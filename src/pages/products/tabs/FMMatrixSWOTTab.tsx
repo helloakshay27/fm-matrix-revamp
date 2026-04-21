@@ -28,7 +28,7 @@ const FMMatrixSWOTTab: React.FC<FMMatrixSWOTTabProps> = ({
 
     return (
         <div className="space-y-8 animate-fade-in">
-            <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+            <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
                 <h2 className="text-xl font-semibold font-poppins">
                     {productName.toUpperCase()} - SWOT Analysis
                 </h2>

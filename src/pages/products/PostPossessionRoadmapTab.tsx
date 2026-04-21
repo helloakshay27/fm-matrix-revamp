@@ -214,7 +214,7 @@ const PostPossessionRoadmapTab: React.FC = () => {
   return (
     <div className="space-y-12 animate-fade-in font-poppins">
       {/* Strategic Header */}
-      <div className="bg-[#1f3864] text-white p-4 rounded-t-xl shadow-sm">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-bold uppercase tracking-wider">
           Post Possession — Strategic Product Roadmap
         </h2>
@@ -256,9 +256,8 @@ const PostPossessionRoadmapTab: React.FC = () => {
                           {item.effort}
                         </td>
                         <td className="border border-gray-100 px-4 py-4 text-center">
-                          <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${
-                            item.impact === "Very High" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
-                          }`}>
+                          <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${item.impact === "Very High" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
+                            }`}>
                             {item.impact}
                           </span>
                         </td>
@@ -279,8 +278,8 @@ const PostPossessionRoadmapTab: React.FC = () => {
       <div className="bg-white border border-[#D3D1C7] rounded-xl p-4 shadow-sm border-l-4 border-l-[#1f3864]">
         <h4 className="text-xs font-bold uppercase tracking-widest text-[#1f3864] mb-2">Roadmap Philosophy</h4>
         <p className="text-[11px] text-[#666] leading-relaxed italic">
-          This roadmap focuses on removing technical blockers for high-margin international markets while building a deep 
-          AI-driven operational moat that point-solutions cannot replicate. Every initiative is tied to a specific 
+          This roadmap focuses on removing technical blockers for high-margin international markets while building a deep
+          AI-driven operational moat that point-solutions cannot replicate. Every initiative is tied to a specific
           commercial outcome: expansion, retention, or monetisation.
         </p>
       </div>

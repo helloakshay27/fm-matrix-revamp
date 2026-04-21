@@ -255,7 +255,7 @@ const PostPossessionSWOTTab: React.FC = () => {
   return (
     <div className="space-y-12 animate-fade-in font-poppins">
       {/* Header */}
-      <div className="bg-[#1f3864] text-white p-4 rounded-t-xl shadow-sm">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-bold uppercase tracking-wider">
           Post Possession — SWOT Analysis
         </h2>
@@ -383,13 +383,13 @@ const PostPossessionSWOTTab: React.FC = () => {
       <div className="bg-white border-2 border-[#D3D1C7] rounded-2xl p-6 shadow-md mt-12">
         <div className="flex flex-col md:flex-row gap-6 items-center text-center md:text-left">
           <div className="bg-[#1f3864] text-white p-4 rounded-xl font-bold text-center min-w-[140px]">
-             <div className="text-[10px] uppercase tracking-widest opacity-80 mb-1">Strategic Moat</div>
-             <div className="text-xl">DATA SOVEREIGNTY</div>
+            <div className="text-[10px] uppercase tracking-widest opacity-80 mb-1">Strategic Moat</div>
+            <div className="text-xl">DATA SOVEREIGNTY</div>
           </div>
           <div className="flex-1">
-             <p className="text-[13px] text-gray-700 leading-relaxed italic">
-               "Post Possession holds a unique globally defensible position by being the only platform that combines white-label developer branding with full data sovereignty. As global privacy laws tighten, this structural advantage becomes the primary driver for enterprise rip-and-replace deals."
-             </p>
+            <p className="text-[13px] text-gray-700 leading-relaxed italic">
+              "Post Possession holds a unique globally defensible position by being the only platform that combines white-label developer branding with full data sovereignty. As global privacy laws tighten, this structural advantage becomes the primary driver for enterprise rip-and-replace deals."
+            </p>
           </div>
         </div>
       </div>

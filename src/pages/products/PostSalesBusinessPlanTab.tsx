@@ -15,7 +15,11 @@ const PostSalesBusinessPlanTab: React.FC = () => {
   const s10: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#fffdf0', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', wordWrap: 'break-word', padding: '0px 3px' };
 
   return (
-    <div className="w-full overflow-x-auto bg-white p-4 font-sans">
+    <div className="w-full overflow-x-auto font-sans">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] text-xl font-bold mb-4">
+        Post Sales  ·  Business Plan Builder , Pre-Filled Answers
+      </div>
+
       <table
         style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: '100%', minWidth: '1000px', backgroundColor: 'white' }}
         cellSpacing={0}
@@ -32,11 +36,6 @@ const PostSalesBusinessPlanTab: React.FC = () => {
           <col style={{ width: '125px' }} />
         </colgroup>
         <tbody>
-
-          {/* ── Row 1: Title ──────────────────────────────────── */}
-          <tr style={{ height: '47px' }}>
-            <td style={s0} colSpan={8}>Post Sales  ·  Business Plan Builder , Pre-Filled Answers</td>
-          </tr>
 
           {/* ── Row 2: Subtitle ───────────────────────────────── */}
           <tr style={{ height: '25px' }}>

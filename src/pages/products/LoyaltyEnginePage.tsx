@@ -1,7 +1,7 @@
 import React from 'react';
 import BaseProductPage, { ProductData } from './BaseProductPage';
-import { 
-  FileText, 
+import {
+  FileText,
   Settings,
   ExternalLink,
   Lock,
@@ -3205,7 +3205,7 @@ const LEFeaturesTab: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl flex justify-between items-center">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Feature List</h2>
       </div>
       <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">All features from product brief. USP rows highlighted in blue. Star denotes unique competitive advantage.</p>
@@ -3246,7 +3246,7 @@ const LEMarketTab: React.FC = () => {
   const competitors = loyaltyEngineData.extendedContent?.detailedMarketAnalysis?.competitorMapping || [];
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Market Analysis</h2>
       </div>
       <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Section 1: Target Audience | Section 2: Competitor Mapping</p>
@@ -3344,7 +3344,7 @@ const LEPricingTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Features & Pricing</h2>
       </div>
       <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Part A: Feature Benchmarking vs Market  |  Part B: Pricing — Current Market & Recommendations  |  Part C: Positioning  |  Part D: Value Propositions & How to Sharpen Them</p>
@@ -3468,7 +3468,7 @@ const LEUseCasesTab: React.FC = () => {
   const teamUseCases = loyaltyEngineData.extendedContent?.detailedUseCases?.internalTeamUseCases || [];
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Use Cases</h2>
       </div>
       <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Section 1: Industry Use Cases | Section 2: Internal Team Use Cases</p>
@@ -3540,7 +3540,7 @@ const LERoadmapTab: React.FC = () => {
   const phases = loyaltyEngineData.extendedContent?.detailedRoadmap?.structuredRoadmap || [];
   return (
     <div className="space-y-10 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Product Roadmap</h2>
       </div>
       {phases.map((phase, pi) => (
@@ -3592,7 +3592,7 @@ const LEBusinessPlanTab: React.FC = () => {
   };
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Business Plan</h2>
       </div>
       {questions.map((q, qi) => (
@@ -3631,7 +3631,7 @@ const LEGTMTab: React.FC = () => {
   const targetGroups = sheet?.targetGroups || [];
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">{sheet?.title || `${loyaltyEngineData.name} - GTM Strategy`}</h2>
       </div>
       {targetGroups.map((tg, tgi) => (
@@ -3680,7 +3680,7 @@ const LEMetricsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">{sheet?.title || `${loyaltyEngineData.name} - Metrics`}</h2>
       </div>
 
@@ -3786,7 +3786,7 @@ const LESWOTTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - SWOT Analysis</h2>
       </div>
 
@@ -3859,7 +3859,7 @@ const LEEnhancementsTab: React.FC = () => {
   const enhancementRoadmap = loyaltyEngineData.extendedContent?.detailedRoadmap?.enhancementRoadmap || [];
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Enhancement Roadmap</h2>
       </div>
       <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Each row shows: current behaviour → enhanced behaviour with integration type. AI/MCP innovations highlighted.</p>
@@ -3906,7 +3906,7 @@ const LEAssetsTab: React.FC = () => {
   const credentials = loyaltyEngineData.credentials || [];
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Assets & Credentials</h2>
       </div>
 

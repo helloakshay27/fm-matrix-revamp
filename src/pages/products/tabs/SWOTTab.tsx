@@ -14,7 +14,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
   if (isClubSWOT) {
     return (
       <div className="space-y-4 animate-fade-in">
-        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
           <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{productData.name} - SWOT Analysis</h2>
         </div>
         <div className="bg-[#F6F4EE] border border-[#D3D1C7] border-t-0 px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins text-center">
@@ -93,7 +93,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
           <div className="w-full rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
               <div
-                className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center"
+                className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]"
               >
                 <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{isCpManagement ? `${productData.name} — SWOT Analysis` : `${productData.name} - SWOT Analysis`}</h2>
               </div>
@@ -164,186 +164,186 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
                     </div>
                   </div>
                 ) : (
-                <div className="mt-4 space-y-4">
-                  <div className="bg-white border border-[#E5E7EB]">
-                    <table className="w-full table-fixed border-collapse font-poppins text-[12px] leading-[1.55]">
-                      <thead>
-                        <tr className="bg-white text-gray-800 border-b border-[#D3D1C7]">
-                          <th
-                            className="border border-[#D3D1C7] px-3 py-2 text-left font-semibold uppercase"
-                            colSpan={6}
-                          >
-                            SWOT Analysis
-                          </th>
-                        </tr>
-                        <tr className="font-semibold uppercase">
-                          <th
-                            className="border border-[#D3D1C7] bg-[#798C5E]/15 text-[#798C5E] px-3 py-2 text-left"
-                            colSpan={3}
-                          >
-                            Strengths (Internal / Positive)
-                          </th>
-                          <th
-                            className="border border-[#D3D1C7] bg-[#E49191]/15 text-[#C72030] px-3 py-2 text-left"
-                            colSpan={3}
-                          >
-                            Weaknesses (Internal / Negative)
-                          </th>
-                        </tr>
-                        <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
-                          <th className="border border-[#E5E7EB] bg-white px-2 py-2 text-center w-[6%]">
-                            ID
-                          </th>
-                          <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[20%]">
-                            Strength
-                          </th>
-                          <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[24%]">
-                            Detail at market
-                          </th>
-                          <th className="border border-[#E5E7EB] bg-white px-2 py-2 text-center w-[6%]">
-                            ID
-                          </th>
-                          <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[20%]">
-                            Weakness
-                          </th>
-                          <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[24%]">
-                            Detail at market
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Array.from(
-                          {
-                            length: Math.max(
-                              productData.extendedContent.detailedSWOT.strengths
-                                .length,
-                              productData.extendedContent.detailedSWOT
-                                .weaknesses.length
-                            ),
-                          },
-                          (_, i) => i
-                        ).map((i) => {
-                          const s =
-                            productData.extendedContent.detailedSWOT.strengths[
-                              i
-                            ];
-                          const w =
-                            productData.extendedContent.detailedSWOT.weaknesses[
-                              i
-                            ];
-                          return (
-                            <tr
-                              key={`sw-${i}`}
-                              className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
+                  <div className="mt-4 space-y-4">
+                    <div className="bg-white border border-[#E5E7EB]">
+                      <table className="w-full table-fixed border-collapse font-poppins text-[12px] leading-[1.55]">
+                        <thead>
+                          <tr className="bg-white text-gray-800 border-b border-[#D3D1C7]">
+                            <th
+                              className="border border-[#D3D1C7] px-3 py-2 text-left font-semibold uppercase"
+                              colSpan={6}
                             >
-                              <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-600">
-                                {s ? `S${i + 1}` : ""}
-                              </td>
-                              <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-gray-700 break-words">
-                                {s?.headline ?? ""}
-                              </td>
-                              <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                                {s?.explanation ?? ""}
-                              </td>
-                              <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-600">
-                                {w ? `W${i + 1}` : ""}
-                              </td>
-                              <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-gray-700 break-words">
-                                {w?.headline ?? ""}
-                              </td>
-                              <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                                {w?.explanation ?? ""}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                              SWOT Analysis
+                            </th>
+                          </tr>
+                          <tr className="font-semibold uppercase">
+                            <th
+                              className="border border-[#D3D1C7] bg-[#798C5E]/15 text-[#798C5E] px-3 py-2 text-left"
+                              colSpan={3}
+                            >
+                              Strengths (Internal / Positive)
+                            </th>
+                            <th
+                              className="border border-[#D3D1C7] bg-[#E49191]/15 text-[#C72030] px-3 py-2 text-left"
+                              colSpan={3}
+                            >
+                              Weaknesses (Internal / Negative)
+                            </th>
+                          </tr>
+                          <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
+                            <th className="border border-[#E5E7EB] bg-white px-2 py-2 text-center w-[6%]">
+                              ID
+                            </th>
+                            <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[20%]">
+                              Strength
+                            </th>
+                            <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[24%]">
+                              Detail at market
+                            </th>
+                            <th className="border border-[#E5E7EB] bg-white px-2 py-2 text-center w-[6%]">
+                              ID
+                            </th>
+                            <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[20%]">
+                              Weakness
+                            </th>
+                            <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[24%]">
+                              Detail at market
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Array.from(
+                            {
+                              length: Math.max(
+                                productData.extendedContent.detailedSWOT.strengths
+                                  .length,
+                                productData.extendedContent.detailedSWOT
+                                  .weaknesses.length
+                              ),
+                            },
+                            (_, i) => i
+                          ).map((i) => {
+                            const s =
+                              productData.extendedContent.detailedSWOT.strengths[
+                              i
+                              ];
+                            const w =
+                              productData.extendedContent.detailedSWOT.weaknesses[
+                              i
+                              ];
+                            return (
+                              <tr
+                                key={`sw-${i}`}
+                                className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
+                              >
+                                <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-600">
+                                  {s ? `S${i + 1}` : ""}
+                                </td>
+                                <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-gray-700 break-words">
+                                  {s?.headline ?? ""}
+                                </td>
+                                <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                  {s?.explanation ?? ""}
+                                </td>
+                                <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-600">
+                                  {w ? `W${i + 1}` : ""}
+                                </td>
+                                <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-gray-700 break-words">
+                                  {w?.headline ?? ""}
+                                </td>
+                                <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                  {w?.explanation ?? ""}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
 
-                    <table className="w-full table-fixed border-collapse font-poppins text-[12px] leading-[1.55] mt-4">
-                      <thead>
-                        <tr className="font-semibold uppercase">
-                          <th
-                            className="border border-[#D3D1C7] bg-[#DA7756]/10 text-[#DA7756] px-3 py-2 text-left"
-                            colSpan={3}
-                          >
-                            Opportunities (External / Positive)
-                          </th>
-                          <th
-                            className="border border-[#D3D1C7] bg-[#EDC488]/20 text-[#B8860B] px-3 py-2 text-left"
-                            colSpan={3}
-                          >
-                            Threats (External / Negative)
-                          </th>
-                        </tr>
-                        <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
-                          <th className="border border-[#E5E7EB] bg-white px-2 py-2 text-center w-[6%]">
-                            ID
-                          </th>
-                          <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[20%]">
-                            Opportunity
-                          </th>
-                          <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[24%]">
-                            Detail & how to
-                          </th>
-                          <th className="border border-[#E5E7EB] bg-white px-2 py-2 text-center w-[6%]">
-                            ID
-                          </th>
-                          <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[20%]">
-                            Threat
-                          </th>
-                          <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[24%]">
-                            Detail & mitigation
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Array.from(
-                          {
-                            length: Math.max(
-                              productData.extendedContent.detailedSWOT
-                                .opportunities.length,
-                              productData.extendedContent.detailedSWOT.threats
-                                .length
-                            ),
-                          },
-                          (_, i) => i
-                        ).map((i) => {
-                          const o =
-                            productData.extendedContent.detailedSWOT
-                              .opportunities[i];
-                          const t =
-                            productData.extendedContent.detailedSWOT.threats[i];
-                          return (
-                            <tr
-                              key={`ot-${i}`}
-                              className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
+                      <table className="w-full table-fixed border-collapse font-poppins text-[12px] leading-[1.55] mt-4">
+                        <thead>
+                          <tr className="font-semibold uppercase">
+                            <th
+                              className="border border-[#D3D1C7] bg-[#DA7756]/10 text-[#DA7756] px-3 py-2 text-left"
+                              colSpan={3}
                             >
-                              <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-600">
-                                {o ? `O${i + 1}` : ""}
-                              </td>
-                              <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-gray-700 break-words">
-                                {o?.headline ?? ""}
-                              </td>
-                              <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                                {o?.explanation ?? ""}
-                              </td>
-                              <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-600">
-                                {t ? `T${i + 1}` : ""}
-                              </td>
-                              <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-gray-700 break-words">
-                                {t?.headline ?? ""}
-                              </td>
-                              <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                                {t?.explanation ?? ""}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                              Opportunities (External / Positive)
+                            </th>
+                            <th
+                              className="border border-[#D3D1C7] bg-[#EDC488]/20 text-[#B8860B] px-3 py-2 text-left"
+                              colSpan={3}
+                            >
+                              Threats (External / Negative)
+                            </th>
+                          </tr>
+                          <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
+                            <th className="border border-[#E5E7EB] bg-white px-2 py-2 text-center w-[6%]">
+                              ID
+                            </th>
+                            <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[20%]">
+                              Opportunity
+                            </th>
+                            <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[24%]">
+                              Detail & how to
+                            </th>
+                            <th className="border border-[#E5E7EB] bg-white px-2 py-2 text-center w-[6%]">
+                              ID
+                            </th>
+                            <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[20%]">
+                              Threat
+                            </th>
+                            <th className="border border-[#E5E7EB] bg-white px-3 py-2 text-left w-[24%]">
+                              Detail & mitigation
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Array.from(
+                            {
+                              length: Math.max(
+                                productData.extendedContent.detailedSWOT
+                                  .opportunities.length,
+                                productData.extendedContent.detailedSWOT.threats
+                                  .length
+                              ),
+                            },
+                            (_, i) => i
+                          ).map((i) => {
+                            const o =
+                              productData.extendedContent.detailedSWOT
+                                .opportunities[i];
+                            const t =
+                              productData.extendedContent.detailedSWOT.threats[i];
+                            return (
+                              <tr
+                                key={`ot-${i}`}
+                                className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
+                              >
+                                <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-600">
+                                  {o ? `O${i + 1}` : ""}
+                                </td>
+                                <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-gray-700 break-words">
+                                  {o?.headline ?? ""}
+                                </td>
+                                <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                  {o?.explanation ?? ""}
+                                </td>
+                                <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-600">
+                                  {t ? `T${i + 1}` : ""}
+                                </td>
+                                <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-gray-700 break-words">
+                                  {t?.headline ?? ""}
+                                </td>
+                                <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                  {t?.explanation ?? ""}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </div>
                 )
               ) : (
                 <div className="p-10 text-center text-[#D3D1C7] font-semibold uppercase text-xl border-4 border-dashed border-[#D3D1C7] rounded-[2rem] m-4">

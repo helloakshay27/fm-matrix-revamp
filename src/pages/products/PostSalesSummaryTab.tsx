@@ -17,7 +17,7 @@ const PostSalesSummaryTab: React.FC<PostSalesSummaryTabProps> = ({ productData }
   return (
     <div className="space-y-12 animate-fade-in font-poppins pb-20 w-full">
       {/* Header for the whole page */}
-      <div className="bg-[#1a2744] text-white p-6 rounded-t-xl shadow-lg border-b border-[#cccccc] w-full">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h1 className="text-3xl font-bold tracking-tight text-center uppercase">
           {productData.name} &middot; FULL PRODUCT SUMMARY
         </h1>
@@ -32,7 +32,7 @@ const PostSalesSummaryTab: React.FC<PostSalesSummaryTabProps> = ({ productData }
         {perspectives.map((perspective, pIdx) => {
           // Get rows for this specific perspective
           const rows = buildSummarySheetRows(productData, pIdx);
-          
+
           return (
             <div key={pIdx} className="bg-white border border-[#cccccc] shadow-sm rounded-sm overflow-hidden w-full">
               {/* Perspective Header Row */}

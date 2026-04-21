@@ -4,7 +4,7 @@ const PostPossessionMarketAnalysisTab: React.FC = () => {
   return (
     <div className="space-y-12 animate-fade-in font-poppins pb-10">
       {/* Header */}
-      <div className="bg-[#1f3864] text-white p-4 rounded-t-xl shadow-sm">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-bold uppercase tracking-wider">
           Post Possession — Market Analysis
         </h2>

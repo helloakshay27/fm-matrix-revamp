@@ -28,7 +28,7 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
         <div className="bg-transparent p-3">
           <div className="w-full rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
-              <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
+              <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
                 <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{productData.name} - Product Roadmap</h2>
               </div>
               <div className="bg-[#F6F4EE] border border-[#D3D1C7] border-t-0 px-4 py-2 text-[12px] text-gray-600 font-medium italic font-poppins text-center">
@@ -60,7 +60,7 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                               <td className="border border-[#E5E7EB] px-4 py-3 font-semibold whitespace-pre-line break-words">
                                 <span className={
                                   item.priority?.startsWith("Critical") ? "text-[#C72030]" :
-                                  item.priority?.startsWith("High") ? "text-[#D97706]" : "text-[#798C5E]"
+                                    item.priority?.startsWith("High") ? "text-[#D97706]" : "text-[#798C5E]"
                                 }>{item.priority}</span>
                               </td>
                               <td className="border border-[#E5E7EB] px-4 py-3 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">{item.timeline}</td>
@@ -279,16 +279,16 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                                             )
                                               ? "text-[#C72030] font-semibold"
                                               : item.dealRisk?.startsWith(
-                                                    "HIGH"
-                                                  )
+                                                "HIGH"
+                                              )
                                                 ? "text-[#C72030]"
                                                 : item.dealRisk
-                                                      ?.toUpperCase()
-                                                      .startsWith("MEDIUM-HIGH")
+                                                  ?.toUpperCase()
+                                                  .startsWith("MEDIUM-HIGH")
                                                   ? "text-[#D97706]"
                                                   : item.dealRisk?.startsWith(
-                                                        "MEDIUM"
-                                                      )
+                                                    "MEDIUM"
+                                                  )
                                                     ? "text-[#D97706]"
                                                     : "text-[#2C2C2C]/80"
                                           }
@@ -304,8 +304,8 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                                               : item.priority?.includes("P1")
                                                 ? "text-[#D97706]"
                                                 : item.priority?.includes(
-                                                      "Strategic"
-                                                    )
+                                                  "Strategic"
+                                                )
                                                   ? "text-[#6B21A8]"
                                                   : "text-[#2C2C2C]"
                                           }
@@ -365,8 +365,8 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                                     <td className="border border-[#D3D1C7] px-3 py-3 text-center font-semibold whitespace-pre-line">
                                       <span className={
                                         item.priority?.includes("P0") ? "text-[#C72030]" :
-                                        item.priority?.includes("P1") ? "text-[#D97706]" :
-                                        "text-[#1A1A2E]"
+                                          item.priority?.includes("P1") ? "text-[#D97706]" :
+                                            "text-[#1A1A2E]"
                                       }>{item.priority ?? ""}</span>
                                     </td>
                                   </tr>

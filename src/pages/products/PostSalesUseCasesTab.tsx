@@ -26,7 +26,10 @@ const PostSalesUseCasesTab: React.FC = () => {
   const s21: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f0faf4', textAlign: 'left', color: '#000000', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
 
   return (
-    <div className="w-full overflow-x-auto bg-white p-4 font-sans">
+    <div className="w-full overflow-x-auto font-sans">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] text-xl font-bold mb-4">
+        Post Sales  ·  Use Cases
+      </div>
       <table
         style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: '100%', minWidth: '1200px', backgroundColor: 'white' }}
         cellSpacing={0}
@@ -44,11 +47,6 @@ const PostSalesUseCasesTab: React.FC = () => {
           <col style={{ width: '139px' }} />
         </colgroup>
         <tbody>
-
-          {/* ── Row 1: Title ────────────────────────────────────── */}
-          <tr style={{ height: '19px' }}>
-            <td style={s0} colSpan={9}>Post Sales  ·  Use Cases</td>
-          </tr>
 
           {/* ── Row 2: Subtitle ─────────────────────────────────── */}
           <tr style={{ height: '19px' }}>

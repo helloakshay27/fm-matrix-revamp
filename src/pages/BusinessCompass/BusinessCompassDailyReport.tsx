@@ -28,6 +28,7 @@ import {
   Loader2,
   Edit,
   Trash2,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -49,6 +50,8 @@ import { Dialog, DialogContent, Slide, Menu, MenuItem } from "@mui/material";
 import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
 import { TransitionProps } from "@mui/material/transitions";
 import AddIssueModal from "@/components/AddIssueModal";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -120,6 +123,7 @@ interface DailyReport {
 }
 
 const BusinessCompassDailyReport: React.FC = () => {
+  const navigate = useNavigate();
   const now = new Date();
   const [selectedDate, setSelectedDate] = useState(now.getDate().toString());
   const [startDate, setStartDate] = useState(now.toLocaleDateString("en-CA"));
@@ -161,6 +165,8 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [selectedTasksIssues, setSelectedTasksIssues] = useState<{ [key: string]: boolean }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  console.log(selectedTasksIssues)
 
   // Pagination state
   const [currentTasksPage, setCurrentTasksPage] = useState(1);
@@ -254,6 +260,17 @@ const BusinessCompassDailyReport: React.FC = () => {
 
     setIsLoadingMore(false);
   }, [tasksData, issuesData, currentTasksPage, currentIssuesPage]);
+
+  // Auto-select completed/closed tasks and issues
+  useEffect(() => {
+    const completedItems: { [key: string]: boolean } = {};
+    mergedTasksIssues.forEach((item) => {
+      if (item.status === "completed" || item.status === "closed") {
+        completedItems[item.id] = true;
+      }
+    });
+    setSelectedTasksIssues(completedItems);
+  }, [mergedTasksIssues]);
 
   // Handle infinite scroll
   useEffect(() => {
@@ -507,6 +524,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   const handleMarkItemClosed = async () => {
     if (!closureItem || !baseUrl || !token) return;
+    console.log(closureItem)
 
     setIsClosureSubmitting(true);
     try {
@@ -524,7 +542,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         });
 
         await axios.put(
-          `${urlBase}/task_managements/${closureItem.id}.json`,
+          `${urlBase}/task_managements/${closureItem.originalData?.id}.json`,
           formDataToSend,
           {
             headers: {
@@ -540,7 +558,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         });
 
         await axios.put(
-          `${urlBase}/issues/${closureItem.id}.json`,
+          `${urlBase}/issues/${closureItem.originalData?.id}.json`,
           formDataToSend,
           {
             headers: {
@@ -555,7 +573,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         const commentPayload = {
           comment: {
             body: `Closure Remarks: ${closureRemarks}`,
-            commentable_id: closureItem.id,
+            commentable_id: closureItem.originalData?.id,
             commentable_type: isTask ? "TaskManagement" : "Issue",
             commentor_id: userId,
             active: true,
@@ -581,6 +599,10 @@ const BusinessCompassDailyReport: React.FC = () => {
       setClosureAttachments([]);
       setClosureItem(null);
 
+      // Fetch updated tasks and issues
+      setCurrentTasksPage(1);
+      setCurrentIssuesPage(1);
+
       // Show success message
       const itemName = isTask ? "Task" : "Issue";
       const message =
@@ -589,9 +611,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           : `${itemName} marked as closed`;
 
       // Optionally show toast/notification
-      if (typeof window !== "undefined" && (window as any).toast) {
-        (window as any).toast.success(message);
-      }
+      toast.success(message);
     } catch (error) {
       console.error("Error marking item as closed:", error);
       const itemName = closureItem?.type === "task" ? "task" : "issue";
@@ -991,8 +1011,12 @@ const BusinessCompassDailyReport: React.FC = () => {
             tasks_issues: mergedTasksIssues
               .filter(item => selectedTasksIssues[item.id])
               .map((item) => ({
+                id: item.originalData?.id,
                 name: item.title,
+                type: item.type,
                 status: "completed",
+                original_status: item.status,
+                priority: item.priority,
               })),
             tomorrow_plan: planningItems.map((p) => ({
               title: p.text,
@@ -1703,18 +1727,32 @@ const BusinessCompassDailyReport: React.FC = () => {
                             <Checkbox
                               checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
                               onCheckedChange={(checked) => {
+                                // Always update the selectedTasksIssues first
+                                setSelectedTasksIssues(prev => ({
+                                  ...prev,
+                                  [item.id]: checked as boolean
+                                }));
+
+                                // If checking an uncompleted item, open the closure modal for remarks
                                 if (checked && item.status !== "completed" && item.status !== "closed") {
                                   setClosureItem(item);
                                   setShowClosureModal(true);
-                                } else {
-                                  setSelectedTasksIssues(prev => ({
-                                    ...prev,
-                                    [item.id]: checked as boolean
-                                  }));
                                 }
                               }}
                               className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a]"
                             />
+                            <button
+                              onClick={() => {
+                                const detailsUrl = item.type === "task"
+                                  ? `/vas/tasks/${item.originalData?.id}`
+                                  : `/vas/issues/${item.originalData?.id}`;
+                                navigate(detailsUrl);
+                              }}
+                              className="p-1.5 hover:bg-gray-200 rounded-[6px] transition-colors"
+                              title={`View ${item.type} details`}
+                            >
+                              <Eye size={16} className="text-gray-600 hover:text-gray-800" />
+                            </button>
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white text-gray-600 uppercase">
                                 {item.type}
@@ -1750,6 +1788,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               >
                                 {item.priority}
                               </span>
+
                             </div>
                           </div>
                         ))}

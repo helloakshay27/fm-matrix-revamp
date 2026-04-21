@@ -31,7 +31,7 @@ const Snag360UseCasesTab: React.FC<Snag360UseCasesTabProps> = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-white text-gray-900 border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
           {productName} - Use Cases
         </h2>

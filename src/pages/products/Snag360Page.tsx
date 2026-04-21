@@ -2725,7 +2725,7 @@ const Snag360FeaturesTab: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl flex justify-between items-center">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Feature List
         </h2>
@@ -2812,7 +2812,7 @@ const Snag360MarketTab: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Market Size Section */}
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Market Analysis
         </h2>
@@ -3019,7 +3019,7 @@ const Snag360PricingTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Features and Pricing
         </h2>
@@ -3228,7 +3228,7 @@ const Snag360RoadmapTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Product Roadmap
         </h2>
@@ -3308,7 +3308,7 @@ const Snag360BusinessPlanTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Business Plan Builder
         </h2>
@@ -3430,7 +3430,7 @@ const Snag360GTMTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - GTM Strategy
         </h2>
@@ -3492,7 +3492,7 @@ const Snag360MetricsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Key Metrics and Targets
         </h2>
@@ -3617,7 +3617,7 @@ const Snag360SWOTTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - SWOT Analysis
         </h2>
@@ -3720,7 +3720,7 @@ const Snag360EnhancementsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Future Enhancement Roadmap (Innovation Layer)
         </h2>
@@ -3860,7 +3860,7 @@ const Snag360AssetsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Assets & Credentials
         </h2>

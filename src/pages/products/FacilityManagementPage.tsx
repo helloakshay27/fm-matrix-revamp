@@ -1831,7 +1831,7 @@ const FMFeaturesTab: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl flex justify-between items-center">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           FM MATRIX — FULL FEATURE LIST
         </h2>
@@ -1936,7 +1936,7 @@ const FMMarketAnalysisTab: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl flex justify-between items-center">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           FM MATRIX — MARKET ANALYSIS
         </h2>
@@ -2140,7 +2140,7 @@ const FMFeaturesAndPricingTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           FM MATRIX - FEATURES & PRICING
         </h2>
@@ -2339,7 +2339,7 @@ const FMMatrixBusinessPlanTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           FM MATRIX - Business Plan Builder
         </h2>
@@ -2412,7 +2412,7 @@ const FMMatrixGTMTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">FM MATRIX — Go-To-Market Strategy</h2>
       </div>
       <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
@@ -2456,9 +2456,8 @@ const FMMatrixGTMTab: React.FC = () => {
                           {row.map((cell: string, j: number) => (
                             <td
                               key={j}
-                              className={`border border-[#b8cce4] p-2 align-top leading-relaxed ${
-                                j === 0 ? "font-semibold text-[#2C2C2C] min-w-[120px]" : "text-[#2C2C2C]/80"
-                              }`}
+                              className={`border border-[#b8cce4] p-2 align-top leading-relaxed ${j === 0 ? "font-semibold text-[#2C2C2C] min-w-[120px]" : "text-[#2C2C2C]/80"
+                                }`}
                             >
                               {cell}
                             </td>
@@ -2540,7 +2539,7 @@ const FMMatrixMetricsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">FM MATRIX — Metrics & Impact Tracker</h2>
       </div>
       <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">

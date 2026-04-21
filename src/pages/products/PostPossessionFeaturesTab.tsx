@@ -2,190 +2,196 @@ import React from 'react';
 
 const PostPossessionFeaturesTab: React.FC = () => {
   const styles: Record<string, React.CSSProperties> = {
-  "s11": {
-    "borderBottom": "1px solid #d9d9d9",
-    "backgroundColor": "#d9e2f3",
-    "textAlign": "left",
-    "fontWeight": "bold",
-    "color": "#1f1f1f",
-    "fontFamily": "Arial,Arial",
-    "fontSize": "10pt",
-    "verticalAlign": "middle",
-    "whiteSpace": "normal",
-    "overflow": "hidden",
-    "wordWrap": "break-word",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s6": {
-    "borderBottom": "1px solid #d9d9d9",
-    "borderRight": "1px solid #d9d9d9",
-    "backgroundColor": "#d9e2f3",
-    "textAlign": "center",
-    "fontWeight": "bold",
-    "color": "#1f1f1f",
-    "fontFamily": "Arial,Arial",
-    "fontSize": "11pt",
-    "verticalAlign": "bottom",
-    "whiteSpace": "nowrap",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s2": {
-    "backgroundColor": "#1f3864",
-    "textAlign": "left",
-    "fontWeight": "bold",
-    "color": "#ffffff",
-    "fontFamily": "Arial",
-    "fontSize": "11pt",
-    "verticalAlign": "middle",
-    "whiteSpace": "nowrap",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s10": {
-    "backgroundColor": "#ffffff",
-    "textAlign": "left",
-    "color": "#000000",
-    "fontFamily": "Arial,Arial",
-    "fontSize": "10pt",
-    "verticalAlign": "middle",
-    "whiteSpace": "normal",
-    "overflow": "hidden",
-    "wordWrap": "break-word",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s7": {
-    "borderBottom": "1px solid #d9d9d9",
-    "borderRight": "1px solid #d9d9d9",
-    "backgroundColor": "#ddebf7",
-    "textAlign": "left",
-    "color": "#1f1f1f",
-    "fontFamily": "Arial,Arial",
-    "fontSize": "10pt",
-    "verticalAlign": "middle",
-    "whiteSpace": "normal",
-    "overflow": "hidden",
-    "wordWrap": "break-word",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s1": {
-    "borderLeft": "none",
-    "backgroundColor": "#1f3864",
-    "textAlign": "left",
-    "fontWeight": "bold",
-    "color": "#ffffff",
-    "fontFamily": "Arial",
-    "fontSize": "11pt",
-    "verticalAlign": "middle",
-    "whiteSpace": "nowrap",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s0": {
-    "borderRight": "none",
-    "backgroundColor": "#1f3864",
-    "textAlign": "left",
-    "fontWeight": "bold",
-    "color": "#ffffff",
-    "fontFamily": "Arial",
-    "fontSize": "11pt",
-    "verticalAlign": "middle",
-    "whiteSpace": "nowrap",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s3": {
-    "borderRight": "1px solid #000000",
-    "backgroundColor": "#1f3864",
-    "textAlign": "left",
-    "fontWeight": "bold",
-    "color": "#ffffff",
-    "fontFamily": "Arial",
-    "fontSize": "11pt",
-    "verticalAlign": "middle",
-    "whiteSpace": "nowrap",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s8": {
-    "borderBottom": "1px solid #d9d9d9",
-    "borderRight": "1px solid #d9d9d9",
-    "backgroundColor": "#ddebf7",
-    "textAlign": "left",
-    "fontWeight": "bold",
-    "color": "#1f4e78",
-    "fontFamily": "Arial,Arial",
-    "fontSize": "10pt",
-    "verticalAlign": "middle",
-    "whiteSpace": "normal",
-    "overflow": "hidden",
-    "wordWrap": "break-word",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s4": {
-    "borderBottom": "1px solid #d9d9d9",
-    "backgroundColor": "#d9e2f3",
-    "textAlign": "left",
-    "fontWeight": "bold",
-    "color": "#1f1f1f",
-    "fontFamily": "Arial,Arial",
-    "fontSize": "12pt",
-    "verticalAlign": "bottom",
-    "whiteSpace": "nowrap",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s9": {
-    "borderBottom": "1px solid #d9d9d9",
-    "borderRight": "1px solid #d9d9d9",
-    "backgroundColor": "#ffffff",
-    "textAlign": "left",
-    "color": "#1f1f1f",
-    "fontFamily": "Arial,Arial",
-    "fontSize": "10pt",
-    "verticalAlign": "middle",
-    "whiteSpace": "normal",
-    "overflow": "hidden",
-    "wordWrap": "break-word",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s12": {
-    "borderBottom": "1px solid #d9d9d9",
-    "borderRight": "1px solid #d9d9d9",
-    "backgroundColor": "#d9e2f3",
-    "textAlign": "center",
-    "fontWeight": "bold",
-    "color": "#1f1f1f",
-    "fontFamily": "Arial,Arial",
-    "fontSize": "10pt",
-    "verticalAlign": "middle",
-    "whiteSpace": "normal",
-    "overflow": "hidden",
-    "wordWrap": "break-word",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s13": {
-    "backgroundColor": "#d9e2f3",
-    "textAlign": "left",
-    "fontWeight": "bold",
-    "color": "#1f1f1f",
-    "fontFamily": "Arial,Arial",
-    "fontSize": "10pt",
-    "verticalAlign": "middle",
-    "whiteSpace": "normal",
-    "overflow": "hidden",
-    "wordWrap": "break-word",
-    "padding": "0px 3px 0px 3px"
-  },
-  "s5": {
-    "backgroundColor": "#d9e2f3",
-    "textAlign": "left",
-    "fontWeight": "bold",
-    "color": "#1f1f1f",
-    "fontFamily": "Arial,Arial",
-    "fontSize": "12pt",
-    "verticalAlign": "bottom",
-    "whiteSpace": "nowrap",
-    "padding": "0px 3px 0px 3px"
-  }
-};
+    "s11": {
+      "borderBottom": "1px solid #d9d9d9",
+      "backgroundColor": "#d9e2f3",
+      "textAlign": "left",
+      "fontWeight": "bold",
+      "color": "#1f1f1f",
+      "fontFamily": "Arial,Arial",
+      "fontSize": "10pt",
+      "verticalAlign": "middle",
+      "whiteSpace": "normal",
+      "overflow": "hidden",
+      "wordWrap": "break-word",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s6": {
+      "borderBottom": "1px solid #d9d9d9",
+      "borderRight": "1px solid #d9d9d9",
+      "backgroundColor": "#d9e2f3",
+      "textAlign": "center",
+      "fontWeight": "bold",
+      "color": "#1f1f1f",
+      "fontFamily": "Arial,Arial",
+      "fontSize": "11pt",
+      "verticalAlign": "bottom",
+      "whiteSpace": "nowrap",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s2": {
+      "backgroundColor": "#1f3864",
+      "textAlign": "left",
+      "fontWeight": "bold",
+      "color": "#ffffff",
+      "fontFamily": "Arial",
+      "fontSize": "11pt",
+      "verticalAlign": "middle",
+      "whiteSpace": "nowrap",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s10": {
+      "backgroundColor": "#ffffff",
+      "textAlign": "left",
+      "color": "#000000",
+      "fontFamily": "Arial,Arial",
+      "fontSize": "10pt",
+      "verticalAlign": "middle",
+      "whiteSpace": "normal",
+      "overflow": "hidden",
+      "wordWrap": "break-word",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s7": {
+      "borderBottom": "1px solid #d9d9d9",
+      "borderRight": "1px solid #d9d9d9",
+      "backgroundColor": "#ddebf7",
+      "textAlign": "left",
+      "color": "#1f1f1f",
+      "fontFamily": "Arial,Arial",
+      "fontSize": "10pt",
+      "verticalAlign": "middle",
+      "whiteSpace": "normal",
+      "overflow": "hidden",
+      "wordWrap": "break-word",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s1": {
+      "borderLeft": "none",
+      "backgroundColor": "#1f3864",
+      "textAlign": "left",
+      "fontWeight": "bold",
+      "color": "#ffffff",
+      "fontFamily": "Arial",
+      "fontSize": "11pt",
+      "verticalAlign": "middle",
+      "whiteSpace": "nowrap",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s0": {
+      "borderRight": "none",
+      "backgroundColor": "#1f3864",
+      "textAlign": "left",
+      "fontWeight": "bold",
+      "color": "#ffffff",
+      "fontFamily": "Arial",
+      "fontSize": "11pt",
+      "verticalAlign": "middle",
+      "whiteSpace": "nowrap",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s3": {
+      "borderRight": "1px solid #000000",
+      "backgroundColor": "#1f3864",
+      "textAlign": "left",
+      "fontWeight": "bold",
+      "color": "#ffffff",
+      "fontFamily": "Arial",
+      "fontSize": "11pt",
+      "verticalAlign": "middle",
+      "whiteSpace": "nowrap",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s8": {
+      "borderBottom": "1px solid #d9d9d9",
+      "borderRight": "1px solid #d9d9d9",
+      "backgroundColor": "#ddebf7",
+      "textAlign": "left",
+      "fontWeight": "bold",
+      "color": "#1f4e78",
+      "fontFamily": "Arial,Arial",
+      "fontSize": "10pt",
+      "verticalAlign": "middle",
+      "whiteSpace": "normal",
+      "overflow": "hidden",
+      "wordWrap": "break-word",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s4": {
+      "borderBottom": "1px solid #d9d9d9",
+      "backgroundColor": "#d9e2f3",
+      "textAlign": "left",
+      "fontWeight": "bold",
+      "color": "#1f1f1f",
+      "fontFamily": "Arial,Arial",
+      "fontSize": "12pt",
+      "verticalAlign": "bottom",
+      "whiteSpace": "nowrap",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s9": {
+      "borderBottom": "1px solid #d9d9d9",
+      "borderRight": "1px solid #d9d9d9",
+      "backgroundColor": "#ffffff",
+      "textAlign": "left",
+      "color": "#1f1f1f",
+      "fontFamily": "Arial,Arial",
+      "fontSize": "10pt",
+      "verticalAlign": "middle",
+      "whiteSpace": "normal",
+      "overflow": "hidden",
+      "wordWrap": "break-word",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s12": {
+      "borderBottom": "1px solid #d9d9d9",
+      "borderRight": "1px solid #d9d9d9",
+      "backgroundColor": "#d9e2f3",
+      "textAlign": "center",
+      "fontWeight": "bold",
+      "color": "#1f1f1f",
+      "fontFamily": "Arial,Arial",
+      "fontSize": "10pt",
+      "verticalAlign": "middle",
+      "whiteSpace": "normal",
+      "overflow": "hidden",
+      "wordWrap": "break-word",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s13": {
+      "backgroundColor": "#d9e2f3",
+      "textAlign": "left",
+      "fontWeight": "bold",
+      "color": "#1f1f1f",
+      "fontFamily": "Arial,Arial",
+      "fontSize": "10pt",
+      "verticalAlign": "middle",
+      "whiteSpace": "normal",
+      "overflow": "hidden",
+      "wordWrap": "break-word",
+      "padding": "0px 3px 0px 3px"
+    },
+    "s5": {
+      "backgroundColor": "#d9e2f3",
+      "textAlign": "left",
+      "fontWeight": "bold",
+      "color": "#1f1f1f",
+      "fontFamily": "Arial,Arial",
+      "fontSize": "12pt",
+      "verticalAlign": "bottom",
+      "whiteSpace": "nowrap",
+      "padding": "0px 3px 0px 3px"
+    }
+  };
 
   return (
-    <div className="w-full overflow-x-auto bg-white p-4 font-sans">
+    <div className="w-full overflow-x-auto font-sans">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-4">
+        <h2 className="text-xl font-bold uppercase tracking-wider">
+          POST POSSESSION — FULL FEATURE LIST
+        </h2>
+      </div>
+
       <table
         style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: '100%', minWidth: '1400px', backgroundColor: 'white' }}
         cellSpacing={0}
@@ -203,17 +209,6 @@ const PostPossessionFeaturesTab: React.FC = () => {
           <col style={{ width: '60px' }} />
         </colgroup>
         <tbody>
-          <tr style={{ height: '31px' }}>
-            <td style={styles.s0}>POST POSSESSION — FULL FEATURE LIST</td>
-            <td style={styles.s1}></td>
-            <td style={styles.s1}></td>
-            <td style={styles.s2}></td>
-            <td style={styles.s2}></td>
-            <td style={styles.s2}></td>
-            <td style={styles.s2}></td>
-            <td style={styles.s2}></td>
-            <td style={styles.s3}></td>
-          </tr>
           <tr style={{ height: '20px' }}>
             <td style={styles.s4}>Visitor Management</td>
             <td style={styles.s4}></td>

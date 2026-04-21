@@ -101,7 +101,7 @@ const PostPossessionBusinessPlanTab: React.FC = () => {
   return (
     <div className="space-y-12 animate-fade-in font-poppins">
       {/* Header */}
-      <div className="bg-[#1f3864] text-white p-4 rounded-t-xl shadow-sm">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-bold uppercase tracking-wider">
           Post Possession — Business Plan Builder
         </h2>
@@ -146,9 +146,8 @@ const PostPossessionBusinessPlanTab: React.FC = () => {
                       {q.source}
                     </td>
                     <td className="border border-[#D3D1C7] px-4 py-4 text-center">
-                      <span className={`px-2 py-1 rounded-sm font-bold text-[9px] uppercase tracking-wider ${
-                        q.flag.includes("Ready") ? "bg-green-100 text-green-700 border border-green-200" : "bg-yellow-100 text-yellow-700 border border-yellow-200"
-                      }`}>
+                      <span className={`px-2 py-1 rounded-sm font-bold text-[9px] uppercase tracking-wider ${q.flag.includes("Ready") ? "bg-green-100 text-green-700 border border-green-200" : "bg-yellow-100 text-yellow-700 border border-yellow-200"
+                        }`}>
                         {q.flag}
                       </span>
                     </td>
@@ -189,13 +188,13 @@ const PostPossessionBusinessPlanTab: React.FC = () => {
           </table>
         </div>
       </div>
-      
+
       {/* Strategic Footer */}
       <div className="bg-white border border-[#D3D1C7] rounded-xl p-4 shadow-sm border-l-4 border-l-[#1f3864]">
         <h4 className="text-xs font-bold uppercase tracking-widest text-[#1f3864] mb-2">Internal Use Only</h4>
         <p className="text-[11px] text-[#666] leading-relaxed italic">
-          This business plan builder is a work-in-progress internal tool for the founding team. 
-          The suggested answers are pre-filled based on current product capabilities and market gaps. 
+          This business plan builder is a work-in-progress internal tool for the founding team.
+          The suggested answers are pre-filled based on current product capabilities and market gaps.
           Please complete the Founder Review Checklist above before using these answers in external conversations.
         </p>
       </div>
