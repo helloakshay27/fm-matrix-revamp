@@ -3874,18 +3874,16 @@ const PTMSummaryTab: React.FC = () => {
             {featureSummaryModules.map((module, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-[#FAF9F6]" : "bg-white"}>
                 <td
-                  className={`p-4 w-1/4 font-semibold border-r border-[#b8cce4] align-top ${
-                    module.isUSP
-                      ? "bg-[#E3F2FD] text-[#1f3a5f]"
-                      : "text-[#2C2C2C]"
-                  }`}
+                  className={`p-4 w-1/4 font-semibold border-r border-[#b8cce4] align-top ${module.isUSP
+                    ? "bg-[#E3F2FD] text-[#1f3a5f]"
+                    : "text-[#2C2C2C]"
+                    }`}
                 >
                   {module.module}
                 </td>
                 <td
-                  className={`p-4 text-[#2C2C2C] align-top font-poppins leading-relaxed ${
-                    module.isUSP ? "bg-[#E3F2FD] text-blue-900" : ""
-                  }`}
+                  className={`p-4 text-[#2C2C2C] align-top font-poppins leading-relaxed ${module.isUSP ? "bg-[#E3F2FD] text-blue-900" : ""
+                    }`}
                 >
                   {module.description}
                 </td>
@@ -3937,7 +3935,7 @@ const PTMFeaturesTab: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl flex justify-between items-center">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Feature List
         </h2>
@@ -4098,7 +4096,7 @@ const PTMMarketTab: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Market Analysis
         </h2>
@@ -4312,7 +4310,7 @@ const PTMPricingTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Features and Pricing
         </h2>
@@ -4513,7 +4511,7 @@ const PTMUseCasesTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Use Cases
         </h2>
@@ -4646,7 +4644,7 @@ const PTMRoadmapTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Product Roadmap
         </h2>
@@ -4739,7 +4737,7 @@ const PTMBusinessPlanTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Business Plan Builder
         </h2>
@@ -4861,7 +4859,7 @@ const PTMGTMTab: React.FC = () => {
 
   return (
     <div className="space-y-12 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - GTM Strategy
         </h2>
@@ -4883,8 +4881,8 @@ const PTMGTMTab: React.FC = () => {
                   <thead>
                     <tr className="bg-[#4f81bd] text-white font-semibold">
                       {section.columns.map((col: string, cIdx: number) => (
-                        <th 
-                          key={cIdx} 
+                        <th
+                          key={cIdx}
                           className={`border border-[#b8cce4] p-3 text-left ${cIdx === 0 ? "w-[15%]" : ""}`}
                         >
                           {col}
@@ -4896,22 +4894,22 @@ const PTMGTMTab: React.FC = () => {
                     {section.rows.map((row: any, rIdx: number) => {
                       const textColor = row.textColor || "#2C2C2C";
                       const bgColor = row.bgColor || (rIdx % 2 === 0 ? "white" : "#F6F4EE");
-                      
+
                       return (
                         <tr key={rIdx} style={{ backgroundColor: bgColor }}>
                           {section.columns.map((_, colIdx: number) => {
-                            const cellValue = colIdx === 0 ? (row.label || row.col1) : 
-                                              colIdx === 1 ? (row.detail || row.col2) : 
-                                              colIdx === 2 ? row.col3 : 
-                                              row.col4;
-                            
+                            const cellValue = colIdx === 0 ? (row.label || row.col1) :
+                              colIdx === 1 ? (row.detail || row.col2) :
+                                colIdx === 2 ? row.col3 :
+                                  row.col4;
+
                             const isYes = cellValue === "Yes";
-                            
+
                             return (
-                              <td 
+                              <td
                                 key={colIdx}
                                 className={`border border-[#b8cce4] p-3 ${colIdx === 0 ? "font-semibold text-[#1f3a5f] bg-[#f0f4ff]" : "text-[#2C2C2C]/80"} ${isYes ? "text-green-700 font-bold text-center bg-green-50/30" : ""}`}
-                                style={{ 
+                                style={{
                                   color: colIdx === 0 ? (textColor === "#2C2C2C" ? "#1f3a5f" : textColor) : textColor,
                                   backgroundColor: colIdx === 0 ? "" : (isYes ? "" : bgColor)
                                 }}
@@ -4953,7 +4951,7 @@ const PTMMetricsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Key Metrics and Targets
         </h2>
@@ -5119,7 +5117,7 @@ const PTMSWOTTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - SWOT Analysis
         </h2>
@@ -5220,7 +5218,7 @@ const PTMEnhancementsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Future Enhancement Roadmap (AI/MCP Layer)
         </h2>
@@ -5301,7 +5299,7 @@ const PTMAssetsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Assets & Credentials
         </h2>
