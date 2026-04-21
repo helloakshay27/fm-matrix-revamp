@@ -56,6 +56,7 @@ const BtnPrimary = ({
   className = "",
   icon: Icon,
   disabled = false,
+  loading = false,
 }: any) => (
   <button
     disabled={disabled}
@@ -65,7 +66,7 @@ const BtnPrimary = ({
       className
     )}
   >
-    {Icon && <Icon className={cn("w-4 h-4", disabled && "animate-spin")} />}{" "}
+    {Icon && <Icon className={cn("w-4 h-4", loading && "animate-spin")} />}{" "}
     {children}
   </button>
 );
@@ -262,6 +263,18 @@ const getItemStatus = (item: any): string => {
   return item.status || "open";
 };
 
+// ── Strip missed-members prefix from textarea value before saving ──
+// So only the actual discussion points typed by user go into key_discussion_points
+const stripMissedMembersPrefix = (text: string): string => {
+  const missedHeaderMatch = text.match(
+    /^Team Members Who Missed Report \(\d+\):\n(?:- .+\n)*\n?/
+  );
+  if (missedHeaderMatch) {
+    return text.slice(missedHeaderMatch[0].length);
+  }
+  return text;
+};
+
 // ─────────────────────────────────────────────
 const DailyTab = () => {
   const [activeDate, setActiveDate] = useState(
@@ -277,9 +290,12 @@ const DailyTab = () => {
   const [dailyData, setDailyData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [calendarDateRow, setCalendarDateRow] = useState<any[]>([]);
+  const isArrowNav = React.useRef(false);
   const [expandedReports, setExpandedReports] = useState<any[]>([]);
   const [selectedReports, setSelectedReports] = useState<any[]>([]);
   const [meetingNotes, setMeetingNotes] = useState("");
+  const [savedMeetingNotes, setSavedMeetingNotes] = useState("");
   const [isSavingMeeting, setIsSavingMeeting] = useState(false);
   const [meetingJournalId, setMeetingJournalId] = useState<number | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
@@ -328,6 +344,11 @@ const DailyTab = () => {
 
       if (json.success) {
         setDailyData(json.data);
+        if (isArrowNav.current || calendarDateRow.length === 0) {
+          setCalendarDateRow(json.data?.date_row || []);
+        }
+        isArrowNav.current = false;
+
         const reports: any[] =
           json.data?.member_reports || json.data?.reports || [];
         const headId = json.data?.config?.meeting_head?.id;
@@ -352,23 +373,41 @@ const DailyTab = () => {
         setMeetingJournalId(meetingJournalReport?.journal_id ?? null);
 
         if (!skipNotesRestore) {
-          const savedDiscussion: string =
-            meetingJournalReport?.report_data?.meeting_notes?.[0]
-              ?.key_discussion_points || "";
+          const DEFAULT_DISCUSSION = "Key Discussion Points:\n";
 
-          if (savedDiscussion) {
+          if (meetingJournalReport) {
+            // ── ALREADY SUBMITTED ──
+            // Show ONLY the saved discussion points — no missed members in textarea
+            const savedDiscussion: string =
+              meetingJournalReport?.report_data?.meeting_notes?.[0]
+                ?.key_discussion_points || DEFAULT_DISCUSSION;
             setMeetingNotes(savedDiscussion);
+            setSavedMeetingNotes(savedDiscussion);
           } else {
-            const missed: any[] = json.data?.missed_members || [];
-            if (missed.length > 0) {
-              setMeetingNotes(
-                `**Team Members Who Missed Report (${missed.length}):**\n` +
-                  missed.map((m: any) => `- ${m.name || m.user}`).join("\n") +
-                  `\n\n**Key Discussion Points:**\n`
-              );
-            } else {
-              setMeetingNotes("");
+            // ── NOT YET SUBMITTED ──
+            // Prefill missed members + discussion heading inside textarea
+            const allReports: any[] =
+              json.data?.member_reports || json.data?.reports || [];
+            const pureMissed = [
+              ...allReports
+                .filter((r: any) => r.status === "pending" && !r.daily_report)
+                .map((r: any) => r.name),
+              ...(json.data?.missed_members || []).map(
+                (m: any) => m.name || m.user
+              ),
+            ].filter(Boolean);
+            const uniqueMissed = [...new Set(pureMissed)] as string[];
+
+            let prefill = "";
+            if (uniqueMissed.length > 0) {
+              prefill =
+                `Team Members Who Missed Report (${uniqueMissed.length}):\n` +
+                uniqueMissed.map((name: string) => `- ${name}`).join("\n") +
+                `\n\n`;
             }
+            prefill += DEFAULT_DISCUSSION;
+            setMeetingNotes(prefill);
+            setSavedMeetingNotes(prefill);
           }
         }
       } else {
@@ -381,6 +420,11 @@ const DailyTab = () => {
       setIsLoading(false);
     }
   };
+
+  // Reset calendar when meeting changes
+  useEffect(() => {
+    setCalendarDateRow([]);
+  }, [selectedMeetingId]);
 
   useEffect(() => {
     loadDailyData(false);
@@ -478,6 +522,7 @@ const DailyTab = () => {
   };
 
   const changeDate = (days: number) => {
+    isArrowNav.current = true;
     const d = new Date(activeDate);
     d.setDate(d.getDate() + days);
     setActiveDate(d.toISOString().split("T")[0]);
@@ -589,6 +634,10 @@ const DailyTab = () => {
   };
 
   // ── Meeting notes array builder ──
+  // meetingNotesText = raw textarea value
+  // For NOT-yet-submitted: strip the auto-prefilled missed-members block,
+  //   save missed members as array + clean discussion points separately
+  // For SUBMITTED (update): textarea only has discussion points, save as-is
   const buildMeetingNotesArray = (
     allReports: any[],
     allMissed: any[],
@@ -601,13 +650,17 @@ const DailyTab = () => {
       if (!pureMissedNames.includes(m.name)) pureMissedNames.push(m.name);
     });
 
+    // Strip the auto-prefilled missed-members block from textarea value
+    // so only the actual discussion points written by user go into key_discussion_points
+    const cleanDiscussion = stripMissedMembersPrefix(meetingNotesText).trim();
+
     const meetingNotesArray: any[] = [];
     const note1: any = {};
     if (pureMissedNames.length > 0) {
       note1[`Team Members Who Missed Report (${pureMissedNames.length})`] =
         pureMissedNames;
     }
-    note1["key_discussion_points"] = meetingNotesText || "";
+    note1["key_discussion_points"] = cleanDiscussion;
     meetingNotesArray.push(note1);
 
     allReports
@@ -662,7 +715,7 @@ const DailyTab = () => {
     return meetingNotesArray;
   };
 
-  // ── Save Meeting (POST) ──
+  // ── Save Meeting (POST) — first time only ──
   const handleSaveMeeting = async () => {
     if (selectedMeetingId === "all" || !selectedMeetingId) {
       toast.error("Please select a specific meeting.");
@@ -726,6 +779,8 @@ const DailyTab = () => {
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       toast.success("Meeting saved successfully!");
       loadDailyData(true);
+      // After save, reload fresh so textarea switches to discussion-points-only mode
+      loadDailyData(false);
     } catch (err: any) {
       toast.error("Error saving meeting: " + err.message);
     } finally {
@@ -733,7 +788,59 @@ const DailyTab = () => {
     }
   };
 
-  // ── Update Meeting (PATCH) ──
+  // ── Update Notes Only (PATCH) — for already-submitted meetings ──
+  // Textarea only contains discussion points at this point (no missed prefix)
+  const handleUpdateNotesOnly = async () => {
+    if (!meetingJournalId) {
+      toast.error("No saved meeting found to update.");
+      return;
+    }
+    setIsSavingMeeting(true);
+    try {
+      const allReports = dailyData?.member_reports || dailyData?.reports || [];
+      const allMissed = dailyData?.missed_members || [];
+      const meetingNotesArray = buildMeetingNotesArray(
+        allReports,
+        allMissed,
+        meetingNotes
+      );
+
+      const existingRd =
+        allReports.find(
+          (r: any) =>
+            r.journal_id === meetingJournalId &&
+            Array.isArray(r.report_data?.meeting_notes)
+        )?.report_data || {};
+
+      const payload = {
+        user_journal: {
+          report_data: {
+            ...existingRd,
+            meeting_notes: meetingNotesArray,
+          },
+        },
+      };
+
+      const res = await fetch(
+        `${getBaseUrl()}/user_journals/${meetingJournalId}.json`,
+        {
+          method: "PATCH",
+          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      if (!res.ok) throw new Error(`Failed: ${res.status}`);
+      toast.success("Meeting notes updated!");
+      setSavedMeetingNotes(meetingNotes);
+      loadDailyData(true);
+    } catch (err: any) {
+      toast.error("Error updating meeting notes: " + err.message);
+    } finally {
+      setIsSavingMeeting(false);
+    }
+  };
+
+  // ── Update Full Meeting (PATCH) ──
   const handleUpdateMeeting = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.", {
@@ -797,6 +904,7 @@ const DailyTab = () => {
       );
       if (!res.ok) throw new Error(`Failed: ${res.status}`);
       toast.success("Meeting updated successfully!");
+      setSavedMeetingNotes(meetingNotes);
       loadDailyData(true);
     } catch (err: any) {
       toast.error("Error updating meeting: " + err.message);
@@ -807,10 +915,19 @@ const DailyTab = () => {
 
   // ── Derived Data ──
   const dateRow = dailyData?.date_row || [];
+  const calendarRow = calendarDateRow.length > 0 ? calendarDateRow : dateRow;
   const config = dailyData?.config;
   const topDateStr = dailyData?.date || activeDate;
   const configName =
     config?.name || (selectedMeetingId === "all" ? "All Meetings" : "Meeting");
+
+  const activeDateStatus = calendarRow.find(
+    (d: any) => d.full_date === activeDate
+  )?.status;
+  const isActiveDateSubmitted =
+    activeDateStatus === "done" || activeDateStatus === "submitted";
+
+  const notesChanged = meetingNotes.trim() !== savedMeetingNotes.trim();
 
   let memberReports = dailyData?.member_reports || dailyData?.reports || [];
   let failedMembers = dailyData?.missed_members || [];
@@ -840,7 +957,6 @@ const DailyTab = () => {
     navigate("/admin-compass/feedback-dashboard");
   };
 
-  // ── No meetings state ──
   const noMeetings = meetingsLoaded && meetingsList.length === 0;
 
   return (
@@ -882,7 +998,6 @@ const DailyTab = () => {
 
         {/* ── Calendar Body ── */}
         {isLoading && !dailyData ? (
-          /* Skeleton loader */
           <div
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
@@ -890,13 +1005,12 @@ const DailyTab = () => {
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <div
                 key={i}
-                className="rounded-[18px] bg-[#F0EBE8] animate-pulse"
+                className="rounded-[18px] skeleton"
                 style={{ width: 100, height: 120 }}
               />
             ))}
           </div>
         ) : noMeetings ? (
-          /* ── No Meetings Empty State ── */
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F5EFEB] border border-[#EAE3DF]">
               <Calendar className="w-7 h-7 text-[#CE8261] opacity-40" />
@@ -911,22 +1025,21 @@ const DailyTab = () => {
             </div>
           </div>
         ) : (
-          /* ── Normal Calendar ── */
           <div
             className="flex gap-3 flex-wrap py-4 px-3"
             style={{ overflow: "visible" }}
           >
-            {dateRow.map((dateItem: any) => {
+            {calendarRow.map((dateItem: any) => {
               const isSelected = dateItem.full_date === activeDate;
               const rawStatus = dateItem.status;
               const isUpcoming = rawStatus === "upcoming";
-              // ── UPCOMING: plain text style (image jaisa) ──
-              // ── UPCOMING: plain text style (image jaisa) ──
+
               if (isUpcoming) {
                 return (
                   <div
                     key={dateItem.full_date}
-                    className="relative select-none cursor-default"
+                    className="relative select-none cursor-not-allowed"
+                    title="Upcoming – not selectable"
                     style={{ width: 100, height: 120 }}
                   >
                     <div className="flex flex-col items-center justify-center w-full h-full border-[3px] border-[#C5BFBB] rounded-[18px] bg-transparent transition-all duration-200">
@@ -953,8 +1066,6 @@ const DailyTab = () => {
                 );
               }
 
-              // ── PAST / TODAY: colored card ──
-              // ── PAST / TODAY / HOLIDAY: colored card ──
               let bg = "#F0EDEA",
                 textColor = "#9CA3AF",
                 labelBg = "rgba(0,0,0,0.07)",
@@ -977,7 +1088,6 @@ const DailyTab = () => {
                 rawStatus === "holiday" ||
                 rawStatus === "non_meeting"
               ) {
-                // 👇 Yahan "non_meeting" add kar diya hai
                 bg = "#F5D142";
                 textColor = "#8A6D3B";
                 labelBg = "rgba(0,0,0,0.09)";
@@ -985,11 +1095,22 @@ const DailyTab = () => {
                 displayLabel = "Holiday";
               }
 
+              const isHoliday =
+                rawStatus === "holiday" || rawStatus === "non_meeting";
+
               return (
                 <div
                   key={dateItem.full_date}
-                  onClick={() => setActiveDate(dateItem.full_date)}
-                  className="relative select-none cursor-pointer"
+                  onClick={
+                    isHoliday
+                      ? undefined
+                      : () => setActiveDate(dateItem.full_date)
+                  }
+                  className={cn(
+                    "relative select-none",
+                    isHoliday ? "cursor-not-allowed" : "cursor-pointer"
+                  )}
+                  title={isHoliday ? "Holiday – not selectable" : undefined}
                 >
                   <div
                     className="flex flex-col items-center justify-center rounded-[18px] transition-all duration-200"
@@ -1031,7 +1152,6 @@ const DailyTab = () => {
           </div>
         )}
 
-        {/* Legend — always show except when no meetings */}
         {!noMeetings && (
           <div className="flex gap-x-8 gap-y-3 text-[11px] font-extrabold flex-wrap justify-center text-[#9A938E] tracking-[0.1em] uppercase mt-2">
             <div className="flex items-center gap-2.5">
@@ -1124,7 +1244,6 @@ const DailyTab = () => {
         </div>
       )}
 
-      {/* ══ NO MEETINGS — full info banner ══ */}
       {noMeetings && (
         <div className="bg-orange-50 border border-orange-200 rounded-2xl p-6 flex items-start gap-4 shadow-sm">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 border border-orange-200 shrink-0 mt-0.5">
@@ -1146,27 +1265,27 @@ const DailyTab = () => {
         <div className="border border-[#F0EBE8] rounded-2xl shadow-sm overflow-hidden bg-white mt-4">
           <div className="p-4 border-b border-[#F0EBE8] flex justify-between items-center bg-[#FAFAFA] flex-wrap gap-3">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-2xl bg-[#F0EBE8] animate-pulse" />
+              <div className="h-9 w-9 rounded-2xl skeleton" />
               <div className="space-y-2">
-                <div className="w-32 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
-                <div className="w-20 h-3 bg-[#F0EBE8] rounded-full animate-pulse" />
+                <div className="w-32 h-4 rounded-full skeleton" />
+                <div className="w-20 h-3 rounded-full skeleton" />
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
-              <div className="w-24 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
-              <div className="w-20 h-7 bg-[#F0EBE8] rounded-2xl animate-pulse" />
+              <div className="w-20 h-7 rounded-2xl skeleton" />
+              <div className="w-24 h-7 rounded-2xl skeleton" />
+              <div className="w-20 h-7 rounded-2xl skeleton" />
             </div>
           </div>
           <div className="p-4 space-y-6">
             <div className="border border-[#F0EBE8] rounded-2xl overflow-hidden shadow-sm">
               <div className="flex items-center justify-between p-3 border-b border-[#F0EBE8] bg-[#FAFAFA]">
-                <div className="w-24 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
-                <div className="w-8 h-8 rounded-xl bg-[#F0EBE8] animate-pulse" />
+                <div className="w-24 h-4 rounded-full skeleton" />
+                <div className="w-8 h-8 rounded-xl skeleton" />
               </div>
               <div className="p-4 h-24 bg-white" />
               <div className="p-3 border-t border-[#F0EBE8] bg-[#FAFAFA] flex justify-end">
-                <div className="w-32 h-9 rounded-2xl bg-[#F0EBE8] animate-pulse" />
+                <div className="w-32 h-9 rounded-2xl skeleton" />
               </div>
             </div>
             <div className="space-y-4">
@@ -1176,15 +1295,15 @@ const DailyTab = () => {
                   className="border border-[#F0EBE8] rounded-2xl p-4 bg-white shadow-sm flex flex-col gap-3"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 rounded bg-[#F0EBE8] animate-pulse" />
-                    <div className="w-40 h-5 bg-[#F0EBE8] rounded-full animate-pulse" />
-                    <div className="w-16 h-4 bg-[#F0EBE8] rounded-full ml-auto animate-pulse" />
+                    <div className="w-4 h-4 rounded skeleton" />
+                    <div className="w-40 h-5 rounded-full skeleton" />
+                    <div className="w-16 h-4 rounded-full ml-auto skeleton" />
                   </div>
-                  <div className="w-48 h-3 bg-[#F0EBE8] rounded-full ml-7 animate-pulse" />
+                  <div className="w-48 h-3 rounded-full ml-7 skeleton" />
                   <div className="flex gap-2 ml-7">
-                    <div className="w-12 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
-                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
-                    <div className="w-16 h-6 bg-[#F0EBE8] rounded-lg animate-pulse" />
+                    <div className="w-12 h-6 rounded-lg skeleton" />
+                    <div className="w-16 h-6 rounded-lg skeleton" />
+                    <div className="w-16 h-6 rounded-lg skeleton" />
                   </div>
                 </div>
               ))}
@@ -1228,7 +1347,7 @@ const DailyTab = () => {
 
             {memberReports.length > 0 && (
               <div className="p-4 bg-[#FFFDFB]">
-                {/* Meeting Notes Box */}
+                {/* ══ Meeting Notes Box ══ */}
                 <div className="bg-white border border-[rgba(218,119,86,0.18)] rounded-2xl overflow-hidden shadow-sm mb-6">
                   <div className="flex items-center justify-between p-3 border-b border-[rgba(218,119,86,0.1)] bg-[#FFFAF8]">
                     <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
@@ -1241,14 +1360,26 @@ const DailyTab = () => {
                       <RefreshCw className="w-3.5 h-3.5" />
                     </BtnIcon>
                   </div>
+
                   <div className="p-4">
+                    {/* ── Textarea label changes based on submit state ── */}
+                    <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
+                      {isActiveDateSubmitted
+                        ? "Discussion Points"
+                        : "Meeting Notes"}
+                    </p>
                     <textarea
                       value={meetingNotes}
                       onChange={(e) => setMeetingNotes(e.target.value)}
-                      className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[80px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
-                      placeholder="Enter meeting remarks, feedback, action items..."
+                      className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[160px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
+                      placeholder={
+                        isActiveDateSubmitted
+                          ? "Edit discussion points..."
+                          : "Team members who missed + discussion points will appear here..."
+                      }
                     />
                   </div>
+
                   <div className="flex items-center justify-between bg-[#FFFAF8] p-3 px-4 border-t border-[rgba(218,119,86,0.1)]">
                     <label className="flex items-center gap-2 cursor-pointer select-none">
                       <input
@@ -1264,11 +1395,31 @@ const DailyTab = () => {
                         Select All
                       </span>
                     </label>
-                    {meetingJournalId ? (
+
+                    {/* ── Smart button logic ── */}
+                    {isActiveDateSubmitted ? (
+                      <div className="flex items-center gap-2">
+                        {!notesChanged && (
+                          <span className="text-[11px] text-neutral-400 font-medium italic">
+                            Edit notes to enable update
+                          </span>
+                        )}
+                        <BtnPrimary
+                          icon={isSavingMeeting ? Loader2 : RefreshCw}
+                          onClick={handleUpdateNotesOnly}
+                          disabled={isSavingMeeting || !notesChanged}
+                          loading={isSavingMeeting}
+                          className="bg-blue-600 hover:bg-blue-700 border-blue-700"
+                        >
+                          {isSavingMeeting ? "Updating..." : "Update Notes"}
+                        </BtnPrimary>
+                      </div>
+                    ) : meetingJournalId ? (
                       <BtnPrimary
                         icon={isSavingMeeting ? Loader2 : RefreshCw}
                         onClick={handleUpdateMeeting}
                         disabled={isSavingMeeting}
+                        loading={isSavingMeeting}
                         className="bg-blue-600 hover:bg-blue-700 border-blue-700"
                       >
                         {isSavingMeeting ? "Updating..." : "Update Meeting"}
@@ -1278,6 +1429,7 @@ const DailyTab = () => {
                         icon={isSavingMeeting ? Loader2 : FileText}
                         onClick={handleSaveMeeting}
                         disabled={isSavingMeeting}
+                        loading={isSavingMeeting}
                       >
                         {isSavingMeeting ? "Saving..." : "Save Meeting"}
                       </BtnPrimary>
@@ -1285,7 +1437,7 @@ const DailyTab = () => {
                   </div>
                 </div>
 
-                {/* Report Cards */}
+                {/* ══ Report Cards ══ */}
                 <div className="space-y-4">
                   {memberReports
                     .filter(
@@ -1797,7 +1949,7 @@ const DailyTab = () => {
                                 {feedbackOpenId === rId && (
                                   <div className="border-t border-[#EAE3DF] pt-5 mt-2">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                      {/* COLUMN 1: Add New Feedback Form */}
+                                      {/* COLUMN 1: Add New Feedback */}
                                       <div>
                                         <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
                                           Provide Feedback
@@ -2087,6 +2239,18 @@ const DailyTab = () => {
         select option:checked, select option:hover { background: #FFF3EE; color: #CE7A5A; }
         select:focus { outline: none; }
         .calendar-row::-webkit-scrollbar { display: none; }
+        
+        @keyframes shimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
+        }
+        
+        .skeleton {
+          background: #F0EBE8;
+          background-image: linear-gradient(to right, #F0EBE8 4%, #FAF8F7 25%, #F0EBE8 36%);
+          background-size: 1000px 100%;
+          animation: shimmer 2s infinite linear;
+        }
       `}</style>
     </div>
   );

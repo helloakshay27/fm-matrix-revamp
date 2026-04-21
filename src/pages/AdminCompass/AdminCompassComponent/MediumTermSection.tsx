@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
+import { toast } from "sonner";
 
 // ── Design Tokens ──
 const C = {
@@ -379,6 +380,10 @@ const getPeriodBadgeLabel = (period: string): string => {
 export const MediumTermSection = () => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
+
+  // Info Tooltip State
+  const [isInfoHovered, setIsInfoHovered] = useState(false);
+  const [infoPos, setInfoPos] = useState({ top: 0, left: 0, transform: "translateX(-50%)" });
 
   const [goals, setGoals] = useState<Goal[]>([]);
   const [allGoals, setAllGoals] = useState<Goal[]>([]);
@@ -821,8 +826,64 @@ export const MediumTermSection = () => {
             >
               Medium-term Goals (3-5 Years)
             </h2>
-            <InfoIcon />
+            <span
+              onMouseEnter={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                setInfoPos({
+                  top: rect.bottom + window.scrollY + 10,
+                  left: rect.left + window.scrollX + rect.width / 2,
+                  transform: "translateX(-50%)"
+                });
+                setIsInfoHovered(true);
+              }}
+              onMouseLeave={() => setIsInfoHovered(false)}
+              style={{ cursor: "help", display: "inline-flex" }}
+            >
+              <InfoIcon />
+            </span>
           </div>
+
+          {isInfoHovered && ReactDOM.createPortal(
+            <div 
+              style={{
+                position: "absolute",
+                top: infoPos.top,
+                left: infoPos.left,
+                transform: infoPos.transform,
+                zIndex: 99999,
+                background: "#16102b",
+                color: "#fff",
+                borderRadius: 12,
+                boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                padding: "16px",
+                width: 320,
+                textAlign: "center",
+                fontFamily: "'Poppins', sans-serif",
+                pointerEvents: "none",
+                border: "1px solid rgba(218,119,86,0.2)"
+              }}
+            >
+              <h4 style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 800, color: "#fff" }}>
+                Medium-term goals (3-5 Years)
+              </h4>
+              <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#d1d5db" }}>
+                Your medium-term direction that bridges your long-term BHAG and annual goals. Focus on 1-3 major strategic themes or market positions.
+              </p>
+              <p style={{ margin: "0 0 10px 0", fontSize: 11, fontStyle: "italic", color: "#9ca3af" }}>
+                From Scaling Up: "The strategic thrust defines which customers you'll serve and how you'll dominate your space."
+              </p>
+              <div style={{ fontSize: 11, color: "#9ca3af" }}>
+                <div style={{ fontStyle: "italic" }}>
+                  Example for a logistics company:
+                </div>
+                <div style={{ fontStyle: "italic" }}>
+                  "Expand cold-chain logistics to cover all Tier-2 cities in South India by 2028, becoming the #1 choice for perishable goods"
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+
           {isFetching && <LoaderIcon className="w-4 h-4" />}
         </div>
 
@@ -1269,7 +1330,6 @@ export const MediumTermSection = () => {
                   </div>
                   <div>
                     <label className="st-label">Target Date</label>
-                    {/* MODIFIED: Using native input type="date" */}
                     <input
                       type="date"
                       value={tempStrategic.targetDate}

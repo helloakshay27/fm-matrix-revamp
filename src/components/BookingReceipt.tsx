@@ -365,30 +365,30 @@ const BookingReceipt = ({
                         {/* Table Header */}
                         <div className="border-b-4 border-[#7C2D12] px-2">
                             <div className="grid grid-cols-12 gap-0 text-[#000000] text-sm font-bold">
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px]">
+                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px] text-center">
                                     SL. NO.
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
+                                <div className="col-span-3 px-1 py-2 text-[#1F5E2E] text-[11px] text-center">
                                     DESCRIPTION
                                 </div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px]">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px] text-center">
                                     SAC/HSN CODE
                                 </div>
-                                <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px]">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px] text-center">
                                     RATE (₹)
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px] text-center">
                                     DISCOUNT AMOUNT (₹)
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
+                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px] text-center">
                                     TOTAL TAXABLE VALUE (₹)
                                 </div>
-                                <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
+                                {/* <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     TAX RATE
                                 </div>
                                 <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-[11px]">
                                     TAX AMOUNT (₹)
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                         {/* Table Rows */}
@@ -400,13 +400,13 @@ const BookingReceipt = ({
                                         <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">
                                             {index + 1}
                                         </div>
-                                        <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm">
+                                        <div className="col-span-3 px-1 py-2 text-[#1F5E2E] text-sm text-center">
                                             {item.description}
                                         </div>
-                                        <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                        <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">
                                             {item.hsn_code}
                                         </div>
-                                        <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                        <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">
                                             {parseFloat(String(item.rate)).toLocaleString("en-IN", {
                                                 minimumFractionDigits: 2,
                                                 maximumFractionDigits: 2,
@@ -421,7 +421,7 @@ const BookingReceipt = ({
                                                 maximumFractionDigits: 2,
                                             })}
                                         </div>
-                                        <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">
+                                        {/* <div className="col-span-2 px-1 py-2 text-[#1F5E2E] text-sm text-center">
                                             {index === 0 ? `CGST (${cgstPercentage}%)` : `SGST (${sgstPercentage}%)`}
                                         </div>
                                         <div className="col-span-1 px-1 py-2 text-[#1F5E2E] text-sm text-center">
@@ -435,7 +435,7 @@ const BookingReceipt = ({
                                                     maximumFractionDigits: 2,
                                                 })
                                             }
-                                        </div>
+                                        </div> */}
                                     </div>
                                 </div>
                             ))}
@@ -454,7 +454,7 @@ const BookingReceipt = ({
                                 </p>
                             </div>
                             <div className="flex justify-between mb-3">
-                                <p className="text-[#1F5E2E] font-bold text-sm">TOTAL CGST</p>
+                                <p className="text-[#1F5E2E] font-bold text-sm">TOTAL CGST ({cgstPercentage}%)</p>
                                 <p className="text-[#1F5E2E] text-sm">
                                     ₹{" "}
                                     {cgstAmount.toLocaleString("en-IN", {
@@ -464,7 +464,7 @@ const BookingReceipt = ({
                                 </p>
                             </div>
                             <div className="flex justify-between">
-                                <p className="text-[#1F5E2E] font-bold text-sm">TOTAL SGST</p>
+                                <p className="text-[#1F5E2E] font-bold text-sm">TOTAL SGST ({sgstPercentage}%)</p>
                                 <p className="text-[#1F5E2E] text-sm">
                                     ₹{" "}
                                     {sgstAmount.toLocaleString("en-IN", {
@@ -511,7 +511,7 @@ const BookingReceipt = ({
                             <div className="mb-[70px]"></div>
 
                             {/* Customer Note */}
-                            <p className="text-[#1F5E2E] font-bold text-sm mb-1">
+                            {/* <p className="text-[#1F5E2E] font-bold text-sm mb-1">
                                 Customer Note:
                             </p>
                             <p className="text-[#1F5E2E] text-sm mb-4 leading-relaxed">
@@ -525,9 +525,9 @@ const BookingReceipt = ({
                                 subscribing on the envelope the name of "GANESH AHER"
                             </p>
 
-                            {/* Company Bank Details */}
+                            
                             <p className="text-[#1F5E2E] font-bold text-sm mb-1">
-                                COMFIRM BANK DETAILS
+                                CONFIRM BANK DETAILS
                             </p>
                             <p className="text-[#1F5E2E] text-sm mb-1">
                                 Account Name: PAUSE & PLAY MOVEMENT LABS PVT. LTD.
@@ -535,7 +535,7 @@ const BookingReceipt = ({
                             <p className="text-[#1F5E2E] text-sm mb-1">
                                 IFSC Code: KBKB0001758
                             </p>
-                            <p className="text-[#1F5E2E] text-sm">A/c. No: 3250048396</p>
+                            <p className="text-[#1F5E2E] text-sm">A/c. No: 3250048396</p> */}
                         </div>
                     </div>
                 </div>

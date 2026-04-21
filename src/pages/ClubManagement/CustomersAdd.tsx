@@ -16,7 +16,149 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { InputAdornment, TextField } from "@mui/material";
 import axios from "axios";
-import { Loader2 } from "lucide-react";
+import { Loader2, TrendingUp, Target, Users, DollarSign, BarChart3, Globe } from "lucide-react";
+
+// MARKET ANALYSIS TAB COMPONENT
+const MarketAnalysisTab = ({ productData }) => {
+    return (
+        <div className="space-y-10">
+            <div className="bg-gray-200 text-gray-800 p-4 rounded-t-xl mb-0 flex justify-between items-center">
+                <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
+                    {productData?.name || 'Product'} - Market Analysis
+                </h2>
+            </div>
+            {productData?.extendedContent?.detailedMarketAnalysis ? (
+                <div className="space-y-8">
+                    <div className="space-y-4">
+                        <div className="bg-gray-200 text-gray-800 px-4 py-2 font-semibold font-poppins text-sm uppercase italic">
+                            MARKET ANALYSIS OVERVIEW
+                        </div>
+                        <div className="overflow-x-auto border border-[#C4B89D] rounded-xl shadow-lg">
+                            <table className="w-full border-collapse text-[10px] bg-white text-left font-poppins">
+                                <thead>
+                                    <tr className="bg-gray-200 text-gray-800 font-semibold uppercase">
+                                        <th className="border border-[#C4B89D] p-2 w-[15%]">
+                                            Category
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[20%]">
+                                            Key Insights
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[30%]">
+                                            Data Points & Metrics
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[20%]">
+                                            Strategic Implications
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[15%]">
+                                            Priority Level
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {productData.extendedContent.detailedMarketAnalysis.map(
+                                        (analysis, i) => (
+                                            <tr
+                                                key={i}
+                                                className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/50"} hover:bg-[#F6F4EE] transition-colors align-top`}
+                                            >
+                                                <td className="border border-[#C4B89D] p-2 font-semibold text-gray-700 break-words">
+                                                    {analysis.category}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/80 font-medium leading-relaxed whitespace-pre-line break-words">
+                                                    {analysis.keyInsights}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C] leading-relaxed whitespace-pre-line break-words">
+                                                    {analysis.dataPoints}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/70 font-medium italic whitespace-pre-line break-words">
+                                                    {analysis.strategicImplications}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/60 font-bold text-center">
+                                                    {analysis.priorityLevel}
+                                                </td>
+                                            </tr>
+                                        )
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="bg-gray-200 text-gray-800 px-4 py-2 font-semibold font-poppins text-sm uppercase italic">
+                            MARKET POSITION SUMMARY
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <TrendingUp className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Market Share
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    {productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.marketShare || 0), 0)}%
+                                </div>
+                                <p className="text-xs text-gray-500">Current position</p>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <Target className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Growth Potential
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    {productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.growthPotential || 0), 0)}%
+                                </div>
+                                <p className="text-xs text-gray-500">Projected growth</p>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <Users className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Target Segments
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    {productData.extendedContent.detailedMarketAnalysis.length}
+                                </div>
+                                <p className="text-xs text-gray-500">Identified segments</p>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <DollarSign className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Revenue Opportunity
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    ${productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.revenueOpportunity || 0), 0)}M
+                                </div>
+                                <p className="text-xs text-gray-500">Potential value</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <div className="p-20 text-center text-[#D3D1C7] font-semibold uppercase text-xl border-4 border-dashed border-[#D3D1C7] rounded-[3rem]">
+                    Market Analysis Data Coming Soon
+                </div>
+            )}
+        </div>
+    );
+};
 
 
 const muiTheme = createTheme({
@@ -113,6 +255,7 @@ const TABS = [
     { key: "contact", label: "Contact Persons" },
     { key: "custom", label: "Custom Fields" },
     { key: "reporting", label: "Reporting Tags" },
+    { key: "market", label: "Market Analysis" },
     { key: "remarks", label: "Remarks" },
 ];
 
@@ -342,7 +485,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
             name: term.name,
             no_of_days: term.days || 0
         }));
-        console.log("Saving Payment Terms Payload:", paymentTermsPayload);
+        // console.log("Saving Payment Terms Payload:", paymentTermsPayload);
         const payload = {
             payment_terms: paymentTermsPayload,
             lock_account_id:lock_account_id
@@ -408,7 +551,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                     }
                 );
 
-                console.log("Customer Tax Exemptions:", res.data);
+                // console.log("Customer Tax Exemptions:", res.data);
                 setCustomerExemptions(res.data || []); // update state
             } catch (err) {
                 console.error("Failed to fetch customer exemptions", err);
@@ -491,7 +634,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
         variant="outline"
         onClick={() => {
           // Call GST lookup API here
-          console.log("Fetch GST details for:", form.gstin);
+          // console.log("Fetch GST details for:", form.gstin);
         }}
       >
         Get Taxpayer Details
@@ -1163,8 +1306,9 @@ const CustomersAdd = () => {
     const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/;
     const phoneClean = (v: string) => v.replace(/[^0-9+]/g, '');
 
-    const handleChange = (e: any) => {
-        let { name, value } = e.target;
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { name: string; value: string } }) => {
+        const { name, value: rawValue } = e.target;
+        let value = rawValue;
 
         // ── First Name / Last Name: block non-alphabets ──
         if (name === 'first_name' || name === 'last_name') {
@@ -1426,7 +1570,7 @@ const CustomersAdd = () => {
     }
             }
         };
-        console.log("Submitting Customer Payload:", payload);
+        // console.log("Submitting Customer Payload:", payload);
         setLoading(true);
         axios.post(
             `https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`,
@@ -1596,7 +1740,7 @@ const CustomersAdd = () => {
                 {/* <div className="p-4"> */}
                 {/* Tabs Header */}
                 <div className="bg-white rounded-lg border p-6 mb-6">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 border-b mb-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 border-b mb-6">
                         {TABS.map((tab) => (
                             <button
                                 key={tab.key}
@@ -1657,6 +1801,15 @@ const CustomersAdd = () => {
 
                     {activeTab === "custom" && <CustomFieldsTab />}
                     {activeTab === "reporting" && <ReportingTagsTab />}
+
+                    {activeTab === "market" && (
+                        <MarketAnalysisTab productData={{
+                            name: form.display_name || form.company_name || 'Customer',
+                            extendedContent: {
+                                detailedMarketAnalysis: []
+                            }
+                        }} />
+                    )}
 
                     {activeTab === "remarks" && (
                         <RemarksTab remarks={remarks} setRemarks={setRemarks} />

@@ -60,6 +60,7 @@ const normalizeReport = (raw) => {
   const validKpiTrend =
     Array.isArray(data.kpi_trend) && data.kpi_trend.length > 0;
   const endDate = data.period?.to;
+  
   return {
     period: data.period || { from: "", to: "" },
     config: data.config || {},
@@ -67,12 +68,17 @@ const normalizeReport = (raw) => {
     attendanceRate: data.attendance_rate ?? 0,
     avgSelfRating: data.avg_self_rating ?? 0,
     unresolvedTasks: data.unresolved_tasks ?? 0,
+    
+    // Yahan API ke "count" ko "attendance" par map kiya hai chart ke liye
     activityTrend: validActivityTrend
-      ? data.activity_trend
+      ? data.activity_trend.map(d => ({ date: d.date, attendance: d.count || 0 }))
       : generateEmptyTrendForReport(endDate, 7),
+      
+    // Yahan API ke "avg_score" ko "kpi" par map kiya hai chart ke liye
     kpiTrend: validKpiTrend
-      ? data.kpi_trend
+      ? data.kpi_trend.map(d => ({ date: d.date, kpi: d.avg_score || 0 }))
       : generateEmptyTrendForReport(endDate, 7),
+      
     memberStats: Array.isArray(data.member_stats) ? data.member_stats : [],
     _raw: raw,
   };
