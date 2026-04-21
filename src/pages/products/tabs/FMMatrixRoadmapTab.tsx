@@ -45,32 +45,32 @@ const FMMatrixRoadmapTab: React.FC<FMMatrixRoadmapTabProps> = ({
 
             {phases.map((phase, phaseIdx) => (
                 <div key={phaseIdx} className="space-y-4">
-                    <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+                    <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">
                         {phase.title}
                     </div>
-                    <div className="bg-[#d9e1f2] border border-[#b8cce4] p-3 text-[11px] text-[#2C2C2C] font-medium leading-relaxed font-poppins italic">
+                    <div className="bg-[#DA7756]/10 border border-[#C4B89D]/50 p-3 text-[11px] text-[#2C2C2C] font-medium leading-relaxed font-poppins italic">
                         {phase.summary}
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full border-collapse text-[11px] font-poppins">
                             <thead>
-                                <tr className="bg-[#4f81bd] text-white font-semibold">
-                                    <th className="border border-[#b8cce4] p-2 text-center">
+                                <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                                    <th className="border border-[#C4B89D]/50 p-2 text-center">
                                         Initiative
                                     </th>
-                                    <th className="border border-[#b8cce4] p-2 text-center">
+                                    <th className="border border-[#C4B89D]/50 p-2 text-center">
                                         What It Is
                                     </th>
-                                    <th className="border border-[#b8cce4] p-2 text-center">
+                                    <th className="border border-[#C4B89D]/50 p-2 text-center">
                                         Customer Segment Unlocked
                                     </th>
-                                    <th className="border border-[#b8cce4] p-2 text-center">
+                                    <th className="border border-[#C4B89D]/50 p-2 text-center">
                                         Effort
                                     </th>
-                                    <th className="border border-[#b8cce4] p-2 text-center">
+                                    <th className="border border-[#C4B89D]/50 p-2 text-center">
                                         Owner
                                     </th>
-                                    <th className="border border-[#b8cce4] p-2 text-center">
+                                    <th className="border border-[#C4B89D]/50 p-2 text-center">
                                         Priority
                                     </th>
                                 </tr>
@@ -81,22 +81,22 @@ const FMMatrixRoadmapTab: React.FC<FMMatrixRoadmapTabProps> = ({
                                         key={i}
                                         className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}
                                     >
-                                        <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                                        <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">
                                             {init.initiative}
                                         </td>
-                                        <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                                        <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                                             {init.feature}
                                         </td>
-                                        <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                                        <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                                             {init.segment}
                                         </td>
-                                        <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                                        <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                                             {init.impact}
                                         </td>
-                                        <td className="border border-[#b8cce4] p-2 text-center text-[#2C2C2C]/80 text-[10px]">
+                                        <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80 text-[10px]">
                                             {init.owner}
                                         </td>
-                                        <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#DA7756]">
+                                        <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#DA7756]">
                                             {init.priority}
                                         </td>
                                     </tr>

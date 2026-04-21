@@ -3144,56 +3144,56 @@ const LESummaryTab: React.FC = () => {
       </div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
-          <thead><tr className="bg-[#4f81bd] text-white font-semibold"><th className="border border-[#b8cce4] p-4 text-center w-1/4 font-poppins">Field</th><th className="border border-[#b8cce4] p-4 text-center font-poppins">Detail</th></tr></thead>
-          <tbody>{identity.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#b8cce4] p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.field}</td><td className="border border-[#b8cce4] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.detail}</td></tr>))}</tbody>
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-4 text-center w-1/4 font-poppins">Field</th><th className="border border-[#C4B89D]/50 p-4 text-center font-poppins">Detail</th></tr></thead>
+          <tbody>{identity.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.field}</td><td className="border border-[#C4B89D]/50 p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.detail}</td></tr>))}</tbody>
         </table>
       </div>
 
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-4 font-semibold text-sm rounded-t-xl font-poppins">The Problem It Solves</div>
+      <div className="bg-[#DA7756] text-white border border-[#C4B89D] p-4 font-semibold text-sm rounded-t-xl font-poppins">The Problem It Solves</div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
-          <thead><tr className="bg-[#4f81bd] text-white font-semibold"><th className="border border-[#b8cce4] p-4 text-center w-1/3 font-poppins">Pain Point</th><th className="border border-[#b8cce4] p-4 text-center font-poppins">How {loyaltyEngineData.name} Solves It</th></tr></thead>
-          <tbody>{problemSolves.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#b8cce4] p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.painPoint}</td><td className="border border-[#b8cce4] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.solution}</td></tr>))}</tbody>
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-4 text-center w-1/3 font-poppins">Pain Point</th><th className="border border-[#C4B89D]/50 p-4 text-center font-poppins">How {loyaltyEngineData.name} Solves It</th></tr></thead>
+          <tbody>{problemSolves.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.painPoint}</td><td className="border border-[#C4B89D]/50 p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.solution}</td></tr>))}</tbody>
         </table>
       </div>
 
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">Who It Is For</div>
+      <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">Who It Is For</div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
-          <thead><tr className="bg-[#4f81bd] text-white font-semibold"><th className="border border-[#b8cce4] p-3 text-center w-1/5 font-poppins">Role</th><th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">What They Use It For</th><th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">Key Frustration Today</th><th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">What They Gain</th></tr></thead>
-          <tbody>{whoItIsFor.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#b8cce4] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.role}</td><td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.useCase}</td><td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/70 font-medium leading-relaxed italic font-poppins bg-white">{r.frustration}</td><td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.gain}</td></tr>))}</tbody>
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-3 text-center w-1/5 font-poppins">Role</th><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">What They Use It For</th><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">Key Frustration Today</th><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">What They Gain</th></tr></thead>
+          <tbody>{whoItIsFor.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.role}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.useCase}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/70 font-medium leading-relaxed italic font-poppins bg-white">{r.frustration}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.gain}</td></tr>))}</tbody>
         </table>
       </div>
 
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Feature Modules</div>
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Feature Modules</div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
-          <thead><tr className="bg-[#4f81bd] text-white font-semibold"><th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">Module</th><th className="border border-[#b8cce4] p-3 text-center font-poppins">Detail</th></tr></thead>
-          <tbody>{featureModules.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#b8cce4] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.label}</td><td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.detail}</td></tr>))}</tbody>
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">Module</th><th className="border border-[#C4B89D]/50 p-3 text-center font-poppins">Detail</th></tr></thead>
+          <tbody>{featureModules.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.label}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.detail}</td></tr>))}</tbody>
         </table>
       </div>
 
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Unique Selling Propositions</div>
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Unique Selling Propositions</div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
-          <thead><tr className="bg-[#4f81bd] text-white font-semibold"><th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">USP</th><th className="border border-[#b8cce4] p-3 text-center font-poppins">Detail</th></tr></thead>
-          <tbody>{usps.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#b8cce4] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.label}</td><td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.detail}</td></tr>))}</tbody>
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">USP</th><th className="border border-[#C4B89D]/50 p-3 text-center font-poppins">Detail</th></tr></thead>
+          <tbody>{usps.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.label}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.detail}</td></tr>))}</tbody>
         </table>
       </div>
 
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Traction & Milestones</div>
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Traction & Milestones</div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
-          <thead><tr className="bg-[#4f81bd] text-white font-semibold"><th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">Milestone</th><th className="border border-[#b8cce4] p-3 text-center font-poppins">Detail</th></tr></thead>
-          <tbody>{traction.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#b8cce4] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.label}</td><td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.detail}</td></tr>))}</tbody>
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">Milestone</th><th className="border border-[#C4B89D]/50 p-3 text-center font-poppins">Detail</th></tr></thead>
+          <tbody>{traction.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.label}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.detail}</td></tr>))}</tbody>
         </table>
       </div>
 
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Where We Are Today</div>
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Where We Are Today</div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
-          <thead><tr className="bg-[#4f81bd] text-white font-semibold"><th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">Dimension</th><th className="border border-[#b8cce4] p-3 text-center w-3/4 font-poppins">Current State</th></tr></thead>
-          <tbody>{today.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#b8cce4] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.dimension}</td><td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.state}</td></tr>))}</tbody>
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">Dimension</th><th className="border border-[#C4B89D]/50 p-3 text-center w-3/4 font-poppins">Current State</th></tr></thead>
+          <tbody>{today.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.dimension}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.state}</td></tr>))}</tbody>
         </table>
       </div>
     </div>
@@ -3208,30 +3208,30 @@ const LEFeaturesTab: React.FC = () => {
       <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Feature List</h2>
       </div>
-      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">All features from product brief. USP rows highlighted in blue. Star denotes unique competitive advantage.</p>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">All features from product brief. USP rows highlighted in orange. Star denotes unique competitive advantage.</p>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-3 text-center">Module</th>
-              <th className="border border-[#b8cce4] p-3 text-center">Feature</th>
-              <th className="border border-[#b8cce4] p-3 text-center">How It Currently Works</th>
-              <th className="border border-[#b8cce4] p-3 text-center">User Type</th>
-              <th className="border border-[#b8cce4] p-3 text-center">Status</th>
-              <th className="border border-[#b8cce4] p-3 text-center">Priority</th>
-              <th className="border border-[#b8cce4] p-3 text-center">USP</th>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-3 text-center">Module</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">Feature</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">How It Currently Works</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">User Type</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">Status</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">Priority</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">USP</th>
             </tr>
           </thead>
           <tbody>
             {features.map((f, i) => (
-              <tr key={i} className={f.usp ? "bg-[#d9e1f2]" : i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C] font-medium">{f.module}</td>
-                <td className={`border border-[#b8cce4] p-3 ${f.usp ? "font-semibold text-[#1f3a5f]" : "text-[#2C2C2C]"}`}>{f.feature}</td>
-                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80">{f.works}</td>
-                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80">{f.userType}</td>
-                <td className="border border-[#b8cce4] p-3 text-center text-[#2C2C2C]/80">{f.status}</td>
-                <td className="border border-[#b8cce4] p-3 text-center text-[#2C2C2C]/80">{f.priority}</td>
-                <td className="border border-[#b8cce4] p-3 text-center font-semibold text-[#DA7756]">{f.usp ? "★ USP" : ""}</td>
+              <tr key={i} className={f.usp ? "bg-[#DA7756]/10" : i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C] font-medium">{f.module}</td>
+                <td className={`border border-[#C4B89D]/50 p-3 ${f.usp ? "font-semibold text-[#DA7756]" : "text-[#2C2C2C]"}`}>{f.feature}</td>
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80">{f.works}</td>
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80">{f.userType}</td>
+                <td className="border border-[#C4B89D]/50 p-3 text-center text-[#2C2C2C]/80">{f.status}</td>
+                <td className="border border-[#C4B89D]/50 p-3 text-center text-[#2C2C2C]/80">{f.priority}</td>
+                <td className="border border-[#C4B89D]/50 p-3 text-center font-semibold text-[#DA7756]">{f.usp ? "★ USP" : ""}</td>
               </tr>
             ))}
           </tbody>
@@ -3251,62 +3251,62 @@ const LEMarketTab: React.FC = () => {
       </div>
       <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Section 1: Target Audience | Section 2: Competitor Mapping</p>
 
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">Section 1: Target Audience</div>
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">Section 1: Target Audience</div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">Segment</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Demographics & Industry</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Geography</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Pain Points</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Not Solved Today</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Good Enough Today</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Trigger to Switch</th>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Segment</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Demographics & Industry</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Geography</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Pain Points</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Not Solved Today</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Good Enough Today</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Trigger to Switch</th>
             </tr>
           </thead>
           <tbody>
             {targetAudience.map((t, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{t.segment}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.demographics}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.geography}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.painPoints}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.notSolved}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.goodEnough}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.triggerToSwitch}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{t.segment}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.demographics}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.geography}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.painPoints}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.notSolved}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.goodEnough}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.triggerToSwitch}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">Section 2: Competitor Mapping</div>
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">Section 2: Competitor Mapping</div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">Competitor</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Location</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Target Customer</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Pricing</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Key Strengths</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Key Weakness</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Market Gaps</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Threat Level</th>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Competitor</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Location</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Target Customer</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Pricing</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Key Strengths</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Key Weakness</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Market Gaps</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Threat Level</th>
             </tr>
           </thead>
           <tbody>
             {competitors.map((c, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{c.name}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{c.location}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{c.targetCustomer}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{c.pricing}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#798C5E] font-bold whitespace-pre-line">{c.strongestFeatures}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#b91c1c] font-bold whitespace-pre-line">{c.weakness}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#4B5563] font-bold whitespace-pre-line">{c.marketGaps}</td>
-                <td className={`border border-[#b8cce4] p-2 text-center font-semibold whitespace-pre-line ${c.threatLevel === "HIGH" ? "text-red-600" : c.threatLevel === "MEDIUM" ? "text-[#D97706]" : "text-green-600"}`}>{c.threatLevel}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{c.name}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{c.location}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{c.targetCustomer}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{c.pricing}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#798C5E] font-bold whitespace-pre-line">{c.strongestFeatures}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#b91c1c] font-bold whitespace-pre-line">{c.weakness}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#4B5563] font-bold whitespace-pre-line">{c.marketGaps}</td>
+                <td className={`border border-[#C4B89D]/50 p-2 text-center font-semibold whitespace-pre-line ${c.threatLevel === "HIGH" ? "text-red-600" : c.threatLevel === "MEDIUM" ? "text-[#D97706]" : "text-green-600"}`}>{c.threatLevel}</td>
               </tr>
             ))}
           </tbody>
@@ -3337,7 +3337,7 @@ const LEPricingTab: React.FC = () => {
 
   const getPricingRowStyle = (highlight?: string) => {
     if (highlight === "now") return "bg-[#e2efda]";
-    if (highlight === "future") return "bg-[#d9e1f2]";
+    if (highlight === "future") return "bg-[#DA7756]/10";
     if (highlight === "risk") return "bg-[#fce4d6]";
     return "";
   };
@@ -3351,7 +3351,7 @@ const LEPricingTab: React.FC = () => {
 
       {/* PART A — FEATURE BENCHMARKING */}
       {benchmark.length > 0 && (<>
-        <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Part A — Current Features vs Market Standard</div>
+        <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Part A — Current Features vs Market Standard</div>
         <div className="grid grid-cols-3 gap-3 px-1">
           <div className="flex items-center gap-2 text-xs font-poppins font-semibold"><span className="inline-block px-2 py-1 rounded bg-[#d4edda] text-[#155724]">AHEAD</span><span className="text-[#2C2C2C]/70">— We lead the market on this feature</span></div>
           <div className="flex items-center gap-2 text-xs font-poppins font-semibold"><span className="inline-block px-2 py-1 rounded bg-[#fff3cd] text-[#856404]">AT PAR</span><span className="text-[#2C2C2C]/70">— Solid, meets market expectation</span></div>
@@ -3360,24 +3360,24 @@ const LEPricingTab: React.FC = () => {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[11px] font-poppins">
             <thead>
-              <tr className="bg-[#4f81bd] text-white font-semibold">
-                <th className="border border-[#b8cce4] p-3 text-center w-[15%]">Feature Area</th>
-                <th className="border border-[#b8cce4] p-3 text-center w-[22%]">Market Standard</th>
-                <th className="border border-[#b8cce4] p-3 text-center w-[22%] bg-[#DA7756]">Our Product</th>
-                <th className="border border-[#b8cce4] p-3 text-center w-[7%]">Status</th>
-                <th className="border border-[#b8cce4] p-3 text-center w-[9%]">Where We Stand</th>
-                <th className="border border-[#b8cce4] p-3 text-center w-[25%]">Deal Impact</th>
+              <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[15%]">Feature Area</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[22%]">Market Standard</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[22%] bg-[#DA7756] text-white">Our Product</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[7%]">Status</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[9%]">Where We Stand</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[25%]">Deal Impact</th>
               </tr>
             </thead>
             <tbody>
               {benchmark.map((b, i) => (
                 <tr key={i} className={b.whereWeStand === "AHEAD" ? "bg-[#e2efda]" : b.whereWeStand === "GAP" ? "bg-[#fce4d6]" : i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                  <td className="border border-[#b8cce4] p-3 font-semibold text-[#1f3a5f]">{b.featureArea}</td>
-                  <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/75 leading-relaxed">{b.marketStandard}</td>
-                  <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/85 font-medium leading-relaxed bg-[#DA7756]/10">{b.ourProduct}</td>
-                  <td className="border border-[#b8cce4] p-3 text-center"><span className={`px-2 py-1 rounded text-[10px] font-semibold ${getStatusBadge(b.status)}`}>{b.status}</span></td>
-                  <td className="border border-[#b8cce4] p-3 text-center"><span className={`px-2 py-1 rounded text-[10px] ${getStandBadge(b.whereWeStand)}`}>{b.whereWeStand}</span></td>
-                  <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 leading-relaxed">{b.dealImpact}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#DA7756]">{b.featureArea}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/75 leading-relaxed">{b.marketStandard}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/85 font-medium leading-relaxed bg-[#DA7756]/10">{b.ourProduct}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-center"><span className={`px-2 py-1 rounded text-[10px] font-semibold ${getStatusBadge(b.status)}`}>{b.status}</span></td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-center"><span className={`px-2 py-1 rounded text-[10px] ${getStandBadge(b.whereWeStand)}`}>{b.whereWeStand}</span></td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 leading-relaxed">{b.dealImpact}</td>
                 </tr>
               ))}
             </tbody>
@@ -3387,25 +3387,25 @@ const LEPricingTab: React.FC = () => {
 
       {/* PART B — PRICING */}
       {pricingData.length > 0 && (<>
-        <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] mt-4">Part B — Pricing: Current Market & Recommendations</div>
+        <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] mt-4">Part B — Pricing: Current Market & Recommendations</div>
         <div className="flex gap-4 px-1 flex-wrap">
           <div className="flex items-center gap-2 text-xs font-poppins font-semibold"><span className="inline-block w-3 h-3 rounded bg-[#e2efda]"></span><span className="text-[#2C2C2C]/70">Recommended NOW</span></div>
-          <div className="flex items-center gap-2 text-xs font-poppins font-semibold"><span className="inline-block w-3 h-3 rounded bg-[#d9e1f2]"></span><span className="text-[#2C2C2C]/70">Future pricing</span></div>
+          <div className="flex items-center gap-2 text-xs font-poppins font-semibold"><span className="inline-block w-3 h-3 rounded bg-[#DA7756]/10"></span><span className="text-[#2C2C2C]/70">Future pricing</span></div>
           <div className="flex items-center gap-2 text-xs font-poppins font-semibold"><span className="inline-block w-3 h-3 rounded bg-[#fce4d6]"></span><span className="text-[#2C2C2C]/70">Risk to watch</span></div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[11px] font-poppins">
             <thead>
-              <tr className="bg-[#4f81bd] text-white font-semibold">
-                <th className="border border-[#b8cce4] p-3 text-left w-[28%]">Topic</th>
-                <th className="border border-[#b8cce4] p-3 text-left">Detail</th>
+              <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                <th className="border border-[#C4B89D]/50 p-3 text-left w-[28%]">Topic</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-left">Detail</th>
               </tr>
             </thead>
             <tbody>
               {pricingData.map((row, i) => (
                 <tr key={i} className={getPricingRowStyle(row.highlight) || (i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]")}>
-                  <td className="border border-[#b8cce4] p-3 font-semibold text-[#1f3a5f] align-top">{row.label}</td>
-                  <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 leading-relaxed whitespace-pre-line">{row.detail}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#DA7756] align-top">{row.label}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 leading-relaxed whitespace-pre-line">{row.detail}</td>
                 </tr>
               ))}
             </tbody>
@@ -3415,12 +3415,12 @@ const LEPricingTab: React.FC = () => {
 
       {/* PART C — POSITIONING */}
       {positioningData.length > 0 && (<>
-        <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] mt-4">Part C — Positioning</div>
+        <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] mt-4">Part C — Positioning</div>
         <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Strategic positioning, target segments, competitor displacement, and GTM motion for Year 1.</p>
         <div className="space-y-4">
           {positioningData.map((item, i) => (
-            <div key={i} className="border border-[#b8cce4] rounded-lg overflow-hidden">
-              <div className="bg-[#4f81bd] text-white px-4 py-2 font-semibold text-[12px] font-poppins">{item.question}</div>
+            <div key={i} className="border border-[#C4B89D]/50 rounded-lg overflow-hidden">
+              <div className="bg-[#F6F4EE] text-[#DA7756] px-4 py-2 font-semibold text-[12px] font-poppins">{item.question}</div>
               <div className="bg-white px-4 py-3 text-[11px] text-[#2C2C2C]/85 leading-relaxed font-poppins whitespace-pre-line">{item.answer}</div>
             </div>
           ))}
@@ -3429,29 +3429,29 @@ const LEPricingTab: React.FC = () => {
 
       {/* PART D — VALUE PROPOSITIONS */}
       {valueProps.length > 0 && (<>
-        <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] mt-4">Part D — Value Propositions & How to Sharpen Them</div>
+        <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] mt-4">Part D — Value Propositions & How to Sharpen Them</div>
         <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Current messaging, its weakness, the sharpened version, and proof points to add.</p>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[11px] font-poppins">
             <thead>
-              <tr className="bg-[#4f81bd] text-white font-semibold">
-                <th className="border border-[#b8cce4] p-3 text-center w-[3%]">#</th>
-                <th className="border border-[#b8cce4] p-3 text-center w-[16%]">Current Value Proposition</th>
-                <th className="border border-[#b8cce4] p-3 text-center w-[14%]">What It Communicates Today</th>
-                <th className="border border-[#b8cce4] p-3 text-center w-[14%]">Weakness / What It's Missing</th>
-                <th className="border border-[#b8cce4] p-3 text-center w-[28%]">Sharpened / Expanded Version</th>
-                <th className="border border-[#b8cce4] p-3 text-center w-[25%]">Proof Point to Add</th>
+              <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[3%]">#</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[16%]">Current Value Proposition</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[14%]">What It Communicates Today</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[14%]">Weakness / What It's Missing</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[28%]">Sharpened / Expanded Version</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[25%]">Proof Point to Add</th>
               </tr>
             </thead>
             <tbody>
               {valueProps.map((v, i) => (
                 <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                  <td className="border border-[#b8cce4] p-3 text-center font-semibold text-[#1f3a5f]">{v.num}</td>
-                  <td className="border border-[#b8cce4] p-3 text-[#2C2C2C] font-medium leading-relaxed">{v.current}</td>
-                  <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 leading-relaxed">{v.communicates}</td>
-                  <td className="border border-[#b8cce4] p-3 text-[#b91c1c]/90 leading-relaxed italic">{v.weakness}</td>
-                  <td className="border border-[#b8cce4] p-3 text-[#155724] font-medium leading-relaxed bg-[#f0fff4]">{v.sharpened}</td>
-                  <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 leading-relaxed">{v.proofPoint}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-center font-semibold text-[#DA7756]">{v.num}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C] font-medium leading-relaxed">{v.current}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 leading-relaxed">{v.communicates}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#b91c1c]/90 leading-relaxed italic">{v.weakness}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#155724] font-medium leading-relaxed bg-[#f0fff4]">{v.sharpened}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 leading-relaxed">{v.proofPoint}</td>
                 </tr>
               ))}
             </tbody>
@@ -3473,30 +3473,30 @@ const LEUseCasesTab: React.FC = () => {
       </div>
       <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Section 1: Industry Use Cases | Section 2: Internal Team Use Cases</p>
 
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">Section 1: Industry Use Cases</div>
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins rounded-t-xl">Section 1: Industry Use Cases</div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[10px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">Rank</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Industry</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Use Case</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Company Profile</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Current Tool</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Urgency</th>
-              <th className="border border-[#b8cce4] p-2 text-center">Primary Buyer</th>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Rank</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Industry</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Use Case</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Company Profile</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Current Tool</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Urgency</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Primary Buyer</th>
             </tr>
           </thead>
           <tbody>
             {industryUseCases.map((u, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">{u.rank}</td>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#1f3a5f] whitespace-pre-line">{u.industry}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{u.useCase}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{u.companyProfile || u.profile}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{u.currentTool}</td>
-                <td className={`border border-[#b8cce4] p-2 text-center font-semibold ${u.urgency?.startsWith("HIGH") ? "text-red-600" : "text-[#D97706]"}`}>{u.urgency}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{u.primaryBuyer}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#2C2C2C]">{u.rank}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#DA7756] whitespace-pre-line">{u.industry}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{u.useCase}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{u.companyProfile || u.profile}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{u.currentTool}</td>
+                <td className={`border border-[#C4B89D]/50 p-2 text-center font-semibold ${u.urgency?.startsWith("HIGH") ? "text-red-600" : "text-[#D97706]"}`}>{u.urgency}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{u.primaryBuyer}</td>
               </tr>
             ))}
           </tbody>
@@ -3504,28 +3504,28 @@ const LEUseCasesTab: React.FC = () => {
       </div>
 
       {teamUseCases.length > 0 && (<>
-        <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">Section 2: Internal Team Use Cases</div>
+        <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8 rounded-t-xl">Section 2: Internal Team Use Cases</div>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-[10px] font-poppins">
             <thead>
-              <tr className="bg-[#4f81bd] text-white font-semibold">
-                <th className="border border-[#b8cce4] p-2 text-center">Team</th>
-                <th className="border border-[#b8cce4] p-2 text-center">Features Used</th>
-                <th className="border border-[#b8cce4] p-2 text-center">How They Use It</th>
-                <th className="border border-[#b8cce4] p-2 text-center">Benefit</th>
-                <th className="border border-[#b8cce4] p-2 text-center">Frequency</th>
-                <th className="border border-[#b8cce4] p-2 text-center">Success Metric</th>
+              <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                <th className="border border-[#C4B89D]/50 p-2 text-center">Team</th>
+                <th className="border border-[#C4B89D]/50 p-2 text-center">Features Used</th>
+                <th className="border border-[#C4B89D]/50 p-2 text-center">How They Use It</th>
+                <th className="border border-[#C4B89D]/50 p-2 text-center">Benefit</th>
+                <th className="border border-[#C4B89D]/50 p-2 text-center">Frequency</th>
+                <th className="border border-[#C4B89D]/50 p-2 text-center">Success Metric</th>
               </tr>
             </thead>
             <tbody>
               {teamUseCases.map((t, i) => (
                 <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                  <td className="border border-[#b8cce4] p-2 font-semibold text-[#1f3a5f] whitespace-pre-line">{t.team}</td>
-                  <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.features}</td>
-                  <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.howTheyUse}</td>
-                  <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.benefit}</td>
-                  <td className="border border-[#b8cce4] p-2 text-center text-[#2C2C2C]/80 whitespace-pre-line">{t.frequency}</td>
-                  <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.successMetric}</td>
+                  <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#DA7756] whitespace-pre-line">{t.team}</td>
+                  <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.features}</td>
+                  <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.howTheyUse}</td>
+                  <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.benefit}</td>
+                  <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80 whitespace-pre-line">{t.frequency}</td>
+                  <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.successMetric}</td>
                 </tr>
               ))}
             </tbody>
@@ -3545,33 +3545,33 @@ const LERoadmapTab: React.FC = () => {
       </div>
       {phases.map((phase, pi) => (
         <div key={pi} className="space-y-4">
-          <div className={`px-4 py-3 font-semibold text-sm font-poppins rounded-t-xl border border-[#C4B89D] ${phase.colorContext === "red" ? "bg-[#C72030] text-white" : phase.colorContext === "yellow" ? "bg-[#D97706] text-white" : "bg-[#1f3a5f] text-white"}`}>
+          <div className={`px-4 py-3 font-semibold text-sm font-poppins rounded-t-xl border border-[#C4B89D] ${phase.colorContext === "red" ? "bg-[#C72030] text-white" : phase.colorContext === "yellow" ? "bg-[#D97706] text-white" : "bg-[#DA7756] text-white"}`}>
             {phase.timeframe} — {phase.headline}
           </div>
           {phase.phaseDescription && <p className="text-[11px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">{phase.phaseDescription}</p>}
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[10px] font-poppins">
               <thead>
-                <tr className="bg-[#4f81bd] text-white font-semibold">
-                  <th className="border border-[#b8cce4] p-2 text-center w-[15%]">What It Is</th>
-                  <th className="border border-[#b8cce4] p-2 text-center w-[30%]">Why It Matters</th>
-                  <th className="border border-[#b8cce4] p-2 text-center w-[20%]">Unlocked Segment</th>
-                  <th className="border border-[#b8cce4] p-2 text-center w-[15%]">Success Metric</th>
-                  <th className="border border-[#b8cce4] p-2 text-center w-[8%]">Effort</th>
-                  <th className="border border-[#b8cce4] p-2 text-center w-[6%]">Priority</th>
-                  <th className="border border-[#b8cce4] p-2 text-center w-[6%]">Owner</th>
+                <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[15%]">What It Is</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[30%]">Why It Matters</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Unlocked Segment</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[15%]">Success Metric</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[8%]">Effort</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[6%]">Priority</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[6%]">Owner</th>
                 </tr>
               </thead>
               <tbody>
                 {phase.items.map((item, ii) => (
                   <tr key={ii} className={ii % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                    <td className="border border-[#b8cce4] p-2 font-semibold text-[#1f3a5f] whitespace-pre-line">{item.whatItIs}</td>
-                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.whyItMatters}</td>
-                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.unlockedSegment}</td>
-                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.successMetric}</td>
-                    <td className="border border-[#b8cce4] p-2 text-center text-[#2C2C2C]/80">{item.effort}</td>
-                    <td className={`border border-[#b8cce4] p-2 text-center font-semibold ${item.priority?.includes("P0") ? "text-[#C72030]" : item.priority?.includes("P1") ? "text-[#D97706]" : "text-[#6B21A8]"}`}>{item.priority}</td>
-                    <td className="border border-[#b8cce4] p-2 text-center text-[#2C2C2C]/80 whitespace-pre-line">{item.owner}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#DA7756] whitespace-pre-line">{item.whatItIs}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.whyItMatters}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.unlockedSegment}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.successMetric}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80">{item.effort}</td>
+                    <td className={`border border-[#C4B89D]/50 p-2 text-center font-semibold ${item.priority?.includes("P0") ? "text-[#C72030]" : item.priority?.includes("P1") ? "text-[#D97706]" : "text-[#6B21A8]"}`}>{item.priority}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80 whitespace-pre-line">{item.owner}</td>
                   </tr>
                 ))}
               </tbody>
@@ -3603,17 +3603,17 @@ const LEBusinessPlanTab: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[11px] font-poppins">
               <thead>
-                <tr className="bg-[#4f81bd] text-white font-semibold">
-                  <th className="border border-[#b8cce4] p-2 text-center w-[60%]">Answer</th>
-                  <th className="border border-[#b8cce4] p-2 text-center w-[20%]">Context / Source</th>
-                  <th className="border border-[#b8cce4] p-2 text-center w-[20%]">Status</th>
+                <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[60%]">Answer</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Context / Source</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Status</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="bg-white">
-                  <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 whitespace-pre-line leading-relaxed">{q.answer}</td>
-                  <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/60 whitespace-pre-line">{q.source || "—"}</td>
-                  <td className="border border-[#b8cce4] p-3 text-center">
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 whitespace-pre-line leading-relaxed">{q.answer}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/60 whitespace-pre-line">{q.source || "—"}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-center">
                     <span className={`inline-block px-2 py-1 rounded text-[10px] font-semibold ${q.flag === "Ready" ? "bg-green-50 text-green-800" : "bg-yellow-50 text-yellow-900"}`}>{q.flag || "—"}</span>
                   </td>
                 </tr>
@@ -3636,17 +3636,17 @@ const LEGTMTab: React.FC = () => {
       </div>
       {targetGroups.map((tg, tgi) => (
         <div key={tgi} className="space-y-6">
-          <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins whitespace-pre-line">{tg.title}</div>
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins whitespace-pre-line">{tg.title}</div>
           {tg.sections.map((sec, si) => (
             <div key={si} className="space-y-2">
-              <div className="bg-[#4f81bd] text-white px-4 py-2 font-semibold text-[12px] font-poppins">{sec.title}</div>
+              <div className="bg-[#F6F4EE] text-[#DA7756] px-4 py-2 font-semibold text-[12px] font-poppins">{sec.title}</div>
               {sec.columns.length > 0 && sec.rows.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse text-[10px] font-poppins">
                     <thead>
-                      <tr className="bg-[#4f81bd] text-white font-semibold">
+                      <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
                         {sec.columns.map((col, ci) => (
-                          <th key={ci} className="border border-[#b8cce4] p-2 text-center">{col}</th>
+                          <th key={ci} className="border border-[#C4B89D]/50 p-2 text-center">{col}</th>
                         ))}
                       </tr>
                     </thead>
@@ -3654,7 +3654,7 @@ const LEGTMTab: React.FC = () => {
                       {sec.rows.map((row, ri) => (
                         <tr key={ri} className={ri % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
                           {row.map((cell, ci) => (
-                            <td key={ci} className={`border border-[#b8cce4] p-2 whitespace-pre-line ${ci === 0 ? "font-semibold text-[#2C2C2C]" : "text-[#2C2C2C]/80"}`}>{cell}</td>
+                            <td key={ci} className={`border border-[#C4B89D]/50 p-2 whitespace-pre-line ${ci === 0 ? "font-semibold text-[#2C2C2C]" : "text-[#2C2C2C]/80"}`}>{cell}</td>
                           ))}
                         </tr>
                       ))}
@@ -3662,7 +3662,7 @@ const LEGTMTab: React.FC = () => {
                   </table>
                 </div>
               ) : (
-                <div className="border border-[#b8cce4] p-3 text-[11px] text-[#2C2C2C]/60 italic font-poppins bg-white">{sec.title}</div>
+                <div className="border border-[#C4B89D]/50 p-3 text-[11px] text-[#2C2C2C]/60 italic font-poppins bg-white">{sec.title}</div>
               )}
             </div>
           ))}
@@ -3688,13 +3688,13 @@ const LEMetricsTab: React.FC = () => {
         sections.map((sec, si) => (
           <div key={si} className="space-y-2">
             {sec.columns.length > 0 && sec.rows.length > 0 ? (<>
-              <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins whitespace-pre-line">{sec.title}</div>
+              <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins whitespace-pre-line">{sec.title}</div>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse text-[10px] font-poppins">
                   <thead>
-                    <tr className="bg-[#4f81bd] text-white font-semibold">
+                    <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
                       {sec.columns.map((col, ci) => (
-                        <th key={ci} className="border border-[#b8cce4] p-2 text-center">{col}</th>
+                        <th key={ci} className="border border-[#C4B89D]/50 p-2 text-center">{col}</th>
                       ))}
                     </tr>
                   </thead>
@@ -3702,7 +3702,7 @@ const LEMetricsTab: React.FC = () => {
                     {sec.rows.map((row, ri) => (
                       <tr key={ri} className={ri % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
                         {row.map((cell, ci) => (
-                          <td key={ci} className={`border border-[#b8cce4] p-2 whitespace-pre-line ${ci === 0 ? "font-semibold text-[#2C2C2C]" : "text-[#2C2C2C]/80"}`}>{cell}</td>
+                          <td key={ci} className={`border border-[#C4B89D]/50 p-2 whitespace-pre-line ${ci === 0 ? "font-semibold text-[#2C2C2C]" : "text-[#2C2C2C]/80"}`}>{cell}</td>
                         ))}
                       </tr>
                     ))}
@@ -3710,30 +3710,30 @@ const LEMetricsTab: React.FC = () => {
                 </table>
               </div>
             </>) : (
-              <div className={`px-4 py-3 font-semibold text-sm font-poppins whitespace-pre-line ${sec.title.includes("LEGEND") || sec.title.includes("★") ? "bg-[#d9e1f2] text-[#2C2C2C] border border-[#b8cce4]" : "bg-[#1f3a5f]/80 text-white/90 italic"}`}>{sec.title}</div>
+              <div className={`px-4 py-3 font-semibold text-sm font-poppins whitespace-pre-line ${sec.title.includes("LEGEND") || sec.title.includes("★") ? "bg-[#DA7756]/10 text-[#2C2C2C] border border-[#C4B89D]/50" : "bg-[#DA7756]/80 text-white/90 italic"}`}>{sec.title}</div>
             )}
           </div>
         ))
       ) : (<>
         {clientImpact.length > 0 && (<>
-          <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">Client Impact Metrics</div>
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">Client Impact Metrics</div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[11px] font-poppins">
               <thead>
-                <tr className="bg-[#4f81bd] text-white font-semibold">
-                  <th className="border border-[#b8cce4] p-2 text-center">Metric</th>
-                  <th className="border border-[#b8cce4] p-2 text-center">Baseline</th>
-                  <th className="border border-[#b8cce4] p-2 text-center">With Platform</th>
-                  <th className="border border-[#b8cce4] p-2 text-center">Impact Claim</th>
+                <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">Metric</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">Baseline</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">With Platform</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">Impact Claim</th>
                 </tr>
               </thead>
               <tbody>
                 {clientImpact.map((m, i) => (
                   <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                    <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">{m.metric}</td>
-                    <td className="border border-[#b8cce4] p-2 text-[#E49191] italic">{m.baseline}</td>
-                    <td className="border border-[#b8cce4] p-2 text-[#108C72] font-semibold">{m.withSnag}</td>
-                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">{m.claim}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">{m.metric}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#E49191] italic">{m.baseline}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#108C72] font-semibold">{m.withSnag}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">{m.claim}</td>
                   </tr>
                 ))}
               </tbody>
@@ -3742,28 +3742,28 @@ const LEMetricsTab: React.FC = () => {
         </>)}
 
         {businessTargets.length > 0 && (<>
-          <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">Business Growth Targets</div>
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">Business Growth Targets</div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[10px] font-poppins">
               <thead>
-                <tr className="bg-[#4f81bd] text-white font-semibold">
-                  <th className="border border-[#b8cce4] p-2 text-center">Metric</th>
-                  <th className="border border-[#b8cce4] p-2 text-center">Definition</th>
-                  <th className="border border-[#b8cce4] p-2 text-center">D30 Current</th>
-                  <th className="border border-[#b8cce4] p-2 text-center">D30 Phase 1</th>
-                  <th className="border border-[#b8cce4] p-2 text-center">M3 Current</th>
-                  <th className="border border-[#b8cce4] p-2 text-center">M3 Phase 1</th>
+                <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">Metric</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">Definition</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">D30 Current</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">D30 Phase 1</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">M3 Current</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">M3 Phase 1</th>
                 </tr>
               </thead>
               <tbody>
                 {businessTargets.map((b, i) => (
                   <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                    <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{b.metric}</td>
-                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{b.definition}</td>
-                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{b.d30Current}</td>
-                    <td className="border border-[#b8cce4] p-2 text-[#108C72] font-medium whitespace-pre-line">{b.d30Phase1}</td>
-                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{b.m3Current}</td>
-                    <td className="border border-[#b8cce4] p-2 text-[#108C72] font-medium whitespace-pre-line">{b.m3Phase1}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{b.metric}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{b.definition}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{b.d30Current}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#108C72] font-medium whitespace-pre-line">{b.d30Phase1}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{b.m3Current}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#108C72] font-medium whitespace-pre-line">{b.m3Phase1}</td>
                   </tr>
                 ))}
               </tbody>
@@ -3794,27 +3794,27 @@ const LESWOTTab: React.FC = () => {
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
             <tr>
-              <th colSpan={3} className="bg-[#798C5E]/15 text-[#798C5E] border border-[#b8cce4] p-3 text-center font-bold text-sm">STRENGTHS</th>
-              <th colSpan={3} className="bg-[#E49191]/15 text-[#C72030] border border-[#b8cce4] p-3 text-center font-bold text-sm">WEAKNESSES</th>
+              <th colSpan={3} className="bg-[#798C5E]/15 text-[#798C5E] border border-[#C4B89D]/50 p-3 text-center font-bold text-sm">STRENGTHS</th>
+              <th colSpan={3} className="bg-[#E49191]/15 text-[#C72030] border border-[#C4B89D]/50 p-3 text-center font-bold text-sm">WEAKNESSES</th>
             </tr>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center w-[6%]">ID</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[20%]">Headline</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[24%]">Detail</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[6%]">ID</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[20%]">Headline</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[24%]">Detail</th>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[6%]">ID</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Headline</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[24%]">Detail</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[6%]">ID</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Headline</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[24%]">Detail</th>
             </tr>
           </thead>
           <tbody>
             {Array.from({ length: maxSW }).map((_, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#798C5E]">{strengths[i] ? `S${i + 1}` : ""}</td>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{strengths[i]?.headline || ""}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{strengths[i]?.explanation || ""}</td>
-                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#C72030]">{weaknesses[i] ? `W${i + 1}` : ""}</td>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{weaknesses[i]?.headline || ""}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{weaknesses[i]?.explanation || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#798C5E]">{strengths[i] ? `S${i + 1}` : ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{strengths[i]?.headline || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{strengths[i]?.explanation || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#C72030]">{weaknesses[i] ? `W${i + 1}` : ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{weaknesses[i]?.headline || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{weaknesses[i]?.explanation || ""}</td>
               </tr>
             ))}
           </tbody>
@@ -3825,27 +3825,27 @@ const LESWOTTab: React.FC = () => {
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
             <tr>
-              <th colSpan={3} className="bg-[#DA7756]/10 text-[#DA7756] border border-[#b8cce4] p-3 text-center font-bold text-sm">OPPORTUNITIES</th>
-              <th colSpan={3} className="bg-[#EDC488]/20 text-[#B8860B] border border-[#b8cce4] p-3 text-center font-bold text-sm">THREATS</th>
+              <th colSpan={3} className="bg-[#DA7756]/10 text-[#DA7756] border border-[#C4B89D]/50 p-3 text-center font-bold text-sm">OPPORTUNITIES</th>
+              <th colSpan={3} className="bg-[#EDC488]/20 text-[#B8860B] border border-[#C4B89D]/50 p-3 text-center font-bold text-sm">THREATS</th>
             </tr>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center w-[6%]">ID</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[20%]">Headline</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[24%]">Detail</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[6%]">ID</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[20%]">Headline</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[24%]">Detail</th>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[6%]">ID</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Headline</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[24%]">Detail</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[6%]">ID</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Headline</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[24%]">Detail</th>
             </tr>
           </thead>
           <tbody>
             {Array.from({ length: maxOT }).map((_, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#DA7756]">{opportunities[i] ? `O${i + 1}` : ""}</td>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{opportunities[i]?.headline || ""}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{opportunities[i]?.explanation || ""}</td>
-                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#B8860B]">{threats[i] ? `T${i + 1}` : ""}</td>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{threats[i]?.headline || ""}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{threats[i]?.explanation || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#DA7756]">{opportunities[i] ? `O${i + 1}` : ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{opportunities[i]?.headline || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{opportunities[i]?.explanation || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#B8860B]">{threats[i] ? `T${i + 1}` : ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{threats[i]?.headline || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{threats[i]?.explanation || ""}</td>
               </tr>
             ))}
           </tbody>
@@ -3866,32 +3866,32 @@ const LEEnhancementsTab: React.FC = () => {
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[10px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center w-[3%]">#</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[8%]">Module</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[10%]">Feature</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[22%]">How It Currently Works</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[25%]">Enhanced Version</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[12%]">Integration Type</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[5%]">Effort</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[5%]">Impact</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[5%]">Priority</th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[5%]">Owner</th>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[3%]">#</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[8%]">Module</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[10%]">Feature</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[22%]">How It Currently Works</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[25%]">Enhanced Version</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[12%]">Integration Type</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[5%]">Effort</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[5%]">Impact</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[5%]">Priority</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[5%]">Owner</th>
             </tr>
           </thead>
           <tbody>
             {enhancementRoadmap.map((item, idx) => (
-              <tr key={idx} className={item.priority === "P0" ? "bg-[#d9e1f2]" : idx % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className={`border border-[#b8cce4] p-2 text-center ${item.priority === "P0" ? "font-semibold" : ""}`}>{item.rowId}</td>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">{item.module}</td>
-                <td className={`border border-[#b8cce4] p-2 ${item.priority === "P0" ? "font-semibold text-[#1f3a5f]" : "text-[#2C2C2C] font-medium"}`}>{item.featureName}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.currentStatus}</td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.enhancedVersion}</td>
-                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#DA7756] whitespace-pre-line">{item.integrationType}</td>
-                <td className="border border-[#b8cce4] p-2 text-center text-[#2C2C2C]/80">{item.effort}</td>
-                <td className="border border-[#b8cce4] p-2 text-center text-[#2C2C2C]/80 font-medium">{item.impact}</td>
-                <td className={`border border-[#b8cce4] p-2 text-center font-semibold ${item.priority === "P0" ? "text-[#C72030]" : item.priority === "P1" ? "text-[#D97706]" : "text-[#6B21A8]"}`}>{item.priority}</td>
-                <td className="border border-[#b8cce4] p-2 text-center text-[#2C2C2C]/80 whitespace-pre-line">{item.owner}</td>
+              <tr key={idx} className={item.priority === "P0" ? "bg-[#DA7756]/10" : idx % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className={`border border-[#C4B89D]/50 p-2 text-center ${item.priority === "P0" ? "font-semibold" : ""}`}>{item.rowId}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">{item.module}</td>
+                <td className={`border border-[#C4B89D]/50 p-2 ${item.priority === "P0" ? "font-semibold text-[#DA7756]" : "text-[#2C2C2C] font-medium"}`}>{item.featureName}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.currentStatus}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.enhancedVersion}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#DA7756] whitespace-pre-line">{item.integrationType}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80">{item.effort}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80 font-medium">{item.impact}</td>
+                <td className={`border border-[#C4B89D]/50 p-2 text-center font-semibold ${item.priority === "P0" ? "text-[#C72030]" : item.priority === "P1" ? "text-[#D97706]" : "text-[#6B21A8]"}`}>{item.priority}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80 whitespace-pre-line">{item.owner}</td>
               </tr>
             ))}
           </tbody>
@@ -3912,11 +3912,11 @@ const LEAssetsTab: React.FC = () => {
 
       {assets.length > 0 && (
         <div className="space-y-4">
-          <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">Product Assets</div>
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">Product Assets</div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {assets.map((asset, i) => (
-              <a key={i} href={asset.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 border border-[#b8cce4] rounded-xl p-4 bg-white hover:bg-[#F6F4EE] transition-all group">
-                <div className="text-[#4f81bd]">{asset.icon}</div>
+              <a key={i} href={asset.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 border border-[#C4B89D]/50 rounded-xl p-4 bg-white hover:bg-[#F6F4EE] transition-all group">
+                <div className="text-[#DA7756]">{asset.icon}</div>
                 <div className="flex-1">
                   <p className="font-semibold text-[#2C2C2C] text-sm font-poppins">{asset.title}</p>
                   <p className="text-[10px] text-[#2C2C2C]/50 font-poppins">{asset.type}</p>
@@ -3930,18 +3930,18 @@ const LEAssetsTab: React.FC = () => {
 
       {credentials.length > 0 && (
         <div className="space-y-4">
-          <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins flex items-center gap-2">
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins flex items-center gap-2">
             <Lock className="w-4 h-4" /> Secure Access Credentials
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {credentials.map((cred, i) => (
-              <div key={i} className="border border-[#b8cce4] rounded-xl p-4 bg-white space-y-2">
+              <div key={i} className="border border-[#C4B89D]/50 rounded-xl p-4 bg-white space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className="text-[#4f81bd]">{cred.icon}</div>
+                  <div className="text-[#DA7756]">{cred.icon}</div>
                   <p className="font-semibold text-[#2C2C2C] text-sm font-poppins">{cred.title}</p>
                 </div>
                 <div className="text-[11px] font-poppins space-y-1">
-                  <p><span className="text-[#2C2C2C]/50">URL:</span> <span className="text-[#4f81bd]">{cred.url}</span></p>
+                  <p><span className="text-[#2C2C2C]/50">URL:</span> <span className="text-[#DA7756]">{cred.url}</span></p>
                   <p><span className="text-[#2C2C2C]/50">ID:</span> <span className="text-[#2C2C2C]/80 font-medium">{cred.id}</span></p>
                   <p><span className="text-[#2C2C2C]/50">Pass:</span> <span className="text-[#2C2C2C]/80 font-medium">{cred.pass}</span></p>
                 </div>
@@ -3953,11 +3953,11 @@ const LEAssetsTab: React.FC = () => {
 
       {loyaltyEngineData.owner && (
         <div className="space-y-4">
-          <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins flex items-center gap-2">
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins flex items-center gap-2">
             <User className="w-4 h-4" /> Product Owner
           </div>
-          <div className="border border-[#b8cce4] rounded-xl p-4 bg-white flex items-center gap-4">
-            {loyaltyEngineData.ownerImage && <img src={loyaltyEngineData.ownerImage} alt={loyaltyEngineData.owner} className="w-16 h-16 rounded-full object-cover border-2 border-[#b8cce4]" />}
+          <div className="border border-[#C4B89D]/50 rounded-xl p-4 bg-white flex items-center gap-4">
+            {loyaltyEngineData.ownerImage && <img src={loyaltyEngineData.ownerImage} alt={loyaltyEngineData.owner} className="w-16 h-16 rounded-full object-cover border-2 border-[#C4B89D]/50" />}
             <div>
               <p className="font-semibold text-[#2C2C2C] text-lg font-poppins">{loyaltyEngineData.owner}</p>
               <p className="text-[11px] text-[#2C2C2C]/50 font-poppins">Product Owner — {loyaltyEngineData.name}</p>

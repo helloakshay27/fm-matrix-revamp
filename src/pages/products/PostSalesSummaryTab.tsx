@@ -34,9 +34,9 @@ const PostSalesSummaryTab: React.FC<PostSalesSummaryTabProps> = ({ productData }
           const rows = buildSummarySheetRows(productData, pIdx);
 
           return (
-            <div key={pIdx} className="bg-white border border-[#cccccc] shadow-sm rounded-sm overflow-hidden w-full">
+            <div key={pIdx} className="bg-white border border-[#C4B89D]/50 shadow-sm rounded-sm overflow-hidden w-full">
               {/* Perspective Header Row */}
-              <div className="bg-[#1a2744] text-white px-6 py-3 font-black text-xs uppercase tracking-[0.3em] border-b border-[#cccccc]">
+              <div className="bg-[#DA7756] text-white px-6 py-3 font-black text-xs uppercase tracking-[0.3em] border-b border-[#C4B89D]/50">
                 {perspective.title}
               </div>
 
@@ -49,7 +49,7 @@ const PostSalesSummaryTab: React.FC<PostSalesSummaryTabProps> = ({ productData }
                         return (
                           <tr key={`section-${pIdx}-${index}`} className="h-[25px]">
                             <td
-                              className="bg-[#1a2744] text-white px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] border-b border-[#cccccc]"
+                              className="bg-[#DA7756] text-white px-6 py-2 text-[10px] font-black uppercase tracking-[0.2em] border-b border-[#C4B89D]/50"
                               colSpan={2}
                             >
                               {row.label}
@@ -63,11 +63,11 @@ const PostSalesSummaryTab: React.FC<PostSalesSummaryTabProps> = ({ productData }
                           className="group transition-colors align-top"
                         >
                           {/* Field Label */}
-                          <td className="w-1/4 md:w-[20%] bg-[#eef2ff] border-b border-r border-[#cccccc] px-6 py-5 text-[13px] font-bold text-[#2e4a7a] leading-tight">
+                          <td className="w-1/4 md:w-[20%] bg-[#F6F4EE] border-b border-r border-[#C4B89D]/50 px-6 py-5 text-[13px] font-bold text-[#DA7756] leading-tight">
                             {row.label}
                           </td>
                           {/* Detail Content */}
-                          <td className="bg-white border-b border-[#cccccc] px-6 py-5 text-[14px] text-[#1a1a1a] font-medium leading-relaxed whitespace-pre-line group-hover:bg-[#fafafa]">
+                          <td className="bg-white border-b border-[#C4B89D]/50 px-6 py-5 text-[14px] text-[#1a1a1a] font-medium leading-relaxed whitespace-pre-line group-hover:bg-[#F6F4EE]">
                             {row.detail}
                           </td>
                         </tr>

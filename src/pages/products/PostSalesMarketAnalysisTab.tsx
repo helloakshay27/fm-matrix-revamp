@@ -36,7 +36,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               colSpan={10}
               style={{
                 borderBottom: "1px solid transparent",
-                backgroundColor: "#f5f5f5",
+                backgroundColor: "#F6F4EE",
                 textAlign: "center",
                 fontStyle: "italic",
                 color: "#666666",
@@ -55,7 +55,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               colSpan={10}
               style={{
                 borderBottom: "1px solid transparent",
-                backgroundColor: "#1a2744",
+                backgroundColor: "#DA7756",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -75,7 +75,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               colSpan={10}
               style={{
                 borderBottom: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -96,7 +96,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#1a2744",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -113,7 +113,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#1a2744",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -132,7 +132,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#1a2744",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -148,7 +148,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#1a2744",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -167,7 +167,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#1a2744",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -183,7 +183,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#1a2744",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -202,7 +202,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#f5f9ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -227,7 +227,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#f5f9ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -457,7 +457,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#f5f9ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -482,7 +482,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#f5f9ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -585,7 +585,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               colSpan={10}
               style={{
                 borderBottom: "1px solid transparent",
-                backgroundColor: "#f8f8f8",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#000000",
                 fontFamily: "Arial, sans-serif",
@@ -600,7 +600,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               colSpan={10}
               style={{
                 borderBottom: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -620,7 +620,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -636,7 +636,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -652,7 +652,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -668,7 +668,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -684,7 +684,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -701,7 +701,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -719,7 +719,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#f5f9ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -814,7 +814,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#eef2ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#000000",
                 fontFamily: "Arial, sans-serif",
@@ -928,7 +928,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#eef2ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#000000",
                 fontFamily: "Arial, sans-serif",
@@ -947,7 +947,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#f5f9ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -1042,7 +1042,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#eef2ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#000000",
                 fontFamily: "Arial, sans-serif",
@@ -1062,7 +1062,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               colSpan={10}
               style={{
                 borderBottom: "1px solid transparent",
-                backgroundColor: "#f8f8f8",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#000000",
                 fontFamily: "Arial, sans-serif",
@@ -1077,7 +1077,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               colSpan={10}
               style={{
                 borderBottom: "1px solid #cccccc",
-                backgroundColor: "#1a2744",
+                backgroundColor: "#DA7756",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -1097,7 +1097,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -1113,7 +1113,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -1129,7 +1129,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -1145,7 +1145,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -1161,7 +1161,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -1177,7 +1177,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -1193,7 +1193,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -1209,7 +1209,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -1225,7 +1225,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -1241,7 +1241,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#2e4a7a",
+                backgroundColor: "#DA7756",
                 textAlign: "center",
                 fontWeight: "bold",
                 color: "#ffffff",
@@ -1259,7 +1259,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#eef2ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -1278,7 +1278,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#fafafa",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -1295,7 +1295,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#fafafa",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -1312,7 +1312,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#fafafa",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -1410,7 +1410,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#fafafa",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -1428,7 +1428,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#f5f5f5",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -1448,7 +1448,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#eef2ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -1608,7 +1608,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#f5f5f5",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -1628,7 +1628,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#eef2ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -1648,7 +1648,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#fafafa",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -1665,7 +1665,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#fafafa",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -1682,7 +1682,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#fafafa",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -1772,7 +1772,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#fafafa",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -1790,7 +1790,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#f5f5f5",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -1810,7 +1810,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#eef2ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -1966,7 +1966,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#f5f5f5",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -1986,7 +1986,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#eef2ff",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",
@@ -2006,7 +2006,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#fafafa",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -2022,7 +2022,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#fafafa",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -2039,7 +2039,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#fafafa",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -2128,7 +2128,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#fafafa",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 color: "#1a1a1a",
                 fontFamily: "Arial, sans-serif",
@@ -2145,7 +2145,7 @@ const PostSalesMarketAnalysisTab: React.FC = () => {
               style={{
                 borderBottom: "1px solid #cccccc",
                 borderRight: "1px solid #cccccc",
-                backgroundColor: "#f5f5f5",
+                backgroundColor: "#F6F4EE",
                 textAlign: "left",
                 fontWeight: "bold",
                 color: "#1a1a1a",

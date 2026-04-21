@@ -17,14 +17,14 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
         <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
           <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{productData.name} - SWOT Analysis</h2>
         </div>
-        <div className="bg-[#F6F4EE] border border-[#D3D1C7] border-t-0 px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins text-center">
+        <div className="bg-[#F6F4EE] border border-[#D3D1C7] border-t-0 px-4 py-2 text-sm text-[#DA7756] font-medium italic font-poppins text-center">
           10 items per quadrant | Lockated / GoPhygital.work | India primary market context
         </div>
 
         <div className="mt-6 border border-[#D3D1C7] grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#D3D1C7]">
           {/* STRENGTHS */}
           <div className="bg-white">
-            <div className="bg-[#4B5563] text-white px-4 py-3 text-[13px] font-bold uppercase tracking-widest text-center font-poppins border-b border-[#D3D1C7]">
+            <div className="bg-[#DA7756] text-white px-4 py-3 text-[13px] font-bold uppercase tracking-widest text-center font-poppins border-b border-[#D3D1C7]">
               STRENGTHS
             </div>
             <div className="divide-y divide-[#D3D1C7]">
@@ -38,7 +38,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
           </div>
           {/* WEAKNESSES */}
           <div className="bg-white">
-            <div className="bg-[#4B5563] text-white px-4 py-3 text-[13px] font-bold uppercase tracking-widest text-center font-poppins border-b border-[#D3D1C7]">
+            <div className="bg-[#DA7756] text-white px-4 py-3 text-[13px] font-bold uppercase tracking-widest text-center font-poppins border-b border-[#D3D1C7]">
               WEAKNESSES
             </div>
             <div className="divide-y divide-[#D3D1C7]">
@@ -55,7 +55,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
         <div className="mt-6 border border-[#D3D1C7] grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-[#D3D1C7]">
           {/* OPPORTUNITIES */}
           <div className="bg-white">
-            <div className="bg-[#4B5563] text-white px-4 py-3 text-[13px] font-bold uppercase tracking-widest text-center font-poppins border-b border-[#D3D1C7]">
+            <div className="bg-[#DA7756] text-white px-4 py-3 text-[13px] font-bold uppercase tracking-widest text-center font-poppins border-b border-[#D3D1C7]">
               OPPORTUNITIES
             </div>
             <div className="divide-y divide-[#D3D1C7]">
@@ -69,7 +69,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
           </div>
           {/* THREATS */}
           <div className="bg-white">
-            <div className="bg-[#4B5563] text-white px-4 py-3 text-[13px] font-bold uppercase tracking-widest text-center font-poppins border-b border-[#D3D1C7]">
+            <div className="bg-[#DA7756] text-white px-4 py-3 text-[13px] font-bold uppercase tracking-widest text-center font-poppins border-b border-[#D3D1C7]">
               THREATS
             </div>
             <div className="divide-y divide-[#D3D1C7]">
@@ -107,7 +107,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
                     {/* STRENGTHS | WEAKNESSES */}
                     <div className="border border-[#D3D1C7] mt-3 grid grid-cols-2 divide-x divide-[#D3D1C7]">
                       <div>
-                        <div className="bg-[#2F5496] text-white px-4 py-2.5 text-[13px] font-bold uppercase tracking-widest text-center">
+                        <div className="bg-[#F6F4EE] text-[#DA7756] px-4 py-2.5 text-[13px] font-bold uppercase tracking-widest text-center">
                           STRENGTHS
                         </div>
                         <div className="divide-y divide-[#E5E7EB]">
@@ -120,7 +120,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
                         </div>
                       </div>
                       <div>
-                        <div className="bg-[#2F5496] text-white px-4 py-2.5 text-[13px] font-bold uppercase tracking-widest text-center">
+                        <div className="bg-[#F6F4EE] text-[#DA7756] px-4 py-2.5 text-[13px] font-bold uppercase tracking-widest text-center">
                           WEAKNESSES
                         </div>
                         <div className="divide-y divide-[#E5E7EB]">
@@ -136,7 +136,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
                     {/* OPPORTUNITIES | THREATS */}
                     <div className="border border-[#D3D1C7] mt-6 grid grid-cols-2 divide-x divide-[#D3D1C7]">
                       <div>
-                        <div className="bg-[#2F5496] text-white px-4 py-2.5 text-[13px] font-bold uppercase tracking-widest text-center">
+                        <div className="bg-[#F6F4EE] text-[#DA7756] px-4 py-2.5 text-[13px] font-bold uppercase tracking-widest text-center">
                           OPPORTUNITIES
                         </div>
                         <div className="divide-y divide-[#E5E7EB]">
@@ -149,7 +149,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
                         </div>
                       </div>
                       <div>
-                        <div className="bg-[#2F5496] text-white px-4 py-2.5 text-[13px] font-bold uppercase tracking-widest text-center">
+                        <div className="bg-[#F6F4EE] text-[#DA7756] px-4 py-2.5 text-[13px] font-bold uppercase tracking-widest text-center">
                           THREATS
                         </div>
                         <div className="divide-y divide-[#E5E7EB]">
@@ -168,7 +168,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
                     <div className="bg-white border border-[#E5E7EB]">
                       <table className="w-full table-fixed border-collapse font-poppins text-[12px] leading-[1.55]">
                         <thead>
-                          <tr className="bg-white text-gray-800 border-b border-[#D3D1C7]">
+                          <tr className="bg-white text-[#DA7756] border-b border-[#D3D1C7]">
                             <th
                               className="border border-[#D3D1C7] px-3 py-2 text-left font-semibold uppercase"
                               colSpan={6}
@@ -190,7 +190,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
                               Weaknesses (Internal / Negative)
                             </th>
                           </tr>
-                          <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
+                          <tr className="bg-white text-[#DA7756] border-b border-[#D3D1C7] font-semibold uppercase">
                             <th className="border border-[#E5E7EB] bg-white px-2 py-2 text-center w-[6%]">
                               ID
                             </th>
@@ -236,19 +236,19 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
                                 key={`sw-${i}`}
                                 className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
                               >
-                                <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-600">
+                                <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-[#DA7756]">
                                   {s ? `S${i + 1}` : ""}
                                 </td>
-                                <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-gray-700 break-words">
+                                <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-[#DA7756] break-words">
                                   {s?.headline ?? ""}
                                 </td>
                                 <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                   {s?.explanation ?? ""}
                                 </td>
-                                <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-600">
+                                <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-[#DA7756]">
                                   {w ? `W${i + 1}` : ""}
                                 </td>
-                                <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-gray-700 break-words">
+                                <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-[#DA7756] break-words">
                                   {w?.headline ?? ""}
                                 </td>
                                 <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
@@ -276,7 +276,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
                               Threats (External / Negative)
                             </th>
                           </tr>
-                          <tr className="bg-white text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
+                          <tr className="bg-white text-[#DA7756] border-b border-[#D3D1C7] font-semibold uppercase">
                             <th className="border border-[#E5E7EB] bg-white px-2 py-2 text-center w-[6%]">
                               ID
                             </th>
@@ -319,19 +319,19 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
                                 key={`ot-${i}`}
                                 className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
                               >
-                                <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-600">
+                                <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-[#DA7756]">
                                   {o ? `O${i + 1}` : ""}
                                 </td>
-                                <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-gray-700 break-words">
+                                <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-[#DA7756] break-words">
                                   {o?.headline ?? ""}
                                 </td>
                                 <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                                   {o?.explanation ?? ""}
                                 </td>
-                                <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-600">
+                                <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-[#DA7756]">
                                   {t ? `T${i + 1}` : ""}
                                 </td>
-                                <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-gray-700 break-words">
+                                <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-[#DA7756] break-words">
                                   {t?.headline ?? ""}
                                 </td>
                                 <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
@@ -388,7 +388,7 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
                   </div>
                 </div>
                 <div className="w-full md:w-1/2 flex flex-col bg-white">
-                  <div className="text-center font-semibold text-gray-700 p-3 text-lg tracking-widest border-b border-[#E5E7EB] uppercase font-poppins">
+                  <div className="text-center font-semibold text-[#DA7756] p-3 text-lg tracking-widest border-b border-[#E5E7EB] uppercase font-poppins">
                     WEAKNESSES
                   </div>
                   <div className="p-4 space-y-6">

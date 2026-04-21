@@ -52,14 +52,14 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
 
       {productData.excelLikeFeatures ? (
         <div className="border border-[#D3D1C7] bg-white">
-          <div className="bg-white text-gray-800 border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+          <div className="bg-[#DA7756] text-white border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
             {productData.name} - Full Feature List
           </div>
           <div className="w-full">
             {hasDetailedFeatureSheet ? (
               <table className="w-full table-fixed border-collapse text-[13px] leading-relaxed font-poppins">
                 <thead>
-                  <tr className="bg-[#F6F4EE] text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
+                  <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#D3D1C7] font-semibold uppercase">
                     <th className="border border-[#E5E7EB] px-2 py-3 text-left w-[16%]">
                       Feature Name
                     </th>
@@ -127,7 +127,7 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
             ) : (
               <table className="w-full border-collapse text-[13px] leading-relaxed font-poppins table-fixed">
                 <thead>
-                  <tr className="bg-[#F6F4EE] text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
+                  <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#D3D1C7] font-semibold uppercase">
                     <th className="border border-[#E5E7EB] p-3 text-center w-[5%]">
                       #
                     </th>

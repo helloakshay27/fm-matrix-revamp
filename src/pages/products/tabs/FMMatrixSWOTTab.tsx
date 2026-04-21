@@ -40,14 +40,14 @@ const FMMatrixSWOTTab: React.FC<FMMatrixSWOTTabProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Strengths */}
                 <div>
-                    <div className="bg-[#4f81bd] text-white px-4 py-3 font-semibold text-center font-poppins">
+                    <div className="bg-[#F6F4EE] text-[#DA7756] px-4 py-3 font-semibold text-center font-poppins">
                         STRENGTHS
                     </div>
-                    <div className="border border-[#b8cce4]">
+                    <div className="border border-[#C4B89D]/50">
                         {strengths.map((s, i) => (
                             <div
                                 key={i}
-                                className="bg-[#e2efda] border-b border-[#b8cce4] p-3 text-[11px] font-poppins"
+                                className="bg-[#e2efda] border-b border-[#C4B89D]/50 p-3 text-[11px] font-poppins"
                             >
                                 <strong>
                                     {i + 1}. {s.headline}:
@@ -60,14 +60,14 @@ const FMMatrixSWOTTab: React.FC<FMMatrixSWOTTabProps> = ({
 
                 {/* Weaknesses */}
                 <div>
-                    <div className="bg-[#4f81bd] text-white px-4 py-3 font-semibold text-center font-poppins">
+                    <div className="bg-[#F6F4EE] text-[#DA7756] px-4 py-3 font-semibold text-center font-poppins">
                         WEAKNESSES
                     </div>
-                    <div className="border border-[#b8cce4]">
+                    <div className="border border-[#C4B89D]/50">
                         {weaknesses.map((w, i) => (
                             <div
                                 key={i}
-                                className="bg-[#fce4d6] border-b border-[#b8cce4] p-3 text-[11px] font-poppins"
+                                className="bg-[#fce4d6] border-b border-[#C4B89D]/50 p-3 text-[11px] font-poppins"
                             >
                                 <strong>
                                     {i + 1}. {w.headline}:
@@ -80,14 +80,14 @@ const FMMatrixSWOTTab: React.FC<FMMatrixSWOTTabProps> = ({
 
                 {/* Opportunities */}
                 <div>
-                    <div className="bg-[#4f81bd] text-white px-4 py-3 font-semibold text-center font-poppins">
+                    <div className="bg-[#F6F4EE] text-[#DA7756] px-4 py-3 font-semibold text-center font-poppins">
                         OPPORTUNITIES
                     </div>
-                    <div className="border border-[#b8cce4]">
+                    <div className="border border-[#C4B89D]/50">
                         {opportunities.map((o, i) => (
                             <div
                                 key={i}
-                                className="bg-[#deeaf1] border-b border-[#b8cce4] p-3 text-[11px] font-poppins"
+                                className="bg-[#deeaf1] border-b border-[#C4B89D]/50 p-3 text-[11px] font-poppins"
                             >
                                 <strong>
                                     {i + 1}. {o.headline}:
@@ -100,14 +100,14 @@ const FMMatrixSWOTTab: React.FC<FMMatrixSWOTTabProps> = ({
 
                 {/* Threats */}
                 <div>
-                    <div className="bg-[#4f81bd] text-white px-4 py-3 font-semibold text-center font-poppins">
+                    <div className="bg-[#F6F4EE] text-[#DA7756] px-4 py-3 font-semibold text-center font-poppins">
                         THREATS
                     </div>
-                    <div className="border border-[#b8cce4]">
+                    <div className="border border-[#C4B89D]/50">
                         {threats.map((t, i) => (
                             <div
                                 key={i}
-                                className="bg-[#fff2cc] border-b border-[#b8cce4] p-3 text-[11px] font-poppins"
+                                className="bg-[#fff2cc] border-b border-[#C4B89D]/50 p-3 text-[11px] font-poppins"
                             >
                                 <strong>
                                     {i + 1}. {t.headline}:

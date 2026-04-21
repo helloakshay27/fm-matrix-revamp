@@ -52,46 +52,46 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
         <div className="space-y-8">
           {hasPostSalesIndustrySheet ? (
             <div className="space-y-4">
-              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-[16px] font-semibold uppercase tracking-wide font-poppins text-center">
+              <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-[16px] font-semibold uppercase tracking-wide font-poppins text-center">
                 {productData.name} - Use Cases
               </div>
-              <div className="bg-white border border-[#D3D1C7] px-4 py-2 text-[12px] text-gray-600 font-medium italic font-poppins text-center">
+              <div className="bg-[#F6F4EE] border border-[#C4B89D] px-4 py-2 text-[12px] text-gray-600 font-medium italic font-poppins text-center">
                 Part 1: Industry-level (10 industries ranked by referral and loyalty relevance) | Part 2: Internal team-level (developer teams that use this platform daily)
               </div>
 
               <div className="space-y-3">
-                <div className="bg-[#1F4E79] text-white border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+                <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
                   Part 1 - Industry-Level Use Cases (Ranked by referral and loyalty relevance to the developer)
                 </div>
-                <div className="border border-[#D3D1C7] bg-white overflow-x-auto">
+                <div className="border border-[#C4B89D]/50 bg-white overflow-x-auto">
                   <table className="min-w-[1900px] w-full table-fixed border-collapse text-[10px] leading-[1.45] font-poppins">
                     <thead>
-                      <tr className="bg-[#2F6F9F] text-white font-semibold uppercase">
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-center w-[4%]">
+                      <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold uppercase">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-center w-[4%]">
                           #
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[11%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[11%]">
                           Industry
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[21%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[21%]">
                           How Post Sales Creates Value
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[18%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[18%]">
                           Ideal Company Profile and Current Tool
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[8%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[8%]">
                           Urgency
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[13%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[13%]">
                           Primary Buyer and What They're Measured On
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[13%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[13%]">
                           Primary User and Daily Frustration
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[12%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[12%]">
                           Key Features and Teams Used
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[16%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[16%]">
                           Referral / Revenue Opportunity
                         </th>
                       </tr>
@@ -100,40 +100,40 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
                       {detailedUseCases.industryUseCases?.map((u, i) => (
                         <tr
                           key={i}
-                          className={`align-top ${i % 2 === 0 ? "bg-[#E9F2FA]" : "bg-white"}`}
+                          className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"} hover:bg-[#DA7756]/5`}
                         >
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-center font-bold text-[#1F4E79] whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-center font-bold text-[#DA7756] whitespace-pre-line break-words">
                             {u.rank}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
                             {u.industry}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.useCase}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.companyProfile || u.profile}
                             {u.currentTool
                               ? `\nCurrently: ${u.currentTool}`
                               : ""}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 font-semibold whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 font-semibold whitespace-pre-line break-words">
                             <span
                               className={`${u.urgency?.startsWith("HIGH") ? "text-[#C72030]" : u.urgency?.startsWith("MEDIUM") ? "text-[#D97706]" : u.urgency?.startsWith("LOW") ? "text-[#798C5E]" : "text-[#2C2C2C]"}`}
                             >
                               {u.urgency}
                             </span>
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.primaryBuyer}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.primaryUser}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.features}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.outcome}
                           </td>
                         </tr>
@@ -145,26 +145,26 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
 
               {hasPostSalesInternalSheet && (
                 <div className="space-y-3">
-                  <div className="bg-[#6F3A8A] text-white border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+                  <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
                     Part 2 - Internal Team Use Cases (Developer's own teams that use Post Sales daily)
                   </div>
-                  <div className="border border-[#D3D1C7] bg-white overflow-x-auto">
+                  <div className="border border-[#C4B89D]/50 bg-white overflow-x-auto">
                     <table className="min-w-[1550px] w-full table-fixed border-collapse text-[10px] leading-[1.45] font-poppins">
                       <thead>
-                        <tr className="bg-[#7E4B99] text-white font-semibold uppercase">
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[14%]">
+                        <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold uppercase">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[14%]">
                             Team
                           </th>
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[27%]">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[27%]">
                             Why Post Sales is Their Platform
                           </th>
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[18%]">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[18%]">
                             Key Features and Processes They Run
                           </th>
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[17%]">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[17%]">
                             Primary Goal the Team Achieves
                           </th>
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[24%]">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[24%]">
                             Why They Champion Post Sales Internally
                           </th>
                         </tr>
@@ -173,21 +173,21 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
                         {detailedUseCases.internalTeamUseCases?.map((t, i) => (
                           <tr
                             key={i}
-                            className={`align-top ${i % 2 === 0 ? "bg-[#F3ECF7]" : "bg-white"}`}
+                            className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"} hover:bg-[#DA7756]/5`}
                           >
-                            <td className="border border-[#D3D1C7] px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
                               {t.team}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.usage || t.howTheyUse || t.process}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.features}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.process || t.problem}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.gain || t.benefit}
                             </td>
                           </tr>
@@ -200,38 +200,38 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
             </div>
           ) : hasDetailedIndustryLayout ? (
             <div className="space-y-4">
-              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins">
+              <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins text-center">
                 {productData.name} - Use Cases by Industry and Internal Team
               </div>
-              <div className="bg-[#F6F4EE] border border-[#D3D1C7] px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins">
+              <div className="bg-[#F6F4EE] border border-[#C4B89D] px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins">
                 10 industries from Market Analysis + key internal team use cases
               </div>
 
               <div className="space-y-3">
-                <div className="bg-[#1F3A5F] text-white border border-[#D3D1C7] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins">
+                <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins">
                   Part 1 - Industry Use Cases (same 10 industries as Market
                   Analysis Tab)
                 </div>
-                <div className="border border-[#D3D1C7] bg-white">
+                <div className="border border-[#C4B89D]/50 bg-white">
                   <table className="w-full border-collapse table-fixed text-[10px] leading-[1.45] font-poppins">
                     <thead>
-                      <tr className="bg-[#4F81BD] text-white font-semibold uppercase">
-                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[9%]">
+                      <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold uppercase">
+                        <th className="border border-[#C4B89D]/50 px-3 py-3 text-left w-[9%]">
                           Industry
                         </th>
-                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[8%]">
+                        <th className="border border-[#C4B89D]/50 px-3 py-3 text-left w-[8%]">
                           Primary User
                         </th>
-                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[18%]">
+                        <th className="border border-[#C4B89D]/50 px-3 py-3 text-left w-[18%]">
                           Core Pain Point
                         </th>
-                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[16%]">
+                        <th className="border border-[#C4B89D]/50 px-3 py-3 text-left w-[16%]">
                           VMS Features Used
                         </th>
-                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[32%]">
+                        <th className="border border-[#C4B89D]/50 px-3 py-3 text-left w-[32%]">
                           Workflow Step-by-Step
                         </th>
-                        <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[17%]">
+                        <th className="border border-[#C4B89D]/50 px-3 py-3 text-left w-[17%]">
                           Business Outcome
                         </th>
                       </tr>
@@ -240,24 +240,24 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
                       {detailedUseCases.industryUseCases?.map((u, i) => (
                         <tr
                           key={i}
-                          className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
+                          className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"} hover:bg-[#DA7756]/5`}
                         >
-                          <td className="border border-[#D3D1C7] px-3 py-2 font-bold text-[#1A1A2E] whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-3 py-2 font-bold text-[#2C2C2C] whitespace-pre-line break-words">
                             {u.industry}
                           </td>
-                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.primaryUser}
                           </td>
-                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.corePainPoint || u.useCase}
                           </td>
-                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.features}
                           </td>
-                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.workflow || u.useCase}
                           </td>
-                          <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.outcome}
                           </td>
                         </tr>
@@ -269,23 +269,23 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
 
               {hasDetailedInternalLayout && (
                 <div className="space-y-3">
-                  <div className="bg-[#1F3A5F] text-white border border-[#D3D1C7] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins">
+                  <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins rounded-t-xl">
                     Part 2 - Internal Team Use Cases
                   </div>
-                  <div className="border border-[#D3D1C7] bg-white">
+                  <div className="border border-[#C4B89D]/50 bg-white">
                     <table className="w-full border-collapse table-fixed text-[10px] leading-[1.45] font-poppins">
                       <thead>
-                        <tr className="bg-[#4F81BD] text-white font-semibold uppercase">
-                          <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[12%]">
+                        <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold uppercase">
+                          <th className="border border-[#C4B89D]/50 px-3 py-3 text-left w-[12%]">
                             Internal Team
                           </th>
-                          <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[24%]">
+                          <th className="border border-[#C4B89D]/50 px-3 py-3 text-left w-[24%]">
                             How They Use VMS
                           </th>
-                          <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[24%]">
+                          <th className="border border-[#C4B89D]/50 px-3 py-3 text-left w-[24%]">
                             Key Features
                           </th>
-                          <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[40%]">
+                          <th className="border border-[#C4B89D]/50 px-3 py-3 text-left w-[40%]">
                             Benefit
                           </th>
                         </tr>
@@ -294,18 +294,18 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
                         {detailedUseCases.internalTeamUseCases?.map((t, i) => (
                           <tr
                             key={i}
-                            className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
+                            className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"} hover:bg-[#DA7756]/5`}
                           >
-                            <td className="border border-[#D3D1C7] px-3 py-2 font-bold text-[#1A1A2E] whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-3 py-2 font-bold text-[#2C2C2C] whitespace-pre-line break-words">
                               {t.team}
                             </td>
-                            <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.howTheyUse || t.process}
                             </td>
-                            <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.features}
                             </td>
-                            <td className="border border-[#D3D1C7] px-3 py-2 text-[#1A1A2E] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.benefit}
                             </td>
                           </tr>
@@ -318,45 +318,45 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
             </div>
           ) : hasWideIndustrySheet || hasWideInternalSheet ? (
             <div className="space-y-4">
-              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-[16px] font-semibold uppercase tracking-wide font-poppins text-center">
+              <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-[16px] font-semibold uppercase tracking-wide font-poppins text-center">
                 {productData.name} - Use Cases
               </div>
-              <div className="bg-white border border-[#D3D1C7] px-4 py-2 text-[12px] text-gray-600 font-medium italic font-poppins text-center">
+              <div className="bg-[#F6F4EE] border border-[#C4B89D] px-4 py-2 text-[12px] text-gray-600 font-medium italic font-poppins text-center">
                 Part A: Industry-level use cases (ranked by relevance) |
                 &nbsp;Part B: Internal teams
               </div>
 
               <div className="space-y-3">
-                <div className="bg-[#1F4E79] text-white border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+                <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
                   Part A - Industry-Level Use Cases | 10 Most Relevant
                   Industries, Ranked by Relevance
                 </div>
-                <div className="border border-[#D3D1C7] bg-white">
+                <div className="border border-[#C4B89D]/50 bg-white">
                   <table className="w-full table-fixed border-collapse text-[10px] leading-[1.4] font-poppins">
                     <thead>
-                      <tr className="bg-[#2F6F9F] text-white font-semibold uppercase">
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-center w-[4%]">
+                      <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold uppercase">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-center w-[4%]">
                           Rank
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[11%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[11%]">
                           Industry
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[18%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[18%]">
                           Relevant Features &amp; Teams
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[18%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[18%]">
                           How They Use It
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[14%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[14%]">
                           Ideal Company Profile
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[11%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[11%]">
                           Current Tool
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[10%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[10%]">
                           Urgency
                         </th>
-                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[14%]">
+                        <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[14%]">
                           Primary Buyer &amp; User
                         </th>
                       </tr>
@@ -365,34 +365,34 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
                       {detailedUseCases?.industryUseCases?.map((u, i) => (
                         <tr
                           key={i}
-                          className={`align-top ${i % 2 === 0 ? "bg-[#E9F2FA]" : "bg-white"}`}
+                          className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"} hover:bg-[#DA7756]/5`}
                         >
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-center font-bold text-[#1F4E79] whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-center font-bold text-[#DA7756] whitespace-pre-line break-words">
                             {u.rank}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
                             {u.industry}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.features}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.useCase}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.companyProfile || u.profile}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.currentTool}
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 font-semibold whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 font-semibold whitespace-pre-line break-words">
                             <span
                               className={`${u.urgency?.startsWith("HIGH") ? "text-[#C72030]" : u.urgency?.startsWith("MEDIUM") ? "text-[#D97706]" : u.urgency?.startsWith("LOW") ? "text-[#798C5E]" : "text-[#2C2C2C]"}`}
                             >
                               {u.urgency}
                             </span>
                           </td>
-                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                          <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {[u.primaryBuyer, u.primaryUser]
                               .filter(Boolean)
                               .join("\n")}
@@ -406,36 +406,36 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
 
               {hasWideInternalSheet && (
                 <div className="space-y-3">
-                  <div className="bg-[#6F3A8A] text-white border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+                  <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins rounded-t-xl">
                     Part B - Internal Teams: How Each Team Uses The Product
                     Daily
                   </div>
-                  <div className="border border-[#D3D1C7] bg-white">
+                  <div className="border border-[#C4B89D]/50 bg-white">
                     <table className="w-full table-fixed border-collapse text-[10px] leading-[1.4] font-poppins">
                       <thead>
-                        <tr className="bg-[#7E4B99] text-white font-semibold uppercase">
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[7%]">
+                        <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold uppercase">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[7%]">
                             Team
                           </th>
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[15%]">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[15%]">
                             Relevant Features &amp; Processes
                           </th>
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[18%]">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[18%]">
                             How They Use It Day-to-Day
                           </th>
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[16%]">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[16%]">
                             Primary Benefit to This Team
                           </th>
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[10%]">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[10%]">
                             Frequency of Use
                           </th>
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[12%]">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[12%]">
                             Key Pain Without This Tool
                           </th>
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[10%]">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[10%]">
                             Collaboration With
                           </th>
-                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[12%]">
+                          <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[12%]">
                             Success Metric
                           </th>
                         </tr>
@@ -444,30 +444,30 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
                         {detailedUseCases?.internalTeamUseCases?.map((t, i) => (
                           <tr
                             key={i}
-                            className={`align-top ${i % 2 === 0 ? "bg-[#F3ECF7]" : "bg-white"}`}
+                            className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"} hover:bg-[#DA7756]/5`}
                           >
-                            <td className="border border-[#D3D1C7] px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
                               {t.team}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.relevantFeatures || t.features}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.howTheyUse || t.process}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.benefit}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.frequency}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.keyPainWithoutTool}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.collaborationWith}
                             </td>
-                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                               {t.successMetric}
                             </td>
                           </tr>
@@ -480,23 +480,23 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
             </div>
           ) : hasCpIndustrySheet ? (
             <div className="space-y-4">
-              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-[16px] font-semibold uppercase tracking-wide font-poppins text-center">
+              <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-[16px] font-semibold uppercase tracking-wide font-poppins text-center">
                 {productData.name} - Use Cases
               </div>
-              <div className="bg-white border border-[#D3D1C7] px-4 py-2 text-[12px] text-gray-600 font-medium italic font-poppins text-center">
+              <div className="bg-[#F6F4EE] border border-[#C4B89D] px-4 py-2 text-[12px] text-gray-600 font-medium italic font-poppins text-center">
                 Part A: 10 most relevant industries ranked by relevance | Part
                 B: Internal teams
               </div>
 
               <div className="space-y-3">
-                <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+                <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins rounded-t-xl">
                   Part A - Industry Level Use Cases (Ranked: Most to Least
                   Relevant)
                 </div>
-                <div className="border border-[#D3D1C7] bg-white">
+                <div className="border border-[#C4B89D]/50 bg-white">
                   <table className="w-full table-fixed border-collapse text-[12px] leading-[1.55] font-poppins">
                     <thead>
-                      <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-semibold uppercase">
+                      <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold uppercase">
                         <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[18%]">
                           Industry (Ranked)
                         </th>

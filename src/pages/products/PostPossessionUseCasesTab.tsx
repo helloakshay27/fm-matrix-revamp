@@ -300,58 +300,58 @@ const PostPossessionUseCasesTab: React.FC = () => {
       <div className="space-y-4">
         {/* Header */}
         <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
-          <h2 className="text-xl font-bold uppercase tracking-wider">
+          <h2 className="text-xl font-bold uppercase tracking-wider font-poppins">
             Part 1 — Industry Level (Residential Real Estate)
           </h2>
         </div>
 
-        <div className="border border-[#D3D1C7] bg-white rounded-b-xl overflow-x-auto shadow-sm">
+        <div className="border border-[#C4B89D]/50 bg-white rounded-b-xl overflow-x-auto shadow-sm">
           <table className="min-w-[1200px] w-full table-fixed border-collapse text-[13px] leading-relaxed font-poppins">
             <thead>
-              <tr className="bg-[#bdd7ee] text-[#2C2C2C] border-b border-[#D3D1C7] font-bold uppercase text-[10px] text-center sticky top-0">
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[4%]">Rank</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[12%]">Industry (Ranked)</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[15%]">Relevant Features & Teams Used</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[15%]">How They Will Use It</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[12%]">Ideal Company Profile</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[12%]">Current Tool Used</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[10%]">Urgency</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[10%]">Primary Buyer (Measured On)</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[10%]">Primary User (Daily Frustration)</th>
+              <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#C4B89D]/50 font-bold uppercase text-[10px] text-center sticky top-0">
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[4%]">Rank</th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[12%]">Industry (Ranked)</th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[15%]">Relevant Features & Teams Used</th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[15%]">How They Will Use It</th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[12%]">Ideal Company Profile</th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[12%]">Current Tool Used</th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[10%]">Urgency</th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[10%]">Primary Buyer (Measured On)</th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[10%]">Primary User (Daily Frustration)</th>
               </tr>
             </thead>
             <tbody>
               {postPossessionUseCases.industryLevel.map((useCase, i) => {
                 const isHighUrgency = useCase.urgency.includes("High");
-                const bgClass = isHighUrgency ? "bg-[#fef5f2]" : "bg-white";
+                const bgClass = i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]";
                 return (
-                  <tr key={`industry-${i}`} className={`${bgClass} align-top border-b border-[#D3D1C7]`}>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-center font-bold text-[#1f3864]">
+                  <tr key={`industry-${i}`} className={`${bgClass} align-top border-b border-[#C4B89D]/50 hover:bg-[#DA7756]/5 transition-colors`}>
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-center font-bold text-[#DA7756]">
                       {useCase.rank}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal font-semibold">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] break-words whitespace-normal font-semibold">
                       {useCase.industry}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                       {useCase.relevantFeatures}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                       {useCase.howTheyUseIt}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                       {useCase.idealCompanyProfile}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                       {useCase.currentToolUsed}
                     </td>
-                    <td className={`border border-[#d9d9d9] px-2 py-2 text-[11px] break-words whitespace-normal font-bold ${isHighUrgency ? "text-[#c5504f]" : "text-[#666]"
+                    <td className={`border border-[#C4B89D]/50 px-2 py-2 text-[11px] break-words whitespace-normal font-bold ${isHighUrgency ? "text-[#c5504f]" : "text-[#2C2C2C]/60"
                       }`}>
                       {useCase.urgency}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                       {useCase.primaryBuyer}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                       {useCase.primaryUser}
                     </td>
                   </tr>
@@ -365,37 +365,37 @@ const PostPossessionUseCasesTab: React.FC = () => {
       {/* Internal Teams Section */}
       <div className="space-y-4">
         {/* Header */}
-        <div className="bg-[#2e4057] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
+        <div className="bg-[#DA7756] text-white px-4 py-3 font-bold text-sm uppercase tracking-wide rounded-t-xl font-poppins">
           Part 2 — Internal Teams Level
         </div>
 
-        <div className="border border-[#D3D1C7] bg-white rounded-lg overflow-x-auto shadow-sm">
+        <div className="border border-[#C4B89D]/50 bg-white overflow-x-auto shadow-sm">
           <table className="min-w-[1200px] w-full table-fixed border-collapse text-[13px] leading-relaxed font-poppins">
             <thead>
-              <tr className="bg-[#bdd7ee] text-[#2C2C2C] border-b border-[#D3D1C7] font-bold uppercase text-[10px] text-center sticky top-0">
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[15%]">Team Name</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[18%]">Relevant Features & Processes</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[20%]">How They Use It Day-to-Day</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[27%]">Primary Benefit to This Team</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-center w-[12%]">Frequency of Use</th>
+              <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#C4B89D]/50 font-bold uppercase text-[10px] text-center sticky top-0">
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[15%]">Team Name</th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[18%]">Relevant Features & Processes</th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[20%]">How They Use It Day-to-Day</th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[27%]">Primary Benefit to This Team</th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-center w-[12%]">Frequency of Use</th>
               </tr>
             </thead>
             <tbody>
               {postPossessionUseCases.internalTeamsLevel.map((team, i) => (
-                <tr key={`team-${i}`} className="bg-white align-top border-b border-[#D3D1C7]">
-                  <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal font-semibold text-[11px]">
+                <tr key={`team-${i}`} className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"} align-top border-b border-[#C4B89D]/50 hover:bg-[#DA7756]/5 transition-colors`}>
+                  <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] break-words whitespace-normal font-semibold text-[11px]">
                     {team.teamName}
                   </td>
-                  <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                  <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                     {team.relevantFeatures}
                   </td>
-                  <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                  <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                     {team.dayToDayUsage}
                   </td>
-                  <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                  <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                     {team.primaryBenefit}
                   </td>
-                  <td className="border border-[#d9d9d9] px-2 py-2 text-center text-[#1f1f1f] text-[11px]">
+                  <td className="border border-[#C4B89D]/50 px-2 py-2 text-center text-[#2C2C2C]/80 text-[11px]">
                     {team.frequencyOfUse}
                   </td>
                 </tr>
@@ -406,9 +406,9 @@ const PostPossessionUseCasesTab: React.FC = () => {
       </div>
 
       {/* Legend / Disclaimer */}
-      <div className="bg-[#f9f9f9] border border-[#D3D1C7] rounded-xl p-3">
-        <p className="text-[11px] text-[#666] font-poppins">
-          ◆ <strong>Industry Table:</strong> Ranked by commercial relevance. High-urgency use cases highlighted.
+      <div className="bg-[#F6F4EE] border border-[#C4B89D] rounded-xl p-4">
+        <p className="text-[11px] text-[#2C2C2C]/60 font-poppins">
+          ◆ <strong>Industry Table:</strong> Ranked by commercial relevance. Alternating row colors for readability.
           <br />
           ◆ <strong>Teams Table:</strong> Internal organizational roles showing how teams use the platform
           daily across developer organizations.
