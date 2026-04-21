@@ -1,47 +1,56 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
+import { toast } from "sonner";
 
-// ── Design tokens — from BusinessPlanAndGoles ──
+// ── Design tokens ──
 const C = {
-  primary:           '#DA7756',
-  primaryHov:        '#c9673f',
-  primaryBg:         '#fdf9f7',
-  primaryTint:       'rgba(218,119,86,0.06)',
-  primaryBord:       '#e8e3de',
-  primaryBordStrong: '#d4cdc6',
-  pageBg:            '#f6f4ee',
-  cardBg:            '#ffffff',
-  tealBg:            '#9EC8BA',
-  textMain:          '#1a1a1a',
-  textMuted:         '#6b7280',
-  borderLgt:         '#ebebeb',
-  font:              "'Poppins', sans-serif",
+  primary: "#DA7756",
+  primaryHov: "#c9673f",
+  primaryBg: "#fdf9f7",
+  primaryTint: "rgba(218,119,86,0.06)",
+  primaryBord: "#e8e3de",
+  primaryBordStrong: "#d4cdc6",
+  pageBg: "#f6f4ee",
+  cardBg: "#ffffff",
+  tealBg: "#9EC8BA",
+  textMain: "#1a1a1a",
+  textMuted: "#6b7280",
+  borderLgt: "#ebebeb",
+  font: "'Poppins', sans-serif",
 };
 
 const getBaseUrl = () => {
-  const raw = (localStorage.getItem('baseUrl') || '').replace(/\/$/, '');
-  if (!raw) return '';
-  return raw.startsWith('http://') || raw.startsWith('https://') ? raw : `https://${raw}`;
+  const raw = (localStorage.getItem("baseUrl") || "").replace(/\/$/, "");
+  if (!raw) return "";
+  return raw.startsWith("http://") || raw.startsWith("https://")
+    ? raw
+    : `https://${raw}`;
 };
 
 export const BASE_URL = getBaseUrl();
 
 const getAuthHeaders = (): Record<string, string> => {
-  const token = localStorage.getItem('token') || '';
+  const token = localStorage.getItem("token") || "";
   return {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(token ? { Authorization: token } : {}),
   };
 };
 
 // ── Icons ──
 const DocIcon = () => (
-  <svg style={{ width: 17, height: 17, color: '#1a1a1a' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg style={{ width: 17, height: 17, color: "#1a1a1a" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
   </svg>
 );
+const FileIcon = () => (
+  <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h1.5m-1.5 4h6m-6 4h6" />
+  </svg>
+);
 const InfoIcon = () => (
-  <svg style={{ width: 15, height: 15, color: '#1a1a1a', opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg style={{ width: 15, height: 15, color: "#1a1a1a", opacity: 0.5 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
@@ -71,26 +80,172 @@ const EditIcon = () => (
   </svg>
 );
 const SearchIcon = () => (
-  <svg style={{ width: 15, height: 15, color: '#a3a3a3' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg style={{ width: 15, height: 15, color: "#a3a3a3" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
   </svg>
 );
 const RunningIcon = () => (
-  <svg style={{ width: 14, height: 14, color: '#16a34a' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg style={{ width: 14, height: 14, color: "#16a34a" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
 const BrokenIcon = () => (
-  <svg style={{ width: 14, height: 14, color: '#f87171' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <svg style={{ width: 14, height: 14, color: "#f87171" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
   </svg>
 );
 const LoaderIcon = () => (
-  <svg style={{ width: 15, height: 15, animation: 'kp-spin 0.8s linear infinite' }} fill="none" viewBox="0 0 24 24">
+  <svg style={{ width: 15, height: 15, animation: "kp-spin 0.8s linear infinite" }} fill="none" viewBox="0 0 24 24">
     <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
     <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
   </svg>
 );
+
+// ── Custom Searchable Select ──
+const SearchableSelect = ({ value, onChange, options, loading, placeholder }: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  const filteredOptions = options.filter((o: any) =>
+    o.name.toLowerCase().startsWith(search.toLowerCase())
+  );
+
+  const selectedName =
+    options.find((o: any) => String(o.id) === String(value))?.name ||
+    placeholder;
+
+  return (
+    <div ref={ref} style={{ position: "relative", width: "100%" }}>
+      <div
+        onClick={() => !loading && setIsOpen(!isOpen)}
+        className="kp-select"
+        style={{
+          cursor: loading ? "not-allowed" : "pointer",
+          display: "flex",
+          alignItems: "center",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          paddingRight: "36px",
+        }}
+      >
+        {loading ? "Loading..." : selectedName}
+      </div>
+
+      {isOpen && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            right: 0,
+            zIndex: 99,
+            background: "#fff",
+            border: `1px solid ${C.primaryBord}`,
+            borderRadius: 12,
+            marginTop: 6,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+            overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            maxHeight: 220,
+          }}
+        >
+          <input
+            type="text"
+            autoFocus
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="kp-input"
+            style={{
+              border: "none",
+              borderBottom: `1px solid ${C.borderLgt}`,
+              borderRadius: 0,
+              padding: "10px 14px",
+              background: "#fff",
+              outline: "none",
+            }}
+          />
+          <div className="kp-modal-body" style={{ overflowY: "auto", flex: 1 }}>
+            <div
+              onClick={() => {
+                onChange("");
+                setIsOpen(false);
+                setSearch("");
+              }}
+              style={{
+                padding: "10px 14px",
+                fontSize: 13,
+                cursor: "pointer",
+                fontFamily: C.font,
+                color: C.textMuted,
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#f9f9f9")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+            >
+              Clear selection
+            </div>
+            {filteredOptions.map((o: any) => {
+              const isSelected = String(o.id) === String(value);
+              return (
+                <div
+                  key={o.id}
+                  onClick={() => {
+                    onChange(String(o.id));
+                    setIsOpen(false);
+                    setSearch("");
+                  }}
+                  style={{
+                    padding: "10px 14px",
+                    fontSize: 13,
+                    cursor: "pointer",
+                    fontFamily: C.font,
+                    background: isSelected ? C.primaryTint : "transparent",
+                    color: isSelected ? C.primary : C.textMain,
+                    fontWeight: isSelected ? 700 : 500,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) e.currentTarget.style.background = "#f9f9f9";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) e.currentTarget.style.background = "transparent";
+                  }}
+                >
+                  {o.name}
+                </div>
+              );
+            })}
+            {filteredOptions.length === 0 && (
+              <div
+                style={{
+                  padding: "12px 14px",
+                  fontSize: 13,
+                  color: "#a3a3a3",
+                  fontStyle: "italic",
+                  textAlign: "center",
+                }}
+              >
+                No match found
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ── Theme Styles ──
 const ThemeStyle = () => (
@@ -189,7 +344,7 @@ const ThemeStyle = () => (
     .kp-process-card {
       background: #fff; border-radius: 14px;
       border: 1px solid #ebebeb; border-left: 4px solid #DA7756;
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; flex-direction: column; gap: 8px; 
       padding: 12px 16px;
       box-shadow: 0 1px 4px rgba(0,0,0,0.05);
       transition: box-shadow .2s, transform .2s;
@@ -216,43 +371,72 @@ const ThemeStyle = () => (
       display: flex; align-items: center; justify-content: space-between; gap: 8px;
       font-family: 'Poppins', sans-serif;
     }
+
+    /* ── Custom Tooltip Styles for Detailed Info ── */
+    .kp-tooltip {
+      position: absolute;
+      top: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 380px;
+      background-color: #0B1221;
+      color: #ffffff;
+      padding: 18px 24px;
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      z-index: 99999;
+      font-size: 12px;
+      line-height: 1.6;
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.08);
+      font-family: 'Poppins', sans-serif;
+      cursor: default;
+    }
   `}</style>
 );
 
 // ── Portal Modal ──
-const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => {
+const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () => void; }) => {
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, []);
   return ReactDOM.createPortal(
     <div className="kp-overlay" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       {children}
     </div>,
-    document.body,
+    document.body
   );
 };
 
 // ── Shared icon button ──
-const BtnIcon = ({ children, onClick, title = '', danger = false }: any) => (
+const BtnIcon = ({ children, onClick, title = "", danger = false }: any) => (
   <button
     onClick={onClick}
     title={title}
     style={{
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      width: 28, height: 28, borderRadius: 8,
-      background: '#fff', border: `1px solid ${C.primaryBord}`,
-      color: '#9ca3af', cursor: 'pointer',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      transition: 'all .15s',
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: 28,
+      height: 28,
+      borderRadius: 8,
+      background: "#fff",
+      border: `1px solid ${C.primaryBord}`,
+      color: "#9ca3af",
+      cursor: "pointer",
+      boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+      transition: "all .15s",
     }}
-    onMouseEnter={e => {
-      e.currentTarget.style.background = danger ? '#fff5f5' : C.primaryBg;
-      e.currentTarget.style.color = danger ? '#dc2626' : C.primary;
+    onMouseEnter={(e) => {
+      e.currentTarget.style.background = danger ? "#fff5f5" : C.primaryBg;
+      e.currentTarget.style.color = danger ? "#dc2626" : C.primary;
     }}
-    onMouseLeave={e => {
-      e.currentTarget.style.background = '#fff';
-      e.currentTarget.style.color = '#9ca3af';
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = "#fff";
+      e.currentTarget.style.color = "#9ca3af";
     }}
   >
     {children}
@@ -261,21 +445,27 @@ const BtnIcon = ({ children, onClick, title = '', danger = false }: any) => (
 
 // ── Status badge ──
 const STATUS_CONFIG: Record<string, { bg: string; color: string; border: string }> = {
-  "to start": { bg: '#fef9f0', color: '#92400e', border: '#fde68a' },
-  "running":  { bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' },
-  "broken":   { bg: '#fef2f2', color: '#991b1b', border: '#fecaca' },
-  "complete": { bg: '#fdf9f7', color: '#9a3412', border: '#e8e3de' },
+  "to start": { bg: "#fef9f0", color: "#92400e", border: "#fde68a" },
+  running: { bg: "#f0fdf4", color: "#166534", border: "#bbf7d0" },
+  broken: { bg: "#fef2f2", color: "#991b1b", border: "#fecaca" },
+  complete: { bg: "#fdf9f7", color: "#9a3412", border: "#e8e3de" },
 };
 const StatusBadge = ({ status }: { status: string }) => {
   const cfg = STATUS_CONFIG[status?.toLowerCase()] || STATUS_CONFIG["to start"];
   return (
-    <span style={{
-      background: cfg.bg, color: cfg.color,
-      border: `1px solid ${cfg.border}`,
-      fontSize: 11, fontWeight: 700,
-      padding: '3px 10px', borderRadius: 99,
-      whiteSpace: 'nowrap', fontFamily: C.font,
-    }}>
+    <span
+      style={{
+        background: cfg.bg,
+        color: cfg.color,
+        border: `1px solid ${cfg.border}`,
+        fontSize: 11,
+        fontWeight: 700,
+        padding: "3px 10px",
+        borderRadius: 99,
+        whiteSpace: "nowrap",
+        fontFamily: C.font,
+      }}
+    >
       {status}
     </span>
   );
@@ -296,185 +486,302 @@ interface SopItem {
 }
 
 const EMPTY_FORM = {
-  name: '', description: '', department_id: '', status: 'To Start',
-  priority: 'Medium', assignee_id: '', health_score: 0, documentation_url: '',
+  name: "",
+  description: "",
+  department_id: "",
+  status: "To Start",
+  priority: "Medium",
+  assignee_id: "",
+  health_score: 0,
+  documentation_url: "",
 };
 
-const STATUSES   = ["To Start", "Running", "Broken", "Complete"];
+const STATUSES = ["To Start", "Running", "Broken", "Complete"];
 const PRIORITIES = ["Low", "Medium", "High"];
 
 const labelSt: React.CSSProperties = {
-  display: 'block', fontSize: 12, fontWeight: 800,
-  color: '#1a1a1a', marginBottom: 6, fontFamily: C.font,
+  display: "block",
+  fontSize: 12,
+  fontWeight: 800,
+  color: "#1a1a1a",
+  marginBottom: 6,
+  fontFamily: C.font,
 };
 const reqStar = <span style={{ color: C.primary }}>*</span>;
 
 // ══════════════════════════════════════════════════════════
 export const KeyProcessesSection = () => {
   const [displayedSops, setDisplayedSops] = useState<SopItem[]>([]);
-  const [allSops, setAllSops]             = useState<SopItem[]>([]);
-  const [isFetching, setIsFetching]       = useState(true);
-  const [fetchError, setFetchError]       = useState<string | null>(null);
-  const [isSaving, setIsSaving]           = useState(false);
-  const [saveError, setSaveError]         = useState<string | null>(null);
-  const [activeModal, setActiveModal]     = useState<string | null>(null);
-  const [editingSop, setEditingSop]       = useState<SopItem | null>(null);
-  const [form, setForm]                   = useState<any>(EMPTY_FORM);
-  const [selectIds, setSelectIds]         = useState<number[]>([]);
-  const [searchQuery, setSearchQuery]     = useState('');
+  const [allSops, setAllSops] = useState<SopItem[]>([]);
+  const [isFetching, setIsFetching] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [editingSop, setEditingSop] = useState<SopItem | null>(null);
+  const [form, setForm] = useState<any>(EMPTY_FORM);
+  const [selectIds, setSelectIds] = useState<number[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // ── State for Image Info Tooltip ──
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
 
-  // ── GET ──
-  const fetchSops = useCallback(async () => {
-    setIsFetching(true); setFetchError(null);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [loadingDepts, setLoadingDepts] = useState(false);
+
+  const fetchDepartmentsAndUsers = useCallback(async () => {
     try {
-      const res = await fetch(`${BASE_URL}/system_sops`, { method: 'GET', headers: getAuthHeaders() });
+      setLoadingDepts(true);
+      const depRes = await fetch(`${BASE_URL}/pms/departments.json`, {
+        headers: getAuthHeaders(),
+      });
+      if (depRes.ok) {
+        const dJson = await depRes.json();
+        const dList = Array.isArray(dJson) ? dJson : dJson.departments || dJson.data || [];
+        const mappedDepts = dList
+          .filter((d) => d?.id)
+          .map((d) => ({
+            id: d.id,
+            name: d.name || d.title || d.department_name || d.label || `Dept ${d.id}`,
+          }));
+        setDepartments(mappedDepts);
+      }
+    } catch (err) {
+      console.error("Failed to fetch departments", err);
+    } finally {
+      setLoadingDepts(false);
+    }
+
+    try {
+      setLoadingUsers(true);
+      const orgId = localStorage.getItem("org_id") || "";
+      const userRes = await fetch(`${BASE_URL}/api/users?organization_id=${orgId}`, { headers: getAuthHeaders() });
+      if (userRes.ok) {
+        const uJson = await userRes.json();
+        const uList = Array.isArray(uJson) ? uJson : uJson.users || uJson.data || [];
+        const mappedUsers = uList
+          .filter((u) => u?.id)
+          .map((u) => {
+            const fName = u.full_name || u.name || `${u.first_name || ""} ${u.last_name || ""}`.trim();
+            return {
+              id: u.id,
+              name: fName || `User ${u.id}`,
+            };
+          });
+        setUsers(mappedUsers);
+      }
+    } catch (err) {
+      console.error("Failed to fetch users", err);
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDepartmentsAndUsers();
+  }, [fetchDepartmentsAndUsers]);
+
+  const fetchSops = useCallback(async () => {
+    setIsFetching(true);
+    setFetchError(null);
+    try {
+      const res = await fetch(`${BASE_URL}/system_sops`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+      });
       const rawText = await res.text();
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       let json: any;
-      try { json = JSON.parse(rawText); } catch { json = []; }
+      try {
+        json = JSON.parse(rawText);
+      } catch {
+        json = [];
+      }
       const records: any[] = Array.isArray(json) ? json : json.data || json.system_sops || [];
       const mapped: SopItem[] = records.map((r: any) => ({
-        id:                r.id,
-        name:              r.system_name || r.name || '',
-        status:            (r.status || 'to start').toLowerCase(),
-        description:       r.description || '',
-        owner:             r.assignee?.name || r.owner || null,
-        health:            r.health_score ?? 0,
-        priority:          r.priority || 'medium priority',
-        documentation_url: r.documentation_url || '',
-        department_id:     r.department_id || null,
-        assignee_id:       r.assignee_id || null,
+        id: r.id,
+        name: r.system_name || r.name || "",
+        status: (r.status || "to start").toLowerCase(),
+        description: r.description || "",
+        owner: r.assignee?.name || r.owner || null,
+        health: r.health_score ?? 0,
+        priority: r.priority || "medium priority",
+        documentation_url: r.documentation_url || "",
+        department_id: r.department_id || null,
+        assignee_id: r.assignee_id || null,
       }));
       setAllSops(mapped);
       const initial = mapped.slice(0, 6);
       setDisplayedSops(initial);
-      setSelectIds(initial.map(s => s.id));
+      setSelectIds(initial.map((s) => s.id));
     } catch (err: any) {
-      setFetchError(err.message || 'Failed to load SOPs.');
+      setFetchError(err.message || "Failed to load SOPs.");
     } finally {
       setIsFetching(false);
     }
   }, []);
 
-  useEffect(() => { fetchSops(); }, [fetchSops]);
+  useEffect(() => {
+    fetchSops();
+  }, [fetchSops]);
 
-  // ── POST ──
   const createSop = async () => {
-    if (!form.name.trim()) { setSaveError('System name is required.'); return; }
-    setIsSaving(true); setSaveError(null);
+    if (!form.name.trim()) {
+      setSaveError("System name is required.");
+      toast.error("System name is required.");
+      return;
+    }
+    setIsSaving(true);
+    setSaveError(null);
     try {
       const payload = {
         system_sop: {
-          system_name:       form.name.trim(),
-          description:       form.description || '',
-          department_id:     form.department_id ? Number(form.department_id) : null,
-          status:            form.status,
-          priority:          form.priority,
-          assignee_id:       form.assignee_id ? Number(form.assignee_id) : null,
-          health_score:      Number(form.health_score) || 0,
-          documentation_url: form.documentation_url || '',
-          kpis:              [],
+          system_name: form.name.trim(),
+          description: form.description || "",
+          department_id: form.department_id ? Number(form.department_id) : null,
+          status: form.status,
+          priority: form.priority,
+          assignee_id: form.assignee_id ? Number(form.assignee_id) : null,
+          health_score: Number(form.health_score) || 0,
+          documentation_url: form.documentation_url || "",
+          kpis: [],
         },
       };
       const res = await fetch(`${BASE_URL}/system_sops`, {
-        method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(payload),
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) { const t = await res.text(); throw new Error(`API error ${res.status}: ${t || res.statusText}`); }
-      closeModal(); fetchSops();
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(`API error ${res.status}: ${t || res.statusText}`);
+      }
+      closeModal();
+      fetchSops();
+      toast.success("System/SOP created successfully!");
     } catch (err: any) {
-      setSaveError(err.message || 'Failed to create SOP.');
+      setSaveError(err.message || "Failed to create SOP.");
+      toast.error(err.message || "Failed to create SOP.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // ── PUT ──
   const updateSop = async () => {
-    if (!editingSop || !form.name.trim()) { setSaveError('System name is required.'); return; }
-    setIsSaving(true); setSaveError(null);
+    if (!editingSop || !form.name.trim()) {
+      setSaveError("System name is required.");
+      toast.error("System name is required.");
+      return;
+    }
+    setIsSaving(true);
+    setSaveError(null);
     try {
       const payload = {
         system_sop: {
-          system_name:       form.name.trim(),
-          description:       form.description || '',
-          status:            form.status,
-          priority:          form.priority,
-          health_score:      Number(form.health_score) || 0,
-          documentation_url: form.documentation_url || '',
-          kpis:              [],
+          system_name: form.name.trim(),
+          description: form.description || "",
+          department_id: form.department_id ? Number(form.department_id) : null,
+          status: form.status,
+          priority: form.priority,
+          assignee_id: form.assignee_id ? Number(form.assignee_id) : null,
+          health_score: Number(form.health_score) || 0,
+          documentation_url: form.documentation_url || "",
+          kpis: [],
         },
       };
       const res = await fetch(`${BASE_URL}/system_sops/${editingSop.id}`, {
-        method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(payload),
+        method: "PUT",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) { const t = await res.text(); throw new Error(`API error ${res.status}: ${t || res.statusText}`); }
-      closeModal(); fetchSops();
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(`API error ${res.status}: ${t || res.statusText}`);
+      }
+      closeModal();
+      fetchSops();
+      toast.success("System/SOP updated successfully!");
     } catch (err: any) {
-      setSaveError(err.message || 'Failed to update SOP.');
+      setSaveError(err.message || "Failed to update SOP.");
+      toast.error(err.message || "Failed to update SOP.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // ── DELETE ──
   const deleteSop = async (id: number) => {
-    if (!window.confirm('Delete this SOP?')) return;
+    if (!window.confirm("Delete this SOP?")) return;
     try {
       const res = await fetch(`${BASE_URL}/system_sops/${id}`, {
-        method: 'DELETE', headers: getAuthHeaders(),
+        method: "DELETE",
+        headers: getAuthHeaders(),
       });
-      if (!res.ok) { const t = await res.text(); throw new Error(`API error ${res.status}: ${t}`); }
-      setDisplayedSops(prev => prev.filter(s => s.id !== id));
-      setAllSops(prev => prev.filter(s => s.id !== id));
-      setSelectIds(prev => prev.filter(x => x !== id));
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(`API error ${res.status}: ${t}`);
+      }
+      setDisplayedSops((prev) => prev.filter((s) => s.id !== id));
+      setAllSops((prev) => prev.filter((s) => s.id !== id));
+      setSelectIds((prev) => prev.filter((x) => x !== id));
+      toast.success("System/SOP deleted successfully!");
     } catch (err: any) {
-      alert(`Delete failed: ${err.message}`);
+      toast.error(`Delete failed: ${err.message}`);
     }
   };
 
-  // ── Modal helpers ──
   const closeModal = () => {
-    setActiveModal(null); setForm(EMPTY_FORM);
-    setEditingSop(null); setSaveError(null); setSearchQuery('');
+    setActiveModal(null);
+    setForm(EMPTY_FORM);
+    setEditingSop(null);
+    setSaveError(null);
+    setSearchQuery("");
   };
   const openCreate = () => {
-    setEditingSop(null); setForm(EMPTY_FORM); setSaveError(null);
-    setActiveModal('create');
+    setEditingSop(null);
+    setForm(EMPTY_FORM);
+    setSaveError(null);
+    setActiveModal("create");
   };
   const openEdit = (sop: SopItem) => {
     setEditingSop(sop);
     setForm({
-      name:              sop.name,
-      description:       sop.description || '',
-      status:            sop.status.charAt(0).toUpperCase() + sop.status.slice(1),
-      priority:          sop.priority?.replace(' priority', '') || 'Medium',
-      health_score:      sop.health ?? 0,
-      documentation_url: sop.documentation_url || '',
-      department_id:     sop.department_id || '',
-      assignee_id:       sop.assignee_id || '',
+      name: sop.name,
+      description: sop.description || "",
+      status: sop.status.charAt(0).toUpperCase() + sop.status.slice(1),
+      priority: sop.priority?.replace(" priority", "") || "Medium",
+      health_score: sop.health ?? 0,
+      documentation_url: sop.documentation_url || "",
+      department_id: sop.department_id ? String(sop.department_id) : "",
+      assignee_id: sop.assignee_id ? String(sop.assignee_id) : "",
     });
     setSaveError(null);
-    setActiveModal('edit');
+    setActiveModal("edit");
   };
   const openSelect = () => {
-    setSelectIds(displayedSops.map(s => s.id));
-    setSearchQuery(''); setSaveError(null);
-    setActiveModal('select');
+    setSelectIds(displayedSops.map((s) => s.id));
+    setSearchQuery("");
+    setSaveError(null);
+    setActiveModal("select");
   };
   const toggleSelect = (id: number) =>
-    setSelectIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    setSelectIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
   const handleSaveSelection = () => {
-    setDisplayedSops(allSops.filter(s => selectIds.includes(s.id)));
+    setDisplayedSops(allSops.filter((s) => selectIds.includes(s.id)));
     closeModal();
   };
 
-  const filteredSops  = allSops.filter(s =>
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (s.owner || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.status.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredSops = allSops.filter(
+    (s) =>
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.owner || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.status.toLowerCase().includes(searchQuery.toLowerCase())
   );
   const selectedCount = selectIds.length;
-  const isValidCount  = selectedCount >= 3 && selectedCount <= 6;
+  const isValidCount = selectedCount >= 3 && selectedCount <= 6;
 
   const Shimmer = ({ h = 56 }: { h?: number }) => (
     <div className="kp-skeleton" style={{ height: h }} />
@@ -484,119 +791,310 @@ export const KeyProcessesSection = () => {
     <div className="kp-wrap" style={{ fontFamily: C.font, marginTop: 24 }}>
       <ThemeStyle />
 
-      {/* ── Section wrapper ── */}
-      <div style={{ borderRadius: 8, overflow: 'hidden', border: `1px solid ${C.primaryBord}`, boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-
-        {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '18px 20px', background: C.tealBg,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: 'rgba(255,255,255,0.30)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            }}>
+      <div
+        style={{
+          borderRadius: 8,
+          // Removed overflow: "hidden" from here to prevent tooltip clipping
+          border: `1px solid ${C.primaryBord}`,
+          boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "18px 20px",
+            background: C.tealBg,
+            // Added explicit border-radius for the top header
+            borderTopLeftRadius: 8,
+            borderTopRightRadius: 8,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 10,
+                background: "rgba(255,255,255,0.30)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
               <DocIcon />
             </div>
-            <h1 style={{
-              fontSize: 12, fontWeight: 900, color: '#070707', margin: 0,
-              letterSpacing: '0.15em', textTransform: 'uppercase', fontFamily: C.font,
-            }}>
+            <h1
+              style={{
+                fontSize: 12,
+                fontWeight: 900,
+                color: "#070707",
+                margin: 0,
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                fontFamily: C.font,
+              }}
+            >
               Key Processes (SOPs)
             </h1>
-            <InfoIcon />
+
+            {/* ── Updated Info Icon with Image Exact Tooltip ── */}
+            <div
+              style={{ position: "relative", display: "flex", alignItems: "center", cursor: "pointer" }}
+              onMouseEnter={() => setShowInfoTooltip(true)}
+              onMouseLeave={() => setShowInfoTooltip(false)}
+            >
+              <InfoIcon />
+              {showInfoTooltip && (
+                <div className="kp-tooltip">
+                  <div style={{ fontWeight: 800, marginBottom: 12, fontSize: 13 }}>
+                    SWOT Analysis - Know Yourself
+                  </div>
+                  <div style={{ marginBottom: 12 }}>
+                    <span style={{ fontWeight: 800 }}>Strengths & Weaknesses:</span> What you control inside your business
+                  </div>
+                  <div style={{ marginBottom: 16 }}>
+                    <span style={{ fontWeight: 800 }}>Opportunities & Threats:</span> External market forces you must respond to
+                  </div>
+                  <div style={{ fontStyle: "italic", marginBottom: 16, color: "#cbd5e1" }}>
+                    From Scaling Up: "Leverage your strengths, shore up weaknesses, exploit opportunities, and protect against threats."
+                  </div>
+                  <div style={{ marginBottom: 4, color: "#cbd5e1" }}>
+                    Indian context examples:
+                  </div>
+                  <div style={{ fontStyle: "italic", color: "#cbd5e1" }}>
+                    Opportunity: Growing middle class, Digital India push, GST simplification
+                  </div>
+                  <div style={{ fontStyle: "italic", color: "#cbd5e1", marginTop: 4 }}>
+                    Threat: New competitors, regulatory changes, talent shortage in smaller cities
+                  </div>
+                </div>
+              )}
+            </div>
+
             {isFetching && <LoaderIcon />}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button
               onClick={openCreate}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                fontSize: 12, fontWeight: 800, color: '#070707',
-                background: 'rgba(255,255,255,0.25)',
-                border: '1px solid rgba(255,255,255,0.40)',
-                borderRadius: 8, padding: '6px 14px', cursor: 'pointer',
-                fontFamily: C.font, transition: 'background .15s',
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 12,
+                fontWeight: 800,
+                color: "#070707",
+                background: "rgba(255,255,255,0.25)",
+                border: "1px solid rgba(255,255,255,0.40)",
+                borderRadius: 8,
+                padding: "6px 14px",
+                cursor: "pointer",
+                fontFamily: C.font,
+                transition: "background .15s",
               }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.40)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.25)'}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.40)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(255,255,255,0.25)")}
             >
               <PlusIcon /> Create New
             </button>
-            <div style={{ width: 1, height: 16, background: 'rgba(0,0,0,0.15)' }} />
+            <div style={{ width: 1, height: 16, background: "rgba(0,0,0,0.15)" }} />
             <button
               onClick={openSelect}
               style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                fontSize: 12, fontWeight: 800, color: '#070707',
-                background: 'transparent', border: 'none', cursor: 'pointer',
-                fontFamily: C.font, opacity: 0.7, transition: 'opacity .15s',
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                fontSize: 12,
+                fontWeight: 800,
+                color: "#070707",
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: C.font,
+                opacity: 0.7,
+                transition: "opacity .15s",
               }}
-              onMouseEnter={e => e.currentTarget.style.opacity = '1'}
-              onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "1")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "0.7")}
             >
               <SelectIcon /> Select
             </button>
           </div>
         </div>
 
-        {/* Body */}
-        <div style={{ padding: 20, background: C.primaryBg }}>
-
+        {/* Added explicit border-radius for the bottom content area */}
+        <div style={{ padding: 20, background: C.primaryBg, borderBottomLeftRadius: 8, borderBottomRightRadius: 8 }}>
           {fetchError && (
             <div className="kp-error-banner" style={{ marginBottom: 16 }}>
               <span>⚠ {fetchError}</span>
               <button
                 onClick={fetchSops}
-                style={{ fontSize: 11, fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', color: '#991b1b', textDecoration: 'underline', fontFamily: C.font }}
-              >Retry</button>
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#991b1b",
+                  textDecoration: "underline",
+                  fontFamily: C.font,
+                }}
+              >
+                Retry
+              </button>
             </div>
           )}
 
           {isFetching ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
-              {[1, 2, 3].map(n => <Shimmer key={n} />)}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3,1fr)",
+                gap: 12,
+              }}
+            >
+              {[1, 2, 3].map((n) => (
+                <Shimmer key={n} />
+              ))}
             </div>
           ) : displayedSops.length === 0 ? (
             <button
               onClick={openCreate}
               style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                width: '100%', padding: '36px 0',
-                borderRadius: 14, border: `2px dashed ${C.primaryBord}`,
-                background: C.primaryTint, cursor: 'pointer', fontFamily: C.font,
-                transition: 'all .15s',
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "100%",
+                padding: "36px 0",
+                borderRadius: 14,
+                border: `2px dashed ${C.primaryBord}`,
+                background: C.primaryTint,
+                cursor: "pointer",
+                fontFamily: C.font,
+                transition: "all .15s",
               }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = C.primary; e.currentTarget.style.background = '#fdf9f7'; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = C.primaryBord; e.currentTarget.style.background = C.primaryTint; }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = C.primary;
+                e.currentTarget.style.background = "#fdf9f7";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = C.primaryBord;
+                e.currentTarget.style.background = C.primaryTint;
+              }}
             >
-              <div style={{
-                width: 36, height: 36, borderRadius: '50%',
-                background: 'rgba(218,119,86,0.18)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginBottom: 8, color: C.primary,
-              }}>
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  background: "rgba(218,119,86,0.18)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 8,
+                  color: C.primary,
+                }}
+              >
                 <PlusIcon />
               </div>
-              <span style={{ fontSize: 13, fontWeight: 900, color: C.primary }}>Add Key Processes</span>
+              <span style={{ fontSize: 13, fontWeight: 900, color: C.primary }}>
+                Add Key Processes
+              </span>
             </button>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12 }}>
-              {displayedSops.map(p => (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3,1fr)",
+                gap: 12,
+              }}
+            >
+              {displayedSops.map((p) => (
                 <div key={p.id} className="kp-process-card">
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.textMain, lineHeight: 1.4, fontFamily: C.font }}>
-                    {p.name}
-                  </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginLeft: 8 }}>
-                    <StatusBadge status={p.status} />
-                    <div className="card-actions" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <BtnIcon onClick={() => openEdit(p)} title="Edit"><EditIcon /></BtnIcon>
-                      <BtnIcon onClick={() => deleteSop(p.id)} title="Delete" danger><TrashIcon /></BtnIcon>
+                  {/* Top Row: Title + Status + Actions */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: C.textMain,
+                        lineHeight: 1.4,
+                        fontFamily: C.font,
+                        paddingRight: 8,
+                      }}
+                    >
+                      {p.name}
+                    </span>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <StatusBadge status={p.status} />
+                      <div
+                        className="card-actions"
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                        }}
+                      >
+                        <BtnIcon onClick={() => openEdit(p)} title="Edit">
+                          <EditIcon />
+                        </BtnIcon>
+                        <BtnIcon
+                          onClick={() => deleteSop(p.id)}
+                          title="Delete"
+                          danger
+                        >
+                          <TrashIcon />
+                        </BtnIcon>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Bottom Row: Documentation Link (Only renders if URL exists) */}
+                  {p.documentation_url && (
+                    <a
+                      href={p.documentation_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 4,
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: "#059669",
+                        textDecoration: "none",
+                        width: "fit-content",
+                        marginTop: 4,
+                        fontFamily: C.font,
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.textDecoration = "underline")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.textDecoration = "none")
+                      }
+                    >
+                      <FileIcon /> View Document &rarr;
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
@@ -605,120 +1103,249 @@ export const KeyProcessesSection = () => {
       </div>
 
       {/* ══ MODAL: Create / Edit ══ */}
-      {(activeModal === 'create' || activeModal === 'edit') && (
+      {(activeModal === "create" || activeModal === "edit") && (
         <Modal onClose={closeModal}>
           <div className="kp-modal" style={{ maxWidth: 480 }}>
-
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '20px 28px 16px',
-              borderBottom: `1px solid ${C.primaryBord}`,
-              background: C.cardBg, flexShrink: 0,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: C.primary, display: 'inline-block', flexShrink: 0 }} />
-                <h2 style={{ fontSize: 17, fontWeight: 900, color: C.textMain, margin: 0, fontFamily: C.font }}>
-                  {activeModal === 'edit' ? 'Edit SOP' : 'Create New SOP'}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "20px 28px 16px",
+                borderBottom: `1px solid ${C.primaryBord}`,
+                background: C.cardBg,
+                flexShrink: 0,
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    background: C.primary,
+                    display: "inline-block",
+                    flexShrink: 0,
+                  }}
+                />
+                <h2
+                  style={{
+                    fontSize: 17,
+                    fontWeight: 900,
+                    color: C.textMain,
+                    margin: 0,
+                    fontFamily: C.font,
+                  }}
+                >
+                  {activeModal === "edit" ? "Edit SOP" : "Create New SOP"}
                 </h2>
               </div>
-              <BtnIcon onClick={closeModal}><CloseIcon /></BtnIcon>
+              <BtnIcon onClick={closeModal}>
+                <CloseIcon />
+              </BtnIcon>
             </div>
 
-            <div className="kp-modal-body" style={{ padding: '20px 28px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div
+              className="kp-modal-body"
+              style={{
+                padding: "20px 28px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 16,
+              }}
+            >
               {saveError && <div className="kp-error-banner">{saveError}</div>}
 
               <div>
                 <label style={labelSt}>System Name {reqStar}</label>
-                <input type="text" placeholder="e.g., Customer Onboarding Process"
-                  value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                  className="kp-input" autoFocus />
+                <input
+                  type="text"
+                  placeholder="e.g., Customer Onboarding Process"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  className="kp-input"
+                  autoFocus
+                />
               </div>
               <div>
                 <label style={labelSt}>Description</label>
-                <textarea placeholder="What does this system do?"
-                  value={form.description} onChange={e => setForm({ ...form, description: e.target.value })}
-                  className="kp-textarea" />
+                <textarea
+                  placeholder="What does this system do?"
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                  className="kp-textarea"
+                />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 14,
+                }}
+              >
                 <div>
                   <label style={labelSt}>Status {reqStar}</label>
-                  <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="kp-select">
-                    {STATUSES.map(s => <option key={s}>{s}</option>)}
+                  <select
+                    value={form.status}
+                    onChange={(e) =>
+                      setForm({ ...form, status: e.target.value })
+                    }
+                    className="kp-select"
+                  >
+                    {STATUSES.map((s) => (
+                      <option key={s}>{s}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
                   <label style={labelSt}>Priority</label>
-                  <select value={form.priority} onChange={e => setForm({ ...form, priority: e.target.value })} className="kp-select">
-                    {PRIORITIES.map(p => <option key={p}>{p}</option>)}
+                  <select
+                    value={form.priority}
+                    onChange={(e) =>
+                      setForm({ ...form, priority: e.target.value })
+                    }
+                    className="kp-select"
+                  >
+                    {PRIORITIES.map((p) => (
+                      <option key={p}>{p}</option>
+                    ))}
                   </select>
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 14,
+                }}
+              >
                 <div>
                   <label style={labelSt}>Health Score (0–100)</label>
-                  <input type="number" min="0" max="100"
-                    value={form.health_score} onChange={e => setForm({ ...form, health_score: e.target.value })}
-                    className="kp-input" />
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={form.health_score}
+                    onChange={(e) =>
+                      setForm({ ...form, health_score: e.target.value })
+                    }
+                    className="kp-input"
+                  />
                 </div>
                 <div>
-                  <label style={labelSt}>Department ID</label>
-                  <input type="number" placeholder="e.g. 1"
-                    value={form.department_id} onChange={e => setForm({ ...form, department_id: e.target.value })}
-                    className="kp-input" />
+                  <label style={labelSt}>Department</label>
+                  <SearchableSelect
+                    value={form.department_id}
+                    onChange={(v: string) =>
+                      setForm({ ...form, department_id: v })
+                    }
+                    options={departments}
+                    loading={loadingDepts}
+                    placeholder="Search department"
+                  />
                 </div>
               </div>
+
               <div>
-                <label style={labelSt}>Assignee ID</label>
-                <input type="number" placeholder="e.g. 123"
-                  value={form.assignee_id} onChange={e => setForm({ ...form, assignee_id: e.target.value })}
-                  className="kp-input" />
+                <label style={labelSt}>Assignee</label>
+                <SearchableSelect
+                  value={form.assignee_id}
+                  onChange={(v: string) => setForm({ ...form, assignee_id: v })}
+                  options={users}
+                  loading={loadingUsers}
+                  placeholder="Search & select user"
+                />
               </div>
+
               <div>
                 <label style={labelSt}>Documentation URL</label>
-                <input type="text" placeholder="https://..."
-                  value={form.documentation_url} onChange={e => setForm({ ...form, documentation_url: e.target.value })}
-                  className="kp-input" />
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={form.documentation_url}
+                  onChange={(e) =>
+                    setForm({ ...form, documentation_url: e.target.value })
+                  }
+                  className="kp-input"
+                />
               </div>
             </div>
 
-            <div style={{
-              display: 'flex', justifyContent: 'flex-end', gap: 10,
-              padding: '16px 28px',
-              borderTop: `1px solid ${C.primaryBord}`,
-              background: C.cardBg, flexShrink: 0,
-              borderRadius: '0 0 20px 20px',
-            }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 10,
+                padding: "16px 28px",
+                borderTop: `1px solid ${C.primaryBord}`,
+                background: C.cardBg,
+                flexShrink: 0,
+                borderRadius: "0 0 20px 20px",
+              }}
+            >
               <button
                 onClick={closeModal}
                 style={{
-                  padding: '10px 20px', fontSize: 13, fontWeight: 700,
-                  color: C.textMain, background: '#fff',
+                  padding: "10px 20px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: C.textMain,
+                  background: "#fff",
                   border: `1px solid ${C.primaryBord}`,
-                  borderRadius: 12, cursor: 'pointer', fontFamily: C.font,
-                  transition: 'background .15s',
+                  borderRadius: 12,
+                  cursor: "pointer",
+                  fontFamily: C.font,
+                  transition: "background .15s",
                 }}
-                onMouseEnter={e => e.currentTarget.style.background = C.primaryBg}
-                onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = C.primaryBg)
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "#fff")
+                }
               >
                 Cancel
               </button>
               <button
-                onClick={activeModal === 'edit' ? updateSop : createSop}
+                onClick={activeModal === "edit" ? updateSop : createSop}
                 disabled={isSaving || !form.name.trim()}
                 style={{
-                  padding: '10px 22px', fontSize: 13, fontWeight: 900, color: '#fff',
-                  background: form.name.trim() && !isSaving ? '#1a1a1a' : '#9ca3af',
-                  border: 'none', borderRadius: 12,
-                  cursor: form.name.trim() && !isSaving ? 'pointer' : 'not-allowed',
-                  boxShadow: form.name.trim() ? '0 2px 8px rgba(0,0,0,0.15)' : 'none',
-                  transition: 'background .15s',
-                  display: 'flex', alignItems: 'center', gap: 8, fontFamily: C.font,
+                  padding: "10px 22px",
+                  fontSize: 13,
+                  fontWeight: 900,
+                  color: "#fff",
+                  background:
+                    form.name.trim() && !isSaving ? "#1a1a1a" : "#9ca3af",
+                  border: "none",
+                  borderRadius: 12,
+                  cursor:
+                    form.name.trim() && !isSaving ? "pointer" : "not-allowed",
+                  boxShadow: form.name.trim()
+                    ? "0 2px 8px rgba(0,0,0,0.15)"
+                    : "none",
+                  transition: "background .15s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  fontFamily: C.font,
                 }}
-                onMouseEnter={e => { if (form.name.trim() && !isSaving) e.currentTarget.style.background = '#000'; }}
-                onMouseLeave={e => { if (form.name.trim() && !isSaving) e.currentTarget.style.background = '#1a1a1a'; }}
+                onMouseEnter={(e) => {
+                  if (form.name.trim() && !isSaving)
+                    e.currentTarget.style.background = "#000";
+                }}
+                onMouseLeave={(e) => {
+                  if (form.name.trim() && !isSaving)
+                    e.currentTarget.style.background = "#1a1a1a";
+                }}
               >
                 {isSaving && <LoaderIcon />}
-                {isSaving ? 'Saving...' : activeModal === 'edit' ? 'Save Changes' : 'Create SOP'}
+                {isSaving
+                  ? "Saving..."
+                  : activeModal === "edit"
+                    ? "Save Changes"
+                    : "Create SOP"}
               </button>
             </div>
           </div>
@@ -726,59 +1353,138 @@ export const KeyProcessesSection = () => {
       )}
 
       {/* ══ MODAL: Select Key Processes ══ */}
-      {activeModal === 'select' && (
+      {activeModal === "select" && (
         <Modal onClose={closeModal}>
           <div className="kp-modal" style={{ maxWidth: 660 }}>
-
-            <div style={{
-              flexShrink: 0, padding: '20px 28px 16px',
-              background: C.cardBg,
-              borderBottom: `1px solid ${C.primaryBord}`,
-            }}>
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: C.primary, display: 'inline-block', flexShrink: 0 }} />
+            <div
+              style={{
+                flexShrink: 0,
+                padding: "20px 28px 16px",
+                background: C.cardBg,
+                borderBottom: `1px solid ${C.primaryBord}`,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <span
+                    style={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: C.primary,
+                      display: "inline-block",
+                      flexShrink: 0,
+                    }}
+                  />
                   <div>
-                    <h2 style={{ fontSize: 17, fontWeight: 900, color: C.textMain, margin: '0 0 2px', fontFamily: C.font }}>
+                    <h2
+                      style={{
+                        fontSize: 17,
+                        fontWeight: 900,
+                        color: C.textMain,
+                        margin: "0 0 2px",
+                        fontFamily: C.font,
+                      }}
+                    >
                       Select Key Processes
                     </h2>
-                    <p style={{ fontSize: 12, fontWeight: 600, color: C.textMuted, margin: 0, fontFamily: C.font }}>
+                    <p
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 600,
+                        color: C.textMuted,
+                        margin: 0,
+                        fontFamily: C.font,
+                      }}
+                    >
                       3 to 6 recommended — choose your most critical SOPs
                     </p>
                   </div>
                 </div>
-                <BtnIcon onClick={closeModal}><CloseIcon /></BtnIcon>
+                <BtnIcon onClick={closeModal}>
+                  <CloseIcon />
+                </BtnIcon>
               </div>
             </div>
 
-            <div style={{ padding: '14px 28px 8px', flexShrink: 0 }}>
-              <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)' }}>
+            <div style={{ padding: "14px 28px 8px", flexShrink: 0 }}>
+              <div style={{ position: "relative" }}>
+                <span
+                  style={{
+                    position: "absolute",
+                    left: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                  }}
+                >
                   <SearchIcon />
                 </span>
                 <input
-                  type="text" placeholder="Search by name, owner, or status..."
-                  value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                  type="text"
+                  placeholder="Search by name, owner, or status..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="kp-search"
                 />
               </div>
             </div>
 
-            <div style={{ padding: '0 28px 12px', flexShrink: 0 }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '10px 14px', borderRadius: 10,
-                background: C.primaryTint, border: `1px solid ${C.primaryBord}`,
-              }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: C.textMuted, fontFamily: C.font }}>
-                  <span style={{ fontWeight: 800, color: C.textMain }}>{selectedCount} selected</span>
-                  {' · '}
+            <div style={{ padding: "0 28px 12px", flexShrink: 0 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "10px 14px",
+                  borderRadius: 10,
+                  background: C.primaryTint,
+                  border: `1px solid ${C.primaryBord}`,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: C.textMuted,
+                    fontFamily: C.font,
+                  }}
+                >
+                  <span style={{ fontWeight: 800, color: C.textMain }}>
+                    {selectedCount} selected
+                  </span>
+                  {" · "}
                   <span>{filteredSops.length} shown</span>
                 </span>
                 {isValidCount && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 800, color: C.primary, fontFamily: C.font }}>
-                    <svg style={{ width: 13, height: 13 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      fontSize: 12,
+                      fontWeight: 800,
+                      color: C.primary,
+                      fontFamily: C.font,
+                    }}
+                  >
+                    <svg
+                      style={{ width: 13, height: 13 }}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={3}
+                        d="M5 13l4 4L19 7"
+                      />
                     </svg>
                     Valid count
                   </span>
@@ -786,92 +1492,225 @@ export const KeyProcessesSection = () => {
               </div>
             </div>
 
-            <div className="kp-modal-body" style={{ padding: '0 28px 12px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div
+              className="kp-modal-body"
+              style={{
+                padding: "0 28px 12px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+              }}
+            >
               {isFetching ? (
-                [1, 2, 3].map(n => <div key={n} className="kp-skeleton" style={{ height: 72 }} />)
+                [1, 2, 3].map((n) => (
+                  <div key={n} className="kp-skeleton" style={{ height: 72 }} />
+                ))
               ) : filteredSops.length === 0 ? (
-                <p style={{ textAlign: 'center', color: '#a3a3a3', fontSize: 13, padding: '24px 0', fontFamily: C.font }}>
+                <p
+                  style={{
+                    textAlign: "center",
+                    color: "#a3a3a3",
+                    fontSize: 13,
+                    padding: "24px 0",
+                    fontFamily: C.font,
+                  }}
+                >
                   No SOPs found.
                 </p>
-              ) : filteredSops.map(sop => {
-                const isSel = selectIds.includes(sop.id);
-                return (
-                  <div
-                    key={sop.id}
-                    className={`kp-list-item${isSel ? ' selected-item' : ''}`}
-                    onClick={() => toggleSelect(sop.id)}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <div className={`kp-checkbox-custom${isSel ? ' checked' : ''}`} style={{ marginTop: 2 }}>
-                        {isSel && (
-                          <svg style={{ width: 10, height: 10, color: '#fff' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3.5} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                          <span style={{ fontSize: 13, fontWeight: 800, color: C.textMain, fontFamily: C.font }}>{sop.name}</span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                            {sop.status === 'running' ? <RunningIcon /> : sop.status === 'broken' ? <BrokenIcon /> : null}
-                            <StatusBadge status={sop.status} />
-                          </div>
+              ) : (
+                filteredSops.map((sop) => {
+                  const isSel = selectIds.includes(sop.id);
+                  return (
+                    <div
+                      key={sop.id}
+                      className={`kp-list-item${isSel ? " selected-item" : ""}`}
+                      onClick={() => toggleSelect(sop.id)}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 12,
+                        }}
+                      >
+                        <div
+                          className={`kp-checkbox-custom${isSel ? " checked" : ""}`}
+                          style={{ marginTop: 2 }}
+                        >
+                          {isSel && (
+                            <svg
+                              style={{ width: 10, height: 10, color: "#fff" }}
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={3.5}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                          )}
                         </div>
-                        {sop.description && (
-                          <p style={{ fontSize: 12, color: C.textMuted, margin: '3px 0 0', fontFamily: C.font, fontWeight: 500 }}>
-                            {sop.description}
-                          </p>
-                        )}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
-                          {sop.owner && (
-                            <span style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, fontFamily: C.font }}>
-                              Owner: {sop.owner}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: 8,
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: 13,
+                                fontWeight: 800,
+                                color: C.textMain,
+                                fontFamily: C.font,
+                              }}
+                            >
+                              {sop.name}
                             </span>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                flexShrink: 0,
+                              }}
+                            >
+                              {sop.status === "running" ? (
+                                <RunningIcon />
+                              ) : sop.status === "broken" ? (
+                                <BrokenIcon />
+                              ) : null}
+                              <StatusBadge status={sop.status} />
+                            </div>
+                          </div>
+                          {sop.description && (
+                            <p
+                              style={{
+                                fontSize: 12,
+                                color: C.textMuted,
+                                margin: "3px 0 0",
+                                fontFamily: C.font,
+                                fontWeight: 500,
+                              }}
+                            >
+                              {sop.description}
+                            </p>
                           )}
-                          <span style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, fontFamily: C.font }}>
-                            Health: {sop.health}%
-                          </span>
-                          {sop.priority && (
-                            <span style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, fontFamily: C.font }}>
-                              {sop.priority}
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 12,
+                              marginTop: 6,
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            {sop.owner && (
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                  color: C.textMuted,
+                                  fontFamily: C.font,
+                                }}
+                              >
+                                Owner: {sop.owner}
+                              </span>
+                            )}
+                            <span
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                color: C.textMuted,
+                                fontFamily: C.font,
+                              }}
+                            >
+                              Health: {sop.health}%
                             </span>
-                          )}
+                            {sop.priority && (
+                              <span
+                                style={{
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                  color: C.textMuted,
+                                  fontFamily: C.font,
+                                }}
+                              >
+                                {sop.priority}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
 
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              padding: '14px 28px',
-              borderTop: `1px solid ${C.primaryBord}`,
-              background: C.cardBg, flexShrink: 0,
-              borderRadius: '0 0 20px 20px',
-            }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: C.textMuted, fontFamily: C.font }}>
-                <strong style={{ color: C.textMain, fontWeight: 800 }}>{selectedCount}</strong> of {allSops.length} selected
-                {isValidCount && <span style={{ color: C.primary, fontWeight: 900, marginLeft: 4 }}>✓</span>}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "14px 28px",
+                borderTop: `1px solid ${C.primaryBord}`,
+                background: C.cardBg,
+                flexShrink: 0,
+                borderRadius: "0 0 20px 20px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: C.textMuted,
+                  fontFamily: C.font,
+                }}
+              >
+                <strong style={{ color: C.textMain, fontWeight: 800 }}>
+                  {selectedCount}
+                </strong>{" "}
+                of {allSops.length} selected
+                {isValidCount && (
+                  <span
+                    style={{ color: C.primary, fontWeight: 900, marginLeft: 4 }}
+                  >
+                    ✓
+                  </span>
+                )}
               </span>
-              <div style={{ display: 'flex', gap: 10 }}>
+              <div style={{ display: "flex", gap: 10 }}>
                 {[
-                  { label: 'Reset', onClick: () => setSelectIds([]) },
-                  { label: 'Cancel', onClick: closeModal },
-                ].map(btn => (
+                  { label: "Reset", onClick: () => setSelectIds([]) },
+                  { label: "Cancel", onClick: closeModal },
+                ].map((btn) => (
                   <button
                     key={btn.label}
                     onClick={btn.onClick}
                     style={{
-                      padding: '9px 18px', fontSize: 13, fontWeight: 700,
-                      color: C.textMain, background: '#fff',
+                      padding: "9px 18px",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: C.textMain,
+                      background: "#fff",
                       border: `1px solid ${C.primaryBord}`,
-                      borderRadius: 12, cursor: 'pointer', fontFamily: C.font,
-                      transition: 'background .15s',
+                      borderRadius: 12,
+                      cursor: "pointer",
+                      fontFamily: C.font,
+                      transition: "background .15s",
                     }}
-                    onMouseEnter={e => e.currentTarget.style.background = C.primaryBg}
-                    onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = C.primaryBg)
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "#fff")
+                    }
                   >
                     {btn.label}
                   </button>
@@ -879,13 +1718,24 @@ export const KeyProcessesSection = () => {
                 <button
                   onClick={handleSaveSelection}
                   style={{
-                    padding: '9px 20px', fontSize: 13, fontWeight: 900, color: '#fff',
-                    background: '#1a1a1a', border: 'none', borderRadius: 12, cursor: 'pointer',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                    transition: 'background .15s', fontFamily: C.font,
+                    padding: "9px 20px",
+                    fontSize: 13,
+                    fontWeight: 900,
+                    color: "#fff",
+                    background: "#1a1a1a",
+                    border: "none",
+                    borderRadius: 12,
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                    transition: "background .15s",
+                    fontFamily: C.font,
                   }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#000'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#1a1a1a'}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.background = "#000")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = "#1a1a1a")
+                  }
                 >
                   Save Selection
                 </button>

@@ -57,12 +57,18 @@ import { Textarea } from "@/components/ui/textarea";
 // API CONFIG
 // ─────────────────────────────────────────────
 const BASE_URL = () => localStorage.getItem("baseUrl") || "";
-
-
 const getToken = () => localStorage.getItem("token") || "";
 
-// Apna current logged in user id yahan se get karein
-const getUserId = () => localStorage.getItem("user_id") || "1";
+// FIX: User data is stored as a JSON object under the "user" key in localStorage.
+// Structure: { id: 188925, email: "...", firstname: "...", ... }
+const getUserId = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    return String(user?.id || "");
+  } catch {
+    return "";
+  }
+};
 
 const apiHeaders = () => ({
   Accept: "application/json",
@@ -115,7 +121,9 @@ const normalizeSopFromAPI = (raw: any): SopCardData => ({
 });
 
 const fetchAllSops = async (): Promise<SopCardData[]> => {
-  const res = await fetch(`https://${BASE_URL()}/system_sops`, { headers: apiHeaders() });
+  const res = await fetch(`https://${BASE_URL()}/system_sops`, {
+    headers: apiHeaders(),
+  });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   const arr = Array.isArray(json)
@@ -126,17 +134,84 @@ const fetchAllSops = async (): Promise<SopCardData[]> => {
 
 const fetchMySops = async (): Promise<SopCardData[]> => {
   const userId = getUserId();
-  // Changed to assignee_id_eq so it fetches SOPs assigned to the user
-  const res = await fetch(
-    `https://${BASE_URL()}/system_sops?q[assignee_id_eq]=${userId}`,
-    { headers: apiHeaders() }
-  );
+  const res = await fetch(`https://${BASE_URL()}/system_sops`, {
+    headers: apiHeaders(),
+  });
+
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
   const json = await res.json();
   const arr = Array.isArray(json)
     ? json
     : (json.data ?? json.system_sops ?? []);
-  return arr.map(normalizeSopFromAPI);
+
+  // FIX: Now correctly compares against the real logged-in user's id
+  const mySops = arr.filter(
+    (sop: any) => String(sop.assignee_id) === String(userId)
+  );
+
+  return mySops.map(normalizeSopFromAPI);
+};
+
+// API call to fetch users
+const fetchUsersData = async (): Promise<
+  { value: string; label: string }[]
+> => {
+  const orgId = localStorage.getItem("org_id") || "";
+
+  if (!orgId) {
+    console.warn("org_id is missing in localStorage! Users will not load.");
+    return [];
+  }
+
+  try {
+    const res = await fetch(
+      `https://${BASE_URL()}/api/users?organization_id=${orgId}`,
+      {
+        headers: apiHeaders(),
+      }
+    );
+    if (!res.ok) throw new Error("Failed to fetch users");
+    const json = await res.json();
+    const arr = Array.isArray(json) ? json : (json.data ?? json.users ?? []);
+    return arr.map((u: any) => ({
+      value: String(u.id),
+      label:
+        u.name ||
+        `${u.firstname || ""} ${u.lastname || ""}`.trim() ||
+        u.email ||
+        `User ${u.id}`,
+    }));
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    return [];
+  }
+};
+
+// API call to fetch departments
+const fetchDepartmentsData = async (): Promise<
+  { value: string; label: string; id: number }[]
+> => {
+  try {
+    const res = await fetch(`https://${BASE_URL()}/pms/departments.json`, {
+      headers: apiHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to fetch departments");
+    const json = await res.json();
+
+    const arr = Array.isArray(json)
+      ? json
+      : (json.data ?? json.departments ?? []);
+
+    return arr.map((d: any) => ({
+      value: String(d.name || d.id),
+      label: d.name || d.department_name,
+      id: d.id,
+    }));
+  } catch (err) {
+    console.error("Error fetching departments:", err);
+    return [];
+  }
 };
 
 const createSop = async (payload: any) => {
@@ -223,35 +298,6 @@ const PRIORITY_STYLES: Record<SopCardData["priority"], string> = {
   high: "bg-rose-100 text-rose-900",
 };
 
-const DEPARTMENTS = [
-  "Front End",
-  "Client Servicing",
-  "Accounts",
-  "Engineering",
-  "QA",
-  "Human Resources",
-  "Design",
-  "Marketing",
-] as const;
-
-const MOCK_ASSIGNEES = [
-  { value: "1", label: "Jane Smith" },
-  { value: "2", label: "Ravi Kumar" },
-  { value: "3", label: "Priya Sharma" },
-  { value: "123", label: "Adhip Shetty" },
-];
-
-const DEPT_ID_MAP: Record<string, number> = {
-  "Front End": 1,
-  "Client Servicing": 2,
-  Accounts: 3,
-  Engineering: 4,
-  QA: 5,
-  "Human Resources": 6,
-  Design: 7,
-  Marketing: 8,
-};
-
 function coerceHealthPercent(n: unknown): number {
   const v = Number(n);
   if (!Number.isFinite(v)) return 0;
@@ -298,12 +344,16 @@ function SopFormDialog({
   isEdit,
   initialData,
   onSave,
+  users,
+  departments,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isEdit: boolean;
   initialData?: SopCardData | null;
   onSave: (data: any, column: ColumnKey) => Promise<void>;
+  users: { value: string; label: string }[];
+  departments: { value: string; label: string; id: number }[];
 }) {
   const [systemName, setSystemName] = useState("");
   const [description, setDescription] = useState("");
@@ -352,6 +402,9 @@ function SopFormDialog({
 
     setIsSaving(true);
     try {
+      const selectedDept = departments.find((d) => d.value === department);
+      const targetDeptId = selectedDept ? selectedDept.id : 1;
+
       const kpis = kpiInvoice
         ? [
             {
@@ -366,13 +419,13 @@ function SopFormDialog({
       const payload = {
         system_name: name,
         description: description.trim() || undefined,
-        department_id: DEPT_ID_MAP[department] ?? 1,
+        department_id: targetDeptId,
         status: COL_TO_STATUS[statusColumn],
         priority: priority.charAt(0).toUpperCase() + priority.slice(1),
         assignee_id: parseInt(assignUser, 10),
         health_score: healthScore[0] ?? 0,
         documentation_url: docUrl.trim() || undefined,
-        kpis: isEdit ? initialData?.kpis : kpis, // Only modify KPIs if new, simplify for demo
+        kpis: isEdit ? initialData?.kpis : kpis,
       };
       await onSave(payload, statusColumn);
     } finally {
@@ -460,9 +513,9 @@ function SopFormDialog({
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
-                    {DEPARTMENTS.map((d) => (
-                      <SelectItem key={d} value={d}>
-                        {d}
+                    {departments.map((d) => (
+                      <SelectItem key={d.id} value={d.value}>
+                        {d.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -558,7 +611,7 @@ function SopFormDialog({
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  {MOCK_ASSIGNEES.map((u) => (
+                  {users.map((u) => (
                     <SelectItem key={u.value} value={u.value}>
                       {u.label}
                     </SelectItem>
@@ -894,10 +947,14 @@ function FilterSelect({
   label,
   value,
   onChange,
+  users = [],
+  departments = [],
 }: {
   label: string;
   value: string;
   onChange: (val: string) => void;
+  users?: { value: string; label: string }[];
+  departments?: { value: string; label: string; id: number }[];
 }) {
   const getOptions = () => {
     if (label === "All Status")
@@ -910,12 +967,12 @@ function FilterSelect({
     if (label === "All Departments")
       return [
         { value: "all", label: "All Departments" },
-        ...DEPARTMENTS.map((d) => ({ value: d, label: d })),
+        ...departments.map((d) => ({ value: d.value, label: d.label })),
       ];
     if (label === "All People")
       return [
         { value: "all", label: "All People" },
-        ...MOCK_ASSIGNEES.map((p) => ({ value: p.value, label: p.label })),
+        ...users.map((p) => ({ value: p.value, label: p.label })),
       ];
     if (label === "All Priorities")
       return [
@@ -973,6 +1030,15 @@ const SystemAndSOP = () => {
     column: ColumnKey;
   } | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [users, setUsers] = useState<{ value: string; label: string }[]>([]);
+  const [departments, setDepartments] = useState<
+    { value: string; label: string; id: number }[]
+  >([]);
+
+  useEffect(() => {
+    fetchUsersData().then(setUsers);
+    fetchDepartmentsData().then(setDepartments);
+  }, []);
 
   const loadSops = useCallback(async () => {
     setIsLoading(true);
@@ -1044,16 +1110,18 @@ const SystemAndSOP = () => {
 
   const activeFilters = useMemo(() => {
     const filters = [];
-    if (filterDept !== "all")
+    if (filterDept !== "all") {
+      const deptName =
+        departments.find((d) => d.value === filterDept)?.label || filterDept;
       filters.push({
         id: "dept",
-        label: `Dept: ${filterDept}`,
+        label: `Dept: ${deptName}`,
         onClear: () => setFilterDept("all"),
       });
+    }
     if (filterAssignee !== "all") {
       const assigneeName =
-        MOCK_ASSIGNEES.find((a) => a.value === filterAssignee)?.label ||
-        filterAssignee;
+        users.find((a) => a.value === filterAssignee)?.label || filterAssignee;
       filters.push({
         id: "assignee",
         label: `Person: ${assigneeName}`,
@@ -1073,7 +1141,14 @@ const SystemAndSOP = () => {
         onClear: () => setFilterStatus("all"),
       });
     return filters;
-  }, [filterDept, filterAssignee, filterPriority, filterStatus]);
+  }, [
+    filterDept,
+    filterAssignee,
+    filterPriority,
+    filterStatus,
+    users,
+    departments,
+  ]);
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => setActiveDragId(parseCardId(event.active.id)),
@@ -1297,7 +1372,10 @@ const SystemAndSOP = () => {
   );
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
+    <div
+      className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6"
+      style={{ fontFamily: "'Poppins', sans-serif" }}
+    >
       <SopFormDialog
         open={editOpen}
         onOpenChange={(o) => {
@@ -1307,12 +1385,16 @@ const SystemAndSOP = () => {
         isEdit={true}
         initialData={editTarget?.item}
         onSave={handleEditSave}
+        users={users}
+        departments={departments}
       />
       <SopFormDialog
         open={addOpen}
         onOpenChange={setAddOpen}
         isEdit={false}
         onSave={handleAddCreate}
+        users={users}
+        departments={departments}
       />
 
       <div className="mx-auto max-w-6xl space-y-6">
@@ -1408,11 +1490,13 @@ const SystemAndSOP = () => {
                   label="All Departments"
                   value={filterDept}
                   onChange={setFilterDept}
+                  departments={departments}
                 />
                 <FilterSelect
                   label="All People"
                   value={filterAssignee}
                   onChange={setFilterAssignee}
+                  users={users}
                 />
                 <FilterSelect
                   label="All Priorities"

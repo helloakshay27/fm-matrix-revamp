@@ -179,7 +179,8 @@ const ItemsAdd = () => {
   };
 
   // Account groups and ledgers for sales/purchase account dropdowns
-  const [accountGroups, setAccountGroups] = React.useState([]);
+  const [salesAccountGroups, setSalesAccountGroups] = React.useState([]);
+  const [purchaseAccountGroups, setPurchaseAccountGroups] = React.useState([]);
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
@@ -189,26 +190,42 @@ const ItemsAdd = () => {
   const [taxSettings, setTaxSettings] = useState<any | null>(null);
 
   React.useEffect(() => {
-    const fetchAccountGroups = async () => {
+    const fetchSalesAccountGroups = async () => {
       try {
-        // Replace with your actual endpoint for groups/ledgers
         const res = await axios.get(
-          `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`,
+          `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat&q[group_type_in][]=sales&q[group_type_in][]=both`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
             },
           }
         );
-        console.log("Account Groups Response:", res.data);
-        setAccountGroups(res.data.data || []);
+        setSalesAccountGroups(res.data.data || []);
       } catch (e) {
-        setAccountGroups([]);
+        setSalesAccountGroups([]);
       }
     };
-    fetchAccountGroups();
-  }, [openSalesAccount, openPurchaseAccount, baseUrl, token]);
-  console.log("Account Groups:", accountGroups);
+    fetchSalesAccountGroups();
+  }, [baseUrl, token, lock_account_id]);
+
+  React.useEffect(() => {
+    const fetchPurchaseAccountGroups = async () => {
+      try {
+        const res = await axios.get(
+          `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat&q[group_type_in][]=purchase&q[group_type_in][]=both`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setPurchaseAccountGroups(res.data.data || []);
+      } catch (e) {
+        setPurchaseAccountGroups([]);
+      }
+    };
+    fetchPurchaseAccountGroups();
+  }, [baseUrl, token, lock_account_id]);
   React.useEffect(() => {
     const fetchExemptions = async () => {
       try {
@@ -321,6 +338,11 @@ const ItemsAdd = () => {
       toast.error(
         "Select at least one option from, Sales Information, Purchase Information to proceed."
       );
+      return;
+    }
+
+    if (form.type === "goods" && !form.hsn_code.trim()) {
+      toast.error("HSN Code is required.");
       return;
     }
 
@@ -621,14 +643,13 @@ const ItemsAdd = () => {
             {/* HSN / SAC Code */}
             {form.type === "goods" ? (
               <TextField
-                label="HSN Code"
+                label={<span>HSN Code <span style={{ color: 'red' }}>*</span></span>}
                 name="hsn_code"
                 placeholder="Enter HSN Code"
                 value={form.hsn_code}
-                // onChange={handleChange}
+                // required
                 onChange={(e) => {
                   const value = e.target.value;
-
                   // Allow only numbers and max 8 digits
                   if (/^\d{0,8}$/.test(value)) {
                     handleChange(e);
@@ -1006,7 +1027,7 @@ const ItemsAdd = () => {
                   }}
                 >
                   <MenuItem value="">Select Account Ledger</MenuItem>
-                  {accountGroups.map((group) =>
+                  {salesAccountGroups.map((group) =>
                     group.ledgers && group.ledgers.length > 0
                       ? [
                           <ListSubheader key={"group-" + group.id}>
@@ -1260,7 +1281,7 @@ const ItemsAdd = () => {
                   }}
                 >
                   <MenuItem value="">Select Account Ledger</MenuItem>
-                  {accountGroups.map((group) =>
+                  {purchaseAccountGroups.map((group) =>
                     group.ledgers && group.ledgers.length > 0
                       ? [
                           <ListSubheader key={"group-" + group.id}>

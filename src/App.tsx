@@ -42,6 +42,7 @@ import { SmsManagementPage } from "./pages/SmsManagementPage";
 // Import Invoice Approvals page
 import { InvoiceApprovalsPage } from "./pages/InvoiceApprovalsPage";
 import { AddInvoiceApprovalsPage } from "./pages/settings/AddInvoiceApprovalsPage";
+import { EditInvoiceApprovalsPage } from "./pages/settings/EditInvoiceApprovalsPage";
 
 // Import Asset Groups page
 import { AssetGroupsPage } from "./pages/AssetGroupsPage";
@@ -204,6 +205,8 @@ import { EditPermitChecklist } from "./pages/EditPermitCheklist";
 import CompanySetup from "./pages/CompanySetup";
 import EmployeeOfTheMonthSetup from "./pages/EmployeeOfTheMonthSetup";
 import AnnouncementsSetup from "./pages/AnnouncementsSetup";
+import TeamSetup from "./pages/settings/company-hub/team-setup";
+import JobsPage from "./pages/CompanyHub/JobsPage";
 import { EditPermitPage } from "./pages/EditPermitPage";
 
 import { LeadDashboard } from "./pages/LeadDashboard";
@@ -362,6 +365,51 @@ import OurGroup from "./pages/OurGroup";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import DocumentDrive from "./pages/DocumentDrive";
+import CustomerAppPage from "./pages/products/CustomerAppPage.tsx";
+import CustomerPostPossessionPage from "./pages/products/CustomerPostPossessionPage";
+import HiSocietyPage from "./pages/products/HiSocietyPage";
+import Snag360Page from "./pages/products/Snag360Page";
+import { Snag360NewPage } from "./pages/products/snag360-new";
+import QCPage from "./pages/products/QCPage";
+import RHBPage from "./pages/products/RHBPage";
+import BrokersPage from "./pages/products/BrokersPage";
+import FMMatrixPage from "./pages/products/FMMatrixPage";
+import GoPhygitalCorporatePage from "./pages/products/GoPhygitalCorporatePage";
+import GoPhygitalCoworkingPage from "./pages/products/GoPhygitalCoworkingPage";
+import TaskManagerPage from "./pages/products/TaskManagerPage";
+import CPManagementPage from "./pages/products/CPManagementPage";
+import VendorManagementPage from "./pages/products/VendorManagementPage";
+import ProcurementPage from "./pages/products/ProcurementPage";
+import LoyaltyEnginePage from "./pages/products/LoyaltyEnginePage";
+import MSafePage from "./pages/products/MSafePage";
+import IncidentManagementPage from "./pages/products/IncidentManagementPage";
+import AppointmentsPage from "./pages/products/AppointmentsPage";
+import HSEAppPage from "./pages/products/HSEAppPage";
+import ClubManagementPage from "./pages/products/ClubManagementPage";
+import GoPhygitalTenantsPage from "./pages/products/GoPhygitalTenantsPage";
+import PTWPage from "./pages/products/PTWPage";
+import ParkingPage from "./pages/products/ParkingPage";
+import FacilityManagementPage from "./pages/products/FacilityManagementPage";
+import CustomerAppPreSalesPage from "./pages/products/CustomerAppPreSalesPage";
+// OLD: import LeaseManagementPage from './pages/products/LeaseManagementPage';
+// NEW: Isolated Lease Management Page
+import LeaseManagementPage from "./pages/products/lease-management/LeaseManagementPage";
+import LifeCompassPage from "./pages/products/LifeCompassPage";
+import BusinessCompassPage from "./pages/products/BusinessCompassPage";
+import GateManagementPage from "./pages/products/GateManagementPage";
+import SurveysPage from "./pages/products/SurveysPage";
+import LMSSalesCRMPage from "./pages/products/LMSSalesCRMPage";
+import SupportCRMPage from "./pages/products/SupportCRMPage";
+import RealEstateCRMPage from "./pages/products/RealEstateCRMPage";
+import AccountingPage from "./pages/products/AccountingPage";
+import MOMPhoneMicPage from "./pages/products/MOMPhoneMicPage";
+import HRMSPage from "./pages/products/HRMSPage";
+import ESGPage from "./pages/products/ESGPage";
+import MailingPage from "./pages/products/MailingPage";
+import OfficeAlternativePage from "./pages/products/OfficeAlternativePage";
+import BudgetingWBSPage from "./pages/products/BudgetingWBSPage";
+import LiquidtextPage from "./pages/products/LiquidtextPage";
+import ViMilesPage from "./pages/products/ViMilesPage";
 import HRPolicies from "./pages/HRPolicies";
 import Directory from "./pages/Directory";
 import EmployeeFAQ from "./pages/EmployeeFAQ";
@@ -993,6 +1041,10 @@ import { SpeechProvider } from "./contexts/SpeechContext";
 import SupportedServiceDashboard from "./pages/SupportedServiceDashboard";
 import { SupportedServiceAdd } from "./pages/SupportedServiceAdd";
 import { SupportedServiceEdit } from "./pages/SupportedServiceEdit";
+import SupportContactSetupPage from "./pages/SupportContactSetupPage";
+import { AddSupportContactPage } from "./pages/AddSupportContactPage";
+import GreSiteAssignmentSetupPage from "./pages/GreSiteAssignmentSetupPage";
+import { AddGreSiteAssignmentPage } from "./pages/AddGreSiteAssignmentPage";
 // import RouteLogger from "./components/RouteLogger";
 
 import { AddBookingSetupClubPage } from "./pages/ClubManagement/AmenityBookingSetupClubAdd";
@@ -1159,6 +1211,7 @@ import VendorCreditDetails from "./pages/ClubManagement/VendorCreditDetails";
 import MobileTodo from "./pages/MobileTodo";
 import { BalanceSheetDetails } from "./pages/ClubManagement/BalanceSheetDetails";
 import { ProfitAndLossDetails } from "./pages/ClubManagement/ProfitAndLossDetails";
+import { CashFlowDetails } from "./pages/ClubManagement/CashFlowDetails";
 import { GSTPayableDetails } from "./pages/ClubManagement/GSTPayableDetails";
 import GstReceivableReport from "./pages/ClubManagement/GSTReceivableReport";
 import { GSTReceivableDetails } from "./pages/ClubManagement/GSTReceivableDetails";
@@ -1243,6 +1296,7 @@ import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
 import HouseSetupPage from "./pages/HouseSetupPage";
 import HSNCodeSetup from "./pages/HSNCodeSetup";
 import DashboardUI from "./pages/DashboardUI";
+import OrganisationMaster from "./pages/ClubManagement/OrganisationMaster";
 
 const queryClient = new QueryClient();
 
@@ -1287,7 +1341,19 @@ const WebSocketNotificationInitializer: React.FC<{
         },
         onMessageNotification: (message) => {
           console.warn("📨 Received notification:", message);
-          if (message.user_id !== currentUser.id) {
+          // if (message.user_id !== currentUser.id) {
+          //   return;
+          // }
+          const typeCheckMap = {
+            conversation: message.user_id,
+            projectspace: message.user_id,
+            newtaskmanagement: message.responsible_person_id,
+            newissue: message.responsible_person_id,
+          };
+
+          const relevantId = typeCheckMap[message.ntype];
+
+          if (Number(relevantId) !== Number(currentUser.id)) {
             return;
           }
 
@@ -1407,7 +1473,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-            (response[0]?.currency as string | undefined)
+          (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -1452,11 +1518,25 @@ function App() {
         },
         onMessageNotification: (message) => {
           console.warn(message);
-          if (
-            (message.ntype === "conversation" ||
-              message.ntype === "projectspace") &&
-            message.user_id !== currentUser.id
-          ) {
+          // if (
+          //   (message.ntype === "conversation" ||
+          //     message.ntype === "projectspace" ||
+          //     message.ntype === 'newtaskmanagement' ||
+          //     message.ntype === 'newissue') &&
+          //   (message?.user_id !== currentUser.id && message?.responsible_person_id !== currentUser.id)
+          // ) {
+          //   return;
+          // }
+          const typeCheckMap = {
+            conversation: message.user_id,
+            projectspace: message.user_id,
+            newtaskmanagement: message.responsible_person_id,
+            newissue: message.responsible_person_id,
+          };
+
+          const relevantId = typeCheckMap[message.ntype];
+
+          if (Number(relevantId) !== Number(currentUser.id)) {
             return;
           }
 
@@ -2138,7 +2218,6 @@ function App() {
                             path="/business-compass/bug-reports"
                             element={<BugReports />}
                           />
-
                           <Route
                             path="/admin-compass/business-plan-goals"
                             element={<BusinessPlanAndGoles />}
@@ -2163,17 +2242,11 @@ function App() {
                             path="/admin-compass/disc-report"
                             element={<DiscReport />}
                           />
-
                           <Route
                             path="/admin-compass/daily-meeting"
                             element={<DailyMeeting />}
                           />
-                          <Route
-                            path="/admin-compass/kpi"
-                            element={<KPI />}
-                          />
-
-
+                          <Route path="/admin-compass/kpi" element={<KPI />} />
                           {/* Dashboard Routes */}
                           <Route path="/dashboard" element={<Dashboard />} />
                           <Route
@@ -3115,6 +3188,10 @@ function App() {
                             path="/accounting/reports/profit-and-loss/details/:id"
                             element={<ProfitAndLossDetails />}
                           />
+                          <Route
+                            path="/accounting/reports/cash-flow-statement/details/:id"
+                            element={<CashFlowDetails />}
+                          />
                           {/* <Route */}
                           <Route
                             path="/accounting/reports/tax-summary"
@@ -3426,6 +3503,10 @@ function App() {
                           <Route
                             path="/accounting/payment-terms"
                             element={<PaymentTermsMaster />}
+                          />
+                          <Route
+                            path="/accounting/organisation"
+                            element={<OrganisationMaster />}
                           />
                           {/* Club Management - Occupant Users */}
                           <Route
@@ -4476,14 +4557,13 @@ function App() {
                             path="/vas/projects"
                             element={<ProjectsDashboard />}
                           />
-
                           <Route
                             path="/report-analytics"
-                            element={<ReportAnalytics />} />
-
-                          <Route
+                            element={<ReportAnalytics />}
+                          />
+                          {/* <Route
                             path="/dashboard-UI"
-                            element={<DashboardUI />} />
+                            element={<DashboardUI />} /> */}
                           <Route
                             path="/vas/projects/details/:id"
                             element={<ProjectDetailsPage />}
@@ -4564,15 +4644,13 @@ function App() {
                           />
                           <Route
                             path="/vas/project-dashboard"
-                            element={<SupersetDashboard />}
+                            element={<DashboardUI />}
                           />
-
                           <Route path="/vas/add-mom" element={<AddMoMPage />} />
                           <Route
                             path="/vas/edit-mom/:id"
                             element={<EditMoMPage />}
                           />
-
                           <Route
                             path="/settings/project-task-setup/roles"
                             element={<ProjectRoles />}
@@ -5531,6 +5609,14 @@ function App() {
                             element={<AnnouncementsSetup />}
                           />
                           <Route
+                            path="/settings/company-hub/team-setup"
+                            element={<TeamSetup />}
+                          />
+                          <Route
+                            path="/settings/company-hub/jobs"
+                            element={<JobsPage />}
+                          />
+                          <Route
                             path="/settings/inventory-management/inventory-type"
                             element={<InventoryTypePage />}
                           />
@@ -5571,8 +5657,173 @@ function App() {
                             element={<JobSheetPage />}
                           />
                           <Route
-                            path="/product-details"
+                            path="/product-details/:productId"
                             element={<ProductDetails />}
+                          />
+                          <Route
+                            path="/product/loyalty"
+                            element={<CustomerAppPage />}
+                          />
+                          <Route
+                            path="/product/customer-app"
+                            element={<CustomerAppPage />}
+                          />
+                          <Route
+                            path="/product/customer-app-post-possession"
+                            element={<CustomerPostPossessionPage />}
+                          />
+                          <Route
+                            path="/product/hi-society"
+                            element={<HiSocietyPage />}
+                          />
+                          <Route
+                            path="/product/snag-360"
+                            element={<Snag360Page />}
+                          />
+                          <Route
+                            path="/product/snag-360-new"
+                            element={<Snag360NewPage />}
+                          />
+                          <Route path="/product/qc" element={<QCPage />} />
+                          <Route path="/product/rhb" element={<RHBPage />} />
+                          <Route
+                            path="/product/brokers"
+                            element={<BrokersPage />}
+                          />
+                          <Route
+                            path="/product/fm-matrix"
+                            element={<FMMatrixPage />}
+                          />
+                          <Route
+                            path="/product/gophygital-corporate"
+                            element={<GoPhygitalCorporatePage />}
+                          />
+                          <Route
+                            path="/product/gophygital-coworking"
+                            element={<GoPhygitalCoworkingPage />}
+                          />
+                          <Route
+                            path="/product/task-manager"
+                            element={<TaskManagerPage />}
+                          />
+                          <Route
+                            path="/product/cp-management"
+                            element={<CPManagementPage />}
+                          />
+                          <Route
+                            path="/product/vendor-management"
+                            element={<VendorManagementPage />}
+                          />
+                          <Route
+                            path="/product/procurement"
+                            element={<ProcurementPage />}
+                          />
+                          <Route
+                            path="/product/loyalty-engine"
+                            element={<LoyaltyEnginePage />}
+                          />
+                          <Route
+                            path="/product/msafe"
+                            element={<MSafePage />}
+                          />
+                          <Route
+                            path="/product/incident-management"
+                            element={<IncidentManagementPage />}
+                          />
+                          <Route
+                            path="/product/appointments"
+                            element={<AppointmentsPage />}
+                          />
+                          <Route
+                            path="/product/hse-app"
+                            element={<HSEAppPage />}
+                          />
+                          <Route
+                            path="/product/club-management"
+                            element={<ClubManagementPage />}
+                          />
+                          <Route
+                            path="/product/gophygital-tenants"
+                            element={<GoPhygitalTenantsPage />}
+                          />
+                          <Route path="/product/ptw" element={<PTWPage />} />
+                          <Route
+                            path="/product/parking"
+                            element={<ParkingPage />}
+                          />
+                          <Route
+                            path="/product/facility-management"
+                            element={<FacilityManagementPage />}
+                          />
+                          <Route
+                            path="/product/customer-app-pre-sales"
+                            element={<CustomerAppPreSalesPage />}
+                          />
+                          <Route
+                            path="/product/customer-app-post-sales"
+                            element={<CustomerAppPage />}
+                          />
+                          <Route
+                            path="/product/lease-management"
+                            element={<LeaseManagementPage />}
+                          />
+                          <Route
+                            path="/product/life-compass"
+                            element={<LifeCompassPage />}
+                          />
+                          <Route
+                            path="/product/business-compass"
+                            element={<BusinessCompassPage />}
+                          />
+                          <Route
+                            path="/product/gate-management"
+                            element={<GateManagementPage />}
+                          />
+                          <Route
+                            path="/product/surveys"
+                            element={<SurveysPage />}
+                          />
+                          <Route
+                            path="/product/lms-sales-crm"
+                            element={<LMSSalesCRMPage />}
+                          />
+                          <Route
+                            path="/product/support-crm"
+                            element={<SupportCRMPage />}
+                          />
+                          <Route
+                            path="/product/real-estate-crm"
+                            element={<RealEstateCRMPage />}
+                          />
+                          <Route
+                            path="/product/accounting"
+                            element={<AccountingPage />}
+                          />
+                          <Route
+                            path="/product/mom-phone-mic"
+                            element={<MOMPhoneMicPage />}
+                          />
+                          <Route path="/product/hrms" element={<HRMSPage />} />
+                          <Route path="/product/esg" element={<ESGPage />} />
+                          <Route
+                            path="/product/mailing"
+                            element={<MailingPage />}
+                          />
+                          <Route
+                            path="/product/office-alternative"
+                            element={<OfficeAlternativePage />}
+                          />
+                          <Route
+                            path="/product/budgeting-wbs"
+                            element={<BudgetingWBSPage />}
+                          />
+                          <Route
+                            path="/product/liquidtext"
+                            element={<LiquidtextPage />}
+                          />
+                          <Route
+                            path="/product/vi-miles"
+                            element={<ViMilesPage />}
                           />
                           <Route path="*" element={<NotFound />} />
                         </Route>
@@ -5885,6 +6136,26 @@ function App() {
                             path="/pulse/sos-category-setup"
                             element={<SOSCategorySetupPage />}
                           />
+                          <Route
+                            path="/pulse/support-contact-setup"
+                            element={<SupportContactSetupPage />}
+                          />
+                          <Route
+                            path="/pulse/support-contact-setup/add"
+                            element={<AddSupportContactPage />}
+                          />
+                          <Route
+                            path="/pulse/gre-site-assignment-setup"
+                            element={<GreSiteAssignmentSetupPage />}
+                          />
+                          <Route
+                            path="/pulse/gre-site-assignment-setup/add"
+                            element={<AddGreSiteAssignmentPage />}
+                          />
+                          <Route
+                            path="/pulse/gre-site-assignment-setup/edit/:id"
+                            element={<AddGreSiteAssignmentPage />}
+                          />
                         </Route>
 
                         <Route
@@ -5908,6 +6179,10 @@ function App() {
                           <Route
                             path="/settings/invoice-approvals/add"
                             element={<AddInvoiceApprovalsPage />}
+                          />
+                          <Route
+                            path="/settings/invoice-approvals/edit/:id"
+                            element={<EditInvoiceApprovalsPage />}
                           />
                           <Route
                             path="/settings/design-insights/setup"
@@ -6173,7 +6448,7 @@ function App() {
                         />
                         <Route path="/hr-policies" element={<HRPolicies />} />
                         <Route path="/directory" element={<Directory />} />
-                        <Route path="/eployee-faq" element={<EmployeeFAQ />} />
+                        <Route path="/employee-faq" element={<EmployeeFAQ />} />
 
                         {/* Mobile Routes */}
                         <Route
@@ -6384,7 +6659,6 @@ function App() {
                             path="/mobile/channels/groups/:id"
                             element={<MobileGroupConversation />}
                           />
-
                         </Route>
                       </Routes>
                       <Toaster />

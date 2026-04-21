@@ -1832,7 +1832,7 @@ export const MobileSurveyLanding: React.FC = () => {
       )}
 
       {/* Header with Logo */}
-      <div className="bg-transparent py-3 px-4 relative z-10">
+      <div className="bg-transparent pt-6 pb-3 px-4 relative z-10">
         <div className="flex justify-between items-center">
           <div className="flex justify-start items-center">
             {!isFormView &&
@@ -1855,10 +1855,10 @@ export const MobileSurveyLanding: React.FC = () => {
                       moveToPreviousQuestion();
                     }
                   }}
-                  className="flex items-center bg-black/40 backdrop-blur-md px-4 py-2.5 rounded-lg text-white font-bold text-sm hover:bg-black/50 transition-all shadow-lg border-2 border-white/40"
+                  className="flex items-center bg-black/40 backdrop-blur-md px-2 py-1.5 rounded-lg text-white font-bold text-[10px] hover:bg-black/50 transition-all shadow-lg border-[1.5px] border-white/40"
                 >
                   <svg
-                    className="w-5 h-5 mr-1.5"
+                    className="w-4 h-4 mr-1"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -2361,109 +2361,51 @@ export const MobileSurveyLanding: React.FC = () => {
                                         key={pageIdx}
                                         className="flex flex-col gap-1.5 xs:gap-2 sm:gap-3 flex-shrink-0 w-full"
                                       >
-                                        {/* First row: items 0,1 */}
-                                        <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3">
-                                          {[0, 1].map((slotIdx) => {
-                                            const tag = pageTags[slotIdx];
-                                            return tag ? (
-                                              <button
-                                                type="button"
-                                                key={tag.id}
-                                                onClick={() =>
-                                                  handleGenericTagClick(tag)
-                                                }
-                                                className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${selectedTags.some(
-                                                  (selectedTag) =>
-                                                    selectedTag.id === tag.id
-                                                )
-                                                  ? "border-blue-500 bg-gray-300"
-                                                  : "border-white/5"
-                                                  }`}
-                                              >
-                                                <div
-                                                  className="w-[80%] xs:w-[85%] sm:w-full mb-0.5 xs:mb-0.5 sm:mb-1"
-                                                  style={{
-                                                    aspectRatio: "16/9",
-                                                  }}
-                                                >
-                                                  {tag.icons &&
-                                                    tag.icons.length > 0 ? (
-                                                    <img
-                                                      src={tag.icons[0].url}
-                                                      alt={tag.category_name}
-                                                      className="w-full h-full object-contain"
-                                                    />
-                                                  ) : (
-                                                    <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                                                      <span className="text-sm xs:text-base sm:text-xl">
-                                                        🏷️
-                                                      </span>
-                                                    </div>
-                                                  )}
-                                                </div>
-                                                <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-gray-700 leading-tight break-words w-full px-0.5">
-                                                  {tag.category_name}
-                                                </span>
-                                              </button>
-                                            ) : (
-                                              <div
-                                                key={`empty-row1-${pageIdx}-${slotIdx}`}
-                                                className="flex-1"
-                                              />
-                                            );
-                                          })}
-                                        </div>
-                                        {/* Second row: items 2,3 */}
-                                        <div className="flex flex-row gap-1.5 xs:gap-2 sm:gap-3">
-                                          {[2, 3].map((slotIdx) => {
-                                            const tag = pageTags[slotIdx];
-                                            return tag ? (
-                                              <button
-                                                type="button"
-                                                key={tag.id}
-                                                onClick={() =>
-                                                  handleGenericTagClick(tag)
-                                                }
-                                                className={`flex-1 flex flex-col items-center justify-center p-1 xs:p-1.5 sm:p-2 rounded-[0.20rem] text-center transition-all border-2 ${selectedTags.some(
-                                                  (selectedTag) =>
-                                                    selectedTag.id === tag.id
-                                                )
-                                                  ? "border-blue-500 bg-gray-300"
-                                                  : "border-white/5"
-                                                  }`}
-                                              >
-                                                <div
-                                                  className="w-[80%] xs:w-[85%] sm:w-full mb-0.5 xs:mb-0.5 sm:mb-1"
-                                                  style={{
-                                                    aspectRatio: "16/9",
-                                                  }}
-                                                >
-                                                  {tag.icons &&
-                                                    tag.icons.length > 0 ? (
-                                                    <img
-                                                      src={tag.icons[0].url}
-                                                      alt={tag.category_name}
-                                                      className="w-full h-full object-contain"
-                                                    />
-                                                  ) : (
-                                                    <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
-                                                      <span className="text-sm xs:text-base sm:text-xl">
-                                                        🏷️
-                                                      </span>
-                                                    </div>
-                                                  )}
-                                                </div>
-                                                <span className="text-[9px] xs:text-[10px] sm:text-xs font-medium text-gray-700 leading-tight break-words w-full px-0.5">
-                                                  {tag.category_name}
-                                                </span>
-                                              </button>
-                                            ) : (
-                                              <div
-                                                key={`empty-row2-${pageIdx}-${slotIdx}`}
-                                                className="flex-1"
-                                              />
-                                            );
-                                          })}
+                                        {/* 2x2 Grid for items 0,1,2,3 */}
+                                        <div className="grid grid-cols-2 gap-1.5 xs:gap-2 sm:gap-3 px-1">
+                                          {pageTags.map((tag) => (
+                                            <button
+                                              type="button"
+                                              key={tag.id}
+                                              onClick={() =>
+                                                handleGenericTagClick(tag)
+                                              }
+                                              className={`flex flex-col items-center justify-center p-2 xs:p-2.5 rounded-lg text-center transition-all border-2 ${selectedTags.some(
+                                                (selectedTag) =>
+                                                  selectedTag.id === tag.id
+                                              )
+                                                ? "border-blue-500 bg-blue-50"
+                                                : "border-transparent bg-gray-50/50"
+                                                }`}
+                                            >
+                                              <div className="w-12 h-12 xs:w-16 xs:h-16 sm:w-20 sm:h-20 mb-1.5 xs:mb-2 flex items-center justify-center">
+                                                {tag.icons &&
+                                                  tag.icons.length > 0 ? (
+                                                  <img
+                                                    src={tag.icons[0].url}
+                                                    alt={tag.category_name}
+                                                    className="max-w-full max-h-full object-contain"
+                                                  />
+                                                ) : (
+                                                  <div className="w-full h-full bg-gray-200 rounded flex items-center justify-center">
+                                                    <span className="text-xl xs:text-2xl">
+                                                      🏷️
+                                                    </span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                              <span className="text-[10px] xs:text-xs font-semibold text-gray-800 leading-tight whitespace-normal break-words w-full">
+                                                {tag.category_name}
+                                              </span>
+                                            </button>
+                                          ))}
+                                          
+                                          {/* Fill empty slots in grid to maintain layout */}
+                                          {pageTags.length < itemsPerPage && 
+                                            Array.from({ length: itemsPerPage - pageTags.length }).map((_, idx) => (
+                                              <div key={`empty-${idx}`} className="flex-1" />
+                                            ))
+                                          }
                                         </div>
                                       </div>
                                     ))}

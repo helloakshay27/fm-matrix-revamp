@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
     TextField,
     Button,
-    Autocomplete,
     FormControlLabel,
     Checkbox,
     IconButton,
@@ -33,12 +33,165 @@ import {
     Delete,
     CloudUpload,
     AttachFile,
-    PersonAdd
+    PersonAdd,
+    EditOutlined
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import { toast } from "sonner";
 import { format, parseISO } from 'date-fns';
+
+// Zoho-style item search input with dropdown
+const ItemSearchInput: React.FC<{
+    value: string;
+    itemOptions: any[];
+    onSelect: (item: any) => void;
+    onType: (text: string) => void;
+}> = ({ value, itemOptions, onSelect, onType }) => {
+    const [inputVal, setInputVal] = React.useState(value);
+    const [open, setOpen] = React.useState(false);
+    const [dropdownPos, setDropdownPos] = React.useState({ top: 0, left: 0, width: 0 });
+    const inputRef = React.useRef<HTMLInputElement>(null);
+
+    // Sync external value changes (e.g. re-preselect effect)
+    React.useEffect(() => { setInputVal(value); }, [value]);
+
+    const filtered = itemOptions.filter(o =>
+        o?.name?.toLowerCase().includes(inputVal.toLowerCase())
+    );
+
+    const handleSelect = (opt: any) => {
+        setInputVal(opt.name);
+        setOpen(false);
+        onSelect(opt);
+    };
+
+    const openDropdown = () => {
+        if (inputRef.current) {
+            const rect = inputRef.current.getBoundingClientRect();
+            setDropdownPos({
+                top: rect.bottom + window.scrollY + 2,
+                left: rect.left + window.scrollX,
+                width: Math.max(rect.width, 280),
+            });
+        }
+        setOpen(true);
+    };
+
+    // Close on outside click
+    React.useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            const target = e.target as Node;
+            const dropdown = document.getElementById('item-search-dropdown');
+            if (
+                inputRef.current && !inputRef.current.contains(target) &&
+                dropdown && !dropdown.contains(target)
+            ) {
+                setOpen(false);
+                onType(inputVal);
+            }
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [inputVal]);
+
+    return (
+        <div style={{ position: 'relative', minWidth: 250 }}>
+            <input
+                ref={inputRef}
+                type="text"
+                value={inputVal}
+                placeholder="Type or select item"
+                onFocus={openDropdown}
+                onChange={(e) => {
+                    setInputVal(e.target.value);
+                    openDropdown();
+                }}
+                onBlur={() => onType(inputVal)}
+                style={{
+                    width: '100%',
+                    padding: '6px 10px',
+                    fontSize: 13,
+                    border: '1px solid #d1d5db',
+                    borderRadius: 4,
+                    outline: 'none',
+                    background: '#fff',
+                    boxSizing: 'border-box',
+                    height: 34,
+                }}
+                onFocusCapture={(e) => (e.target.style.borderColor = '#C72030')}
+                onBlurCapture={(e) => (e.target.style.borderColor = '#d1d5db')}
+            />
+            {open && typeof document !== 'undefined' && createPortal(
+                <div
+                    id="item-search-dropdown"
+                    style={{
+                        position: 'absolute',
+                        top: dropdownPos.top,
+                        left: dropdownPos.left,
+                        width: dropdownPos.width,
+                        zIndex: 9999,
+                        background: '#fff',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: 6,
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+                        maxHeight: 240,
+                        overflowY: 'auto',
+                    }}
+                >
+                    {filtered.length === 0 ? (
+                        <div style={{ padding: '10px 14px', fontSize: 13, color: '#6b7280' }}>
+                            No results found. Try a different keyword.
+                        </div>
+                    ) : (
+                        filtered.map((opt) => (
+                            <div
+                                key={opt.id}
+                                onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
+                                style={{
+                                    padding: '8px 14px',
+                                    fontSize: 13,
+                                    cursor: 'pointer',
+                                    color: '#111827',
+                                    borderBottom: '1px solid #f3f4f6',
+                                }}
+                                onMouseEnter={e => (e.currentTarget.style.background = '#f9fafb')}
+                                onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
+                            >
+                                {opt.name}
+                            </div>
+                        ))
+                    )}
+                    {/* {inputVal.trim() && !filtered.find(o => o.name.toLowerCase() === inputVal.trim().toLowerCase()) && (
+                        <div
+                            onMouseDown={(e) => {
+                                e.preventDefault();
+                                onType(inputVal.trim());
+                                setOpen(false);
+                            }}
+                            style={{
+                                padding: '8px 14px',
+                                fontSize: 13,
+                                color: '#C72030',
+                                cursor: 'pointer',
+                                fontWeight: 500,
+                                borderTop: '1px solid #e5e7eb',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = '#fef2f2')}
+                            onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
+                        >
+                            + Add New Item: "{inputVal.trim()}"
+                        </div>
+                    )} */}
+                </div>,
+                document.body
+            )}
+        </div>
+    );
+};
 
 // Section component - matching PatrollingCreatePage style
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -98,6 +251,7 @@ interface DetailContactPerson {
 }
 
 interface CustomerDetail {
+    id?: string | number;
     company_name: string;
     salutation: string;
     first_name: string;
@@ -111,6 +265,7 @@ interface CustomerDetail {
     portal_status: string;
     customer_language: string;
     gst_treatment: string;
+    gst_preference?: string;
     gstin: string;
     pan: string;
     place_of_supply: string;
@@ -132,11 +287,40 @@ interface CustomerDetail {
         pin_code: string;
         country: string;
     };
+    billing_addresses?: CustomerAddress[];
+    shipping_addresses?: CustomerAddress[];
+    default_billing_address?: any;
+    default_shipping_address?: any;
+    gst_details?: GstDetail[];
+}
+
+interface CustomerAddress {
+    id: number | string;
+    attention: string;
+    address: string;
+    address_line_two: string;
+    country: string;
+    state: string;
+    city: string;
+    pin_code: string;
+    telephone_number: string;
+    fax_number: string;
+    mobile: string;
+}
+
+interface GstDetail {
+    id: number | string;
+    gstin: string;
+    place_of_supply: string;
+    business_legal_name: string | null;
+    business_trade_name: string | null;
+    primary: boolean;
 }
 
 interface Item {
     id: string;
     name: string;
+    item_id?: string | null;
     description: string;
     quantity: number | '';
     rate: number | '';
@@ -165,7 +349,7 @@ export const QuotesAdd: React.FC = () => {
             const token = localStorage.getItem('token');
             const lock_account_id = localStorage.getItem('lock_account_id');
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}`, {
+                const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}&q[can_be_sold_eq]=1`, {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
@@ -176,7 +360,8 @@ export const QuotesAdd: React.FC = () => {
                         id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description,
                         tax_preference: item.tax_preference,
                         tax_exemption_id: item.tax_exemption_id,
-                        tax_group_id: Number(item.intra_state_tax_rate_id) || null
+                        tax_group_id: Number(item.intra_state_tax_rate_id) || null,
+                        inter_state_tax_rate_id: item.inter_state_tax_rate_id
                     })));
                     console.log('Fetched items:', res.data);
                 }
@@ -268,8 +453,154 @@ export const QuotesAdd: React.FC = () => {
     const [drawerActiveTab, setDrawerActiveTab] = useState(0);
     const [addressExpanded, setAddressExpanded] = useState(true);
     const [contactPersonsExpanded, setContactPersonsExpanded] = useState(true);
+    const [billingAddressBook, setBillingAddressBook] = useState<CustomerAddress[]>([]);
+    const [shippingAddressBook, setShippingAddressBook] = useState<CustomerAddress[]>([]);
+    const [selectedBillingAddressId, setSelectedBillingAddressId] = useState<number | string | null>(null);
+    const [selectedShippingAddressId, setSelectedShippingAddressId] = useState<number | string | null>(null);
+    const [addressListModalOpen, setAddressListModalOpen] = useState(false);
+    const [addressFormModalOpen, setAddressFormModalOpen] = useState(false);
+    const [activeAddressType, setActiveAddressType] = useState<'billing' | 'shipping'>('billing');
+    const [addressFormMode, setAddressFormMode] = useState<'new' | 'edit'>('new');
+    const [editingAddressId, setEditingAddressId] = useState<number | string | null>(null);
+    const [selectedAddressTaxInfoId, setSelectedAddressTaxInfoId] = useState<string>('');
+    const [gstModalOpen, setGstModalOpen] = useState(false);
+    const [gstTreatmentDraft, setGstTreatmentDraft] = useState('');
+    const [gstinDraft, setGstinDraft] = useState('');
+    const [gstPermanentDraft, setGstPermanentDraft] = useState(false);
+    const [gstManageModalOpen, setGstManageModalOpen] = useState(false);
+    const [gstPickerModalOpen, setGstPickerModalOpen] = useState(false);
+    const [showNewGstForm, setShowNewGstForm] = useState(false);
+    const [gstDetails, setGstDetails] = useState<GstDetail[]>([]);
+    const [selectedGstDetailId, setSelectedGstDetailId] = useState<number | string | null>(null);
+    const [editingGstDetailId, setEditingGstDetailId] = useState<number | string | null>(null);
+    const [newGstForm, setNewGstForm] = useState({
+        gstin: '',
+        place_of_supply: '',
+        business_legal_name: '',
+        business_trade_name: ''
+    });
+    const gstTreatmentOptions = [
+        { value: 'registered_regular', label: 'Registered Business - Regular' },
+        { value: 'registered_composition', label: 'Registered Business - Composition' },
+        { value: 'unregistered', label: 'Unregistered Business' },
+        { value: 'consumer', label: 'Consumer' },
+        { value: 'overseas', label: 'Overseas' },
+        { value: 'sez_unit', label: 'Special Economic Zone (SEZ) Unit' },
+        { value: 'deemed_export', label: 'Deemed Export' },
+        { value: 'tax_deductor', label: 'Tax Deductor' },
+        { value: 'sez_developer', label: 'SEZ Developer' },
+        { value: 'isd', label: 'Input Service Distributor (ISD)' }
+    ];
+    const getGstTreatmentLabel = (value?: string) => {
+        if (!value) return '';
+        return gstTreatmentOptions.find(opt => opt.value === value)?.label || value;
+    };
+    const emptyAddressForm: CustomerAddress = {
+        id: '',
+        attention: '',
+        address: '',
+        address_line_two: '',
+        country: 'India',
+        state: '',
+        city: '',
+        pin_code: '',
+        telephone_number: '',
+        fax_number: '',
+        mobile: ''
+    };
+    const addressCountryOptions = [
+        { code: 'IN', name: 'India' },
+        { code: 'US', name: 'United States' },
+        { code: 'GB', name: 'United Kingdom' }
+    ];
+    const [addressForm, setAddressForm] = useState<CustomerAddress>(emptyAddressForm);
 
-    const fetchCustomerDetail = async (customerId: string | number) => {
+    const mapAddress = (address: any, fallbackType: 'billing' | 'shipping'): CustomerAddress => ({
+        id: address?.id ?? `${fallbackType}-${Date.now()}-${Math.random()}`,
+        attention: address?.attention || address?.contact_person || '',
+        address: address?.address || '',
+        address_line_two: address?.address_line_two || '',
+        country: address?.country || 'India',
+        state: address?.state || '',
+        city: address?.city || '',
+        pin_code: address?.pin_code || '',
+        telephone_number: address?.telephone_number || '',
+        fax_number: address?.fax_number || '',
+        mobile: address?.mobile || ''
+    });
+
+    const formatAddressText = (addr?: CustomerAddress | null): string => {
+        if (!addr) return '';
+        const parts = [
+            addr.attention,
+            addr.address,
+            addr.address_line_two,
+            [addr.city, addr.state].filter(Boolean).join(', '),
+            addr.pin_code,
+            addr.country
+        ].filter(Boolean);
+        const contact = [addr.telephone_number, addr.fax_number ? `Fax: ${addr.fax_number}` : ''].filter(Boolean).join(' ');
+        return [...parts, contact].filter(Boolean).join(', ');
+    };
+
+    const getAddressBookByType = (type: 'billing' | 'shipping') =>
+        type === 'billing' ? billingAddressBook : shippingAddressBook;
+
+    const selectedBillingAddress = billingAddressBook.find(a => String(a.id) === String(selectedBillingAddressId)) || billingAddressBook[0] || null;
+    const selectedShippingAddress = shippingAddressBook.find(a => String(a.id) === String(selectedShippingAddressId)) || shippingAddressBook[0] || null;
+    const selectedGstDetail = gstDetails.find(g => String(g.id) === String(selectedGstDetailId)) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
+
+    const openAddressListModal = (type: 'billing' | 'shipping') => {
+        setActiveAddressType(type);
+        setAddressListModalOpen(true);
+    };
+
+    const openAddressFormModal = (mode: 'new' | 'edit', type: 'billing' | 'shipping', address?: CustomerAddress) => {
+        setActiveAddressType(type);
+        setAddressFormMode(mode);
+        if (mode === 'edit' && address) {
+            setEditingAddressId(address.id);
+            setAddressForm({ ...address });
+        } else {
+            setEditingAddressId(null);
+            setAddressForm({ ...emptyAddressForm, id: `${type}-${Date.now()}` });
+        }
+        setSelectedAddressTaxInfoId(selectedGstDetailId ? String(selectedGstDetailId) : '');
+        setAddressFormModalOpen(true);
+    };
+
+    const openGstModal = () => {
+        setGstTreatmentDraft(
+            customerDetail?.gst_preference ||
+            customerDetail?.gst_treatment ||
+            ''
+        );
+        setGstinDraft(customerDetail?.gstin || '');
+        setGstPermanentDraft(false);
+        setGstModalOpen(true);
+    };
+
+    const openGstManageModal = () => {
+        setShowNewGstForm(false);
+        setEditingGstDetailId(null);
+        setNewGstForm({
+            gstin: '',
+            place_of_supply: '',
+            business_legal_name: '',
+            business_trade_name: ''
+        });
+        setGstManageModalOpen(true);
+    };
+
+    const openGstPickerModal = () => {
+        setGstPickerModalOpen(true);
+    };
+
+    const fetchCustomerDetail = async (
+        customerId: string | number, 
+        preferredGstin?: string, 
+        newAddressToSelect?: { type: 'billing' | 'shipping', attention: string, address: string, pin_code: string }
+    ) => {
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
         setCustomerDetailLoading(true);
@@ -285,31 +616,72 @@ export const QuotesAdd: React.FC = () => {
             );
             const data = await response.json();
             setCustomerDetail(data);
-            // Pre-populate address fields (user can still edit them)
-            const ba = data.billing_address;
-            if (ba) {
-                const formatted = [
-                    ba.address,
-                    ba.address_line_two,
-                    ba.city,
-                    ba.state,
-                    ba.pin_code ? `- ${ba.pin_code}` : '',
-                    ba.country
-                ].filter(Boolean).join(', ');
-                setBillingAddress(formatted);
+            const nextBilling = Array.isArray(data.billing_addresses) && data.billing_addresses.length
+                ? data.billing_addresses.map((a: any) => mapAddress(a, 'billing'))
+                : (data.billing_address ? [mapAddress(data.billing_address, 'billing')] : []);
+            const nextShipping = Array.isArray(data.shipping_addresses) && data.shipping_addresses.length
+                ? data.shipping_addresses.map((a: any) => mapAddress(a, 'shipping'))
+                : (data.shipping_address ? [mapAddress(data.shipping_address, 'shipping')] : []);
+            setBillingAddressBook(nextBilling);
+            setShippingAddressBook(nextShipping);
+            const nextGstDetails: GstDetail[] = Array.isArray(data.gst_details) ? data.gst_details : [];
+            setGstDetails(nextGstDetails);
+            const defaultGst =
+                (preferredGstin ? nextGstDetails.find(g => g.gstin === preferredGstin) : null) ||
+                nextGstDetails.find(g => g.primary) ||
+                nextGstDetails[0] ||
+                null;
+            if (defaultGst) {
+                setSelectedGstDetailId(defaultGst.id);
+                setPlaceOfSupply(defaultGst.place_of_supply || placeOfSupply);
+                setCustomerDetail((prev) => (prev ? { ...prev, gstin: defaultGst.gstin } : prev));
+            } else {
+                setSelectedGstDetailId(null);
             }
-            const sa = data.shipping_address;
-            if (sa) {
-                const formatted = [
-                    sa.address,
-                    sa.address_line_two,
-                    sa.city,
-                    sa.state,
-                    sa.pin_code ? `- ${sa.pin_code}` : '',
-                    sa.country
-                ].filter(Boolean).join(', ');
-                setShippingAddress(formatted);
+
+            // Billing address logic: 
+            // 1. Check if we just added/edited a billing address
+            // 2. Otherwise keep current selection if it exists in the fresh list
+            // 3. Otherwise use default
+            let finalBilling = null;
+            if (newAddressToSelect?.type === 'billing') {
+                finalBilling = nextBilling.find(a => 
+                    a.attention === newAddressToSelect.attention && 
+                    a.address === newAddressToSelect.address &&
+                    a.pin_code === newAddressToSelect.pin_code
+                );
             }
+            if (!finalBilling && selectedBillingAddressId) {
+                finalBilling = nextBilling.find(a => String(a.id) === String(selectedBillingAddressId));
+            }
+            if (!finalBilling) {
+                finalBilling = data.default_billing_address 
+                    ? mapAddress(data.default_billing_address, 'billing') 
+                    : (nextBilling.length > 0 ? nextBilling[0] : null);
+            }
+
+            // Shipping address logic
+            let finalShipping = null;
+            if (newAddressToSelect?.type === 'shipping') {
+                finalShipping = nextShipping.find(a => 
+                    a.attention === newAddressToSelect.attention && 
+                    a.address === newAddressToSelect.address &&
+                    a.pin_code === newAddressToSelect.pin_code
+                );
+            }
+            if (!finalShipping && selectedShippingAddressId) {
+                finalShipping = nextShipping.find(a => String(a.id) === String(selectedShippingAddressId));
+            }
+            if (!finalShipping) {
+                finalShipping = data.default_shipping_address 
+                    ? mapAddress(data.default_shipping_address, 'shipping') 
+                    : (nextShipping.length > 0 ? nextShipping[0] : null);
+            }
+
+            setSelectedBillingAddressId(finalBilling?.id ?? null);
+            setSelectedShippingAddressId(finalShipping?.id ?? null);
+            setBillingAddress(formatAddressText(finalBilling));
+            setShippingAddress(formatAddressText(finalShipping));
         } catch (error) {
             console.error("Error fetching customer details:", error);
             toast.error("Failed to fetch customer details");
@@ -350,6 +722,7 @@ export const QuotesAdd: React.FC = () => {
         {
             id: Date.now().toString(),
             name: '',
+            item_id: null,
             description: '',
             quantity: 1 as number | '',
             rate: 0 as number | '',
@@ -365,6 +738,7 @@ export const QuotesAdd: React.FC = () => {
     ]);
 
     const [placeOfSupply, setPlaceOfSupply] = useState("");
+    const [orgState, setOrgState] = useState<string>("");
     const taxTypeOptions = [
         { value: "non_taxable", label: "Non-Taxable" },
         { value: "out_of_scope", label: "Out of Scope" },
@@ -396,6 +770,59 @@ export const QuotesAdd: React.FC = () => {
                 setLoadingTaxGroups(false);
             });
     }, []);
+
+    const [taxRates, setTaxRates] = useState<any[]>([]);
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
+            })
+            .then((res) => setTaxRates(res.data || []))
+            .catch((error) => console.error("Error fetching IGST tax rates:", error));
+    }, []);
+
+    // Fetch organisation state on mount
+    useEffect(() => {
+        const fetchOrgState = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            const organisation_id = localStorage.getItem('org_id') || localStorage.getItem('organisation_id');
+            if (!organisation_id || !baseUrl || !token) return;
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/organizations/${organisation_id}.json?lock_account_id=${lock_account_id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const org = res.data?.organization || res.data;
+                const state = org?.address?.state || '';
+                console.log('[Quotes] Org state from API:', state);
+                setOrgState(state);
+            } catch (err) {
+                console.error('[Quotes] Failed to fetch org state:', err);
+            }
+        };
+        fetchOrgState();
+    }, []);
+
+    // Re-preselect tax on all taxable items when place of supply or orgState changes
+    useEffect(() => {
+        if (!placeOfSupply) return;
+        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+        setItems(prev => prev.map(item => {
+            if (!["tax_group", "tax_rate"].includes(item.item_tax_type)) return item;
+            const matched = itemOptions.find(opt => opt.name === item.name);
+            if (!matched) return item;
+            return {
+                ...item,
+                item_tax_type: isSameState ? "tax_group" : "tax_rate",
+                tax_group_id: isSameState ? matched.tax_group_id : matched.inter_state_tax_rate_id,
+            };
+        }));
+    }, [placeOfSupply, orgState]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
     const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
@@ -466,13 +893,32 @@ export const QuotesAdd: React.FC = () => {
     });
 
     // Dropdowns data
-    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number; description: string; tax_preference: string; tax_exemption_id: number | null; tax_group_id: number | null }[]>([]);
+    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number; description: string; tax_preference: string; tax_exemption_id: number | null; tax_group_id: number | null; inter_state_tax_rate_id?: any }[]>([]);
     const [salespersons, setSalespersons] = useState<{ id: string; name: string }[]>([]);
     const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
     const [taxOptions, setTaxOptions] = useState<any[]>([]);
     const [selectedTax, setSelectedTax] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [hasQuoteApproval, setHasQuoteApproval] = useState(false);
+
+    useEffect(() => {
+        const fetchLockAccount = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            try {
+                const res = await axios.get(`https://${baseUrl}/get_lock_account.json`, {
+                    headers: { Authorization: token ? `Bearer ${token}` : undefined },
+                });
+                const hasApproval = Array.isArray(res.data?.approvals) &&
+                    res.data.approvals.some((a: any) => a.approval_type === 'quote' && a.active);
+                setHasQuoteApproval(hasApproval);
+            } catch (e) {
+                console.error('Failed to fetch lock account', e);
+            }
+        };
+        fetchLockAccount();
+    }, []);
     const [selectedProject, setSelectedProject] = useState<string>("");
 
     const projects = [
@@ -487,6 +933,18 @@ export const QuotesAdd: React.FC = () => {
         '& .MuiInputBase-input, & .MuiSelect-select': {
             padding: { xs: '8px', sm: '10px', md: '12px' },
         },
+    };
+    const modalPrimaryButtonSx = {
+        textTransform: 'none',
+        bgcolor: '#C72030',
+        color: '#fff',
+        '&:hover': { bgcolor: '#A01020' }
+    };
+    const modalSecondaryButtonSx = {
+        textTransform: 'none',
+        borderColor: '#C72030',
+        color: '#C72030',
+        '&:hover': { borderColor: '#A01020', bgcolor: '#f8f1f1', color: '#A01020' }
     };
 
     // Generate auto sales order number
@@ -547,8 +1005,9 @@ export const QuotesAdd: React.FC = () => {
     // When customer is selected
     useEffect(() => {
         if (selectedCustomer) {
-            setBillingAddress(selectedCustomer.billingAddress);
-            setShippingAddress(selectedCustomer.shippingAddress);
+            // Address and payment terms will be updated by fetchCustomerDetail
+            // setBillingAddress(selectedCustomer.billingAddress);
+            // setShippingAddress(selectedCustomer.shippingAddress);
             setPaymentTerms(selectedCustomer.paymentTerms);
         }
     }, [selectedCustomer]);
@@ -560,6 +1019,242 @@ export const QuotesAdd: React.FC = () => {
         }
     }, [sameAsBilling, billingAddress]);
 
+    useEffect(() => {
+        if (selectedBillingAddress) {
+            setBillingAddress(formatAddressText(selectedBillingAddress));
+        }
+    }, [selectedBillingAddressId, billingAddressBook.length]);
+
+    useEffect(() => {
+        if (!sameAsBilling && selectedShippingAddress) {
+            setShippingAddress(formatAddressText(selectedShippingAddress));
+        }
+    }, [selectedShippingAddressId, shippingAddressBook.length, sameAsBilling]);
+
+    const handleSaveAddressForm = async () => {
+        if (!selectedCustomer?.id) {
+            toast.error("Please select a customer first");
+            return;
+        }
+
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const lock_account_id = localStorage.getItem("lock_account_id");
+        const setBook = activeAddressType === 'billing' ? setBillingAddressBook : setShippingAddressBook;
+        const setSelectedId = activeAddressType === 'billing' ? setSelectedBillingAddressId : setSelectedShippingAddressId;
+        const targetId = editingAddressId ?? addressForm.id ?? `${activeAddressType}-${Date.now()}`;
+        const payload: CustomerAddress = { ...addressForm, id: targetId };
+
+        const addressAttr: any = {
+            attention: addressForm.attention || '',
+            address: addressForm.address || '',
+            email: '',
+            address_type: activeAddressType,
+            address_line_two: addressForm.address_line_two || '',
+            address_line_three: '',
+            country: addressForm.country || 'India',
+            state: addressForm.state || '',
+            city: addressForm.city || '',
+            pin_code: addressForm.pin_code || '',
+            telephone_number: addressForm.telephone_number || '',
+            fax_number: addressForm.fax_number || '',
+            mobile: addressForm.mobile || '',
+            contact_person: addressForm.attention || '',
+            gst_detail_id: selectedAddressTaxInfoId ? Number(selectedAddressTaxInfoId) : null
+        };
+
+        if (addressFormMode === 'edit' && !String(targetId).startsWith(`${activeAddressType}-`)) {
+            addressAttr.id = Number(targetId) || targetId;
+        }
+
+        const updatePayload = {
+            lock_account_customer: {
+                id: selectedCustomer.id,
+                [activeAddressType === 'billing' ? 'billing_addresses_attributes' : 'shipping_addresses_attributes']: [addressAttr]
+            }
+        };
+
+        try {
+            const response = await fetch(
+                `https://${baseUrl}/lock_account_customers/${selectedCustomer.id}.json?lock_account_id=${lock_account_id}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(updatePayload)
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Address save failed (${response.status})`);
+            }
+
+            setBook(prev => {
+                if (addressFormMode === 'edit') {
+                    return prev.map(item => (String(item.id) === String(targetId) ? payload : item));
+                }
+                return [...prev, payload];
+            });
+            setSelectedId(targetId);
+            setAddressFormModalOpen(false);
+            setAddressListModalOpen(false);
+            toast.success("Address saved successfully");
+            fetchCustomerDetail(selectedCustomer.id, undefined, {
+                type: activeAddressType,
+                attention: addressForm.attention,
+                address: addressForm.address,
+                pin_code: addressForm.pin_code
+            });
+        } catch (error) {
+            console.error("Error saving address:", error);
+            toast.error("Failed to save address");
+        }
+    };
+
+    const handleUpdateGstConfig = () => {
+        setCustomerDetail((prev) => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                gst_preference: gstTreatmentDraft,
+                gst_treatment: gstTreatmentDraft,
+                gstin: gstinDraft
+            };
+        });
+        setGstModalOpen(false);
+    };
+
+    const handleGstinDropdownChange = (value: string | number) => {
+        setSelectedGstDetailId(value);
+        const selected = gstDetails.find(g => String(g.id) === String(value));
+        if (!selected) return;
+        setCustomerDetail((prev) => prev ? { ...prev, gstin: selected.gstin } : prev);
+        if (selected.place_of_supply) {
+            setPlaceOfSupply(selected.place_of_supply);
+        }
+        setGstPickerModalOpen(false);
+    };
+
+    const handleSaveAndSelectGst = async () => {
+        if (!selectedCustomer?.id) {
+            toast.error("Please select a customer first");
+            return;
+        }
+        if (!newGstForm.gstin || !newGstForm.place_of_supply) {
+            toast.error("GSTIN and Place of Supply are required");
+            return;
+        }
+        const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+        const normalizedGstin = String(newGstForm.gstin || '').toUpperCase().trim();
+        if (!gstinRegex.test(normalizedGstin)) {
+            toast.error('Invalid GSTIN format. e.g. 27AAAAA1234A1Z5');
+            return;
+        }
+
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const lock_account_id = localStorage.getItem("lock_account_id");
+
+        const gstAttribute = {
+            ...(editingGstDetailId ? { id: Number(editingGstDetailId) || editingGstDetailId } : {}),
+            gstin: normalizedGstin,
+            place_of_supply: newGstForm.place_of_supply,
+            business_legal_name: newGstForm.business_legal_name || '',
+            business_trade_name: newGstForm.business_trade_name || ''
+        };
+
+        const payload = {
+            lock_account_customer: {
+                id: selectedCustomer.id,
+                gst_details_attributes: [gstAttribute]
+            }
+        };
+
+        try {
+            const response = await fetch(
+                `https://${baseUrl}/lock_account_customers/${selectedCustomer.id}.json?lock_account_id=${lock_account_id}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload)
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`GST detail save failed (${response.status})`);
+            }
+
+            setShowNewGstForm(false);
+            setEditingGstDetailId(null);
+            setGstManageModalOpen(false);
+            toast.success(editingGstDetailId ? "Tax information updated" : "Tax information saved");
+            await fetchCustomerDetail(selectedCustomer.id, normalizedGstin);
+        } catch (error) {
+            console.error("Error saving gst detail:", error);
+            toast.error("Failed to save tax information");
+        }
+    };
+
+    const handleEditGstDetail = (gst: GstDetail) => {
+        setEditingGstDetailId(gst.id);
+        setShowNewGstForm(true);
+        setNewGstForm({
+            gstin: gst.gstin || '',
+            place_of_supply: gst.place_of_supply || '',
+            business_legal_name: gst.business_legal_name || '',
+            business_trade_name: gst.business_trade_name || ''
+        });
+    };
+
+    const handleDeleteGstDetail = async (gstId: number | string) => {
+        if (!selectedCustomer?.id) {
+            toast.error("Please select a customer first");
+            return;
+        }
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const lock_account_id = localStorage.getItem("lock_account_id");
+
+        const payload = {
+            lock_account_customer: {
+                id: selectedCustomer.id,
+                gst_details_attributes: [
+                    {
+                        id: Number(gstId) || gstId,
+                        _destroy: true
+                    }
+                ]
+            }
+        };
+
+        try {
+            const response = await fetch(
+                `https://${baseUrl}/lock_account_customers/${selectedCustomer.id}.json?lock_account_id=${lock_account_id}`,
+                {
+                    method: 'PUT',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(payload)
+                }
+            );
+            if (!response.ok) {
+                throw new Error(`GST detail delete failed (${response.status})`);
+            }
+            toast.success("Tax information deleted");
+            await fetchCustomerDetail(selectedCustomer.id);
+        } catch (error) {
+            console.error("Error deleting gst detail:", error);
+            toast.error("Failed to delete tax information");
+        }
+    };
+
     // Calculate item amount
     const calculateItemAmount = (item: Item): number => {
         const baseAmount = Number(item.quantity || 0) * Number(item.rate || 0);
@@ -569,6 +1264,16 @@ export const QuotesAdd: React.FC = () => {
         const afterDiscount = baseAmount - discountAmount;
         const taxAmount = (afterDiscount * Number(item.taxRate || 0)) / 100;
         return afterDiscount + taxAmount;
+    };
+
+    // Update multiple item fields at once (avoids double re-renders)
+    const updateItemFields = (index: number, fields: Partial<Item>) => {
+        setItems(prev => {
+            const newItems = [...prev];
+            newItems[index] = { ...newItems[index], ...fields };
+            newItems[index].amount = calculateItemAmount(newItems[index]);
+            return newItems;
+        });
     };
 
     // Update item
@@ -589,6 +1294,7 @@ export const QuotesAdd: React.FC = () => {
         setItems(prev => [...prev, {
             id: Date.now().toString(),
             name: '',
+            item_id: null,
             description: '',
             quantity: 1,
             rate: 0,
@@ -809,16 +1515,19 @@ export const QuotesAdd: React.FC = () => {
                 const found = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
                 return found && found.id ? found.id : selectedTax || '';
             })(),
-            lock_account_invoice_items_attributes: items.map(item => ({
-                lock_account_item_id: itemOptions.find(opt => opt.name === item.name)?.id || item.name,
-                rate: item.rate,
-                quantity: item.quantity,
-                total_amount: item.amount,
-                description: item.description || '',
-                tax_type: item.item_tax_type,
-                tax_group_id: item.tax_group_id,
-                tax_exemption_id: item.tax_exemption_id
-            })),
+            lock_account_invoice_items_attributes: items.map(item => {
+                const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
+                return {
+                    ...(resolvedId ? { lock_account_item_id: resolvedId } : { item_name: item.name }),
+                    rate: item.rate,
+                    quantity: item.quantity,
+                    total_amount: item.amount,
+                    description: item.description || '',
+                    tax_type: item.item_tax_type,
+                    tax_group_id: item.tax_group_id,
+                    tax_exemption_id: item.tax_exemption_id
+                };
+            }),
             email_contact_persons_attributes: selectedContactPersons.map(id => ({ contact_person_id: id })),
             attachments_attributes: attachments.map(f => ({
                 document: f,
@@ -830,6 +1539,7 @@ export const QuotesAdd: React.FC = () => {
 
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
+        if (isSubmitting) return;
         if (!validate()) {
             return;
         }
@@ -889,9 +1599,26 @@ export const QuotesAdd: React.FC = () => {
             const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
             formData.append('lock_account_quote[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
             formData.append('lock_account_quote[place_of_supply]', placeOfSupply); //new added
+
+            // Address detail attributes for selected customer address/gst mapping
+            const selectedOrFirstBillingId = selectedBillingAddressId ?? billingAddressBook[0]?.id ?? '';
+            const selectedOrFirstShippingId = selectedShippingAddressId ?? shippingAddressBook[0]?.id ?? '';
+            const selectedOrFirstGstDetailId = selectedGstDetailId ?? gstDetails[0]?.id ?? '';
+            const gstPreferenceValue = customerDetail?.gst_preference || customerDetail?.gst_treatment || '';
+
+            formData.append('lock_account_quote[address_detail_attributes][billing_address_id]', String(selectedOrFirstBillingId));
+            formData.append('lock_account_quote[address_detail_attributes][shipping_address_id]', String(selectedOrFirstShippingId));
+            formData.append('lock_account_quote[address_detail_attributes][gst_detail_id]', String(selectedOrFirstGstDetailId));
+            formData.append('lock_account_quote[address_detail_attributes][gst_preference]', String(gstPreferenceValue));
+
             // Quote items
             items.forEach((item, idx) => {
-                formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][lock_account_item_id]`, itemOptions.find(opt => opt.name === item.name)?.id || item.name);
+                const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
+                if (resolvedId) {
+                    formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][lock_account_item_id]`, String(resolvedId));
+                } else {
+                    formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][item_name]`, item.name);
+                }
                 formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
                 formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
                 formData.append(`lock_account_quote[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
@@ -913,20 +1640,22 @@ export const QuotesAdd: React.FC = () => {
                 formData.append(`lock_account_quote[attachments_attributes][${idx}][active]`, 'true');
             });
 
-            await fetch(`https://${baseUrl}/lock_account_quotes.json?lock_account_id=${lock_account_id}`, {
-                method: 'POST',
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined
-                    // Do NOT set Content-Type, browser will set it for FormData
-                },
-                body: formData
-            });
+            await axios.post(
+                `https://${baseUrl}/lock_account_quotes.json?lock_account_id=${lock_account_id}`,
+                formData,
+                {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined
+                        // Do NOT set Content-Type manually for FormData
+                    }
+                }
+            );
 
-            alert(`Invoice ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+            toast.success(saveAsDraft ? 'Quote saved as draft successfully' : 'Quote created successfully');
             navigate('/accounting/quotes');
         } catch (error) {
-            console.error('Error submitting invoice:', error);
-            alert('Failed to create invoice');
+            console.error('Error submitting quote:', error);
+            toast.error('Failed to save quote');
         } finally {
             setIsSubmitting(false);
         }
@@ -1013,6 +1742,18 @@ export const QuotesAdd: React.FC = () => {
             }
         });
     });
+
+    // Inter-state (IGST Tax Rates)
+    items
+        .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
+        .forEach(item => {
+            const rate = taxRates.find(r => String(r.id) === String(item.tax_group_id));
+            if (!rate) return;
+            const taxAmount = (item.amount * rate.rate) / 100;
+            const existing = taxBreakdown.find(t => t.name === rate.name);
+            if (existing) existing.amount += taxAmount;
+            else taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmount });
+        });
     // Calculate Final Total
 
     const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
@@ -1074,10 +1815,15 @@ export const QuotesAdd: React.FC = () => {
                                             const customerId = e.target.value;
                                             const customer = customers.find(c => c.id === customerId);
                                             setSelectedCustomer(customer || null);
+                                            setSelectedBillingAddressId(null);
+                                            setSelectedShippingAddressId(null);
                                             if (customerId) {
                                                 fetchCustomerDetail(customerId);
                                             } else {
                                                 setCustomerDetail(null);
+                                                setBillingAddress('');
+                                                setShippingAddress('');
+                                                setPlaceOfSupply('');
                                             }
                                         }}
                                         displayEmpty
@@ -1144,55 +1890,71 @@ export const QuotesAdd: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-100 pt-6">
                                     {/* Billing Address */}
                                     <div>
-                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Billing Address
+                                            <IconButton size="small" onClick={() => openAddressListModal('billing')}>
+                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                            </IconButton>
                                         </div>
-                                        {customerDetail.billing_address?.address ? (
+                                        {selectedBillingAddress?.address ? (
                                             <div className="text-sm text-gray-700 leading-relaxed">
-                                                <div className="font-medium">{customerDetail.billing_address.address}</div>
-                                                {customerDetail.billing_address.address_line_two && (
-                                                    <div>{customerDetail.billing_address.address_line_two}</div>
+                                                <div className="font-medium">{selectedBillingAddress.address}</div>
+                                                {selectedBillingAddress.address_line_two && (
+                                                    <div>{selectedBillingAddress.address_line_two}</div>
                                                 )}
                                                 <div>
-                                                    {[customerDetail.billing_address.city, customerDetail.billing_address.state]
+                                                    {[selectedBillingAddress.city, selectedBillingAddress.state]
                                                         .filter(Boolean)
                                                         .join(", ")}
-                                                    {customerDetail.billing_address.pin_code ? ` - ${customerDetail.billing_address.pin_code}` : ""}
+                                                    {selectedBillingAddress.pin_code ? ` - ${selectedBillingAddress.pin_code}` : ""}
                                                 </div>
-                                                {customerDetail.billing_address.country && (
-                                                    <div>{customerDetail.billing_address.country}</div>
+                                                {selectedBillingAddress.country && (
+                                                    <div>{selectedBillingAddress.country}</div>
                                                 )}
                                             </div>
                                         ) : (
-                                            <div className="text-sm text-gray-400 italic">No billing address provided</div>
+                                            <button
+                                                type="button"
+                                                onClick={() => openAddressFormModal('new', 'billing')}
+                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                            >
+                                                New Address
+                                            </button>
                                         )}
                                     </div>
 
                                     {/* Shipping Address */}
                                     <div>
-                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Shipping Address
+                                            <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
+                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                            </IconButton>
                                         </div>
-                                        {customerDetail.shipping_address?.address ? (
+                                        {selectedShippingAddress?.address ? (
                                             <div className="text-sm text-gray-700 leading-relaxed">
-                                                <div className="font-medium">{customerDetail.shipping_address.address}</div>
-                                                {customerDetail.shipping_address.address_line_two && (
-                                                    <div>{customerDetail.shipping_address.address_line_two}</div>
+                                                <div className="font-medium">{selectedShippingAddress.address}</div>
+                                                {selectedShippingAddress.address_line_two && (
+                                                    <div>{selectedShippingAddress.address_line_two}</div>
                                                 )}
                                                 <div>
-                                                    {[customerDetail.shipping_address.city, customerDetail.shipping_address.state]
+                                                    {[selectedShippingAddress.city, selectedShippingAddress.state]
                                                         .filter(Boolean)
                                                         .join(", ")}
-                                                    {customerDetail.shipping_address.pin_code ? ` - ${customerDetail.shipping_address.pin_code}` : ""}
+                                                    {selectedShippingAddress.pin_code ? ` - ${selectedShippingAddress.pin_code}` : ""}
                                                 </div>
-                                                {customerDetail.shipping_address.country && (
-                                                    <div>{customerDetail.shipping_address.country}</div>
+                                                {selectedShippingAddress.country && (
+                                                    <div>{selectedShippingAddress.country}</div>
                                                 )}
                                             </div>
                                         ) : (
-                                            <div className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                            <button
+                                                type="button"
+                                                onClick={() => openAddressFormModal('new', 'shipping')}
+                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
+                                            >
                                                 New Address
-                                            </div>
+                                            </button>
                                         )}
                                     </div>
                                 </div>
@@ -1201,11 +1963,17 @@ export const QuotesAdd: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">GST Treatment:</span>
-                                        <span className="text-gray-800">{customerDetail.gst_treatment || "Registered Business - Regular"}</span>
+                                        <span className="text-gray-800">{getGstTreatmentLabel(customerDetail.gst_preference || customerDetail.gst_treatment)}</span>
+                                        <IconButton size="small" onClick={openGstModal}>
+                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                        </IconButton>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">GSTIN:</span>
-                                        <span className="text-gray-800 font-medium">{customerDetail.gstin || "—"}</span>
+                                        <span className="text-gray-800 font-medium">{selectedGstDetail?.gstin || customerDetail.gstin || "—"}</span>
+                                        <IconButton size="small" onClick={openGstPickerModal}>
+                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                        </IconButton>
                                     </div>
                                 </div>
 
@@ -1421,46 +2189,36 @@ export const QuotesAdd: React.FC = () => {
                                     {items.map((item, index) => (
                                         <tr key={item.id} className="hover:bg-muted/30 transition-colors">
                                             <td className="px-4 py-3">
-                                                <FormControl fullWidth sx={{ minWidth: 250 }}>
-                                                    <Select
-                                                        value={item.name}
-                                                        onChange={(e) => {
-                                                            const selectedItem = itemOptions.find(opt => opt.name === e.target.value);
-                                                            if (selectedItem) {
-                                                                updateItem(index, 'name', selectedItem.name);
-                                                                updateItem(index, 'rate', selectedItem.rate);
-                                                                updateItem(index, 'description', selectedItem.description);
-                                                                // TAX HANDLING
-                                                                if (selectedItem.tax_preference === "non_taxable") {
-                                                                    updateItem(index, "item_tax_type", "non_taxable");
-                                                                    updateItem(index, "tax_exemption_id", selectedItem.tax_exemption_id);
-                                                                }
-
-                                                                if (selectedItem.tax_preference === "taxable") {
-                                                                    updateItem(index, "item_tax_type", "tax_group");
-                                                                    updateItem(index, "tax_group_id", selectedItem.tax_group_id);
-                                                                }
-
-                                                                if (selectedItem.tax_preference === "out_of_scope") {
-                                                                    updateItem(index, "item_tax_type", "out_of_scope");
-                                                                }
-
-                                                                if (selectedItem.tax_preference === "non_gst_supply") {
-                                                                    updateItem(index, "item_tax_type", "non_gst_supply");
-                                                                }
-                                                            }
-                                                        }}
-                                                        displayEmpty
-                                                        size="small"
-                                                    >
-                                                        <MenuItem value="" disabled>Select an item</MenuItem>
-                                                        {itemOptions.map((option) => (
-                                                            <MenuItem key={option.id} value={option.name}>
-                                                                {option.name}
-                                                            </MenuItem>
-                                                        ))}
-                                                    </Select>
-                                                </FormControl>
+                                                <ItemSearchInput
+                                                    value={item.name}
+                                                    itemOptions={itemOptions}
+                                                    onSelect={(selected) => {
+                                                        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                        let taxFields: Partial<Item> = {};
+                                                        if (selected.tax_preference === "non_taxable") {
+                                                            taxFields = { item_tax_type: "non_taxable", tax_exemption_id: selected.tax_exemption_id };
+                                                        } else if (selected.tax_preference === "taxable") {
+                                                            taxFields = {
+                                                                item_tax_type: isSameState ? "tax_group" : "tax_rate",
+                                                                tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id
+                                                            };
+                                                        } else if (selected.tax_preference === "out_of_scope") {
+                                                            taxFields = { item_tax_type: "out_of_scope" };
+                                                        } else if (selected.tax_preference === "non_gst_supply") {
+                                                            taxFields = { item_tax_type: "non_gst_supply" };
+                                                        }
+                                                        updateItemFields(index, {
+                                                            item_id: String(selected.id),
+                                                            name: selected.name,
+                                                            rate: selected.rate || 0,
+                                                            description: selected.description || '',
+                                                            ...taxFields
+                                                        });
+                                                    }}
+                                                    onType={(typed) => {
+                                                        updateItemFields(index, { item_id: null, name: typed });
+                                                    }}
+                                                />
                                                 <TextField
                                                     fullWidth
                                                     label="Item Description"
@@ -1533,11 +2291,11 @@ export const QuotesAdd: React.FC = () => {
                                             <td className="px-4 py-3">
                                                 <FormControl size="small" sx={{ width: 200 }}>
                                                     <Select
-                                                        //   value={item.tax_type || ""}
-                                                        value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
+                                                        value={["tax_group", "tax_rate"].includes(item.item_tax_type) ? item.tax_group_id : item.item_tax_type || ""}
                                                         displayEmpty
                                                         onChange={(e) => {
                                                             const value = String(e.target.value);
+                                                            const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
 
                                                             // Static tax types
                                                             if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
@@ -1549,9 +2307,9 @@ export const QuotesAdd: React.FC = () => {
                                                                     setExemptionModalOpen(true);
                                                                 }
                                                             }
-                                                            // Tax group selected
+                                                            // Tax group/rate selected
                                                             else {
-                                                                updateItem(index, "item_tax_type", "tax_group");
+                                                                updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
                                                                 updateItem(index, "tax_group_id", Number(value));
                                                             }
                                                         }}
@@ -1565,17 +2323,24 @@ export const QuotesAdd: React.FC = () => {
                                                             </MenuItem>
                                                         ))}
 
-                                                        {/* Divider */}
-                                                        <MenuItem disabled>
-                                                            Tax Groups
-                                                        </MenuItem>
-
-                                                        {/* Tax Groups */}
-                                                        {taxGroups.map((group) => (
-                                                            <MenuItem key={group.id} value={group.id}>
-                                                                {group.name}
-                                                            </MenuItem>
-                                                        ))}
+                                                        {(() => {
+                                                            const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                            return isSameState ? (
+                                                                [
+                                                                    <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
+                                                                    ...taxGroups.map((group) => (
+                                                                        <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                                                                    ))
+                                                                ]
+                                                            ) : (
+                                                                [
+                                                                    <MenuItem key="__divider__" disabled>Tax Rates (IGST)</MenuItem>,
+                                                                    ...taxRates.map((rate) => (
+                                                                        <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
+                                                                    ))
+                                                                ]
+                                                            );
+                                                        })()}
                                                     </Select>
                                                 </FormControl>
                                             </td>
@@ -1737,7 +2502,7 @@ export const QuotesAdd: React.FC = () => {
                                         type="number"
                                         size="small"
                                         value={adjustment}
-                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || '')}
+                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || 0)}
                                         inputProps={{ step: 0.01 }}
                                         sx={{ width: 100 }}
                                     />
@@ -1952,24 +2717,26 @@ export const QuotesAdd: React.FC = () => {
                 >
                     Save as Draft
                 </Button>
-                <Button
-                    variant="text"
-                    onClick={() => handleSubmit(false)}
-                    disabled={isSubmitting}
-                    sx={{
-                        bgcolor: '#f8f1f1',
-                        color: '#C72030',
-                        fontWeight: 600,
-                        px: 4,
-                        '&:hover': {
-                            bgcolor: '#f1e8e8',
-                            color: '#A01020'
-                        },
-                        textTransform: 'none'
-                    }}
-                >
-                    {isSubmitting ? 'Submitting...' : 'Save and Send'}
-                </Button>
+                {!hasQuoteApproval && (
+                    <Button
+                        variant="text"
+                        onClick={() => handleSubmit(false)}
+                        disabled={isSubmitting}
+                        sx={{
+                            bgcolor: '#f8f1f1',
+                            color: '#C72030',
+                            fontWeight: 600,
+                            px: 4,
+                            '&:hover': {
+                                bgcolor: '#f1e8e8',
+                                color: '#A01020'
+                            },
+                            textTransform: 'none'
+                        }}
+                    >
+                        {isSubmitting ? 'Submitting...' : 'Save and Send'}
+                    </Button>
+                )}
 
                 <Button
                     variant="outlined"
@@ -2084,8 +2851,8 @@ export const QuotesAdd: React.FC = () => {
                                                 ["Payment Terms", customerDetail.payment_terms || "—"],
                                                 ["Portal Status", customerDetail.portal_status || "—"],
                                                 ["Customer Language", customerDetail.customer_language || "English"],
-                                                ["GST Treatment", customerDetail.gst_treatment || "—"],
-                                                ["GSTIN", customerDetail.gstin || "—"],
+                                                ["GST Treatment", getGstTreatmentLabel(customerDetail.gst_preference || customerDetail.gst_treatment)],
+                                                ["GSTIN", selectedGstDetail?.gstin || customerDetail.gstin || "—"],
                                                 ["PAN", customerDetail.pan || "—"],
                                                 ["Place of Supply", customerDetail.place_of_supply || "Yet to be updated"],
                                                 ["Tax Preference", customerDetail.tax_preference || "—"],
@@ -2272,6 +3039,368 @@ export const QuotesAdd: React.FC = () => {
                     <Button onClick={() => setAddUserDialogOpen(false)}>Cancel</Button>
                     <Button onClick={handleAddExternalUser} variant="contained">Add</Button>
                 </DialogActions>
+            </Dialog>
+
+            <Dialog open={addressListModalOpen} onClose={() => setAddressListModalOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle className="!text-base !font-semibold !pr-10">
+                    {activeAddressType === 'billing' ? 'Billing Address' : 'Shipping Address'}
+                </DialogTitle>
+                <DialogContent dividers>
+                    <div className="max-h-[420px] overflow-y-auto space-y-3">
+                        {getAddressBookByType(activeAddressType).map((addr) => (
+                            <div
+                                key={addr.id}
+                                className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
+                                        ? 'border-[#C72030] bg-red-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                onClick={() => {
+                                    if (activeAddressType === 'billing') setSelectedBillingAddressId(addr.id);
+                                    else setSelectedShippingAddressId(addr.id);
+                                    setAddressListModalOpen(false);
+                                }}
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="space-y-0.5 text-gray-700">
+                                        {addr.attention && <div className="font-semibold">{addr.attention}</div>}
+                                        {addr.address && <div>{addr.address}</div>}
+                                        {addr.address_line_two && <div>{addr.address_line_two}</div>}
+                                        <div>{[addr.city, addr.state].filter(Boolean).join(', ')}{addr.pin_code ? ` ${addr.pin_code}` : ''}</div>
+                                        {addr.country && <div>{addr.country}</div>}
+                                        {(addr.telephone_number || addr.fax_number) && (
+                                            <div>{addr.telephone_number}{addr.fax_number ? ` Fax Number : ${addr.fax_number}` : ''}</div>
+                                        )}
+                                    </div>
+                                    <IconButton
+                                        size="small"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            openAddressFormModal('edit', activeAddressType, addr);
+                                        }}
+                                    >
+                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                    </IconButton>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </DialogContent>
+                <DialogActions className="!justify-between !px-4">
+                    <button
+                        type="button"
+                        className="text-[#1d4ed8] text-sm font-medium"
+                        onClick={() => openAddressFormModal('new', activeAddressType)}
+                    >
+                        + New address
+                    </button>
+                    <Button onClick={() => setAddressListModalOpen(false)} variant="outlined" size="small" sx={modalSecondaryButtonSx}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={addressFormModalOpen} onClose={() => setAddressFormModalOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle className="!text-base !font-semibold">
+                    Additional Address
+                </DialogTitle>
+                <DialogContent dividers>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                        <TextField
+                            label="Attention"
+                            fullWidth
+                            value={addressForm.attention}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, attention: e.target.value }))}
+                            className="md:col-span-2"
+                        />
+                        <TextField
+                            label="Country/Region"
+                            select
+                            fullWidth
+                            value={addressForm.country}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, country: e.target.value }))}
+                            className="md:col-span-2"
+                        >
+                            {addressCountryOptions.map((opt) => (
+                                <MenuItem key={opt.code} value={opt.name}>{opt.name}</MenuItem>
+                            ))}
+                        </TextField>
+                        <TextField
+                            label="Tax Information"
+                            select
+                            fullWidth
+                            value={selectedAddressTaxInfoId}
+                            onChange={(e) => setSelectedAddressTaxInfoId(String(e.target.value))}
+                            className="md:col-span-2"
+                        >
+                            <MenuItem value="">Select</MenuItem>
+                            {gstDetails.map((gst) => (
+                                <MenuItem key={gst.id} value={String(gst.id)}>
+                                    {gst.gstin} - {gst.place_of_supply}
+                                </MenuItem>
+                            ))}
+                        </TextField>
+                        <TextField
+                            label="Address"
+                            placeholder="Street 1"
+                            fullWidth
+                            value={addressForm.address}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, address: e.target.value }))}
+                            className="md:col-span-2"
+                        />
+                        <TextField
+                            placeholder="Street 2"
+                            fullWidth
+                            value={addressForm.address_line_two}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, address_line_two: e.target.value }))}
+                            className="md:col-span-2"
+                        />
+                        <TextField
+                            label="City"
+                            fullWidth
+                            value={addressForm.city}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, city: e.target.value }))}
+                            className="md:col-span-2"
+                        />
+                        <TextField
+                            label="State"
+                            select
+                            fullWidth
+                            value={addressForm.state}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, state: e.target.value }))}
+                        >
+                            <MenuItem value="">Select</MenuItem>
+                            {states.map((state) => (
+                                <MenuItem key={state} value={state}>{state}</MenuItem>
+                            ))}
+                        </TextField>
+                        <TextField
+                            label="Pin Code"
+                            fullWidth
+                            value={addressForm.pin_code}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, pin_code: e.target.value }))}
+                        />
+                        <TextField
+                            label="Phone"
+                            fullWidth
+                            value={addressForm.telephone_number}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, telephone_number: e.target.value }))}
+                            InputProps={{ startAdornment: <InputAdornment position="start">+91</InputAdornment> }}
+                        />
+                        <TextField
+                            label="Fax Number"
+                            fullWidth
+                            value={addressForm.fax_number}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, fax_number: e.target.value }))}
+                        />
+                    </div>
+                </DialogContent>
+                <DialogActions className="!justify-start !px-6 !py-3">
+                    <Button variant="contained" onClick={handleSaveAddressForm} sx={modalPrimaryButtonSx}>Save</Button>
+                    <Button variant="outlined" onClick={() => setAddressFormModalOpen(false)} sx={modalSecondaryButtonSx}>Cancel</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={gstModalOpen} onClose={() => setGstModalOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle className="!text-base !font-medium !pb-2">Configure Tax Preferences</DialogTitle>
+                <DialogContent className="!pt-2">
+                    <div className="space-y-3">
+                        <TextField
+                            label="GST Treatment"
+                            select
+                            fullWidth
+                            value={gstTreatmentDraft}
+                            onChange={(e) => setGstTreatmentDraft(e.target.value)}
+                            size="small"
+                        >
+                            {gstTreatmentOptions.map((opt) => (
+                                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                            ))}
+                        </TextField>
+                    </div>
+                </DialogContent>
+                <DialogActions className="!justify-start !px-6 !pb-4">
+                    <Button variant="contained" onClick={handleUpdateGstConfig} sx={modalPrimaryButtonSx}>Update</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={gstManageModalOpen} onClose={() => setGstManageModalOpen(false)} maxWidth="md" fullWidth>
+                <DialogTitle className="!text-base !font-semibold !border-b !border-gray-200 !flex !items-center !justify-between !py-3">
+                    <span>Manage Tax Informations</span>
+                    <IconButton size="small" onClick={() => setGstManageModalOpen(false)}>
+                        <Close fontSize="small" className="text-red-500" />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent className="!pt-4">
+                    <div className="space-y-4">
+                        <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => {
+                                setEditingGstDetailId(null);
+                                setNewGstForm({
+                                    gstin: '',
+                                    place_of_supply: '',
+                                    business_legal_name: '',
+                                    business_trade_name: ''
+                                });
+                                setShowNewGstForm(true);
+                            }}
+                            sx={modalPrimaryButtonSx}
+                        >
+                            Add New Tax Information
+                        </Button>
+                        {showNewGstForm && (
+                            <div className="border border-gray-200 bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <TextField
+                                        label="GSTIN / UIN*"
+                                        fullWidth
+                                        value={newGstForm.gstin}
+                                        onChange={(e) => setNewGstForm(prev => ({ ...prev, gstin: e.target.value.toUpperCase() }))}
+                                        error={!!newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)}
+                                        helperText={
+                                            newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)
+                                                ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5'
+                                                : ''
+                                        }
+                                        inputProps={{ maxLength: 15 }}
+                                        size="small"
+                                    />
+                                    
+                                </div>
+                                <TextField
+                                    label="Place of Supply*"
+                                    select
+                                    fullWidth
+                                    value={newGstForm.place_of_supply}
+                                    onChange={(e) => setNewGstForm(prev => ({ ...prev, place_of_supply: e.target.value }))}
+                                    size="small"
+                                >
+                                    <MenuItem value="">Select</MenuItem>
+                                    {states.map((state) => (
+                                        <MenuItem key={state} value={state}>{state}</MenuItem>
+                                    ))}
+                                </TextField>
+                                <TextField
+                                    label="Business Legal Name"
+                                    fullWidth
+                                    value={newGstForm.business_legal_name}
+                                    onChange={(e) => setNewGstForm(prev => ({ ...prev, business_legal_name: e.target.value }))}
+                                    size="small"
+                                />
+                                <TextField
+                                    label="Business Trade Name"
+                                    fullWidth
+                                    value={newGstForm.business_trade_name}
+                                    onChange={(e) => setNewGstForm(prev => ({ ...prev, business_trade_name: e.target.value }))}
+                                    size="small"
+                                />
+                                <div className="md:col-span-3 flex items-center gap-2">
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        onClick={handleSaveAndSelectGst}
+                                        sx={modalPrimaryButtonSx}
+                                    >
+                                        {editingGstDetailId ? 'Save' : 'Save and Select'}
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        size="small"
+                                        onClick={() => {
+                                            setShowNewGstForm(false);
+                                            setEditingGstDetailId(null);
+                                        }}
+                                        sx={modalSecondaryButtonSx}
+                                    >
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                        <div className="border border-gray-200 rounded-md overflow-hidden">
+                            <div className="grid grid-cols-5 bg-gray-50 text-xs font-semibold text-gray-500 px-4 py-2">
+                                <div>GSTIN</div>
+                                <div>PLACE OF SUPPLY</div>
+                                <div>BUSINESS LEGAL NAME</div>
+                                <div>BUSINESS TRADE NAME</div>
+                                <div></div>
+                            </div>
+                            <div className="max-h-[280px] overflow-y-auto">
+                                {gstDetails.map((gst) => (
+                                    <div
+                                        key={gst.id}
+                                        className={`grid grid-cols-5 px-4 py-2 text-sm border-t border-gray-100 cursor-pointer ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''}`}
+                                        onClick={() => handleGstinDropdownChange(gst.id)}
+                                    >
+                                        <div>
+                                            {gst.gstin}
+                                            {gst.primary && <div className="text-green-600 italic">(Primary Tax Information)</div>}
+                                        </div>
+                                        <div>{gst.place_of_supply || '—'}</div>
+                                        <div>{gst.business_legal_name || '—'}</div>
+                                        <div>{gst.business_trade_name || '—'}</div>
+                                        <div className="flex items-center gap-2 justify-end">
+                                            {!gst.primary && (
+                                                <>
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleEditGstDetail(gst);
+                                                        }}
+                                                    >
+                                                        <EditOutlined fontSize="small" />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        size="small"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteGstDetail(gst.id);
+                                                        }}
+                                                    >
+                                                        <Delete fontSize="small" />
+                                                    </IconButton>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+                <DialogActions className="!px-5 !pb-4">
+                    <Button variant="outlined" size="small" onClick={() => setGstManageModalOpen(false)} sx={modalSecondaryButtonSx}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={gstPickerModalOpen} onClose={() => setGstPickerModalOpen(false)} maxWidth="xs" fullWidth>
+                <DialogContent className="!p-0">
+                    <div className="max-h-[240px] overflow-y-auto">
+                        {gstDetails.map((gst) => (
+                            <button
+                                key={gst.id}
+                                type="button"
+                                className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 text-sm ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''}`}
+                                onClick={() => handleGstinDropdownChange(gst.id)}
+                            >
+                                {gst.gstin} - {gst.place_of_supply}[MH]
+                            </button>
+                        ))}
+                    </div>
+                    <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
+                        <button
+                            type="button"
+                            className="text-blue-600 text-sm flex items-center gap-1"
+                            onClick={() => {
+                                setGstPickerModalOpen(false);
+                                openGstManageModal();
+                            }}
+                        >
+                            <span>⚙</span>
+                            Manage Tax Informations
+                        </button>
+                    </div>
+                </DialogContent>
             </Dialog>
 
             {/* Add Contact Person Dialog */}

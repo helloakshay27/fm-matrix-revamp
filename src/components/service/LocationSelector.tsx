@@ -107,7 +107,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   useEffect(() => {
     dispatch(fetchSites());
     dispatch(fetchGroups());
-    
+
     // Auto-set site based on user's current site
     const userSiteId = localStorage.getItem('selectedSiteId') || localStorage.getItem('siteId');
     if (userSiteId && !selectedSiteId) {
@@ -161,31 +161,31 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   const handleBuildingChange = (buildingId: number) => {
     dispatch(setSelectedBuilding(buildingId));
     if (buildingId) {
-      const selectedBuilding = buildings.find(b => b.id === buildingId);
-      if (selectedBuilding?.has_wing) {
-        dispatch(fetchWings(buildingId));
-      }
+      dispatch(fetchWings(buildingId));
+      dispatch(fetchAreas(buildingId));
+      dispatch(fetchFloors(buildingId));
+      dispatch(fetchRooms(buildingId));
     }
   };
 
   const handleWingChange = (wingId: number) => {
     dispatch(setSelectedWing(wingId));
-    if (wingId) {
-      dispatch(fetchAreas(wingId));
+    if (selectedBuildingId) {
+      dispatch(fetchAreas(selectedBuildingId));
     }
   };
 
   const handleAreaChange = (areaId: number) => {
     dispatch(setSelectedArea(areaId));
-    if (areaId) {
-      dispatch(fetchFloors(areaId));
+    if (selectedBuildingId) {
+      dispatch(fetchFloors(selectedBuildingId));
     }
   };
 
   const handleFloorChange = (floorId: number) => {
     dispatch(setSelectedFloor(floorId));
-    if (floorId) {
-      dispatch(fetchRooms(floorId));
+    if (selectedBuildingId) {
+      dispatch(fetchRooms(selectedBuildingId));
     }
   };
 
@@ -203,8 +203,6 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   const handleSubGroupChange = (subGroupId: number) => {
     dispatch(setSelectedSubGroup(subGroupId));
   };
-
-  const selectedBuilding = buildings.find(b => b.id === selectedBuildingId);
 
   return (
     <div className="space-y-4">
@@ -244,7 +242,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {/* Wing */}
         <FormControl fullWidth variant="outlined" error={errors.wingId}>
           <InputLabel id="wing-select-label" shrink>
-            Wing<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
+            Wing
           </InputLabel>
           <MuiSelect
             labelId="wing-select-label"
@@ -253,7 +251,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             value={selectedWingId || ''}
             onChange={(e) => handleWingChange(Number(e.target.value))}
             sx={fieldStyles}
-            disabled={!selectedBuildingId || !selectedBuilding?.has_wing || loading.wings}
+            disabled={!selectedBuildingId || loading.wings}
           >
             <MenuItem value="">
               <em>Select Wing</em>
@@ -275,7 +273,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {/* Area */}
         <FormControl fullWidth variant="outlined" error={errors.areaId}>
           <InputLabel id="area-select-label" shrink>
-            Area<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
+            Area
           </InputLabel>
           <MuiSelect
             labelId="area-select-label"
@@ -284,7 +282,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             value={selectedAreaId || ''}
             onChange={(e) => handleAreaChange(Number(e.target.value))}
             sx={fieldStyles}
-            disabled={!selectedWingId || !selectedBuilding?.has_area || loading.areas}
+            disabled={!selectedBuildingId || loading.areas}
           >
             <MenuItem value="">
               <em>Select Area</em>
@@ -306,7 +304,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {/* Floor */}
         <FormControl fullWidth variant="outlined" error={errors.floorId}>
           <InputLabel id="floor-select-label" shrink>
-            Floor<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
+            Floor
           </InputLabel>
           <MuiSelect
             labelId="floor-select-label"
@@ -315,7 +313,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             value={selectedFloorId || ''}
             onChange={(e) => handleFloorChange(Number(e.target.value))}
             sx={fieldStyles}
-            disabled={!selectedAreaId || !selectedBuilding?.has_floor || loading.floors}
+            disabled={!selectedBuildingId || loading.floors}
           >
             <MenuItem value="">
               <em>Select Floor</em>
@@ -347,7 +345,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             value={selectedRoomId || ''}
             onChange={(e) => handleRoomChange(Number(e.target.value))}
             sx={fieldStyles}
-            disabled={!selectedFloorId || !selectedBuilding?.has_room || loading.rooms}
+            disabled={!selectedBuildingId || loading.rooms}
           >
             <MenuItem value="">
               <em>Select Room</em>

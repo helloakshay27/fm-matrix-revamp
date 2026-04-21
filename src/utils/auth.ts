@@ -235,12 +235,11 @@ const isViSite =
   hostname.includes("web.gophygital.work") ||
   hostname.includes("lockated.gophygital.work") ||
   hostname.includes("community.gophygital.work");
-
 const isFmSite =
   hostname === "fm-uat.gophygital.work" ||
   hostname === "fm.gophygital.work" ||
   hostname === "fm-matrix.lockated.com" ||
-   hostname === "localhost";
+  hostname === "localhost";
 
 const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 

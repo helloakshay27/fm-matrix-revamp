@@ -21,14 +21,12 @@ export interface InvestigatorData {
         name: string;
         email: string;
         role: string;
-        contactNo: string;
         employeeType?: string;
     };
     external?: {
         name: string;
         email: string;
         role: string;
-        contactNo: string;
         company?: string;
     };
 }
@@ -36,7 +34,6 @@ export interface InvestigatorData {
 interface ValidationErrors {
     name?: string;
     email?: string;
-    contactNo?: string;
 }
 
 export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
@@ -54,7 +51,6 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
         name: '',
         email: '',
         role: '',
-        contactNo: '',
         company: ''
     });
     const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
@@ -74,13 +70,6 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
             errors.email = 'Email is required';
         } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(externalForm.email)) {
             errors.email = 'Please enter a valid email address';
-        }
-
-        // Validate contact number - only 10 digits
-        if (!externalForm.contactNo.trim()) {
-            errors.contactNo = 'Contact number is required';
-        } else if (!/^\d{10}$/.test(externalForm.contactNo)) {
-            errors.contactNo = 'Contact number must be exactly 10 digits';
         }
 
         setValidationErrors(errors);
@@ -103,7 +92,6 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
                         name: selectedUser.full_name || '',
                         email: selectedUser.email || '',
                         role: selectedUser.role || 'Investigator',
-                        contactNo: selectedUser.mobile || '',
                         employeeType: selectedUser.employee_type || ''
                     }
                 };
@@ -112,14 +100,24 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
             }
         } else {
             if (validateExternalForm()) {
+                // const data: InvestigatorData = {
+                //     type: 'external',
+                //     external: {
+                //         ...externalForm
+                //     }
+                // };
+
                 const data: InvestigatorData = {
                     type: 'external',
                     external: {
-                        ...externalForm
+                        name: externalForm.name,
+                        email: externalForm.email,
+                        role: externalForm.role,
+                        company: externalForm.company
                     }
                 };
                 onSubmit(data);
-                setExternalForm({ name: '', email: '', role: '', contactNo: '', company: '' });
+                setExternalForm({ name: '', email: '', role: '', company: '' });
                 setValidationErrors({});
             }
         }
@@ -235,25 +233,7 @@ export const InvestigatorBlock: React.FC<InvestigatorBlockProps> = ({
                             sx={{ backgroundColor: 'white' }}
                         />
                     </div>
-                    <div>
-                        <label className="text-sm font-medium text-gray-700 mb-1 inline-block">
-                            Contact No. <span style={{ color: '#C72030' }}>*</span>
-                        </label>
-                        <TextField
-                            fullWidth
-                            size="small"
-                            placeholder="Contact No. (10 digits)"
-                            value={externalForm.contactNo}
-                            onChange={(e) => {
-                                const value = e.target.value.replace(/\D/g, '');
-                                setExternalForm({ ...externalForm, contactNo: value });
-                            }}
-                            inputProps={{ maxLength: 10 }}
-                            error={!!validationErrors.contactNo}
-                            helperText={validationErrors.contactNo}
-                            sx={{ backgroundColor: 'white' }}
-                        />
-                    </div>
+
                 </TabsContent>
             </Tabs>
 

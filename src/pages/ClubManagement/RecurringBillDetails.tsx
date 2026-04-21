@@ -29,6 +29,10 @@ import {
   Copy,
   Share2,
   ShoppingCart,
+  CirclePlus,
+  ClipboardList,
+  Eye,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -219,6 +223,7 @@ export const RecurringBillDetails = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showApprovalLog, setShowApprovalLog] = useState(false);
   const [transactionRecords, setTransactionRecords] = useState<
     TransactionRecord[]
   >([]);
@@ -307,6 +312,13 @@ export const RecurringBillDetails = () => {
       cancelled: "bg-red-100 text-red-800 border-red-200",
     };
     return colors[status] || colors.draft;
+  };
+
+  const getApprovalStatusBadge = (status: any) => {
+    const s = String(status || "").toLowerCase();
+    if (s === "approved") return "bg-green-100 text-green-800";
+    if (s === "rejected") return "bg-red-100 text-red-800";
+    return "bg-yellow-100 text-yellow-800";
   };
 
   const handleEdit = () => {
@@ -404,6 +416,17 @@ export const RecurringBillDetails = () => {
             <Badge className={`${getStatusColor(salesOrder.status)} border`}>
               {/* {salesOrder.status.toUpperCase()} */}
             </Badge>
+            {(salesOrder as any)?.approval_status?.approval_levels?.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowApprovalLog(true)}
+                className="gap-2"
+              >
+                <ClipboardList className="h-4 w-4" />
+                Approval Log
+              </Button>
+            )}
           </div>
         </div>
 
@@ -478,6 +501,7 @@ export const RecurringBillDetails = () => {
                 { label: "Bill Details", value: "order-details" },
                 { label: "Vendor Info", value: "customer-info" },
                 { label: "History", value: "history" },
+                { label: "Activity Logs", value: "activity-logs" },
               ].map((tab) => (
                 <TabsTrigger
                   key={tab.value}
@@ -986,9 +1010,120 @@ export const RecurringBillDetails = () => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent
+              value="activity-logs"
+              className="p-3 sm:p-6 space-y-6"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Activity Logs
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {Array.isArray((salesOrder as any)?.activity_logs) &&
+                  (salesOrder as any).activity_logs.length > 0 ? (
+                    <div className="divide-y">
+                      {(salesOrder as any).activity_logs.map((log: any, idx: number) => {
+                        const key = `${log?.date || ""}-${log?.time || ""}-${idx}`;
+                        const hint = `${log?.action || ""} ${log?.message || ""}`.toLowerCase();
+                        const isConverted = hint.includes("convert");
+                        const isCreated = hint.includes("create");
+                        const isAccepted = hint.includes("accept");
+                        const isSent = hint.includes("sent");
+                        const Icon = isConverted || isCreated ? CirclePlus : (isAccepted || isSent ? Eye : FileText);
+                        const iconWrapClass =
+                          isConverted || isCreated
+                            ? "bg-green-50 text-green-600 border-green-100"
+                            : isAccepted || isSent
+                              ? "bg-sky-50 text-sky-600 border-sky-100"
+                              : "bg-gray-50 text-gray-500 border-gray-100";
+
+                        return (
+                          <div key={key} className="flex gap-6 py-5">
+                            <div className="min-w-[170px] text-sm text-muted-foreground">
+                              <div>{log?.date || "—"} {log?.time || ""}</div>
+                            </div>
+
+                            <div className={`w-9 h-9 rounded-full border flex items-center justify-center ${iconWrapClass}`}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-foreground">
+                                {log?.message || "—"}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                by <span className="font-medium text-foreground">{log?.user || "—"}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No activity logs found.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      <Dialog open={showApprovalLog} onOpenChange={setShowApprovalLog}>
+        <DialogContent className="max-w-4xl">
+          <div className="flex items-center justify-between">
+            <DialogHeader>
+              <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+            </DialogHeader>
+            <button
+              type="button"
+              onClick={() => setShowApprovalLog(false)}
+              className="p-2 rounded hover:bg-muted"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="rounded-lg border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                  <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">Sr.No.</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Approval Level</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Approved By</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Date</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Status</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Remark</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Users</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {((salesOrder as any)?.approval_status?.approval_levels || []).map((lvl: any, index: number) => (
+                  <TableRow key={lvl?.id ?? index}>
+                    <TableCell className="font-medium">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{lvl?.name || "—"}</TableCell>
+                    <TableCell className="font-medium">{lvl?.approved_by || "—"}</TableCell>
+                    <TableCell className="font-medium">{lvl?.approved_at || "—"}</TableCell>
+                    <TableCell>
+                      <span className={`px-3 py-1 rounded text-xs font-semibold ${getApprovalStatusBadge(lvl?.status)}`}>
+                        {String(lvl?.status || "pending").toUpperCase()}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{lvl?.rejection_reason || "—"}</TableCell>
+                    <TableCell className="text-sm">{Array.isArray(lvl?.users) ? lvl.users.map((u: any) => u?.name || u).filter(Boolean).join(", ") : "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

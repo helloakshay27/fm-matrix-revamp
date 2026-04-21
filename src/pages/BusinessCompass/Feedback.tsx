@@ -107,7 +107,6 @@ import {
   getEmbeddedToken,
   resolveBaseUrlByOrgId,
 } from "@/utils/embeddedMode";
-import apiClient from "@/utils/apiClient";
 import { getUser } from "@/utils/auth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -135,6 +134,23 @@ export type FeedbackItem = {
   constructiveFeedback?: string;
   positiveClosing?: string;
   createdAt?: string;
+  reviewer?: string;
+  reviews?: string;
+  readAt?: string;
+  readComment?: string;
+};
+
+export type FeedbackSummary = {
+  received: number;
+  given: number;
+  unread: number;
+  avgRating: string;
+  feedbackPoints: number;
+};
+
+export type FeedbackListResponse = {
+  summary?: FeedbackSummary;
+  ratings: FeedbackItem[];
 };
 
 type TeamMemberOption = {
@@ -218,7 +234,7 @@ async function refreshAccessToken(): Promise<string> {
       { headers: { "x-skip-auth-retry": "1" } }
     )
     .then(({ data }) => {
-      setAccessToken(data.access_token);
+      // setAccessToken(data.access_token);
       return data.access_token;
     })
     .finally(() => {
@@ -321,7 +337,7 @@ async function resolveBaseUrl(): Promise<string> {
   } as AppError;
 }
 
-// Request interceptor — attach base URL, Authorization header, and access_token query param
+// Request interceptor — attach base URL and Authorization header
 apiClient.interceptors.request.use(async (config) => {
   if (!config.baseURL) {
     config.baseURL = await resolveBaseUrl();
@@ -330,10 +346,8 @@ apiClient.interceptors.request.use(async (config) => {
   // Extract raw token value (strip "Bearer " prefix if present)
   const rawToken = token?.startsWith("Bearer ") ? token.slice(7) : token;
   if (rawToken) {
-    // Set both Authorization header and access_token query param
-    // The lockated API accepts both; some routes require the query param
+    // Set Authorization header
     config.headers.Authorization = `Bearer ${rawToken}`;
-    config.params = { ...config.params, access_token: rawToken };
   }
   return config;
 });
@@ -445,6 +459,10 @@ const FeedbackSchema = z.object({
     })
     .optional()
     .catch(undefined),
+  reviewer: z.string().optional().catch(undefined),
+  reviews: z.string().nullable().optional().catch(undefined),
+  read_at: z.string().optional().catch(undefined),
+  read_comment: z.string().nullable().optional().catch(undefined),
 });
 
 type RawFeedback = z.infer<typeof FeedbackSchema>;
@@ -473,6 +491,20 @@ const FeedbackListSchema = z
     z
       .object({ feedback: z.array(FeedbackSchema) })
       .transform((d) => d.feedback),
+    z
+      .object({
+        summary: z
+          .object({
+            received: z.number(),
+            given: z.number(),
+            unread: z.number(),
+            avg_rating: z.string(),
+            feedback_points: z.number(),
+          })
+          .optional(),
+        ratings: z.array(FeedbackSchema),
+      })
+      .transform((d) => d.ratings),
   ])
   .catch([]);
 
@@ -548,12 +580,14 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
     raw.positive_opening || raw.fields?.positive_opening,
     raw.constructive_feedback || raw.fields?.constructive_feedback,
     raw.positive_closing || raw.fields?.positive_closing,
+    raw.reviews,
   ]
     .filter(Boolean)
     .join(" ");
 
   const ratingFromName =
     raw.rating_from_name ||
+    raw.reviewer ||
     ratingFrom?.name ||
     ratingFrom?.full_name ||
     (ratingFrom?.firstname && ratingFrom?.lastname
@@ -576,6 +610,10 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
       raw.constructive_feedback || raw.fields?.constructive_feedback,
     positiveClosing: raw.positive_closing || raw.fields?.positive_closing,
     createdAt: raw.created_at ?? raw.createdAt ?? raw.date,
+    reviewer: raw.reviewer,
+    reviews: raw.reviews || undefined,
+    readAt: raw.read_at,
+    readComment: raw.read_comment || undefined,
   };
 }
 
@@ -781,12 +819,15 @@ function getRatingsDetailEndpoints(feedbackId: string): string[] {
 async function fetchFeedbackList(
   direction: "given" | "received",
   userId: number | null
-): Promise<FeedbackItem[]> {
+): Promise<{ items: FeedbackItem[]; summary?: FeedbackSummary }> {
   const memoryKey = getFeedbackCacheKey(direction, userId);
-  const params: Record<string, string | number> = { _t: Date.now() };
+  const params: Record<string, string | number> = {};
   if (userId) {
     if (direction === "given") params.rating_from_id = userId;
-    else params.resource_id = userId;
+    else {
+      params.resource_id = userId;
+      params.resource_type = "User";
+    }
   }
 
   let lastError: AppError | null = null;
@@ -795,11 +836,31 @@ async function fetchFeedbackList(
     try {
       const { data } = await apiClient.get(endpoint, {
         params,
-        // Note: Cache-Control header removed to avoid CORS issues with oig-api
-        // The _t timestamp parameter already prevents caching
       });
 
+      console.log(data);
+
+      // Extract summary if present
+      let summary: FeedbackSummary | undefined;
+      if (data && typeof data === "object" && "summary" in data) {
+        const rawSummary = data.summary as {
+          received: number;
+          given: number;
+          unread: number;
+          avg_rating: string;
+          feedback_points: number;
+        };
+        summary = {
+          received: rawSummary.received,
+          given: rawSummary.given,
+          unread: rawSummary.unread,
+          avgRating: rawSummary.avg_rating,
+          feedbackPoints: rawSummary.feedback_points,
+        };
+      }
+
       const raw = FeedbackListSchema.parse(data);
+      console.log(raw);
       const mapped = raw.map(mapRawFeedback);
       const filtered = mapped.filter((item) => {
         if (!userId) return true;
@@ -822,20 +883,23 @@ async function fetchFeedbackList(
         visibleItems.length === 0 &&
         (LAST_SUCCESSFUL_FEEDBACK[memoryKey]?.length ?? 0) > 0
       ) {
-        return LAST_SUCCESSFUL_FEEDBACK[memoryKey];
+        return { items: LAST_SUCCESSFUL_FEEDBACK[memoryKey], summary };
       }
 
       const cachedItems = readFeedbackCache(direction, userId);
       if (visibleItems.length === 0 && cachedItems.length > 0) {
         LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
-        return cachedItems;
+        return { items: cachedItems, summary };
       }
 
-      return visibleItems.sort((a, b) => {
-        const at = new Date(a.createdAt || 0).getTime();
-        const bt = new Date(b.createdAt || 0).getTime();
-        return bt - at;
-      });
+      return {
+        items: visibleItems.sort((a, b) => {
+          const at = new Date(a.createdAt || 0).getTime();
+          const bt = new Date(b.createdAt || 0).getTime();
+          return bt - at;
+        }),
+        summary,
+      };
     } catch (err) {
       lastError = normalizeError(err);
       if (lastError.kind === "auth" || lastError.kind === "forbidden") break;
@@ -843,7 +907,7 @@ async function fetchFeedbackList(
       const cachedItems = readFeedbackCache(direction, userId);
       if (cachedItems.length > 0) {
         LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
-        return cachedItems;
+        return { items: cachedItems };
       }
     }
   }
@@ -851,7 +915,7 @@ async function fetchFeedbackList(
   const cachedItems = readFeedbackCache(direction, userId);
   if (cachedItems.length > 0) {
     LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
-    return cachedItems;
+    return { items: cachedItems };
   }
 
   throw (
@@ -864,7 +928,7 @@ async function fetchFeedbackList(
 
 async function fetchTeamMembers(): Promise<TeamMemberOption[]> {
   const { data } = await apiClient.get(TEAM_MEMBERS_ENDPOINT, {
-    params: { _t: Date.now() },
+    params: {},
   });
   const raw = TeamMembersListSchema.parse(data);
   return raw
@@ -882,6 +946,7 @@ interface FeedbackPayload {
   positive_closing?: string;
   rating_from_type?: string;
   rating_from_id?: number;
+  reviews?: string;
 }
 
 type FeedbackMutationVariables = {
@@ -907,6 +972,12 @@ async function createFeedback(payload: FeedbackPayload): Promise<unknown> {
       if (lastError.kind === "auth" || lastError.kind === "forbidden") {
         throw lastError;
       }
+      if (lastError.status === 429) {
+        throw {
+          ...lastError,
+          message: "Too many requests. Please try again later.",
+        } as AppError;
+      }
     }
   }
 
@@ -925,34 +996,31 @@ async function updateFeedback(
   id: string,
   payload: FeedbackPayload
 ): Promise<unknown> {
-  let lastError: AppError | null = null;
-
-  for (const endpoint of getRatingsDetailEndpoints(id)) {
-    try {
-      const { data } = await apiClient.put(endpoint, payload, {
-        headers: { "Content-Type": "application/json" },
-      });
-      return data;
-    } catch (err) {
-      lastError = normalizeError(err);
-      if (lastError.kind === "auth" || lastError.kind === "forbidden") {
-        throw lastError;
-      }
-      if (lastError.kind === "notFound") {
-        continue;
-      }
-    }
+  const trimmedId = id.trim();
+  if (!trimmedId) {
+    throw { message: "Invalid feedback id.", kind: "unknown" } as AppError;
   }
 
-  if (lastError?.kind === "notFound") {
-    throw {
-      ...lastError,
-      message:
-        "Feedback could not be updated because the ratings API route is not available.",
-    } as AppError;
+  const { data } = await apiClient.put(
+    `/ratings/${encodeURIComponent(trimmedId)}.json`,
+    payload,
+    { headers: { "Content-Type": "application/json" } }
+  );
+  return data;
+}
+
+async function markRatingAsRead(id: string, readComment?: string): Promise<unknown> {
+  const trimmedId = id.trim();
+  if (!trimmedId) {
+    throw { message: "Invalid feedback id.", kind: "unknown" } as AppError;
   }
 
-  throw lastError ?? { message: "Failed to update feedback.", kind: "unknown" };
+  const { data } = await apiClient.patch(
+    `/ratings/${encodeURIComponent(trimmedId)}/mark_as_read`,
+    readComment?.trim() ? { read_comment: readComment.trim() } : {},
+    { headers: { "Content-Type": "application/json" } }
+  );
+  return data;
 }
 
 async function deleteFeedback(id: string): Promise<void> {
@@ -998,10 +1066,13 @@ function useFeedbackList(
     LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cached;
   }
 
-  return useQuery<FeedbackItem[], AppError>({
+  return useQuery<
+    { items: FeedbackItem[]; summary?: FeedbackSummary },
+    AppError
+  >({
     queryKey: ["feedback", direction, userId],
     queryFn: () => fetchFeedbackList(direction, userId),
-    placeholderData: cached.length > 0 ? cached : [],
+    placeholderData: cached.length > 0 ? { items: cached } : { items: [] },
   });
 }
 
@@ -1026,13 +1097,19 @@ function useCreateFeedback() {
         variables.recipientName
       );
 
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "given"] },
-        (old) => upsertFeedbackItem(old, item)
+        (old) => {
+          const items = upsertFeedbackItem(old?.items, item);
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "given", currentUserId],
-        (old) => upsertFeedbackItem(old, item)
+        (old) => {
+          const items = upsertFeedbackItem(old?.items, item);
+          return { items, summary: old?.summary };
+        }
       );
       const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
       LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = upsertFeedbackItem(
@@ -1065,27 +1142,37 @@ function useUpdateFeedback() {
         variables.id
       );
 
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "given"] },
-        (old) => upsertFeedbackItem(old, item)
+        (old) => {
+          const items = upsertFeedbackItem(old?.items, item);
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "given", currentUserId],
-        (old) => upsertFeedbackItem(old, item)
+        (old) => {
+          const items = upsertFeedbackItem(old?.items, item);
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "received"] },
-        (old) =>
-          old?.some((existing) => existing.id === item.id)
-            ? upsertFeedbackItem(old, item)
-            : (old ?? [])
+        (old) => {
+          const items = old?.items?.some((existing) => existing.id === item.id)
+            ? upsertFeedbackItem(old?.items, item)
+            : (old?.items ?? []);
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "received", currentUserId],
-        (old) =>
-          old?.some((existing) => existing.id === item.id)
-            ? upsertFeedbackItem(old, item)
-            : (old ?? [])
+        (old) => {
+          const items = old?.items?.some((existing) => existing.id === item.id)
+            ? upsertFeedbackItem(old?.items, item)
+            : (old?.items ?? []);
+          return { items, summary: old?.summary };
+        }
       );
       const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
       LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey] = upsertFeedbackItem(
@@ -1128,21 +1215,41 @@ function useDeleteFeedback() {
     mutationFn: ({ id }) => deleteFeedback(id),
     onSuccess: (_, variables) => {
       const currentUserId = getCurrentUserId();
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "given"] },
-        (old) => (old ?? []).filter((item) => item.id !== variables.id)
+        (old) => {
+          const items = (old?.items ?? []).filter(
+            (item) => item.id !== variables.id
+          );
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "given", currentUserId],
-        (old) => (old ?? []).filter((item) => item.id !== variables.id)
+        (old) => {
+          const items = (old?.items ?? []).filter(
+            (item) => item.id !== variables.id
+          );
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueriesData<FeedbackItem[]>(
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "received"] },
-        (old) => (old ?? []).filter((item) => item.id !== variables.id)
+        (old) => {
+          const items = (old?.items ?? []).filter(
+            (item) => item.id !== variables.id
+          );
+          return { items, summary: old?.summary };
+        }
       );
-      qc.setQueryData<FeedbackItem[]>(
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         ["feedback", "received", currentUserId],
-        (old) => (old ?? []).filter((item) => item.id !== variables.id)
+        (old) => {
+          const items = (old?.items ?? []).filter(
+            (item) => item.id !== variables.id
+          );
+          return { items, summary: old?.summary };
+        }
       );
       const givenMemoryKey = getFeedbackCacheKey("given", currentUserId);
       const receivedMemoryKey = getFeedbackCacheKey("received", currentUserId);
@@ -1162,6 +1269,51 @@ function useDeleteFeedback() {
         currentUserId,
         LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]
       );
+    },
+  });
+}
+
+function useMarkAsRead() {
+  const qc = useQueryClient();
+  return useMutation<unknown, AppError, { id: string; readComment?: string }>({
+    mutationFn: ({ id, readComment }) => markRatingAsRead(id, readComment),
+    onSuccess: (_, variables) => {
+      const currentUserId = getCurrentUserId();
+      qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
+        { queryKey: ["feedback", "received"] },
+        (old) => {
+          const items = (old?.items ?? []).map((item) =>
+            item.id === variables.id
+              ? { ...item, status: "read" as const }
+              : item
+          );
+          return { items, summary: old?.summary };
+        }
+      );
+      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
+        ["feedback", "received", currentUserId],
+        (old) => {
+          const items = (old?.items ?? []).map((item) =>
+            item.id === variables.id
+              ? { ...item, status: "read" as const }
+              : item
+          );
+          return { items, summary: old?.summary };
+        }
+      );
+      const receivedMemoryKey = getFeedbackCacheKey("received", currentUserId);
+      if (LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]) {
+        LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] = LAST_SUCCESSFUL_FEEDBACK[
+          receivedMemoryKey
+        ].map((item) =>
+          item.id === variables.id ? { ...item, status: "read" as const } : item
+        );
+        writeFeedbackCache(
+          "received",
+          currentUserId,
+          LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]
+        );
+      }
     },
   });
 }
@@ -1231,7 +1383,7 @@ function AsyncBoundary({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Inline Error Panel ────────────────────────────────────────────────────────
+// ─── Sub-components ────────────────────────────────────────────────────────────
 
 function InlineError({
   error,
@@ -1269,8 +1421,6 @@ function InlineError({
   );
 }
 
-// ─── Sub-components ────────────────────────────────────────────────────────────
-
 function FeedbackEmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
@@ -1298,7 +1448,7 @@ function StarRatingRow({ value }: { value: number }) {
         <Star
           key={i}
           className={cn(
-            "h-4 w-4 sm:h-[18px] sm:w-[18px]",
+            "h-4 w-4",
             i <= value
               ? "fill-amber-400 text-amber-400"
               : "fill-transparent text-neutral-300"
@@ -1325,24 +1475,30 @@ function GivenFeedbackList({
 }) {
   const fetchDirection = direction === "to" ? "given" : "received";
   const {
-    data: queriedItems = [],
+    data: queriedData = { items: [] },
     isLoading,
     isError,
     error,
     refetch,
   } = useFeedbackList(fetchDirection, filterUserId);
+  const queriedItems = queriedData.items;
+  const summary = queriedData.summary;
   const items = itemsOverride ?? queriedItems;
   const deleteMutation = useDeleteFeedback();
+  const markAsReadMutation = useMarkAsRead();
   const currentUserId = getCurrentUserId();
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [ratingFilter, setRatingFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [detailCache, setDetailCache] = useState<Record<string, FeedbackItem>>(
     {}
   );
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
   const [lastStableItems, setLastStableItems] = useState<FeedbackItem[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [notes, setNotes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!isError && items.length > 0) {
@@ -1362,53 +1518,52 @@ function GivenFeedbackList({
   const handleExpand = async (itemId: string) => {
     const isCollapsing = expandedId === itemId;
     setExpandedId(isCollapsing ? null : itemId);
-    if (isCollapsing || detailCache[itemId]) return;
+    if (isCollapsing) return;
+
+    // Pre-populate cache with data already in the list item so the 3 sections
+    // (positiveOpening, constructiveFeedback, positiveClosing) render immediately
+    const existingItem = sourceItems.find((i) => i.id === itemId);
+    if (existingItem && !detailCache[itemId]) {
+      setDetailCache((prev) => ({ ...prev, [itemId]: existingItem }));
+    }
+
+    // Skip detail fetch if we already have enriched data cached
+    if (detailCache[itemId]) return;
+
     setLoadingDetailId(itemId);
     try {
       const detail = await fetchFeedbackDetail(itemId);
-      if (detail) setDetailCache((prev) => ({ ...prev, [itemId]: detail }));
+      if (detail) {
+        // Merge: prefer detail API data for each field, fallback to list data
+        setDetailCache((prev) => ({
+          ...prev,
+          [itemId]: {
+            ...(existingItem ?? {}),
+            ...detail,
+            // Ensure the 3 key fields are never lost
+            positiveOpening:
+              detail.positiveOpening ?? existingItem?.positiveOpening,
+            constructiveFeedback:
+              detail.constructiveFeedback ?? existingItem?.constructiveFeedback,
+            positiveClosing:
+              detail.positiveClosing ?? existingItem?.positiveClosing,
+          } as FeedbackItem,
+        }));
+      }
     } catch {
-      /* ignore — fallback to cached list data */
+      /* ignore — we already have list-level data in cache */
     } finally {
       setLoadingDetailId(null);
     }
   };
 
-  const handleDelete = (item: FeedbackItem) => {
-    if (!currentUserId) {
-      window.alert("Unable to verify your account. Please log in again.");
-      return;
-    }
-
-    const hasKnownCreator = item.ratingFromId != null;
-    if (
-      hasKnownCreator &&
-      Number(item.ratingFromId) !== Number(currentUserId)
-    ) {
-      window.alert("You can only delete feedback created by your account.");
-      return;
-    }
-
-    if (!window.confirm("Are you sure you want to delete this feedback?")) {
-      return;
-    }
-
-    deleteMutation.mutate(
-      { id: item.id },
-      {
-        onSuccess: () => {
-          setLastStableItems((prev) => prev.filter((f) => f.id !== item.id));
-          setDetailCache((prev) => {
-            const next = { ...prev };
-            delete next[item.id];
-            return next;
-          });
-        },
-        onError: (error) => {
-          window.alert(error.message || "Failed to delete feedback.");
-        },
-      }
-    );
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const filtered = useMemo(
@@ -1425,61 +1580,191 @@ function GivenFeedbackList({
           (item.detailPreview?.toLowerCase().includes(q) ?? false);
         const matchesRating =
           ratingFilter === "all" || String(item.rating) === ratingFilter;
-        return matchesSearch && matchesRating;
+        const matchesStatus =
+          statusFilter === "all" || item.status === statusFilter;
+        return matchesSearch && matchesRating && matchesStatus;
       }),
-    [sourceItems, searchQuery, ratingFilter, direction]
+    [sourceItems, searchQuery, ratingFilter, statusFilter, direction]
   );
 
+  const avgRating =
+    summary?.avgRating ??
+    (filtered.length > 0
+      ? (filtered.reduce((s, i) => s + i.rating, 0) / filtered.length).toFixed(
+          1
+        )
+      : "0.0");
+  const avgRatingNum = Number(avgRating);
+  const totalFeedback =
+    direction === "to"
+      ? (summary?.given ?? filtered.length)
+      : (summary?.received ?? filtered.length);
+  const points =
+    summary?.feedbackPoints ??
+    (() => {
+      let calculatedPoints = 0;
+      filtered.forEach((item) => {
+        if (item.rating === 1) calculatedPoints -= 10;
+        else if (item.rating === 2) calculatedPoints -= 5;
+        else if (item.rating === 4) calculatedPoints += 5;
+        else if (item.rating === 5) calculatedPoints += 10;
+      });
+      return calculatedPoints;
+    })();
+
+  const allSelected =
+    filtered.length > 0 && filtered.every((i) => selectedIds.has(i.id));
+  const handleSelectAll = () => {
+    if (allSelected) setSelectedIds(new Set());
+    else setSelectedIds(new Set(filtered.map((i) => i.id)));
+  };
+
+  const getAvatarBg = (name: string) => {
+    const colors = [
+      "#3B82F6",
+      "#8B5CF6",
+      "#10B981",
+      "#F59E0B",
+      "#EF4444",
+      "#06B6D4",
+    ];
+    const idx = (name.charCodeAt(0) || 0) % colors.length;
+    return colors[idx];
+  };
+
   return (
-    <div className="space-y-4 px-4 py-4 sm:px-6 sm:py-5">
-      {/* Toolbar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch sm:justify-between sm:gap-3">
-        <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
-          <div className="relative min-w-0 flex-1">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
-              aria-hidden
-            />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name or content..."
-              className="h-10 w-full rounded-xl border border-neutral-200 bg-white py-2 pl-10 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#C72030]/25"
-            />
-          </div>
-          <Select value={ratingFilter} onValueChange={setRatingFilter}>
-            <SelectTrigger className="h-10 w-full rounded-xl border-neutral-200 bg-white sm:w-[160px] sm:shrink-0">
-              <SelectValue placeholder="All Ratings" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Ratings</SelectItem>
-              <SelectItem value="5">5 stars</SelectItem>
-              <SelectItem value="4">4 stars</SelectItem>
-              <SelectItem value="3">3 stars</SelectItem>
-              <SelectItem value="2">2 stars</SelectItem>
-              <SelectItem value="1">1 star</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="flex flex-col gap-5 pb-4">
+      <div className="px-4 py-2 bg-[#f4f5f7] border-b border-neutral-200 flex items-center gap-5">
         <button
           type="button"
-          onClick={onGiveFeedbackClick}
-          className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#DA7756]/85 sm:px-5"
+          onClick={handleSelectAll}
+          className="flex items-center gap-2 px-3 py-1.5 rounded border border-neutral-300 bg-white text-sm font-medium text-neutral-700 hover:bg-neutral-50 shadow-sm"
         >
-          <Send className="h-4 w-4 text-white" strokeWidth={2} />
-          Give Feedback
+          <input
+            type="checkbox"
+            checked={allSelected}
+            readOnly
+            className="h-4 w-4 accent-[#DA7756] cursor-pointer"
+          />
+          {allSelected ? "Deselect All" : "Select All"}
         </button>
+
+        {selectedIds.size > 0 && (
+          <div className="flex items-center gap-4">
+            <span className="text-sm font-medium text-neutral-700">
+              {selectedIds.size} selected
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (
+                  !window.confirm(
+                    `Delete ${selectedIds.size} selected feedback item${selectedIds.size > 1 ? "s" : ""}?`
+                  )
+                )
+                  return;
+                Array.from(selectedIds).forEach((id) =>
+                  deleteMutation.mutate({ id })
+                );
+                setSelectedIds(new Set());
+              }}
+              disabled={deleteMutation.isPending}
+              className="flex items-center gap-2 rounded bg-[#EF4444] px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-600 disabled:opacity-60 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Selected
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* List content */}
-      <div className="space-y-3">
+      <div className="mx-4 rounded-xl border border-neutral-200 bg-[#FDFBF3] px-6 py-4 grid grid-cols-3 divide-x divide-neutral-200">
+        <div className="flex flex-col gap-1 pr-6">
+          <span className="text-xs text-neutral-500 font-medium">
+            Average Rating
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold text-amber-500">
+              {avgRating}
+            </span>
+            <div className="flex gap-0.5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Star
+                  key={i}
+                  className={cn(
+                    "h-4 w-4",
+                    i <= Math.round(avgRatingNum)
+                      ? "fill-amber-400 text-amber-400"
+                      : "fill-transparent text-neutral-300"
+                  )}
+                  strokeWidth={i <= Math.round(avgRatingNum) ? 0 : 1.5}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col items-center gap-1">
+          <span className="text-xs text-neutral-500 font-medium">
+            Total Feedback
+          </span>
+          <span className="text-2xl font-bold text-neutral-900">
+            {totalFeedback}
+          </span>
+        </div>
+        <div className="flex flex-col items-end gap-1 pl-6">
+          <span className="text-xs text-neutral-500 font-medium">
+            Points from Feedback
+          </span>
+          <span className="text-2xl font-bold text-neutral-900">{points}</span>
+        </div>
+      </div>
+
+      <div className="px-4 flex gap-3 items-center">
+        <div className="relative flex-1">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
+            aria-hidden
+          />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by name or content..."
+            className="h-9 w-full rounded-lg border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-300"
+          />
+        </div>
+        <Select value={ratingFilter} onValueChange={setRatingFilter}>
+          <SelectTrigger className="h-9 w-[130px] rounded-lg border border-neutral-200 bg-white text-sm">
+            <SelectValue placeholder="All Ratings" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Ratings</SelectItem>
+            <SelectItem value="5">5 stars</SelectItem>
+            <SelectItem value="4">4 stars</SelectItem>
+            <SelectItem value="3">3 stars</SelectItem>
+            <SelectItem value="2">2 stars</SelectItem>
+            <SelectItem value="1">1 star</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="h-9 w-[90px] rounded-lg border border-neutral-200 bg-white text-sm">
+            <SelectValue placeholder="All" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="unread">Unread</SelectItem>
+            <SelectItem value="read">Read</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="px-4 space-y-3">
         {isLoading && filtered.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-neutral-500">
             <Loader2 className="h-5 w-5 animate-spin text-[#DA7756]" />
             Loading feedback…
           </div>
-        ) : isError && filtered.length === 0 && direction === "to" ? (
+        ) : isError && filtered.length === 0 ? (
           <InlineError
             error={normalizeError(error)}
             onRetry={() => refetch()}
@@ -1487,77 +1772,109 @@ function GivenFeedbackList({
         ) : filtered.length === 0 ? (
           <FeedbackEmptyState />
         ) : (
-          <>
-            {filtered.map((item) => {
-              const expanded = expandedId === item.id;
-              const detail = detailCache[item.id] ?? item;
-              const isLoadingDetail = loadingDetailId === item.id;
-              const counterpartName =
-                direction === "to" ? item.recipientName : item.recipientName;
-              return (
-                <div
-                  key={item.id}
-                  className={cn(
-                    "rounded-xl border border-neutral-200/90 bg-[#FFFDF0] p-4 shadow-sm",
-                    "transition-shadow hover:shadow-md"
-                  )}
-                >
-                  <div className="flex gap-3 sm:gap-4">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#2E7D32] sm:h-12 sm:w-12">
-                      <Send className="h-5 w-5 text-white" strokeWidth={2} />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <button
-                        type="button"
-                        className="w-full text-left"
-                        onClick={() => handleExpand(item.id)}
-                      >
-                        <p className="font-semibold text-neutral-900">
-                          {direction === "to" ? "To" : "From"}:{" "}
-                          {counterpartName}
-                        </p>
-                        <p className="text-sm text-neutral-600">{item.date}</p>
-                        {!expanded && (
-                          <p className="mt-1 text-xs text-neutral-400">
-                            Click to expand feedback details
-                          </p>
-                        )}
-                      </button>
+          filtered.map((item) => {
+            const expanded = expandedId === item.id;
+            const detail = detailCache[item.id] ?? item;
+            const isLoadingDetail = loadingDetailId === item.id;
+            const displayName =
+              direction === "from"
+                ? item.ratingFromName || item.recipientName
+                : item.recipientName;
+            const initial = (displayName || "T").charAt(0).toUpperCase();
+            const avatarBg = getAvatarBg(displayName || "T");
 
-                      {expanded &&
-                        (isLoadingDetail ? (
-                          <div className="mt-3 flex items-center gap-2 text-xs text-neutral-400">
+            return (
+              <div
+                key={item.id}
+                className={cn(
+                  "rounded-xl border bg-white transition-all",
+                  expanded
+                    ? "border-[#4A90D9] ring-1 ring-[#4A90D9]/30"
+                    : "border-neutral-200 hover:border-neutral-300"
+                )}
+              >
+                <div className="flex items-start gap-3 p-4">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.has(item.id)}
+                    onChange={() => toggleSelect(item.id)}
+                    className="mt-1 h-4 w-4 accent-[#DA7756] cursor-pointer shrink-0"
+                  />
+
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                    style={{ backgroundColor: avatarBg }}
+                  >
+                    {initial}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <button
+                      type="button"
+                      className="w-full text-left"
+                      onClick={() => handleExpand(item.id)}
+                    >
+                      <p className="font-semibold text-[#1a1a1a] text-sm">
+                        {direction === "from" ? "From: " : "To: "}{displayName}
+                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <CalendarIcon className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
+                        <span className="text-xs text-neutral-500">
+                          {item.date}
+                        </span>
+                        <span
+                          className={cn(
+                            "rounded px-2 py-0.5 text-[10px] font-semibold",
+                            item.status === "unread"
+                              ? "bg-blue-100 text-blue-700"
+                              : "bg-green-100 text-green-700"
+                          )}
+                        >
+                          {item.status === "unread" ? "Unread" : "Read"}
+                        </span>
+                      </div>
+                      {!expanded && (
+                        <p className="text-[11px] text-neutral-400 italic mt-0.5">
+                          Click to expand feedback details
+                        </p>
+                      )}
+                    </button>
+
+                    {expanded && (
+                      <div className="mt-3 space-y-3">
+                        {isLoadingDetail ? (
+                          <div className="flex items-center gap-2 text-xs text-neutral-400">
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             Loading details...
                           </div>
                         ) : (
-                          <div className="mt-3 space-y-2">
+                          <>
                             {detail.positiveOpening && (
-                              <div className="border-l-2 border-[#2E7D32]/50 pl-3">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#2E7D32]/70">
-                                  Positive Opening
+                              <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2">
+                                <p className="text-[11px] font-semibold text-green-700 mb-1">
+                                  ✓ What You're Doing Well
                                 </p>
-                                <p className="text-sm leading-relaxed text-neutral-700">
+                                <p className="text-sm text-neutral-700">
                                   {detail.positiveOpening}
                                 </p>
                               </div>
                             )}
                             {detail.constructiveFeedback && (
-                              <div className="border-l-2 border-orange-400/60 pl-3">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-orange-500/80">
-                                  Constructive Feedback
+                              <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2">
+                                <p className="text-[11px] font-semibold text-orange-600 mb-1">
+                                  → Area for Growth
                                 </p>
-                                <p className="text-sm leading-relaxed text-neutral-700">
+                                <p className="text-sm text-neutral-700">
                                   {detail.constructiveFeedback}
                                 </p>
                               </div>
                             )}
                             {detail.positiveClosing && (
-                              <div className="border-l-2 border-sky-400/60 pl-3">
-                                <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-500/80">
-                                  Positive Closing
+                              <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2">
+                                <p className="text-[11px] font-semibold text-sky-600 mb-1">
+                                  ★ Encouragement
                                 </p>
-                                <p className="text-sm leading-relaxed text-neutral-700">
+                                <p className="text-sm text-neutral-700">
                                   {detail.positiveClosing}
                                 </p>
                               </div>
@@ -1566,85 +1883,114 @@ function GivenFeedbackList({
                               !detail.constructiveFeedback &&
                               !detail.positiveClosing &&
                               detail.detailPreview && (
-                                <p className="border-l-2 border-[#2E7D32]/40 pl-3 text-sm leading-relaxed text-neutral-700">
-                                  {detail.detailPreview}
-                                </p>
+                                <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+                                  <p className="text-sm text-neutral-700">
+                                    {detail.detailPreview}
+                                  </p>
+                                </div>
                               )}
-                          </div>
-                        ))}
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-2">
-                      <StarRatingRow value={item.rating} />
-                      <span
-                        className={cn(
-                          "rounded-md px-2 py-0.5 text-xs font-medium",
-                          item.status === "unread"
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-neutral-200/80 text-neutral-600"
+                            {/* Notes — only meaningful for received feedback (as the recipient acting on it) */}
+                            {direction === "from" && (
+                              <div className="mt-2">
+                                <label className="text-xs font-semibold text-neutral-600">
+                                  Your Notes / Action Items{" "}
+                                  <span className="font-normal text-neutral-400">
+                                    (Optional)
+                                  </span>
+                                </label>
+                                <textarea
+                                  rows={3}
+                                  value={notes[item.id] || ""}
+                                  onChange={(e) =>
+                                    setNotes((prev) => ({
+                                      ...prev,
+                                      [item.id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Add your notes about how you'll act on this feedback..."
+                                  className="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-neutral-400 resize-y"
+                                />
+                              </div>
+                            )}
+                            {/* Mark as Read — only for received (from) unread items */}
+                            {direction === "from" && item.status === "unread" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  markAsReadMutation.mutate({
+                                    id: item.id,
+                                    readComment: notes[item.id] || undefined,
+                                  })
+                                }
+                                disabled={markAsReadMutation.isPending}
+                                className="inline-flex items-center gap-2 rounded-lg bg-[#2E7D32] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1B5E20] transition-colors disabled:opacity-50"
+                              >
+                                <CheckCircle className="h-3.5 w-3.5" />
+                                {markAsReadMutation.isPending
+                                  ? "Marking..."
+                                  : "Mark as Read"}
+                              </button>
+                            )}
+                          </>
                         )}
-                      >
-                        {item.status === "unread" ? "Unread" : "Read"}
-                      </span>
-                      {direction === "to" && (
-                        <div className="mt-1 flex flex-wrap justify-end gap-2">
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex shrink-0 flex-col items-end gap-2">
+                    <StarRatingRow value={item.rating} />
+                    <button
+                      type="button"
+                      className="rounded-md p-1 text-neutral-400 hover:bg-black/5 hover:text-neutral-600"
+                      aria-expanded={expanded}
+                      aria-label={expanded ? "Collapse" : "Expand"}
+                      onClick={() => handleExpand(item.id)}
+                    >
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 transition-transform",
+                          expanded && "rotate-180"
+                        )}
+                      />
+                    </button>
+                    {direction === "to" && (
+                      <div className="flex gap-1">
+                        {/* Edit — only shown for incomplete feedback (missing ≥1 of the 3 sections) */}
+                        {(!item.positiveOpening ||
+                          !item.constructiveFeedback ||
+                          !item.positiveClosing) && (
                           <button
                             type="button"
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-300 bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-sm hover:bg-neutral-50"
+                            className="rounded p-1 text-neutral-400 hover:text-neutral-700"
+                            title="Edit (incomplete feedback)"
                             onClick={(e) => {
                               e.stopPropagation();
                               onEditFeedback(item);
                             }}
                           >
                             <Pencil className="h-3.5 w-3.5" />
-                            Edit
                           </button>
-                          <button
-                            type="button"
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 shadow-sm hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                            disabled={
-                              deleteMutation.isPending || !currentUserId
+                        )}
+                        <button
+                          type="button"
+                          className="rounded p-1 text-neutral-400 hover:text-red-600"
+                          title="Delete"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm("Delete this feedback?")) {
+                              deleteMutation.mutate({ id: item.id });
                             }
-                            title={
-                              !currentUserId
-                                ? "Unable to verify current user for delete"
-                                : item.ratingFromId != null &&
-                                  Number(item.ratingFromId) !==
-                                  Number(currentUserId)
-                                  ? "You can only delete feedback created by you"
-                                  : undefined
-                            }
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDelete(item);
-                            }}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            {deleteMutation.isPending
-                              ? "Deleting..."
-                              : "Delete"}
-                          </button>
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        className="mt-1 rounded-md p-1 text-neutral-400 hover:bg-black/5 hover:text-neutral-600"
-                        aria-expanded={expanded}
-                        aria-label={expanded ? "Collapse" : "Expand"}
-                        onClick={() => handleExpand(item.id)}
-                      >
-                        <ChevronDown
-                          className={cn(
-                            "h-5 w-5 transition-transform",
-                            expanded && "rotate-180"
-                          )}
-                        />
-                      </button>
-                    </div>
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-              );
-            })}
-          </>
+              </div>
+            );
+          })
         )}
       </div>
     </div>
@@ -1699,7 +2045,6 @@ function GiveFeedbackForm({
   const [positiveClose, setPositiveClose] = useState("");
   const [localError, setLocalError] = useState("");
 
-  // Pre-fill when editing existing feedback
   useEffect(() => {
     if (!initialFeedback) return;
     const recipientOption = initialFeedback.resourceId
@@ -1733,7 +2078,7 @@ function GiveFeedbackForm({
 
   const handleSubmit = async () => {
     if (!recipient) {
-      setLocalError("Please select a team member to give feedback to.");
+      setLocalError("Please select a team member.");
       return;
     }
     if (rating === 0) {
@@ -1756,15 +2101,14 @@ function GiveFeedbackForm({
       resource_id: selectedMember.id,
       score: rating,
       rating_from_type: initialFeedback?.ratingFromType ?? "User",
-      rating_from_id: ratingFromId || undefined,
-      positive_opening: positiveOpen || undefined,
-      constructive_feedback: constructive || undefined,
-      positive_closing: positiveClose || undefined,
+      rating_from_id: ratingFromId,
+      positive_opening: positiveOpen,
+      constructive_feedback: constructive,
+      positive_closing: positiveClose,
+      reviews: context,
     };
 
-    if (!isEditMode) {
-      payload.created_at = feedbackDate.toISOString();
-    }
+    if (!isEditMode) payload.created_at = feedbackDate.toISOString();
 
     if (isEditMode && initialFeedback?.id) {
       updateMutation.mutate(
@@ -1869,8 +2213,7 @@ function GiveFeedbackForm({
             >
               {teamMembersLoading ? (
                 <span className="flex items-center gap-2 text-neutral-400">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Loading members…
+                  <Loader2 className="h-4 w-4 animate-spin" /> Loading members…
                 </span>
               ) : (
                 <SelectValue placeholder="Select team member" />
@@ -1901,11 +2244,7 @@ function GiveFeedbackForm({
               <button
                 type="button"
                 id="feedback-date"
-                className={cn(
-                  "flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 text-left text-sm text-neutral-900",
-                  "outline-none ring-offset-2 transition-colors hover:bg-neutral-50/80",
-                  "focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-                )}
+                className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 text-left text-sm text-neutral-900 outline-none hover:bg-neutral-50/80"
               >
                 <span className="tabular-nums">{formatDMY(feedbackDate)}</span>
                 <CalendarIcon
@@ -1949,7 +2288,7 @@ function GiveFeedbackForm({
               role="radio"
               aria-checked={rating === n}
               onClick={() => setRating(n)}
-              className="rounded-md p-0.5 transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C72030]/40"
+              className="rounded-md p-0.5 transition-transform hover:scale-110"
             >
               <Star
                 className={cn(
@@ -1975,7 +2314,7 @@ function GiveFeedbackForm({
                   seg.bg,
                   seg.text,
                   rating === seg.stars &&
-                  "relative z-10 ring-2 ring-inset ring-neutral-900/80"
+                    "relative z-10 ring-2 ring-inset ring-neutral-900/80"
                 )}
               >
                 <span className="block text-[10px] font-semibold leading-tight sm:text-xs">
@@ -2001,7 +2340,7 @@ function GiveFeedbackForm({
           value={context}
           onChange={(e) => setContext(e.target.value)}
           placeholder="e.g., Regarding the client presentation last week..."
-          className="h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#C72030]/25"
+          className="h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none"
         />
       </div>
 
@@ -2066,7 +2405,7 @@ function GiveFeedbackForm({
             type="button"
             onClick={onCancelEdit}
             disabled={isPending}
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-6 text-sm font-semibold text-amber-900 shadow-sm hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-6 text-sm font-semibold text-amber-900 shadow-sm hover:bg-amber-100 disabled:opacity-50"
           >
             Cancel edit
           </button>
@@ -2075,7 +2414,7 @@ function GiveFeedbackForm({
           type="button"
           onClick={clearForm}
           disabled={isPending}
-          className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-300 bg-white px-6 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-300 bg-white px-6 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-50"
         >
           Clear form
         </button>
@@ -2083,7 +2422,7 @@ function GiveFeedbackForm({
           type="button"
           onClick={handleSubmit}
           disabled={isPending || teamMembersLoading}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:opacity-60"
         >
           {isPending ? (
             <>
@@ -2097,29 +2436,6 @@ function GiveFeedbackForm({
             </>
           )}
         </button>
-      </div>
-
-      <div className="rounded-2xl border border-violet-100 bg-violet-50/90 px-4 py-4 sm:px-5">
-        <div className="flex gap-3 sm:gap-4">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-200/80">
-            <Lightbulb className="h-5 w-5 text-violet-700" strokeWidth={2} />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-violet-950">
-              Feedback tips
-            </p>
-            <ul className="mt-2 list-disc space-y-1.5 pl-4 text-sm leading-relaxed text-violet-900/90">
-              <li>Be specific — reference real situations and outcomes.</li>
-              <li>Focus on behavior and impact, not personality.</li>
-              <li>
-                Make it timely; don&apos;t wait weeks to share important input.
-              </li>
-              <li>
-                Listen openly when they respond; feedback is a conversation.
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -2152,13 +2468,22 @@ function FeedbackPage() {
   );
   const orgLine = selectedCompany?.name?.toUpperCase() ?? "YOUR ORGANIZATION";
 
-  // Both queries are already cached from the list components; no extra requests made
-  const { data: givenFeedback = [] } = useFeedbackList("given", currentUserId);
-  const { data: selectedReceivedFeedback = [] } = useFeedbackList(
-    "received",
-    selectedReceivedUserId
+  const { data: givenFeedbackData = { items: [] } } = useFeedbackList(
+    "given",
+    currentUserId
   );
-  const { data: allReceivedFeedback = [] } = useFeedbackList("received", null);
+  const givenFeedback = givenFeedbackData.items;
+  const givenSummary = givenFeedbackData.summary;
+  const { data: selectedReceivedFeedbackData = { items: [] } } =
+    useFeedbackList("received", selectedReceivedUserId);
+  const selectedReceivedFeedback = selectedReceivedFeedbackData.items;
+  const selectedReceivedSummary = selectedReceivedFeedbackData.summary;
+  const { data: allReceivedFeedbackData = { items: [] } } = useFeedbackList(
+    "received",
+    null
+  );
+  const allReceivedFeedback = allReceivedFeedbackData.items;
+  const allReceivedSummary = allReceivedFeedbackData.summary;
   const selectedReceivedMember =
     selectedReceivedUserId == null
       ? null
@@ -2169,117 +2494,31 @@ function FeedbackPage() {
   const receivedFeedback = useMemo(() => {
     const merged = mergeFeedbackItems(
       selectedReceivedFeedback,
-      allReceivedFeedback,
-      givenFeedback
+      allReceivedFeedback
     );
-    const normalizedSelectedName = selectedReceivedName?.trim().toLowerCase();
 
-    if (selectedReceivedUserId == null && !normalizedSelectedName) {
+    if (selectedReceivedUserId != null && merged.length > 0) {
       return merged;
     }
 
-    const exactMatches = merged.filter((item) => {
-      if (
-        selectedReceivedUserId != null &&
-        item.resourceId === selectedReceivedUserId
-      ) {
-        return true;
-      }
+    const normalizedSelectedName = selectedReceivedName?.trim().toLowerCase();
+    if (!normalizedSelectedName) return merged;
 
-      return normalizedSelectedName
-        ? item.recipientName.toLowerCase() === normalizedSelectedName
-        : false;
-    });
+    const exactMatches = merged.filter(
+      (item) => item.recipientName.toLowerCase() === normalizedSelectedName
+    );
+    if (exactMatches.length > 0) return exactMatches;
 
-    if (exactMatches.length > 0) {
-      return exactMatches;
-    }
-
-    return normalizedSelectedName
-      ? merged.filter((item) =>
-        item.recipientName.toLowerCase().includes(normalizedSelectedName)
-      )
-      : merged;
+    return merged.filter((item) =>
+      item.recipientName.toLowerCase().includes(normalizedSelectedName)
+    );
   }, [
     selectedReceivedFeedback,
     allReceivedFeedback,
-    givenFeedback,
     selectedReceivedUserId,
     selectedReceivedName,
   ]);
 
-  const feedbackSummary = useMemo(() => {
-    const all = [...givenFeedback, ...receivedFeedback];
-    const avgRating =
-      all.length > 0
-        ? (all.reduce((sum, i) => sum + i.rating, 0) / all.length).toFixed(1)
-        : "0";
-    const unread = all.filter((f) => f.status === "unread").length;
-    let feedbackPoints = 0;
-    all.forEach((item) => {
-      if (item.rating === 1) feedbackPoints -= 10;
-      else if (item.rating === 2) feedbackPoints -= 5;
-      else if (item.rating === 4) feedbackPoints += 5;
-      else if (item.rating === 5) feedbackPoints += 10;
-    });
-
-    return {
-      received: receivedFeedback.length,
-      given: givenFeedback.length,
-      unread,
-      avg_rating: Number(avgRating),
-      feedback_points: feedbackPoints,
-    };
-  }, [givenFeedback, receivedFeedback]);
-
-  const headerSummaryStats = useMemo((): SummaryStat[] => {
-    const all = [...givenFeedback, ...receivedFeedback];
-    const avgRating =
-      feedbackSummary?.avg_rating ||
-      (all.length > 0
-        ? (all.reduce((sum, i) => sum + i.rating, 0) / all.length).toFixed(1)
-        : "0");
-
-    const feedbackPoints = feedbackSummary?.feedback_points || 0;
-
-    return [
-      {
-        label: "Received",
-        value: feedbackSummary?.received ?? receivedFeedback.length,
-        icon: Inbox,
-        bgClass: "bg-sky-100/90",
-        iconClass: "text-sky-600",
-      },
-      {
-        label: "Given",
-        value: feedbackSummary?.given ?? givenFeedback.length,
-        icon: Send,
-        bgClass: "bg-[#E3F4E8]",
-        iconClass: "text-[#2E7D32]",
-      },
-      {
-        label: "Unread",
-        value: feedbackSummary?.unread ?? 0,
-        icon: MessageSquare,
-        bgClass: "bg-orange-100/90",
-        iconClass: "text-orange-600",
-      },
-      {
-        label: "Avg Rating",
-        value: avgRating,
-        icon: TrendingUp,
-        bgClass: "bg-violet-100/90",
-        iconClass: "text-violet-600",
-      },
-      {
-        label: "Feedback Points",
-        value: feedbackPoints,
-        icon: ArrowUp,
-        bgClass: "bg-teal-100/80",
-        iconClass: "text-teal-600",
-      },
-    ];
-  }, [givenFeedback, receivedFeedback, feedbackSummary]);
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -2291,10 +2530,10 @@ function FeedbackPage() {
             <button
               type="button"
               className="min-w-0 flex-1 text-left"
-              onClick={() => { }}
+              onClick={() => {}}
             >
               <p className="text-sm font-semibold text-sky-950">
-                Giving & Receiving Feedback
+                Giving &amp; Receiving Feedback
               </p>
               <p className="text-xs text-sky-700/90">Click to view tips</p>
             </button>
@@ -2336,179 +2575,135 @@ function FeedbackPage() {
           </div>
         </header>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 lg:gap-4">
-          {headerSummaryStats.map(
-            ({ label, value, icon: Icon, bgClass, iconClass }) => (
-              <Card
-                key={label}
+        <Card className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+          {/* Tab bar */}
+          <div className="flex border-b border-neutral-200">
+            {(
+              [
+                {
+                  value: "received",
+                  label: "Received",
+                  icon: Inbox,
+                  count:
+                    allReceivedSummary?.received ?? receivedFeedback.length,
+                },
+                {
+                  value: "given",
+                  label: "Given",
+                  icon: Send,
+                  count: givenSummary?.given ?? givenFeedback.length,
+                },
+                {
+                  value: "give",
+                  label: "Give Feedback",
+                  icon: Pencil,
+                  count: null,
+                },
+              ] as const
+            ).map(({ value, label, icon: Icon, count }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFeedbackTab(value)}
                 className={cn(
-                  "border-0 shadow-md transition-shadow hover:shadow-lg rounded-2xl p-5",
-                  bgClass
+                  "flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2",
+                  feedbackTab === value
+                    ? "border-[#DA7756] bg-white text-neutral-900"
+                    : "border-transparent bg-[#f5f5f5] text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700"
                 )}
               >
-                <div className="flex flex-col items-center text-center">
-                  <Icon className={cn("mb-3 h-7 w-7", iconClass)} />
-                  <p className="text-3xl font-bold tabular-nums text-neutral-900">
-                    {value}
-                  </p>
-                  <p className="mt-1 text-xs font-medium text-neutral-600">
-                    {label}
-                  </p>
-                </div>
-              </Card>
-            )
+                <Icon className="h-4 w-4" />
+                {label}
+                {count !== null && count > 0 && (
+                  <span className="rounded-full bg-[#C72030] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    {count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* View for: dropdown — received tab only */}
+          {feedbackTab === "received" && (
+            <div className="px-4 py-3 border-b border-neutral-100 bg-white flex items-center gap-3">
+              <span className="text-sm text-neutral-600 font-medium">
+                View feedback for:
+              </span>
+              <Select value={receivedView} onValueChange={setReceivedView}>
+                <SelectTrigger className="h-9 w-[200px] rounded-lg border-neutral-200 bg-white text-sm">
+                  <SelectValue placeholder={myselfLabel} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="myself">{myselfLabel}</SelectItem>
+                  {teamMembersLoading ? (
+                    <div className="px-3 py-2 text-sm text-neutral-400">
+                      Loading...
+                    </div>
+                  ) : (
+                    teamMembers
+                      .filter((member) => member.id !== currentUserId)
+                      .map((member) => (
+                        <SelectItem key={member.value} value={member.value}>
+                          {member.label}
+                        </SelectItem>
+                      ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           )}
-        </div>
 
-        <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-md">
-          <Tabs
-            value={feedbackTab}
-            onValueChange={setFeedbackTab}
-            className="w-full"
-          >
-            <TabsList
-              className={cn(
-                "h-auto w-full justify-start gap-1 rounded-none border-b border-[#DA7756]/20",
-                "bg-[#DA7756]/10 p-2"
-              )}
-            >
-              <TabsTrigger
-                value="received"
-                className={cn(
-                  "gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-neutral-600 transition-colors",
-                  "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:[&_svg]:text-white",
-                  "hover:bg-[#DA7756]/10"
-                )}
-              >
-                <Inbox className="h-4 w-4" />
-                Received
-                {receivedFeedback.length > 0 && (
-                  <span className="ml-1 rounded-full bg-sky-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    {receivedFeedback.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger
-                value="given"
-                className={cn(
-                  "gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-neutral-600 transition-colors",
-                  "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm data-[state=active]:[&_svg]:text-white",
-                  "hover:bg-[#DA7756]/10"
-                )}
-              >
-                <Send className="h-4 w-4" />
-                Given
-                {givenFeedback.length > 0 && (
-                  <span className="ml-1 rounded-full bg-[#2E7D32] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    {givenFeedback.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger
-                value="give"
-                className={cn(
-                  "gap-2 rounded-xl px-4 py-2.5 text-sm font-medium text-neutral-600",
-                  "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white",
-                  "data-[state=active]:shadow-sm data-[state=active]:[&_svg]:text-white",
-                  "data-[state=inactive]:bg-transparent"
-                )}
-              >
-                <Pencil className="h-4 w-4" />
-                Give Feedback
-              </TabsTrigger>
-            </TabsList>
+          {/* Tab contents */}
+          {feedbackTab === "received" && (
+            <AsyncBoundary>
+              <GivenFeedbackList
+                key={`received-${receivedView}`}
+                onGiveFeedbackClick={() => {
+                  setEditingFeedback(null);
+                  setFeedbackTab("give");
+                }}
+                onEditFeedback={(item) => {
+                  setEditingFeedback(item);
+                  setFeedbackTab("give");
+                }}
+                direction="from"
+                filterUserId={null}
+                itemsOverride={receivedFeedback}
+              />
+            </AsyncBoundary>
+          )}
 
-            {feedbackTab === "received" && (
-              <div className="border-b border-neutral-100 bg-[#DA7756]/10 px-4 py-3 sm:px-6">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                  <span className="text-sm text-neutral-600">
-                    View feedback for:
-                  </span>
-                  <Select value={receivedView} onValueChange={setReceivedView}>
-                    <SelectTrigger className="h-10 w-full max-w-[220px] rounded-lg border-neutral-200 bg-white">
-                      <SelectValue placeholder={myselfLabel} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="myself">{myselfLabel}</SelectItem>
-                      {teamMembersLoading ? (
-                        <div className="px-3 py-2 text-sm text-neutral-400">
-                          Loading team members...
-                        </div>
-                      ) : (
-                        teamMembers
-                          .filter((member) => member.id !== currentUserId)
-                          .map((member) => (
-                            <SelectItem key={member.value} value={member.value}>
-                              {member.label}
-                            </SelectItem>
-                          ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
+          {feedbackTab === "given" && (
+            <AsyncBoundary>
+              <GivenFeedbackList
+                onGiveFeedbackClick={() => {
+                  setEditingFeedback(null);
+                  setFeedbackTab("give");
+                }}
+                onEditFeedback={(item) => {
+                  setEditingFeedback(item);
+                  setFeedbackTab("give");
+                }}
+                direction="to"
+              />
+            </AsyncBoundary>
+          )}
 
-            <TabsContent
-              value="received"
-              className="m-0 focus-visible:outline-none"
-            >
-              <AsyncBoundary>
-                <GivenFeedbackList
-                  key={`received-${receivedView}`}
-                  onGiveFeedbackClick={() => {
-                    setEditingFeedback(null);
-                    setFeedbackTab("give");
-                  }}
-                  onEditFeedback={(item) => {
-                    setEditingFeedback(item);
-                    setFeedbackTab("give");
-                  }}
-                  direction="from"
-                  filterUserId={null}
-                  itemsOverride={receivedFeedback}
-                />
-              </AsyncBoundary>
-            </TabsContent>
-
-            <TabsContent
-              value="given"
-              className="m-0 focus-visible:outline-none"
-            >
-              <AsyncBoundary>
-                <GivenFeedbackList
-                  onGiveFeedbackClick={() => {
-                    setEditingFeedback(null);
-                    setFeedbackTab("give");
-                  }}
-                  onEditFeedback={(item) => {
-                    setEditingFeedback(item);
-                    setFeedbackTab("give");
-                  }}
-                  direction="to"
-                />
-              </AsyncBoundary>
-            </TabsContent>
-
-            <TabsContent
-              value="give"
-              className="m-0 focus-visible:outline-none"
-            >
-              <AsyncBoundary>
-                <GiveFeedbackForm
-                  initialFeedback={editingFeedback}
-                  onCancelEdit={() => {
-                    setEditingFeedback(null);
-                    setFeedbackTab("given");
-                  }}
-                  onSubmitted={() => {
-                    setEditingFeedback(null);
-                    setFeedbackTab("given");
-                  }}
-                />
-              </AsyncBoundary>
-            </TabsContent>
-          </Tabs>
+          {feedbackTab === "give" && (
+            <AsyncBoundary>
+              <GiveFeedbackForm
+                initialFeedback={editingFeedback}
+                onCancelEdit={() => {
+                  setEditingFeedback(null);
+                  setFeedbackTab("given");
+                }}
+                onSubmitted={() => {
+                  setEditingFeedback(null);
+                  setFeedbackTab("given");
+                }}
+              />
+            </AsyncBoundary>
+          )}
         </Card>
       </div>
     </div>

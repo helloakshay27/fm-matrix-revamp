@@ -29,6 +29,10 @@ import {
   Copy,
   Share2,
   ShoppingCart,
+  CirclePlus,
+  ClipboardList,
+  Eye,
+  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -219,9 +223,16 @@ export const BillDetails = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showApprovalLog, setShowApprovalLog] = useState(false);
   const [transactionRecords, setTransactionRecords] = useState<
     TransactionRecord[]
   >([]);
+
+  const [hasSaleOrderApproval, setHasSaleOrderApproval] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [showConvertMenu, setShowConvertMenu] = useState(false);
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
   useEffect(() => {
     const fetchSalesOrder = async () => {
       setLoading(true);
@@ -253,12 +264,78 @@ export const BillDetails = () => {
     if (id) fetchSalesOrder();
   }, [id]);
 
+  useEffect(() => {
+    const fetchLockAccount = async () => {
+      try {
+        const response = await axios.get(`https://${baseUrl}/get_lock_account.json`, {
+          headers: { Authorization: token ? `Bearer ${token}` : undefined },
+        });
+        const hasApproval = Array.isArray(response.data?.approvals) &&
+          response.data.approvals.some((a: any) => a.approval_type === "bill" && a.active);
+        setHasSaleOrderApproval(hasApproval);
+      } catch (e) {
+        console.error("Failed to fetch lock account", e);
+      }
+    };
+    if (baseUrl && token) fetchLockAccount();
+  }, []);
+
+  // Close convert dropdown on outside click
+  useEffect(() => {
+    const handler = () => setShowConvertMenu(false);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const updateStatus = async (status: string) => {
+    try {
+      setActionLoading(true);
+      const response = await axios.patch(
+        `https://${baseUrl}/lock_account_bills/${id}.json`,
+        { lock_account_bill: { status } },
+        { headers: { Authorization: token ? `Bearer ${token}` : undefined }, validateStatus: () => true }
+      );
+      if (response.status === 422) {
+        const { message, errors } = response.data;
+        const msg = Array.isArray(errors) && errors.length > 0
+          ? errors.map((e: any) => `${e.id}: ${e.message}`).join(", ")
+          : message || "Failed to update status";
+        sonnerToast.error(msg);
+        return;
+      }
+      sonnerToast.success(`Sales order ${status.replace("_", " ")} successfully`);
+      fetchSalesOrder();
+    } catch (error) {
+      sonnerToast.error("Failed to update status");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const updateApprovalStatus = async (status: string) => {
+    try {
+      setActionLoading(true);
+      await axios.post(
+        `https://${baseUrl}/lock_account_bills/${id}/update_approval_status.json`,
+        { status, comment: "" },
+        { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+      );
+      sonnerToast.success(`Sales order ${status.replace("_", " ")} successfully`);
+      fetchSalesOrder();
+    } catch (error) {
+      sonnerToast.error("Failed to update approval status");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading sales order...</p>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -307,6 +384,13 @@ export const BillDetails = () => {
       cancelled: "bg-red-100 text-red-800 border-red-200",
     };
     return colors[status] || colors.draft;
+  };
+
+  const getApprovalStatusBadge = (status: any) => {
+    const s = String(status || "").toLowerCase();
+    if (s === "approved") return "bg-green-100 text-green-800";
+    if (s === "rejected") return "bg-red-100 text-red-800";
+    return "bg-yellow-100 text-yellow-800";
   };
 
   const handleEdit = () => {
@@ -402,9 +486,116 @@ export const BillDetails = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* <Badge className={`${getStatusColor(salesOrder.status)} border`}>
+              {salesOrder.status.toUpperCase()}
+            </Badge> */}
             <Badge className={`${getStatusColor(salesOrder.status)} border`}>
-              {/* {salesOrder.status.toUpperCase()} */}
+              {salesOrder.status?.toUpperCase()}
             </Badge>
+            {(salesOrder as any)?.approval_status?.approval_levels?.length > 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowApprovalLog(true)}
+                className="gap-2"
+              >
+                <ClipboardList className="h-4 w-4" />
+                Approval Log
+              </Button>
+            )}
+
+
+            {/* ── WITHOUT APPROVAL ── */}
+            {!hasSaleOrderApproval && (
+              <>
+                {/* Draft → Mark as Confirmed */}
+                {salesOrder.status === "draft" && (
+                  <Button
+                    size="sm"
+                    className="bg-green-600 text-white hover:bg-green-700"
+                    disabled={actionLoading}
+                    onClick={() => updateStatus("open")}
+                  >
+                    Mark as Open
+                  </Button>
+                )}
+
+                {/* Confirmed → Convert to Invoice */}
+                {/* {salesOrder.status === "confirmed" && (
+                  <Button
+                    size="sm"
+                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    disabled={actionLoading}
+                    onClick={() => navigate("/accounting/invoices/add", { state: { saleOrderId: salesOrder?.id || id } })}
+                  >
+                    Convert to Invoice
+                  </Button>
+                )} */}
+              </>
+            )}
+
+            {/* ── WITH APPROVAL ── */}
+            {hasSaleOrderApproval && (
+              <>
+                {/* Draft → Submit for Approval */}
+                {salesOrder.status === "draft" && (
+                  <Button
+                    size="sm"
+                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    disabled={actionLoading}
+                    onClick={() => updateStatus("pending_approval")}
+                  >
+                    Submit for Approval
+                  </Button>
+                )}
+
+                {/* Pending Approval + can_approve → Approve / Reject */}
+                {salesOrder.status === "pending_approval" && (salesOrder as any).can_approve && (
+                  <>
+                    <Button
+                      size="sm"
+                      className="bg-green-600 text-white hover:bg-green-700"
+                      disabled={actionLoading}
+                      onClick={() => updateApprovalStatus("approved")}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-red-600 text-white hover:bg-red-700"
+                      disabled={actionLoading}
+                      onClick={() => updateApprovalStatus("rejected")}
+                    >
+                      Reject
+                    </Button>
+                  </>
+                )}
+
+                {/* Approved → Mark as Confirmed */}
+                {salesOrder.status === "approved" && (
+                  <Button
+                    size="sm"
+                    className="bg-green-600 text-white hover:bg-green-700"
+                    disabled={actionLoading}
+                    onClick={() => updateStatus("open")}
+                  >
+                    Mark as Open
+                  </Button>
+                )}
+
+                {/* Confirmed → Convert to Invoice */}
+                {/* {salesOrder.status === "confirmed" && (
+                  <Button
+                    size="sm"
+                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    disabled={actionLoading}
+                    onClick={() => navigate("/accounting/invoices/add", { state: { saleOrderId: salesOrder?.id || id } })}
+                  >
+                    Convert to Invoice
+                  </Button>
+                )} */}
+              </>
+            )}
           </div>
         </div>
 
@@ -479,6 +670,7 @@ export const BillDetails = () => {
                 { label: "Bill Details", value: "order-details" },
                 { label: "Vendor Info", value: "customer-info" },
                 { label: "History", value: "history" },
+                { label: "Activity Logs", value: "activity-logs" },
               ].map((tab) => (
                 <TabsTrigger
                   key={tab.value}
@@ -532,7 +724,7 @@ export const BillDetails = () => {
                         {salesOrder?.vendor_name}
                       </p>
                     </div>
-                     <div>
+                    <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Source of Supply
                       </p>
@@ -540,7 +732,7 @@ export const BillDetails = () => {
                         {salesOrder?.source_of_supply}
                       </p>
                     </div>
-                     <div>
+                    <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Destination of Supply
                       </p>
@@ -806,7 +998,7 @@ export const BillDetails = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5 text-primary" />
-                      Journal Entries
+                      Journal
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -825,7 +1017,18 @@ export const BillDetails = () => {
                             const formatted = `₹${absAmount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
                             return (
                               <TableRow key={rec.id}>
-                                <TableCell>{rec.ledger_name}</TableCell>
+                                <TableCell>
+                                  {rec.ledger_id ? (
+                                    <span
+                                      className="text-black-600 cursor-pointer hover:underline"
+                                    // onClick={() => navigate(`/accounting/reports/balance-sheet/details/${rec.ledger_id}`)}
+                                    >
+                                      {rec.ledger_name}
+                                    </span>
+                                  ) : (
+                                    rec.ledger_name
+                                  )}
+                                </TableCell>
                                 <TableCell className="text-right">
                                   {rec.tr_type === "dr" ? formatted : "0.00"}
                                 </TableCell>
@@ -987,9 +1190,120 @@ export const BillDetails = () => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent
+              value="activity-logs"
+              className="p-3 sm:p-6 space-y-6"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Activity Logs
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {Array.isArray((salesOrder as any)?.activity_logs) &&
+                    (salesOrder as any).activity_logs.length > 0 ? (
+                    <div className="divide-y">
+                      {(salesOrder as any).activity_logs.map((log: any, idx: number) => {
+                        const key = `${log?.date || ""}-${log?.time || ""}-${idx}`;
+                        const hint = `${log?.action || ""} ${log?.message || ""}`.toLowerCase();
+                        const isConverted = hint.includes("convert");
+                        const isCreated = hint.includes("create");
+                        const isAccepted = hint.includes("accept");
+                        const isSent = hint.includes("sent");
+                        const Icon = isConverted || isCreated ? CirclePlus : (isAccepted || isSent ? Eye : FileText);
+                        const iconWrapClass =
+                          isConverted || isCreated
+                            ? "bg-green-50 text-green-600 border-green-100"
+                            : isAccepted || isSent
+                              ? "bg-sky-50 text-sky-600 border-sky-100"
+                              : "bg-gray-50 text-gray-500 border-gray-100";
+
+                        return (
+                          <div key={key} className="flex gap-6 py-5">
+                            <div className="min-w-[170px] text-sm text-muted-foreground">
+                              <div>{log?.date || "—"} {log?.time || ""}</div>
+                            </div>
+
+                            <div className={`w-9 h-9 rounded-full border flex items-center justify-center ${iconWrapClass}`}>
+                              <Icon className="h-5 w-5" />
+                            </div>
+
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-foreground">
+                                {log?.message || "—"}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                by <span className="font-medium text-foreground">{log?.user || "—"}</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No activity logs found.</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      <Dialog open={showApprovalLog} onOpenChange={setShowApprovalLog}>
+        <DialogContent className="max-w-4xl">
+          <div className="flex items-center justify-between">
+            <DialogHeader>
+              <DialogTitle className="text-[#C72030]">Approval Log</DialogTitle>
+            </DialogHeader>
+            <button
+              type="button"
+              onClick={() => setShowApprovalLog(false)}
+              className="p-2 rounded hover:bg-muted"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="rounded-lg border overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
+                  <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">Sr.No.</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Approval Level</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Approved By</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Date</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Status</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Remark</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">Users</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {((salesOrder as any)?.approval_status?.approval_levels || []).map((lvl: any, index: number) => (
+                  <TableRow key={lvl?.id ?? index}>
+                    <TableCell className="font-medium">{index + 1}</TableCell>
+                    <TableCell className="font-medium">{lvl?.name || "—"}</TableCell>
+                    <TableCell className="font-medium">{lvl?.approved_by || "—"}</TableCell>
+                    <TableCell className="font-medium">{lvl?.approved_at || "—"}</TableCell>
+                    <TableCell>
+                      <span className={`px-3 py-1 rounded text-xs font-semibold ${getApprovalStatusBadge(lvl?.status)}`}>
+                        {String(lvl?.status || "pending").toUpperCase()}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{lvl?.rejection_reason || "—"}</TableCell>
+                    <TableCell className="text-sm">{Array.isArray(lvl?.users) ? lvl.users.map((u: any) => u?.name || u).filter(Boolean).join(", ") : "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

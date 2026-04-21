@@ -98,11 +98,11 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
             {/* Bar Chart — fixed height, never shrinks */}
             <div className="h-52 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
+                <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" fontSize={10} />
-                  <YAxis />
-                  <Tooltip />
+                  <XAxis dataKey="name" fontSize={10} padding={{ left: 30, right: 20 }} />
+                  <YAxis width={40} />
+                  <Tooltip cursor={{ fill: 'rgba(180,180,180,0.15)' }} />
                   <Bar dataKey="open" stackId="a" fill={CHART_COLORS.primary} name="Open" />
                   <Bar dataKey="closed" stackId="a" fill={CHART_COLORS.secondary} name="Closed" />
                   <Bar dataKey="work_in_progress" stackId="a" fill={CHART_COLORS.tertiary} name="Work in Progress" />
@@ -125,16 +125,22 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {chartData.map((item, index) => (
-                    <tr key={index} className="border-b hover:bg-gray-50">
-                      <td className="p-2 font-medium">{item.name}</td>
-                      <td className="text-right p-2">{item.open}</td>
-                      <td className="text-right p-2">{item.closed}</td>
-                      <td className="text-right p-2">{item.work_in_progress}</td>
-                      <td className="text-right p-2">{item.overdue}</td>
-                      <td className="text-right p-2 font-semibold">{item.total}</td>
+                  {chartData.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center p-4 text-muted-foreground text-sm">No data available</td>
                     </tr>
-                  ))}
+                  ) : (
+                    chartData.map((item, index) => (
+                      <tr key={index} className="border-b hover:bg-gray-50">
+                        <td className="p-2 font-medium">{item.name}</td>
+                        <td className="text-right p-2">{item.open ?? 0}</td>
+                        <td className="text-right p-2">{item.closed ?? 0}</td>
+                        <td className="text-right p-2">{item.work_in_progress ?? 0}</td>
+                        <td className="text-right p-2">{item.overdue ?? 0}</td>
+                        <td className="text-right p-2 font-semibold">{item.total ?? 0}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -170,11 +176,11 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
             {/* Bar Chart — fixed height */}
             <div className="h-52 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
+                <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="type" angle={-35} textAnchor="end" height={80} fontSize={9} />
-                  <YAxis />
-                  <Tooltip />
+                  <XAxis dataKey="type" angle={-35} textAnchor="end" height={80} fontSize={9} padding={{ left: 30, right: 20 }} />
+                  <YAxis width={40} />
+                  <Tooltip cursor={{ fill: 'rgba(180,180,180,0.15)' }} />
                   <Bar dataKey="count">
                     {chartData.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -233,11 +239,11 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
             {/* Stacked Bar Chart — fixed height */}
             <div className="h-52 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
+                <BarChart data={chartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="site" fontSize={10} />
-                  <YAxis />
-                  <Tooltip />
+                  <XAxis dataKey="site" fontSize={10} padding={{ left: 30, right: 20 }} />
+                  <YAxis width={40} />
+                  <Tooltip cursor={{ fill: 'rgba(180,180,180,0.15)' }} />
                   <Bar dataKey="open" stackId="a" fill={CHART_COLORS.primary} name="Open" />
                   <Bar dataKey="closed" stackId="a" fill={CHART_COLORS.secondary} name="Closed" />
                   <Bar dataKey="work_in_progress" stackId="a" fill={CHART_COLORS.tertiary} name="Work in Progress" />
@@ -260,16 +266,22 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {chartData.map((item, index) => (
-                    <tr key={index} className="border-b hover:bg-gray-50">
-                      <td className="p-2 font-medium">{item.site}</td>
-                      <td className="text-right p-2">{item.open}</td>
-                      <td className="text-right p-2">{item.closed}</td>
-                      <td className="text-right p-2">{item.work_in_progress}</td>
-                      <td className="text-right p-2">{item.overdue}</td>
-                      <td className="text-right p-2 font-semibold">{item.total}</td>
+                  {chartData.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center p-4 text-muted-foreground text-sm">No data available</td>
                     </tr>
-                  ))}
+                  ) : (
+                    chartData.map((item, index) => (
+                      <tr key={index} className="border-b hover:bg-gray-50">
+                        <td className="p-2 font-medium">{item.site}</td>
+                        <td className="text-right p-2">{item.open ?? 0}</td>
+                        <td className="text-right p-2">{item.closed ?? 0}</td>
+                        <td className="text-right p-2">{item.work_in_progress ?? 0}</td>
+                        <td className="text-right p-2">{item.overdue ?? 0}</td>
+                        <td className="text-right p-2 font-semibold">{item.total ?? 0}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

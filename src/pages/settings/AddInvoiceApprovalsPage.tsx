@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/utils/apiClient';
@@ -22,6 +21,10 @@ interface User {
 
 export const AddInvoiceApprovalsPage = () => {
   const navigate = useNavigate();
+  const baseUrl = localStorage.getItem('baseUrl') || '';
+  const lockAccountId = localStorage.getItem('lock_account_id');
+  const normalizedBaseUrl = baseUrl.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const shouldPassLockAccountId = normalizedBaseUrl === 'club-uat-api.lockated.com';
   const [selectedFunction, setSelectedFunction] = useState('');
   const [approvalLevels, setApprovalLevels] = useState<ApprovalLevel[]>([
     { order: 1, name: '', users: [], sendEmails: false }
@@ -37,10 +40,15 @@ export const AddInvoiceApprovalsPage = () => {
     },
   });
 
-  // Function options as specified
+  // Function options for invoice approval
   const functionOptions = [
-    { label: 'Asset', value: 'asset' },
-    { label: 'Asset Movement', value: 'asset_movement' }
+    { label: 'Quote', value: 'quote' },
+    { label: 'SaleOrder', value: 'sale_order' },
+    { label: 'Invoice', value: 'invoice' },
+    { label: 'CreditNote', value: 'credit_note' },
+    { label: 'PurchaseOrder', value: 'purchase_order' },
+    { label: 'Bill', value: 'bill' },
+    { label: 'VendorCredit', value: 'vendor_credit' }
   ];
 
   // Fetch users from API
@@ -72,6 +80,7 @@ export const AddInvoiceApprovalsPage = () => {
     fetchUsers();
   }, []);
 
+
   const addApprovalLevel = () => {
     const newLevel: ApprovalLevel = {
       order: approvalLevels.length + 1,
@@ -95,6 +104,25 @@ export const AddInvoiceApprovalsPage = () => {
     const updated = [...approvalLevels];
     updated[index] = { ...updated[index], [field]: value };
     setApprovalLevels(updated);
+  };
+
+  const getApiErrorMessage = (error: any, fallback: string) => {
+    const data = error?.response?.data;
+    if (!data) return fallback;
+    if (typeof data === 'string') return data;
+    if (Array.isArray(data)) return data.join(', ');
+    if (typeof data === 'object') {
+      const parts: string[] = [];
+      Object.entries(data).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          parts.push(`${key} ${value.join(', ')}`);
+        } else if (typeof value === 'string') {
+          parts.push(`${key} ${value}`);
+        }
+      });
+      if (parts.length > 0) return parts.join(' | ');
+    }
+    return fallback;
   };
 
   const handleCreate = async () => {
@@ -127,7 +155,10 @@ export const AddInvoiceApprovalsPage = () => {
       };
 
       // Create the invoice approval matrix using the existing API endpoint
-      await apiClient.post('/pms/admin/invoice_approvals.json', payload);
+      const saveUrl = shouldPassLockAccountId
+        ? `/pms/admin/invoice_approvals.json?lock_account_id=${lockAccountId}`
+        : '/pms/admin/invoice_approvals.json';
+      await apiClient.post(saveUrl, payload);
 
       toast.success('Invoice approval matrix created successfully');
       
@@ -136,16 +167,10 @@ export const AddInvoiceApprovalsPage = () => {
       
     } catch (error) {
       console.error('Error creating invoice approval matrix:', error);
-      toast.error('Failed to create invoice approval matrix');
+      toast.error(getApiErrorMessage(error, 'Failed to create invoice approval matrix'));
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const handleSaveAndCreateNew = () => {
-    setSelectedFunction('');
-    setApprovalLevels([{ order: 1, name: '', users: [], sendEmails: false }]);
-    toast.success('Form cleared for new entry');
   };
 
   return (
@@ -300,19 +325,17 @@ export const AddInvoiceApprovalsPage = () => {
           {/* Action Buttons */}
           <div className="flex gap-4 pt-6">
             <Button
+              variant="outline"
+              onClick={() => navigate('/settings/asset-setup/approval-matrix')}
+            >
+              Back
+            </Button>
+            <Button
               onClick={handleCreate}
               disabled={submitting}
               className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
             >
               {submitting ? 'Creating...' : 'Create'}
-            </Button>
-            
-            <Button
-              variant="outline"
-              onClick={handleSaveAndCreateNew}
-              className="border-destructive text-destructive hover:bg-destructive/10"
-            >
-              Save And Create New
             </Button>
           </div>
         </div>

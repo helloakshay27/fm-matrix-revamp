@@ -11,8 +11,10 @@ import {
   Edit,
   Trash,
   MoreHorizontal,
+  CalendarClock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import {
   fetchMeetingConfigs,
   createMeetingConfig,
@@ -33,32 +35,28 @@ const MeetingConfigModal = ({
 }) => {
   const isEdit = !!existingConfig;
 
-  // Check if members come as array of objects from API
-  const initialMembers = existingConfig?.members 
-    ? existingConfig.members.map(m => Number(m.id)) 
+  const initialMembers = existingConfig?.members
+    ? existingConfig.members.map((m) => Number(m.id))
     : (existingConfig?.memberIds ?? []).map(Number);
 
   const [form, setForm] = useState({
     name: existingConfig?.name ?? "",
-    meeting_time: existingConfig?.meetingTime ?? existingConfig?.meeting_time ?? "",
-    meeting_days: existingConfig?.meetingDays ?? existingConfig?.meeting_days ?? [
-      "Mon",
-      "Tue",
-      "Wed",
-      "Thu",
-      "Fri",
-    ],
+    meeting_time:
+      existingConfig?.meetingTime ?? existingConfig?.meeting_time ?? "",
+    meeting_days: existingConfig?.meetingDays ??
+      existingConfig?.meeting_days ?? ["Mon", "Tue", "Wed", "Thu", "Fri"],
     meeting_head_id: existingConfig?.meetingHead?.id
       ? String(existingConfig.meetingHead.id)
       : existingConfig?.meetingHeadId
-      ? String(existingConfig.meetingHeadId)
-      : "",
+        ? String(existingConfig.meetingHeadId)
+        : "",
     department_id: existingConfig?.department?.id
       ? String(existingConfig.department.id)
       : existingConfig?.departmentId
-      ? String(existingConfig.departmentId)
-      : "",
-    is_default: existingConfig?.isDefault ?? existingConfig?.is_default ?? false,
+        ? String(existingConfig.departmentId)
+        : "",
+    is_default:
+      existingConfig?.isDefault ?? existingConfig?.is_default ?? false,
   });
 
   const [selectedMemberIds, setSelectedMemberIds] = useState(initialMembers);
@@ -114,12 +112,15 @@ const MeetingConfigModal = ({
     try {
       if (isEdit) {
         await updateMeetingConfig(existingConfig.id, payload);
+        toast.success("Meeting configuration updated!");
       } else {
         await createMeetingConfig(payload);
+        toast.success("Meeting configuration created!");
       }
       onSaved();
     } catch (err) {
       setError(err.message || "Failed to save config.");
+      toast.error(err.message || "Failed to save config.");
     } finally {
       setIsLoading(false);
     }
@@ -355,8 +356,8 @@ const MeetingConfigModal = ({
             {isLoading
               ? "Saving..."
               : isEdit
-              ? "Update Config"
-              : "Create Config"}
+                ? "Update Config"
+                : "Create Config"}
           </button>
         </div>
       </div>
@@ -365,10 +366,210 @@ const MeetingConfigModal = ({
   );
 };
 
+// ── DeleteConfirmModal ──
+const DeleteConfirmModal = ({ configName, onConfirm, onCancel, isDeleting }) =>
+  createPortal(
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      style={{ zIndex: 99999 }}
+      onClick={() => !isDeleting && onCancel()}
+    >
+      <div
+        className="bg-white rounded-[24px] shadow-2xl w-full max-w-sm p-6 flex flex-col gap-5"
+        onClick={(e) => e.stopPropagation()}
+        style={{ fontFamily: "'Poppins', sans-serif" }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <AlertTriangle className="w-5 h-5 text-red-500" />
+          </div>
+          <div>
+            <h3 className="font-black text-[#1A1A1A] text-[16px]">
+              Delete Meeting?
+            </h3>
+            <p className="text-xs text-[#8C8580] font-bold mt-0.5">
+              "{configName}" will be permanently removed.
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onCancel}
+            disabled={isDeleting}
+            className="px-5 py-2.5 bg-white border border-[#E0E0E0] text-[#555] rounded-[12px] text-sm font-bold hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            className="flex items-center gap-2 px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-[12px] text-sm font-bold shadow-sm disabled:opacity-60 transition-colors"
+          >
+            {isDeleting ? (
+              <span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+            ) : (
+              <Trash className="w-4 h-4" />
+            )}
+            {isDeleting ? "Deleting..." : "Delete"}
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+
+// ─────────────────────────────────────────────────────────
+//  Day helpers
+// ─────────────────────────────────────────────────────────
+
+/** Maps our 2-char display keys to JS Date.getDay() (0=Sun..6=Sat) */
+const DAY_TO_JS_IDX: Record<string, number> = {
+  Su: 0,
+  Mo: 1,
+  Tu: 2,
+  We: 3,
+  Th: 4,
+  Fr: 5,
+  Sa: 6,
+};
+
+/** Normalise any API day format to 2-char display key */
+const normalizeDayKey = (d: string): string => {
+  const map: Record<string, string> = {
+    Sun: "Su",
+    Mon: "Mo",
+    Tue: "Tu",
+    Wed: "We",
+    Thu: "Th",
+    Fri: "Fr",
+    Sat: "Sa",
+    Su: "Su",
+    Mo: "Mo",
+    Tu: "Tu",
+    We: "We",
+    Th: "Th",
+    Fr: "Fr",
+    Sa: "Sa",
+    Sunday: "Su",
+    Monday: "Mo",
+    Tuesday: "Tu",
+    Wednesday: "We",
+    Thursday: "Th",
+    Friday: "Fr",
+    Saturday: "Sa",
+  };
+  return map[d] ?? d;
+};
+
+const WEEK_DISPLAY_KEYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
+
+/** Returns dot colour + whether the column is today */
+const getDayStatus = (
+  displayKey: string,
+  activeDayKeys: Set<string>,
+  todayJsIdx: number
+): { color: string; ringColor: string; isToday: boolean } => {
+  const dayIdx = DAY_TO_JS_IDX[displayKey];
+  const isScheduled = activeDayKeys.has(displayKey);
+  const isToday = dayIdx === todayJsIdx;
+
+  if (!isScheduled) {
+    return { color: "bg-[#E5E7EB]", ringColor: "", isToday };
+  }
+  if (isToday) {
+    return {
+      color: "bg-[#F59E0B]",
+      ringColor: "ring-2 ring-offset-1 ring-[#F59E0B]",
+      isToday,
+    };
+  }
+  if (dayIdx < todayJsIdx) {
+    return { color: "bg-[#2ECC71]", ringColor: "", isToday };
+  }
+  return { color: "bg-[#E5E7EB]", ringColor: "", isToday };
+};
+
+// ─────────────────────────────────────────────────────────
+//  getNextMeeting — calculates next upcoming meeting slot
+//  across ALL configs dynamically
+// ─────────────────────────────────────────────────────────
+const getNextMeeting = (configs: any[]): string | null => {
+  if (!configs.length) return null;
+
+  const today = new Date();
+  const todayJsIdx = today.getDay(); // 0=Sun … 6=Sat
+  const nowMinutes = today.getHours() * 60 + today.getMinutes();
+
+  const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+  let earliest: {
+    daysAhead: number;
+    meetingMinutes: number;
+    label: string;
+    time: string;
+    name: string;
+  } | null = null;
+
+  configs.forEach((c) => {
+    const days: string[] = (c.meetingDays || c.meeting_days || []).map(
+      normalizeDayKey
+    );
+
+    const timeStr: string = c.meetingTime || c.meeting_time || "";
+    if (!timeStr) return;
+
+    const [h, m] = timeStr.split(":").map(Number);
+    const meetingMinutes = h * 60 + (m || 0);
+
+    days.forEach((dayKey) => {
+      const jsIdx = DAY_TO_JS_IDX[dayKey];
+      if (jsIdx === undefined) return;
+
+      let daysAhead = (jsIdx - todayJsIdx + 7) % 7;
+
+      // If it's today but time has already passed → push to next week
+      if (daysAhead === 0 && meetingMinutes <= nowMinutes) {
+        daysAhead = 7;
+      }
+
+      const isBetter =
+        !earliest ||
+        daysAhead < earliest.daysAhead ||
+        (daysAhead === earliest.daysAhead &&
+          meetingMinutes < earliest.meetingMinutes);
+
+      if (isBetter) {
+        earliest = {
+          daysAhead,
+          meetingMinutes,
+          label: DAY_LABELS[jsIdx],
+          time: timeStr,
+          name: c.name || "Meeting",
+        };
+      }
+    });
+  });
+
+  if (!earliest) return null;
+
+  // Format time to 12-hr for readability e.g. "09:00" → "9:00 AM"
+  const e = earliest as { label: string; time: string; meetingMinutes: number; name: string };
+  const totalMin = e.meetingMinutes;
+  const hh = Math.floor(totalMin / 60);
+  const mm = totalMin % 60;
+  const suffix = hh >= 12 ? "PM" : "AM";
+  const displayH = hh % 12 === 0 ? 12 : hh % 12;
+  const displayM = mm.toString().padStart(2, "0");
+  const formattedTime = `${displayH}:${displayM} ${suffix}`;
+
+  return `${e.name} - ${e.label} at ${formattedTime}`;
+};
+
 // ── ConfigCard ──
 const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -381,16 +582,16 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
   }, []);
 
   const handleDelete = async () => {
-    if (!window.confirm(`Are you sure you want to delete "${config.name}"?`))
-      return;
     setIsDeleting(true);
     try {
       await deleteMeetingConfig(config.id);
+      toast.success(`"${config.name}" deleted successfully.`);
       loadConfigs();
     } catch (e) {
-      alert(`Delete failed: ${e.message}`);
+      toast.error(`Delete failed: ${e.message}`);
     } finally {
       setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -400,17 +601,14 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
     return val;
   };
 
-  // Safe checks for meeting head
-  const meetingHeadName = getDisplayName(config.meetingHead || config.meeting_head) || "Unknown Head";
+  const meetingHeadName =
+    getDisplayName(config.meetingHead || config.meeting_head) || "Unknown Head";
   const meetingHeadId = config.meetingHeadId || config.meeting_head?.id;
 
-  // Ensure members list is captured correctly
-  const membersArray = config.members || []; 
-  
-  // Create an array of member names for UI
+  const membersArray = config.members || [];
+
   const mappedMembers = membersArray.map((m) => {
-    if(m && m.name) return m.name;
-    // Fallback if only IDs exist
+    if (m && m.name) return m.name;
     const user = allUsers.find((u) => Number(u.id) === Number(m.id || m));
     return user
       ? (user.name ?? user.full_name ?? user.username ?? `User ${m.id || m}`)
@@ -432,161 +630,216 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
       (u.name ?? u.full_name ?? u.username) === meetingHeadName
   );
 
-  const meetingDays = config.meetingDays || config.meeting_days || [];
-  const meetingTime = config.meetingTime || config.meeting_time || "No time set";
+  const meetingTime =
+    config.meetingTime || config.meeting_time || "No time set";
 
-  const weekDays = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+  const today = new Date();
+  const todayJsIdx = today.getDay();
+
+  const activeDayKeys = new Set(
+    (config.meetingDays || config.meeting_days || []).map(normalizeDayKey)
+  );
 
   return (
-    <div className="bg-white border border-[#F0EBE8] rounded-[24px] shadow-sm p-6 hover:shadow-md hover:border-[#D37E5F] transition-all relative">
-      <div className="absolute top-5 right-4" ref={menuRef}>
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="p-1.5 text-[#8C8580] hover:text-[#1A1A1A] rounded-[8px] hover:bg-[#FCFAFA] transition-colors"
-        >
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
-        {menuOpen && (
-          <div className="absolute right-0 mt-1 w-36 bg-white border border-[#F0EBE8] rounded-[16px] shadow-lg py-1 z-10 overflow-hidden">
-            <button
-              onClick={() => {
-                setMenuOpen(false);
-                onEdit(config);
-              }}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#1A1A1A] hover:bg-[#FCFAFA]"
-            >
-              <Edit className="w-4 h-4 text-[#8C8580]" /> Edit
-            </button>
-            <button
-              onClick={() => {
-                setMenuOpen(false);
-                handleDelete();
-              }}
-              disabled={isDeleting}
-              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#EB4A4A] hover:bg-[#EB4A4A]/10"
-            >
-              <Trash className="w-4 h-4 text-[#EB4A4A]" />{" "}
-              {isDeleting ? "Deleting..." : "Delete"}
-            </button>
+    <>
+      <div className="bg-white border border-[#F0EBE8] rounded-[24px] shadow-sm p-6 hover:shadow-md hover:border-[#D37E5F] transition-all relative">
+        {/* ── Three-dot menu ── */}
+        <div className="absolute top-5 right-4" ref={menuRef}>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="p-1.5 text-[#8C8580] hover:text-[#1A1A1A] rounded-[8px] hover:bg-[#FCFAFA] transition-colors"
+          >
+            <MoreHorizontal className="w-5 h-5" />
+          </button>
+          {menuOpen && (
+            <div className="absolute right-0 mt-1 w-36 bg-white border border-[#F0EBE8] rounded-[16px] shadow-lg py-1 z-10 overflow-hidden">
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  onEdit(config);
+                }}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#1A1A1A] hover:bg-[#FCFAFA]"
+              >
+                <Edit className="w-4 h-4 text-[#8C8580]" /> Edit
+              </button>
+              <button
+                onClick={() => {
+                  setMenuOpen(false);
+                  setShowDeleteConfirm(true);
+                }}
+                disabled={isDeleting}
+                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#EB4A4A] hover:bg-[#EB4A4A]/10"
+              >
+                <Trash className="w-4 h-4 text-[#EB4A4A]" />{" "}
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── Name + Time + Day pills ── */}
+        <div className="mb-5 pr-8">
+          <h3 className="text-[18px] font-black text-[#1A1A1A] mb-3 leading-tight tracking-tight">
+            {config.name}
+          </h3>
+          <div className="inline-flex items-center gap-1.5 bg-[#FCFAFA] border border-[#F0EBE8] text-[#1A1A1A] px-3 py-1.5 rounded-[8px] text-xs font-bold mb-4">
+            <Clock className="w-3.5 h-3.5 text-[#8C8580]" /> {meetingTime}
+          </div>
+
+          {/* Day pills */}
+          <div className="flex gap-1.5 flex-wrap">
+            {(["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const).map(
+              (day) => {
+                const isActive = activeDayKeys.has(day);
+                const isToday = DAY_TO_JS_IDX[day] === todayJsIdx;
+                return (
+                  <div
+                    key={day}
+                    className={cn(
+                      "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider transition-all",
+                      isActive && isToday
+                        ? "bg-[#F59E0B] text-white ring-2 ring-offset-1 ring-[#F59E0B]"
+                        : isActive
+                          ? "bg-[#1A1A1A] text-white"
+                          : isToday
+                            ? "bg-[#FCFAFA] border-2 border-[#F59E0B] text-[#F59E0B]"
+                            : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
+                    )}
+                  >
+                    {day}
+                  </div>
+                );
+              }
+            )}
+          </div>
+        </div>
+
+        {/* ── Meeting Head ── */}
+        <div className="mb-5">
+          <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-2">
+            Meeting Head
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-[12px] bg-[#FDF5F1] text-[#D37E5F] border border-[#F6E1D7] flex items-center justify-center font-black text-sm shrink-0">
+              {getInitials(meetingHeadName)}
+            </div>
+            <div className="truncate">
+              <div className="text-sm font-black text-[#1A1A1A] truncate">
+                {meetingHeadName}
+              </div>
+              <div className="text-[11px] font-bold text-[#8C8580] truncate mt-0.5">
+                {meetingHeadUser?.email ?? "No email"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Members ── */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest">
+              Members
+            </div>
+            <div className="bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580] text-[10px] font-black px-2 py-0.5 rounded-[6px]">
+              {mappedMembers.length}
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {mappedMembers.slice(0, 4).map((name, i) => (
+                <div
+                  key={i}
+                  className="w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-black bg-[#FCFAFA] text-[#1A1A1A] border-2 border-white relative z-10"
+                >
+                  {getInitials(name)}
+                </div>
+              ))}
+              {mappedMembers.length > 4 && (
+                <div className="w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-black bg-[#F0EBE8] text-[#1A1A1A] border-2 border-white relative z-10">
+                  +{mappedMembers.length - 4}
+                </div>
+              )}
+            </div>
+            <div className="text-[11px] font-bold text-[#8C8580] truncate flex-1 leading-snug">
+              {membersText}
+            </div>
+          </div>
+        </div>
+
+        {/* ── This Week — DYNAMIC ── */}
+        <div className="pt-5 border-t border-[#F0EBE8]">
+          <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-3">
+            This Week
+          </div>
+
+          <div className="flex justify-between items-center px-1 mb-4">
+            {WEEK_DISPLAY_KEYS.map((day) => {
+              const { color, ringColor, isToday } = getDayStatus(
+                day,
+                activeDayKeys,
+                todayJsIdx
+              );
+              return (
+                <div key={day} className="flex flex-col items-center gap-2">
+                  <span
+                    className={cn(
+                      "text-[10px]",
+                      isToday
+                        ? "font-black text-[#1A1A1A]"
+                        : "font-bold text-[#8C8580]"
+                    )}
+                  >
+                    {day}
+                  </span>
+                  <div
+                    className={cn(
+                      "w-2 h-2 rounded-full transition-all",
+                      color,
+                      ringColor
+                    )}
+                  />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Legend */}
+          <div className="flex items-center gap-3 flex-wrap text-[10px] font-bold text-[#8C8580]">
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#2ECC71]" />
+              Held
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#F59E0B]" />
+              Today
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="w-2 h-2 rounded-full bg-[#E5E7EB]" />
+              Upcoming / Off
+            </div>
+          </div>
+        </div>
+
+        {/* ── Default badge ── */}
+        {(config.isDefault || config.is_default) && (
+          <div className="mt-5 flex">
+            <span className="bg-[#1A1A1A] text-white text-[10px] font-black tracking-widest uppercase px-3 py-1.5 rounded-[8px]">
+              Default Meeting
+            </span>
           </div>
         )}
       </div>
 
-      <div className="mb-5 pr-8">
-        <h3 className="text-[18px] font-black text-[#1A1A1A] mb-3 leading-tight tracking-tight">
-          {config.name}
-        </h3>
-        <div className="inline-flex items-center gap-1.5 bg-[#FCFAFA] border border-[#F0EBE8] text-[#1A1A1A] px-3 py-1.5 rounded-[8px] text-xs font-bold mb-4">
-          <Clock className="w-3.5 h-3.5 text-[#8C8580]" />{" "}
-          {meetingTime}
-        </div>
-        <div className="flex gap-1.5 flex-wrap">
-          {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
-            <div
-              key={day}
-              className={cn(
-                "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider",
-                meetingDays.some((cd) => cd.startsWith(day))
-                  ? "bg-[#1A1A1A] text-white"
-                  : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
-              )}
-            >
-              {day}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mb-5">
-        <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-2">
-          Meeting Head
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-[12px] bg-[#FDF5F1] text-[#D37E5F] border border-[#F6E1D7] flex items-center justify-center font-black text-sm shrink-0">
-            {getInitials(meetingHeadName)}
-          </div>
-          <div className="truncate">
-            <div className="text-sm font-black text-[#1A1A1A] truncate">
-              {meetingHeadName}
-            </div>
-            <div className="text-[11px] font-bold text-[#8C8580] truncate mt-0.5">
-              {meetingHeadUser?.email ?? "No email"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest">
-            Members
-          </div>
-          <div className="bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580] text-[10px] font-black px-2 py-0.5 rounded-[6px]">
-            {mappedMembers.length}
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex -space-x-2">
-            {mappedMembers.slice(0, 4).map((name, i) => (
-              <div
-                key={i}
-                className="w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-black bg-[#FCFAFA] text-[#1A1A1A] border-2 border-white relative z-10"
-              >
-                {getInitials(name)}
-              </div>
-            ))}
-            {mappedMembers.length > 4 && (
-              <div className="w-8 h-8 rounded-[10px] flex items-center justify-center text-[10px] font-black bg-[#F0EBE8] text-[#1A1A1A] border-2 border-white relative z-10">
-                +{mappedMembers.length - 4}
-              </div>
-            )}
-          </div>
-          <div className="text-[11px] font-bold text-[#8C8580] truncate flex-1 leading-snug">
-            {membersText}
-          </div>
-        </div>
-      </div>
-
-      <div className="pt-5 border-t border-[#F0EBE8]">
-        <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-3">
-          This Week
-        </div>
-        <div className="flex justify-between items-center px-1 mb-4">
-          {weekDays.map((day, i) => {
-            let dotColor = "bg-[#E5E7EB]";
-            if (i < 2) dotColor = "bg-[#2ECC71]";
-            else if (i === 2) dotColor = "bg-[#EB4A4A]";
-            return (
-              <div key={day} className="flex flex-col items-center gap-2">
-                <span className="text-[10px] font-bold text-[#8C8580]">
-                  {day}
-                </span>
-                <div className={cn("w-2 h-2 rounded-full", dotColor)} />
-              </div>
-            );
-          })}
-        </div>
-        <div className="flex items-center gap-3 text-[10px] font-bold text-[#8C8580]">
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[#2ECC71]" /> Held
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[#EB4A4A]" /> Missed
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-2 h-2 rounded-full bg-[#E5E7EB]" /> Upcoming/Off
-          </div>
-        </div>
-      </div>
-
-      {(config.isDefault || config.is_default) && (
-        <div className="mt-5 flex">
-          <span className="bg-[#1A1A1A] text-white text-[10px] font-black tracking-widest uppercase px-3 py-1.5 rounded-[8px]">
-            Default Meeting
-          </span>
-        </div>
+      {/* Delete confirm modal */}
+      {showDeleteConfirm && (
+        <DeleteConfirmModal
+          configName={config.name}
+          onConfirm={handleDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
+          isDeleting={isDeleting}
+        />
       )}
-    </div>
+    </>
   );
 };
 
@@ -604,7 +857,7 @@ const SettingsTab = () => {
   const [departments, setDepartments] = useState([]);
   const [dropdownsLoading, setDropdownsLoading] = useState(true);
 
-  const orgid = ()=> localStorage.getItem("org_id") || " ";
+  const orgid = () => localStorage.getItem("org_id") || " ";
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -616,7 +869,7 @@ const SettingsTab = () => {
             headers: { Authorization: `Bearer ${token}` },
           }),
           fetch(
-            `https://fm-uat-api.lockated.com/api/users?organization_id=${orgid()}&token=${token}`
+            `${getBaseUrl()}/api/users?organization_id=${orgid()}&token=${token}`
           ),
         ]);
         const deptData = await deptRes.json();
@@ -627,6 +880,7 @@ const SettingsTab = () => {
         setUsers(usersData?.users ?? usersData ?? []);
       } catch (err) {
         console.error("Failed to load dropdown data:", err);
+        toast.error("Failed to load dropdown data.");
       } finally {
         setDropdownsLoading(false);
       }
@@ -639,11 +893,15 @@ const SettingsTab = () => {
     setListError(null);
     try {
       const data = await fetchMeetingConfigs();
-      // Ensure we extract data if API wraps it inside a data object
-      const parsedData = Array.isArray(data) ? data : data.data ? [data.data] : [];
+      const parsedData = Array.isArray(data)
+        ? data
+        : data.data
+          ? [data.data]
+          : [];
       setConfigs(parsedData);
     } catch (err) {
       setListError(err.message);
+      toast.error("Failed to load configurations: " + err.message);
     } finally {
       setIsLoading(false);
     }
@@ -681,15 +939,16 @@ const SettingsTab = () => {
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     const headName = getDisplayName(c.meetingHead || c.meeting_head);
-    const matchesHead =
-      headFilter === "All Heads" || headName === headFilter;
+    const matchesHead = headFilter === "All Heads" || headName === headFilter;
     return matchesSearch && matchesHead;
   });
 
   const uniqueHeads = [
     "All Heads",
     ...new Set(
-      configs.map((c) => getDisplayName(c.meetingHead || c.meeting_head)).filter(Boolean)
+      configs
+        .map((c) => getDisplayName(c.meetingHead || c.meeting_head))
+        .filter(Boolean)
     ),
   ];
 
@@ -697,6 +956,9 @@ const SettingsTab = () => {
     (acc, curr) => acc + (curr.members?.length || curr.memberIds?.length || 0),
     0
   );
+
+  // Dynamic next meeting across all configs
+  const nextMeeting = getNextMeeting(configs);
 
   return (
     <div
@@ -722,18 +984,28 @@ const SettingsTab = () => {
           </button>
         </div>
 
-        {/* Stats Bar */}
-        <div className="bg-white rounded-[24px] border border-[#F0EBE8] p-6 shadow-sm flex flex-wrap items-center gap-4 text-sm font-bold text-[#8C8580]">
-          <div className="text-[#1A1A1A] font-black">
-            {configs.length} Active Meetings
+        {/* Stats Bar — only shown when configs exist */}
+        {configs.length > 0 && (
+          <div className="bg-white rounded-[24px] border border-[#F0EBE8] p-6 shadow-sm flex flex-wrap items-center gap-4 text-sm font-bold text-[#8C8580]">
+            <div className="text-[#1A1A1A] font-black">
+              {configs.length} Active Meeting{configs.length !== 1 ? "s" : ""}
+            </div>
+            <div className="w-1.5 h-1.5 rounded-full bg-[#F0EBE8]" />
+            <div>
+              {totalMembersCount} Total Member
+              {totalMembersCount !== 1 ? "s" : ""}
+            </div>
+            {nextMeeting && (
+              <>
+                <div className="w-1.5 h-1.5 rounded-full bg-[#F0EBE8]" />
+                <div className="flex items-center gap-2 text-[#1A1A1A]">
+                  <Clock className="w-4 h-4 text-[#D37E5F]" />
+                  Next: {nextMeeting}
+                </div>
+              </>
+            )}
           </div>
-          <div className="w-1.5 h-1.5 rounded-full bg-[#F0EBE8]"></div>
-          <div>{totalMembersCount} Total Members</div>
-          <div className="w-1.5 h-1.5 rounded-full bg-[#F0EBE8]"></div>
-          <div className="flex items-center gap-2 text-[#1A1A1A]">
-            <Clock className="w-4 h-4 text-[#D37E5F]" /> Next: Sa at 10:00
-          </div>
-        </div>
+        )}
 
         {/* Search & Filter */}
         <div className="flex flex-col sm:flex-row gap-4">
@@ -796,11 +1068,36 @@ const SettingsTab = () => {
             ))}
           </div>
         ) : filteredConfigs.length === 0 && !listError ? (
-          <div className="text-center py-24 bg-white border-2 border-dashed border-[#F0EBE8] rounded-[32px]">
-            <p className="text-[#8C8580] font-bold text-sm">
-              No meeting configurations found.
-            </p>
-          </div>
+          configs.length === 0 ? (
+            // ── Zero configs exist — onboarding empty state ──
+            <div className="flex flex-col items-center justify-center py-24 bg-white border-2 border-dashed border-[#F0EBE8] rounded-[32px] gap-6">
+              <div className="w-16 h-16 rounded-[20px] bg-[#FDF5F1] border border-[#F6E1D7] flex items-center justify-center">
+                <CalendarClock className="w-8 h-8 text-[#D37E5F]" />
+              </div>
+              <div className="text-center space-y-2">
+                <p className="text-[#1A1A1A] font-black text-[16px]">
+                  No meetings configured yet
+                </p>
+                <p className="text-[#8C8580] font-bold text-sm max-w-xs leading-relaxed">
+                  Create your first recurring meeting to get started with daily
+                  standups and minute tracking.
+                </p>
+              </div>
+              <button
+                onClick={handleCreate}
+                className="flex items-center gap-2 bg-[#1A1A1A] text-white px-6 py-3 rounded-[16px] text-sm font-bold shadow-sm hover:bg-black transition-all"
+              >
+                <Plus className="w-4 h-4" /> Create Your First Meeting
+              </button>
+            </div>
+          ) : (
+            // ── Configs exist but search/filter returned nothing ──
+            <div className="text-center py-24 bg-white border-2 border-dashed border-[#F0EBE8] rounded-[32px]">
+              <p className="text-[#8C8580] font-bold text-sm">
+                No meetings match your search or filter.
+              </p>
+            </div>
+          )
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredConfigs.map((config) => (
@@ -829,7 +1126,7 @@ const SettingsTab = () => {
         )}
       </div>
 
-      {/* Modal Portal */}
+      {/* Modal */}
       {showModal && (
         <MeetingConfigModal
           onClose={handleModalClose}

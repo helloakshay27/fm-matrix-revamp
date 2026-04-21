@@ -7,6 +7,7 @@ import CommunityFeed from "../CommunitySection/CommunityFeed";
 import CEOMessageWidget from "../Sidebar/CEOMessageWidget";
 import EmployeeOfMonthWidget from "../Sidebar/EmployeeOfMonthWidget";
 import TownHallsWidget from "../Sidebar/TownHallsWidget";
+import AnnouncementsWidget from "../Sidebar/AnnouncementsWidget";
 import UpcomingEventsWidget from "../Sidebar/UpcomingEventsWidget";
 import { Post, TaskStats, LifeCompassStats } from "../types";
 
@@ -16,6 +17,7 @@ interface DashboardTabProps {
   visionText: string;
   missionText: string;
   taskStats: TaskStats;
+  announcements?: unknown[];
   selectedMatrixQuadrant: any;
   setSelectedMatrixQuadrant: (q: any) => void;
   activeTimeView: "hourly" | "weekly" | "monthly";
@@ -44,6 +46,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
   visionText,
   missionText,
   taskStats,
+  announcements,
   selectedMatrixQuadrant,
   setSelectedMatrixQuadrant,
   activeTimeView,
@@ -91,6 +94,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
 
       <CompassSection lifeCompassStats={lifeCompassStats} />
 
+
       {/* Community Section */}
       <div className="pt-10 space-y-8">
         <h2 className="text-2xl font-black text-gray-800 tracking-tight">
@@ -114,6 +118,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
             <EmployeeOfMonthWidget currentEmployee={currentEmployee} />
             <div className="space-y-6">
               <TownHallsWidget />
+              <AnnouncementsWidget announcements={announcements} />
               <UpcomingEventsWidget />
             </div>
           </div>

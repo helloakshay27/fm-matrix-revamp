@@ -55,18 +55,20 @@ export interface KPIManagementTabProps {
   onDeleteKpi?: (id: string | number) => Promise<void>;
   onEditKpi?: (kpi: KPICardData) => void;
   onArchiveSelected?: (ids: string[]) => void;
+  onManageUsersSave?: (kpiIds: string[], assigneeIds: number[]) => Promise<void>;
   users?: FilterUser[];
   departments?: FilterDepartment[];
 }
 
 const KPICardView: React.FC<{
   kpi: KPICardData;
+  assignedUsersText: string;
   selected: boolean;
   onToggleSelect: () => void;
   onDelete: (id: string) => Promise<void>;
   onEdit: (kpi: KPICardData) => void;
   onManage: (kpi: KPICardData) => void;
-}> = ({ kpi, selected, onToggleSelect, onDelete, onEdit, onManage }) => {
+}> = ({ kpi, assignedUsersText, selected, onToggleSelect, onDelete, onEdit, onManage }) => {
   const [deleting, setDeleting] = useState(false);
 
   const handleDelete = async () => {
@@ -113,7 +115,7 @@ const KPICardView: React.FC<{
       <h3 className="text-[15px] font-bold leading-snug text-[#1a1a1a]">
         {kpi.name}
       </h3>
-      <p className="mt-1 text-xs text-neutral-500">Owner: {kpi.owner}</p>
+      <p className="mt-1 text-xs text-neutral-500">Assigned: {assignedUsersText}</p>
 
       <div className="mt-4 flex items-start justify-between gap-3 border-t border-[rgba(218,119,86,0.12)] pt-3">
         <span
@@ -178,12 +180,13 @@ const KPICardView: React.FC<{
 
 const KPIListView: React.FC<{
   kpis: KPICardData[];
+  getAssignedUsersText: (kpi: KPICardData) => string;
   selectedIds: Set<string>;
   toggleOne: (id: string) => void;
   onDelete: (id: string) => Promise<void>;
   onEdit: (kpi: KPICardData) => void;
   onManage: (kpi: KPICardData) => void;
-}> = ({ kpis, selectedIds, toggleOne, onDelete, onEdit, onManage }) => {
+}> = ({ kpis, getAssignedUsersText, selectedIds, toggleOne, onDelete, onEdit, onManage }) => {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
@@ -209,7 +212,7 @@ const KPIListView: React.FC<{
           <tr className="border-b border-[rgba(218,119,86,0.12)] bg-[#faf9f6] text-xs font-semibold uppercase tracking-wide text-neutral-600">
             <th className="w-10 px-3 py-3" />
             <th className="px-3 py-3">KPI</th>
-            <th className="px-3 py-3">Owner</th>
+            <th className="px-3 py-3">Assigned Users</th>
             <th className="px-3 py-3">Target</th>
             <th className="px-3 py-3">Frequency</th>
             <th className="px-3 py-3">Priority</th>
@@ -233,7 +236,7 @@ const KPIListView: React.FC<{
               <td className="px-3 py-3 font-semibold text-[#1a1a1a]">
                 {kpi.name}
               </td>
-              <td className="px-3 py-3 text-neutral-600">{kpi.owner}</td>
+              <td className="px-3 py-3 text-neutral-600">{getAssignedUsersText(kpi)}</td>
               <td className="px-3 py-3 font-semibold text-[#1a1a1a]">
                 {kpi.target}
               </td>
@@ -304,6 +307,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
   onDeleteKpi,
   onEditKpi,
   onArchiveSelected,
+  onManageUsersSave,
   users = [],
   departments = [],
 }) => {
@@ -318,19 +322,24 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
   const [selectedManageUsers, setSelectedManageUsers] = useState<Set<number>>(
     new Set()
   );
+  const [manageUserSearch, setManageUserSearch] = useState("");
+  const [isSavingManageUsers, setIsSavingManageUsers] = useState(false);
 
   const manageUsers = useMemo(() => {
     if (!manageKpi) return [] as FilterUser[];
-
-    const byDepartment = users.filter(
-      (u) =>
-        manageKpi.departmentId != null &&
-        u.departmentId != null &&
-        Number(u.departmentId) === Number(manageKpi.departmentId)
-    );
-
-    return byDepartment.length > 0 ? byDepartment : users;
+    return users;
   }, [users, manageKpi]);
+
+  const filteredManageUsers = useMemo(() => {
+    const query = manageUserSearch.trim().toLowerCase();
+    if (!query) return manageUsers;
+
+    return manageUsers.filter((user) => {
+      const userName = (user.name ?? "").toLowerCase();
+      const userEmail = (user.email ?? "").toLowerCase();
+      return userName.includes(query) || userEmail.includes(query);
+    });
+  }, [manageUserSearch, manageUsers]);
 
   const frequencyOptions = useMemo(() => {
     const values = new Set(
@@ -356,6 +365,8 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       const matchesUser =
         selectedUser === "all" ||
         String(k.assigneeId ?? "") === selectedUser ||
+        (Array.isArray(k.assigneeIds) &&
+          k.assigneeIds.some((id) => String(id) === selectedUser)) ||
         k.owner.toLowerCase() ===
           (users.find((u) => String(u.id) === selectedUser)?.name.toLowerCase() ?? "");
 
@@ -371,6 +382,32 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       );
     });
   }, [kpis, search, selectedDepartment, selectedUser, selectedFrequency, users]);
+
+  const getAssignedUsersText = (kpi: KPICardData): string => {
+    const idSet = new Set<number>();
+
+    if (Array.isArray(kpi.assigneeIds)) {
+      kpi.assigneeIds.forEach((id) => {
+        const parsed = Number(id);
+        if (Number.isFinite(parsed)) idSet.add(parsed);
+      });
+    }
+
+    if (kpi.assigneeId != null) {
+      const parsed = Number(kpi.assigneeId);
+      if (Number.isFinite(parsed)) idSet.add(parsed);
+    }
+
+    const assignedNames = Array.from(idSet)
+      .map((id) => users.find((u) => u.id === id)?.name)
+      .filter((name): name is string => typeof name === "string" && name.trim().length > 0);
+
+    if (assignedNames.length > 0) {
+      return assignedNames.join(", ");
+    }
+
+    return kpi.owner?.trim() || "Unassigned";
+  };
 
   const allFilteredSelected =
     filtered.length > 0 && filtered.every((k) => selectedIds.has(k.id));
@@ -424,8 +461,15 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
   const handleOpenManage = (kpi: KPICardData) => {
     setBulkManageIds(null);
     setManageKpi(kpi);
+    setManageUserSearch("");
     setSelectedManageUsers(() => {
       const next = new Set<number>();
+      if (Array.isArray(kpi.assigneeIds)) {
+        kpi.assigneeIds.forEach((id) => {
+          const parsed = Number(id);
+          if (Number.isFinite(parsed)) next.add(parsed);
+        });
+      }
       if (kpi.assigneeId != null) {
         next.add(Number(kpi.assigneeId));
       }
@@ -446,6 +490,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
     setManageKpi(null);
     setBulkManageIds(null);
     setSelectedManageUsers(new Set());
+    setManageUserSearch("");
   };
 
   const selectedCount = selectedIds.size;
@@ -458,8 +503,15 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
 
     setBulkManageIds(new Set(selectedIds));
     setManageKpi(firstSelected);
+    setManageUserSearch("");
     setSelectedManageUsers(() => {
       const next = new Set<number>();
+      if (Array.isArray(firstSelected.assigneeIds)) {
+        firstSelected.assigneeIds.forEach((id) => {
+          const parsed = Number(id);
+          if (Number.isFinite(parsed)) next.add(parsed);
+        });
+      }
       if (firstSelected.assigneeId != null) {
         next.add(Number(firstSelected.assigneeId));
       }
@@ -477,6 +529,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
               ...item,
               owner: "Unassigned",
               assigneeId: null,
+              assigneeIds: [],
             }
           : item
       )
@@ -500,7 +553,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
     setSelectedIds(new Set());
   };
 
-  const handleSaveManageUsers = () => {
+  const handleSaveManageUsers = async () => {
     if (!manageKpi) return;
 
     const selectedUserList = users.filter((u) => selectedManageUsers.has(u.id));
@@ -508,29 +561,44 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       selectedUserList.length > 0
         ? selectedUserList.map((u) => u.name).join(", ")
         : "Unassigned";
+    const assigneeIds = selectedUserList.map((u) => Number(u.id));
     const primaryAssigneeId = selectedUserList[0]?.id ?? null;
 
     const targetIds = bulkManageIds ?? new Set([manageKpi.id]);
 
-    setKpis((prev) =>
-      prev.map((item) =>
-        targetIds.has(item.id)
-          ? {
-              ...item,
-              owner: ownerText,
-              assigneeId: primaryAssigneeId,
-            }
-          : item
-      )
-    );
+    try {
+      setIsSavingManageUsers(true);
 
-    toast.success(
-      bulkManageIds
-        ? `User assignments updated for ${targetIds.size} KPI(s)`
-        : "KPI user assignments updated"
-    );
-    setSelectedIds(new Set());
-    handleCloseManage();
+      if (onManageUsersSave) {
+        await onManageUsersSave(Array.from(targetIds), assigneeIds);
+      }
+
+      setKpis((prev) =>
+        prev.map((item) =>
+          targetIds.has(item.id)
+            ? {
+                ...item,
+                owner: ownerText,
+                assigneeId: primaryAssigneeId,
+                assigneeIds,
+              }
+            : item
+        )
+      );
+
+      toast.success(
+        bulkManageIds
+          ? `User assignments updated for ${targetIds.size} KPI(s)`
+          : "KPI user assignments updated"
+      );
+      setSelectedIds(new Set());
+      handleCloseManage();
+    } catch (error) {
+      console.error("Manage users save error:", error);
+      toast.error("Failed to save user assignments");
+    } finally {
+      setIsSavingManageUsers(false);
+    }
   };
 
   const filterSelectClass = cn(
@@ -730,6 +798,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
             <KPICardView
               key={kpi.id}
               kpi={kpi}
+              assignedUsersText={getAssignedUsersText(kpi)}
               selected={selectedIds.has(kpi.id)}
               onToggleSelect={() => toggleOne(kpi.id)}
               onDelete={handleDeleteKpi}
@@ -741,6 +810,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       ) : (
         <KPIListView
           kpis={filtered}
+          getAssignedUsersText={getAssignedUsersText}
           selectedIds={selectedIds}
           toggleOne={toggleOne}
           onDelete={handleDeleteKpi}
@@ -775,14 +845,36 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
 
                 <p className="text-sm font-semibold text-neutral-700">Users from department:</p>
 
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+                  <input
+                    type="search"
+                    value={manageUserSearch}
+                    onChange={(e) => setManageUserSearch(e.target.value)}
+                    placeholder="Search user by name or email"
+                    className={cn(
+                      "h-11 w-full rounded-xl py-2 pl-9 pr-3 text-sm text-[#1a1a1a] shadow-sm placeholder:text-neutral-400",
+                      kpiClass.border,
+                      kpiClass.surfaceInput,
+                      kpiClass.focusRing
+                    )}
+                  />
+                </div>
+
                 <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
                   {manageUsers.length === 0 ? (
                     <div className="rounded-xl border border-neutral-200 bg-white px-4 py-5 text-sm text-neutral-500">
                       No users found for this department.
                     </div>
+                  ) : filteredManageUsers.length === 0 ? (
+                    <div className="rounded-xl border border-neutral-200 bg-white px-4 py-5 text-sm text-neutral-500">
+                      No users match your search.
+                    </div>
                   ) : (
-                    manageUsers.map((u) => {
+                    filteredManageUsers.map((u) => {
                       const checked = selectedManageUsers.has(u.id);
+                      const displayName = u.name?.trim() || u.email?.trim() || `User ${u.id}`;
+                      const displayEmail = u.email?.trim() || "No email available";
                       return (
                         <label
                           key={u.id}
@@ -796,10 +888,10 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
                           />
                           <span>
                             <span className="block text-base font-semibold leading-tight text-neutral-900">
-                              {u.name}
+                              {displayName}
                             </span>
                             <span className="mt-0.5 block text-sm text-neutral-500">
-                              {u.email ?? "No email available"}
+                              {displayEmail}
                             </span>
                           </span>
                         </label>
@@ -816,6 +908,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
                   <button
                     type="button"
                     onClick={handleCloseManage}
+                    disabled={isSavingManageUsers}
                     className="inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50"
                   >
                     Cancel
@@ -823,9 +916,17 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
                   <button
                     type="button"
                     onClick={handleSaveManageUsers}
+                    disabled={isSavingManageUsers}
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#c9674a]"
                   >
-                    Save Changes
+                    {isSavingManageUsers ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
                   </button>
                 </div>
               </div>

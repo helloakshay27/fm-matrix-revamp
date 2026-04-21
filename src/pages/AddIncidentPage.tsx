@@ -1286,79 +1286,170 @@ export const AddIncidentPage = () => {
   // Incident levels
   const [incidentLevels, setIncidentLevels] = useState<{ id: number; name: string }[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  // Fetch all tags and buildings on mount
-  useEffect(() => {
-    const fetchAll = async () => {
-      // Get baseUrl and token from localStorage, ensure baseUrl starts with https://
-      let baseUrl = localStorage.getItem('baseUrl') || '';
-      const token = localStorage.getItem('token') || '';
-      if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-        baseUrl = 'https://' + baseUrl.replace(/^\/\/+/, '');
+
+  // Get baseUrl and token from localStorage
+  const getBaseUrl = () => {
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    const token = localStorage.getItem('token') || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/\/+/, '');
+    }
+    return { baseUrl, token };
+  };
+
+  // Helper function to fetch data by tag type with optional parent_id filter
+  const fetchByTagType = async (tagType: string, parentId?: string | number) => {
+    const { baseUrl, token } = getBaseUrl();
+    try {
+      let url = `${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=${tagType}`;
+      if (parentId) {
+        url += `&q[parent_id_eq]=${parentId}`;
       }
-      // Fetch buildings
-      try {
-        const response = await fetch(`${baseUrl}/pms/buildings.json`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          const result = await response.json();
-          setBuildings(Array.isArray(result.pms_buildings) ? result.pms_buildings.map((b: any) => ({ id: b.id, name: b.name })) : []);
-        } else {
-          setBuildings([]);
-        }
-      } catch {
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error(`Failed to fetch ${tagType}`);
+      const result = await response.json();
+      return result.data || [];
+    } catch (e) {
+      console.error(`Error fetching ${tagType}:`, e);
+      return [];
+    }
+  };
+
+  // Individual fetch functions
+  const fetchCategories = async () => {
+    try {
+      const data = await fetchByTagType('IncidenceCategory', null);
+      const filtered = data.filter((item: any) => item.parent_id === null);
+      setCategories(filtered.map((item: any) => ({ id: item.id, name: item.name })));
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchSubCategories = async (parentId: string | number) => {
+    try {
+      const data = await fetchByTagType('IncidenceSubCategory', parentId);
+      setSubCategories(data.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchSubSubCategories = async (parentId: string | number) => {
+    try {
+      const data = await fetchByTagType('IncidenceSubSubCategory', parentId);
+      setSubSubCategories(data.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchSubSubSubCategories = async (parentId: string | number) => {
+    try {
+      const data = await fetchByTagType('IncidenceSubSubSubCategory', parentId);
+      setSubSubSubCategories(data.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchSecondaryCategories = async () => {
+    try {
+      const data = await fetchByTagType('IncidenceSecondaryCategory', null);
+      const filtered = data.filter((item: any) => item.parent_id === null);
+      setSecondaryCategories(filtered.map((item: any) => ({ id: item.id, name: item.name })));
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchSecondarySubCategories = async (parentId: string | number) => {
+    try {
+      const data = await fetchByTagType('IncidenceSecondarySubCategory', parentId);
+      setSecondarySubCategories(data.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchSecondarySubSubCategories = async (parentId: string | number) => {
+    try {
+      const data = await fetchByTagType('IncidenceSecondarySubSubCategory', parentId);
+      setSecondarySubSubCategories(data.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchSecondarySubSubSubCategories = async (parentId: string | number) => {
+    try {
+      const data = await fetchByTagType('IncidenceSecondarySubSubSubCategory', parentId);
+      setSecondarySubSubSubCategories(data.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchIncidentLevels = async () => {
+    try {
+      const data = await fetchByTagType('IncidenceLevel');
+      setIncidentLevels(data.map((item: any) => ({ id: item.id, name: item.name })));
+    } catch (e) { console.error(e); }
+  };
+
+  const fetchBuildings = async () => {
+    const { baseUrl, token } = getBaseUrl();
+    try {
+      const response = await fetch(`${baseUrl}/pms/buildings.json`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const result = await response.json();
+        setBuildings(Array.isArray(result.pms_buildings) ? result.pms_buildings.map((b: any) => ({ id: b.id, name: b.name })) : []);
+      } else {
         setBuildings([]);
       }
+    } catch (e) {
+      console.error('Error fetching buildings:', e);
+      setBuildings([]);
+    }
+  };
 
-      // Fetch incident levels
-      try {
-        const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          const result = await response.json();
-          const levels = result.data
-            .filter((item: any) => item.tag_type === 'IncidenceLevel')
-            .map(({ id, name }: any) => ({ id, name }));
-          setIncidentLevels(levels);
-        } else {
-          setIncidentLevels([]);
-        }
-      } catch {
-        setIncidentLevels([]);
-      }
-
-      // Fetch all tags for categories
-      try {
-        const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-          const result = await response.json();
-          const data = result.data || [];
-          // Primary hierarchy
-          const allCategories = data.filter((item: any) => item.tag_type === 'IncidenceCategory' && item.parent_id === null);
-          setCategories(allCategories.map((item: any) => ({ id: item.id, name: item.name })));
-          const allSubCategories = data.filter((item: any) => item.tag_type === 'IncidenceSubCategory');
-          setSubCategories(allSubCategories.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
-          const allSubSubCategories = data.filter((item: any) => item.tag_type === 'IncidenceSubSubCategory');
-          setSubSubCategories(allSubSubCategories.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
-          const allSubSubSubCategories = data.filter((item: any) => item.tag_type === 'IncidenceSubSubSubCategory');
-          setSubSubSubCategories(allSubSubSubCategories.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
-          // Secondary hierarchy
-          const allSecondaryCategories = data.filter((item: any) => item.tag_type === 'IncidenceSecondaryCategory' && item.parent_id === null);
-          setSecondaryCategories(allSecondaryCategories.map((item: any) => ({ id: item.id, name: item.name })));
-          const allSecondarySubCategories = data.filter((item: any) => item.tag_type === 'IncidenceSecondarySubCategory');
-          setSecondarySubCategories(allSecondarySubCategories.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
-          const allSecondarySubSubCategories = data.filter((item: any) => item.tag_type === 'IncidenceSecondarySubSubCategory');
-          setSecondarySubSubCategories(allSecondarySubSubCategories.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
-          const allSecondarySubSubSubCategories = data.filter((item: any) => item.tag_type === 'IncidenceSecondarySubSubSubCategory');
-          setSecondarySubSubSubCategories(allSecondarySubSubSubCategories.map((item: any) => ({ id: item.id, name: item.name, parent_id: item.parent_id })));
-        }
-      } catch { }
-    };
-    fetchAll();
+  // Fetch initial data on mount
+  useEffect(() => {
+    fetchBuildings();
+    fetchCategories();
+    fetchSecondaryCategories();
+    fetchIncidentLevels();
   }, []);
+
+  // Fetch subcategories when category is selected
+  useEffect(() => {
+    if (incidentData.primaryCategory) {
+      fetchSubCategories(incidentData.primaryCategory);
+    }
+  }, [incidentData.primaryCategory]);
+
+  // Fetch sub-subcategories when subcategory is selected
+  useEffect(() => {
+    if (incidentData.subCategory) {
+      fetchSubSubCategories(incidentData.subCategory);
+    }
+  }, [incidentData.subCategory]);
+
+  // Fetch sub-sub-subcategories when sub-subcategory is selected
+  useEffect(() => {
+    if (incidentData.subSubCategory) {
+      fetchSubSubSubCategories(incidentData.subSubCategory);
+    }
+  }, [incidentData.subSubCategory]);
+
+  // Fetch secondary subcategories when secondary category is selected
+  useEffect(() => {
+    if (incidentData.secondaryCategory) {
+      fetchSecondarySubCategories(incidentData.secondaryCategory);
+    }
+  }, [incidentData.secondaryCategory]);
+
+  // Fetch secondary sub-subcategories when secondary subcategory is selected
+  useEffect(() => {
+    if (incidentData.secondarySubCategory) {
+      fetchSecondarySubSubCategories(incidentData.secondarySubCategory);
+    }
+  }, [incidentData.secondarySubCategory]);
+
+  // Fetch secondary sub-sub-subcategories when secondary sub-subcategory is selected
+  useEffect(() => {
+    if (incidentData.secondarySubSubCategory) {
+      fetchSecondarySubSubSubCategories(incidentData.secondarySubSubCategory);
+    }
+  }, [incidentData.secondarySubSubCategory]);
 
   // Helper to calculate and set incident level based on risk score
   const calculateAndSetIncidentLevel = (severity: string, probability: string) => {
@@ -1445,6 +1536,10 @@ export const AddIncidentPage = () => {
   };
 
   const handleInputChange = (field: string, value: string) => {
+    // Character limit for description field
+    if (field === 'description' && value.length > 240) {
+      return; // Don't update state if exceeds 240 characters
+    }
     setIncidentData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -2013,15 +2108,26 @@ export const AddIncidentPage = () => {
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  padding: "10px", // Increased padding
-                  minHeight: "120px", // Ensure minimum height
-                  marginTop: "8px", // Space between label and input
+                  height: "auto !important",
+                  padding: "2px !important",
+                  display: "flex",
+                },
+                "& .MuiInputBase-input[aria-hidden='true']": {
+                  flex: 0,
+                  width: 0,
+                  height: 0,
+                  padding: "0 !important",
+                  margin: 0,
+                  display: "none",
                 },
                 "& .MuiInputBase-input": {
                   resize: "none !important",
                 },
               }}
             />
+            <div className="mt-2 text-sm text-gray-600">
+              {incidentData.description.length} / 240
+            </div>
           </div>
         </CardContent>
       </Card>

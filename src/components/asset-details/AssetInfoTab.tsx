@@ -90,6 +90,19 @@ interface Asset {
   it_asset?: boolean;
   is_meter?: boolean;
   meter_category_name?: string;
+  equipment_id?: string;
+  meter_type?: string;
+  location_type?: string;
+  spv_code?: {
+    id?: number;
+    asset_id?: number;
+    spv_plant_code?: string | null;
+    spv_org_code?: string | null;
+    spv_company_code?: string | null;
+    service_location?: string | null;
+    need_qr?: boolean;
+    qr_done?: boolean | null;
+  } | null;
 }
 type ExtraFieldsGrouped = {
   [group: string]: { field_name: string; field_value: string }[];
@@ -137,7 +150,6 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
 }) => {
   return (
     <div className="min-h-full ">
-
       <Tabs defaultValue="analytics" style={{ width: "100%" }}>
         <TabsList className="w-full mb-6">
           <TabsTrigger
@@ -261,8 +273,15 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                         {/* Vehicle Financial: Show Warranty Period if category is Vehicle */}
                         {groupName === "Vehicle Financial" && (
                           <div className="text-sm text-gray-800">
-                            <span className="text-gray-500">Warranty Period:</span>{" "}
-                            <span className="font-medium">   {asset.warranty_period ? `${asset.warranty_period} Months` : "-"}</span>
+                            <span className="text-gray-500">
+                              Warranty Period:
+                            </span>{" "}
+                            <span className="font-medium">
+                              {" "}
+                              {asset.warranty_period
+                                ? `${asset.warranty_period} Months`
+                                : "-"}
+                            </span>
                           </div>
                         )}
 
@@ -280,9 +299,14 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                                 {asset.asset_code || "-"}
                               </span>
                             </div>
-                            {(asset.asset_type_category === "Leasehold Improvement" || asset.asset_type_category === "Leasehold Land") && (
+                            {(asset.asset_type_category ===
+                              "Leasehold Improvement" ||
+                              asset.asset_type_category ===
+                                "Leasehold Land") && (
                               <div className="text-sm text-gray-800">
-                                <span className="text-gray-500">Allocated To:</span>{" "}
+                                <span className="text-gray-500">
+                                  Allocated To:
+                                </span>{" "}
                                 <span className="font-medium text-gray-800">
                                   {asset?.allocated_to || "-"}
                                 </span>
@@ -294,12 +318,14 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                         {fields.map((field, idx) => (
                           <div key={idx} className="text-sm text-gray-800">
                             <span className="text-gray-500">
-                              {field.field_name === "Amc Ppm Linked" ? "AMC/PPM Linked" : field.field_name}:
+                              {field.field_name === "Amc Ppm Linked"
+                                ? "AMC/PPM Linked"
+                                : field.field_name}
+                              :
                             </span>{" "}
                             {field.field_value}
                           </div>
                         ))}
-
                       </div>
                     </div>
                   </div>
@@ -505,6 +531,28 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                         </span>
                       </div>
 
+                      {/* Equipment Id */}
+                      <div className="flex items-start">
+                        <span className="w-28 text-gray-500 text-sm">
+                          Equipment Id
+                        </span>
+                        <span className="mx-2 text-gray-500">:</span>
+                        <span className="font-semibold text-black">
+                          {asset.equipment_id || "-"}
+                        </span>
+                      </div>
+
+                      {/* Meter Type */}
+                      <div className="flex items-start">
+                        <span className="w-28 text-gray-500 text-sm">
+                          Meter Type
+                        </span>
+                        <span className="mx-2 text-gray-500">:</span>
+                        <span className="font-semibold text-black">
+                          {asset.meter_type || "-"}
+                        </span>
+                      </div>
+
                       {/* Asset Details Extra Fields */}
                       {asset.extra_fields_grouped?.["Asset Details"]?.map(
                         (field, idx) => (
@@ -544,10 +592,11 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
 
                         {/* Fallback when image is not available */}
                         <div
-                          className={`absolute inset-0 ${asset.asset_image?.document || asset.image_url
-                            ? "hidden"
-                            : "flex"
-                            } flex-col items-center justify-center text-gray-400 text-sm`}
+                          className={`absolute inset-0 ${
+                            asset.asset_image?.document || asset.image_url
+                              ? "hidden"
+                              : "flex"
+                          } flex-col items-center justify-center text-gray-400 text-sm`}
                         >
                           <Box className="w-12 h-12 mb-2" />
                           <span>No Image Available</span>
@@ -556,133 +605,125 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                     </div>
                   </div>
 
-
-                  {
-                    asset.it_asset && (
-                      <div className="border-t pt-8">
-                        <div className="text-lg font-semibold text-black-600 mb-6">
-                          System Details
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                          <div className="flex items-start">
-                            <span className="w-20 text-gray-500 text-sm">
-                              IT Type
-                            </span>
-                            <span className="mx-2 text-gray-500">:</span>
-                            <span className="font-semibold text-black">
-                              {asset.custom_fields?.system_details?.it_type ||
-                                asset.asset_type_category ||
-                                "-"}
-                            </span>
-                          </div>
-                          <div className="flex items-start">
-                            <span className="w-20 text-gray-500 text-sm">OS</span>
-                            <span className="mx-2 text-gray-500">:</span>
-                            <span className="font-semibold text-black">
-                              {asset.custom_fields?.system_details?.os 
-                              ||
-                                "-"}
-                            </span>
-                          </div>
-                          <div className="flex items-start">
-                            <span className="w-20 text-gray-500 text-sm">
-                              Total Memory
-                            </span>
-                            <span className="mx-2 text-gray-500">:</span>
-                            <span className="font-semibold text-black">
-                              {asset.custom_fields?.system_details?.memory || "-"}
-                            </span>
-                          </div>
-                          <div className="flex items-start">
-                            <span className="w-20 text-gray-500 text-sm">
-                              Processor
-                            </span>
-                            <span className="mx-2 text-gray-500">:</span>
-                            <span className="font-semibold text-black">
-                              {asset.custom_fields?.system_details?.processor ||
-                                "-"}
-                            </span>
-                          </div>
-                          {asset.extra_fields_grouped?.["System Details"] &&
-                            asset.extra_fields_grouped?.["System Details"]?.map(
-                              (field, index) => (
-                                <div
-                                  className="flex items-start"
-                                  key={`system-detail-${index}`}
-                                >
-                                  <span className="w-20 text-gray-500 text-sm">
-                                    {field.field_name}
-                                  </span>
-                                  <span className="mx-2 text-gray-500">:</span>
-                                  <span className="font-semibold text-black">
-                                    {field.field_value}
-                                  </span>
-                                </div>
-                              )
-                            )}
-                        </div>
+                  {asset.it_asset && (
+                    <div className="border-t pt-8">
+                      <div className="text-lg font-semibold text-black-600 mb-6">
+                        System Details
                       </div>
-                    )
-                  }
-
-
-                  {
-                    asset.it_asset && (
-                      <div className="border-t pt-8">
-                        <div className="text-lg font-semibold text-black-600 mb-6">
-                          Hard Disk Details
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="flex items-start">
+                          <span className="w-20 text-gray-500 text-sm">
+                            IT Type
+                          </span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-semibold text-black">
+                            {asset.custom_fields?.system_details?.it_type ||
+                              asset.asset_type_category ||
+                              "-"}
+                          </span>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                          <div className="flex items-start">
-                            <span className="w-20 text-gray-500 text-sm">
-                              Model
-                            </span>
-                            <span className="mx-2 text-gray-500">:</span>
-                            <span className="font-semibold text-black">
-                              {asset.custom_fields?.hardware?.model || "-"}
-                            </span>
-                          </div>
-                          <div className="flex items-start">
-                            <span className="w-20 text-gray-500 text-sm">
-                              Capacity
-                            </span>
-                            <span className="mx-2 text-gray-500">:</span>
-                            <span className="font-semibold text-black">
-                              {asset.custom_fields?.hardware?.capacity || "-"}
-                            </span>
-                          </div>
-
-                          <div className="flex items-start">
-                            <span className="w-20 text-gray-500 text-sm">
-                              Serial No.
-                            </span>
-                            <span className="mx-2 text-gray-500">:</span>
-                            <span className="font-semibold text-black">
-                              {asset.custom_fields?.hardware?.serial_no || "-"}
-                            </span>
-                          </div>
-
-                          {asset.extra_fields_grouped?.["Hardware Details"] &&
-                            asset.extra_fields_grouped?.["Hardware Details"]?.map(
-                              (field, index) => (
-                                <div
-                                  className="flex items-start"
-                                  key={`hardware-detail-${index}`}
-                                >
-                                  <span className=" text-gray-500 text-sm">
-                                    {field.field_name}
-                                  </span>
-                                  <span className="mx-2 text-gray-500">:</span>
-                                  <span className="font-semibold text-black">
-                                    {field.field_value}
-                                  </span>
-                                </div>
-                              )
-                            )}
+                        <div className="flex items-start">
+                          <span className="w-20 text-gray-500 text-sm">OS</span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-semibold text-black">
+                            {asset.custom_fields?.system_details?.os || "-"}
+                          </span>
                         </div>
+                        <div className="flex items-start">
+                          <span className="w-20 text-gray-500 text-sm">
+                            Total Memory
+                          </span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-semibold text-black">
+                            {asset.custom_fields?.system_details?.memory || "-"}
+                          </span>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="w-20 text-gray-500 text-sm">
+                            Processor
+                          </span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-semibold text-black">
+                            {asset.custom_fields?.system_details?.processor ||
+                              "-"}
+                          </span>
+                        </div>
+                        {asset.extra_fields_grouped?.["System Details"] &&
+                          asset.extra_fields_grouped?.["System Details"]?.map(
+                            (field, index) => (
+                              <div
+                                className="flex items-start"
+                                key={`system-detail-${index}`}
+                              >
+                                <span className="w-20 text-gray-500 text-sm">
+                                  {field.field_name}
+                                </span>
+                                <span className="mx-2 text-gray-500">:</span>
+                                <span className="font-semibold text-black">
+                                  {field.field_value}
+                                </span>
+                              </div>
+                            )
+                          )}
                       </div>
-                    )
-                  }
+                    </div>
+                  )}
+
+                  {asset.it_asset && (
+                    <div className="border-t pt-8">
+                      <div className="text-lg font-semibold text-black-600 mb-6">
+                        Hard Disk Details
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="flex items-start">
+                          <span className="w-20 text-gray-500 text-sm">
+                            Model
+                          </span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-semibold text-black">
+                            {asset.custom_fields?.hardware?.model || "-"}
+                          </span>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="w-20 text-gray-500 text-sm">
+                            Capacity
+                          </span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-semibold text-black">
+                            {asset.custom_fields?.hardware?.capacity || "-"}
+                          </span>
+                        </div>
+
+                        <div className="flex items-start">
+                          <span className="w-20 text-gray-500 text-sm">
+                            Serial No.
+                          </span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-semibold text-black">
+                            {asset.custom_fields?.hardware?.serial_no || "-"}
+                          </span>
+                        </div>
+
+                        {asset.extra_fields_grouped?.["Hardware Details"] &&
+                          asset.extra_fields_grouped?.["Hardware Details"]?.map(
+                            (field, index) => (
+                              <div
+                                className="flex items-start"
+                                key={`hardware-detail-${index}`}
+                              >
+                                <span className=" text-gray-500 text-sm">
+                                  {field.field_name}
+                                </span>
+                                <span className="mx-2 text-gray-500">:</span>
+                                <span className="font-semibold text-black">
+                                  {field.field_value}
+                                </span>
+                              </div>
+                            )
+                          )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               {/* Meter Category Type Block */}
@@ -690,7 +731,10 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                 <div className="w-full bg-white rounded-lg shadow-sm border mb-6">
                   <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
-                      <CreditCard className="w-8 h-8" style={{ color: "#C72030" }} />
+                      <CreditCard
+                        className="w-8 h-8"
+                        style={{ color: "#C72030" }}
+                      />
                     </div>
                     <h3 className="text-lg font-semibold uppercase text-black">
                       Meter Category Type
@@ -699,8 +743,48 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                   <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
                     <div className="text-sm text-gray-800">
                       <span className="text-gray-500">Category Name:</span>{" "}
-                      <span className="font-medium">{asset.meter_category_name || "-"}</span>
+                      <span className="font-medium">
+                        {asset.meter_category_name || "-"}
+                      </span>
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Other Details - SPV Code (only when spv_code is a non-null object) */}
+              {asset.spv_code && typeof asset.spv_code === 'object' && (
+                <div className="w-full bg-white rounded-lg shadow-sm border mb-6">
+                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <FileText className="w-8 h-8" style={{ color: "#C72030" }} />
+                    </div>
+                    <h3 className="text-lg font-semibold uppercase text-black">
+                      Other Details
+                    </h3>
+                  </div>
+                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-gray-600 font-medium">SPV Plant Code</TableHead>
+                          <TableHead className="text-gray-600 font-medium">SPV Org Code</TableHead>
+                          <TableHead className="text-gray-600 font-medium">SPV Company Code</TableHead>
+                          <TableHead className="text-gray-600 font-medium">Service Location</TableHead>
+                          <TableHead className="text-gray-600 font-medium">Need QR</TableHead>
+                          <TableHead className="text-gray-600 font-medium">QR Done</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell>{asset.spv_code.spv_plant_code ?? "-"}</TableCell>
+                          <TableCell>{asset.spv_code.spv_org_code ?? "-"}</TableCell>
+                          <TableCell>{asset.spv_code.spv_company_code ?? "-"}</TableCell>
+                          <TableCell>{asset.spv_code.service_location ?? "-"}</TableCell>
+                          <TableCell>{asset.spv_code.need_qr ? "Yes" : "No"}</TableCell>
+                          <TableCell>{asset.spv_code.qr_done != null ? (asset.spv_code.qr_done ? "Yes" : "No") : "-"}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
               )}
@@ -827,6 +911,17 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                         ))}
                       </div>
                     </div>
+
+                    {/* Location Type */}
+                    {asset.location_type && (
+                      <div className="mt-6 flex items-start text-sm text-gray-800">
+                        <span className="text-gray-500 w-32">Location Type</span>
+                        <span className="mx-2 text-gray-500">:</span>
+                        <span className="font-semibold text-black">
+                          {asset.location_type}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

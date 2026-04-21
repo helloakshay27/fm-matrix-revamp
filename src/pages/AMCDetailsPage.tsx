@@ -1,18 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ArrowLeft, Edit, Download, Truck, Boxes, FileTextIcon, Paperclip, FileText, FileSpreadsheet, X, Ticket, Calendar, BarChart3, Settings } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { AddVisitModal } from '@/components/AddVisitModal';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchAMCDetails } from '@/store/slices/amcDetailsSlice';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye } from 'lucide-react';
-import { AMCAnalyticsTab } from '@/components/amc-details/AMCAnalyticsTab';
-import { AMCDetailsPreviewTab } from '@/components/amc-details/AMCDetailsPreviewTab';
-
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  ArrowLeft,
+  Edit,
+  Download,
+  Truck,
+  Boxes,
+  FileTextIcon,
+  Paperclip,
+  FileText,
+  FileSpreadsheet,
+  X,
+  Ticket,
+  Calendar,
+  BarChart3,
+  Settings,
+} from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { AddVisitModal } from "@/components/AddVisitModal";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchAMCDetails } from "@/store/slices/amcDetailsSlice";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Eye } from "lucide-react";
+import { AMCAnalyticsTab } from "@/components/amc-details/AMCAnalyticsTab";
+import { AMCDetailsPreviewTab } from "@/components/amc-details/AMCDetailsPreviewTab";
 
 interface AMCDetailsData {
   id: number;
@@ -69,11 +96,10 @@ interface AmcVisitLog {
   // Added optional attachment to align with runtime usage (visit.attachment?.document / id)
   attachment?: {
     id?: number;
-    document?: string;          // image URL or file URL
-    document_url?: string;      // sometimes APIs use document_url
-    [key: string]: any;         // allow extra backend-provided fields
+    document?: string; // image URL or file URL
+    document_url?: string; // sometimes APIs use document_url
+    [key: string]: any; // allow extra backend-provided fields
   } | null;
-
 }
 
 interface AMCDetailsDataWithVisits extends AMCDetailsData {
@@ -96,57 +122,84 @@ export const AMCDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const dispatch = useAppDispatch();
-  const { data: amcData, loading, error } = useAppSelector(
-    (state) => state.amcDetails as { data: AMCDetailsDataWithVisits; loading: boolean; error: any }
+  const {
+    data: amcData,
+    loading,
+    error,
+  } = useAppSelector(
+    (state) =>
+      state.amcDetails as {
+        data: AMCDetailsDataWithVisits;
+        loading: boolean;
+        error: any;
+      }
   );
   const [showAddVisitModal, setShowAddVisitModal] = useState(false);
   const amcDetails: AMCDetailsData | null = amcData as AMCDetailsData;
   const amcVisitData = amcData?.amc_visit_logs?.map((visit) => visit) ?? [];
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState('amc-information'); // Changed default to 'amc-information'
+  const [activeTab, setActiveTab] = useState("amc-information"); // Changed default to 'amc-information'
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   // Tickets state
   const [tickets, setTickets] = useState<TicketRecord[]>([]);
   const [ticketsLoading, setTicketsLoading] = useState(false);
   const [ticketsError, setTicketsError] = useState<string | null>(null);
+  // History (PPM Occurrences) state
+  const [occurrences, setOccurrences] = useState<any[]>([]);
+  const [occurrencesLoading, setOccurrencesLoading] = useState(false);
+  const [occurrenceStatusFilter, setOccurrenceStatusFilter] = useState("Scheduled");
+  const [occurrenceSearch, setOccurrenceSearch] = useState("");
 
   const fetchTicketsForAssets = async (assetIds: number[]) => {
     if (!assetIds.length) return;
-    const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
     if (!baseUrl || !token) return;
     setTicketsLoading(true);
     setTicketsError(null);
     try {
-      const all: TicketRecord[] = [];
-      // Sequential to keep order; could parallelize with Promise.all if backend load ok
-      for (const assetId of assetIds) {
-        try {
-          const url = `https://${baseUrl}/pms/assets/${assetId}/tickets.json?id=${assetId}`;
-          const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-          if (!resp.ok) throw new Error(`Asset ${assetId} tickets fetch failed`);
-          const data = await resp.json();
-          const arr = Array.isArray(data) ? data : (Array.isArray(data?.tickets) ? data.tickets : []);
-          arr.forEach((t: any) => {
-            all.push({
-              id: t.id,
-              heading: t.heading || null,
-              category_type: t.category_type || null,
-              status: t.status || null,
-              updated_at: t.updated_at || null,
-              created_at: t.created_at || null,
-              updated_by: t.updated_by || null,
-            });
-          });
-        } catch (inner) {
-          console.warn(inner);
-        }
-      }
+      // Manually build query string to preserve brackets exactly as the API expects:
+      // q[pms_asset_id_in][]=123&q[pms_asset_id_in][]=456
+      const qs = assetIds
+        .filter((id) => !!id)
+        .map((id) => `q[pms_asset_id_in][]=${id}`)
+        .join("&");
+
+      const url = `https://${baseUrl}/pms/assets/assets_tickets?${qs}`;
+
+      const resp = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+
+      if (!resp.ok)
+        throw new Error(`Tickets fetch failed with status ${resp.status}`);
+
+      const data = await resp.json();
+
+      const arr = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.tickets)
+          ? data.tickets
+          : [];
+      const all: TicketRecord[] = arr.map((t: any) => ({
+        id: t.id,
+        heading: t.heading || null,
+        category_type: t.category_type || null,
+        status: t.status || null,
+        updated_at: t.updated_at || null,
+        created_at: t.created_at || null,
+        updated_by: t.updated_by || null,
+      }));
+
       setTickets(all);
     } catch (e: any) {
-      setTicketsError(e.message || 'Failed to load tickets');
+      console.error("Tickets Error:", e);
+      setTicketsError(e.message || "Failed to load tickets");
     } finally {
       setTicketsLoading(false);
     }
@@ -155,7 +208,9 @@ export const AMCDetailsPage = () => {
   // Fetch tickets when AMC details loaded
   useEffect(() => {
     if (amcDetails?.amc_assets?.length) {
-      const ids = amcDetails.amc_assets.map((a: any) => a.asset_id).filter((v: any) => !!v);
+      const ids = amcDetails.amc_assets
+        .map((a: any) => a.asset_id)
+        .filter((v: any) => !!v);
       fetchTicketsForAssets(ids);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,23 +223,22 @@ export const AMCDetailsPage = () => {
   }, [dispatch, id]);
 
   const formatDate = (dateString: string | null): string => {
-    if (!dateString) return '—';
+    if (!dateString) return "—";
     try {
-      return new Date(dateString).toLocaleDateString('en-GB');
+      return new Date(dateString).toLocaleDateString("en-GB");
     } catch {
-      return '—';
+      return "—";
     }
   };
 
-
   const formatCurrency = (amount: number | null): string => {
-    if (amount === null || amount === undefined) return '—';
-    return `${localStorage.getItem('currency')}${amount}`;
+    if (amount === null || amount === undefined) return "—";
+    return `${localStorage.getItem("currency")}${amount}`;
   };
 
   const formatPaymentTerm = (term: string | null | undefined): string => {
-    if (!term) return '—';
-    const formatted = term.replace(/_/g, ' ').toLowerCase();
+    if (!term) return "—";
+    const formatted = term.replace(/_/g, " ").toLowerCase();
     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
   };
 
@@ -223,8 +277,6 @@ export const AMCDetailsPage = () => {
     setShowAddVisitModal(false);
   };
 
-
-
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -237,7 +289,7 @@ export const AMCDetailsPage = () => {
           Back to AMC List
         </Button> */}
         <button
-          onClick={() => navigate('/maintenance/amc')}
+          onClick={() => navigate("/maintenance/amc")}
           className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -279,7 +331,7 @@ export const AMCDetailsPage = () => {
             </Button>
             <Button
               onClick={() => setShowAddVisitModal(true)}
-              style={{ backgroundColor: '#C72030' }}
+              style={{ backgroundColor: "#C72030" }}
               className="text-white hover:bg-[#C72030]/90"
             >
               Add Visit
@@ -292,12 +344,18 @@ export const AMCDetailsPage = () => {
               <Edit className="w-4 h-4 mr-2" />
               Edit
             </Button> */}
-
           </div>
         </div>
       </div>
 
-      <div className="rounded-lg border-r border-b border-gray-200 shadow-sm" style={{ borderTop: 'none', borderLeft: 'none', backgroundColor: 'rgba(250, 250, 250, 1)' }}>
+      <div
+        className="rounded-lg border-r border-b border-gray-200 shadow-sm"
+        style={{
+          borderTop: "none",
+          borderLeft: "none",
+          backgroundColor: "rgba(250, 250, 250, 1)",
+        }}
+      >
         <style>{`
           .top-level-tabs button[data-state="active"] {
             background-color: rgba(237, 234, 227, 1) !important;
@@ -305,36 +363,45 @@ export const AMCDetailsPage = () => {
           }
         `}</style>
         <Tabs defaultValue="amc-information" className="w-full">
-          <TabsList className="top-level-tabs w-full flex flex-nowrap rounded-t-lg p-0 overflow-x-auto mb-4" style={{ gap: '0', padding: '0', backgroundColor: 'rgba(246, 247, 247, 1)', height: '50px', marginBottom: '16px' }}>
+          <TabsList
+            className="top-level-tabs w-full flex flex-nowrap rounded-t-lg p-0 overflow-x-auto mb-4"
+            style={{
+              gap: "0",
+              padding: "0",
+              backgroundColor: "rgba(246, 247, 247, 1)",
+              height: "50px",
+              marginBottom: "16px",
+            }}
+          >
             {[
-              { label: 'AMC Information', value: 'amc-information' },
-              { label: 'Supplier Information', value: 'supplier-information' },
-              { label: 'Attachments', value: 'attachments' },
-              { label: 'Schedule', value: 'schedule' },
-              { label: 'Tickets', value: 'tickets' },
-              { label: 'Association', value: 'association' },
+              { label: "AMC Information", value: "amc-information" },
+              { label: "Supplier Information", value: "supplier-information" },
+              { label: "Attachments", value: "attachments" },
+              { label: "History", value: "history" },
+              { label: "Tickets", value: "tickets" },
+              { label: "Association", value: "association" },
             ].map((tab) => (
               <TabsTrigger
                 key={tab.value}
                 value={tab.value}
                 className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030]"
                 style={{
-                  width: '230px',
-                  height: '36px',
-                  paddingTop: '10px',
-                  paddingRight: '20px',
-                  paddingBottom: '10px',
-                  paddingLeft: '20px',
-                  borderRadius: '0',
-                  border: 'none',
-                  margin: '0',
-                  fontFamily: 'Work Sans',
+                  width: "230px",
+                  height: "36px",
+                  paddingTop: "10px",
+                  paddingRight: "20px",
+                  paddingBottom: "10px",
+                  paddingLeft: "20px",
+                  borderRadius: "0",
+                  border: "none",
+                  margin: "0",
+                  fontFamily: "Work Sans",
                   fontWeight: 500,
-                  fontSize: '14px',
-                  lineHeight: '100%',
-                  letterSpacing: '0%',
-                  color: 'rgba(26, 26, 26, 1)',
-                  backgroundColor: 'rgba(246, 247, 247, 1)'
+                  fontSize: "14px",
+                  lineHeight: "100%",
+                  letterSpacing: "0%",
+                  color: "rgba(26, 26, 26, 1)",
+                  backgroundColor: "rgba(246, 247, 247, 1)",
                 }}
               >
                 {tab.label}
@@ -345,20 +412,43 @@ export const AMCDetailsPage = () => {
           {/* AMC Information */}
           <TabsContent value="amc-information" className="p-0">
             {/* Sub-navigation */}
-            <div className="rounded-lg shadow-sm border border-gray-200" style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
+            <div
+              className="rounded-lg shadow-sm border border-gray-200"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
               <Tabs defaultValue="analytics" className="w-full">
                 <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-[36px] p-0 text-sm justify-stretch border-b border-gray-200">
                   <TabsTrigger
                     value="analytics"
                     className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-0 h-[36px] flex items-center gap-2 text-gray-700 data-[state=active]:text-[#C72030] data-[state=active]:border-0 [&_svg]:text-gray-700 data-[state=active]:[&_svg]:text-[#C72030]"
-                    style={{ border: '1px solid rgba(217, 217, 217, 1)', borderRight: '1px solid rgba(209, 209, 209, 1)' }}
+                    style={{
+                      border: "1px solid rgba(217, 217, 217, 1)",
+                      borderRight: "1px solid rgba(209, 209, 209, 1)",
+                    }}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18" fill="none">
-                      <mask id="mask0_9547_3931" style={{ maskType: 'alpha' }} maskUnits="userSpaceOnUse" x="0" y="0" width="18" height="18">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="18"
+                      height="18"
+                      viewBox="0 0 18 18"
+                      fill="none"
+                    >
+                      <mask
+                        id="mask0_9547_3931"
+                        style={{ maskType: "alpha" }}
+                        maskUnits="userSpaceOnUse"
+                        x="0"
+                        y="0"
+                        width="18"
+                        height="18"
+                      >
                         <rect width="18" height="18" fill="#D9D9D9" />
                       </mask>
                       <g mask="url(#mask0_9547_3931)">
-                        <path d="M8.66681 13.1106C7.59669 13.0192 6.69719 12.5831 5.96831 11.8024C5.23944 11.0216 4.875 10.0875 4.875 9C4.875 7.85413 5.27606 6.88019 6.07819 6.07819C6.88019 5.27606 7.85413 4.875 9 4.875C10.0875 4.875 11.0216 5.23825 11.8024 5.96475C12.5831 6.69112 13.0192 7.58944 13.1106 8.65969L11.9179 8.30625C11.7557 7.63125 11.4066 7.07812 10.8703 6.64688C10.3342 6.21563 9.71075 6 9 6C8.175 6 7.46875 6.29375 6.88125 6.88125C6.29375 7.46875 6 8.175 6 9C6 9.7125 6.21681 10.3375 6.65044 10.875C7.08406 11.4125 7.636 11.7625 8.30625 11.925L8.66681 13.1106ZM9.56681 16.0946C9.47231 16.1149 9.37788 16.125 9.2835 16.125H9C8.01438 16.125 7.08812 15.938 6.22125 15.564C5.35437 15.19 4.60031 14.6824 3.95906 14.0413C3.31781 13.4002 2.81019 12.6463 2.43619 11.7795C2.06206 10.9128 1.875 9.98669 1.875 9.00131C1.875 8.01581 2.062 7.0895 2.436 6.22237C2.81 5.35525 3.31756 4.601 3.95869 3.95962C4.59981 3.31825 5.35375 2.81044 6.2205 2.43619C7.08725 2.06206 8.01331 1.875 8.99869 1.875C9.98419 1.875 10.9105 2.06206 11.7776 2.43619C12.6448 2.81019 13.399 3.31781 14.0404 3.95906C14.6818 4.60031 15.1896 5.35437 15.5638 6.22125C15.9379 7.08812 16.125 8.01438 16.125 9V9.27975C16.125 9.373 16.1149 9.46631 16.0946 9.55969L15 9.225V9C15 7.325 14.4187 5.90625 13.2563 4.74375C12.0938 3.58125 10.675 3 9 3C7.325 3 5.90625 3.58125 4.74375 4.74375C3.58125 5.90625 3 7.325 3 9C3 10.675 3.58125 12.0938 4.74375 13.2563C5.90625 14.4187 7.325 15 9 15H9.225L9.56681 16.0946ZM15.1052 16.2332L11.7043 12.825L10.8894 15.2884L9 9L15.2884 10.8894L12.825 11.7043L16.2332 15.1052L15.1052 16.2332Z" fill="#C72030"/>
+                        <path
+                          d="M8.66681 13.1106C7.59669 13.0192 6.69719 12.5831 5.96831 11.8024C5.23944 11.0216 4.875 10.0875 4.875 9C4.875 7.85413 5.27606 6.88019 6.07819 6.07819C6.88019 5.27606 7.85413 4.875 9 4.875C10.0875 4.875 11.0216 5.23825 11.8024 5.96475C12.5831 6.69112 13.0192 7.58944 13.1106 8.65969L11.9179 8.30625C11.7557 7.63125 11.4066 7.07812 10.8703 6.64688C10.3342 6.21563 9.71075 6 9 6C8.175 6 7.46875 6.29375 6.88125 6.88125C6.29375 7.46875 6 8.175 6 9C6 9.7125 6.21681 10.3375 6.65044 10.875C7.08406 11.4125 7.636 11.7625 8.30625 11.925L8.66681 13.1106ZM9.56681 16.0946C9.47231 16.1149 9.37788 16.125 9.2835 16.125H9C8.01438 16.125 7.08812 15.938 6.22125 15.564C5.35437 15.19 4.60031 14.6824 3.95906 14.0413C3.31781 13.4002 2.81019 12.6463 2.43619 11.7795C2.06206 10.9128 1.875 9.98669 1.875 9.00131C1.875 8.01581 2.062 7.0895 2.436 6.22237C2.81 5.35525 3.31756 4.601 3.95869 3.95962C4.59981 3.31825 5.35375 2.81044 6.2205 2.43619C7.08725 2.06206 8.01331 1.875 8.99869 1.875C9.98419 1.875 10.9105 2.06206 11.7776 2.43619C12.6448 2.81019 13.399 3.31781 14.0404 3.95906C14.6818 4.60031 15.1896 5.35437 15.5638 6.22125C15.9379 7.08812 16.125 8.01438 16.125 9V9.27975C16.125 9.373 16.1149 9.46631 16.0946 9.55969L15 9.225V9C15 7.325 14.4187 5.90625 13.2563 4.74375C12.0938 3.58125 10.675 3 9 3C7.325 3 5.90625 3.58125 4.74375 4.74375C3.58125 5.90625 3 7.325 3 9C3 10.675 3.58125 12.0938 4.74375 13.2563C5.90625 14.4187 7.325 15 9 15H9.225L9.56681 16.0946ZM15.1052 16.2332L11.7043 12.825L10.8894 15.2884L9 9L15.2884 10.8894L12.825 11.7043L16.2332 15.1052L15.1052 16.2332Z"
+                          fill="#C72030"
+                        />
                       </g>
                     </svg>
                     Analytics
@@ -366,7 +456,7 @@ export const AMCDetailsPage = () => {
                   <TabsTrigger
                     value="amc-details"
                     className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-0 h-[36px] flex items-center gap-2 text-gray-700 data-[state=active]:text-[#C72030] data-[state=active]:border-0 [&_svg]:text-gray-700 data-[state=active]:[&_svg]:text-[#C72030]"
-                    style={{ border: '1px solid rgba(217, 217, 217, 1)' }}
+                    style={{ border: "1px solid rgba(217, 217, 217, 1)" }}
                   >
                     <Settings className="w-4 h-4" />
                     AMC Details
@@ -374,73 +464,127 @@ export const AMCDetailsPage = () => {
                 </TabsList>
 
                 {/* Analytics Sub-tab */}
-                <TabsContent value="analytics" className="p-4 sm:p-6" style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
-                  <AMCAnalyticsTab amc={amcDetails} amcId={amcDetails?.id?.toString() || id || ''} />
+                <TabsContent
+                  value="analytics"
+                  className="p-4 sm:p-6"
+                  style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+                >
+                  <AMCAnalyticsTab
+                    amc={amcDetails}
+                    amcId={amcDetails?.id?.toString() || id || ""}
+                  />
                 </TabsContent>
 
                 {/* AMC Details Sub-tab */}
                 <TabsContent value="amc-details" className="p-4 sm:p-6">
-                  <AMCDetailsPreviewTab amc={amcDetails} amcId={amcDetails?.id?.toString() || id || ''} />
+                  <AMCDetailsPreviewTab
+                    amc={amcDetails}
+                    amcId={amcDetails?.id?.toString() || id || ""}
+                  />
                 </TabsContent>
               </Tabs>
-                  </div>
+            </div>
           </TabsContent>
 
           {/* Supplier Information */}
-          <TabsContent value="supplier-information" className="p-3 sm:p-6" style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
-            <Card className="border-[#D9D9D9] bg-white shadow-sm" style={{
-              borderRadius: '4px',
-              background: '#FFF',
-              boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-            }}>
+          <TabsContent
+            value="supplier-information"
+            className="p-3 sm:p-6"
+            style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+          >
+            <Card
+              className="border-[#D9D9D9] bg-white shadow-sm"
+              style={{
+                borderRadius: "4px",
+                background: "#FFF",
+                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
+              }}
+            >
               <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
                     <div className="w-6 h-6 mr-2 flex items-center justify-center">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" stroke="#C72030" strokeWidth="1.5"/>
-                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="#C72030" strokeWidth="1.5"/>
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+                          stroke="#C72030"
+                          strokeWidth="1.5"
+                        />
+                        <path
+                          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+                          stroke="#C72030"
+                          strokeWidth="1.5"
+                        />
                       </svg>
-                  </div>
-                  SUPPLIER INFORMATION
-                </CardTitle>
+                    </div>
+                    SUPPLIER INFORMATION
+                  </CardTitle>
                   <Button
                     className="px-4 py-2 font-medium text-[#C72030] border border-[#C72030] rounded-md hover:bg-[#C72030] hover:text-white transition-colors"
                     style={{
-                      backgroundColor: '#F6F4EE',
-                      color: '#C72030',
-                      border: '1px solid #C72030',
-                      borderRadius: '4px',
-                      padding: '8px 16px',
-                      fontSize: '14px',
-                      fontWeight: 500
+                      backgroundColor: "#F6F4EE",
+                      color: "#C72030",
+                      border: "1px solid #C72030",
+                      borderRadius: "4px",
+                      padding: "8px 16px",
+                      fontSize: "14px",
+                      fontWeight: 500,
                     }}
                   >
                     View Supplier
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
+              <CardContent
+                className="p-6"
+                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">Name</div>
-                    <div className="text-base text-gray-900 font-semibold">{amcDetails.amc_vendor_name || '—'}</div>
+                    <div className="text-sm text-gray-500 font-normal">
+                      Name
+                    </div>
+                    <div className="text-base text-gray-900 font-semibold">
+                      {amcDetails.amc_vendor_name || "—"}
+                    </div>
                   </div>
                   <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">Company Name</div>
-                    <div className="text-base text-gray-900 font-semibold">{amcDetails.amc_vendor_name || '—'}</div>
+                    <div className="text-sm text-gray-500 font-normal">
+                      Company Name
+                    </div>
+                    <div className="text-base text-gray-900 font-semibold">
+                      {amcDetails.amc_vendor_name || "—"}
+                    </div>
                   </div>
                   <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">Mobile 1</div>
-                    <div className="text-base text-gray-900 font-semibold">{amcDetails.amc_vendor_mobile || '—'}</div>
+                    <div className="text-sm text-gray-500 font-normal">
+                      Mobile 1
+                    </div>
+                    <div className="text-base text-gray-900 font-semibold">
+                      {amcDetails.amc_vendor_mobile || "—"}
+                    </div>
                   </div>
                   <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">Email</div>
-                    <div className="text-base text-gray-900 font-semibold">{amcDetails.amc_vendor_email || '—'}</div>
+                    <div className="text-sm text-gray-500 font-normal">
+                      Email
+                    </div>
+                    <div className="text-base text-gray-900 font-semibold">
+                      {amcDetails.amc_vendor_email || "—"}
+                    </div>
                   </div>
                   <div className="space-y-1">
-                    <div className="text-sm text-gray-500 font-normal">Mobile 2</div>
-                    <div className="text-base text-gray-900 font-semibold">—</div>
+                    <div className="text-sm text-gray-500 font-normal">
+                      Mobile 2
+                    </div>
+                    <div className="text-base text-gray-900 font-semibold">
+                      —
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -448,12 +592,19 @@ export const AMCDetailsPage = () => {
           </TabsContent>
 
           {/* Attachments */}
-          <TabsContent value="attachments" className="p-3 sm:p-6" style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
-            <Card className="border-[#D9D9D9] bg-white shadow-sm" style={{
-              borderRadius: '4px',
-              background: '#FFF',
-              boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-            }}>
+          <TabsContent
+            value="attachments"
+            className="p-3 sm:p-6"
+            style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+          >
+            <Card
+              className="border-[#D9D9D9] bg-white shadow-sm"
+              style={{
+                borderRadius: "4px",
+                background: "#FFF",
+                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
+              }}
+            >
               <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
                 <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
                   <div className="w-6 h-6 mr-2 flex items-center justify-center">
@@ -462,187 +613,75 @@ export const AMCDetailsPage = () => {
                   ATTACHMENTS
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
+              <CardContent
+                className="p-6"
+                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* AMC Contracts Card */}
                   <div className="bg-[#F6F4EE] rounded-lg p-6">
-                    <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">AMC Contracts</h3>
+                    <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">
+                      AMC Contracts
+                    </h3>
                     <div className="flex flex-wrap gap-4">
                       {(() => {
-                        const sectionData = (amcData as any)?.amc_contracts || [];
-                        const documents = sectionData?.flatMap((item: any) => item.documents || []) || [];
-                        
-                        if (documents.length === 0) {
-                    return (
-                            <p className="text-gray-500 text-sm">No AMC contract attachments available</p>
-                          );
-                        }
-                        
-                        return documents.map((doc: any) => {
-                              const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(doc.document_url);
-                              const isPdf = /\.pdf$/i.test(doc.document_url);
-                              const isExcel = /\.(xls|xlsx|csv)$/i.test(doc.document_url);
-                              const isWord = /\.(doc|docx)$/i.test(doc.document_url);
-                              const isDownloadable = isPdf || isExcel || isWord;
+                        const sectionData =
+                          (amcData as any)?.amc_contracts || [];
+                        const documents =
+                          sectionData?.flatMap(
+                            (item: any) => item.documents || []
+                          ) || [];
 
-                              const handleFileAction = async () => {
-                                if (!doc?.attachment_id) {
-                                  console.error('Attachment ID is undefined', doc);
-                                  return;
-                                }
-
-                                try {
-                                  const token = localStorage.getItem('token');
-                                  const baseUrl = localStorage.getItem('baseUrl');
-                                  if (!token) {
-                                    console.error('No token found in local storage');
-                                    return;
-                                  }
-
-                                  const apiUrl = `https://${baseUrl}/attachfiles/${doc.attachment_id}?show_file=true`;
-
-                                  const response = await fetch(apiUrl, {
-                                    method: 'GET',
-                                    headers: {
-                                      Authorization: `Bearer ${token}`,
-                                      'Content-Type': 'application/json',
-                                    },
-                                  });
-
-                                  if (!response.ok) {
-                                    throw new Error('Failed to fetch the file');
-                                  }
-
-                                  const blob = await response.blob();
-                                  const url = window.URL.createObjectURL(blob);
-
-                                  if (isImage) {
-                                    setSelectedDoc({
-                                      document_url: url,
-                                      document_name: doc.document_name || `document_${doc.attachment_id}`,
-                                      blob: blob
-                                    });
-                                    setIsModalOpen(true);
-                                  } else {
-                                    const link = document.createElement('a');
-                                    link.href = url;
-                                    link.download = doc.document_name || `document_${doc.attachment_id}`;
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                    window.URL.revokeObjectURL(url);
-                                  }
-                                } catch (error) {
-                                  console.error('Error handling file:', error);
-                                }
-                              };
-
-                              return (
-                                <div
-                                  key={doc.id}
-                              className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-white shadow-md"
-                                >
-                                  {isImage ? (
-                                    <>
-                                      <button
-                                        className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                        title="View"
-                                        onClick={handleFileAction}
-                                        type="button"
-                                      >
-                                        <Eye className="w-4 h-4" />
-                                      </button>
-                                      <img
-                                        src={doc.document_url}
-                                        alt={doc.document_name}
-                                        className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                        onClick={handleFileAction}
-                                      />
-                                    </>
-                                  ) : isPdf ? (
-                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                                      <FileText className="w-6 h-6" />
-                                    </div>
-                                  ) : isExcel ? (
-                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                                      <FileSpreadsheet className="w-6 h-6" />
-                                    </div>
-                                  ) : isWord ? (
-                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                                      <FileText className="w-6 h-6" />
-                                    </div>
-                                  ) : (
-                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                                      <FileText className="w-6 h-6" />
-                                    </div>
-                                  )}
-                                  <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                                    {doc.document_name || `Document_${doc.id}`}
-                                  </span>
-                                  {isDownloadable && (
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
-                                      onClick={handleFileAction}
-                                    >
-                                      <Download className="w-4 h-4" />
-                                    </Button>
-                                  )}
-                                </div>
-                              );
-                        });
-                      })()}
-                            </div>
-                        </div>
-
-                  {/* AMC Invoice Card */}
-                  <div className="bg-[#F6F4EE] rounded-lg p-6">
-                    <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">AMC Invoice</h3>
-                    <div className="flex flex-wrap gap-4">
-                      {(() => {
-                        const sectionData = (amcData as any)?.amc_invoices || [];
-                        const documents = sectionData?.flatMap((item: any) => item.documents || []) || [];
-                        
                         if (documents.length === 0) {
                           return (
-                            <p className="text-gray-500 text-sm">No AMC invoice attachments available</p>
+                            <p className="text-gray-500 text-sm">
+                              No AMC contract attachments available
+                            </p>
                           );
                         }
-                        
+
                         return documents.map((doc: any) => {
-                          const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(doc.document_url);
+                          const isImage =
+                            /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(
+                              doc.document_url
+                            );
                           const isPdf = /\.pdf$/i.test(doc.document_url);
-                          const isExcel = /\.(xls|xlsx|csv)$/i.test(doc.document_url);
-                          const isWord = /\.(doc|docx)$/i.test(doc.document_url);
+                          const isExcel = /\.(xls|xlsx|csv)$/i.test(
+                            doc.document_url
+                          );
+                          const isWord = /\.(doc|docx)$/i.test(
+                            doc.document_url
+                          );
                           const isDownloadable = isPdf || isExcel || isWord;
 
                           const handleFileAction = async () => {
                             if (!doc?.attachment_id) {
-                              console.error('Attachment ID is undefined', doc);
+                              console.error("Attachment ID is undefined", doc);
                               return;
                             }
 
                             try {
-                              const token = localStorage.getItem('token');
-                              const baseUrl = localStorage.getItem('baseUrl');
+                              const token = localStorage.getItem("token");
+                              const baseUrl = localStorage.getItem("baseUrl");
                               if (!token) {
-                                console.error('No token found in local storage');
+                                console.error(
+                                  "No token found in local storage"
+                                );
                                 return;
                               }
 
                               const apiUrl = `https://${baseUrl}/attachfiles/${doc.attachment_id}?show_file=true`;
 
                               const response = await fetch(apiUrl, {
-                                method: 'GET',
+                                method: "GET",
                                 headers: {
                                   Authorization: `Bearer ${token}`,
-                                  'Content-Type': 'application/json',
+                                  "Content-Type": "application/json",
                                 },
                               });
 
                               if (!response.ok) {
-                                throw new Error('Failed to fetch the file');
+                                throw new Error("Failed to fetch the file");
                               }
 
                               const blob = await response.blob();
@@ -651,21 +690,25 @@ export const AMCDetailsPage = () => {
                               if (isImage) {
                                 setSelectedDoc({
                                   document_url: url,
-                                  document_name: doc.document_name || `document_${doc.attachment_id}`,
-                                  blob: blob
+                                  document_name:
+                                    doc.document_name ||
+                                    `document_${doc.attachment_id}`,
+                                  blob: blob,
                                 });
                                 setIsModalOpen(true);
                               } else {
-                                const link = document.createElement('a');
+                                const link = document.createElement("a");
                                 link.href = url;
-                                link.download = doc.document_name || `document_${doc.attachment_id}`;
+                                link.download =
+                                  doc.document_name ||
+                                  `document_${doc.attachment_id}`;
                                 document.body.appendChild(link);
                                 link.click();
                                 document.body.removeChild(link);
                                 window.URL.revokeObjectURL(url);
                               }
                             } catch (error) {
-                              console.error('Error handling file:', error);
+                              console.error("Error handling file:", error);
                             }
                           };
 
@@ -721,8 +764,161 @@ export const AMCDetailsPage = () => {
                                   <Download className="w-4 h-4" />
                                 </Button>
                               )}
-                      </div>
-                    );
+                            </div>
+                          );
+                        });
+                      })()}
+                    </div>
+                  </div>
+
+                  {/* AMC Invoice Card */}
+                  <div className="bg-[#F6F4EE] rounded-lg p-6">
+                    <h3 className="text-[#1a1a1a] font-semibold text-base mb-3">
+                      AMC Invoice
+                    </h3>
+                    <div className="flex flex-wrap gap-4">
+                      {(() => {
+                        const sectionData =
+                          (amcData as any)?.amc_invoices || [];
+                        const documents =
+                          sectionData?.flatMap(
+                            (item: any) => item.documents || []
+                          ) || [];
+
+                        if (documents.length === 0) {
+                          return (
+                            <p className="text-gray-500 text-sm">
+                              No AMC invoice attachments available
+                            </p>
+                          );
+                        }
+
+                        return documents.map((doc: any) => {
+                          const isImage =
+                            /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(
+                              doc.document_url
+                            );
+                          const isPdf = /\.pdf$/i.test(doc.document_url);
+                          const isExcel = /\.(xls|xlsx|csv)$/i.test(
+                            doc.document_url
+                          );
+                          const isWord = /\.(doc|docx)$/i.test(
+                            doc.document_url
+                          );
+                          const isDownloadable = isPdf || isExcel || isWord;
+
+                          const handleFileAction = async () => {
+                            if (!doc?.attachment_id) {
+                              console.error("Attachment ID is undefined", doc);
+                              return;
+                            }
+
+                            try {
+                              const token = localStorage.getItem("token");
+                              const baseUrl = localStorage.getItem("baseUrl");
+                              if (!token) {
+                                console.error(
+                                  "No token found in local storage"
+                                );
+                                return;
+                              }
+
+                              const apiUrl = `https://${baseUrl}/attachfiles/${doc.attachment_id}?show_file=true`;
+
+                              const response = await fetch(apiUrl, {
+                                method: "GET",
+                                headers: {
+                                  Authorization: `Bearer ${token}`,
+                                  "Content-Type": "application/json",
+                                },
+                              });
+
+                              if (!response.ok) {
+                                throw new Error("Failed to fetch the file");
+                              }
+
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+
+                              if (isImage) {
+                                setSelectedDoc({
+                                  document_url: url,
+                                  document_name:
+                                    doc.document_name ||
+                                    `document_${doc.attachment_id}`,
+                                  blob: blob,
+                                });
+                                setIsModalOpen(true);
+                              } else {
+                                const link = document.createElement("a");
+                                link.href = url;
+                                link.download =
+                                  doc.document_name ||
+                                  `document_${doc.attachment_id}`;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                                window.URL.revokeObjectURL(url);
+                              }
+                            } catch (error) {
+                              console.error("Error handling file:", error);
+                            }
+                          };
+
+                          return (
+                            <div
+                              key={doc.id}
+                              className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-white shadow-md"
+                            >
+                              {isImage ? (
+                                <>
+                                  <button
+                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                    title="View"
+                                    onClick={handleFileAction}
+                                    type="button"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </button>
+                                  <img
+                                    src={doc.document_url}
+                                    alt={doc.document_name}
+                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                    onClick={handleFileAction}
+                                  />
+                                </>
+                              ) : isPdf ? (
+                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                  <FileText className="w-6 h-6" />
+                                </div>
+                              ) : isExcel ? (
+                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                  <FileSpreadsheet className="w-6 h-6" />
+                                </div>
+                              ) : isWord ? (
+                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                  <FileText className="w-6 h-6" />
+                                </div>
+                              ) : (
+                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                  <FileText className="w-6 h-6" />
+                                </div>
+                              )}
+                              <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                {doc.document_name || `Document_${doc.id}`}
+                              </span>
+                              {isDownloadable && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                  onClick={handleFileAction}
+                                >
+                                  <Download className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+                          );
                         });
                       })()}
                     </div>
@@ -745,7 +941,9 @@ export const AMCDetailsPage = () => {
                       <X className="w-5 h-5" />
                     </button>
                     <DialogHeader>
-                      <DialogTitle className="text-center">{selectedDoc?.document_name}</DialogTitle>
+                      <DialogTitle className="text-center">
+                        {selectedDoc?.document_name}
+                      </DialogTitle>
                     </DialogHeader>
                     <div className="flex flex-col items-center justify-center gap-4">
                       {selectedDoc?.document_url && (
@@ -758,14 +956,17 @@ export const AMCDetailsPage = () => {
                       <Button
                         onClick={() => {
                           if (selectedDoc?.document_url) {
-                            const link = document.createElement('a');
+                            const link = document.createElement("a");
                             link.href = selectedDoc.document_url;
-                            link.download = selectedDoc.document_name || 'document';
+                            link.download =
+                              selectedDoc.document_name || "document";
                             document.body.appendChild(link);
                             link.click();
                             document.body.removeChild(link);
                             setIsModalOpen(false);
-                            window.URL.revokeObjectURL(selectedDoc.document_url);
+                            window.URL.revokeObjectURL(
+                              selectedDoc.document_url
+                            );
                             setSelectedDoc(null);
                           }
                         }}
@@ -802,7 +1003,6 @@ export const AMCDetailsPage = () => {
                           </div>
                         </div>
                       )}
-
                     </div>
                   </DialogContent>
                 </Dialog>
@@ -810,233 +1010,196 @@ export const AMCDetailsPage = () => {
             </Card>
           </TabsContent>
 
-          {/* Schedule */}
-          <TabsContent value="schedule" className="p-3 sm:p-6" style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
-            <Card className="border-[#D9D9D9] bg-white shadow-sm" style={{
-              borderRadius: '4px',
-              background: '#FFF',
-              boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-            }}>
+          {/* History */}
+          <TabsContent
+            value="history"
+            className="p-3 sm:p-6"
+            style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+          >
+            <Card
+              className="border-[#D9D9D9] bg-white shadow-sm"
+              style={{
+                borderRadius: "4px",
+                background: "#FFF",
+                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
+              }}
+            >
               <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
                 <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
                     <Calendar className="w-5 h-5 text-[#C72030]" />
                   </div>
-                  SCHEDULE
+                  HISTORY
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
-                <div className="overflow-x-auto" style={{ maxHeight: '600px', overflowY: 'auto' }}>
-                  <Table>
-                    <TableHeader style={{ position: 'sticky', top: 0, backgroundColor: '#F6F4EE', zIndex: 10 }}>
-                      <TableRow className="bg-[#F6F4EE]">
-                        <TableHead className="font-semibold text-[#1a1a1a]">Schedule Date</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Visit Date</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Visit No.</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Attendant Name</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">No. of Assets Covered</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="bg-white">
-                      {amcVisitData.length > 0 ? (
-                        amcVisitData.map((visit: any, index: number) => {
-                          const fileUrl = visit.attachment?.document || visit.attachment?.document_url;
-                          const isImage = fileUrl && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(fileUrl);
-                          const isPdf = fileUrl && /\.pdf$/i.test(fileUrl);
-                          const isExcel = fileUrl && /\.(xls|xlsx|csv)$/i.test(fileUrl);
-                          const isWord = fileUrl && /\.(doc|docx)$/i.test(fileUrl);
-                          let icon: React.ReactNode = <FileText className="w-6 h-6 text-gray-600" />;
-                          if (isPdf) icon = <FileText className="w-6 h-6 text-red-600" />;
-                          else if (isExcel) icon = <FileSpreadsheet className="w-6 h-6 text-green-600" />;
-                          else if (isWord) icon = <FileText className="w-6 h-6 text-blue-600" />;
-                          return (
-                            <TableRow key={visit.id || index} className="border-b border-gray-200">
-                              <TableCell className="text-gray-600">{visit.scheduled_date || visit.asset_period || '—'}</TableCell>
-                              <TableCell className="text-gray-600">{visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('en-GB') : '—'}</TableCell>
-                              <TableCell className="text-gray-600">{visit.visit_number || '—'}</TableCell>
-                              <TableCell className="text-gray-600">{visit.attendant_name || (visit.technician ? visit.technician.name : '—')}</TableCell>
-                              <TableCell className="text-gray-600 text-center">{visit.no_of_assets ?? visit.assets_covered ?? '—'}</TableCell>
-                              <TableCell className="text-gray-600">{visit.remarks || '—'}</TableCell>
-                              <TableCell>
-                                {fileUrl ? (
-                                  isImage ? (
-                                    <div className="flex relative flex-col items-center bg-[#F6F4EE] border rounded-lg p-2 w-[100px] shadow-sm">
-                                      <img
-                                        src={fileUrl}
-                                        alt={visit.attachment?.document_name || 'Attachment'}
-                                        className="w-16 h-16 object-cover rounded border cursor-pointer"
-                                        onClick={() => setSelectedImage(fileUrl)}
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div
-                                      className="flex relative flex-col items-center bg-[#F6F4EE] border rounded-lg p-2 w-[100px] shadow-sm cursor-pointer hover:ring-1 hover:ring-[#C72030]"
-                                      onClick={async () => {
-                                        try {
-                                          const attachmentId = visit.attachment?.id;
-                                          const token = localStorage.getItem('token');
-                                          const baseUrl = localStorage.getItem('baseUrl');
-                                          if (attachmentId && token && baseUrl) {
-                                            const apiUrl = `https://${baseUrl}/attachfiles/${attachmentId}?show_file=true`;
-                                            const response = await fetch(apiUrl, {
-                                              method: 'GET',
-                                              headers: { Authorization: `Bearer ${token}` },
-                                            });
-                                            if (!response.ok) throw new Error('Download failed');
-                                            const blob = await response.blob();
-                                            const url = window.URL.createObjectURL(blob);
-                                            const link = document.createElement('a');
-                                            link.href = url;
-                                            const originalName = visit.attachment?.document_name || 'file';
-                                            link.download = originalName;
-                                            document.body.appendChild(link);
-                                            link.click();
-                                            document.body.removeChild(link);
-                                            window.URL.revokeObjectURL(url);
-                                          } else {
-                                            // Fallback: open direct URL if available
-                                            window.open(fileUrl, '_blank');
-                                          }
-                                        } catch (e) {
-                                          console.error('Attachment download error', e);
-                                        }
-                                      }}
-                                      title="Download file"
-                                    >
-                                      <div className="w-16 h-16 flex items-center justify-center bg-white rounded border">
-                                        {icon}
-                                      </div>
-                                      <span className="mt-1 text-[10px] text-center break-all px-1">
-                                        {/* {(visit.attachment?.document_name || 'File').slice(0, 40)} */}
-                                      </span>
-                                      {/* <span className="absolute top-1 right-1 text-[9px] text-[#C72030] font-semibold">DL</span> */}
-                                    </div>
-                                  )
-                                ) : (
-                                  '—'
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })
-                      ) : (
-                        <TableRow className="border-b border-gray-200">
-                          <TableCell colSpan={7} className="text-center text-gray-600">
-                            No AMC visit logs available.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
+              <CardContent
+                className="p-6"
+                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
+              >
+                {/* Status Cards */}
+                {(() => {
+                  const assetIds = amcDetails?.amc_assets?.map((a: any) => a.asset_id).filter(Boolean) ?? [];
+                  const statusCards = [
+                    { label: "Scheduled", color: "#6366F1" },
+                    { label: "Open", color: "#EF4444" },
+                    { label: "In Progress", color: "#F59E0B" },
+                    { label: "Closed", color: "#10B981" },
+                    { label: "Overdue", color: "#C72030" },
+                  ];
 
-              {/* Modal */}
-              {selectedImage && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-                  <div className="bg-white rounded-lg p-4 max-w-sm w-full relative pt-8">
-                    {/* Close Icon */}
-                    <button
-                      className="absolute top-2 right-2 text-gray-700 hover:text-black z-10"
-                      onClick={() => setSelectedImage(null)}
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-
-                    {/* Image */}
-                    <img
-                      src={selectedImage}
-                      alt="Preview"
-                      className="w-full h-auto object-contain rounded mb-4"
-                    />
-
-                    {/* Download Button with Loader */}
-                    <button
-                      className="block text-center bg-[#f6f4ee] text-[#c72030] py-2 rounded w-full flex items-center justify-center"
-                      disabled={isDownloading}
-                      onClick={async () => {
-                        const visit = amcVisitData.find((v: any) => v.attachment?.document === selectedImage);
-                        if (!visit?.attachment?.id) {
-                          console.error('Attachment ID is undefined for selected image');
-                          return;
-                        }
-
-                        setIsDownloading(true);
+                  // Fetch occurrences on first render when assets available
+                  const fetchOccurrences = async () => {
+                    if (!assetIds.length) return;
+                    const baseUrl = localStorage.getItem("baseUrl");
+                    const token = localStorage.getItem("token");
+                    if (!baseUrl || !token) return;
+                    setOccurrencesLoading(true);
+                    try {
+                      const results: any[] = [];
+                      for (const aid of assetIds) {
                         try {
-                          const token = localStorage.getItem('token');
-                          const baseUrl = localStorage.getItem('baseUrl');
-                          if (!token || !baseUrl) {
-                            console.error('Token or baseUrl not found in local storage');
-                            return;
+                          const res = await fetch(
+                            `https://${baseUrl}/pms/assets/${aid}/occurrences.json`,
+                            { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+                          );
+                          if (res.ok) {
+                            const d = await res.json();
+                            (d.occurrences || []).forEach((o: any) => results.push(o));
                           }
+                        } catch {}
+                      }
+                      setOccurrences(results);
+                    } finally {
+                      setOccurrencesLoading(false);
+                    }
+                  };
 
-                          const apiUrl = `https://${baseUrl}/attachfiles/${visit.attachment.id}?show_file=true`;
+                  const filtered = occurrences.filter(
+                    (o) =>
+                      o.task_status === occurrenceStatusFilter &&
+                      (
+                        (o.checklist_name || "").toLowerCase().includes(occurrenceSearch.toLowerCase()) ||
+                        (o.schedule || "").toLowerCase().includes(occurrenceSearch.toLowerCase())
+                      )
+                  );
 
-                          const response = await fetch(apiUrl, {
-                            method: 'GET',
-                            headers: {
-                              Authorization: `Bearer ${token}`,
-                              'Content-Type': 'application/json',
-                            },
-                          });
+                  return (
+                    <div className="space-y-6">
+                      {/* Status Cards */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {statusCards.map((card) => {
+                          const count = occurrences.filter((o) => o.task_status === card.label).length;
+                          return (
+                            <div
+                              key={card.label}
+                              className={`p-4 rounded-lg cursor-pointer ${
+                                occurrenceStatusFilter === card.label ? "ring-2 ring-[#C72030]" : ""
+                              }`}
+                              style={{ backgroundColor: "#F6F4EE" }}
+                              onClick={() => {
+                                setOccurrenceStatusFilter(card.label);
+                                if (!occurrences.length && !occurrencesLoading) fetchOccurrences();
+                              }}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                                  <Calendar className="w-5 h-5" style={{ color: "#C72030" }} />
+                                </div>
+                                <div>
+                                  <div className="text-2xl font-bold text-black">
+                                    {count.toString().padStart(2, "0")}
+                                  </div>
+                                  <div className="text-sm font-medium text-black">{card.label}</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
 
-                          if (!response.ok) {
-                            throw new Error(`Failed to fetch the file: ${response.statusText}`);
-                          }
+                      {/* Search */}
+                      <div className="flex justify-end">
+                        <div className="relative">
+                          <Input
+                            placeholder="Search..."
+                            value={occurrenceSearch}
+                            onChange={(e) => setOccurrenceSearch(e.target.value)}
+                            className="pl-3 w-64"
+                          />
+                        </div>
+                      </div>
 
-                          const blob = await response.blob();
-                          const url = window.URL.createObjectURL(blob);
-                          const link = document.createElement('a');
-                          link.href = url;
-                          link.download = `attachment_${visit.attachment.id}.png`; // Fallback name
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          window.URL.revokeObjectURL(url);
-                          setSelectedImage(null); // Close modal after download
-                        } catch (error) {
-                          console.error('Error downloading file:', error);
-                        } finally {
-                          setIsDownloading(false);
-                        }
-                      }}
-                    >
-                      {isDownloading ? (
-                        <span className="loader mr-2"></span>
-                      ) : (
-                        <Download className="mr-2 w-4 h-4" />
-                      )}
-                      {isDownloading ? 'Downloading...' : 'Download'}
-                    </button>
-                    <style>{`
-                  .loader {
-                    border: 2px solid #c72030;
-                    border-top: 2px solid transparent;
-                    border-radius: 50%;
-                    width: 16px;
-                    height: 16px;
-                    animation: spin 1s linear infinite;
-                  }
-                  @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                  }
-                `}</style>
-                  </div>
-                </div>
-              )}
+                      {/* Occurrences Table */}
+                      <div className="bg-white rounded-lg border overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-[#EDEAE3]">
+                              <TableHead className="font-semibold text-[#1a1a1a]">ID</TableHead>
+                              <TableHead className="font-semibold text-[#1a1a1a]">Checklist</TableHead>
+                              <TableHead className="font-semibold text-[#1a1a1a]">Type</TableHead>
+                              <TableHead className="font-semibold text-[#1a1a1a]">Schedule</TableHead>
+                              <TableHead className="font-semibold text-[#1a1a1a]">Assigned To</TableHead>
+                              <TableHead className="font-semibold text-[#1a1a1a]">Grace Time</TableHead>
+                              <TableHead className="font-semibold text-[#1a1a1a]">%</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody className="bg-white">
+                            {occurrencesLoading ? (
+                              <TableRow>
+                                <TableCell colSpan={7} className="text-center py-6 text-gray-500">
+                                  Loading history...
+                                </TableCell>
+                              </TableRow>
+                            ) : filtered.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={7} className="text-center py-6 text-gray-500">
+                                  No history found.
+                                </TableCell>
+                              </TableRow>
+                            ) : (
+                              filtered.map((item: any) => (
+                                <TableRow key={item.id} className="border-b border-gray-200">
+                                  <TableCell className="font-medium text-gray-900">{item.id}</TableCell>
+                                  <TableCell className="text-gray-900">{item.checklist_name || "—"}</TableCell>
+                                  <TableCell className="text-gray-900">{item.type || "—"}</TableCell>
+                                  <TableCell className="text-gray-900">{item.schedule || "—"}</TableCell>
+                                  <TableCell className="text-gray-900">{item.assigned_to || "—"}</TableCell>
+                                  <TableCell className="text-gray-900">{item.grace_time || "—"}</TableCell>
+                                  <TableCell>
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-6 h-6 rounded-full flex items-center justify-center bg-[#C72030]">
+                                        <span className="text-white text-[9px] font-bold">✓</span>
+                                      </div>
+                                      <span className="font-medium">{item.per ?? 0}%</span>
+                                    </div>
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </CardContent>
             </Card>
           </TabsContent>
 
           {/* Tickets */}
-          <TabsContent value="tickets" className="p-3 sm:p-6" style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
-            <Card className="border-[#D9D9D9] bg-white shadow-sm" style={{
-              borderRadius: '4px',
-              background: '#FFF',
-              boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-            }}>
+          <TabsContent
+            value="tickets"
+            className="p-3 sm:p-6"
+            style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+          >
+            <Card
+              className="border-[#D9D9D9] bg-white shadow-sm"
+              style={{
+                borderRadius: "4px",
+                background: "#FFF",
+                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
+              }}
+            >
               <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
                 <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
@@ -1045,57 +1208,113 @@ export const AMCDetailsPage = () => {
                   TICKETS
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
+              <CardContent
+                className="p-6"
+                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
+              >
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-[#EDEAE3]">
-                        <TableHead className="font-semibold text-[#1a1a1a]">ID</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Title</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Category</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Updated By</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Created At</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">
+                          ID
+                        </TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">
+                          Title
+                        </TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">
+                          Category
+                        </TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">
+                          Status
+                        </TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">
+                          Updated By
+                        </TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">
+                          Created At
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody className="bg-white">
                       {ticketsLoading && (
                         <TableRow className="border-b border-gray-200">
-                          <TableCell colSpan={6} className="text-center text-gray-600">Loading tickets...</TableCell>
+                          <TableCell
+                            colSpan={6}
+                            className="text-center text-gray-600"
+                          >
+                            Loading tickets...
+                          </TableCell>
                         </TableRow>
                       )}
                       {!ticketsLoading && ticketsError && (
                         <TableRow className="border-b border-gray-200">
-                          <TableCell colSpan={6} className="text-center text-red-600">{ticketsError}</TableCell>
-                        </TableRow>
-                      )}
-                      {!ticketsLoading && !ticketsError && tickets.length === 0 && (
-                        <TableRow className="border-b border-gray-200">
-                          <TableCell colSpan={6} className="text-center text-gray-600">No tickets found.</TableCell>
-                        </TableRow>
-                      )}
-                      {!ticketsLoading && !ticketsError && tickets.length > 0 && tickets.map(t => (
-                        <TableRow key={t.id} className="border-b border-gray-200">
-                          <TableCell className="text-gray-900">{t.id}</TableCell>
-                          <TableCell className="max-w-[360px] whitespace-normal break-words text-gray-900">{t.heading || '—'}</TableCell>
-                          <TableCell className="text-gray-900">{t.category_type || '—'}</TableCell>
-                          <TableCell>
-                            {t.status ? (
-                              <span className={`px-2 py-1 text-xs rounded ${
-                                t.status.toLowerCase() === 'open' 
-                                  ? 'bg-gray-200 text-gray-900' 
-                                  : t.status.toLowerCase() === 'pending'
-                                  ? 'bg-[#C72030] text-white'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {t.status}
-                              </span>
-                            ) : '—'}
+                          <TableCell
+                            colSpan={6}
+                            className="text-center text-red-600"
+                          >
+                            {ticketsError}
                           </TableCell>
-                          <TableCell className="text-gray-900">{t.updated_by || '—'}</TableCell>
-                          <TableCell className="text-gray-900">{t.created_at ? new Date(t.created_at).toLocaleDateString('en-GB') : '—'}</TableCell>
                         </TableRow>
-                      ))}
+                      )}
+                      {!ticketsLoading &&
+                        !ticketsError &&
+                        tickets.length === 0 && (
+                          <TableRow className="border-b border-gray-200">
+                            <TableCell
+                              colSpan={6}
+                              className="text-center text-gray-600"
+                            >
+                              No tickets found.
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      {!ticketsLoading &&
+                        !ticketsError &&
+                        tickets.length > 0 &&
+                        tickets.map((t) => (
+                          <TableRow
+                            key={t.id}
+                            className="border-b border-gray-200"
+                          >
+                            <TableCell className="text-gray-900">
+                              {t.id}
+                            </TableCell>
+                            <TableCell className="max-w-[360px] whitespace-normal break-words text-gray-900">
+                              {t.heading || "—"}
+                            </TableCell>
+                            <TableCell className="text-gray-900">
+                              {t.category_type || "—"}
+                            </TableCell>
+                            <TableCell>
+                              {t.status ? (
+                                <span
+                                  className={`px-2 py-1 text-xs rounded ${
+                                    t.status.toLowerCase() === "open"
+                                      ? "bg-gray-200 text-gray-900"
+                                      : t.status.toLowerCase() === "pending"
+                                        ? "bg-[#C72030] text-white"
+                                        : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {t.status}
+                                </span>
+                              ) : (
+                                "—"
+                              )}
+                            </TableCell>
+                            <TableCell className="text-gray-900">
+                              {t.updated_by || "—"}
+                            </TableCell>
+                            <TableCell className="text-gray-900">
+                              {t.created_at
+                                ? new Date(t.created_at).toLocaleDateString(
+                                    "en-GB"
+                                  )
+                                : "—"}
+                            </TableCell>
+                          </TableRow>
+                        ))}
                     </TableBody>
                   </Table>
                 </div>
@@ -1103,12 +1322,11 @@ export const AMCDetailsPage = () => {
             </Card>
           </TabsContent>
 
-
           {/* Asset Information */}
-          {amcDetails.amc_type === 'Asset' && (
+          {amcDetails.amc_type === "Asset" && (
             <TabsContent value="asset-information" className="p-3 sm:p-6">
               <Card className="border">
-                <CardHeader >
+                <CardHeader>
                   <CardTitle className="text-lg flex items-center">
                     {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                       <Boxes className="h-4 w-4" />
@@ -1144,29 +1362,34 @@ export const AMCDetailsPage = () => {
                                   <Eye className="w-4 h-4" />
                                 </a>
                               </TableCell>
-                              <TableCell>{asset.asset_id || '—'}</TableCell>
-                              <TableCell>{asset.asset_name || '—'}</TableCell>
+                              <TableCell>{asset.asset_id || "—"}</TableCell>
+                              <TableCell>{asset.asset_name || "—"}</TableCell>
                               <TableCell>
                                 {asset.warranty === true
-                                  ? 'Yes'
+                                  ? "Yes"
                                   : asset.warranty === false
-                                    ? 'No'
-                                    : 'NA'}
-                              </TableCell>                              <TableCell>
+                                    ? "No"
+                                    : "NA"}
+                              </TableCell>{" "}
+                              <TableCell>
                                 <span
-                                  className={`px-2 py-1 text-xs rounded ${asset.asset_status === 'active'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-gray-100 text-gray-800'
-                                    }`}
+                                  className={`px-2 py-1 text-xs rounded ${
+                                    asset.asset_status === "active"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
                                 >
-                                  {asset.asset_status?.replace('_', ' ') || '—'}
+                                  {asset.asset_status?.replace("_", " ") || "—"}
                                 </span>
                               </TableCell>
                             </TableRow>
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center text-sm text-gray-500">
+                            <TableCell
+                              colSpan={5}
+                              className="text-center text-sm text-gray-500"
+                            >
                               No assets found
                             </TableCell>
                           </TableRow>
@@ -1179,10 +1402,10 @@ export const AMCDetailsPage = () => {
             </TabsContent>
           )}
 
-          {amcDetails.amc_type === 'Service' && (
+          {amcDetails.amc_type === "Service" && (
             <TabsContent value="asset-information" className="p-3 sm:p-6">
               <Card className="border">
-                <CardHeader >
+                <CardHeader>
                   <CardTitle className="text-lg flex items-center">
                     {/* <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                       <Boxes className="h-4 w-4" />
@@ -1219,16 +1442,21 @@ export const AMCDetailsPage = () => {
                                   <Eye className="w-4 h-4" />
                                 </a>
                               </TableCell>
-                              <TableCell>{svc.service_id || '—'}</TableCell>
-                              <TableCell>{svc.service_name || '—'}</TableCell>
-                              <TableCell>{svc.sset_code || svc.asset_code || '—'}</TableCell>
-                              <TableCell>{svc.group_id ?? '—'}</TableCell>
-                              <TableCell>{svc.sub_group_id ?? '—'}</TableCell>
+                              <TableCell>{svc.service_id || "—"}</TableCell>
+                              <TableCell>{svc.service_name || "—"}</TableCell>
+                              <TableCell>
+                                {svc.sset_code || svc.asset_code || "—"}
+                              </TableCell>
+                              <TableCell>{svc.group_id ?? "—"}</TableCell>
+                              <TableCell>{svc.sub_group_id ?? "—"}</TableCell>
                             </TableRow>
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={6} className="text-center text-sm text-gray-500">
+                            <TableCell
+                              colSpan={6}
+                              className="text-center text-sm text-gray-500"
+                            >
                               No services found
                             </TableCell>
                           </TableRow>
@@ -1242,55 +1470,108 @@ export const AMCDetailsPage = () => {
           )}
 
           {/* Association */}
-          <TabsContent value="association" className="p-3 sm:p-6" style={{ backgroundColor: 'rgba(250, 250, 250, 1)' }}>
-            <Card className="border-[#D9D9D9] bg-white shadow-sm" style={{
-              borderRadius: '4px',
-              background: '#FFF',
-              boxShadow: '0 4px 14.2px 0 rgba(0, 0, 0, 0.10)'
-            }}>
+          <TabsContent
+            value="association"
+            className="p-3 sm:p-6"
+            style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+          >
+            <Card
+              className="border-[#D9D9D9] bg-white shadow-sm"
+              style={{
+                borderRadius: "4px",
+                background: "#FFF",
+                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
+              }}
+            >
               <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
                 <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z" stroke="#C72030" strokeWidth="1.5"/>
-                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" stroke="#C72030" strokeWidth="1.5"/>
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M12 15.5A3.5 3.5 0 1 0 12 8.5a3.5 3.5 0 0 0 0 7Z"
+                        stroke="#C72030"
+                        strokeWidth="1.5"
+                      />
+                      <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.01a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.01a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.01a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
+                        stroke="#C72030"
+                        strokeWidth="1.5"
+                      />
                     </svg>
                   </div>
                   ASSET / SERVICE
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6" style={{ backgroundColor: 'rgba(246, 247, 247, 1)' }}>
+              <CardContent
+                className="p-6"
+                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
+              >
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-[#EDEAE3]">
-                        {amcDetails.amc_type === 'Service' ? (
+                        {amcDetails.amc_type === "Service" ? (
                           <>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Action</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Service ID</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Name</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Group & Sub Group</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Action
+                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Service ID
+                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Name
+                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Group & Sub Group
+                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Status
+                            </TableHead>
                           </>
                         ) : (
                           <>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Action</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Equipment ID</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Asset Name</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Model No.</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Group & Sub Group</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Criticality</TableHead>
-                            <TableHead className="font-semibold text-[#1a1a1a]">Location</TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Action
+                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Equipment ID
+                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Asset Name
+                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Model No.
+                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Group & Sub Group
+                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Status
+                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Criticality
+                            </TableHead>
+                            <TableHead className="font-semibold text-[#1a1a1a]">
+                              Location
+                            </TableHead>
                           </>
                         )}
                       </TableRow>
                     </TableHeader>
                     <TableBody className="bg-white">
-                      {amcDetails.amc_type === 'Service' ? (
+                      {amcDetails.amc_type === "Service" ? (
                         amcDetails.amc_services?.length > 0 ? (
                           amcDetails.amc_services.map((service) => (
-                            <TableRow key={service.id} className="border-b border-gray-200">
+                            <TableRow
+                              key={service.id}
+                              className="border-b border-gray-200"
+                            >
                               <TableCell>
                                 <a
                                   href={`/maintenance/service/details/${service.service_id}`}
@@ -1300,77 +1581,115 @@ export const AMCDetailsPage = () => {
                                   <Eye className="w-4 h-4" />
                                 </a>
                               </TableCell>
-                              <TableCell className="text-gray-900">{service.service_id || '—'}</TableCell>
-                              <TableCell className="text-gray-900">{service.service_name || '—'}</TableCell>
                               <TableCell className="text-gray-900">
-                                {[service.group_name, service.sub_group_name].filter(Boolean).join(' / ') || '—'}
+                                {service.service_id || "—"}
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {service.service_name || "—"}
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {[service.group_name, service.sub_group_name]
+                                  .filter(Boolean)
+                                  .join(" / ") || "—"}
                               </TableCell>
                               <TableCell>
-                                <span className={`px-2 py-1 text-xs rounded ${
-                                  (service as any).status === 'Active'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-gray-100 text-gray-800'
-                                }`}>
-                                  {(service as any).status || '—'}
+                                <span
+                                  className={`px-2 py-1 text-xs rounded ${
+                                    (service as any).status === "Active"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {(service as any).status || "—"}
                                 </span>
                               </TableCell>
                             </TableRow>
                           ))
                         ) : (
                           <TableRow className="border-b border-gray-200">
-                            <TableCell colSpan={5} className="text-center text-sm text-gray-500">
+                            <TableCell
+                              colSpan={5}
+                              className="text-center text-sm text-gray-500"
+                            >
                               No services found
                             </TableCell>
                           </TableRow>
                         )
+                      ) : amcDetails.amc_assets?.length > 0 ? (
+                        amcDetails.amc_assets.map((asset: any) => {
+                          const locationParts = [
+                            asset.building_name || asset.building,
+                            asset.wing_name || asset.wing,
+                            asset.area_name || asset.area,
+                            asset.floor_name || asset.floor,
+                            asset.room_name || asset.room,
+                          ].filter(Boolean);
+                          const location =
+                            locationParts.length > 0
+                              ? locationParts.join(", ")
+                              : "—";
+                          const groupSubGroup =
+                            [asset.group_name, asset.sub_group_name]
+                              .filter(Boolean)
+                              .join(" / ") || "—";
+                          return (
+                            <TableRow
+                              key={asset.id}
+                              className="border-b border-gray-200"
+                            >
+                              <TableCell>
+                                <a
+                                  href={`/maintenance/asset/details/${asset.asset_id}`}
+                                  className="text-gray-600 hover:text-black"
+                                  title="View Details"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {asset.equipment_id ||
+                                  asset.asset_code ||
+                                  asset.asset_id ||
+                                  "—"}
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {asset.asset_name || "—"}
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {asset.model_no || asset.model_number || "—"}
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {groupSubGroup}
+                              </TableCell>
+                              <TableCell>
+                                <span
+                                  className={`px-2 py-1 text-xs rounded ${
+                                    asset.asset_status === "active"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {asset.asset_status?.replace("_", " ") || "—"}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {asset.criticality || "—"}
+                              </TableCell>
+                              <TableCell className="text-gray-900 text-sm">
+                                {location}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
                       ) : (
-                        amcDetails.amc_assets?.length > 0 ? (
-                          amcDetails.amc_assets.map((asset: any) => {
-                            const locationParts = [
-                              asset.building_name || asset.building,
-                              asset.wing_name || asset.wing,
-                              asset.area_name || asset.area,
-                              asset.floor_name || asset.floor,
-                              asset.room_name || asset.room,
-                            ].filter(Boolean);
-                            const location = locationParts.length > 0 ? locationParts.join(', ') : '—';
-                            const groupSubGroup = [asset.group_name, asset.sub_group_name].filter(Boolean).join(' / ') || '—';
-                            return (
-                              <TableRow key={asset.id} className="border-b border-gray-200">
-                                <TableCell>
-                                  <a
-                                    href={`/maintenance/asset/details/${asset.asset_id}`}
-                                    className="text-gray-600 hover:text-black"
-                                    title="View Details"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                  </a>
-                                </TableCell>
-                                <TableCell className="text-gray-900">{asset.equipment_id || asset.asset_code || asset.asset_id || '—'}</TableCell>
-                                <TableCell className="text-gray-900">{asset.asset_name || '—'}</TableCell>
-                                <TableCell className="text-gray-900">{asset.model_no || asset.model_number || '—'}</TableCell>
-                                <TableCell className="text-gray-900">{groupSubGroup}</TableCell>
-                                <TableCell>
-                                  <span className={`px-2 py-1 text-xs rounded ${
-                                    asset.asset_status === 'active'
-                                      ? 'bg-green-100 text-green-800'
-                                      : 'bg-gray-100 text-gray-800'
-                                  }`}>
-                                    {asset.asset_status?.replace('_', ' ') || '—'}
-                                  </span>
-                                </TableCell>
-                                <TableCell className="text-gray-900">{asset.criticality || '—'}</TableCell>
-                                <TableCell className="text-gray-900 text-sm">{location}</TableCell>
-                              </TableRow>
-                            );
-                          })
-                        ) : (
-                          <TableRow className="border-b border-gray-200">
-                            <TableCell colSpan={8} className="text-center text-sm text-gray-500">
-                              No assets found
-                            </TableCell>
-                          </TableRow>
-                        )
+                        <TableRow className="border-b border-gray-200">
+                          <TableCell
+                            colSpan={8}
+                            className="text-center text-sm text-gray-500"
+                          >
+                            No assets found
+                          </TableCell>
+                        </TableRow>
                       )}
                     </TableBody>
                   </Table>
@@ -1378,14 +1697,13 @@ export const AMCDetailsPage = () => {
               </CardContent>
             </Card>
           </TabsContent>
-
         </Tabs>
       </div>
 
       <AddVisitModal
         isOpen={showAddVisitModal}
         onClose={hanldeClose}
-        amcId={amcDetails?.id?.toString() || id || ''}
+        amcId={amcDetails?.id?.toString() || id || ""}
       />
     </div>
   );

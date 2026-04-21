@@ -1,10 +1,4 @@
-import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { X, UserPlus, Mail, User, Trash2, Link2, Copy } from "lucide-react";
 import {
@@ -44,9 +38,31 @@ interface DocumentShareModalProps {
 }
 
 const fieldStyles = {
-  height: { xs: 28, sm: 36, md: 45 },
+  height: { xs: 36, sm: 40, md: 45 },
+  backgroundColor: "white",
+  borderRadius: "4px",
+  "& .MuiOutlinedInput-root": {
+    height: { xs: 36, sm: 40, md: 45 },
+    backgroundColor: "white",
+    "& fieldset": {
+      borderColor: "#ddd",
+    },
+    "&:hover fieldset": {
+      borderColor: "#C72030",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#C72030",
+    },
+  },
   "& .MuiInputBase-input, & .MuiSelect-select": {
     padding: { xs: "8px", sm: "10px", md: "12px" },
+    color: "#1a1a1a",
+  },
+  "& .MuiInputLabel-root": {
+    color: "#666",
+    "&.Mui-focused": {
+      color: "#C72030",
+    },
   },
 };
 
@@ -62,7 +78,7 @@ const selectMenuProps = {
       zIndex: 9999,
     },
   },
-  disablePortal: false,
+  disableScrollLock: true,
   disableAutoFocus: true,
   disableEnforceFocus: true,
 };
@@ -84,6 +100,7 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
   const [accessLevel, setAccessLevel] = useState<"viewer" | "editor">("viewer");
   const [internalUsers, setInternalUsers] = useState<InternalUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Get organization ID from localStorage
   const getOrgId = () => {
@@ -229,45 +246,58 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
     onClose();
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose} modal={true}>
-      <DialogContent
-        className="max-w-3xl max-h-[82vh] overflow-y-auto bg-white z-50"
-        aria-describedby="document-share-dialog-description"
-      >
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-[#C72030]" />
-            SHARE DOCUMENT
-          </DialogTitle>
-          <div className="flex items-center gap-2">
-            {publicUuid && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyShareLink}
-                className="h-8 gap-2 border-[#C72030] text-[#C72030] hover:bg-red-50"
-              >
-                <Link2 className="h-4 w-4" />
-                <span className="hidden sm:inline">Copy Link</span>
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClose}
-              className="h-6 w-6 p-0 hover:bg-gray-100"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <div id="document-share-dialog-description" className="sr-only">
-            Share document with internal users and external emails with
-            different access levels
-          </div>
-        </DialogHeader>
+  if (!isOpen) return null;
 
-        <div className="space-y-6 py-4">
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-[1000] bg-black/80 animate-in fade-in-0"
+        onClick={onClose}
+      />
+      {/* Modal Container - flexbox centered, NO CSS transform */}
+      <div
+        className="fixed inset-0 z-[1000] flex items-center justify-center p-4"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
+      >
+        <div
+          ref={modalRef}
+          className="w-full max-w-3xl max-h-[82vh] bg-white rounded-lg shadow-2xl flex flex-col animate-in fade-in-0 zoom-in-95"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex flex-row items-center justify-between space-y-0 px-6 py-4 border-b border-gray-100 shrink-0">
+            <div className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-[#C72030]" />
+              SHARE DOCUMENT
+            </div>
+            <div className="flex items-center gap-2">
+              {publicUuid && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyShareLink}
+                  className="h-8 gap-2 border-[#C72030] text-[#C72030] hover:bg-red-50"
+                >
+                  <Link2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Copy Link</span>
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClose}
+                className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Scrollable Body */}
+          <div className="px-6 py-6 space-y-6 overflow-y-auto flex-1">
           {/* Add Share Section */}
           <div>
             <h3 className="text-sm font-medium text-[#C72030] mb-4">
@@ -302,55 +332,51 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
               </button>
             </div>
 
-            {/* Internal User Selection */}
-            {shareType === "internal" && (
-              <div className="space-y-3 mt-4">
-                <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Select User</InputLabel>
-                  <MuiSelect
-                    value={selectedUserId}
-                    onChange={(e) =>
-                      setSelectedUserId(e.target.value as number)
-                    }
-                    label="Select User"
-                    disabled={loading}
-                    displayEmpty
-                    MenuProps={selectMenuProps}
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="">
-                      <em>Select a user</em>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              {/* Internal User / External Email Input */}
+              {shareType === "internal" ? (
+                <TextField
+                  select
+                  fullWidth
+                  label="Select User"
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value as number)}
+                  variant="outlined"
+                  disabled={loading}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  SelectProps={{
+                    displayEmpty: true,
+                    MenuProps: selectMenuProps,
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Select a user</em>
+                  </MenuItem>
+                  {loading ? (
+                    <MenuItem disabled>
+                      <em>Loading users...</em>
                     </MenuItem>
-                    {loading ? (
-                      <MenuItem disabled>
-                        <em>Loading users...</em>
+                  ) : internalUsers.length === 0 ? (
+                    <MenuItem disabled>
+                      <em>No users found</em>
+                    </MenuItem>
+                  ) : (
+                    internalUsers.map((user) => (
+                      <MenuItem key={user.id} value={user.id}>
+                        <div className="flex flex-col w-full">
+                          <span className="font-medium text-gray-900">
+                            {user.full_name}
+                          </span>
+                          <span className="text-xs text-gray-500 mt-0.5">
+                            {user.user_type}
+                          </span>
+                        </div>
                       </MenuItem>
-                    ) : internalUsers.length === 0 ? (
-                      <MenuItem disabled>
-                        <em>No users found</em>
-                      </MenuItem>
-                    ) : (
-                      internalUsers.map((user) => (
-                        <MenuItem key={user.id} value={user.id}>
-                          <div className="flex flex-col w-full">
-                            <span className="font-medium text-gray-900">
-                              {user.full_name}
-                            </span>
-                            <span className="text-xs text-gray-500 mt-0.5">
-                              {user.user_type}
-                            </span>
-                          </div>
-                        </MenuItem>
-                      ))
-                    )}
-                  </MuiSelect>
-                </FormControl>
-              </div>
-            )}
-
-            {/* External Email Input */}
-            {shareType === "external" && (
-              <div className="space-y-3 mt-4">
+                    ))
+                  )}
+                </TextField>
+              ) : (
                 <TextField
                   fullWidth
                   label="Email Address"
@@ -362,41 +388,45 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
                 />
-              </div>
-            )}
+              )}
 
-            {/* Access Level Selection */}
-            <div className="mt-4">
-              <FormControl fullWidth variant="outlined">
-                <InputLabel shrink>Access Level</InputLabel>
-                <MuiSelect
-                  value={accessLevel}
-                  onChange={(e) =>
-                    setAccessLevel(e.target.value as "viewer" | "editor")
-                  }
-                  label="Access Level"
-                  displayEmpty
-                  MenuProps={selectMenuProps}
-                  sx={fieldStyles}
-                >
-                  <MenuItem value="viewer">
-                    <div className="flex flex-col w-full">
-                      <span className="font-medium text-gray-900">Viewer</span>
-                      <span className="text-xs text-gray-500 mt-0.5">
-                        Can view and download
-                      </span>
-                    </div>
-                  </MenuItem>
-                  <MenuItem value="editor">
-                    <div className="flex flex-col w-full">
-                      <span className="font-medium text-gray-900">Editor</span>
-                      <span className="text-xs text-gray-500 mt-0.5">
-                        Can view, download, and edit
-                      </span>
-                    </div>
-                  </MenuItem>
-                </MuiSelect>
-              </FormControl>
+              {/* Access Level Selection */}
+              <TextField
+                select
+                fullWidth
+                label="Access Level"
+                value={accessLevel}
+                onChange={(e) =>
+                  setAccessLevel(e.target.value as "viewer" | "editor")
+                }
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                SelectProps={{
+                  displayEmpty: true,
+                  MenuProps: selectMenuProps,
+                }}
+              >
+                <MenuItem value="" disabled>
+                  <em>Select access level</em>
+                </MenuItem>
+                <MenuItem value="viewer">
+                  <div className="flex flex-col w-full">
+                    <span className="font-medium text-gray-900">Viewer</span>
+                    <span className="text-xs text-gray-500 mt-0.5">
+                      Can view and download
+                    </span>
+                  </div>
+                </MenuItem>
+                <MenuItem value="editor">
+                  <div className="flex flex-col w-full">
+                    <span className="font-medium text-gray-900">Editor</span>
+                    <span className="text-xs text-gray-500 mt-0.5">
+                      Can view, download, and edit
+                    </span>
+                  </div>
+                </MenuItem>
+              </TextField>
             </div>
 
             {/* Add Button */}
@@ -459,6 +489,7 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
                             )
                           }
                           sx={{ height: "36px" }}
+                          MenuProps={selectMenuProps}
                         >
                           <MenuItem value="viewer">Viewer</MenuItem>
                           <MenuItem value="editor">Editor</MenuItem>
@@ -492,23 +523,24 @@ export const DocumentShareModal: React.FC<DocumentShareModalProps> = ({
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            className="px-6 py-2 bg-[#C72030] hover:bg-[#A01828] text-white"
-          >
-            Save
-          </Button>
+          {/* Footer Actions */}
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/50 shrink-0 rounded-b-lg">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="px-6 py-2 border-gray-300 text-gray-700 hover:bg-gray-50 bg-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              className="px-6 py-2 bg-[#C72030] hover:bg-[#A01828] text-white shadow-lg"
+            >
+              Save
+            </Button>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </>
   );
 };
