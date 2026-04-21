@@ -2351,34 +2351,141 @@ const productData = {
                 },
               ],
             },
+            {
+              title: "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 1: Tech / SaaS Companies",
+              columns: ["Phase", "Goals & Actions", "Milestone / Risk"],
+              rows: [
+                {
+                  col1: "Days 1–30 Foundation",
+                  col2: "Build 300-company target list. Launch 50 personalised outreaches/week. Create 5-min demo video.",
+                  col3: "Milestone: 5 qualified demo calls booked. Risk: generic messaging (needs 10 min research/lead).",
+                },
+                {
+                  col1: "Days 31–60 Traction",
+                  col2: "Run 5+ live demos. Setup pre-loaded sandbox trials. Proactively engage IT Heads on data architecture.",
+                  col3: "Milestone: 3 active trials running. Risk: trial inactivity (needs Day 2 check-in).",
+                },
+                {
+                  col1: "Days 61–90 Conversion",
+                  col2: "Week 9 usage review (show ROI). Present cost saving vs MS 365/Asana. Request peer references.",
+                  col3: "Milestone: 2 signed contracts + 1 case study. Risk: procurement delays (offer early-pay discount).",
+                },
+              ],
+            },
+            {
+              title: "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 1: Tech / SaaS Companies",
+              columns: ["Partnership element", "Details"],
+              rows: [
+                {
+                  label: "Timing for partnerships",
+                  detail: "Yes , but only after first 10 direct customers. Build direct sales motion first.",
+                },
+                {
+                  label: "Partner type 1",
+                  detail: "Indian SaaS consultants / implementation partners. Referral commission on Year 1 ARR.",
+                },
+              ],
+            },
           ],
           summaryBox:
             "Founder-led direct outbound → SDR + AE by Month 4. LinkedIn organic + personalised cold outreach. 5 demo calls → 3 trials → 2 signed contracts + 1 case study. Indian SaaS consultants (referral-only). CTO / VP Engineering (50–200 employees) | COO / CFO (200+ employees).",
         },
         {
           id: "TG2",
-          title:
-            "Professional Services, Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
-          components: [
+          name: "TG 2: Professional Services, Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+          sections: [
             {
-              component: "Sales Motion",
-              detail:
-                "Founder-led direct + field sales (in-person meetings). Relationship and trust based.",
+              title: "COMPONENT 1 , SALES MOTION | TG 2: Professional Services",
+              columns: ["Sales element", "Details"],
+              rows: [
+                {
+                  label: "Primary sales motion",
+                  detail: "Founder-led direct + field sales. This TG buys on relationships. Lunch meeting with MP is worth more than 20 cold emails.",
+                },
+                {
+                  label: "Avg. sales cycle",
+                  detail: "6–10 weeks. Requires partner approval and compliance review. GCC legal audit adds 3–4 weeks.",
+                },
+                {
+                  label: "Economic buyer",
+                  detail: "Managing Partner (small firms) or COO / Practice Head (larger firms). GCC: GM or Regional Director.",
+                },
+                {
+                  label: "Champion",
+                  detail: "Senior Manager or Associate Director managing client delivery. They feel the MoM pain.",
+                },
+                {
+                  label: "Blocker to anticipate",
+                  detail: "Legal/compliance partner asking 'where does client data go?'. Our 'your servers' answer closes it.",
+                  textColor: "#C62828",
+                  bgColor: "#FFEBEE",
+                },
+                {
+                  label: "What closes this TG",
+                  detail: "Demo of MoM-to-task + data sovereignty explanation. Reference from similarly regulated firm.",
+                  textColor: "#2E7D32",
+                  bgColor: "#E8F5E9",
+                },
+              ],
             },
             {
-              component: "Marketing Channels",
-              detail:
-                "LinkedIn organic, cold outreach, FICCI/CII/DIFC events, SEO & content marketing, referral & word of mouth, community & associations.",
+              title: "COMPONENT 2 , MARKETING CHANNELS | TG 2: Professional Services",
+              columns: ["Channel", "Relevant?", "Execution approach", "Priority rank"],
+              rows: [
+                {
+                  col1: "LinkedIn (organic + paid)",
+                  col2: "Yes",
+                  col3: "Content targeting Practice Heads: client data security, billable hour optimisation, DIFC/SEBI compliance.",
+                  col4: "#1 , High priority",
+                },
+                {
+                  col1: "Cold outreach",
+                  col2: "Yes",
+                  col3: "Hook: 'Your client contracts live on Google's servers. Here's an alternative.' Personalise Heavily.",
+                  col4: "#1 , High priority",
+                },
+                {
+                  col1: "Events & conferences",
+                  col2: "Yes",
+                  col3: "FICCI/CII/DIFC events. Host breakfast roundtables: 'confidentiality in a SaaS world'.",
+                  col4: "#2 , Month 2 onward",
+                },
+              ],
             },
             {
-              component: "90-Day Launch",
-              detail:
-                "Days 1–30: Foundation. Days 31–60: Traction. Days 61–90: Conversion.",
+              title: "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 2: Professional Services",
+              columns: ["Phase", "Goals & Actions", "Milestone / Risk"],
+              rows: [
+                {
+                  col1: "Days 1–30 Foundation",
+                  col2: "Map 50 target firms. Request warm intros from Lockated network. Draft PS-specific sovereignty PDF.",
+                  col3: "Milestone: 3 qualified meetings. Risk: warm intros lag (need cold parallel).",
+                },
+                {
+                  col1: "Days 31–60 Traction",
+                  col2: "Run 3+ demos. Set up pilot on LIVE client project. Send DIFC-specific compliance brief.",
+                  col3: "Milestone: 2 paid pilots. Risk: low activation (must bind to specific MoM).",
+                },
+                {
+                  col1: "Days 61–90 Conversion",
+                  col2: "Present pilot data (time saved). Show ROI on billing rate vs cost. Request case study.",
+                  col3: "Milestone: 2 signed contracts. Risk: partnership approval cycle.",
+                },
+              ],
             },
             {
-              component: "Partnership Strategy",
-              detail:
-                "Ex-Big4 boutique consultants (referral) + GCC RegTech vendors (co-marketing).",
+              title: "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 2: Professional Services",
+              columns: ["Partnership element", "Details"],
+              rows: [
+                {
+                  label: "GCC Partners",
+                  detail: "GCC RegTech vendors (co-marketing). Relationship based.",
+                },
+                {
+                  label: "Boutique consultants",
+                  detail: "Ex-Big4 boutique consultants (referral). High trust networks.",
+                },
+              ],
             },
           ],
           summaryBox:
