@@ -1,36 +1,38 @@
-import { AdminViewEmulation } from '@/components/AdminViewEmulation'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { TrendingUp } from 'lucide-react'
-import { TeamPerformance } from './TeamPerformance'
+import { TeamPerformance } from "./TeamPerformance";
 
 const TeamDashboard = () => {
-    return (
-        <div className="p-6 space-y-6 max-w-7xl mx-auto bg-[#f6f4ee] rounded-2xl border border-[rgba(218,119,86,0.18)]">
-            {/* Header Section */}
-            <div className="flex justify-between items-start">
-                <div>
-                    <h1 className="text-3xl font-bold text-[#1a1a1a]">Team Dashboard</h1>
-                    <p className="text-neutral-500 mt-1">Performance overview and feedback analytics</p>
-                </div>
-            </div>
+  return (
+    <div
+      className="min-h-screen w-full"
+      style={{ background: "#f6f4ee", fontFamily: "'Poppins', sans-serif" }}
+    >
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap'); * { font-family: 'Poppins', sans-serif !important; }`}</style>
 
-            <Tabs defaultValue="team_performance" className="w-full">
-                <TabsList className="w-full rounded-2xl bg-[#DA7756] p-1 h-auto">
-                    <TabsTrigger
-                        value="team_performance"
-                        className="w-full rounded-xl text-sm font-semibold text-white/80 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm"
-                    >
-                        <TrendingUp className='h-4 w-4 mr-2' />
-                        Team Performance
-                    </TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="team_performance" className="mt-5">
-                    <TeamPerformance />
-                </TabsContent>
-            </Tabs>
+      <div className="px-4 md:px-8 py-6 max-w-[1600px] mx-auto space-y-5">
+        <div
+          className="rounded-2xl border p-8"
+          style={{
+            background: "rgba(218,119,86,0.10)",
+            borderColor: "#e8e3de",
+          }}
+        >
+          <p
+            className="text-[10px] font-black uppercase tracking-[0.18em] mb-1"
+            style={{ color: "#6b7280" }}
+          >
+            Performance overview and feedback analytics
+          </p>
+          <h1
+            className="text-2xl font-black tracking-tight"
+            style={{ color: "#1a1a1a" }}
+          >
+            Team Dashboard
+          </h1>
         </div>
-    )
-}
+        <TeamPerformance />
+      </div>
+    </div>
+  );
+};
 
-export default TeamDashboard
+export default TeamDashboard;

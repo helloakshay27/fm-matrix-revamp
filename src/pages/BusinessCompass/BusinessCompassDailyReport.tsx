@@ -130,8 +130,12 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [absenceReason, setAbsenceReason] = useState("");
   const [isDetailedScoreExpanded, setIsDetailedScoreExpanded] = useState(false);
   const [isScoreInfoExpanded, setIsScoreInfoExpanded] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState(now.toLocaleString('default', { month: 'long' }));
-  const [selectedYear, setSelectedYear] = useState(now.getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState(
+    now.toLocaleString("default", { month: "long" })
+  );
+  const [selectedYear, setSelectedYear] = useState(
+    now.getFullYear().toString()
+  );
   const [accomplishments, setAccomplishments] = useState<
     { id: string; text: string; completed: boolean; starred: boolean }[]
   >([]);
@@ -139,15 +143,25 @@ const BusinessCompassDailyReport: React.FC = () => {
     { id: string; text: string; starred: boolean }[]
   >([]);
   const [uploadedFiles, setUploadedFiles] = useState<
-    { id: string; name: string; size: string; type: string; base64?: string; file?: File }[]
+    {
+      id: string;
+      name: string;
+      size: string;
+      type: string;
+      base64?: string;
+      file?: File;
+    }[]
   >([]);
-  const [reportAttachments, setReportAttachments] = useState<AttachmentFile[]>([]);
+  const [reportAttachments, setReportAttachments] = useState<AttachmentFile[]>(
+    []
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
   const closureFileInputRef = useRef<HTMLInputElement>(null);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [openTaskModal, setOpenTaskModal] = useState(false);
   const [openIssueModal, setOpenIssueModal] = useState(false);
-  const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] = useState<null | HTMLElement>(null);
+  const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] =
+    useState<null | HTMLElement>(null);
   const [showClosureModal, setShowClosureModal] = useState(false);
   const [closureItem, setClosureItem] = useState<any>(null);
   const [closureRemarks, setClosureRemarks] = useState("");
@@ -158,7 +172,9 @@ const BusinessCompassDailyReport: React.FC = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const [mergedTasksIssues, setMergedTasksIssues] = useState<any[]>([]);
-  const [selectedTasksIssues, setSelectedTasksIssues] = useState<{ [key: string]: boolean }>({});
+  const [selectedTasksIssues, setSelectedTasksIssues] = useState<{
+    [key: string]: boolean;
+  }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
@@ -169,7 +185,10 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [hasMoreIssues, setHasMoreIssues] = useState(true);
 
   // Get current user for filtering my tasks/issues
-  const user = typeof localStorage !== "undefined" ? JSON.parse(localStorage.getItem("user") || "{}") : {};
+  const user =
+    typeof localStorage !== "undefined"
+      ? JSON.parse(localStorage.getItem("user") || "{}")
+      : {};
   const userId = user?.id;
 
   // Build filter for my issues
@@ -186,7 +205,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     page: currentTasksPage,
     filters: {
       "q[start_date_or_target_date_eq]": startDate,
-    }
+    },
   });
 
   const { data: issuesData, isLoading: issuesLoading } = useIssues({
@@ -199,11 +218,13 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   // Merge and filter tasks and issues with infinite scroll support
   useEffect(() => {
-    const tasks = tasksData?.data?.task_managements || tasksData?.task_managements || [];
+    const tasks =
+      tasksData?.data?.task_managements || tasksData?.task_managements || [];
     const issues = issuesData?.issues || [];
 
     // Check if there are more pages
-    const tasksPagination = tasksData?.data?.pagination || tasksData?.pagination;
+    const tasksPagination =
+      tasksData?.data?.pagination || tasksData?.pagination;
     const issuesPagination = issuesData?.pagination;
 
     setHasMoreTasks(currentTasksPage < (tasksPagination?.total_pages || 1));
@@ -234,7 +255,9 @@ const BusinessCompassDailyReport: React.FC = () => {
     }));
 
     const newData = [...transformedTasks, ...transformedIssues].sort(
-      (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      (a, b) =>
+        new Date(b.created_at || 0).getTime() -
+        new Date(a.created_at || 0).getTime()
     );
 
     // For first page, replace data; for subsequent pages, append
@@ -244,9 +267,13 @@ const BusinessCompassDailyReport: React.FC = () => {
       setMergedTasksIssues((prev) => {
         // Remove duplicates by ID and append new data
         const existingIds = new Set(prev.map((item) => item.id));
-        const uniqueNewData = newData.filter((item) => !existingIds.has(item.id));
+        const uniqueNewData = newData.filter(
+          (item) => !existingIds.has(item.id)
+        );
         const merged = [...prev, ...uniqueNewData].sort(
-          (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+          (a, b) =>
+            new Date(b.created_at || 0).getTime() -
+            new Date(a.created_at || 0).getTime()
         );
         return merged;
       });
@@ -306,7 +333,14 @@ const BusinessCompassDailyReport: React.FC = () => {
       (item) => item.status === "in_progress"
     ).length;
 
-    return { completed, open, overdue, onHold, inProgress, total: mergedTasksIssues.length };
+    return {
+      completed,
+      open,
+      overdue,
+      onHold,
+      inProgress,
+      total: mergedTasksIssues.length,
+    };
   }, [mergedTasksIssues]);
 
   // KPI State
@@ -335,11 +369,11 @@ const BusinessCompassDailyReport: React.FC = () => {
     const fetchKpis = async () => {
       try {
         setKpiLoading(true);
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
 
         if (!baseUrl || !token) {
-          console.warn('Missing baseUrl or token');
+          console.warn("Missing baseUrl or token");
           return;
         }
 
@@ -347,9 +381,9 @@ const BusinessCompassDailyReport: React.FC = () => {
           `https://${baseUrl}/kpis/due_entries.json?date=${startDate}&journal_type=daily`,
           {
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }
         );
 
@@ -365,7 +399,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           setKpiEntries(entries);
         }
       } catch (error) {
-        console.error('Error fetching KPIs:', error);
+        console.error("Error fetching KPIs:", error);
       } finally {
         setKpiLoading(false);
       }
@@ -378,9 +412,20 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   // Helper function to determine if file is an image
   const isImageFile = (fileName: string, contentType: string) => {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp'];
+    const imageExtensions = [
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".gif",
+      ".webp",
+      ".svg",
+      ".bmp",
+    ];
     const lowerFileName = fileName.toLowerCase();
-    return contentType.startsWith('image/') || imageExtensions.some(ext => lowerFileName.endsWith(ext));
+    return (
+      contentType.startsWith("image/") ||
+      imageExtensions.some((ext) => lowerFileName.endsWith(ext))
+    );
   };
 
   const addAccomplishment = () => {
@@ -441,6 +486,18 @@ const BusinessCompassDailyReport: React.FC = () => {
     );
   };
 
+  // Transfer unchecked accomplishments to tomorrow's plan
+  const transferUncheckedToTomorrow = () => {
+    const unchecked = accomplishments.filter((a) => !a.completed);
+    const newPlanItems = unchecked.map((a) => ({
+      id: `transferred-${Date.now()}-${a.id}`,
+      text: a.text,
+      starred: a.starred,
+    }));
+    setPlanningItems((prev) => [...prev, ...newPlanItems]);
+    setAccomplishments((prev) => prev.filter((a) => a.completed));
+  };
+
   const triggerFileUpload = () => {
     fileInputRef.current?.click();
   };
@@ -449,7 +506,9 @@ const BusinessCompassDailyReport: React.FC = () => {
     closureFileInputRef.current?.click();
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = event.target.files;
     if (!files) return;
 
@@ -477,7 +536,9 @@ const BusinessCompassDailyReport: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleClosureFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleClosureFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const files = event.target.files;
     if (!files) return;
 
@@ -514,17 +575,35 @@ const BusinessCompassDailyReport: React.FC = () => {
       const isTask = closureItem.type === "task";
       const urlBase = `https://${baseUrl}`;
 
+      // 🚨 FIX 1: "task-123" mein se sirf number nikalo API ke liye
+      const realId = closureItem.id.replace("task-", "").replace("issue-", "");
+
+      // 🚨 FIX 2: UI aur color ko turant update karo (Optimistic Update)
+      setMergedTasksIssues((prev) =>
+        prev.map((item) =>
+          item.id === closureItem.id ? { ...item, status: "completed" } : item
+        )
+      );
+
+      setSelectedTasksIssues((prev) => ({
+        ...prev,
+        [closureItem.id]: true,
+      }));
+
       const formDataToSend = new FormData();
-      // Step 1: Update the item status
+
+      // Step 1: Update the item status in API
       if (isTask) {
-        // Update task status to "completed"
         formDataToSend.append("task_management[status]", "completed");
         closureAttachments.forEach((attachment) => {
-          formDataToSend.append(`task_management[attachments][]`, attachment.file);
+          formDataToSend.append(
+            `task_management[attachments][]`,
+            attachment.file
+          );
         });
 
         await axios.put(
-          `${urlBase}/task_managements/${closureItem.id}.json`,
+          `${urlBase}/task_managements/${realId}.json`, // Yahan realId use kiya
           formDataToSend,
           {
             headers: {
@@ -533,14 +612,13 @@ const BusinessCompassDailyReport: React.FC = () => {
           }
         );
       } else {
-        // Update issue status to "closed"
         formDataToSend.append("issue[status]", "completed");
         closureAttachments.forEach((attachment) => {
           formDataToSend.append(`issue[attachments][]`, attachment.file);
         });
 
         await axios.put(
-          `${urlBase}/issues/${closureItem.id}.json`,
+          `${urlBase}/issues/${realId}.json`, // Yahan realId use kiya
           formDataToSend,
           {
             headers: {
@@ -555,7 +633,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         const commentPayload = {
           comment: {
             body: `Closure Remarks: ${closureRemarks}`,
-            commentable_id: closureItem.id,
+            commentable_id: realId, // Yahan realId use kiya
             commentable_type: isTask ? "TaskManagement" : "Issue",
             commentor_id: userId,
             active: true,
@@ -568,12 +646,6 @@ const BusinessCompassDailyReport: React.FC = () => {
           },
         });
       }
-
-      // Mark as completed in UI
-      setSelectedTasksIssues((prev) => ({
-        ...prev,
-        [closureItem.id]: true,
-      }));
 
       // Close modal and reset
       setShowClosureModal(false);
@@ -588,13 +660,22 @@ const BusinessCompassDailyReport: React.FC = () => {
           ? `${itemName} marked as closed with remarks and attachments`
           : `${itemName} marked as closed`;
 
-      // Optionally show toast/notification
       if (typeof window !== "undefined" && (window as any).toast) {
         (window as any).toast.success(message);
       }
     } catch (error) {
       console.error("Error marking item as closed:", error);
       const itemName = closureItem?.type === "task" ? "task" : "issue";
+
+      // Agar API fail ho jaye toh color wapas pehle jaisa kar do (Optional but safe)
+      setMergedTasksIssues((prev) =>
+        prev.map((item) =>
+          item.id === closureItem.id
+            ? { ...item, status: closureItem.status }
+            : item
+        )
+      );
+
       if (typeof window !== "undefined" && (window as any).toast) {
         (window as any).toast.error(`Failed to close ${itemName}`);
       }
@@ -602,7 +683,6 @@ const BusinessCompassDailyReport: React.FC = () => {
       setIsClosureSubmitting(false);
     }
   };
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -694,7 +774,9 @@ const BusinessCompassDailyReport: React.FC = () => {
   const handleSelectDate = (item: any) => {
     setSelectedDate(item.date);
     setStartDate(item.fullDate);
-    setSelectedMonth(item.actualDate.toLocaleString("default", { month: "long" }));
+    setSelectedMonth(
+      item.actualDate.toLocaleString("default", { month: "long" })
+    );
     setSelectedYear(item.actualDate.getFullYear().toString());
 
     // Find the report for this date from reportsList
@@ -706,17 +788,18 @@ const BusinessCompassDailyReport: React.FC = () => {
       // Populate accomplishments
       if (report.report_data?.accomplishments?.items) {
         setAccomplishments(
-          report.report_data.accomplishments.items.map((ach: any, idx: number) => ({
-            id: `fetched-ach-${idx}`,
-            text: ach.title || "",
-            completed: true,
-            starred: false,
-          }))
+          report.report_data.accomplishments.items.map(
+            (ach: any, idx: number) => ({
+              id: `fetched-ach-${idx}`,
+              text: ach.title || "",
+              completed: true,
+              starred: false,
+            })
+          )
         );
       } else {
         setAccomplishments([]);
       }
-
 
       // Load report attachments (from API response)
       if (report.attachments && report.attachments.length > 0) {
@@ -846,7 +929,10 @@ const BusinessCompassDailyReport: React.FC = () => {
               }
 
               // Load report attachments (from API response)
-              if (existingReport.attachments && existingReport.attachments.length > 0) {
+              if (
+                existingReport.attachments &&
+                existingReport.attachments.length > 0
+              ) {
                 setReportAttachments(existingReport.attachments);
               } else {
                 setReportAttachments([]);
@@ -872,8 +958,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                 setKpiEntries({});
               }
 
-              if (existingReport.is_absent !== undefined) setIsAbsent(existingReport.is_absent);
-              if (existingReport.description) setAbsenceReason(existingReport.description);
+              if (existingReport.is_absent !== undefined)
+                setIsAbsent(existingReport.is_absent);
+              if (existingReport.description)
+                setAbsenceReason(existingReport.description);
               if (existingReport.self_rating !== undefined)
                 setSelfRating([existingReport.self_rating]);
               setSelectedTasksIssues({});
@@ -933,7 +1021,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-      })
+      });
 
       setReportsList(response.data || []);
     } catch (err) {
@@ -989,7 +1077,12 @@ const BusinessCompassDailyReport: React.FC = () => {
               })),
             },
             tasks_issues: mergedTasksIssues
-              .filter(item => selectedTasksIssues[item.id])
+              .filter(
+                (item) =>
+                  selectedTasksIssues[item.id] ||
+                  item.status === "completed" ||
+                  item.status === "closed"
+              )
               .map((item) => ({
                 name: item.title,
                 status: "completed",
@@ -999,7 +1092,9 @@ const BusinessCompassDailyReport: React.FC = () => {
             })),
             past_kpis: kpis.map((kpi) => ({
               kpi_id: kpi.kpi_id,
-              actual_value: kpiEntries[kpi.kpi_id] ? parseFloat(kpiEntries[kpi.kpi_id]) : 0,
+              actual_value: kpiEntries[kpi.kpi_id]
+                ? parseFloat(kpiEntries[kpi.kpi_id])
+                : 0,
               target_value: parseFloat(kpi.target_value),
               notes: kpi.kpi_name,
             })),
@@ -1043,10 +1138,15 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       setSubmitSuccess(true);
 
-      // Refetch reports list to update history, but keep form data as-is
+      // Refetch reports list to update history
       fetchReportsList();
 
-      setTimeout(() => setSubmitSuccess(false), 5000);
+      // Redirect to history tab after a short delay
+      setTimeout(() => {
+        setSubmitSuccess(false);
+        setActiveTab("history");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 1500);
     } catch (err: unknown) {
       console.error("Submission failed:", err);
       setSubmitError(
@@ -1208,24 +1308,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                       {selectedMonth.slice(0, 3)}, {selectedYear}
                     </span>
                   </div>
-                  {/* <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-gray-400 hover:text-gray-900 border-none"
-                      onClick={handlePrevWeek}
-                    >
-                      <ChevronLeft size={20} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-gray-400 hover:text-gray-900 border-none"
-                      onClick={handleNextWeek}
-                    >
-                      <ChevronRight size={20} />
-                    </Button>
-                  </div> */}
                 </div>
 
                 <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
@@ -1234,15 +1316,16 @@ const BusinessCompassDailyReport: React.FC = () => {
                       key={index}
                       className={cn(
                         "min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 cursor-pointer border-2 transition-all shrink-0 snap-center shadow-sm relative group",
-                        item.isFuture && "opacity-40 grayscale cursor-not-allowed pointer-events-none",
+                        item.isFuture &&
+                          "opacity-40 grayscale cursor-not-allowed pointer-events-none",
                         item.type === "missed" &&
-                        "bg-[#ef4444] text-white border-[#ef4444]/20 hover:bg-[#dc2626]",
+                          "bg-[#ef4444] text-white border-[#ef4444]/20 hover:bg-[#dc2626]",
                         item.type === "holiday" &&
-                        "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 hover:bg-[#facc15]",
+                          "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 hover:bg-[#facc15]",
                         item.type === "upcoming" &&
-                        "bg-[#f8fafc] text-[#94a3b8] border-gray-100 hover:bg-gray-100",
+                          "bg-[#f8fafc] text-[#94a3b8] border-gray-100 hover:bg-gray-100",
                         item.type === "filled" &&
-                        "bg-[#22c55e] text-white border-[#22c55e]/20 hover:bg-[#16a34a]",
+                          "bg-[#22c55e] text-white border-[#22c55e]/20 hover:bg-[#16a34a]",
                         selectedDate === item.date && !item.isFuture
                           ? "ring-4 ring-blue-500/20 scale-105 z-10 text-white"
                           : "border-transparent"
@@ -1259,11 +1342,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <Badge
                           className={cn(
                             "text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter",
-                            (item.type === "missed" || item.type === "filled")
+                            item.type === "missed" || item.type === "filled"
                               ? "bg-white/20 text-white"
                               : "bg-black/10 text-[#854d0e]",
                             selectedDate === item.date &&
-                            "bg-white/20 text-white"
+                              "bg-white/20 text-white"
                           )}
                         >
                           {item.status}
@@ -1315,7 +1398,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                     </div>
                     <CardContent className="p-6 space-y-4">
                       {kpis.map((kpi) => (
-                        <div key={kpi.kpi_id} className="flex items-center gap-4 p-4 rounded-lg bg-[#fafafa] border border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors">
+                        <div
+                          key={kpi.kpi_id}
+                          className="flex items-center gap-4 p-4 rounded-lg bg-[#fafafa] border border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors"
+                        >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
                               <h4 className="text-sm font-bold text-[#1a1a1a] truncate">
@@ -1328,19 +1414,25 @@ const BusinessCompassDailyReport: React.FC = () => {
                               )}
                             </div>
                             <div className="flex items-center gap-2 text-xs text-gray-600">
-                              <span className="font-medium">Target: {kpi.unit} {kpi.target_value}</span>
+                              <span className="font-medium">
+                                Target: {kpi.unit} {kpi.target_value}
+                              </span>
                               <span className="text-gray-400">•</span>
-                              <span className="text-gray-500">{kpi.frequency_label}</span>
+                              <span className="text-gray-500">
+                                {kpi.frequency_label}
+                              </span>
                             </div>
                           </div>
                           <div className="w-32">
                             <input
                               type="number"
-                              value={kpiEntries[kpi.kpi_id] || ''}
-                              onChange={(e) => setKpiEntries(prev => ({
-                                ...prev,
-                                [kpi.kpi_id]: e.target.value
-                              }))}
+                              value={kpiEntries[kpi.kpi_id] || ""}
+                              onChange={(e) =>
+                                setKpiEntries((prev) => ({
+                                  ...prev,
+                                  [kpi.kpi_id]: e.target.value,
+                                }))
+                              }
                               placeholder="0"
                               className="w-full px-3 py-2 border border-[#e5e7eb] rounded-[10px] text-sm font-bold text-right bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/30 focus:border-[#f59e0b]"
                             />
@@ -1475,6 +1567,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           <Button
                             variant="outline"
                             className="h-11 border-blue-200 text-blue-600 font-bold text-xs bg-white hover:bg-blue-50 rounded-[8px] px-4"
+                            onClick={transferUncheckedToTomorrow}
                           >
                             Transfer unchecked to tomorrow
                           </Button>
@@ -1499,7 +1592,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                           className="hidden"
                         />
                         <Button
-                          disabled={uploadedFiles.length + reportAttachments.length >= 5}
+                          disabled={
+                            uploadedFiles.length + reportAttachments.length >= 5
+                          }
                           className={cn(
                             "bg-[#10b981] text-white font-black px-6 h-10 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none",
                             uploadedFiles.length + reportAttachments.length >= 5
@@ -1556,44 +1651,70 @@ const BusinessCompassDailyReport: React.FC = () => {
                       <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
                         <div className="flex items-center gap-2">
                           <Upload size={16} className="text-purple-600" />
-                          <span className="text-sm font-bold text-[#1a1a1a]">Linked Files ({reportAttachments.length})</span>
+                          <span className="text-sm font-bold text-[#1a1a1a]">
+                            Linked Files ({reportAttachments.length})
+                          </span>
                         </div>
                         <div className="space-y-2">
-                          {reportAttachments.map((attachment: AttachmentFile, idx: number) => {
-                            const isImage = isImageFile(attachment.document_file_name, attachment.document_content_type);
-                            return (
-                              <div
-                                key={attachment.id || idx}
-                                className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
-                              >
-                                <div className="flex items-center gap-3 flex-1 min-w-0">
-                                  {isImage ? (
-                                    <ImageIcon size={20} className="text-purple-600 shrink-0" />
-                                  ) : (
-                                    <FileText size={20} className="text-blue-600 shrink-0" />
-                                  )}
-                                  <div className="flex flex-col gap-1 min-w-0 flex-1">
-                                    <a
-                                      href={attachment.document_url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2 group-hover:text-purple-700 transition-colors"
-                                    >
-                                      {attachment.document_file_name}
-                                    </a>
-                                    <span className="text-[11px] text-gray-600 font-medium">
-                                      {attachment.relation} • {(attachment.document_file_size / 1024).toFixed(2)} KB • {new Date(attachment.document_updated_at).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}
-                                    </span>
+                          {reportAttachments.map(
+                            (attachment: AttachmentFile, idx: number) => {
+                              const isImage = isImageFile(
+                                attachment.document_file_name,
+                                attachment.document_content_type
+                              );
+                              return (
+                                <div
+                                  key={attachment.id || idx}
+                                  className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
+                                >
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    {isImage ? (
+                                      <ImageIcon
+                                        size={20}
+                                        className="text-purple-600 shrink-0"
+                                      />
+                                    ) : (
+                                      <FileText
+                                        size={20}
+                                        className="text-blue-600 shrink-0"
+                                      />
+                                    )}
+                                    <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                      <a
+                                        href={attachment.document_url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2 group-hover:text-purple-700 transition-colors"
+                                      >
+                                        {attachment.document_file_name}
+                                      </a>
+                                      <span className="text-[11px] text-gray-600 font-medium">
+                                        {attachment.relation} •{" "}
+                                        {(
+                                          attachment.document_file_size / 1024
+                                        ).toFixed(2)}{" "}
+                                        KB •{" "}
+                                        {new Date(
+                                          attachment.document_updated_at
+                                        ).toLocaleDateString("en-US", {
+                                          month: "numeric",
+                                          day: "numeric",
+                                          year: "numeric",
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0 ml-3">
+                                    <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                      {attachment.active
+                                        ? "Active"
+                                        : "Inactive"}
+                                    </Badge>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0 ml-3">
-                                  <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
-                                    {attachment.active ? 'Active' : 'Inactive'}
-                                  </Badge>
-                                </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            }
+                          )}
                         </div>
                       </div>
                     )}
@@ -1614,7 +1735,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </h3>
                         </div>
                         <p className="text-[11px] text-gray-500 font-medium">
-                          {tasksLoading || issuesLoading ? "Loading..." : `Total: ${taskIssueCounts.total} items`}
+                          {tasksLoading || issuesLoading
+                            ? "Loading..."
+                            : `Total: ${taskIssueCounts.total} items`}
                         </p>
                         <div className="flex flex-wrap gap-2 pt-1">
                           <Badge
@@ -1660,7 +1783,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                         <Button
                           className="bg-[#b91c1c] hover:bg-[#991b1b] text-white font-black px-4 h-8 rounded-[4px] flex items-center gap-2 text-[10px] shadow-md transition-all border-none"
-                          onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
+                          onClick={(e) =>
+                            setTaskIssueMenuAnchor(e.currentTarget)
+                          }
                         >
                           <Plus size={14} />
                           Add
@@ -1672,28 +1797,41 @@ const BusinessCompassDailyReport: React.FC = () => {
                   <CardContent className="p-6">
                     {tasksLoading || issuesLoading ? (
                       <div className="flex flex-col items-center justify-center text-center py-10">
-                        <Loader2 size={40} className="text-[#b91c1c]/30 animate-spin mb-3" />
-                        <p className="text-sm font-bold text-gray-500">Loading tasks and issues...</p>
+                        <Loader2
+                          size={40}
+                          className="text-[#b91c1c]/30 animate-spin mb-3"
+                        />
+                        <p className="text-sm font-bold text-gray-500">
+                          Loading tasks and issues...
+                        </p>
                       </div>
                     ) : mergedTasksIssues.length === 0 ? (
                       <div className="flex flex-col items-center justify-center text-center py-10">
                         <div className="flex flex-col items-center gap-3 opacity-30">
-                          <CheckSquare size={40} className="text-[#b91c1c]/20" />
+                          <CheckSquare
+                            size={40}
+                            className="text-[#b91c1c]/20"
+                          />
                           <p className="text-base font-bold text-gray-400 tracking-tight">
                             No open tasks or issues
                           </p>
                         </div>
                       </div>
                     ) : (
-                      <div className="space-y-2 max-h-[400px] overflow-y-auto" ref={scrollContainerRef}>
+                      <div
+                        className="space-y-2 max-h-[400px] overflow-y-auto"
+                        ref={scrollContainerRef}
+                      >
                         {mergedTasksIssues.map((item: any) => (
                           <div
                             key={item.id}
                             className={cn(
                               "flex items-center gap-3 p-3 rounded-[10px] border transition-all",
-                              item.status === "completed" || item.status === "closed"
+                              item.status === "completed" ||
+                                item.status === "closed"
                                 ? "bg-green-50/50 border-green-200/50"
-                                : item.status === "overdue" || item.status === "on_hold"
+                                : item.status === "overdue" ||
+                                    item.status === "on_hold"
                                   ? "bg-red-50/50 border-red-200/50"
                                   : item.status === "in_progress"
                                     ? "bg-amber-50/50 border-amber-200/50"
@@ -1701,15 +1839,23 @@ const BusinessCompassDailyReport: React.FC = () => {
                             )}
                           >
                             <Checkbox
-                              checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
+                              checked={
+                                selectedTasksIssues[item.id] ||
+                                item.status === "completed" ||
+                                item.status === "closed"
+                              }
                               onCheckedChange={(checked) => {
-                                if (checked && item.status !== "completed" && item.status !== "closed") {
+                                if (
+                                  checked &&
+                                  item.status !== "completed" &&
+                                  item.status !== "closed"
+                                ) {
                                   setClosureItem(item);
                                   setShowClosureModal(true);
                                 } else {
-                                  setSelectedTasksIssues(prev => ({
+                                  setSelectedTasksIssues((prev) => ({
                                     ...prev,
-                                    [item.id]: checked as boolean
+                                    [item.id]: checked as boolean,
                                   }));
                                 }
                               }}
@@ -1719,10 +1865,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white text-gray-600 uppercase">
                                 {item.type}
                               </span>
-                              {item.status === "completed" || item.status === "closed" ? (
-                                <CheckCircle2 size={16} className="text-green-600" />
-                              ) : item.status === "overdue" || item.status === "on_hold" ? (
-                                <AlertCircle size={16} className="text-red-600" />
+                              {item.status === "completed" ||
+                              item.status === "closed" ? (
+                                <CheckCircle2
+                                  size={16}
+                                  className="text-green-600"
+                                />
+                              ) : item.status === "overdue" ||
+                                item.status === "on_hold" ? (
+                                <AlertCircle
+                                  size={16}
+                                  className="text-red-600"
+                                />
                               ) : item.status === "in_progress" ? (
                                 <Clock size={16} className="text-amber-600" />
                               ) : (
@@ -1730,10 +1884,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                               )}
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className={cn(
-                                "text-sm font-medium truncate",
-                                (item.status === "completed" || item.status === "closed") && "line-through text-gray-400"
-                              )}>
+                              <p
+                                className={cn(
+                                  "text-sm font-medium truncate",
+                                  (item.status === "completed" ||
+                                    item.status === "closed") &&
+                                    "line-through text-gray-400"
+                                )}
+                              >
                                 {item.title}
                               </p>
                               <p className="text-xs text-gray-500 capitalize">
@@ -1744,8 +1902,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <span
                                 className="text-[10px] px-2 py-1 rounded-full font-bold"
                                 style={{
-                                  backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                  color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                  backgroundColor:
+                                    item.priority === "High"
+                                      ? "#fee2e2"
+                                      : item.priority === "Medium"
+                                        ? "#fef3c7"
+                                        : "#dcfce7",
+                                  color:
+                                    item.priority === "High"
+                                      ? "#991b1b"
+                                      : item.priority === "Medium"
+                                        ? "#92400e"
+                                        : "#166534",
                                 }}
                               >
                                 {item.priority}
@@ -1755,8 +1923,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                         ))}
                         {isLoadingMore && (
                           <div className="flex items-center justify-center py-4">
-                            <Loader2 size={20} className="text-[#b91c1c]/50 animate-spin mr-2" />
-                            <p className="text-xs text-gray-500 font-medium">Loading more...</p>
+                            <Loader2
+                              size={20}
+                              className="text-[#b91c1c]/50 animate-spin mr-2"
+                            />
+                            <p className="text-xs text-gray-500 font-medium">
+                              Loading more...
+                            </p>
                           </div>
                         )}
                       </div>
@@ -1789,7 +1962,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </h3>
                     </div>
                     <Badge className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-3 py-1 rounded-[6px] text-[10px] font-black tracking-widest border-none shadow-sm">
-                      {dailyScore.planningScore}/{dailyScore.details.planning.maxPoints} PTS
+                      {dailyScore.planningScore}/
+                      {dailyScore.details.planning.maxPoints} PTS
                     </Badge>
                   </div>
 
@@ -1850,7 +2024,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                             Plan your next working day!
                           </p>
                           <p className="text-xs text-gray-500 font-medium">
-                            List 3-5 key tasks for {nextDayLabel || "tomorrow"} to stay focused.
+                            List 3-5 key tasks for {nextDayLabel || "tomorrow"}{" "}
+                            to stay focused.
                           </p>
                         </div>
                       </div>
@@ -1934,24 +2109,49 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <div className="mb-4 bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 border border-green-100">
                       <CheckCircle2 size={16} />
                       {currentReportId
-                        ? "Daily report updated successfully."
-                        : "Daily report submitted successfully."}
+                        ? "Daily report updated successfully. Redirecting to history..."
+                        : "Daily report submitted successfully. Redirecting to history..."}
                     </div>
                   )}
-                  <Button
-                    className="w-full h-14 bg-black hover:bg-zinc-800 text-white font-black text-lg rounded-[14px] shadow-sm transition-all border-none focus-visible:ring-0 disabled:opacity-50"
+                  <button
+                    className={cn(
+                      // Base styles
+                      "w-full h-[56px] font-black text-[18px] rounded-[14px] transition-all duration-200 ease-in-out border-none flex items-center justify-center gap-2",
+
+                      // Hover Effects (Scale up slightly, add bigger shadow, push down on click)
+                      isSubmitting
+                        ? "opacity-60 cursor-not-allowed"
+                        : "cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.15)] active:translate-y-0 active:shadow-sm",
+
+                      // Background Colors with Hover states (! zaruri hai taaki koi aur CSS panga na kare)
+                      currentReportId
+                        ? "!bg-[#2563eb] hover:!bg-[#1d4ed8]" // Blue to Darker Blue
+                        : "!bg-[#16a34a] hover:!bg-[#15803d]" // Green to Darker Green
+                    )}
+                    style={{ color: "#ffffff" }} // Text ko hamesha white rakhne ke liye
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2 size={20} className="animate-spin" />
-                        {currentReportId ? "Updating..." : "Submitting..."}
-                      </span>
+                      <>
+                        <Loader2
+                          size={20}
+                          className="animate-spin"
+                          style={{ color: "#ffffff" }}
+                        />
+                        <span
+                          style={{ color: "#ffffff", margin: 0, padding: 0 }}
+                        >
+                          {currentReportId ? "Updating..." : "Submitting..."}
+                        </span>
+                      </>
                     ) : (
-                      `${currentReportId ? "Update" : "Submit"} Daily Report (for ${selectedDate} ${selectedMonth.slice(0, 3)})`
+                      <span style={{ color: "#ffffff", margin: 0, padding: 0 }}>
+                        {currentReportId ? "Update" : "Submit"} Daily Report
+                        (for {selectedDate} {selectedMonth.slice(0, 3)})
+                      </span>
                     )}
-                  </Button>
+                  </button>
                 </div>
               </div>
             </Card>
@@ -2063,23 +2263,37 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                             </div>
                             <span className="text-xs font-black text-green-600">
-                              {dailyScore.kpiScore}/{dailyScore.details.kpi.maxPoints} pts
+                              {dailyScore.kpiScore}/
+                              {dailyScore.details.kpi.maxPoints} pts
                             </span>
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-green-50">
                             {dailyScore.details.kpi.hasKPIs ? (
                               <>
-                                {dailyScore.details.kpi.kpis.map((kpi: any, idx: number) => (
-                                  <div key={idx} className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                                    <span className="flex items-center gap-2">
-                                      • {kpi.name}:
-                                    </span>
-                                    <span className="text-gray-900">{kpi.achievement.toFixed(1)}% = {kpi.points.toFixed(2)} pts</span>
-                                  </div>
-                                ))}
+                                {dailyScore.details.kpi.kpis.map(
+                                  (kpi: any, idx: number) => (
+                                    <div
+                                      key={idx}
+                                      className="flex items-center justify-between text-[11px] font-bold text-gray-500"
+                                    >
+                                      <span className="flex items-center gap-2">
+                                        • {kpi.name}:
+                                      </span>
+                                      <span className="text-gray-900">
+                                        {kpi.achievement.toFixed(1)}% ={" "}
+                                        {kpi.points.toFixed(2)} pts
+                                      </span>
+                                    </div>
+                                  )
+                                )}
                                 <div className="flex items-center justify-between text-[11px] font-black text-green-900 pt-1 border-t border-gray-50">
                                   <span>Average Achievement:</span>
-                                  <span>{dailyScore.details.kpi.averageAchievement.toFixed(1)}%</span>
+                                  <span>
+                                    {dailyScore.details.kpi.averageAchievement.toFixed(
+                                      1
+                                    )}
+                                    %
+                                  </span>
                                 </div>
                               </>
                             ) : (
@@ -2100,7 +2314,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                             </div>
                             <span className="text-xs font-black text-purple-600">
-                              {dailyScore.accomplishmentsScore}/{dailyScore.details.accomplishments.maxPoints} pts
+                              {dailyScore.accomplishmentsScore}/
+                              {dailyScore.details.accomplishments.maxPoints} pts
                             </span>
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-purple-50">
@@ -2108,17 +2323,32 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <span className="flex items-center gap-2">
                                 • Completed items:
                               </span>
-                              <span className="text-gray-900">{dailyScore.details.accomplishments.completedItems}/{dailyScore.details.accomplishments.totalItems} items</span>
+                              <span className="text-gray-900">
+                                {
+                                  dailyScore.details.accomplishments
+                                    .completedItems
+                                }
+                                /{dailyScore.details.accomplishments.totalItems}{" "}
+                                items
+                              </span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                               <span className="flex items-center gap-2">
                                 • Completion rate:
                               </span>
-                              <span className="text-gray-900">{dailyScore.details.accomplishments.completionPercentage.toFixed(0)}%</span>
+                              <span className="text-gray-900">
+                                {dailyScore.details.accomplishments.completionPercentage.toFixed(
+                                  0
+                                )}
+                                %
+                              </span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] font-black text-purple-900 pt-1 border-t border-gray-50">
                               <span>Total earned:</span>
-                              <span>{dailyScore.accomplishmentsScore} pts (max {dailyScore.details.accomplishments.maxPoints})</span>
+                              <span>
+                                {dailyScore.accomplishmentsScore} pts (max{" "}
+                                {dailyScore.details.accomplishments.maxPoints})
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -2136,7 +2366,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                             </div>
                             <span className="text-xs font-black text-[#ea580c]">
-                              {dailyScore.tasksIssuesScore}/{dailyScore.details.tasksIssues.maxPoints} pts
+                              {dailyScore.tasksIssuesScore}/
+                              {dailyScore.details.tasksIssues.maxPoints} pts
                             </span>
                           </div>
                           <div className="bg-slate-50/50 rounded-[12px] border border-slate-100 p-4 space-y-3">
@@ -2150,9 +2381,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     size={12}
                                     className="text-green-500"
                                   />{" "}
-                                  Closed On Time ({dailyScore.details.tasksIssues.closedOnTimeCount} × 5 pts)
+                                  Closed On Time (
+                                  {
+                                    dailyScore.details.tasksIssues
+                                      .closedOnTimeCount
+                                  }{" "}
+                                  × 5 pts)
                                 </span>
-                                <span className="text-green-600">+{dailyScore.details.tasksIssues.closedOnTimeCount * 5}</span>
+                                <span className="text-green-600">
+                                  +
+                                  {dailyScore.details.tasksIssues
+                                    .closedOnTimeCount * 5}
+                                </span>
                               </div>
                               <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                                 <span className="flex items-center gap-2">
@@ -2160,9 +2400,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     size={12}
                                     className="text-orange-500"
                                   />{" "}
-                                  Closed Late ({dailyScore.details.tasksIssues.closedLateCount} × 2 pts)
+                                  Closed Late (
+                                  {
+                                    dailyScore.details.tasksIssues
+                                      .closedLateCount
+                                  }{" "}
+                                  × 2 pts)
                                 </span>
-                                <span className="text-orange-600">+{dailyScore.details.tasksIssues.closedLateCount * 2}</span>
+                                <span className="text-orange-600">
+                                  +
+                                  {dailyScore.details.tasksIssues
+                                    .closedLateCount * 2}
+                                </span>
                               </div>
                               <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                                 <span className="flex items-center gap-2">
@@ -2170,13 +2419,31 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     size={12}
                                     className="text-blue-500"
                                   />{" "}
-                                  New Issues ({dailyScore.details.tasksIssues.newIssuesCount} × 2 pts, max 10)
+                                  New Issues (
+                                  {
+                                    dailyScore.details.tasksIssues
+                                      .newIssuesCount
+                                  }{" "}
+                                  × 2 pts, max 10)
                                 </span>
-                                <span className="text-blue-600">+{Math.min(dailyScore.details.tasksIssues.newIssuesCount * 2, 10)}</span>
+                                <span className="text-blue-600">
+                                  +
+                                  {Math.min(
+                                    dailyScore.details.tasksIssues
+                                      .newIssuesCount * 2,
+                                    10
+                                  )}
+                                </span>
                               </div>
                               <div className="flex items-center justify-between text-[11px] font-black text-gray-900 pt-1 border-t border-gray-100">
                                 <span>Subtotal (Positive)</span>
-                                <span>+{dailyScore.details.tasksIssues.positivePoints}</span>
+                                <span>
+                                  +
+                                  {
+                                    dailyScore.details.tasksIssues
+                                      .positivePoints
+                                  }
+                                </span>
                               </div>
                               <div className="flex items-center justify-between text-[11px] font-bold text-red-500">
                                 <span className="flex items-center gap-2">
@@ -2184,17 +2451,25 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     size={12}
                                     className="text-red-500"
                                   />{" "}
-                                  Overdue Penalty ({dailyScore.details.tasksIssues.overdueCount} × 5 pts, max -15)
+                                  Overdue Penalty (
+                                  {dailyScore.details.tasksIssues.overdueCount}{" "}
+                                  × 5 pts, max -15)
                                 </span>
-                                <span>{dailyScore.details.tasksIssues.penaltyPoints}</span>
+                                <span>
+                                  {dailyScore.details.tasksIssues.penaltyPoints}
+                                </span>
                               </div>
                               <div className="flex items-center justify-between text-[11px] font-black text-gray-900 pt-1 border-t border-gray-200">
                                 <span className="text-sm">Final Score</span>
-                                <span className="text-[#ea580c]">{dailyScore.tasksIssuesScore}/{dailyScore.details.tasksIssues.maxPoints} pts</span>
+                                <span className="text-[#ea580c]">
+                                  {dailyScore.tasksIssuesScore}/
+                                  {dailyScore.details.tasksIssues.maxPoints} pts
+                                </span>
                               </div>
                             </div>
                             <p className="text-[9px] text-gray-400 font-medium italic mt-2 leading-relaxed">
-                              Note: Only tasks/issues closed on the report day or new issues reported on that day are counted.
+                              Note: Only tasks/issues closed on the report day
+                              or new issues reported on that day are counted.
                             </p>
                           </div>
                         </div>
@@ -2212,7 +2487,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                             </div>
                             <span className="text-xs font-black text-blue-600">
-                              {dailyScore.planningScore}/{dailyScore.details.planning.maxPoints} pts
+                              {dailyScore.planningScore}/
+                              {dailyScore.details.planning.maxPoints} pts
                             </span>
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-blue-50">
@@ -2220,7 +2496,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <span className="flex items-center gap-2">
                                 • Regular items:
                               </span>
-                              <span className="text-gray-900">{dailyScore.details.planning.regularItems} × 2 pts = {dailyScore.details.planning.regularItems * 2} pts</span>
+                              <span className="text-gray-900">
+                                {dailyScore.details.planning.regularItems} × 2
+                                pts ={" "}
+                                {dailyScore.details.planning.regularItems * 2}{" "}
+                                pts
+                              </span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                               <span className="flex items-center gap-2">
@@ -2231,11 +2512,19 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 />{" "}
                                 Starred items:
                               </span>
-                              <span className="text-gray-900">{dailyScore.details.planning.starredItems} × 4 pts = {dailyScore.details.planning.starredItems * 4} pts</span>
+                              <span className="text-gray-900">
+                                {dailyScore.details.planning.starredItems} × 4
+                                pts ={" "}
+                                {dailyScore.details.planning.starredItems * 4}{" "}
+                                pts
+                              </span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] font-black text-blue-900 pt-1 border-t border-gray-50">
                               <span>Total earned:</span>
-                              <span>{dailyScore.planningScore}/{dailyScore.details.planning.maxPoints} pts</span>
+                              <span>
+                                {dailyScore.planningScore}/
+                                {dailyScore.details.planning.maxPoints} pts
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -2250,7 +2539,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                             </div>
                             <span className="text-xs font-black text-orange-600">
-                              {dailyScore.timingScore}/{dailyScore.details.timing.maxPoints} pts
+                              {dailyScore.timingScore}/
+                              {dailyScore.details.timing.maxPoints} pts
                             </span>
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-orange-50">
@@ -2258,16 +2548,23 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <span className="flex items-center gap-2">
                                 • Submission Time:
                               </span>
-                              <span className="text-gray-900 font-bold">{dailyScore.details.timing.submissionTime}</span>
+                              <span className="text-gray-900 font-bold">
+                                {dailyScore.details.timing.submissionTime}
+                              </span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                               <span className="flex items-center gap-2">
                                 • Points Awarded:
                               </span>
-                              <span className="text-orange-600 font-bold">{dailyScore.timingScore} pts</span>
+                              <span className="text-orange-600 font-bold">
+                                {dailyScore.timingScore} pts
+                              </span>
                             </div>
                             <p className="text-[9px] text-gray-400 font-medium italic pt-2 border-t border-gray-100">
-                              Note: Submission timing score is calculated based on when the report is actually submitted. The live preview shows 0 points as no submission time has been recorded yet.
+                              Note: Submission timing score is calculated based
+                              on when the report is actually submitted. The live
+                              preview shows 0 points as no submission time has
+                              been recorded yet.
                             </p>
                           </div>
                         </div>
@@ -2599,14 +2896,24 @@ const BusinessCompassDailyReport: React.FC = () => {
                             <div className="flex flex-col items-end gap-2">
                               <Badge className="bg-[#f59e0b] hover:bg-[#f59e0b] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
                                 <Star size={12} className="fill-white" />
-                                {report.report_data?.details?.self_rating ?? report.report_data?.self_rating ?? report.self_rating ?? 0}/10
+                                {report.report_data?.details?.self_rating ??
+                                  report.report_data?.self_rating ??
+                                  report.self_rating ??
+                                  0}
+                                /10
                               </Badge>
                               <Badge className="bg-[#dc2626] hover:bg-[#dc2626] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
                                 <Target size={12} className="fill-white" />
                                 {report.report_data?.total_score || 0}/100
                               </Badge>
-                              <Badge variant="outline" className="text-gray-600 bg-white border border-gray-200 px-2 py-0.5 rounded-[4px] text-[11px] font-medium w-fit mt-1">
-                                {new Date(report.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                              <Badge
+                                variant="outline"
+                                className="text-gray-600 bg-white border border-gray-200 px-2 py-0.5 rounded-[4px] text-[11px] font-medium w-fit mt-1"
+                              >
+                                {new Date(report.created_at).toLocaleTimeString(
+                                  "en-US",
+                                  { hour: "numeric", minute: "2-digit" }
+                                )}
                               </Badge>
                             </div>
 
@@ -2618,90 +2925,107 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 className="h-8 px-4 text-blue-600 border-gray-200 hover:bg-blue-50 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
                                 onClick={() => {
                                   const date = new Date(report.start_date);
-                                  const formattedDate = date.toLocaleDateString("en-CA");
+                                  const formattedDate =
+                                    date.toLocaleDateString("en-CA");
 
-                                  // Set the start date first (this triggers the fetchExistingReport useEffect)
                                   setStartDate(formattedDate);
-
-                                  // Set calendar dates
                                   setSelectedDate(
                                     date.getDate().toString().padStart(2, "0")
                                   );
                                   setSelectedMonth(
-                                    date.toLocaleString("default", { month: "long" })
+                                    date.toLocaleString("default", {
+                                      month: "long",
+                                    })
                                   );
-                                  setSelectedYear(date.getFullYear().toString());
-
-                                  // Set the current report ID
+                                  setSelectedYear(
+                                    date.getFullYear().toString()
+                                  );
                                   setCurrentReportId(report.id);
 
-                                  // Populate accomplishments
-                                  if (report.report_data?.accomplishments?.items) {
+                                  if (
+                                    report.report_data?.accomplishments?.items
+                                  ) {
                                     setAccomplishments(
-                                      report.report_data.accomplishments.items.map((ach: any, idx: number) => ({
-                                        id: `fetched-ach-${idx}`,
-                                        text: ach.title || "",
-                                        completed: true,
-                                        starred: false,
-                                      }))
+                                      report.report_data.accomplishments.items.map(
+                                        (ach: any, idx: number) => ({
+                                          id: `fetched-ach-${idx}`,
+                                          text: ach.title || "",
+                                          completed: true,
+                                          starred: false,
+                                        })
+                                      )
                                     );
                                   } else {
                                     setAccomplishments([]);
                                   }
 
-                                  // Populate planning items
                                   if (report.report_data?.tomorrow_plan) {
                                     setPlanningItems(
-                                      report.report_data.tomorrow_plan.map((p: any, idx: number) => ({
-                                        id: `fetched-plan-${idx}`,
-                                        text: p.title || "",
-                                        starred: false,
-                                      }))
+                                      report.report_data.tomorrow_plan.map(
+                                        (p: any, idx: number) => ({
+                                          id: `fetched-plan-${idx}`,
+                                          text: p.title || "",
+                                          starred: false,
+                                        })
+                                      )
                                     );
                                   } else {
                                     setPlanningItems([]);
                                   }
 
-                                  // Populate KPI entries
                                   if (report.report_data?.past_kpis) {
-                                    const entries: { [key: number]: string } = {};
-                                    report.report_data.past_kpis.forEach((kpiEntry: any) => {
-                                      entries[kpiEntry.kpi_id] = kpiEntry.actual_value.toString();
-                                    });
+                                    const entries: { [key: number]: string } =
+                                      {};
+                                    report.report_data.past_kpis.forEach(
+                                      (kpiEntry: any) => {
+                                        entries[kpiEntry.kpi_id] =
+                                          kpiEntry.actual_value.toString();
+                                      }
+                                    );
                                     setKpiEntries(entries);
                                   } else {
                                     setKpiEntries({});
                                   }
 
-                                  // Populate selected tasks/issues
-                                  if (report.report_data?.tasks_issues && report.report_data.tasks_issues.length > 0) {
-                                    const selectedTasks: { [key: string]: boolean } = {};
-                                    report.report_data.tasks_issues.forEach((task: any) => {
-                                      // Find matching task/issue in mergedTasksIssues
-                                      const matchingItem = mergedTasksIssues.find(item => item.title === task.name);
-                                      if (matchingItem) {
-                                        selectedTasks[matchingItem.id] = true;
+                                  if (
+                                    report.report_data?.tasks_issues &&
+                                    report.report_data.tasks_issues.length > 0
+                                  ) {
+                                    const selectedTasks: {
+                                      [key: string]: boolean;
+                                    } = {};
+                                    report.report_data.tasks_issues.forEach(
+                                      (task: any) => {
+                                        const matchingItem =
+                                          mergedTasksIssues.find(
+                                            (item) => item.title === task.name
+                                          );
+                                        if (matchingItem) {
+                                          selectedTasks[matchingItem.id] = true;
+                                        }
                                       }
-                                    });
+                                    );
                                     setSelectedTasksIssues(selectedTasks);
                                   } else {
                                     setSelectedTasksIssues({});
                                   }
 
-                                  // Set absence and rating
-                                  if (report.is_absent !== undefined) setIsAbsent(report.is_absent);
-                                  if (report.description) setAbsenceReason(report.description);
+                                  if (report.is_absent !== undefined)
+                                    setIsAbsent(report.is_absent);
+                                  if (report.description)
+                                    setAbsenceReason(report.description);
                                   if (report.self_rating !== undefined)
                                     setSelfRating([report.self_rating]);
 
-                                  // Switch to submit tab
                                   setActiveTab("submit");
-
-                                  // Scroll to top
-                                  window.scrollTo({ top: 0, behavior: "smooth" });
+                                  window.scrollTo({
+                                    top: 0,
+                                    behavior: "smooth",
+                                  });
                                 }}
                               >
-                                <Edit size={14} className="text-blue-500" /> Edit
+                                <Edit size={14} className="text-blue-500" />{" "}
+                                Edit
                               </Button>
                               <Button
                                 variant="outline"
@@ -2711,112 +3035,206 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   // console.log("Delete report", report.id);
                                 }}
                               >
-                                <Trash2 size={14} className="text-red-500" /> Delete
+                                <Trash2 size={14} className="text-red-500" />{" "}
+                                Delete
                               </Button>
                             </div>
                           </div>
                         </div>
 
                         {/* Score Breakdown container */}
+                        {/* Score Breakdown container */}
                         <div className="bg-[#f8fafc] border border-gray-200 rounded-[8px] p-4 mb-6">
                           <div className="flex items-center gap-2 mb-3">
                             <BarChart3 size={14} className="text-blue-500" />
-                            <span className="text-xs font-bold text-slate-700">Score Breakdown</span>
+                            <span className="text-xs font-bold text-slate-700">
+                              Score Breakdown
+                            </span>
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {/* 1. Accomplishments */}
                             <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-medium mb-1">Accomplishments</p>
-                              <p className="text-base font-bold text-[#c026d3]">{report.report_data?.sections?.tasks_completed || 0}/25</p>
+                              <p className="text-[10px] text-gray-500 font-medium mb-1">
+                                Accomplishments
+                              </p>
+                              <p className="text-base font-bold text-[#c026d3]">
+                                {/* Naya key try karega, nahi mila toh purana 'tasks_completed', warna 0 */}
+                                {report.report_data?.sections
+                                  ?.accomplishments ??
+                                  report.report_data?.sections
+                                    ?.tasks_completed ??
+                                  0}
+                                /25
+                              </p>
                             </div>
+
+                            {/* 2. Tasks & Issues */}
                             <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-medium mb-1">Tasks</p>
-                              <p className="text-base font-bold text-[#ea580c]">{report.report_data?.sections?.attendance || 0}/25</p>
+                              <p className="text-[10px] text-gray-500 font-medium mb-1">
+                                Tasks & Issues
+                              </p>
+                              <p className="text-base font-bold text-[#ea580c]">
+                                {/* Naya key try karega, nahi mila toh purana 'attendance', warna 0 */}
+                                {report.report_data?.sections?.tasks_issues ??
+                                  report.report_data?.sections?.attendance ??
+                                  0}
+                                /25
+                              </p>
                             </div>
+
+                            {/* 3. Planning */}
                             <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-medium mb-1">Planning</p>
-                              <p className="text-base font-bold text-[#0d9488]">{report.report_data?.sections?.collaboration || 0}/25</p>
+                              <p className="text-[10px] text-gray-500 font-medium mb-1">
+                                Planning
+                              </p>
+                              <p className="text-base font-bold text-[#0d9488]">
+                                {/* Naya key try karega, nahi mila toh purana 'collaboration', warna 0 */}
+                                {report.report_data?.sections?.planning ??
+                                  report.report_data?.sections?.collaboration ??
+                                  0}
+                                /25
+                              </p>
                             </div>
+
+                            {/* 4. Timing (Yahan pehle 0/25 hardcoded tha) */}
                             <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-medium mb-1">Timing</p>
-                              <p className="text-base font-bold text-[#d97706]">0/25</p>
+                              <p className="text-[10px] text-gray-500 font-medium mb-1">
+                                Timing
+                              </p>
+                              <p className="text-base font-bold text-[#d97706]">
+                                {report.report_data?.sections?.timing ?? 0}/25
+                              </p>
                             </div>
                           </div>
                         </div>
-
                         {/* KPIs Section */}
-                        {report.report_data?.past_kpis && report.report_data.past_kpis.length > 0 && (
-                          <div className="bg-[#fffbeb] border border-amber-200 rounded-[8px] p-4 mb-6">
-                            <div className="flex items-center gap-2 mb-3">
-                              <TrendingUp size={14} className="text-amber-500" />
-                              <span className="text-xs font-bold text-slate-700">Daily KPIs</span>
-                            </div>
-                            <div className="space-y-3">
-                              {report.report_data.past_kpis.map((kpi: any, idx: number) => {
-                                const achievement = parseFloat(kpi.target_value) > 0
-                                  ? (parseFloat(kpi.actual_value) / parseFloat(kpi.target_value)) * 100
-                                  : 0;
-                                const displayAchievement = Math.min(achievement, 100);
-                                return (
-                                  <div key={idx} className="bg-white border border-amber-100 rounded-[6px] p-3 shadow-sm">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <span className="text-sm font-semibold text-gray-800">{kpi.notes}</span>
-                                      <Badge className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 border-none rounded-[4px]">
-                                        {displayAchievement.toFixed(0)}%
-                                      </Badge>
-                                    </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                        {report.report_data?.past_kpis &&
+                          report.report_data.past_kpis.length > 0 && (
+                            <div className="bg-[#fffbeb] border border-amber-200 rounded-[8px] p-4 mb-6">
+                              <div className="flex items-center gap-2 mb-3">
+                                <TrendingUp
+                                  size={14}
+                                  className="text-amber-500"
+                                />
+                                <span className="text-xs font-bold text-slate-700">
+                                  Daily KPIs
+                                </span>
+                              </div>
+                              <div className="space-y-3">
+                                {report.report_data.past_kpis.map(
+                                  (kpi: any, idx: number) => {
+                                    const achievement =
+                                      parseFloat(kpi.target_value) > 0
+                                        ? (parseFloat(kpi.actual_value) /
+                                            parseFloat(kpi.target_value)) *
+                                          100
+                                        : 0;
+                                    const displayAchievement = Math.min(
+                                      achievement,
+                                      100
+                                    );
+                                    return (
                                       <div
-                                        className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full transition-all"
-                                        style={{ width: `${displayAchievement}%` }}
-                                      />
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-1">{kpi.actual_value} / {kpi.target_value}</p>
-                                  </div>
-                                );
-                              })}
+                                        key={idx}
+                                        className="bg-white border border-amber-100 rounded-[6px] p-3 shadow-sm"
+                                      >
+                                        <div className="flex items-center justify-between mb-2">
+                                          <span className="text-sm font-semibold text-gray-800">
+                                            {kpi.notes}
+                                          </span>
+                                          <Badge className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 border-none rounded-[4px]">
+                                            {displayAchievement.toFixed(0)}%
+                                          </Badge>
+                                        </div>
+                                        <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                                          <div
+                                            className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full transition-all"
+                                            style={{
+                                              width: `${displayAchievement}%`,
+                                            }}
+                                          />
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-1">
+                                          {kpi.actual_value} /{" "}
+                                          {kpi.target_value}
+                                        </p>
+                                      </div>
+                                    );
+                                  }
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
 
                         {/* Tasks & Issues Section */}
-                        {report.report_data?.tasks_issues && report.report_data.tasks_issues.length > 0 && (
-                          <div className="bg-[#fef2f2] border border-red-200 rounded-[8px] p-4 mb-6">
-                            <div className="flex items-center gap-2 mb-3">
-                              <CheckSquare size={14} className="text-red-600" />
-                              <span className="text-xs font-bold text-slate-700">Completed Tasks & Issues</span>
+                        {report.report_data?.tasks_issues &&
+                          report.report_data.tasks_issues.length > 0 && (
+                            <div className="bg-[#fef2f2] border border-red-200 rounded-[8px] p-4 mb-6">
+                              <div className="flex items-center gap-2 mb-3">
+                                <CheckSquare
+                                  size={14}
+                                  className="text-red-600"
+                                />
+                                <span className="text-xs font-bold text-slate-700">
+                                  Completed Tasks & Issues
+                                </span>
+                              </div>
+                              <div className="space-y-2">
+                                {report.report_data.tasks_issues.map(
+                                  (item: any, idx: number) => (
+                                    <div
+                                      key={idx}
+                                      className="bg-white border border-red-100 rounded-[6px] p-3 shadow-sm flex items-start gap-2"
+                                    >
+                                      <span className="text-red-600 font-bold mt-0.5">
+                                        ✓
+                                      </span>
+                                      <span className="text-sm text-gray-700">
+                                        {item.name}
+                                      </span>
+                                    </div>
+                                  )
+                                )}
+                              </div>
                             </div>
-                            <div className="space-y-2">
-                              {report.report_data.tasks_issues.map((item: any, idx: number) => (
-                                <div key={idx} className="bg-white border border-red-100 rounded-[6px] p-3 shadow-sm flex items-start gap-2">
-                                  <span className="text-red-600 font-bold mt-0.5">✓</span>
-                                  <span className="text-sm text-gray-700">{item.name}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
+                          )}
 
                         {/* Bottom sections */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {/* Accomplishments */}
                           <div className="border border-green-200 rounded-[8px] overflow-hidden bg-[#f0fdf4]">
                             <div className="px-4 py-3 border-b border-green-200/50 flex items-center gap-2">
-                              <CheckCircle2 size={16} className="text-green-600" />
-                              <span className="text-sm font-semibold text-[#1a1a1a]">Accomplishments</span>
+                              <CheckCircle2
+                                size={16}
+                                className="text-green-600"
+                              />
+                              <span className="text-sm font-semibold text-[#1a1a1a]">
+                                Accomplishments
+                              </span>
                             </div>
                             <div className="p-4">
-                              {report.report_data?.accomplishments?.items?.length ? (
+                              {report.report_data?.accomplishments?.items
+                                ?.length ? (
                                 <ul className="space-y-2">
-                                  {report.report_data.accomplishments.items.map((ach: any, idx: number) => (
-                                    <li key={idx} className="bg-white border border-green-100 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2">
-                                      <span className="text-gray-400 font-medium">✓</span>
-                                      {ach.title}
-                                    </li>
-                                  ))}
+                                  {report.report_data.accomplishments.items.map(
+                                    (ach: any, idx: number) => (
+                                      <li
+                                        key={idx}
+                                        className="bg-white border border-green-100 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
+                                      >
+                                        <span className="text-gray-400 font-medium">
+                                          ✓
+                                        </span>
+                                        {ach.title}
+                                      </li>
+                                    )
+                                  )}
                                 </ul>
                               ) : (
                                 <div className="bg-white border border-green-100 rounded-[6px] px-3 py-2 text-sm shadow-sm flex items-start gap-2">
-                                  <p className="text-gray-400 italic">No accomplishments.</p>
+                                  <p className="text-gray-400 italic">
+                                    No accomplishments.
+                                  </p>
                                 </div>
                               )}
                             </div>
@@ -2826,21 +3244,32 @@ const BusinessCompassDailyReport: React.FC = () => {
                           <div className="border border-purple-200 rounded-[8px] overflow-hidden bg-[#faf5ff]">
                             <div className="px-4 py-3 border-b border-purple-200/50 flex items-center gap-2">
                               <Target size={16} className="text-purple-600" />
-                              <span className="text-sm font-semibold text-[#1a1a1a]">Tomorrow's Plan</span>
+                              <span className="text-sm font-semibold text-[#1a1a1a]">
+                                Tomorrow's Plan
+                              </span>
                             </div>
                             <div className="p-4">
                               {report.report_data?.tomorrow_plan?.length ? (
                                 <ul className="space-y-2">
-                                  {report.report_data.tomorrow_plan.map((task: any, idx: number) => (
-                                    <li key={idx} className="bg-white border border-purple-100 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2">
-                                      <span className="text-gray-400 font-bold mt-0.5">•</span>
-                                      {task.title}
-                                    </li>
-                                  ))}
+                                  {report.report_data.tomorrow_plan.map(
+                                    (task: any, idx: number) => (
+                                      <li
+                                        key={idx}
+                                        className="bg-white border border-purple-100 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
+                                      >
+                                        <span className="text-gray-400 font-bold mt-0.5">
+                                          •
+                                        </span>
+                                        {task.title}
+                                      </li>
+                                    )
+                                  )}
                                 </ul>
                               ) : (
                                 <div className="bg-white border border-purple-100 rounded-[6px] px-3 py-2 text-sm shadow-sm flex items-start gap-2">
-                                  <p className="text-gray-400 italic">No plan for tomorrow.</p>
+                                  <p className="text-gray-400 italic">
+                                    No plan for tomorrow.
+                                  </p>
                                 </div>
                               )}
                             </div>
@@ -2848,52 +3277,79 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
 
                         {/* API Response Attachments Section */}
-                        {report.attachments && report.attachments.length > 0 && (
-                          <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
-                            <div className="flex items-center gap-2">
-                              <Upload size={16} className="text-purple-600" />
-                              <span className="text-sm font-bold text-[#1a1a1a]">Linked Files ({report.attachments.length})</span>
-                            </div>
-                            <div className="space-y-2">
-                              {report.attachments.map((attachment: AttachmentFile, idx: number) => {
-                                const isImage = isImageFile(attachment.document_file_name, attachment.document_content_type);
-                                return (
-                                  <div
-                                    key={attachment.id || idx}
-                                    className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
-                                  >
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                      {isImage ? (
-                                        <ImageIcon size={20} className="text-purple-600 shrink-0" />
-                                      ) : (
-                                        <FileText size={20} className="text-blue-600 shrink-0" />
-                                      )}
-                                      <div className="flex flex-col gap-1 min-w-0 flex-1">
-                                        <a
-                                          href={attachment.document_url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2 group-hover:text-purple-700 transition-colors"
-                                        >
-                                          {attachment.document_file_name}
-                                        </a>
-                                        <span className="text-[11px] text-gray-600 font-medium">
-                                          {attachment.relation} • {(attachment.document_file_size / 1024).toFixed(2)} KB • {new Date(attachment.document_updated_at).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' })}
-                                        </span>
+                        {report.attachments &&
+                          report.attachments.length > 0 && (
+                            <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
+                              <div className="flex items-center gap-2">
+                                <Upload size={16} className="text-purple-600" />
+                                <span className="text-sm font-bold text-[#1a1a1a]">
+                                  Linked Files ({report.attachments.length})
+                                </span>
+                              </div>
+                              <div className="space-y-2">
+                                {report.attachments.map(
+                                  (attachment: AttachmentFile, idx: number) => {
+                                    const isImage = isImageFile(
+                                      attachment.document_file_name,
+                                      attachment.document_content_type
+                                    );
+                                    return (
+                                      <div
+                                        key={attachment.id || idx}
+                                        className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
+                                      >
+                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                          {isImage ? (
+                                            <ImageIcon
+                                              size={20}
+                                              className="text-purple-600 shrink-0"
+                                            />
+                                          ) : (
+                                            <FileText
+                                              size={20}
+                                              className="text-blue-600 shrink-0"
+                                            />
+                                          )}
+                                          <div className="flex flex-col gap-1 min-w-0 flex-1">
+                                            <a
+                                              href={attachment.document_url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2 group-hover:text-purple-700 transition-colors"
+                                            >
+                                              {attachment.document_file_name}
+                                            </a>
+                                            <span className="text-[11px] text-gray-600 font-medium">
+                                              {attachment.relation} •{" "}
+                                              {(
+                                                attachment.document_file_size /
+                                                1024
+                                              ).toFixed(2)}{" "}
+                                              KB •{" "}
+                                              {new Date(
+                                                attachment.document_updated_at
+                                              ).toLocaleDateString("en-US", {
+                                                month: "numeric",
+                                                day: "numeric",
+                                                year: "numeric",
+                                              })}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0 ml-3">
+                                          <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                            {attachment.active
+                                              ? "Active"
+                                              : "Inactive"}
+                                          </Badge>
+                                        </div>
                                       </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0 ml-3">
-                                      <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
-                                        {attachment.active ? 'Active' : 'Inactive'}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                                    );
+                                  }
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
-
+                          )}
                       </div>
                     </Card>
                   ))}
@@ -2914,11 +3370,6 @@ const BusinessCompassDailyReport: React.FC = () => {
         </Tabs>
       </div>
 
-      {/* <AddTaskOrIssueModal
-        isOpen={isAddTaskModalOpen}
-        onClose={() => setIsAddTaskModalOpen(false)}
-      /> */}
-
       <Dialog
         open={openTaskModal}
         onClose={() => setOpenTaskModal(false)}
@@ -2927,17 +3378,24 @@ const BusinessCompassDailyReport: React.FC = () => {
       >
         <DialogContent
           className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
-          style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+          style={{
+            margin: 0,
+            maxHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+          }}
           sx={{
             padding: "0 !important",
             "& .MuiDialogContent-root": {
               padding: "0 !important",
               overflow: "auto",
-            }
+            },
           }}
         >
           <div className="sticky top-0 bg-white z-10">
-            <h3 className="text-[14px] font-medium text-center mt-8">Add Tasks</h3>
+            <h3 className="text-[14px] font-medium text-center mt-8">
+              Add Tasks
+            </h3>
             <X
               className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
               onClick={() => setOpenTaskModal(false)}
@@ -2975,12 +3433,14 @@ const BusinessCompassDailyReport: React.FC = () => {
           sx: {
             boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
             maxHeight: "90vh",
-          }
+          },
         }}
       >
         <div className="p-6 space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold text-[#1a1a1a]">Add Closure Remarks</h2>
+            <h2 className="text-lg font-bold text-[#1a1a1a]">
+              Add Closure Remarks
+            </h2>
             <button
               onClick={() => {
                 setShowClosureModal(false);
@@ -2997,13 +3457,19 @@ const BusinessCompassDailyReport: React.FC = () => {
           {closureItem && (
             <div className="bg-blue-50 border border-blue-200 rounded-[10px] p-3">
               <p className="text-xs text-gray-600 font-medium mb-1">Closing:</p>
-              <p className="text-sm font-bold text-[#1a1a1a]">{closureItem.title}</p>
-              <p className="text-xs text-gray-500 mt-1 capitalize">{closureItem.type} • {closureItem.status.replace(/_/g, " ")}</p>
+              <p className="text-sm font-bold text-[#1a1a1a]">
+                {closureItem.title}
+              </p>
+              <p className="text-xs text-gray-500 mt-1 capitalize">
+                {closureItem.type} • {closureItem.status.replace(/_/g, " ")}
+              </p>
             </div>
           )}
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-[#1a1a1a]">Closure Remarks (Optional)</label>
+            <label className="text-sm font-bold text-[#1a1a1a]">
+              Closure Remarks (Optional)
+            </label>
             <textarea
               value={closureRemarks}
               onChange={(e) => setClosureRemarks(e.target.value)}
@@ -3013,11 +3479,17 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-[#1a1a1a]">Attach Files (Optional)</label>
+            <label className="text-sm font-bold text-[#1a1a1a]">
+              Attach Files (Optional)
+            </label>
             <div className="flex items-center justify-between bg-gray-50 border border-[#e5e7eb] rounded-[10px] p-4">
               <div className="space-y-0.5">
-                <p className="text-xs font-bold text-green-600">{closureAttachments.length}/5</p>
-                <p className="text-xs text-gray-600 font-medium">Limits: Images 2MB, Others 5MB</p>
+                <p className="text-xs font-bold text-green-600">
+                  {closureAttachments.length}/5
+                </p>
+                <p className="text-xs text-gray-600 font-medium">
+                  Limits: Images 2MB, Others 5MB
+                </p>
               </div>
               <input
                 type="file"
@@ -3045,7 +3517,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <FileText size={16} className="text-blue-500 shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-blue-600 truncate">{file.name}</p>
+                        <p className="text-sm font-medium text-blue-600 truncate">
+                          {file.name}
+                        </p>
                         <p className="text-xs text-gray-500">{file.size}</p>
                       </div>
                     </div>
@@ -3156,7 +3630,9 @@ const BusinessCompassDailyReport: React.FC = () => {
             </div>
             <div className="flex flex-col gap-0.5">
               <span className="font-bold text-gray-900 text-sm">Add Task</span>
-              <span className="text-xs text-gray-500 font-medium">Create a new task</span>
+              <span className="text-xs text-gray-500 font-medium">
+                Create a new task
+              </span>
             </div>
           </div>
         </MenuItem>
@@ -3187,7 +3663,9 @@ const BusinessCompassDailyReport: React.FC = () => {
             </div>
             <div className="flex flex-col gap-0.5">
               <span className="font-bold text-gray-900 text-sm">Add Issue</span>
-              <span className="text-xs text-gray-500 font-medium">Report a problem</span>
+              <span className="text-xs text-gray-500 font-medium">
+                Report a problem
+              </span>
             </div>
           </div>
         </MenuItem>
