@@ -20,7 +20,10 @@ const PostSalesRoadmapTab: React.FC = () => {
   const s15: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f0fff4', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
 
   return (
-    <div className="w-full overflow-x-auto bg-white p-4 font-sans">
+    <div className="w-full overflow-x-auto font-sans">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] text-xl font-bold mb-4">
+        Post Sales  ·  Product Roadmap
+      </div>
       <table
         style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: '100%', minWidth: '1150px', backgroundColor: 'white' }}
         cellSpacing={0}
@@ -36,11 +39,6 @@ const PostSalesRoadmapTab: React.FC = () => {
           <col style={{ width: '153px' }} />
         </colgroup>
         <tbody>
-
-          {/* ── Row 1: Title ─────────────────────────────────── */}
-          <tr style={{ height: '47px' }}>
-            <td style={s0} colSpan={7}>Post Sales  ·  Product Roadmap</td>
-          </tr>
 
           {/* ── Row 2: Subtitle ──────────────────────────────── */}
           <tr style={{ height: '25px' }}>

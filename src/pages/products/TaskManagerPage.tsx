@@ -204,6 +204,259 @@ const productData = {
             "India (primary): Tech/SaaS, Professional Services, Real Estate, Manufacturing (50–500 employees, metro cities). GCC (secondary): UAE, Saudi Arabia, Qatar — regulated industries where data localisation is a compliance requirement.",
         },
       ],
+      featureSummaryModules: [
+        {
+          module: "Task & Project Management",
+          description:
+            "Project -> Milestone -> Task -> Subtask with 15-column task table, sprint management.",
+          icon: "Layout",
+        },
+        {
+          module: "Project Dashboards & Analytics",
+          description:
+            "8-chart project dashboard: completion, milestone, assignee-wise milestone, task status, task dependencies, issue tracker.",
+          icon: "BarChart",
+        },
+        {
+          module: "Issues Register (Client-Raised)",
+          description:
+            "Dedicated client issues register separate from internal tasks: ID, project, milestone, task, type, priority, status, responsible.",
+          icon: "AlertCircle",
+        },
+        {
+          module: "Sprint / Agile Management",
+          description:
+            "Sprint module with task linking, sprint details, sprint-to-task association.",
+          icon: "RefreshCw",
+        },
+        {
+          module: "Document Creation & Editing",
+          description:
+            "Full in-platform creation: Word, Excel, PPT, PDF. Real-time collaborative editing. Exports as official MS Office files.",
+          icon: "FileText",
+        },
+        {
+          module: "Data Sovereignty (USP)",
+          description:
+            "All data, documents, tasks, chats, MoMs, stored exclusively on the client's own database. No data leaves the client's environment.",
+          icon: "Lock",
+          isUSP: true,
+        },
+        {
+          module: "Minutes of Meeting (MoM)",
+          description:
+            "Structured MoM with 9 data fields including direct conversion of action points to tasks.",
+          icon: "Clipboard",
+        },
+        {
+          module: "Opportunity Register",
+          description:
+            "Public suggestion forum, employees or external visitors post ideas, tagged by department, convertible to tasks.",
+          icon: "Lightbulb",
+        },
+        {
+          module: "Team Communication (Chat)",
+          description:
+            "Direct messages + group channels. Inline task creation from chat messages.",
+          icon: "MessageSquare",
+        },
+        {
+          module: "Todo with Kanban + Eisenhower",
+          description:
+            "Personal to-do list with both Kanban board view and Eisenhower matrix (urgency x importance) view.",
+          icon: "CheckSquare",
+        },
+        {
+          module: "Mobile App",
+          description:
+            "Not yet available. Roadmap item for field teams and site managers.",
+          icon: "Smartphone",
+        },
+        {
+          module: "Third-party Integrations",
+          description:
+            "No third-party integrations currently. Roadmap: Jira, GitHub, Slack, Tally, Zoho Books.",
+          icon: "Layers",
+        },
+        {
+          module: "Gantt / Timeline View",
+          description:
+            "Not currently available. Roadmap item for project timeline visualization.",
+          icon: "Trello",
+        },
+        {
+          module: "Workflow Automation",
+          description:
+            "Not currently available. Roadmap: No-code automation triggers for task state changes.",
+          icon: "Zap",
+        },
+        {
+          module: "AI Assistant",
+          description:
+            "Not in current scope. Future addition will be grounded on sovereign data.",
+          icon: "Cpu",
+        },
+      ],
+      competitivePositionUSP: {
+        singlePosition:
+          "The only project management platform at SMB pricing where 100% of company data stays on infrastructure the client owns and controls. Documents export as real MS Office files. MoM auto-converts to tasks. All in one sovereign environment.",
+        keyUSPs: [
+          "1. Data sovereignty — on-premise deployment. All client data stays on company servers, zero third-party cloud exposure.",
+          "2. MS Office document replacement — Create, edit, and export Word docs, Excel sheets, PowerPoint presentations as real .docx/.xlsx/.pptx files inside the platform.",
+          "3. MoM-to-task auto-conversion — structured meeting management with one-click action point conversion to tasks. No competitor has this.",
+          "4. Opportunity Register — Public innovation forum built into PM workflow. Capture suggestions from entire org, department tag, convert to tasks.",
+          "5. Kanban + Eisenhower dual view — rare in enterprise PM tools. Visual task prioritization by urgency-importance matrix.",
+        ],
+        whatWeAreNot:
+          "PTM is a focused project, task, and document management platform. It does not include HRMS features, intranet/social layer, desk booking, parking, F&B, or calendar sync in its current scope. This focus makes it fast to onboard, easy to position, and immediately valuable to any knowledge-working team.",
+        targetMarkets:
+          "India (primary): Tech/SaaS (50–300 employees, metro cities). Professional Services (consulting, legal, audit firms). Real Estate (5–50 active projects). GCC (secondary): UAE, Saudi Arabia — regulated industries where data localisation is compliance requirement.",
+      },
+      featureComparison: [
+        {
+          feature: "Task & Project Management",
+          competitorInfo:
+            "Create projects, assign tasks, set deadlines, track status. Basic hierarchy: Project -> Task.",
+          productDetail:
+            "Project -> Milestone -> Task -> Subtask with 15-column task table, sprint management.",
+          snag360Status: "AHEAD",
+          notes:
+            "Four-tier hierarchy is deeper than Asana or Monday. Only ClickUp matches this depth.",
+        },
+        {
+          feature: "Project Dashboards & Analytics",
+          competitorInfo: "Basic completion charts, assignee workload.",
+          productDetail:
+            "8-chart project dashboard: completion, milestone, assignee-wise milestone, task status, task dependencies, issue",
+          snag360Status: "AHEAD",
+          notes:
+            "Dashboard depth matches Jira Premium. Most SMB tools offer 2-3 chart types maximum.",
+        },
+        {
+          feature: "Issues Register (Client-Raised)",
+          competitorInfo:
+            "Most PM tools mix internal bugs with client issues or have no structured issue register.",
+          productDetail:
+            "Dedicated client issues register separate from internal tasks: ID, project, milestone, task, type, priority, status, responsible",
+          snag360Status: "AHEAD",
+          notes:
+            "Separate client issue register is rare. Competitors either mix bugs with client issues or rely on email.",
+        },
+        {
+          feature: "Sprint / Agile Management",
+          competitorInfo:
+            "Jira: comprehensive. Asana, Monday: basic. ClickUp: moderate.",
+          productDetail:
+            "Sprint module with task linking, sprint details, sprint-to-task association.",
+          snag360Status: "AT PAR",
+          notes:
+            "Functional sprint management. Lacks velocity tracking and burndown charts ,roadmap gap vs Jira.",
+        },
+        {
+          feature: "Document Creation & Editing",
+          competitorInfo:
+            "External only (Google Docs, Notion, SharePoint). Almost no PM tool includes native doc creation.",
+          productDetail:
+            "Full in-platform creation: Word, Excel, PPT, PDF. Real-time collaborative editing. Exports as official MS Office files.",
+          snag360Status: "AHEAD, UNIQUE",
+          notes:
+            "No PM competitor offers MS Office-compatible document creation and export. Replaces Google Workspace or MS 365 for document needs.",
+        },
+        {
+          feature: "Data Sovereignty",
+          competitorInfo:
+            "All competitors store data on their own cloud. No SMB PM tool offers client-hosted data.",
+          productDetail:
+            "All data, documents, tasks, chats, MoMs, stored exclusively on the client's own database.",
+          snag360Status: "AHEAD, UNIQUE",
+          notes:
+            "Structural differentiator that competitors cannot easily copy without rebuilding their architecture.",
+        },
+        {
+          feature: "Minutes of Meeting (MoM)",
+          competitorInfo:
+            "Rarely built into PM tools. Usually Google Docs or a separate tool.",
+          productDetail:
+            "Structured MoM with 9 data fields including direct conversion of action points to tasks.",
+          snag360Status: "AHEAD, UNIQUE",
+          notes:
+            "Auto-convert MoM action points to tasks saves 30+ minutes per meeting cycle. No PM competitor has this natively.",
+        },
+        {
+          feature: "Opportunity Register",
+          competitorInfo:
+            "Not present in any PM competitor. Closest: Aha! for product feedback (B2B SaaS only).",
+          productDetail:
+            "Public suggestion forum ,employees or external visitors post ideas, tagged by department, convertible to",
+          snag360Status: "AHEAD, UNIQUE",
+          notes:
+            "Innovation capture built into the PM workflow. No direct competitor has this as a native PM feature.",
+        },
+        {
+          feature: "Team Communication (Chat)",
+          competitorInfo:
+            "Most require Slack/Teams separately. ClickUp has basic chat.",
+          productDetail:
+            "Direct messages + group channels. Inline task creation from chat messages.",
+          snag360Status: "AT PAR with ClickUp",
+          notes: "Functional. Not as mature as Slack threading ,roadmap item.",
+        },
+        {
+          feature: "Todo with Kanban + Eisenhower",
+          competitorInfo:
+            "Kanban is common. Eisenhower matrix is rare in enterprise PM tools.",
+          productDetail:
+            "Personal to-do list with both Kanban board view and Eisenhower matrix (urgency x importance) view.",
+          snag360Status: "AHEAD",
+          notes:
+            "Eisenhower matrix differentiation is rare. Most tools offer kanban only for personal tasks.",
+        },
+        {
+          feature: "Mobile App",
+          competitorInfo:
+            "All major competitors have polished mobile apps (Jira, Asana, Monday, Notion, ClickUp).",
+          productDetail: "Not yet available.",
+          snag360Status: "GAP",
+          notes:
+            "Critical gap for field teams, real estate site managers, any user away from a desk.",
+        },
+        {
+          feature: "Third-party Integrations",
+          competitorInfo: "Jira: 3000+. Asana: 200+. Monday: 200+.",
+          productDetail:
+            "No third-party integrations currently. Roadmap: Jira, GitHub, Slack, accounting tools (Tally, Zoho Books).",
+          snag360Status: "GAP",
+          notes:
+            "Will cost deals in tech companies where GitHub/Jira sync is expected.",
+        },
+        {
+          feature: "Gantt / Timeline View",
+          competitorInfo:
+            "Standard in Asana (Premium+), Monday, MS Project, ClickUp.",
+          productDetail: "Not available.",
+          snag360Status: "GAP",
+          notes:
+            "Will cost deals vs Asana and Monday when buyers ask for timeline view.",
+        },
+        {
+          feature: "Workflow Automation",
+          competitorInfo:
+            "Asana, Monday, ClickUp all have strong no-code automation.",
+          productDetail: "Not available.",
+          snag360Status: "GAP",
+          notes:
+            "Buyers in ops-heavy companies expect 'when task moves to Done -> notify manager' automation.",
+        },
+        {
+          feature: "AI Assistant",
+          competitorInfo:
+            "Notion AI, ClickUp AI, Jira AI (beta), Asana AI ,all in market.",
+          productDetail: "Not in current scope.",
+          snag360Status: "GAP",
+          notes:
+            "Out of current scope. When added, should be grounded on sovereign data ,the key differentiator.",
+        },
+      ],
     },
     detailedFeatures: [
       {
@@ -582,37 +835,37 @@ const productData = {
         {
           capability: "Task & Project Management",
           currentState:
-            "Project → Milestone → Task → Subtask with 15-column task table, sprint management.",
+            "Project -> Milestone -> Task -> Subtask with 15-column task table, sprint management.",
           marketNeed:
-            "Create projects, assign tasks, set deadlines, track status. Basic hierarchy: Project → Task.",
+            "Create projects, assign tasks, set deadlines, track status. Basic hierarchy: Project -> Task.",
+          status: "AHEAD",
           impact:
             "Four-tier hierarchy is deeper than Asana or Monday. Only ClickUp matches this depth.",
-          status: "AHEAD",
           recommendation:
-            "Focus on complex enterprise projects where granularity is a requirement.",
+            "Four-tier hierarchy is deeper than Asana or Monday. Only ClickUp matches this depth.",
         },
         {
           capability: "Project Dashboards & Analytics",
           currentState:
-            "8-chart project dashboard: completion, milestone, assignee-wise milestone, task status, task dependencies, issue breakdown.",
+            "8-chart project dashboard: completion, milestone, assignee-wise milestone, task status, task dependencies, issue",
           marketNeed: "Basic completion charts, assignee workload.",
+          status: "AHEAD",
           impact:
             "Dashboard depth matches Jira Premium. Most SMB tools offer 2-3 chart types maximum.",
-          status: "AHEAD",
           recommendation:
-            "Demo analytics to CXOs to show real-time visibility without manual reporting.",
+            "Dashboard depth matches Jira Premium. Most SMB tools offer 2-3 chart types maximum.",
         },
         {
           capability: "Issues Register (Client-Raised)",
           currentState:
-            "Dedicated client issues register separate from internal tasks: ID, project, milestone, task, type, priority, status, responsible.",
+            "Dedicated client issues register separate from internal tasks: ID, project, milestone, task, type, priority, status, responsible",
           marketNeed:
             "Most PM tools mix internal bugs with client issues or have no structured issue register.",
+          status: "AHEAD",
           impact:
             "Separate client issue register is rare. Competitors either mix bugs with client issues or rely on email.",
-          status: "AHEAD",
           recommendation:
-            "Target Customer Support and Real Estate teams where client feedback loops are critical.",
+            "Separate client issue register is rare. Competitors either mix bugs with client issues or rely on email.",
         },
         {
           capability: "Sprint / Agile Management",
@@ -620,11 +873,11 @@ const productData = {
             "Sprint module with task linking, sprint details, sprint-to-task association.",
           marketNeed:
             "Jira: comprehensive. Asana, Monday: basic. ClickUp: moderate.",
-          impact:
-            "Functional sprint management. Lacks velocity tracking and burndown charts, roadmap gap vs Jira.",
           status: "AT PAR",
+          impact:
+            "Functional sprint management. Lacks velocity tracking and burndown charts ,roadmap gap vs Jira.",
           recommendation:
-            "Improve velocity tracking and burndown charts to truly compete with Jira for dev teams.",
+            "Functional sprint management. Lacks velocity tracking and burndown charts ,roadmap gap vs Jira.",
         },
         {
           capability: "Document Creation & Editing",
@@ -632,11 +885,11 @@ const productData = {
             "Full in-platform creation: Word, Excel, PPT, PDF. Real-time collaborative editing. Exports as official MS Office files.",
           marketNeed:
             "External only (Google Docs, Notion, SharePoint). Almost no PM tool includes native doc creation.",
-          impact:
-            "No PM competitor offers MS Office-compatible document creation and export.",
           status: "AHEAD, UNIQUE",
+          impact:
+            "No PM competitor offers MS Office-compatible document creation and export. Replaces Google Workspace or MS 365 for document needs.",
           recommendation:
-            "Pitch as a cost-saving replacement for MS 365 or Google Workspace document tiers.",
+            "No PM competitor offers MS Office-compatible document creation and export. Replaces Google Workspace or MS 365 for document needs.",
         },
         {
           capability: "Data Sovereignty",
@@ -644,11 +897,11 @@ const productData = {
             "All data, documents, tasks, chats, MoMs, stored exclusively on the client's own database.",
           marketNeed:
             "All competitors store data on their own cloud. No SMB PM tool offers client-hosted data.",
+          status: "AHEAD, UNIQUE",
           impact:
             "Structural differentiator that competitors cannot easily copy without rebuilding their architecture.",
-          status: "AHEAD, UNIQUE",
           recommendation:
-            "Lead with this for government, legal, and IP-sensitive enterprise accounts.",
+            "Structural differentiator that competitors cannot easily copy without rebuilding their architecture.",
         },
         {
           capability: "Minutes of Meeting (MoM)",
@@ -656,84 +909,205 @@ const productData = {
             "Structured MoM with 9 data fields including direct conversion of action points to tasks.",
           marketNeed:
             "Rarely built into PM tools. Usually Google Docs or a separate tool.",
+          status: "AHEAD, UNIQUE",
           impact:
             "Auto-convert MoM action points to tasks saves 30+ minutes per meeting cycle. No PM competitor has this natively.",
-          status: "AHEAD, UNIQUE",
           recommendation:
-            "Focus on the 'Meeting to Task' speed in demos to drive immediate perceived value.",
+            "Auto-convert MoM action points to tasks saves 30+ minutes per meeting cycle. No PM competitor has this natively.",
+        },
+        {
+          capability: "Opportunity Register",
+          currentState:
+            "Public suggestion forum ,employees or external visitors post ideas, tagged by department, convertible to",
+          marketNeed:
+            "Not present in any PM competitor. Closest: Aha! for product feedback (B2B SaaS only).",
+          status: "AHEAD, UNIQUE",
+          impact:
+            "Innovation capture built into the PM workflow. No direct competitor has this as a native PM feature.",
+          recommendation:
+            "Innovation capture built into the PM workflow. No direct competitor has this as a native PM feature.",
+        },
+        {
+          capability: "Team Communication (Chat)",
+          currentState:
+            "Direct messages + group channels. Inline task creation from chat messages.",
+          marketNeed:
+            "Most require Slack/Teams separately. ClickUp has basic chat.",
+          status: "AT PAR with ClickUp",
+          impact: "Functional. Not as mature as Slack threading ,roadmap item.",
+          recommendation:
+            "Functional. Not as mature as Slack threading ,roadmap item.",
+        },
+        {
+          capability: "Todo with Kanban + Eisenhower",
+          currentState:
+            "Personal to-do list with both Kanban board view and Eisenhower matrix (urgency x importance) view.",
+          marketNeed:
+            "Kanban is common. Eisenhower matrix is rare in enterprise PM tools.",
+          status: "AHEAD",
+          impact:
+            "Eisenhower matrix differentiation is rare. Most tools offer kanban only for personal tasks.",
+          recommendation:
+            "Eisenhower matrix differentiation is rare. Most tools offer kanban only for personal tasks.",
+        },
+        {
+          capability: "Mobile App",
+          currentState: "Not yet available.",
+          marketNeed:
+            "All major competitors have polished mobile apps (Jira, Asana, Monday, Notion, ClickUp).",
+          status: "GAP",
+          impact:
+            "Critical gap for field teams, real estate site managers, any user away from a desk.",
+          recommendation:
+            "Critical gap for field teams, real estate site managers, any user away from a desk.",
+        },
+        {
+          capability: "Third-party Integrations",
+          currentState:
+            "No third-party integrations currently. Roadmap: Jira, GitHub, Slack, accounting tools (Tally, Zoho Books).",
+          marketNeed: "Jira: 3000+. Asana: 200+. Monday: 200+.",
+          status: "GAP",
+          impact:
+            "Will cost deals in tech companies where GitHub/Jira sync is expected.",
+          recommendation:
+            "Will cost deals in tech companies where GitHub/Jira sync is expected.",
+        },
+        {
+          capability: "Gantt / Timeline View",
+          currentState: "Not available.",
+          marketNeed:
+            "Standard in Asana (Premium+), Monday, MS Project, ClickUp.",
+          status: "GAP",
+          impact:
+            "Will cost deals vs Asana and Monday when buyers ask for timeline view.",
+          recommendation:
+            "Will cost deals vs Asana and Monday when buyers ask for timeline view.",
+        },
+        {
+          capability: "Workflow Automation",
+          currentState: "Not available.",
+          marketNeed:
+            "Asana, Monday, ClickUp all have strong no-code automation.",
+          status: "GAP",
+          impact:
+            "Buyers in ops-heavy companies expect 'when task moves to Done -> notify manager' automation.",
+          recommendation:
+            "Buyers in ops-heavy companies expect 'when task moves to Done -> notify manager' automation.",
+        },
+        {
+          capability: "AI Assistant",
+          currentState: "Not in current scope.",
+          marketNeed:
+            "Notion AI, ClickUp AI, Jira AI (beta), Asana AI ,all in market.",
+          status: "GAP",
+          impact:
+            "Out of current scope. When added, should be grounded on sovereign data ,the key differentiator.",
+          recommendation:
+            "Out of current scope. When added, should be grounded on sovereign data ,the key differentiator.",
         },
       ],
       pricingSummaryRows: [
         {
-          label: "Our Structural Leads",
+          label: "Where we are head",
           detail:
-            "Four-tier project hierarchy and 100% data sovereignty are deep moats against global SaaS players like Asana or Monday.",
+            "Data sovereignty (unique) · MS Office document creation & export (unique) · MoM-to-task auto-conversion (unique) · Opportunity Register (unique) · 8-chart project dashboard (ahead) · 4-tier project hierarchy (deeper than most) · Client issues register (separate from internal bugs) · Eisenhower matrix for todos (rare).",
           tone: "green",
         },
         {
-          label: "Execution Efficiency",
+          label: "At Par",
           detail:
-            "Native MS Office creation and MoM-to-task automation (saving 30m/meeting) provide immediate ROI that competitors lack.",
+            "Team chat and channels (functional, not as mature as Slack) · Sprint management (functional, lacks burndown/velocity charts)					",
           tone: "green",
         },
         {
-          label: "Current Road-map Gap",
+          label: "gaps that will cost deals",
           detail:
-            "While functional, our sprint module currently lacks advanced velocity tracking and burndown charts compared to Jira.",
+            "Mobile app ,losing every deal with field teams or mobile-first users · Gantt/timeline view ,losing head-to-head vs Asana/Monday · Workflow automation ,ops-heavy buyers expect this · Third-party integrations ,tech companies expect GitHub/Jira sync · AI assistant ,not in current scope; when added, must be grounded on sovereign data to differentiate",
           tone: "yellow",
         },
       ],
       pricingCurrentRows: [
         {
-          label: "India Price Point",
-          detail:
-            "₹499 (Starter) to ₹899 (Growth) per user/month. Enterprise custom from ₹1,200+.",
+          label: "Standard pricing models",
+          detail: "Per-seat SaaS (annual billing) is the category standard. Freemium (free up to 10 users) drives viral adoption ,Notion, ClickUp, Asana all use it. Module add-ons create upsell revenue. Enterprise custom contracts with 20–30% discounts for 500+ seats.",
         },
         {
-          label: "GCC Price Point",
-          detail:
-            "$8 to $25 per user/month. Premium justified by UAE data residency compliance.",
+          label: "India price ranges",
+          detail: "Entry/Starter: ₹400-800/user/month. Mid/Professional: ₹900-1,500/user/month. Enterprise: ₹1,500-3,000/user/month (custom). Competitors: Asana Personal ~₹880, Jira Standard ~₹650, Monday Standard ~₹1,000, ClickUp Unlimited ~₹580.",
         },
         {
-          label: "Deployment Model",
-          detail:
-            "SaaS (Standard) or On-Premise (Enterprise only with setup fee).",
+          label: "GCC price ranges",
+          detail: "Entry: $5–10/user/month (AED 18–37). Mid: $10–20/user/month (AED 37–73). Enterprise: $20–40+/user/month (custom, annual). GCC pricing carries a premium justified by data residency compliance value.",
         },
         {
-          label: "Commercial Logic",
-          detail:
-            "Priced to replace Asana + Google Docs seat cost; adds sovereignty as a 'free' bonus.",
+          label: "Recommended pricing now",
+          detail: "₹599–799/user/month (India) | AED 28–35/user/month (GCC). Free 14-day trial. Starter: up to 20 users at ₹499. Growth: 21–200 users at ₹699 (adds advanced dashboards and MoM features). Do not go below ₹499, too cheap signals 'not enterprise-ready'.",
+        },
+        {
+          label: "At 6 months (post mobile + integrations)",
+          detail: "Raise Growth tier to ₹899–999. Introduce Workplace add-on at ₹150/user (when those features are built). Add freemium entry tier (5 users free, forever) to drive viral SMB adoption.",
+        },
+        {
+          label: "At 18 months",
+          detail: "Enterprise tier: ₹1,499–1,999/user/month with on-premise deployment option (₹2–5L setup fee). GCC Enterprise: AED 50–70/user/month for full data sovereignty compliance stack.",
+        },
+        {
+          label: "Pricing risk to watch",
+          detail: "Do not compete on price alone against ClickUp ($7) or Notion ($8). Data sovereignty and MoM-to-task are worth a premium. Never discount below ₹499. Instead of discounting: offer extended trial (30–45 days), free onboarding session, or 2 months free on annual contract.",
         },
       ],
       pricingPositioningRows: [
         {
-          question: "Why chose PTM over Asana?",
-          answer:
-            "Because Asana owns your data on their servers. PTM gives you the tool but you keep the data.",
-          note: "This is the 'Nuclear Option' in sales pitches for IP-sensitive firms.",
+          label: "Single most defensible position",
+          detail: "The only project management platform where 100% of your company's data ,tasks, documents, MoMs, communications ,stays on infrastructure you own. With MS Office document creation built in.",
         },
         {
-          question: "Is it just a PM tool?",
-          answer:
-            "No, it is a document and meeting operating system for your team.",
-          note: "Focus on the 'Three Pillars' (Tasks + Docs + Meetings).",
+          label: "Segments to prioritise this year",
+          detail: "1. Tech/SaaS companies (50–300 employees, India metros) ,highest urgency, fastest cycle, engineering teams drive adoption\n2. Professional Services (consulting, legal, audit) in India + GCC ,data sovereignty is a compliance requirement, MoM-to-task is immediately compelling\n3. Lockated existing clients (all industries) ,zero CAC, warm relationships, cross-sell motion",
+        },
+        {
+          label: "Competitor to displace most aggressively",
+          detail: "Asana. It is the most common 'good enough' tool in target segments. Has no document creation, no MoM module, no sovereign storage. Displacement message: 'Replace Asana + Google Docs with one platform where your data never leaves your building.'",
+        },
+        {
+          label: "What to STOP doing or saying",
+          detail: "STOP: Pitching as 'just another PM tool' ,leads with feature list instead of sovereignty story\nSTOP: Saying 'we replace Jira' ,instead say 'keep Jira for engineering, use PTM for everyone else'\nSTOP: Discounting to compete with Notion/ClickUp pricing\nSTOP: Mentioning removed features (wallet, desk/space booking features, F&B, AI) in sales decks ,creates expectation confusion",
+        },
+        {
+          label: "Recommended GTM motion Year 1",
+          detail: "Founder-led direct sales (first 20 accounts). India-first outbound to CTOs, VPs Engineering, Managing Partners. Lockated existing clients as cross-sell pipeline. 2–3 invite-only roundtables on 'data sovereignty in work management'. GITEX (Dubai) for GCC presence.",
         },
       ],
       pricingImprovementRows: [
         {
-          currentProp: "All-in-one Project Management",
-          suggestedFix: "Reframe as 'The Sovereign Work OS'",
-          improvedFraming:
-            "The only platform where your company's tasks, docs, and meetings stay on your servers.",
-          whyItWins:
-            "Moves the conversation from 'features' to 'security and control'.",
+          currentVP: "'All-in-one platform ,replace multiple tools'",
+          whoResonates: "IT heads, cost-conscious COOs",
+          improvedVersion: "'Stop paying for Asana, Google Docs, and a separate MoM tool. PTM does all three ,and your data stays on your servers.'",
+          whyStronger: "Names the specific tools being replaced (Asana + Google Docs + MoM tool). More concrete than 'all-in-one'. Sovereignty angle makes the status quo feel uncomfortable.",
         },
         {
-          currentProp: "MoM to task button",
-          suggestedFix: "Focus on 'Closed-Loop Execution'",
-          improvedFraming:
-            "Stop having meetings that go nowhere. Every action becomes a task automatically.",
-          whyItWins: "Solves a specific, painful operational frustration.",
+          currentVP: "'Data sovereignty ,your data stays on your servers'",
+          whoResonates: "CIOs, CISOs, compliance teams, BFSI, Legal",
+          improvedVersion: "'Your project plans, client deliverables, and meeting records shouldn't live on Asana's servers in Oregon. PTM keeps every byte on infrastructure you own ,period.'",
+          whyStronger: "Names what data is at risk and where it currently lives. Sovereignty becomes visceral rather than abstract.",
+        },
+        {
+          currentVP: "'Document creation with MS Office export'",
+          whoResonates: "IT heads replacing MS 365, ops and finance teams",
+          improvedVersion: "'Write proposals and reports inside PTM. Share with anyone as a real Word or Excel file. Stop paying ₹750/user/month for MS 365 to create documents that live on Microsoft's servers.'",
+          whyStronger: "Names the financial saving and the sovereignty problem together. Choice becomes explicit.",
+        },
+        {
+          currentVP: "'MoM to task in one click'",
+          whoResonates: "Project managers, ops leads, consulting teams",
+          improvedVersion: "'Every action item from every meeting becomes a tracked task, assigned to a person, with a deadline ,automatically. No more Word documents nobody follows up on.'",
+          whyStronger: "Frames the outcome ('no more Word documents nobody follows up on') rather than the feature. Addresses the specific frustration the buyer has already felt.",
+        },
+        {
+          currentVP: "'Replace Jira, Slack, and Asana'",
+          whoResonates: "Founders and CXOs frustrated with tool sprawl",
+          improvedVersion: "'Let engineering keep Jira. Give everyone else PTM ,one login, one bill, one place where your data lives on your terms.'",
+          whyStronger: "Original sounds arrogant. Improved version acknowledges Jira's entrenchment, positions PTM for the majority, and leads with simplicity.",
         },
       ],
       featuresVsMarket: [
@@ -1899,27 +2273,118 @@ const productData = {
       targetGroups: [
         {
           id: "TG1",
-          title: "Tech / SaaS Companies (50–300 employees, India metros)",
-          components: [
+          name: "TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
+          sections: [
             {
-              component: "Sales Motion",
-              detail:
-                "Founder-led direct outbound for first 20 accounts. Transition to SDR + AE model at Month 4.",
+              title: "COMPONENT 1 , SALES MOTION | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
+              columns: ["Sales element", "Details"],
+              rows: [
+                {
+                  label: "Primary sales motion",
+                  detail: "Founder-led direct outbound for first 20 accounts. Transition to SDR + AE model at Month 4. Deal size (₹6–15L/year) justifies high-touch sales; product complexity (sovereignty story) requires a human in the room for the first call.",
+                },
+                {
+                  label: "Avg. sales cycle",
+                  detail: "4–8 weeks for SMB tech companies (50–150 employees). 8–14 weeks for mid-market (150–500 employees). Flag: this is longer than typical for a tool-level SaaS purchase , driven by IT approval for data migration and procurement sign-off. Pre-empt by engaging IT Head in Week 1, not Week 6.",
+                },
+                {
+                  label: "Economic buyer (signs)",
+                  detail: "CTO or VP Engineering for companies under 200 employees. COO or CFO for companies over 200 employees where the purchase spans multiple departments.",
+                },
+                {
+                  label: "Champion (internal advocate)",
+                  detail: "VP Engineering or Head of Product , they feel the Jira + Slack + Confluence fragmentation pain daily. Engineering managers who have been complaining about data security are natural champions.",
+                },
+                {
+                  label: "Blocker to anticipate",
+                  detail: "IT/Security Head who will demand a security audit and data flow documentation before approving any new platform. Pre-empt with a one-pager on PTM's data architecture and sovereignty compliance before the IT conversation begins.",
+                  textColor: "#C62828",
+                  bgColor: "#FFEBEE",
+                },
+                {
+                  label: "What closes this TG",
+                  detail: "A live demo showing the full project → sprint → MoM → task → documents → issues flow, followed by a 14-day sandbox trial where their actual team sets up one real project. Reference customer in a similar-stage tech company seals it. Sovereignty architecture documentation closes the IT objection.",
+                  textColor: "#2E7D32",
+                  bgColor: "#E8F5E9",
+                },
+              ],
             },
             {
-              component: "Marketing Channels",
-              detail:
-                "LinkedIn organic + paid, cold outreach, events & conferences, SEO & content marketing, referral & word of mouth, community & associations.",
+              title: "COMPONENT 2 , MARKETING CHANNELS | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
+              columns: ["Channel", "Relevant?", "Execution approach", "Priority rank"],
+              rows: [
+                {
+                  col1: "LinkedIn (organic + paid)",
+                  col2: "Yes",
+                  col3: "Organic: 2 posts/week from Founder account , topics: data sovereignty in SaaS, Jira alternatives, sprint productivity. Target personas: CTOs, VPs Engineering, Product Managers. Paid: LinkedIn Sponsored Content targeting 'Software Engineering' + 'Product Management' job titles at companies 50–500 employees in Bengaluru, Pune, Hyderabad. Budget: ₹50–80k/month. Start organic for 60 days, layer paid after first 3 case studies.",
+                  col4: "#1 , Start immediately",
+                },
+                {
+                  col1: "Cold outreach (email + LinkedIn DM)",
+                  col2: "Yes",
+                  col3: "Sequence: Day 1 , LinkedIn connection request with note referencing a specific pain ('noticed your team uses Jira + Confluence , have 10 min to show you something interesting?'). Day 4 , email with 1-line data sovereignty hook + 30-second Loom video of PTM sprint view. Day 8 , follow-up with a relevant case study or stat. Day 14 , final breakup email. Best day/time: Tuesday–Thursday, 9–11am IST. List size target: 50 personalised outreaches per week.",
+                  col4: "#1 , Start immediately",
+                },
+                {
+                  col1: "Events & conferences",
+                  col2: "Yes",
+                  col3: "India: NASSCOM Product Conclave (Bengaluru, annual), TechSparks by YourStory (Bengaluru), SaaS Insider events. Host a 40-person invite-only roundtable: 'Data sovereignty in the SaaS stack , what engineering leaders need to know.' GCC: GITEX Technology Week (Dubai, October) for enterprise tech audience.",
+                  col4: "#2 , Month 2 onward",
+                },
+                {
+                  col1: "SEO & content marketing",
+                  col2: "Yes",
+                  col3: "Top 3 search topics this TG looks for: 'Jira alternatives India', 'best project management software for startups', 'data localisation SaaS India'. Content format: long-form blog posts (2,000+ words) targeting comparison keywords. Timeline: 90+ days to see SEO results , start now but don't count on it for Month 1.",
+                  col4: "#3 , Medium-term",
+                },
+                {
+                  col1: "Referral & word of mouth",
+                  col2: "Yes",
+                  col3: "Trigger: when a team completes their first sprint fully in PTM and reports velocity improvement. Engineer the referral: at Day 30 check-in, ask satisfied users to intro PTM to 1 peer at another company. Offer: free 30-day seat extension for each successful referral that converts to a trial.",
+                  col4: "#2 , Month 2",
+                },
+                {
+                  col1: "Community & associations",
+                  col2: "Yes",
+                  col3: "LinkedIn groups: SaaS India, Product Management India. Slack communities: SaaSBoomi, The Hustle (India SaaS community), Product Folks. YourStory and Inc42 founder communities. Engage authentically , answer questions about PM tools, sovereignty, sprint management , don't pitch directly.",
+                  col4: "#3 , Medium-term",
+                },
+              ],
             },
             {
-              component: "90-Day Launch",
-              detail:
-                "Days 1–30: Foundation. Days 31–60: Traction. Days 61–90: Conversion.",
+              title: "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 1: Tech / SaaS Companies",
+              columns: ["Phase", "Goals & Actions", "Milestone / Risk"],
+              rows: [
+                {
+                  col1: "Days 1–30 Foundation",
+                  col2: "Build 300-company target list. Launch 50 personalised outreaches/week. Create 5-min demo video.",
+                  col3: "Milestone: 5 qualified demo calls booked. Risk: generic messaging (needs 10 min research/lead).",
+                },
+                {
+                  col1: "Days 31–60 Traction",
+                  col2: "Run 5+ live demos. Setup pre-loaded sandbox trials. Proactively engage IT Heads on data architecture.",
+                  col3: "Milestone: 3 active trials running. Risk: trial inactivity (needs Day 2 check-in).",
+                },
+                {
+                  col1: "Days 61–90 Conversion",
+                  col2: "Week 9 usage review (show ROI). Present cost saving vs MS 365/Asana. Request peer references.",
+                  col3: "Milestone: 2 signed contracts + 1 case study. Risk: procurement delays (offer early-pay discount).",
+                },
+              ],
             },
             {
-              component: "Partnership Strategy",
-              detail:
-                "Indian SaaS consultants (referral-only, post 10 direct customers). Talent platforms & HRMS vendors (cross-sell).",
+              title: "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 1: Tech / SaaS Companies",
+              columns: ["Partnership element", "Details"],
+              rows: [
+                {
+                  label: "Timing for partnerships",
+                  detail: "Yes , but only after first 10 direct customers. Build direct sales motion first.",
+                },
+                {
+                  label: "Partner type 1",
+                  detail: "Indian SaaS consultants / implementation partners. Referral commission on Year 1 ARR.",
+                },
+              ],
             },
           ],
           summaryBox:
@@ -1927,28 +2392,100 @@ const productData = {
         },
         {
           id: "TG2",
-          title:
-            "Professional Services, Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
-          components: [
+          name: "TG 2: Professional Services, Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+          sections: [
             {
-              component: "Sales Motion",
-              detail:
-                "Founder-led direct + field sales (in-person meetings). Relationship and trust based.",
+              title: "COMPONENT 1 , SALES MOTION | TG 2: Professional Services",
+              columns: ["Sales element", "Details"],
+              rows: [
+                {
+                  label: "Primary sales motion",
+                  detail: "Founder-led direct + field sales. This TG buys on relationships. Lunch meeting with MP is worth more than 20 cold emails.",
+                },
+                {
+                  label: "Avg. sales cycle",
+                  detail: "6–10 weeks. Requires partner approval and compliance review. GCC legal audit adds 3–4 weeks.",
+                },
+                {
+                  label: "Economic buyer",
+                  detail: "Managing Partner (small firms) or COO / Practice Head (larger firms). GCC: GM or Regional Director.",
+                },
+                {
+                  label: "Champion",
+                  detail: "Senior Manager or Associate Director managing client delivery. They feel the MoM pain.",
+                },
+                {
+                  label: "Blocker to anticipate",
+                  detail: "Legal/compliance partner asking 'where does client data go?'. Our 'your servers' answer closes it.",
+                  textColor: "#C62828",
+                  bgColor: "#FFEBEE",
+                },
+                {
+                  label: "What closes this TG",
+                  detail: "Demo of MoM-to-task + data sovereignty explanation. Reference from similarly regulated firm.",
+                  textColor: "#2E7D32",
+                  bgColor: "#E8F5E9",
+                },
+              ],
             },
             {
-              component: "Marketing Channels",
-              detail:
-                "LinkedIn organic, cold outreach, FICCI/CII/DIFC events, SEO & content marketing, referral & word of mouth, community & associations.",
+              title: "COMPONENT 2 , MARKETING CHANNELS | TG 2: Professional Services",
+              columns: ["Channel", "Relevant?", "Execution approach", "Priority rank"],
+              rows: [
+                {
+                  col1: "LinkedIn (organic + paid)",
+                  col2: "Yes",
+                  col3: "Content targeting Practice Heads: client data security, billable hour optimisation, DIFC/SEBI compliance.",
+                  col4: "#1 , High priority",
+                },
+                {
+                  col1: "Cold outreach",
+                  col2: "Yes",
+                  col3: "Hook: 'Your client contracts live on Google's servers. Here's an alternative.' Personalise Heavily.",
+                  col4: "#1 , High priority",
+                },
+                {
+                  col1: "Events & conferences",
+                  col2: "Yes",
+                  col3: "FICCI/CII/DIFC events. Host breakfast roundtables: 'confidentiality in a SaaS world'.",
+                  col4: "#2 , Month 2 onward",
+                },
+              ],
             },
             {
-              component: "90-Day Launch",
-              detail:
-                "Days 1–30: Foundation. Days 31–60: Traction. Days 61–90: Conversion.",
+              title: "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 2: Professional Services",
+              columns: ["Phase", "Goals & Actions", "Milestone / Risk"],
+              rows: [
+                {
+                  col1: "Days 1–30 Foundation",
+                  col2: "Map 50 target firms. Request warm intros from Lockated network. Draft PS-specific sovereignty PDF.",
+                  col3: "Milestone: 3 qualified meetings. Risk: warm intros lag (need cold parallel).",
+                },
+                {
+                  col1: "Days 31–60 Traction",
+                  col2: "Run 3+ demos. Set up pilot on LIVE client project. Send DIFC-specific compliance brief.",
+                  col3: "Milestone: 2 paid pilots. Risk: low activation (must bind to specific MoM).",
+                },
+                {
+                  col1: "Days 61–90 Conversion",
+                  col2: "Present pilot data (time saved). Show ROI on billing rate vs cost. Request case study.",
+                  col3: "Milestone: 2 signed contracts. Risk: partnership approval cycle.",
+                },
+              ],
             },
             {
-              component: "Partnership Strategy",
-              detail:
-                "Ex-Big4 boutique consultants (referral) + GCC RegTech vendors (co-marketing).",
+              title: "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 2: Professional Services",
+              columns: ["Partnership element", "Details"],
+              rows: [
+                {
+                  label: "GCC Partners",
+                  detail: "GCC RegTech vendors (co-marketing). Relationship based.",
+                },
+                {
+                  label: "Boutique consultants",
+                  detail: "Ex-Big4 boutique consultants (referral). High trust networks.",
+                },
+              ],
             },
           ],
           summaryBox:
@@ -2489,6 +3026,11 @@ const productData = {
       },
     },
     detailedMetrics: {
+      northStarMetric: {
+        title: "Weekly Active Teams",
+        definition: "Number of companies (teams) that have at least 3 active users who created or updated a task, MoM, or document in the past 7 days. This metric captures genuine habitual usage , not just accounts created. A team that uses PTM every week has embedded it into their workflow. A team that logs in once a month has not. Everything else follows from this: revenue, retention, referrals, and NPS all correlate with weekly active team count.",
+        whyItIsNorthStar: "Weekly active teams predict MRR growth (teams that are active expand seats). They predict NPS (teams that use PTM weekly are the ones who recommend it). They predict churn prevention (teams that go quiet for 2+ weeks are at-risk accounts to intervene on). A stagnant Weekly Active Teams count , even with rising new signups , is an early warning of a product-market fit problem."
+      },
       clientImpact: [
         {
           metric: "Sprint Velocity Improvement",
@@ -3205,6 +3747,8 @@ const PTMSummaryTab: React.FC = () => {
     productData.extendedContent?.productSummaryNew?.problemSolves || [];
   const whoItIsFor =
     productData.extendedContent?.productSummaryNew?.whoItIsFor || [];
+  const featureSummaryModules =
+    productData.extendedContent?.productSummaryNew?.featureSummaryModules || [];
   const today = productData.extendedContent?.productSummaryNew?.today || [];
 
   return (
@@ -3320,9 +3864,38 @@ const PTMSummaryTab: React.FC = () => {
         </table>
       </div>
 
+      {/* Feature Summary (Live Modules) Section */}
+      <div className="bg-[#1565C0] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] text-center">
+        FEATURE SUMMARY (LIVE MODULES)
+      </div>
+      <div className="bg-white overflow-hidden border border-[#b8cce4]">
+        <table className="w-full border-collapse text-sm">
+          <tbody className="divide-y divide-gray-300">
+            {featureSummaryModules.map((module, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-[#FAF9F6]" : "bg-white"}>
+                <td
+                  className={`p-4 w-1/4 font-semibold border-r border-[#b8cce4] align-top ${module.isUSP
+                    ? "bg-[#E3F2FD] text-[#1f3a5f]"
+                    : "text-[#2C2C2C]"
+                    }`}
+                >
+                  {module.module}
+                </td>
+                <td
+                  className={`p-4 text-[#2C2C2C] align-top font-poppins leading-relaxed ${module.isUSP ? "bg-[#E3F2FD] text-blue-900" : ""
+                    }`}
+                >
+                  {module.description}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
       {/* Where We Are Today Section */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">
-        Where We Are Today
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] mt-8">
+        Competititve Position & USP
       </div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
@@ -3357,10 +3930,12 @@ const PTMSummaryTab: React.FC = () => {
 // Features Tab for PTM
 const PTMFeaturesTab: React.FC = () => {
   const features = productData.extendedContent?.detailedFeatures || [];
+  const featureComparison =
+    productData.extendedContent?.productSummaryNew?.featureComparison || [];
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl flex justify-between items-center">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Feature List
         </h2>
@@ -3369,6 +3944,81 @@ const PTMFeaturesTab: React.FC = () => {
         All features from product brief. USP rows highlighted in blue. Star
         denotes unique competitive advantage.
       </p>
+
+      {/* Feature Comparison (brief) */}
+      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+        SECTION 1, CURRENT FEATURES VS MARKET STANDARD
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-left">
+                Feature Area
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-left">
+                Market Standard
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-left bg-[#DA7756]">
+                Our Product
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Status
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-left">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {featureComparison.map((fc, idx) => {
+              const status = fc.snag360Status || "";
+              const getStatusColor = (s: string) => {
+                const upperS = s.toUpperCase();
+                if (upperS.includes("AHEAD, UNIQUE"))
+                  return { bg: "#1f4a7c", text: "white" }; // Dark blue as in image
+                if (upperS.includes("AHEAD"))
+                  return { bg: "#e2efda", text: "#2E7D32" };
+                if (upperS.includes("AT PAR"))
+                  return { bg: "#F5F5F5", text: "#666" };
+                if (upperS.includes("PARITY"))
+                  return { bg: "#FFF9C4", text: "#F57F17" };
+                if (upperS.includes("GAP"))
+                  return { bg: "#FFEBEE", text: "#C62828" };
+                return { bg: "#F5F5F5", text: "#666" };
+              };
+
+              const color = getStatusColor(status);
+
+              return (
+                <tr
+                  key={idx}
+                  className={idx % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}
+                >
+                  <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                    {fc.feature}
+                  </td>
+                  <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                    {fc.competitorInfo}
+                  </td>
+                  <td className="border border-[#b8cce4] p-2 text-[#2C2C2C] font-medium bg-[#DA7756]/5">
+                    {fc.productDetail}
+                  </td>
+                  <td className="border border-[#b8cce4] p-2 text-center">
+                    <span
+                      className="text-xs font-bold px-3 py-1 rounded"
+                      style={{ backgroundColor: color.bg, color: color.text }}
+                    >
+                      {status.replace(/_/g, " ")}
+                    </span>
+                  </td>
+                  <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                    {fc.notes}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
@@ -3446,7 +4096,7 @@ const PTMMarketTab: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Market Analysis
         </h2>
@@ -3640,10 +4290,27 @@ const PTMPricingTab: React.FC = () => {
   const currentRows = pricing?.pricingCurrentRows || [];
   const positioningRows = pricing?.pricingPositioningRows || [];
   const improvementRows = pricing?.pricingImprovementRows || [];
+  const featureComparison =
+    productData.extendedContent?.productSummaryNew?.featureComparison || [];
+
+  const mergedFeatureRows = [
+    ...featureRows,
+    ...featureComparison.map((fc: any) => ({
+      capability: fc.feature,
+      currentState: fc.productDetail,
+      marketNeed: fc.competitorInfo,
+      impact: "",
+      status:
+        fc.snag360Status === "AHEAD_UNIQUE"
+          ? "AHEAD, UNIQUE"
+          : fc.snag360Status,
+      recommendation: fc.notes,
+    })),
+  ];
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Features and Pricing
         </h2>
@@ -3655,30 +4322,25 @@ const PTMPricingTab: React.FC = () => {
 
       {/* Feature Comparison Table */}
       <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
-        Section 1: Feature Comparison vs Market
+        SECTION 1, CURRENT FEATURES VS MARKET STANDARD
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[10px] font-poppins">
           <thead>
             <tr className="bg-[#4f81bd] text-white font-semibold">
               <th className="border border-[#b8cce4] p-2 text-center">
-                Capability
+                Feature Area
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">
+                Market Standard
               </th>
               <th className="border border-[#b8cce4] p-2 text-center bg-[#DA7756]">
-                PTM Current State
-              </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
-                Market Need
-              </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
-                Impact
+                Our Product
               </th>
               <th className="border border-[#b8cce4] p-2 text-center">
                 Status
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
-                Recommendation
-              </th>
+              <th className="border border-[#b8cce4] p-2 text-center">Notes</th>
             </tr>
           </thead>
           <tbody>
@@ -3698,14 +4360,11 @@ const PTMPricingTab: React.FC = () => {
                 <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
                   {f.capability}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C] font-medium bg-[#DA7756]/10">
-                  {f.currentState}
-                </td>
                 <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
                   {f.marketNeed}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
-                  {f.impact}
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C] font-medium bg-[#DA7756]/10">
+                  {f.currentState}
                 </td>
                 <td
                   className={`border border-[#b8cce4] p-2 text-center font-semibold ${f.status.includes("AHEAD") ? "text-green-600" : f.status === "GAP" ? "text-red-600" : "text-[#2C2C2C]"}`}
@@ -3737,27 +4396,27 @@ const PTMPricingTab: React.FC = () => {
 
       {/* Current Pricing */}
       <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
-        Section 2: Current Pricing Structure
+        SECTION 2 ,PRICING LANDSCAPE
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
             <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center w-1/4">
-                Item
+              <th className="border border-[#b8cce4] p-3 text-left w-1/4">
+                Pricing Layer
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center w-3/4">
-                Detail
+              <th className="border border-[#b8cce4] p-3 text-left w-3/4">
+                Details & Benchmarking
               </th>
             </tr>
           </thead>
           <tbody>
             {currentRows.map((c, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                <td className="border border-[#b8cce4] p-3 font-semibold text-[#1f3a5f]">
                   {c.label}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 leading-relaxed">
                   {c.detail}
                 </td>
               </tr>
@@ -3768,32 +4427,28 @@ const PTMPricingTab: React.FC = () => {
 
       {/* Positioning */}
       <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
-        Section 3: Competitive Positioning
+        SECTION 3 ,HOW TO POSITION OURSELVES
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
             <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">
-                Question
+              <th className="border border-[#b8cce4] p-3 text-left w-1/4">
+                Dimension
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
-                Answer
+              <th className="border border-[#b8cce4] p-3 text-left w-3/4">
+                Strategic Narrative
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">Note</th>
             </tr>
           </thead>
           <tbody>
-            {positioningRows.map((p, i) => (
+            {positioningRows.map((p: any, i: number) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
-                  {p.question}
+                <td className="border border-[#b8cce4] p-3 font-semibold text-[#1f3a5f]">
+                  {p.label}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
-                  {p.answer}
-                </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/60 italic">
-                  {p.note}
+                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 leading-relaxed whitespace-pre-line">
+                  {p.detail}
                 </td>
               </tr>
             ))}
@@ -3803,40 +4458,40 @@ const PTMPricingTab: React.FC = () => {
 
       {/* Value Proposition Improvements */}
       <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
-        Section 4: Value Proposition Improvements
+        SECTION 4 ,VALUE PROPOSITIONS & IMPROVEMENTS
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-[11px] font-poppins">
+        <table className="w-full border-collapse text-[10px] font-poppins">
           <thead>
             <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">
-                Current Prop
+              <th className="border border-[#b8cce4] p-3 text-center w-1/5">
+                Current VP
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
-                Suggested Fix
+              <th className="border border-[#b8cce4] p-3 text-center w-1/5">
+                Who it resonates with
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
-                Improved Framing
+              <th className="border border-[#b8cce4] p-3 text-center w-2/5">
+                Improved version
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
-                Why It Wins
+              <th className="border border-[#b8cce4] p-3 text-center w-2/5">
+                Why stronger
               </th>
             </tr>
           </thead>
           <tbody>
-            {improvementRows.map((imp, i) => (
+            {improvementRows.map((imp: any, i: number) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]">
-                  {imp.currentProp}
+                <td className="border border-[#b8cce4] p-3 font-semibold text-[#2C2C2C]">
+                  {imp.currentVP}
                 </td>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#DA7756]">
-                  {imp.suggestedFix}
+                <td className="border border-[#b8cce4] p-3 text-[#DA7756] font-medium">
+                  {imp.whoResonates}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
-                  {imp.improvedFraming}
+                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 leading-relaxed">
+                  {imp.improvedVersion}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
-                  {imp.whyItWins}
+                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 leading-relaxed italic">
+                  {imp.whyStronger}
                 </td>
               </tr>
             ))}
@@ -3856,7 +4511,7 @@ const PTMUseCasesTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Use Cases
         </h2>
@@ -3989,7 +4644,7 @@ const PTMRoadmapTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Product Roadmap
         </h2>
@@ -4082,7 +4737,7 @@ const PTMBusinessPlanTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Business Plan Builder
         </h2>
@@ -4203,54 +4858,84 @@ const PTMGTMTab: React.FC = () => {
     productData.extendedContent?.detailedGTM?.targetGroups || [];
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+    <div className="space-y-12 animate-fade-in">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - GTM Strategy
         </h2>
       </div>
-      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">
-        2 Target Groups | Each with: Sales Motion, Marketing Channels, 90-Day
-        Sequence, Partnership Strategy
-      </p>
 
-      {targetGroups.map((tg, tgIdx) => (
-        <div key={tgIdx} className="space-y-4 mb-8">
-          <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
-            {tg.title}
+      {targetGroups.map((tg: any, tgIdx) => (
+        <div key={tgIdx} className="space-y-8 mb-12">
+          <div className="border-l-4 border-[#1f3a5f] pl-4 text-2xl font-bold text-[#1f3a5f] font-poppins mb-6">
+            {tg.name}
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-[11px] font-poppins">
-              <thead>
-                <tr className="bg-[#4f81bd] text-white font-semibold">
-                  <th className="border border-[#b8cce4] p-2 text-center w-[20%]">
-                    Component
-                  </th>
-                  <th className="border border-[#b8cce4] p-2 text-center w-[80%]">
-                    Detail
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {tg.components.map((comp, i) => (
-                  <tr
-                    key={i}
-                    className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}
-                  >
-                    <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
-                      {comp.component}
-                    </td>
-                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 leading-relaxed">
-                      {comp.detail}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="bg-[#d9e1f2] border border-[#b8cce4] p-4 text-[11px] text-[#2C2C2C] font-medium leading-relaxed font-poppins">
-            <strong>TG Summary:</strong> {tg.summaryBox}
-          </div>
+
+          {tg.sections.map((section: any, sIdx: number) => (
+            <div key={sIdx} className="space-y-4">
+              <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+                {section.title}
+              </div>
+              <div className="overflow-x-auto shadow-sm border border-[#b8cce4] rounded-lg">
+                <table className="w-full border-collapse text-[11px] font-poppins">
+                  <thead>
+                    <tr className="bg-[#4f81bd] text-white font-semibold">
+                      {section.columns.map((col: string, cIdx: number) => (
+                        <th
+                          key={cIdx}
+                          className={`border border-[#b8cce4] p-3 text-left ${cIdx === 0 ? "w-[15%]" : ""}`}
+                        >
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {section.rows.map((row: any, rIdx: number) => {
+                      const textColor = row.textColor || "#2C2C2C";
+                      const bgColor = row.bgColor || (rIdx % 2 === 0 ? "white" : "#F6F4EE");
+
+                      return (
+                        <tr key={rIdx} style={{ backgroundColor: bgColor }}>
+                          {section.columns.map((_, colIdx: number) => {
+                            const cellValue = colIdx === 0 ? (row.label || row.col1) :
+                              colIdx === 1 ? (row.detail || row.col2) :
+                                colIdx === 2 ? row.col3 :
+                                  row.col4;
+
+                            const isYes = cellValue === "Yes";
+
+                            return (
+                              <td
+                                key={colIdx}
+                                className={`border border-[#b8cce4] p-3 ${colIdx === 0 ? "font-semibold text-[#1f3a5f] bg-[#f0f4ff]" : "text-[#2C2C2C]/80"} ${isYes ? "text-green-700 font-bold text-center bg-green-50/30" : ""}`}
+                                style={{
+                                  color: colIdx === 0 ? (textColor === "#2C2C2C" ? "#1f3a5f" : textColor) : textColor,
+                                  backgroundColor: colIdx === 0 ? "" : (isYes ? "" : bgColor)
+                                }}
+                              >
+                                {cellValue}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ))}
+
+          {tg.summaryBox && (
+            <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg text-sm text-blue-900 leading-relaxed font-poppins shadow-inner">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                <strong className="uppercase tracking-wider">Target Group Summary</strong>
+              </div>
+              {tg.summaryBox}
+            </div>
+          )}
         </div>
       ))}
     </div>
@@ -4266,7 +4951,7 @@ const PTMMetricsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Key Metrics and Targets
         </h2>
@@ -4325,52 +5010,93 @@ const PTMMetricsTab: React.FC = () => {
 
       {/* Business Targets */}
       <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
-        Section 2: Product and Business Metrics with Targets
+        SECTION 2 , PRODUCT LAUNCH TRACKING METRICS (North Star + Top 10, with Phase 1 roadmap comparison)
       </div>
-      <div className="overflow-x-auto">
+      <p className="text-[11px] text-[#2C2C2C]/70 italic font-medium font-poppins px-2 py-2 bg-[#f0f4ff] border-l-4 border-[#1f3a5f]">
+        These metrics track the health of PTM's own product launch. North Star metric identified first. Then top 10 split by 30-day and 3-month windows, with expected ranges with and without Phase 1 roadmap improvements.
+      </p>
+
+      {/* North Star Metric Box */}
+      <div className="border border-[#b8cce4] mt-4 overflow-hidden rounded-lg">
+        <div className="bg-[#1f3a5f] text-white px-4 py-2 font-bold text-center text-xs flex items-center justify-center gap-2">
+          ★ NORTH STAR METRIC
+        </div>
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <tbody>
+            <tr>
+              <td className="w-[30%] bg-[#1f3a5f] text-white p-4 font-bold text-center border border-[#b8cce4] align-middle">
+                Weekly Active Teams
+              </td>
+              <td className="w-[70%] bg-[#f0f4ff] p-4 text-[#2C2C2C] border border-[#b8cce4]">
+                {productData.extendedContent?.detailedMetrics?.northStarMetric?.definition}
+              </td>
+            </tr>
+            <tr>
+              <td className="w-[30%] bg-[#f0f4ff] text-[#1f3a5f] p-4 font-bold border border-[#b8cce4]">
+                Why this is the North Star
+              </td>
+              <td className="w-[70%] bg-[#f0f4ff] p-4 text-[#2C2C2C] border border-[#b8cce4]">
+                {productData.extendedContent?.detailedMetrics?.northStarMetric?.whyItIsNorthStar}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="overflow-x-auto mt-6">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
             <tr className="bg-[#4f81bd] text-white font-semibold">
+              <th className="border border-[#b8cce4] p-2 text-center">#</th>
               <th className="border border-[#b8cce4] p-2 text-center">
                 Metric
               </th>
               <th className="border border-[#b8cce4] p-2 text-center">
-                Definition
+                What it measures
               </th>
               <th className="border border-[#b8cce4] p-2 text-center">
-                30-Day Current
+                30-day target (current product)
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center bg-[#e2efda] text-[#2E7D32]">
+                30-day target (with Phase 1 roadmap)
               </th>
               <th className="border border-[#b8cce4] p-2 text-center">
-                30-Day with Phase 1
+                3-month target (current product)
+              </th>
+              <th className="border border-[#b8cce4] p-2 text-center bg-[#e2efda] text-[#2E7D32]">
+                3-month target (with Phase 1 roadmap)
               </th>
               <th className="border border-[#b8cce4] p-2 text-center">
-                3-Month Current
-              </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
-                3-Month with Phase 1
+                Why it matters
               </th>
             </tr>
           </thead>
           <tbody>
-            {businessTargets.map((t, i) => (
+            {businessTargets.map((t: any, i: number) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">
+                  {i + 1}
+                </td>
                 <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
                   {t.metric}
                 </td>
                 <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
                   {t.definition}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">
                   {t.d30Current}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#b8cce4] p-2 text-[#2E7D32] bg-[#e2efda]/30 whitespace-pre-line">
                   {t.d30Phase1}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 whitespace-pre-line">
                   {t.m3Current}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#b8cce4] p-2 text-[#2E7D32] bg-[#e2efda]/30 whitespace-pre-line">
                   {t.m3Phase1}
+                </td>
+                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 text-[10px]">
+                  {t.whyItMatters || "TBD"}
                 </td>
               </tr>
             ))}
@@ -4391,7 +5117,7 @@ const PTMSWOTTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - SWOT Analysis
         </h2>
@@ -4492,7 +5218,7 @@ const PTMEnhancementsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Future Enhancement Roadmap (AI/MCP Layer)
         </h2>
@@ -4573,7 +5299,7 @@ const PTMAssetsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           PROJECT & TASK MANAGER - Assets & Credentials
         </h2>

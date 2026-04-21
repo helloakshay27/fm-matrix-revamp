@@ -171,7 +171,7 @@ const PostPossessionGTMTab: React.FC = () => {
   return (
     <div className="space-y-12 animate-fade-in font-poppins">
       {/* Header */}
-      <div className="bg-[#1f3864] text-white p-4 rounded-t-xl shadow-sm">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-bold uppercase tracking-wider">
           Post Possession — GTM Strategy
         </h2>
@@ -181,17 +181,17 @@ const PostPossessionGTMTab: React.FC = () => {
         {postPossessionGTM.targetGroups.map((tg, idx) => {
           const isIndia = tg.title.includes("INDIAN");
           const isGCC = tg.title.includes("GCC");
-          
-          const groupColor = isIndia 
-            ? "border-l-[#1a237e]" 
-            : isGCC 
-              ? "border-l-[#1b5e20]" 
+
+          const groupColor = isIndia
+            ? "border-l-[#1a237e]"
+            : isGCC
+              ? "border-l-[#1b5e20]"
               : "border-l-[#b71c1c]";
 
-          const groupHeaderBg = isIndia 
-            ? "bg-[#1a237e]" 
-            : isGCC 
-              ? "bg-[#1b5e20]" 
+          const groupHeaderBg = isIndia
+            ? "bg-[#1a237e]"
+            : isGCC
+              ? "bg-[#1b5e20]"
               : "bg-[#b71c1c]";
 
           return (
@@ -340,8 +340,8 @@ const PostPossessionGTMTab: React.FC = () => {
       <div className="bg-white border border-[#D3D1C7] rounded-xl p-4 shadow-sm border-l-4 border-l-[#DA7756]">
         <h4 className="text-xs font-bold uppercase tracking-widest text-[#DA7756] mb-2">GTM Execution Note</h4>
         <p className="text-[11px] text-[#666] leading-relaxed italic">
-          The GTM strategy prioritises Indian Enterprise sales to build a reference base for GCC entry in Year 2. 
-          UK BTR is a strategic priority due to GDPR compliance tailwinds. 
+          The GTM strategy prioritises Indian Enterprise sales to build a reference base for GCC entry in Year 2.
+          UK BTR is a strategic priority due to GDPR compliance tailwinds.
           All motions lead with ROI quantification (Referral Revenue) rather than operational features to accelerate procurement.
         </p>
       </div>

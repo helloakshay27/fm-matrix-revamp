@@ -47,7 +47,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
   return (
     <>
       {/* ── Page Header ─────────────────────────────────────────────────── */}
-      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
           {productData.name} — Competitive Feature Comparison &amp; Pricing
         </h2>
@@ -304,43 +304,43 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                   </thead>
                   <tbody>
                     {dp.clubFeatureComparison.map((f: any, i: number) => {
-                       const getStatusBg = (val: string) => {
-                         const tone = (val || "").toUpperCase();
-                         if (tone.includes("AHEAD")) return "bg-[#798C5E] text-white";
-                         if (tone.includes("GAP")) return "bg-[#C72030] text-white";
-                         if (tone.includes("AT PAR")) return "bg-[#F4E6C8] text-[#D97706]";
-                         return "";
-                       };
-                       return (
-                         <tr key={i} className={`align-middle border-b border-[#D3D1C7] ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
-                           <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] break-words whitespace-pre-line text-left">{f.feature}</td>
-                           <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
-                             <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.lockated)}`}>
-                               {f.lockated}
-                             </div>
-                           </td>
-                           <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
-                             <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.shawman)}`}>
-                               {f.shawman}
-                             </div>
-                           </td>
-                           <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
-                             <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.mindbody)}`}>
-                               {f.mindbody}
-                             </div>
-                           </td>
-                           <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
-                             <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.glofox)}`}>
-                               {f.glofox}
-                             </div>
-                           </td>
-                           <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
-                             <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.omnify)}`}>
-                               {f.omnify}
-                             </div>
-                           </td>
-                         </tr>
-                       );
+                      const getStatusBg = (val: string) => {
+                        const tone = (val || "").toUpperCase();
+                        if (tone.includes("AHEAD")) return "bg-[#798C5E] text-white";
+                        if (tone.includes("GAP")) return "bg-[#C72030] text-white";
+                        if (tone.includes("AT PAR")) return "bg-[#F4E6C8] text-[#D97706]";
+                        return "";
+                      };
+                      return (
+                        <tr key={i} className={`align-middle border-b border-[#D3D1C7] ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                          <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] break-words whitespace-pre-line text-left">{f.feature}</td>
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
+                            <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.lockated)}`}>
+                              {f.lockated}
+                            </div>
+                          </td>
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
+                            <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.shawman)}`}>
+                              {f.shawman}
+                            </div>
+                          </td>
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
+                            <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.mindbody)}`}>
+                              {f.mindbody}
+                            </div>
+                          </td>
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
+                            <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.glofox)}`}>
+                              {f.glofox}
+                            </div>
+                          </td>
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
+                            <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${getStatusBg(f.omnify)}`}>
+                              {f.omnify}
+                            </div>
+                          </td>
+                        </tr>
+                      );
                     })}
                     {dp.priceCompetitiveness && (
                       <tr className="bg-white border-b border-[#D3D1C7]">
@@ -367,9 +367,9 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                   <thead>
                     <tr className="bg-[#F6F4EE] text-gray-800 font-bold uppercase border-b border-[#D3D1C7] text-left">
                       <th className="border border-[#C4B89D] px-3 py-3 w-[16%]">Competitor</th>
-                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Entry Price<br/>(INR/mo)</th>
-                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Mid-Market<br/>(INR/mo)</th>
-                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Enterprise<br/>(INR/mo)</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Entry Price<br />(INR/mo)</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Mid-Market<br />(INR/mo)</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Enterprise<br />(INR/mo)</th>
                       <th className="border border-[#C4B89D] px-3 py-3 w-[22%]">Pricing Model</th>
                       <th className="border border-[#C4B89D] px-3 py-3 w-[17%]">India Market Presence</th>
                     </tr>
@@ -487,19 +487,19 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                     </tr>
                   </thead>
                   <tbody>
-                      {snagFeatureRows.map((f, i: number) => {
-                        return (
-                         <tr key={i} className={`align-middle border-b border-[#D3D1C7] ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
-                           <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] break-words whitespace-pre-line">{f.feature}</td>
-                           <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line">{"snag360" in f ? (f.snag360 || f.snag) : f.snag}</td>
-                           <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{"falconBrick" in f ? (f.falconBrick || f.falcon) : f.falcon}</td>
-                           <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium whitespace-pre-line">{f.procore}</td>
-                           <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{f.novade}</td>
-                           <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{f.snagR}</td>
-                           <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{"safetyCulture" in f ? (f.safetyCulture || f.safety) : f.safety}</td>
-                          
-                         </tr>
-                       );
+                    {snagFeatureRows.map((f, i: number) => {
+                      return (
+                        <tr key={i} className={`align-middle border-b border-[#D3D1C7] ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                          <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] break-words whitespace-pre-line">{f.feature}</td>
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line">{"snag360" in f ? (f.snag360 || f.snag) : f.snag}</td>
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{"falconBrick" in f ? (f.falconBrick || f.falcon) : f.falcon}</td>
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium whitespace-pre-line">{f.procore}</td>
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{f.novade}</td>
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{f.snagR}</td>
+                          <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{"safetyCulture" in f ? (f.safetyCulture || f.safety) : f.safety}</td>
+
+                        </tr>
+                      );
                     })}
                   </tbody>
                 </table>
@@ -519,8 +519,8 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                     <tr className="bg-[#F6F4EE] text-gray-800 font-bold uppercase border-b border-[#D3D1C7] text-left">
                       <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Tier</th>
                       <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Pricing Model</th>
-                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">India Price Range<br/>(INR/user/mo)</th>
-                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Global Price<br/>(USD/user/mo)</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">India Price Range<br />(INR/user/mo)</th>
+                      <th className="border border-[#C4B89D] px-3 py-3 w-[15%]">Global Price<br />(USD/user/mo)</th>
                       <th className="border border-[#C4B89D] px-3 py-3 w-[22%]">What's Included</th>
                       <th className="border border-[#C4B89D] px-3 py-3 w-[18%]">Target Segment</th>
                     </tr>
@@ -684,11 +684,11 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                               Market Standard
                             </th>
                             <th className="border border-[#D3D1C7] px-3 py-2 w-[22%] text-left">
-                                Our Product
-                              </th>
-                              <th className="border border-[#D3D1C7] px-3 py-2 w-[18%] text-center">
-                                Where We Stand
-                              </th>
+                              Our Product
+                            </th>
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[18%] text-center">
+                              Where We Stand
+                            </th>
                             <th className="border border-[#D3D1C7] px-3 py-2 text-left">
                               Deal Impact
                             </th>
@@ -696,7 +696,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                         </thead>
                         <tbody>
                           {dp.featuresVsMarket.map((f, i: number) => {
-                              return (
+                            return (
                               <tr
                                 key={i}
                                 className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}

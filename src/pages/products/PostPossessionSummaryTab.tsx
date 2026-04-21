@@ -8,7 +8,12 @@ const PostPossessionSummaryTab: React.FC = () => {
   const s3: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f2f2f2', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '8px' };
 
   return (
-    <div className="w-full overflow-x-auto bg-white p-4 font-sans">
+    <div className="w-full overflow-x-auto font-sans">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-4">
+        <h2 className="text-xl font-bold uppercase tracking-wider">
+          POST POSSESSION — PRODUCT SUMMARY  |  Lockated Product Suite
+        </h2>
+      </div>
       <table
         style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: '100%', minWidth: '1070px', backgroundColor: 'white' }}
         cellSpacing={0}
@@ -26,11 +31,6 @@ const PostPossessionSummaryTab: React.FC = () => {
           <col style={{ width: '125px' }} />
         </colgroup>
         <tbody>
-
-          {/* ── Title ────────────────────────────────────────────────────────── */}
-          <tr style={{ height: '36px' }}>
-            <td style={s0} colSpan={8}>POST POSSESSION — PRODUCT SUMMARY  |  Lockated Product Suite</td>
-          </tr>
 
           {/* ── WHAT IT IS ─────────────────────────────────────────────────── */}
           <tr style={{ height: '23px' }}>

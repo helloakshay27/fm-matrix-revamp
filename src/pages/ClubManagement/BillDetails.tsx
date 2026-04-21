@@ -227,6 +227,12 @@ export const BillDetails = () => {
   const [transactionRecords, setTransactionRecords] = useState<
     TransactionRecord[]
   >([]);
+
+  const [hasSaleOrderApproval, setHasSaleOrderApproval] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [showConvertMenu, setShowConvertMenu] = useState(false);
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
   useEffect(() => {
     const fetchSalesOrder = async () => {
       setLoading(true);
@@ -257,6 +263,72 @@ export const BillDetails = () => {
     };
     if (id) fetchSalesOrder();
   }, [id]);
+
+  useEffect(() => {
+    const fetchLockAccount = async () => {
+      try {
+        const response = await axios.get(`https://${baseUrl}/get_lock_account.json`, {
+          headers: { Authorization: token ? `Bearer ${token}` : undefined },
+        });
+        const hasApproval = Array.isArray(response.data?.approvals) &&
+          response.data.approvals.some((a: any) => a.approval_type === "bill" && a.active);
+        setHasSaleOrderApproval(hasApproval);
+      } catch (e) {
+        console.error("Failed to fetch lock account", e);
+      }
+    };
+    if (baseUrl && token) fetchLockAccount();
+  }, []);
+
+  // Close convert dropdown on outside click
+  useEffect(() => {
+    const handler = () => setShowConvertMenu(false);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const updateStatus = async (status: string) => {
+    try {
+      setActionLoading(true);
+      const response = await axios.patch(
+        `https://${baseUrl}/lock_account_bills/${id}.json`,
+        { lock_account_bill: { status } },
+        { headers: { Authorization: token ? `Bearer ${token}` : undefined }, validateStatus: () => true }
+      );
+      if (response.status === 422) {
+        const { message, errors } = response.data;
+        const msg = Array.isArray(errors) && errors.length > 0
+          ? errors.map((e: any) => `${e.id}: ${e.message}`).join(", ")
+          : message || "Failed to update status";
+        sonnerToast.error(msg);
+        return;
+      }
+      sonnerToast.success(`Sales order ${status.replace("_", " ")} successfully`);
+      fetchSalesOrder();
+    } catch (error) {
+      sonnerToast.error("Failed to update status");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const updateApprovalStatus = async (status: string) => {
+    try {
+      setActionLoading(true);
+      await axios.post(
+        `https://${baseUrl}/lock_account_bills/${id}/update_approval_status.json`,
+        { status, comment: "" },
+        { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
+      );
+      sonnerToast.success(`Sales order ${status.replace("_", " ")} successfully`);
+      fetchSalesOrder();
+    } catch (error) {
+      sonnerToast.error("Failed to update approval status");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -414,8 +486,11 @@ export const BillDetails = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* <Badge className={`${getStatusColor(salesOrder.status)} border`}>
+              {salesOrder.status.toUpperCase()}
+            </Badge> */}
             <Badge className={`${getStatusColor(salesOrder.status)} border`}>
-              {/* {salesOrder.status.toUpperCase()} */}
+              {salesOrder.status?.toUpperCase()}
             </Badge>
             {(salesOrder as any)?.approval_status?.approval_levels?.length > 0 && (
               <Button
@@ -427,6 +502,99 @@ export const BillDetails = () => {
                 <ClipboardList className="h-4 w-4" />
                 Approval Log
               </Button>
+            )}
+
+
+            {/* ── WITHOUT APPROVAL ── */}
+            {!hasSaleOrderApproval && (
+              <>
+                {/* Draft → Mark as Confirmed */}
+                {salesOrder.status === "draft" && (
+                  <Button
+                    size="sm"
+                    className="bg-green-600 text-white hover:bg-green-700"
+                    disabled={actionLoading}
+                    onClick={() => updateStatus("open")}
+                  >
+                    Mark as Open
+                  </Button>
+                )}
+
+                {/* Confirmed → Convert to Invoice */}
+                {/* {salesOrder.status === "confirmed" && (
+                  <Button
+                    size="sm"
+                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    disabled={actionLoading}
+                    onClick={() => navigate("/accounting/invoices/add", { state: { saleOrderId: salesOrder?.id || id } })}
+                  >
+                    Convert to Invoice
+                  </Button>
+                )} */}
+              </>
+            )}
+
+            {/* ── WITH APPROVAL ── */}
+            {hasSaleOrderApproval && (
+              <>
+                {/* Draft → Submit for Approval */}
+                {salesOrder.status === "draft" && (
+                  <Button
+                    size="sm"
+                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    disabled={actionLoading}
+                    onClick={() => updateStatus("pending_approval")}
+                  >
+                    Submit for Approval
+                  </Button>
+                )}
+
+                {/* Pending Approval + can_approve → Approve / Reject */}
+                {salesOrder.status === "pending_approval" && (salesOrder as any).can_approve && (
+                  <>
+                    <Button
+                      size="sm"
+                      className="bg-green-600 text-white hover:bg-green-700"
+                      disabled={actionLoading}
+                      onClick={() => updateApprovalStatus("approved")}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="bg-red-600 text-white hover:bg-red-700"
+                      disabled={actionLoading}
+                      onClick={() => updateApprovalStatus("rejected")}
+                    >
+                      Reject
+                    </Button>
+                  </>
+                )}
+
+                {/* Approved → Mark as Confirmed */}
+                {salesOrder.status === "approved" && (
+                  <Button
+                    size="sm"
+                    className="bg-green-600 text-white hover:bg-green-700"
+                    disabled={actionLoading}
+                    onClick={() => updateStatus("open")}
+                  >
+                    Mark as Open
+                  </Button>
+                )}
+
+                {/* Confirmed → Convert to Invoice */}
+                {/* {salesOrder.status === "confirmed" && (
+                  <Button
+                    size="sm"
+                    className="bg-[#C72030] text-white hover:bg-[#a81a28]"
+                    disabled={actionLoading}
+                    onClick={() => navigate("/accounting/invoices/add", { state: { saleOrderId: salesOrder?.id || id } })}
+                  >
+                    Convert to Invoice
+                  </Button>
+                )} */}
+              </>
             )}
           </div>
         </div>
@@ -556,7 +724,7 @@ export const BillDetails = () => {
                         {salesOrder?.vendor_name}
                       </p>
                     </div>
-                     <div>
+                    <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Source of Supply
                       </p>
@@ -564,7 +732,7 @@ export const BillDetails = () => {
                         {salesOrder?.source_of_supply}
                       </p>
                     </div>
-                     <div>
+                    <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Destination of Supply
                       </p>
@@ -830,7 +998,7 @@ export const BillDetails = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <FileText className="h-5 w-5 text-primary" />
-                      Journal 
+                      Journal
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -853,7 +1021,7 @@ export const BillDetails = () => {
                                   {rec.ledger_id ? (
                                     <span
                                       className="text-black-600 cursor-pointer hover:underline"
-                                      // onClick={() => navigate(`/accounting/reports/balance-sheet/details/${rec.ledger_id}`)}
+                                    // onClick={() => navigate(`/accounting/reports/balance-sheet/details/${rec.ledger_id}`)}
                                     >
                                       {rec.ledger_name}
                                     </span>
@@ -1037,7 +1205,7 @@ export const BillDetails = () => {
                 </CardHeader>
                 <CardContent>
                   {Array.isArray((salesOrder as any)?.activity_logs) &&
-                  (salesOrder as any).activity_logs.length > 0 ? (
+                    (salesOrder as any).activity_logs.length > 0 ? (
                     <div className="divide-y">
                       {(salesOrder as any).activity_logs.map((log: any, idx: number) => {
                         const key = `${log?.date || ""}-${log?.time || ""}-${idx}`;

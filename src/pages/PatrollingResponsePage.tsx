@@ -55,6 +55,8 @@ interface Answer {
   is_negative: boolean;
   answered_at: string;
   quest_map_id: number;
+  comments: string | null;
+  attachments: VisitAttachment[];
 }
 
 interface Ticket {
@@ -210,9 +212,12 @@ const transformVisitsToResponses = (
       const key = String(q.question_id ?? q.question_text);
       const ans = answerMap.get(key);
       const commentFromMap = q.question_id ? commentsMap.get(String(q.question_id)) : undefined;
-      baseRow[`q${n}_answer`]   = ans ? (ans.answer || ans.option_text || '-') : '-';
-      baseRow[`q${n}_comment`]  = commentFromMap || '-';
-      baseRow[`q${n}_negative`] = ans ? ans.is_negative : false;
+      baseRow[`q${n}_answer`]      = ans ? (ans.answer || ans.option_text || '-') : '-';
+      baseRow[`q${n}_comment`]     = ans?.comments || commentFromMap || '-';
+      baseRow[`q${n}_negative`]    = ans ? ans.is_negative : false;
+      // Per-answer attachments (if API provides them), fall back to visit-level attachments
+      const ansAttachments = ans?.attachments ?? [];
+      baseRow[`q${n}_attachments`] = (ansAttachments.length > 0 ? ansAttachments : visit.attachments ?? []) as VisitAttachment[];
     });
 
     return baseRow;
@@ -670,10 +675,12 @@ export const PatrollingResponsePage = () => {
           const n = idx + 1;
           const aKey = `q${n}_answer`;
           const cKey = `q${n}_comment`;
+          const attKey = `q${n}_attachments`;
           if (!(aKey in visMap)) visMap[aKey] = true;
           if (!(cKey in visMap)) visMap[cKey] = true;
+          if (!(attKey in visMap)) visMap[attKey] = true;
         });
-        if (columnKey.match(/^q\d+_(answer|comment)$/)) {
+        if (columnKey.match(/^q\d+_(answer|comment|attachments)$/)) {
           visMap[columnKey] = visible;
         }
         localStorage.setItem(COLUMN_STORAGE_KEY, JSON.stringify(visMap));
@@ -702,7 +709,7 @@ export const PatrollingResponsePage = () => {
   const isColumnVisible = useCallback(
     (columnKey: string) => {
       // Dynamic question columns
-      if (columnKey.match(/^q\d+_(answer|comment)$/)) {
+      if (columnKey.match(/^q\d+_(answer|comment|attachments)$/)) {
         return dynColVisibility[columnKey] ?? true;
       }
       const column = columns.find((col) => col.key === columnKey);
@@ -735,11 +742,11 @@ export const PatrollingResponsePage = () => {
       { key: 'patrolling_date', label: 'Patrolling Date', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('patrolling_date'), hideable: true },
       { key: 'patrolling_time', label: 'Patrolling Time', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('patrolling_time'), hideable: true },
       { key: 'submitted_by', label: 'Submitted By', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('submitted_by'), hideable: true },
-      { key: 'attachments', label: 'Attachments', sortable: false, draggable: true, defaultVisible: true, visible: isColumnVisible('attachments'), hideable: true },
+      // { key: 'attachments', label: 'Attachments', sortable: false, draggable: true, defaultVisible: true, visible: isColumnVisible('attachments'), hideable: true },
       { key: 'approved_at', label: 'Approve Date/Time', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('approved_at'), hideable: true },
     ];
 
-    // Dynamic question columns: each question → Answer column + Comment column
+    // Dynamic question columns: each question → Answer + Comment + Attachments columns
     const questionColumns = allQuestions.flatMap((q, idx) => {
       const n = idx + 1;
       const shortLabel = q.question_text.length > 40
@@ -757,11 +764,20 @@ export const PatrollingResponsePage = () => {
         },
         {
           key: `q${n}_comment`,
-          label: `${shortLabel} — Comment`,
+          label: `Comment`,
           sortable: true,
           draggable: true,
           defaultVisible: true,
           visible: isColumnVisible(`q${n}_comment`),
+          hideable: true,
+        },
+        {
+          key: `q${n}_attachments`,
+          label: `Attachments`,
+          sortable: false,
+          draggable: true,
+          defaultVisible: true,
+          visible: isColumnVisible(`q${n}_attachments`),
           hideable: true,
         },
       ];
@@ -912,6 +928,54 @@ export const PatrollingResponsePage = () => {
         if (columnKey.match(/^q\d+_comment$/)) {
           const val = String(item[columnKey] ?? '-');
           return <span className="text-sm text-gray-600 max-w-[180px] truncate block" title={val}>{val}</span>;
+        }
+        // Dynamic per-answer attachments column: q1_attachments, q2_attachments, …
+        if (columnKey.match(/^q\d+_attachments$/)) {
+          const rawVal = item[columnKey];
+          const attachments = Array.isArray(rawVal) ? (rawVal as VisitAttachment[]) : [];
+          if (!attachments.length) return <span className="text-gray-400 text-xs">-</span>;
+          return (
+            <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1">
+                {attachments.slice(0, 3).map((att, attIdx) => {
+                  const imgUrl = decodeFileUrl(att.file_url);
+                  const isImage = att.content_type?.startsWith('image/');
+                  return isImage ? (
+                    <button
+                      key={att.id}
+                      onClick={() => openPreview(attachments, attIdx)}
+                      className="w-8 h-8 rounded overflow-hidden border border-gray-200 hover:border-[#C72030] transition-colors flex-shrink-0"
+                      title={att.file_name}
+                    >
+                      <img
+                        src={imgUrl}
+                        alt={att.file_name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </button>
+                  ) : (
+                    <button
+                      key={att.id}
+                      onClick={() => openPreview(attachments, attIdx)}
+                      className="w-8 h-8 rounded border border-gray-200 hover:border-[#C72030] transition-colors flex-shrink-0 flex items-center justify-center bg-gray-50"
+                      title={att.file_name}
+                    >
+                      <Paperclip className="w-3 h-3 text-gray-500" />
+                    </button>
+                  );
+                })}
+              </div>
+              {attachments.length > 3 && (
+                <button
+                  onClick={() => openPreview(attachments, 0)}
+                  className="text-xs text-[#C72030] font-medium hover:underline"
+                >
+                  +{attachments.length - 3}
+                </button>
+              )}
+            </div>
+          );
         }
         return <span>{String(item[columnKey] ?? '-')}</span>;
       }

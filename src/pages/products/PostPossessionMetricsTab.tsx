@@ -226,7 +226,7 @@ const PostPossessionMetricsTab: React.FC = () => {
   return (
     <div className="space-y-12 animate-fade-in font-poppins">
       {/* Header */}
-      <div className="bg-[#1f3864] text-white p-4 rounded-t-xl shadow-sm">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-bold uppercase tracking-wider">
           Post Possession — Performance & Impact Metrics
         </h2>
@@ -237,7 +237,7 @@ const PostPossessionMetricsTab: React.FC = () => {
         <div className="bg-[#2e4057] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
           Section 1 — Client Impact Metrics (Proof Points)
         </div>
-        
+
         <div className="overflow-hidden border border-[#D3D1C7] rounded-xl shadow-sm bg-white">
           <table className="w-full border-collapse table-fixed text-[12px] leading-relaxed">
             <thead>

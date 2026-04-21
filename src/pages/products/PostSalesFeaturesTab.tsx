@@ -11,8 +11,8 @@ const PostSalesFeaturesTab: React.FC<PostSalesFeaturesTabProps> = ({ productData
   return (
     <div className="animate-fade-in font-poppins pb-20 w-full overflow-hidden">
       {/* Title & Subtitle */}
-      <div className="w-full border border-[#dddddd] mb-0">
-        <div className="bg-[#0d1b2a] text-white p-4 text-center font-bold text-[15pt] border-b border-[#dddddd]">
+      <div className="w-full mb-0">
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] text-xl font-semibold mb-4">
           Post Sales · Complete Feature List
         </div>
         <div className="bg-[#e8eaf6] text-[#5c6bc0] p-2 text-center text-[9pt] border-b border-[#dddddd]">
@@ -35,7 +35,7 @@ const PostSalesFeaturesTab: React.FC<PostSalesFeaturesTabProps> = ({ productData
           <tbody>
             {features.map((f: any, index: number) => {
               const isUSP = f.usp === true || (typeof f.usp === 'string' && f.usp.includes('USP'));
-              
+
               // CSS Classes based on USP status
               const baseCellClass = "p-3 border-r border-[#dddddd] text-[10pt] align-middle overflow-hidden break-words";
               const indexClass = `${baseCellClass} bg-[#eeeeee] text-[#212121] text-center`;

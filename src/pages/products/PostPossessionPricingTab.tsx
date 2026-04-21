@@ -4,7 +4,7 @@ const PostPossessionPricingTab: React.FC = () => {
   return (
     <div className="space-y-12 animate-fade-in font-poppins pb-10">
       {/* Header */}
-      <div className="bg-[#1f3864] text-white p-4 rounded-t-xl shadow-sm">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-bold uppercase tracking-wider">
           Post Possession — Features & Pricing
         </h2>
@@ -192,44 +192,44 @@ const PostPossessionPricingTab: React.FC = () => {
         </div>
         <div className="grid grid-cols-1 gap-4">
           <div className="bg-[#e2efda] p-6 rounded-xl border-l-8 border-l-green-600 shadow-sm">
-             <h3 className="text-[#1f3864] font-black text-sm uppercase mb-3">Single Most Defensible Position (NOW)</h3>
-             <p className="text-sm font-medium italic text-gray-800 leading-relaxed max-w-4xl">
-               "The only white-label, data-sovereign community management platform that covers the entire resident lifecycle — from post-possession daily living through FM operations to developer referral and loyalty — in a single app, on the developer's own servers."
-             </p>
+            <h3 className="text-[#1f3864] font-black text-sm uppercase mb-3">Single Most Defensible Position (NOW)</h3>
+            <p className="text-sm font-medium italic text-gray-800 leading-relaxed max-w-4xl">
+              "The only white-label, data-sovereign community management platform that covers the entire resident lifecycle — from post-possession daily living through FM operations to developer referral and loyalty — in a single app, on the developer's own servers."
+            </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-             <div className="bg-[#ddebf7] p-5 rounded-xl border-l-8 border-l-blue-600">
-                <h3 className="text-blue-900 font-bold text-[10px] uppercase mb-2">Priority Segments</h3>
-                <ul className="text-[11px] space-y-2 text-gray-700">
-                  <li><span className="font-bold">INDIA:</span> Large/Mid-market residential (Tier-1). godrej/piramal validated.</li>
-                  <li><span className="font-bold">GCC:</span> UAE (Dubai/Abu Dhabi). High ROI on referral + data sovereignty.</li>
-                  <li><span className="font-bold">UK:</span> Build-to-Rent (BTR) operators. GDPR pressure + no white-label alternative.</li>
-                </ul>
-             </div>
-             <div className="bg-[#fce9d5] p-5 rounded-xl border-l-8 border-l-orange-400">
-                <h3 className="text-orange-900 font-bold text-[10px] uppercase mb-2 italic">Competitive Displacement</h3>
-                <p className="text-[11px] font-bold text-orange-950 mb-1 inline-block border-b border-orange-300 pb-0.5">Target: MyGate</p>
-                <p className="text-[11px] leading-relaxed text-gray-800 mt-1">
-                  Attack at developer procurement level. Messaging: 'MyGate is a resident's app. Post Possession is a developer's platform. One makes your community safe. The other makes your brand immortal.'
-                </p>
-             </div>
+            <div className="bg-[#ddebf7] p-5 rounded-xl border-l-8 border-l-blue-600">
+              <h3 className="text-blue-900 font-bold text-[10px] uppercase mb-2">Priority Segments</h3>
+              <ul className="text-[11px] space-y-2 text-gray-700">
+                <li><span className="font-bold">INDIA:</span> Large/Mid-market residential (Tier-1). godrej/piramal validated.</li>
+                <li><span className="font-bold">GCC:</span> UAE (Dubai/Abu Dhabi). High ROI on referral + data sovereignty.</li>
+                <li><span className="font-bold">UK:</span> Build-to-Rent (BTR) operators. GDPR pressure + no white-label alternative.</li>
+              </ul>
+            </div>
+            <div className="bg-[#fce9d5] p-5 rounded-xl border-l-8 border-l-orange-400">
+              <h3 className="text-orange-900 font-bold text-[10px] uppercase mb-2 italic">Competitive Displacement</h3>
+              <p className="text-[11px] font-bold text-orange-950 mb-1 inline-block border-b border-orange-300 pb-0.5">Target: MyGate</p>
+              <p className="text-[11px] leading-relaxed text-gray-800 mt-1">
+                Attack at developer procurement level. Messaging: 'MyGate is a resident's app. Post Possession is a developer's platform. One makes your community safe. The other makes your brand immortal.'
+              </p>
+            </div>
           </div>
 
           <div className="bg-[#fce4d6] p-5 rounded-xl border border-red-100 border-dashed">
             <h3 className="text-red-900 font-bold text-[10px] uppercase mb-2">What To Stop Doing / Saying</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-               {[
-                 { title: "No Feature Lists", desc: "Don't drown buyers in 130 features. Lead with outcomes." },
-                 { title: "No 'Society App'", desc: "Don't call it that; it commoditises to MyGate level." },
-                 { title: "No Small RWAs", desc: "Too complex/expensive for them; dilutes enterprise value." },
-                 { title: "Don't sell to IT", desc: "Target CRM/Sales Heads who own referral budget." },
-               ].map((stop, i) => (
-                 <div key={i}>
-                   <p className="text-[9px] font-black text-red-700 uppercase mb-1">{stop.title}</p>
-                   <p className="text-[10px] text-gray-600 leading-tight">{stop.desc}</p>
-                 </div>
-               ))}
+              {[
+                { title: "No Feature Lists", desc: "Don't drown buyers in 130 features. Lead with outcomes." },
+                { title: "No 'Society App'", desc: "Don't call it that; it commoditises to MyGate level." },
+                { title: "No Small RWAs", desc: "Too complex/expensive for them; dilutes enterprise value." },
+                { title: "Don't sell to IT", desc: "Target CRM/Sales Heads who own referral budget." },
+              ].map((stop, i) => (
+                <div key={i}>
+                  <p className="text-[9px] font-black text-red-700 uppercase mb-1">{stop.title}</p>
+                  <p className="text-[10px] text-gray-600 leading-tight">{stop.desc}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -241,35 +241,35 @@ const PostPossessionPricingTab: React.FC = () => {
           Part D — Value Propositions & Improvements
         </div>
         <div className="overflow-x-auto border border-[#D3D1C7] rounded-lg bg-white shadow-sm">
-           <table className="w-full text-left text-[11px] leading-relaxed border-collapse">
-             <thead className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[10px]">
-               <tr>
-                 <th className="p-3 border border-[#E5E7EB] w-[20%]">Current Value Proposition</th>
-                 <th className="p-3 border border-[#E5E7EB] w-[15%]">Who Resonates</th>
-                 <th className="p-3 border border-[#E5E7EB] w-[35%]">Sharpened / Expanded Version</th>
-                 <th className="p-3 border border-[#E5E7EB] w-[30%]">Why This Works Better</th>
-               </tr>
-             </thead>
-             <tbody>
-                {[
-                  { current: "White-labelled community app", who: "Marketing/Branding", sharp: "'Your brand. Your data. Your community.' — Only platform where residents see your name/logo.", reason: "Shifts from feature to emotional outcome (brand ownership).", tone: "bg-white" },
-                  { current: "Integrated Platform", who: "FM Head, Ops Director", sharp: "'Replace 7 apps with 1. Run entire community from a single screen.'", reason: "The '7 to 1' framing makes the pain tangible.", tone: "bg-[#f2f2f2]" },
-                  { current: "Reduce CP cost by 50%", who: "Sales Director, CFO", sharp: "'Turn residents into salespeople. Every referral saves ₹3–10L in fees.'", reason: "Anchors value in specific rupee amount. Must-have for CFOs.", tone: "bg-white" },
-                  { current: "Reduce support cost by 20%", who: "FM Head, Ops Director", sharp: "'Cut maintenance overhead in half. Automated ticket routing + 5-layer escalation.'", reason: "Quantified and specific. Supported by reference data.", tone: "bg-[#f2f2f2]" },
-                  { current: "Lifecycle management", who: "CRM Head, CEO", sharp: "'Relationship doesn't end at possession. It starts there. Keep every referral tracked.'", reason: "Reframes from 'ops tool' to 'long-term commercial asset'.", tone: "bg-white" },
-                  { current: "Zero unauthorised vendors", who: "Legal/Risk, FM Head", sharp: "'Curated marketplace. Every provider vetted by you. Your ecosystem, your revenue.'", reason: "Adds safety AND revenue angle.", tone: "bg-[#f2f2f2]" },
-                  { current: "Data sovereignty", who: "CIO, Legal, CFO", sharp: "'Residents' data never leaves your servers. Full sovereignty — GDPR/PDPA compliant.'", reason: "Critical differentiator for international regulatory contexts.", tone: "bg-white" },
-                  { current: "Operational efficiency", who: "FM Head, FM Team", sharp: "'From reactive to proactive. PPM, digital audits, compliance alerts — stop chasing paperwork.'", reason: "Speaks directly to daily frustration of FM managers.", tone: "bg-[#f2f2f2]" },
-                ].map((row, r) => (
-                  <tr key={r} className={`${row.tone} hover:bg-gray-100 transition-colors`}>
-                    <td className="p-3 border border-gray-100 font-bold">{row.current}</td>
-                    <td className="p-3 border border-gray-100 text-gray-500 font-medium">{row.who}</td>
-                    <td className="p-3 border border-gray-100 font-bold text-[#1f3864]">{row.sharp}</td>
-                    <td className="p-3 border border-gray-100 italic">{row.reason}</td>
-                  </tr>
-                ))}
-             </tbody>
-           </table>
+          <table className="w-full text-left text-[11px] leading-relaxed border-collapse">
+            <thead className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[10px]">
+              <tr>
+                <th className="p-3 border border-[#E5E7EB] w-[20%]">Current Value Proposition</th>
+                <th className="p-3 border border-[#E5E7EB] w-[15%]">Who Resonates</th>
+                <th className="p-3 border border-[#E5E7EB] w-[35%]">Sharpened / Expanded Version</th>
+                <th className="p-3 border border-[#E5E7EB] w-[30%]">Why This Works Better</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { current: "White-labelled community app", who: "Marketing/Branding", sharp: "'Your brand. Your data. Your community.' — Only platform where residents see your name/logo.", reason: "Shifts from feature to emotional outcome (brand ownership).", tone: "bg-white" },
+                { current: "Integrated Platform", who: "FM Head, Ops Director", sharp: "'Replace 7 apps with 1. Run entire community from a single screen.'", reason: "The '7 to 1' framing makes the pain tangible.", tone: "bg-[#f2f2f2]" },
+                { current: "Reduce CP cost by 50%", who: "Sales Director, CFO", sharp: "'Turn residents into salespeople. Every referral saves ₹3–10L in fees.'", reason: "Anchors value in specific rupee amount. Must-have for CFOs.", tone: "bg-white" },
+                { current: "Reduce support cost by 20%", who: "FM Head, Ops Director", sharp: "'Cut maintenance overhead in half. Automated ticket routing + 5-layer escalation.'", reason: "Quantified and specific. Supported by reference data.", tone: "bg-[#f2f2f2]" },
+                { current: "Lifecycle management", who: "CRM Head, CEO", sharp: "'Relationship doesn't end at possession. It starts there. Keep every referral tracked.'", reason: "Reframes from 'ops tool' to 'long-term commercial asset'.", tone: "bg-white" },
+                { current: "Zero unauthorised vendors", who: "Legal/Risk, FM Head", sharp: "'Curated marketplace. Every provider vetted by you. Your ecosystem, your revenue.'", reason: "Adds safety AND revenue angle.", tone: "bg-[#f2f2f2]" },
+                { current: "Data sovereignty", who: "CIO, Legal, CFO", sharp: "'Residents' data never leaves your servers. Full sovereignty — GDPR/PDPA compliant.'", reason: "Critical differentiator for international regulatory contexts.", tone: "bg-white" },
+                { current: "Operational efficiency", who: "FM Head, FM Team", sharp: "'From reactive to proactive. PPM, digital audits, compliance alerts — stop chasing paperwork.'", reason: "Speaks directly to daily frustration of FM managers.", tone: "bg-[#f2f2f2]" },
+              ].map((row, r) => (
+                <tr key={r} className={`${row.tone} hover:bg-gray-100 transition-colors`}>
+                  <td className="p-3 border border-gray-100 font-bold">{row.current}</td>
+                  <td className="p-3 border border-gray-100 text-gray-500 font-medium">{row.who}</td>
+                  <td className="p-3 border border-gray-100 font-bold text-[#1f3864]">{row.sharp}</td>
+                  <td className="p-3 border border-gray-100 italic">{row.reason}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </section>
     </div>

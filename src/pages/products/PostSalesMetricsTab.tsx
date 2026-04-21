@@ -2,16 +2,16 @@ import React from 'react';
 
 const PostSalesMetricsTab: React.FC = () => {
   // ── Style objects mapped 1:1 from HTML CSS classes ────────────────────────
-  const s0: React.CSSProperties  = { borderBottom: '1px solid transparent', backgroundColor: '#1a2744', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '16pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
-  const s1: React.CSSProperties  = { borderBottom: '1px solid transparent', backgroundColor: '#f5f5f5', textAlign: 'center', fontStyle: 'italic', color: '#666666', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
-  const s2: React.CSSProperties  = { borderBottom: '1px solid #cccccc', backgroundColor: '#2e4a7a', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '10pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
-  const s3: React.CSSProperties  = { backgroundColor: '#ffffff', textAlign: 'left', color: '#000000', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'bottom', whiteSpace: 'nowrap', padding: '0px 3px' };
-  const s4: React.CSSProperties  = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#1a2744', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', wordWrap: 'break-word', padding: '0px 3px' };
-  const s5: React.CSSProperties  = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#2e4a7a', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', wordWrap: 'break-word', padding: '0px 3px' };
-  const s6: React.CSSProperties  = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#1b5e20', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', wordWrap: 'break-word', padding: '0px 3px' };
-  const s7: React.CSSProperties  = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#5c3a1e', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', wordWrap: 'break-word', padding: '0px 3px' };
-  const s8: React.CSSProperties  = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f5f9ff', textAlign: 'center', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
-  const s9: React.CSSProperties  = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f5f9ff', textAlign: 'left', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
+  const s0: React.CSSProperties = { borderBottom: '1px solid transparent', backgroundColor: '#1a2744', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '16pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
+  const s1: React.CSSProperties = { borderBottom: '1px solid transparent', backgroundColor: '#f5f5f5', textAlign: 'center', fontStyle: 'italic', color: '#666666', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
+  const s2: React.CSSProperties = { borderBottom: '1px solid #cccccc', backgroundColor: '#2e4a7a', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '10pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
+  const s3: React.CSSProperties = { backgroundColor: '#ffffff', textAlign: 'left', color: '#000000', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'bottom', whiteSpace: 'nowrap', padding: '0px 3px' };
+  const s4: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#1a2744', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', wordWrap: 'break-word', padding: '0px 3px' };
+  const s5: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#2e4a7a', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', wordWrap: 'break-word', padding: '0px 3px' };
+  const s6: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#1b5e20', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', wordWrap: 'break-word', padding: '0px 3px' };
+  const s7: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#5c3a1e', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', wordWrap: 'break-word', padding: '0px 3px' };
+  const s8: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f5f9ff', textAlign: 'center', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
+  const s9: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f5f9ff', textAlign: 'left', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
   const s10: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f5f9ff', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
   const s11: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#e8f5e9', textAlign: 'center', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
   const s12: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#fff8e1', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
@@ -41,7 +41,11 @@ const PostSalesMetricsTab: React.FC = () => {
   const s36: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#eef2ff', textAlign: 'center', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
 
   return (
-    <div className="w-full overflow-x-auto bg-white p-4 font-sans">
+    <div className="w-full overflow-x-auto font-sans">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] text-xl font-bold mb-4">
+        Post Sales  ·  Metrics
+      </div>
+
       <table
         style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: '100%', minWidth: '1350px', backgroundColor: 'white' }}
         cellSpacing={0}
@@ -59,11 +63,6 @@ const PostSalesMetricsTab: React.FC = () => {
           <col style={{ width: '167px' }} />
         </colgroup>
         <tbody>
-
-          {/* ── Row 1: Title ──────────────────────────────────── */}
-          <tr style={{ height: '47px' }}>
-            <td style={s0} colSpan={9}>Post Sales  ·  Metrics</td>
-          </tr>
 
           {/* ── Row 2: Subtitle ───────────────────────────────── */}
           <tr style={{ height: '25px' }}>

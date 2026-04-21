@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as tf from "@tensorflow/tfjs";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
+import { useProductSecurity } from "./useProductSecurity";
+import {
+  CameraPermissionPending,
+  CameraPermissionDenied,
+  ModelLoadingScreen,
+  SecurityOverlays,
+} from "./SecurityOverlays";
 import {
   ArrowLeft,
   Monitor,
@@ -2718,7 +2725,7 @@ const Snag360FeaturesTab: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl flex justify-between items-center">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Feature List
         </h2>
@@ -2805,7 +2812,7 @@ const Snag360MarketTab: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Market Size Section */}
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Market Analysis
         </h2>
@@ -3012,7 +3019,7 @@ const Snag360PricingTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Features and Pricing
         </h2>
@@ -3221,7 +3228,7 @@ const Snag360RoadmapTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Product Roadmap
         </h2>
@@ -3301,7 +3308,7 @@ const Snag360BusinessPlanTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Business Plan Builder
         </h2>
@@ -3423,7 +3430,7 @@ const Snag360GTMTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - GTM Strategy
         </h2>
@@ -3485,7 +3492,7 @@ const Snag360MetricsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Key Metrics and Targets
         </h2>
@@ -3610,7 +3617,7 @@ const Snag360SWOTTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - SWOT Analysis
         </h2>
@@ -3713,7 +3720,7 @@ const Snag360EnhancementsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Future Enhancement Roadmap (Innovation Layer)
         </h2>
@@ -3853,7 +3860,7 @@ const Snag360AssetsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Assets & Credentials
         </h2>
@@ -3966,7 +3973,19 @@ const Snag360AssetsTab: React.FC = () => {
 // ============== MAIN SNAG 360 PAGE COMPONENT ==============
 const Snag360Page: React.FC = () => {
   const navigate = useNavigate();
+  const security = useProductSecurity();
   const snagTabsScrollRef = useRef<HTMLDivElement>(null);
+
+  // Security checks
+  if (security.cameraPermission === "pending") {
+    return <CameraPermissionPending />;
+  }
+  if (security.cameraPermission === "denied") {
+    return <CameraPermissionDenied />;
+  }
+  if (security.modelLoading) {
+    return <ModelLoadingScreen />;
+  }
 
   // Extract use cases data for custom component
   const industryUseCases =
@@ -3977,7 +3996,16 @@ const Snag360Page: React.FC = () => {
   const tabOrder = productData.tabOrder;
 
   return (
-    <div className="min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300">
+    <div
+      className="min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300"
+      style={{
+        filter: security.isBlurred ? "blur(20px)" : "none",
+        transition: "filter 0.3s ease",
+      }}
+    >
+      {/* Security Overlays */}
+      <SecurityOverlays security={security} />
+
       {/* Header */}
       <div className="relative mb-4 flex flex-col items-center bg-[#F6F4EE] pt-4">
         <div className="w-full max-w-7xl px-6 lg:px-10 mb-4">

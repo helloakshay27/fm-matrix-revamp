@@ -27,7 +27,7 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
   if (productData.excelLikeSummary) {
     return (
       <div className="animate-fade-in bg-[#F6F4EE]">
-        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-5 rounded-t-xl mb-0 flex justify-between items-center">
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
           <h2 className="text-2xl font-semibold font-poppins uppercase tracking-tight">
             {productData.name} - Product Summary
           </h2>
@@ -40,11 +40,10 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
                   <button
                     key={idx}
                     onClick={() => setActivePerspective(idx)}
-                    className={`px-6 py-2 rounded-full font-semibold font-poppins text-sm uppercase tracking-wide transition-all ${
-                      activePerspective === idx
+                    className={`px-6 py-2 rounded-full font-semibold font-poppins text-sm uppercase tracking-wide transition-all ${activePerspective === idx
                         ? "bg-[#DA7756] text-white shadow-md"
                         : "bg-white text-[#2C2C2C] border border-[#D3D1C7] hover:bg-[#F6F4EE]"
-                    }`}
+                      }`}
                   >
                     {p.title}
                   </button>
@@ -110,8 +109,8 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
     );
   }
 
-  const currentSummaryData = hasPerspectives 
-    ? productData.extendedContent?.productSummaryNew?.perspectives?.[activePerspective] 
+  const currentSummaryData = hasPerspectives
+    ? productData.extendedContent?.productSummaryNew?.perspectives?.[activePerspective]
     : productData.extendedContent?.productSummaryNew;
   const currentSummaryTitle = hasPerspectives
     ? productData.extendedContent?.productSummaryNew?.perspectives?.[activePerspective]?.title
@@ -128,11 +127,10 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
             <button
               key={idx}
               onClick={() => setActivePerspective(idx)}
-              className={`px-6 py-2 rounded-full font-semibold font-poppins text-sm uppercase tracking-wide transition-all ${
-                activePerspective === idx
+              className={`px-6 py-2 rounded-full font-semibold font-poppins text-sm uppercase tracking-wide transition-all ${activePerspective === idx
                   ? "bg-[#DA7756] text-white shadow-md"
                   : "bg-white text-[#2C2C2C] border border-[#D3D1C7] hover:bg-[#F6F4EE]"
-              }`}
+                }`}
             >
               {p.title}
             </button>

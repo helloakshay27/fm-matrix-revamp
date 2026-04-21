@@ -33,7 +33,11 @@ const PostSalesPricingTab: React.FC = () => {
   const s28: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f5f9ff', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
 
   return (
-    <div className="w-full overflow-x-auto bg-white p-4 font-sans">
+    <div className="w-full overflow-x-auto font-sans">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] text-xl font-bold mb-4">
+        Post Sales  ·  Features &amp; Pricing
+      </div>
+
       <table
         style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: '100%', minWidth: '1000px', backgroundColor: 'white' }}
         cellSpacing={0}
@@ -50,10 +54,6 @@ const PostSalesPricingTab: React.FC = () => {
           <col style={{ width: '20px' }} />
         </colgroup>
         <tbody>
-          {/* Row 1 – Title */}
-          <tr style={{ height: '47px' }}>
-            <td style={s0} colSpan={8}>Post Sales  ·  Features &amp; Pricing</td>
-          </tr>
           {/* Row 2 – Subtitle */}
           <tr style={{ height: '23px' }}>
             <td style={s1} colSpan={8}>Section 1: Feature comparison vs market  |  Section 2: Pricing landscape  |  Section 3: Positioning  |  Section 4: Value propositions</td>

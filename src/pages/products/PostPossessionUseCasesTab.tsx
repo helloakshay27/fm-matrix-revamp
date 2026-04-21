@@ -299,7 +299,7 @@ const PostPossessionUseCasesTab: React.FC = () => {
       {/* Industry Level Section */}
       <div className="space-y-4">
         {/* Header */}
-        <div className="bg-[#1f3864] text-white p-4 rounded-t-xl shadow-sm">
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
           <h2 className="text-xl font-bold uppercase tracking-wider">
             Part 1 — Industry Level (Residential Real Estate)
           </h2>
@@ -344,9 +344,8 @@ const PostPossessionUseCasesTab: React.FC = () => {
                     <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
                       {useCase.currentToolUsed}
                     </td>
-                    <td className={`border border-[#d9d9d9] px-2 py-2 text-[11px] break-words whitespace-normal font-bold ${
-                      isHighUrgency ? "text-[#c5504f]" : "text-[#666]"
-                    }`}>
+                    <td className={`border border-[#d9d9d9] px-2 py-2 text-[11px] break-words whitespace-normal font-bold ${isHighUrgency ? "text-[#c5504f]" : "text-[#666]"
+                      }`}>
                       {useCase.urgency}
                     </td>
                     <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
