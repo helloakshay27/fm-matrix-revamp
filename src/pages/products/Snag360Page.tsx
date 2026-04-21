@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as tf from "@tensorflow/tfjs";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
+import { useProductSecurity } from "./useProductSecurity";
+import {
+  CameraPermissionPending,
+  CameraPermissionDenied,
+  ModelLoadingScreen,
+  SecurityOverlays,
+} from "./SecurityOverlays";
 import {
   ArrowLeft,
   Monitor,
@@ -3966,7 +3973,19 @@ const Snag360AssetsTab: React.FC = () => {
 // ============== MAIN SNAG 360 PAGE COMPONENT ==============
 const Snag360Page: React.FC = () => {
   const navigate = useNavigate();
+  const security = useProductSecurity();
   const snagTabsScrollRef = useRef<HTMLDivElement>(null);
+
+  // Security checks
+  if (security.cameraPermission === "pending") {
+    return <CameraPermissionPending />;
+  }
+  if (security.cameraPermission === "denied") {
+    return <CameraPermissionDenied />;
+  }
+  if (security.modelLoading) {
+    return <ModelLoadingScreen />;
+  }
 
   // Extract use cases data for custom component
   const industryUseCases =
@@ -3977,7 +3996,16 @@ const Snag360Page: React.FC = () => {
   const tabOrder = productData.tabOrder;
 
   return (
-    <div className="min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300">
+    <div
+      className="min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300"
+      style={{
+        filter: security.isBlurred ? "blur(20px)" : "none",
+        transition: "filter 0.3s ease",
+      }}
+    >
+      {/* Security Overlays */}
+      <SecurityOverlays security={security} />
+
       {/* Header */}
       <div className="relative mb-4 flex flex-col items-center bg-[#F6F4EE] pt-4">
         <div className="w-full max-w-7xl px-6 lg:px-10 mb-4">
