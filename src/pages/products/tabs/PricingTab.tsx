@@ -55,17 +55,17 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
 
       {/* ── EXCEL LAYOUT (excelLikePricing = true) ──────────────────────── */}
       {productData.excelLikePricing && dp ? (
-        <div className="overflow-x-auto border border-[#E5E7EB] bg-transparent p-2">
-          <div className="min-w-[1850px] bg-transparent">
+        <div className="w-full border border-[#E5E7EB] bg-transparent p-2">
+          <div className="w-full bg-transparent">
             <div className="mt-2 flex gap-6">
-              <div className="w-[1180px] shrink-0 space-y-3">
+              <div className="w-full space-y-3">
                 {/* Section 1 header */}
-                <table className="w-full border-collapse bg-transparent text-[9px] leading-[1.2] font-poppins">
+                <table className="w-full border-collapse bg-transparent text-sm leading-[1.2] font-poppins">
                   <thead>
                     <tr className="bg-white text-gray-800 border-b border-[#D3D1C7]">
                       <th
                         className="border border-[#D3D1C7] px-2 py-1.5 text-center font-semibold"
-                        colSpan={6}
+                        colSpan={5}
                       >
                         Post Sales - Features &amp; Pricing
                       </th>
@@ -73,7 +73,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                     <tr className="bg-white text-gray-800 border-b border-[#D3D1C7]">
                       <th
                         className="border border-[#D3D1C7] px-2 py-1 text-left text-[8px] font-semibold"
-                        colSpan={6}
+                        colSpan={5}
                       >
                         {dp.pricingMatrixSubtitle ||
                           "Section 1 compares current feature depth vs market expectations and highlights where positioning is strongest or vulnerable."}
@@ -82,27 +82,24 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                     <tr className="bg-white text-gray-800 border-b border-[#D3D1C7]">
                       <th
                         className="border border-[#D3D1C7] px-1.5 py-1 text-left font-semibold uppercase"
-                        colSpan={6}
+                        colSpan={5}
                       >
                         Section 1: Current features vs market standard | Where
                         we are strong, where we are weak
                       </th>
                     </tr>
                     <tr className="font-semibold uppercase text-[8px] text-[#2C2C2C]">
-                      <th className="border border-[#E5E7EB] bg-white text-gray-800 px-1.5 py-1 text-left w-[18%]">
+                      <th className="border border-[#E5E7EB] bg-white text-gray-800 px-1.5 py-1 text-left w-[20%]">
                         Feature / Capability
                       </th>
-                      <th className="border border-[#E5E7EB] bg-white text-gray-800 px-1.5 py-1 text-left w-[18%]">
+                      <th className="border border-[#E5E7EB] bg-white text-gray-800 px-1.5 py-1 text-left w-[20%]">
                         Current State
                       </th>
-                      <th className="border border-[#E5E7EB] bg-white text-gray-800 px-1.5 py-1 text-left w-[18%]">
+                      <th className="border border-[#E5E7EB] bg-white text-gray-800 px-1.5 py-1 text-left w-[20%]">
                         What Market Expects
                       </th>
-                      <th className="border border-[#E5E7EB] bg-white text-gray-800 px-1.5 py-1 text-left w-[18%]">
+                      <th className="border border-[#E5E7EB] bg-white text-gray-800 px-1.5 py-1 text-left w-[20%]">
                         How This Helps / Hurts Us
-                      </th>
-                      <th className="border border-[#E5E7EB] bg-white text-gray-800 px-1.5 py-1 text-center w-[8%]">
-                        Status
                       </th>
                       <th className="border border-[#E5E7EB] bg-white text-gray-800 px-1.5 py-1 text-left w-[20%]">
                         Recommended Move
@@ -111,13 +108,6 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                   </thead>
                   <tbody>
                     {dp.pricingFeatureRows?.map((row, index: number) => {
-                      const tone = row.status.toUpperCase();
-                      const statusBg =
-                        tone.includes("AHEAD") || tone.includes("STRONG")
-                          ? "bg-[#798C5E] text-white"
-                          : tone.includes("PAR") || tone.includes("OK")
-                            ? "bg-[#DA7756]/15 text-[#DA7756]"
-                            : "bg-[#E49191]/15 text-[#C72030] border border-[#E49191]/30";
                       return (
                         <tr
                           key={index}
@@ -135,13 +125,6 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                           <td className="border border-[#E5E7EB] bg-transparent px-1.5 py-1 text-[#2C2C2C]/80">
                             {row.impact}
                           </td>
-                          <td className="border border-[#E5E7EB] px-1 py-1 text-center">
-                            <span
-                              className={`px-1.5 py-1 font-semibold uppercase text-[8px] tracking-tight block rounded-sm ${statusBg}`}
-                            >
-                              {row.status}
-                            </span>
-                          </td>
                           <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C]/70">
                             {row.recommendation}
                           </td>
@@ -153,7 +136,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
 
                 {/* pricingSummaryRows */}
                 {!!dp.pricingSummaryRows?.length && (
-                  <table className="w-full border-collapse bg-transparent text-[9px] leading-[1.2] font-poppins">
+                  <table className="w-full border-collapse bg-transparent text-sm leading-[1.2] font-poppins">
                     <tbody>
                       {dp.pricingSummaryRows.map((row, index: number) => {
                         const bgClass =
@@ -182,7 +165,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                 )}
 
                 {/* Section 2: pricing current rows */}
-                <table className="w-full border-collapse bg-transparent text-[9px] leading-[1.2] font-poppins">
+                <table className="w-full border-collapse bg-transparent text-sm leading-[1.2] font-poppins">
                   <thead>
                     <tr className="bg-white text-gray-800 border-b border-[#D3D1C7]">
                       <th
@@ -209,7 +192,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                 </table>
 
                 {/* Section 3: positioning rows */}
-                <table className="w-full border-collapse bg-transparent text-[9px] leading-[1.2] font-poppins">
+                <table className="w-full border-collapse bg-transparent text-sm leading-[1.2] font-poppins">
                   <thead>
                     <tr className="bg-white text-gray-800 border-b border-[#D3D1C7]">
                       <th
@@ -239,7 +222,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                 </table>
 
                 {/* Section 4: improvement rows */}
-                <table className="w-full border-collapse bg-transparent text-[9px] leading-[1.2] font-poppins">
+                <table className="w-full border-collapse bg-transparent text-sm leading-[1.2] font-poppins">
                   <thead>
                     <tr className="bg-white text-gray-800 border-b border-[#D3D1C7]">
                       <th
@@ -501,14 +484,11 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                       <th className="border border-[#C4B89D] px-3 py-3">Novade</th>
                       <th className="border border-[#C4B89D] px-3 py-3">SnagR</th>
                       <th className="border border-[#C4B89D] px-3 py-3">SafetyCulture</th>
-                      <th className="border border-[#C4B89D] px-3 py-3">Status vs Market</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {snagFeatureRows.map((f, i: number) => {
-                       const tone = (f.status || "").toUpperCase();
-                       const statusBg = tone.includes("AHEAD") ? "bg-[#798C5E] text-white" : tone.includes("GAP") ? "bg-[#C72030] text-white" : "bg-[#F4E6C8] text-[#D97706]";
-                       return (
+                      {snagFeatureRows.map((f, i: number) => {
+                        return (
                          <tr key={i} className={`align-middle border-b border-[#D3D1C7] ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
                            <td className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#2C2C2C] break-words whitespace-pre-line">{f.feature}</td>
                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line">{"snag360" in f ? (f.snag360 || f.snag) : f.snag}</td>
@@ -517,11 +497,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{f.novade}</td>
                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{f.snagR}</td>
                            <td className="border border-[#D3D1C7] px-3 py-3 text-[#4B5563] font-medium">{"safetyCulture" in f ? (f.safetyCulture || f.safety) : f.safety}</td>
-                           <td className="border border-[#D3D1C7] px-3 py-3 text-center align-middle">
-                             <div className={`px-2 py-1.5 font-bold text-[10px] uppercase rounded-sm inline-block ${statusBg}`}>
-                               {f.status}
-                             </div>
-                           </td>
+                          
                          </tr>
                        );
                     })}
@@ -645,7 +621,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                     <div className="border border-[#D3D1C7] border-t-0 bg-white">
                       <table className="w-full border-collapse text-[10px] bg-transparent font-poppins leading-[1.35] table-fixed">
                         <thead>
-                          <tr className="bg-white text-gray-800 font-semibold uppercase text-[9px] border-b border-[#D3D1C7]">
+                          <tr className="bg-white text-gray-800 font-semibold uppercase text-sm border-b border-[#D3D1C7]">
                             <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[20%]">
                               Feature Area
                             </th>
@@ -700,22 +676,19 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                     <div className="border border-[#D3D1C7] border-t-0 bg-white">
                       <table className="w-full border-collapse text-[10px] bg-transparent text-left font-poppins leading-[1.4] table-fixed">
                         <thead>
-                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
+                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-sm">
                             <th className="border border-[#D3D1C7] px-3 py-2 w-[16%] text-left">
                               Feature Area
                             </th>
                             <th className="border border-[#D3D1C7] px-3 py-2 w-[22%] text-left">
                               Market Standard
                             </th>
-                            <th className="border border-[#D3D1C7] px-3 py-2 w-[16%] text-left">
-                              Our Product
-                            </th>
-                            <th className="border border-[#D3D1C7] px-3 py-2 w-[9%] text-center">
-                              Status
-                            </th>
-                            <th className="border border-[#D3D1C7] px-3 py-2 w-[16%] text-center">
-                              Where We Stand
-                            </th>
+                            <th className="border border-[#D3D1C7] px-3 py-2 w-[22%] text-left">
+                                Our Product
+                              </th>
+                              <th className="border border-[#D3D1C7] px-3 py-2 w-[18%] text-center">
+                                Where We Stand
+                              </th>
                             <th className="border border-[#D3D1C7] px-3 py-2 text-left">
                               Deal Impact
                             </th>
@@ -723,13 +696,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                         </thead>
                         <tbody>
                           {dp.featuresVsMarket.map((f, i: number) => {
-                            const liveTone = (f.liveStatus || f.status || "")
-                              .toUpperCase()
-                              .trim();
-                            const liveClass = liveTone.includes("ROADMAP")
-                              ? "bg-[#F4E6C8] text-[#D97706]"
-                              : "bg-[#D8EEDB] text-[#2F855A]";
-                            return (
+                              return (
                               <tr
                                 key={i}
                                 className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
@@ -742,11 +709,6 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                                 </td>
                                 <td className="border border-[#D3D1C7] px-3 py-2 text-[#4B5563] font-medium leading-snug whitespace-pre-line break-words">
                                   {f.ourProduct}
-                                </td>
-                                <td className="border border-[#D3D1C7] px-3 py-2 text-center align-middle">
-                                  <span className={`px-2 py-1 text-[8px] font-semibold uppercase tracking-tight inline-block rounded-sm ${liveClass}`}>
-                                    {f.liveStatus || f.status}
-                                  </span>
                                 </td>
                                 <td className="border border-[#D3D1C7] px-3 py-2 text-center align-middle">
                                   <StatusBadge status={f.whereWeStand || f.status} />
@@ -863,7 +825,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                     <div className="border border-[#D3D1C7] border-t-0 bg-white">
                       <table className="w-full border-collapse text-[10px] bg-transparent font-poppins leading-[1.5]">
                         <thead>
-                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
+                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-sm">
                             <th className="border border-[#D3D1C7] px-4 py-2 w-[33%] text-left">
                               VMS Advantage Areas
                             </th>
@@ -956,7 +918,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
               <div className="border border-[#D3D1C7] border-t-0 bg-white">
                 <table className="w-full border-collapse text-[10px] bg-transparent font-poppins leading-[1.45]">
                   <thead>
-                    <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
+                    <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-sm">
                       <th className="border border-[#D3D1C7] px-3 py-2 w-[24%] text-left">
                         Category
                       </th>
@@ -999,7 +961,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                     <div className="border border-[#D3D1C7] border-t-0 bg-white">
                       <table className="w-full border-collapse text-[10px] bg-transparent font-poppins leading-[1.45]">
                         <thead>
-                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
+                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-sm">
                             <th className="border border-[#D3D1C7] px-3 py-2 w-[10%] text-left">
                               Tier
                             </th>
@@ -1096,7 +1058,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
               <div className="border border-[#D3D1C7] border-t-0 bg-white">
                 <table className="w-full border-collapse text-[10px] bg-transparent font-poppins leading-[1.45]">
                   <thead>
-                    <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
+                    <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-sm">
                       <th className="border border-[#D3D1C7] px-3 py-2 w-[28%] text-left">
                         Positioning Category
                       </th>
@@ -1141,7 +1103,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                     <div className="border border-[#D3D1C7] border-t-0 bg-white">
                       <table className="w-full border-collapse text-[10px] bg-transparent font-poppins leading-[1.4] table-fixed">
                         <thead>
-                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
+                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-sm">
                             <th className="border border-[#D3D1C7] px-3 py-2 w-[25%] text-left">
                               Current Value Proposition
                             </th>
@@ -1192,7 +1154,7 @@ const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
                     <div className="border border-[#D3D1C7] border-t-0 bg-white">
                       <table className="w-full border-collapse text-[10px] bg-transparent font-poppins leading-[1.4]">
                         <thead>
-                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
+                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-sm">
                             <th className="border border-[#D3D1C7] px-3 py-2 w-[22%] text-left">
                               Value Proposition
                             </th>

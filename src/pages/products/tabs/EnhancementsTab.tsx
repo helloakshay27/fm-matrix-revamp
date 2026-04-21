@@ -47,7 +47,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
               </tr>
 
               {/* Table 1 Body */}
-              {clubEnhancements.innovations.map((item: any, idx: number) => {
+              {clubEnhancements.innovations.map((item, idx) => {
                 const isHighImpact = item.impact?.toUpperCase() === "HIGH";
                 const rowClass = isHighImpact 
                   ? "bg-[#F9FAFB] text-[#1F2937] font-bold text-[10pt]"
@@ -95,7 +95,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
               </tr>
 
               {/* Table 2 Body */}
-              {clubEnhancements.top5.map((item: any, idx: number) => {
+              {clubEnhancements.top5.map((item, idx) => {
                 return (
                   <tr key={`top-${idx}`} className="align-top">
                     <td className="bg-white text-[#4B5563] font-medium text-[10pt] px-3 py-3 border-b border-r border-[#D3D1C7] whitespace-pre-wrap">{item.enhancement}</td>
@@ -138,6 +138,7 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
   const hasRowId = displayEnhancements.some((item) => item.rowId?.trim());
   const hasEffort = enhancementRoadmap.some((item) => item.effort?.trim());
   const hasImpact = displayEnhancements.some((item) => item.impact?.trim());
+  const hasOutcome = enhancementRoadmap.some((item) => item.outcome?.trim());
   const hasPriority = enhancementRoadmap.some((item) => item.priority?.trim());
   const hasOwner = enhancementRoadmap.some((item) => item.owner?.trim());
   const hasVendorEnhancementShape = displayEnhancements.some(
@@ -282,6 +283,11 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                             Impact
                           </th>
                         )}
+                        {hasOutcome && (
+                          <th className="border border-[#E5E7EB] bg-white px-3 py-2 w-[20%] text-left">
+                            Revenue / Relationship Outcome
+                          </th>
+                        )}
                         {hasPriority && (
                           <th className="border border-[#E5E7EB] bg-white px-2 py-2 w-[7%] text-center">
                             Priority
@@ -330,6 +336,11 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                           {hasImpact && (
                             <td className="border border-[#E5E7EB] px-2 py-2 text-center font-semibold text-gray-700">
                               {item.impact}
+                            </td>
+                          )}
+                          {hasOutcome && (
+                            <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                              {item.outcome}
                             </td>
                           )}
                           {hasPriority && (

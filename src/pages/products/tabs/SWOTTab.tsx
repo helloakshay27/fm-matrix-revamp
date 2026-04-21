@@ -14,8 +14,8 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
   if (isClubSWOT) {
     return (
       <div className="space-y-4 animate-fade-in">
-        <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 uppercase font-poppins text-[14px] font-bold tracking-wide text-center">
-          {productData.name} - SWOT Analysis
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
+          <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{productData.name} - SWOT Analysis</h2>
         </div>
         <div className="bg-[#F6F4EE] border border-[#D3D1C7] border-t-0 px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins text-center">
           10 items per quadrant | Lockated / GoPhygital.work | India primary market context
@@ -93,9 +93,9 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
           <div className="w-full rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
               <div
-                className={`bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 font-poppins uppercase ${isCpManagement ? "text-sm font-semibold tracking-wide text-center" : "font-bold tracking-tight text-[16px] text-center"}`}
+                className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center"
               >
-                {isCpManagement ? `${productData.name} — SWOT Analysis` : `${productData.name} - SWOT Analysis`}
+                <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{isCpManagement ? `${productData.name} — SWOT Analysis` : `${productData.name} - SWOT Analysis`}</h2>
               </div>
 
               {productData.extendedContent?.detailedSWOT ? (
@@ -355,8 +355,8 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
         </div>
       ) : (
         <div className="space-y-12  p-4 bg-white border border-[#C4B89D] rounded-xl">
-          <div className="bg-white text-gray-900 border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center ">
-            <h2 className="text-2xl font-semibold font-poppins uppercase tracking-tight">
+          <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center ">
+            <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
               Strategic SWOT Analysis Matrix
             </h2>
           </div>
