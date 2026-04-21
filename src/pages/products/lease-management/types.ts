@@ -131,6 +131,32 @@ export interface GTMSalesElement {
   details: string;
 }
 
+export interface GTMMarketingChannel {
+  channel: string;
+  relevant: string;
+  executionApproach: string;
+  priorityRank: number;
+  expectedOutput: string;
+  budgetTimeline: string;
+}
+
+export interface GTMLaunchWeek {
+  week: string;
+  salesAction: string;
+  marketingAction: string;
+  keyProductMilestones: string;
+  successMetric: string;
+}
+
+export interface GTMPartnershipElement {
+  element: string;
+  details: string;
+}
+
+export interface GTMOnePageSummary {
+  [key: string]: string;
+}
+
 export interface GTMTargetGroup {
   targetGroup?: string;
   painPoint?: string;
@@ -138,7 +164,13 @@ export interface GTMTargetGroup {
   channel?: string;
   closingTactic?: string;
   name?: string;
+  profile?: string;
   elements?: GTMSalesElement[];
+  marketingChannels?: GTMMarketingChannel[];
+  launchSequence?: GTMLaunchWeek[];
+  partnerships?: GTMPartnershipElement[];
+  onePageSummary?: GTMOnePageSummary;
+  tgSummary?: string;
 }
 
 export interface ClientMetric {
@@ -152,6 +184,41 @@ export interface ClientMetric {
   featureDriving?: string;
   howCaused?: string;
   landingClaim?: string;
+}
+
+export interface ProductLaunchMetric {
+  id: number;
+  metric: string;
+  whatMeasures: string;
+  activationDefinition: string;
+  thirtyDayCurrent: string;
+  thirtyDayWithPhase1: string;
+  threeMonthCurrent: string;
+  threeMonthWithPhase1: string;
+  whyItMatters: string;
+  successSignal: string;
+  upliftFromPhase1: string;
+}
+
+export interface LessorClientMetric {
+  id: number;
+  name: string;
+  whatMeasures: string;
+  howToTrack: string;
+  baselineBefore: string;
+  targetAfter90Days: string;
+  landingPageHeadline: string;
+  howToPresent: string;
+  portfolioImpact: string;
+  revenueImpact: string;
+  clientROILogic: string;
+}
+
+export interface LessorLaunchTrackingRow {
+  metric: string;
+  baselinePreLaunch: string;
+  thirtyDayTarget: string;
+  ninetyDayTarget: string;
 }
 
 export interface SWOTItem {

@@ -511,7 +511,7 @@ const Receipt = ({
                             <div className="mb-[70px]"></div>
 
                             {/* Customer Note */}
-                            <p className="text-[#1F5E2E] font-bold text-xs mb-1">
+                            {/* <p className="text-[#1F5E2E] font-bold text-xs mb-1">
                                 Customer Note:
                             </p>
                             <p className="text-[#1F5E2E] text-xs mb-4 leading-relaxed">
@@ -525,7 +525,7 @@ const Receipt = ({
                                 subscribing on the envelope the name of "GANESH AHER"
                             </p>
 
-                            {/* Company Bank Details */}
+                            
                             <p className="text-[#1F5E2E] font-bold text-xs mb-1">
                                 CONFIRM BANK DETAILS
                             </p>
@@ -535,7 +535,7 @@ const Receipt = ({
                             <p className="text-[#1F5E2E] text-xs mb-1">
                                 IFSC Code: KBKB0001758
                             </p>
-                            <p className="text-[#1F5E2E] text-xs">A/c. No: 3250048396</p>
+                            <p className="text-[#1F5E2E] text-xs">A/c. No: 3250048396</p> */}
                         </div>
                     </div>
                 </div>

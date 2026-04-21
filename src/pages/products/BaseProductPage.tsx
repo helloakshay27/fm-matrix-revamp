@@ -1,4 +1,4 @@
-﻿import React, { useRef } from "react";
+import React, { useRef } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -16,7 +16,6 @@ import {
   SecurityOverlays,
 } from "./SecurityOverlays";
 import SummaryTab from "./tabs/SummaryTab";
-import PostPossessionTab from "./tabs/PostPossessionTab";
 import FeaturesTab from "./tabs/FeaturesTab";
 import MarketTab from "./tabs/MarketTab";
 import PricingTab from "./tabs/PricingTab";

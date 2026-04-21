@@ -7,6 +7,14 @@ interface UseCasesTabProps {
 
 const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
   const detailedUseCases = productData.extendedContent?.detailedUseCases;
+  const hasPostSalesIndustrySheet =
+    detailedUseCases?.industryUseCases?.some(
+      (item) => item.outcome && item.primaryBuyer && item.primaryUser
+    ) ?? false;
+  const hasPostSalesInternalSheet =
+    detailedUseCases?.internalTeamUseCases?.some(
+      (item) => item.usage || item.gain
+    ) ?? false;
   const hasWideIndustrySheet =
     detailedUseCases?.industryUseCases?.some(
       (item) => item.urgency || item.primaryBuyer || item.primaryUser
@@ -42,7 +50,155 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
       </div>
       {detailedUseCases && (
         <div className="space-y-8">
-          {hasDetailedIndustryLayout ? (
+          {hasPostSalesIndustrySheet ? (
+            <div className="space-y-4">
+              <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-[16px] font-semibold uppercase tracking-wide font-poppins text-center">
+                {productData.name} - Use Cases
+              </div>
+              <div className="bg-white border border-[#D3D1C7] px-4 py-2 text-[12px] text-gray-600 font-medium italic font-poppins text-center">
+                Part 1: Industry-level (10 industries ranked by referral and loyalty relevance) | Part 2: Internal team-level (developer teams that use this platform daily)
+              </div>
+
+              <div className="space-y-3">
+                <div className="bg-[#1F4E79] text-white border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+                  Part 1 - Industry-Level Use Cases (Ranked by referral and loyalty relevance to the developer)
+                </div>
+                <div className="border border-[#D3D1C7] bg-white overflow-x-auto">
+                  <table className="min-w-[1900px] w-full table-fixed border-collapse text-[10px] leading-[1.45] font-poppins">
+                    <thead>
+                      <tr className="bg-[#2F6F9F] text-white font-semibold uppercase">
+                        <th className="border border-[#D3D1C7] px-2 py-2 text-center w-[4%]">
+                          #
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[11%]">
+                          Industry
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[21%]">
+                          How Post Sales Creates Value
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[18%]">
+                          Ideal Company Profile and Current Tool
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[8%]">
+                          Urgency
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[13%]">
+                          Primary Buyer and What They're Measured On
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[13%]">
+                          Primary User and Daily Frustration
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[12%]">
+                          Key Features and Teams Used
+                        </th>
+                        <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[16%]">
+                          Referral / Revenue Opportunity
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {detailedUseCases.industryUseCases?.map((u, i) => (
+                        <tr
+                          key={i}
+                          className={`align-top ${i % 2 === 0 ? "bg-[#E9F2FA]" : "bg-white"}`}
+                        >
+                          <td className="border border-[#D3D1C7] px-2 py-2 text-center font-bold text-[#1F4E79] whitespace-pre-line break-words">
+                            {u.rank}
+                          </td>
+                          <td className="border border-[#D3D1C7] px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
+                            {u.industry}
+                          </td>
+                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            {u.useCase}
+                          </td>
+                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            {u.companyProfile || u.profile}
+                            {u.currentTool
+                              ? `\nCurrently: ${u.currentTool}`
+                              : ""}
+                          </td>
+                          <td className="border border-[#D3D1C7] px-2 py-2 font-semibold whitespace-pre-line break-words">
+                            <span
+                              className={`${u.urgency?.startsWith("HIGH") ? "text-[#C72030]" : u.urgency?.startsWith("MEDIUM") ? "text-[#D97706]" : u.urgency?.startsWith("LOW") ? "text-[#798C5E]" : "text-[#2C2C2C]"}`}
+                            >
+                              {u.urgency}
+                            </span>
+                          </td>
+                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            {u.primaryBuyer}
+                          </td>
+                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            {u.primaryUser}
+                          </td>
+                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            {u.features}
+                          </td>
+                          <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            {u.outcome}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {hasPostSalesInternalSheet && (
+                <div className="space-y-3">
+                  <div className="bg-[#6F3A8A] text-white border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+                    Part 2 - Internal Team Use Cases (Developer's own teams that use Post Sales daily)
+                  </div>
+                  <div className="border border-[#D3D1C7] bg-white overflow-x-auto">
+                    <table className="min-w-[1550px] w-full table-fixed border-collapse text-[10px] leading-[1.45] font-poppins">
+                      <thead>
+                        <tr className="bg-[#7E4B99] text-white font-semibold uppercase">
+                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[14%]">
+                            Team
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[27%]">
+                            Why Post Sales is Their Platform
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[18%]">
+                            Key Features and Processes They Run
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[17%]">
+                            Primary Goal the Team Achieves
+                          </th>
+                          <th className="border border-[#D3D1C7] px-2 py-2 text-left w-[24%]">
+                            Why They Champion Post Sales Internally
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detailedUseCases.internalTeamUseCases?.map((t, i) => (
+                          <tr
+                            key={i}
+                            className={`align-top ${i % 2 === 0 ? "bg-[#F3ECF7]" : "bg-white"}`}
+                          >
+                            <td className="border border-[#D3D1C7] px-2 py-2 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">
+                              {t.team}
+                            </td>
+                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                              {t.usage || t.howTheyUse || t.process}
+                            </td>
+                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                              {t.features}
+                            </td>
+                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                              {t.process || t.problem}
+                            </td>
+                            <td className="border border-[#D3D1C7] px-2 py-2 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                              {t.gain || t.benefit}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : hasDetailedIndustryLayout ? (
             <div className="space-y-4">
               <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-sm font-semibold uppercase tracking-wide font-poppins">
                 {productData.name} - Use Cases by Industry and Internal Team

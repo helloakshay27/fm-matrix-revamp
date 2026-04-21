@@ -40,6 +40,9 @@ import type {
   LesseeTeamUseCase,
   LessorIndustryUseCase,
   LessorTeamUseCase,
+  ProductLaunchMetric,
+  LessorClientMetric,
+  LessorLaunchTrackingRow,
 } from "./types";
 
 // ==================== PRODUCT METADATA ====================
@@ -4141,7 +4144,9 @@ export const founderReviewChecklist: {
 
 export const gtmTargetGroups: GTMTargetGroup[] = [
   {
-    name: "Retail Chains (100+ Stores)",
+    name: "TARGET GROUP 1 — INDIA RETAIL CHAINS (100-500 STORES)",
+    profile:
+      "Company size: 200-5000 employees | Industry: Fashion, Grocery, QSR, Pharmacy, Electronics retail | Geography: Pan-India, Tier 1 and 2 cities | Buyer: Head of Real Estate / Director Property | Budget: Rs 8-25 lakh/year for lease management software | Current stack: Excel tracker + shared drive + Outlook calendar + standalone accounting software.",
     elements: [
       {
         element: "ICP Definition",
@@ -4194,7 +4199,7 @@ export const gtmTargetGroups: GTMTargetGroup[] = [
           "CFO or COO. Identify by asking the Head of Real Estate: 'Who approves software spend above Rs 5 lakh?' CFO is triggered by IND AS 116 compliance and total occupancy cost visibility. COO is triggered by operational risk reduction.",
       },
       {
-        element: "Champion (Internal Advocate)",
+        element: "Champion",
         details:
           "Head of Real Estate or Director Property. They feel the pain daily. They will push for budget if you solve their renewal and compliance tracking problem during the pilot.",
       },
@@ -4214,6 +4219,911 @@ export const gtmTargetGroups: GTMTargetGroup[] = [
           "A successful 2-week pilot where the Head of Real Estate loads 50 live leases, sees upcoming renewals flagged automatically, and receives a compliance alert for one expiring document. The emotional moment of 'this would have saved me 3 hours this week' closes the deal. Followed by a total cost of ownership comparison with Tango Analytics or Excel status quo.",
       },
     ],
+    marketingChannels: [
+      {
+        channel: "LinkedIn (Sponsored + Organic)",
+        relevant: "YES",
+        executionApproach:
+          "Targeted posts and sponsored content to Heads of Real Estate and CFOs at retail companies (50+ store employee threshold). Content: lease renewal case studies, India compliance guides, retail lease cost analysis.",
+        priorityRank: 1,
+        expectedOutput: "5-10 demo-qualified leads per month at scale.",
+        budgetTimeline: "Rs 1-2 lakh/month ad spend. 2 posts per week organic.",
+      },
+      {
+        channel: "Content and SEO",
+        relevant: "YES",
+        executionApproach:
+          "Publish long-form India-specific content: 'How to manage 200 lease renewals simultaneously', 'IND AS 116 compliance guide for retail chains', 'India commercial lease benchmark data by city'. Target commercial lease management keywords.",
+        priorityRank: 2,
+        expectedOutput:
+          "50-100 monthly organic visits by Month 6. Rs 50k-1 lakh/month for content writer. 6-month SEO ramp. 3-5 inbound demo requests per month by Month 8.",
+        budgetTimeline:
+          "Rs 50k-1 lakh/month for content writer. 6-month SEO ramp.",
+      },
+      {
+        channel: "Events and Conferences",
+        relevant: "YES",
+        executionApproach:
+          "CREDAI annual summit, Shopping Centres Association of India (SCAI) events, CII Retail Summit. Speaking slot or booth presence. Demo station at events.",
+        priorityRank: 3,
+        expectedOutput:
+          "10-20 qualified conversations per event. 3-5 follow-up demos.",
+        budgetTimeline: "Rs 2-5 lakh per event for booth or sponsorship.",
+      },
+      {
+        channel: "Email Outbound",
+        relevant: "YES",
+        executionApproach:
+          "Cold email sequences to Director Property at top 200 Indian retail chains. 5-email sequence over 14 days. Personalise with company name and lease portfolio size estimate.",
+        priorityRank: 2,
+        expectedOutput:
+          "3-5 demo bookings per 100 emails sent (3-5% response rate target).",
+        budgetTimeline:
+          "Tool cost Rs 5k-20k/month (Lemlist, Instantly). Content cost Rs 20k for sequence writing.",
+      },
+      {
+        channel: "Partner Referrals (Real Estate Consulting)",
+        relevant: "YES",
+        executionApproach:
+          "Formal referral agreements with JLL India, CBRE India, Cushman and Wakefield India. They advise retail chains on lease strategy. Lockated solves the operational problem after advisory.",
+        priorityRank: 4,
+        expectedOutput:
+          "5-8 warm introductions per quarter per active partner.",
+        budgetTimeline:
+          "Zero direct cost. Requires 3-6 months to activate partner pipeline.",
+      },
+      {
+        channel: "Product Directories (G2, Capterra, India Software Suggest)",
+        relevant: "YES",
+        executionApproach:
+          "List on top India SaaS directories. Actively solicit reviews from early users. Optimise listing for 'lease management software India' search.",
+        priorityRank: 4,
+        expectedOutput:
+          "3-8 inbound leads per month by Month 6 from directories.",
+        budgetTimeline:
+          "Rs 30k-60k/month for premium listing on Software Suggest or Capterra.",
+      },
+      {
+        channel: "Cold Calling and SDR Outreach",
+        relevant: "YES",
+        executionApproach:
+          "SDR team calling Heads of Real Estate at retail chains. 3-touch LinkedIn research first. Qualify: call target 2 minutes max, qualify on lease count and current tool.",
+        priorityRank: 3,
+        expectedOutput: "2-3 demo bookings per SDR per week.",
+        budgetTimeline: "1 SDR at Rs 30-40k/month loaded cost.",
+      },
+      {
+        channel: "YouTube and Video Content",
+        relevant: "SELECTIVE",
+        executionApproach:
+          "Short 3-5 minute product demo videos. 'How Lockated manages 200 lease renewals and IND AS 116 compliance in 10 minutes.' Published on YouTube and LinkedIn.",
+        priorityRank: 5,
+        expectedOutput:
+          "Supports sales process. Buyers who watch product videos have 30% higher close rate.",
+        budgetTimeline: "Rs 20-40k. 1 video. 1 per month.",
+      },
+      {
+        channel: "Industry Associations",
+        relevant: "SELECTIVE",
+        executionApproach:
+          "CREDAI membership, SCAI membership, RAI (Retailers Association of India). Present at member events. Access to member directories for outreach.",
+        priorityRank: 5,
+        expectedOutput:
+          "Brand credibility with enterprise buyers who vet vendors through association membership.",
+        budgetTimeline: "Rs 1-2 lakh/year membership.",
+      },
+      {
+        channel: "Paid Ads (Google)",
+        relevant: "SELECTIVE",
+        executionApproach:
+          "Search ads for 'lease management software India', 'commercial lease management tool', 'IND AS 116 software'. Nail small intent-based buyers who are on LinkedIn and Google, not social.",
+        priorityRank: 5,
+        expectedOutput:
+          "5-10 clicks per day at Rs 150-300 per click for relevant commercial real estate software terms.",
+        budgetTimeline:
+          "Rs 1-2 lakh/month. ROI positive only after IND AS 116 module is live (increases search relevance).",
+      },
+    ],
+    launchSequence: [
+      {
+        week: "Week 1",
+        salesAction:
+          "Build LinkedIn prospect list: 100 Heads of Real Estate at retail chains. Configure email sequence. Send first 50 outbound emails.",
+        marketingAction:
+          "Publish retail-specific case study or blog: 'How India's retail chains lose 17% on lease renewals each year.'",
+        keyProductMilestones: "Bulk import template ready.",
+        successMetric:
+          "20 emails sent. 2 replies. List of 100 prospects researched and validated.",
+      },
+      {
+        week: "Week 2",
+        salesAction:
+          "Send 50 more emails. Follow up on Week 1 replies. Book first 3 demos.",
+        marketingAction:
+          "Launch LinkedIn sponsored post. Targeted at Head of Real Estate at 200+ store retailers.",
+        keyProductMilestones: "Demo environment loaded.",
+        successMetric:
+          "6 demos booked. LinkedIn paid achieving 2-3% engagement rate with 50 results per week.",
+      },
+      {
+        week: "Week 3",
+        salesAction:
+          "Run 5+ demos. Send proposals to 2 qualified leads. Begin 2 pilot conversations.",
+        marketingAction:
+          "SEO blog: 'lease management software comparison India retail chains'. Target head terms.",
+        keyProductMilestones:
+          "Compliance management module (FSSAI and Shop Act compliance alerts) live.",
+        successMetric: "3 pilot agreements signed or verbal go-ahead.",
+      },
+      {
+        week: "Week 4",
+        salesAction:
+          "Run 3+ more demos. 2 pilots active with real data. First pilot feedback call.",
+        marketingAction:
+          "Submit to G2 and Software Suggest India listings. Request reviews from 2 existing clients.",
+        keyProductMilestones:
+          "Mobile app MVP released. 2 active pilots. 1 directory listing live. First client review submitted.",
+        successMetric:
+          "First client review submitted to pilot users for field testing.",
+      },
+      {
+        week: "Biggest risk — Days 1-30",
+        salesAction:
+          "Head of Real Estate interested but CFO not engaged. Mitigation: ask in Week 2 'who else should be in the room for a 45-minute demo?' and bring CFO in at Week 3 demo.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+      {
+        week: "Week 5",
+        salesAction:
+          "Convert 1 pilot to paid contract. Send contracts to 2 prospects. Continue outbound to 50 new prospects.",
+        marketingAction:
+          "Publish video walkthrough: 'Lease renewal pipeline in Lockated - 3 minutes'.",
+        keyProductMilestones:
+          "IND AS 116 basic module. 1 first paid contract signed. 50 new prospects in outbound. live. Can demo to listed company buyers.",
+        successMetric: "",
+      },
+      {
+        week: "Week 6",
+        salesAction:
+          "Second paid contract target. Begin CREDAI event outreach for speaking slot or attendance.",
+        marketingAction:
+          "LinkedIn organic post: client success story (anonymised). Sponsored ad targeting CFOs at retail companies.",
+        keyProductMilestones:
+          "Rent escalation automation live. Can demo automated compliance renewal alerts.",
+        successMetric:
+          "2 contracts signed by end of Week 6. 1 CREDAI event confirmed.",
+      },
+      {
+        week: "Week 7",
+        salesAction:
+          "3 pilots in progress. Weekly pilot success calls with each. Identify expansion opportunities (additional users, additional properties).",
+        marketingAction:
+          "Email newsletter to prospect list: 'IND AS 116 compliance: what retail CFOs need to do before year end.'",
+        keyProductMilestones:
+          "Tally export functionality live. Demo to Tally-using prospects.",
+        successMetric: "3 active paid clients. 1 client using Tally export.",
+      },
+      {
+        week: "Week 8",
+        salesAction:
+          "Review pipeline: 30 outreach targets, 10 demos done, 5 proposals sent, 3 pilots, 2-3 paid. Adjust messaging based on demo-to-proposal conversion.",
+        marketingAction:
+          "Case study published (with client permission): 'How [retail chain] manages 150 lease renewals with Lockated'.",
+        keyProductMilestones:
+          "Mobile app available on iOS and Android for pilot Month 2.",
+        successMetric:
+          "30-day pipeline review complete. Case study live. 3 paid clients by end of.",
+      },
+      {
+        week: "Biggest risk — Days 31-60",
+        salesAction:
+          "Pilot clients not loading enough real data - they test with dummy data and cannot see value. Mitigation: assign a dedicated onboarding manager to each pilot and run a data migration workshop in Week 1 of pilot.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+      {
+        week: "Week 9-10",
+        salesAction:
+          "In-person visits by Week 10. Begin reference client programme: ask 2 paid clients to participate in case study and referral scheme.",
+        marketingAction:
+          "Submit to SCAI (Shopping Centres Association) event. Publish second SEO blog.",
+        keyProductMilestones:
+          "SAP integration MVP available for pilot with one enterprise client.",
+        successMetric:
+          "6 paid clients. 2 in reference programme. 1 speaking slot confirmed or submitted.",
+      },
+      {
+        week: "Week 11-12",
+        salesAction:
+          "Target 8-10 paid clients by end of 90 days. First renewal upsell conversation or month 1 client (additional users or properties).",
+        marketingAction:
+          "Publish retail lease industry benchmark data. Average rent per sq ft data by city. Heavy LinkedIn organic distribution.",
+        keyProductMilestones:
+          "Budget vs actual analytics dashboard available for pilot. Industry benchmark content published.",
+        successMetric:
+          "8-10 paid clients by Day 90. First upsell conversation completed.",
+      },
+      {
+        week: "Week 13 (Day 93 Review)",
+        salesAction:
+          "Conduct 91-day retrospective: what worked in sales, what did not, which messaging resonated, what objections were hardest.",
+        marketingAction:
+          "90-day content performance review: which blog post or LinkedIn content drove the most demo requests.",
+        keyProductMilestones:
+          "Phase 1 roadmap fully delivered. Roadmap Phase 2 planning begins.",
+        successMetric:
+          "10 paid clients. ARR Rs 60 lakh to Rs 1.5 crore from TG1. 3 reference clients. Selling to clients of all types.",
+      },
+      {
+        week: "Biggest risk — Days 61-90",
+        salesAction:
+          "Paying clients not adopting the full platform - using Lease Repository but not Compliance or AMC modules. Mitigation: 30-day and 60-day client success reviews with module adoption checklist. Create an onboarding incentive for activating 6+ modules.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+    ],
+    partnerships: [
+      {
+        element: "Timing for partnerships",
+        details:
+          "Month 1-3: sign first partner agreements. Month 4-6: first partner-generated lead in pipeline. Month 6-12: 20-25% of new leads from partner channel. Do not rely on partners for first 10 clients - direct sales must close those.",
+      },
+      {
+        element: "Partner Type 1: Real Estate Consulting Firms",
+        details:
+          "Who: JLL India, CBRE India, Anarock, Cushman and Wakefield India. What we offer: 5-10% referral fee on first-year ARR, co-branded collateral, free platform licenses for their internal lease tracking. India profile: JLL and CBRE India are leading real estate advisors to Fortune 500 India and retail chains. Their advisory projects create natural hand-offs to Lockated for operational execution. Global profile: JLL and CBRE globally are already recommending enterprise lease platforms. Red flag to avoid: partners who want exclusivity or reseller rights - Lockated works direct and partners refer only.",
+      },
+      {
+        element: "Partner Type 2: Big 4 Advisory Firms (IND AS 116 Practices)",
+        details:
+          "Who: Deloitte India, EY India, KPMG India (Real Estate and Finance advisory). What we offer: Lockated as the recommended operational platform for IND AS 116 implementation projects. Revenue share on platform licences placed through advisory engagement. India profile: These firms run IND AS 116 adoption projects for listed companies and PSUs. The CFO has already approved budget for compliance. Lockated adds operational execution alongside compliance accounting. Global profile: Not applicable in Year 1. Red flag to avoid: Big 4 firms wanting to build competing products using Lockated's architecture.",
+      },
+      {
+        element: "Year 1 Partnership Structure",
+        details:
+          "3-5 active referral partners. No reseller or white-label arrangements in Year 1. Partner agreement: non-exclusive referral, 7-10% referral fee on first-year ARR, 2-year partnership term renewable. Partner onboarding: 2-hour platform briefing, co-branded whitepaper, access to demo environment, dedicated partner contact at Lockated.",
+      },
+    ],
+    onePageSummary: {
+      "Best sales motion":
+        "Direct outbound to Head of Real Estate + CFO co-sell. 45-minute structured demo. 2-week pilot with live data. 45-60 day sales cycle.",
+      "Top 2 marketing channels":
+        "LinkedIn sponsored and organic content targeting Head of Real Estate. Referral partnerships with JLL and CBRE India.",
+      "90-day goal":
+        "10 paid clients from retail chain segment. ARR Rs 60 lakh to Rs 1.5 crore. 3 reference clients in programme.",
+      "Key partner type": "Real estate consulting firms.",
+      "Most important Week 1 action":
+        "Build a researched list of 100 Heads of Real Estate at India's top retail chains and send the first 50 personalised outbound emails by Day 5.",
+      "Biggest risk to watch":
+        "Pilot clients not loading real data. Monitor data migration progress in Week 1 of every pilot. Assign onboarding manager per pilot.",
+      "What closes this TG":
+        "A live pilot where the Head of Real Estate sees renewal pipeline with 30 expiring leases and a compliance alert for one actual document. The emotional realisation that this saves them 3 hours this week.",
+    },
+    tgSummary:
+      "TG 1 SUMMARY: Retail chains are the highest-priority target group because they have the most urgent and frequent lease management need (constant renewals across 100-500 stores), the clearest India-specific compliance requirement (FSSAI, Shop Act), and the shortest time to demonstrated value in a 2-week pilot.",
+  },
+  {
+    name: "TARGET GROUP 2 — CORPORATE REAL ESTATE TEAMS AT LARGE INDIAN ENTERPRISES (BFSI, IT, FMCG)",
+    profile:
+      "Company size: 1000+ employees | Industry: BFSI (banks, NBFCs, insurance), IT/ITES (TCS, Infosys, HCL), FMCG manufacturers, Pharma | Geography: Pan-India headquarters in Mumbai, Delhi NCR, Bangalore | Buyer: Head of Corporate Real Estate, VP Real Estate, CFO | Budget: Rs 15-40 lakh/year | Current stack: SAP or Oracle for rent accounting, Excel for lease tracking, SharePoint for documents.",
+    elements: [
+      {
+        element: "ICP Definition",
+        details:
+          "Indian enterprise with 50-300 leased commercial properties across multiple cities, listed or unlisted, with mandatory IND AS 116 compliance requirements. Head of Corporate Real Estate or equivalent title. Budget gatekeeper is CFO or Group CFO. IT team must approve data sovereignty architecture.",
+      },
+      {
+        element: "Lead Source",
+        details:
+          "LinkedIn Sales Navigator (title: Head of Corporate Real Estate, VP Real Estate, Chief Administrative Officer at BFSI and IT companies with 1000+ employees), inbound from IND AS 116 SEO content, Big 4 advisory firm referrals from IND AS 116 implementation projects.",
+      },
+      {
+        element: "Outreach Approach",
+        details:
+          "LinkedIn message to Head of Corporate Real Estate: 'Your IND AS 116 compliance process for 100+ leases - is it still manual?' We have built the only India-first platform that automates ROU asset calculation and keeps your data on your own servers. 20-minute demo? Follow up with email to CFO's direct report if Head of Real Estate does not respond.",
+      },
+      {
+        element: "First Meeting Agenda",
+        details:
+          "10 minutes: discover ERP environment (SAP or Oracle), lease count, IND AS 116 current process (manual vs automated), data sovereignty requirements. 25 minutes: demo starting with Portfolio Overview Dashboard, Audit Logs for All Changes (audit trail appeal), IND AS 116 module (P1S appeal), and Location Hierarchy (geography-based reporting). 10 minutes: data sovereignty, architecture discussion. 5 minutes: next steps - IT security review and CFO briefing.",
+      },
+      {
+        element: "Demo Flow",
+        details:
+          "Start with Regional Performance Insights showing portfolio by State and Region. Open Audit Logs and show immutable change history (auditor appeal). Show IND AS 116 journal generation preview. Show Custom Fields for Leases with Cost Centre Code and Business Unit tags. End with data sovereignty architecture diagram.",
+      },
+      {
+        element: "Deal Velocity Target",
+        details:
+          "60-90 days. IT security review adds 3-4 weeks. Procurement process adds 2-3 weeks. Total cycle: 12-16 weeks from first contact to a signed contract at large enterprises.",
+      },
+      {
+        element: "Primary Sales Motion",
+        details:
+          "Consultative direct sales. Multiple stakeholder meetings (Head of Real Estate, CFO, IT security, procurement). RFP response required for deals above Rs 20 lakh.",
+      },
+      {
+        element: "Why This Motion",
+        details:
+          "Enterprise procurement requires documented vendor evaluation. IT security requires architecture review for data hosting. Procurement requires comparative quotes. Self-service or trial does not work here.",
+      },
+      {
+        element: "Recommended Opening Hook",
+        details:
+          "Most BFSI and IT companies with 100+ offices are producing IND AS 116 journals manually in Excel, with their lease data on a public cloud. Lockated automates the journals and keeps every byte of lease data on your own servers. Which CFO in your organisation would find 5 minutes for that?",
+      },
+      {
+        element: "Economic Buyer",
+        details:
+          "CFO or Group CFO. Triggered by IND AS 116 compliance cost reduction and audit risk elimination. Budget pre-allocated for compliance software in many enterprises.",
+      },
+      {
+        element: "Champion",
+        details:
+          "Head of Corporate Real Estate - daily pain of managing 100+ office leases without a dedicated platform.",
+      },
+      {
+        element: "Co-Champion",
+        details:
+          "Head of Internal Audit or Chief Compliance Officer - benefits directly from Audit Logs and immutable change tracking.",
+      },
+      {
+        element: "Blocker to Anticipate",
+        details:
+          "IT security team requiring VAPT (Vulnerability Assessment and Penetration Testing) report and ISO 27001 certification from Lockated. Prepare security documentation and offer a dedicated security briefing with client's CISO.",
+      },
+      {
+        element: "What Closes This TG",
+        details:
+          "A successful IT security review clearing the data sovereignty architecture, followed by a CFO-level demo showing IND AS 116 journal automation. Contract closes when CFO sees the time saving (8 working days per quarter for their finance team) and audit risk reduction as justifying Rs 25-50 lakh/year annual spend.",
+      },
+    ],
+    marketingChannels: [
+      {
+        channel: "LinkedIn",
+        relevant: "YES",
+        executionApproach:
+          "Thought leadership content: IND AS 116 compliance guides, 'Why your lease data should stay in India', CPO-targeted posts on real estate cost visibility.",
+        priorityRank: 1,
+        expectedOutput: "5-12 enterprise demos per month at scale.",
+        budgetTimeline: "Rs 1.5-2.5 lakh/month.",
+      },
+      {
+        channel: "Big 4 Advisory Partnerships",
+        relevant: "YES",
+        executionApproach:
+          "Co-present at Deloitte or EY IND AS 116 client workshops. Sponsor content: 'Your IND AS 116 deadline is approaching - here is how to operationalise your lease management.'",
+        priorityRank: 1,
+        expectedOutput:
+          "5-8 warm enterprise introductions per quarter per partner.",
+        budgetTimeline: "Zero direct cost.",
+      },
+      {
+        channel: "Content and SEO",
+        relevant: "YES",
+        executionApproach:
+          "IND AS 116 deep-dive content, 'Data sovereignty in enterprise software' guides, 'lease accounting software India' keyword targeting.",
+        priorityRank: 2,
+        expectedOutput: "30-50 high-intent monthly visits by Month 8.",
+        budgetTimeline: "Rs 60k-80k/month.",
+      },
+      {
+        channel: "Industry Events",
+        relevant: "YES",
+        executionApproach:
+          "CII Finance Summit, NASSCOM Real Estate track, FICCI BFSI Summit. Speaking slots on IND AS 116 compliance and data sovereignty in real estate.",
+        priorityRank: 3,
+        expectedOutput: "15-25 qualified conversations per event.",
+        budgetTimeline: "Rs 3-6 lakh per event.",
+      },
+      {
+        channel: "CXO Direct Email Outreach",
+        relevant: "YES",
+        executionApproach:
+          "Personalised emails to CFOs and Heads of Corporate Real Estate at top 100 Indian BFSI and IT companies. Reference IND AS 116 deadline and offer a compliance readiness audit report.",
+        priorityRank: 2,
+        expectedOutput: "2-4 demo bookings per 60 CFO emails sent.",
+        budgetTimeline: "Rs 20-30k for data and tooling.",
+      },
+      {
+        channel: "Paid Ads (Google)",
+        relevant: "SELECTIVE",
+        executionApproach:
+          "IND AS 116 software search terms. High commercial intent, lower volume.",
+        priorityRank: 4,
+        expectedOutput: "5-10 clicks per day from high-intent search.",
+        budgetTimeline: "Rs 80k-1.2 lakh/month.",
+      },
+    ],
+    launchSequence: [
+      {
+        week: "Days 1-30 Focus",
+        salesAction:
+          "Build prospect list of 50 Head of Corporate Real Estate at BFSI and IT companies. Launch IND AS 116-focused outbound campaign. Identify 1 Big 4 partner contact. Target: 5 demos booked by Day 30.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+      {
+        week: "Days 31-60 Focus",
+        salesAction:
+          "IT security review process for 2 prospects (prepare architecture documentation). First CFO-level demos. Submit for Big 4 co-presentation at upcoming event. Target: 1 paid contract or advanced procurement stage by Day 61.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+      {
+        week: "Days 61-90 Focus",
+        salesAction:
+          "3-5 active enterprise evaluations. First enterprise contract signed (Rs 15-25 lakh ARR). Reference client case study with BFSI or IT sector name. Big 4 partnership agreement signed. Target: 2 enterprise signed by Day 90.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+      {
+        week: "Biggest risk",
+        salesAction:
+          "IT security review delays extending the sales cycle beyond 60 days. Mitigation: prepare a comprehensive security briefing pack (architecture diagram, data flow documentation, VAPT scope, ISO 27001 status) and offer CISO-level briefing in Week 1 of evaluation.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+    ],
+    partnerships: [
+      {
+        element: "Partner Type 1: Big 4 Advisory (IND AS 116)",
+        details:
+          "Deloitte India, EY India, KPMG India. These firms run IND AS 116 adoption projects. Lockated is positioned as the operational layer (post-compliance setup). Partner benefit: adds tangible product recommendation to their consulting engagement with budget already allocated.",
+      },
+      {
+        element: "Partner Type 2: SAP Implementation Partners",
+        details:
+          "Wipro SAP Practice, Accenture SAP India, IBM SAP. These partners implement SAP for BFSI and IT enterprises. Lockated's forthcoming SAP integration (Phase 2 roadmap) makes this partnership viable from Month 6. In the meantime, position Lockated as a complementary lease operations tool alongside SAP, not a replacement.",
+      },
+    ],
+    onePageSummary: {
+      "Best sales motion":
+        "Consultative direct sales to Head of Corporate Real Estate and CFO co-sell. 60-90 day cycle. IT security review is a mandatory stage. RFP responses required for deals above Rs 20 lakh.",
+      "Top 2 marketing channels":
+        "Big 4 advisory partnerships for warm enterprise introductions. LinkedIn thought leadership content targeting CFOs and Real Estate Heads at BFSI and IT companies.",
+      "90-day goal":
+        "2 signed enterprise contracts at Rs 15-25 lakh ARR each. 1 Big 4 partner agreement signed. 5 active pipeline opportunities.",
+      "Biggest risk to watch":
+        "IT security review extending sales cycle beyond 90 days. Have architecture documentation, data flow diagrams, and VAPT reports ready before first demo.",
+      "Most important Week 1 action":
+        "Identify and contact one Deloitte India or EY India real estate advisory partner for a co-presentation opportunity. Prepare the security briefing pack for IT security reviews.",
+      "What closes this TG":
+        "CFO seeing IND AS 116 journal automation saving 8 working days per quarter and audit team accepting data sovereignty. Data sovereignty is the emotional closer.",
+    },
+    tgSummary:
+      "TG 2 SUMMARY: Corporate real estate teams at large Indian enterprises are the highest-ACV target group (Rs 15-40 lakh each) but have a longer 60-90 day sales cycle due to IT security review and enterprise procurement. The key assumption is that IND AS 116 compliance requirement creates pre-allocated CFO budget for lease management software, reducing the need to justify new spend. The one metric that tells us if it is working: IT security approval rate above 80%, within 4 weeks of first security briefing - if this is consistently below 80%, the security documentation must be improved.",
+  },
+  {
+    name: "TARGET GROUP 3 — PROPERTY MANAGEMENT COMPANIES (MANAGING 50-200 COMMERCIAL PROPERTIES FOR THIRD-PARTY OWNERS)",
+    profile:
+      "Company size: 20-500 employees | Industry: Commercial property management, REIT management, co-working operators | Geography: Mumbai, Delhi NCR, Bangalore, Hyderabad | Budget: Rs 6-18 lakh/year | Current stack: Excel rent register, physical compliance files, WhatsApp for maintenance, Tally for accounting.",
+    elements: [
+      {
+        element: "ICP Definition",
+        details:
+          "Property management company managing 50-200 commercial or mixed-use properties for third-party property owners. Revenue model: management fee (1-2% of rent collected) or fixed fee per property. CEO or Portfolio Manager as primary contact. Currently managing tenant communication and maintenance via WhatsApp and email.",
+      },
+      {
+        element: "Lead Source",
+        details:
+          "CREDAI PM member directory, RICS India member network, LinkedIn (title: Property Manager, Portfolio Manager, Head of Property Management at companies with 20-500 employees), referrals from existing clients who know peer PM companies.",
+      },
+      {
+        element: "Outreach Approach",
+        details:
+          "LinkedIn message: 'Managing 100 commercial properties across 15 clients on Excel and WhatsApp - the margin erosion from tenant disputes over rent, missed compliance renewals, and maintenance SLA failures is significant. Lockated gives you a professional platform that makes you look like a Yardi-level operation at 10% of Yardi's cost. Can I show you in 30 minutes?'",
+      },
+      {
+        element: "Demo Flow",
+        details:
+          "Start with the Rent Collection Dashboard showing 100 properties with payment status. Show Maintenance Request Ticketing with vendor assignment and SLA tracking. Show Compliance Management with 60-day expiry alert. Show the future Landlord Portal (Phase 2 roadmap) as a preview of white-label tenant and owner reporting.",
+      },
+      {
+        element: "Deal Velocity Target",
+        details:
+          "30-45 days. CEO of a PM company makes decisions faster than enterprise procurement. Single decision maker plus accountant sign-off.",
+      },
+      {
+        element: "Primary Sales Motion",
+        details:
+          "Direct outbound plus event-based networking. CEO-level conversations. Quick demo to paid pilot in 2-3 weeks.",
+      },
+      {
+        element: "Recommended Opening Hook",
+        details:
+          "Your biggest competitor is a PM company that uses professional software and charges the same management fee. Lockated helps you look as professional as CoStar's clients without CoStar's cost. And your clients' data stays on their server, not ours.",
+      },
+      {
+        element: "Economic Buyer",
+        details:
+          "CEO or MD of the PM company. Decision is often made in 1-2 meetings for deals under Rs 10 lakh/year.",
+      },
+      {
+        element: "Champion",
+        details:
+          "CEO or Portfolio Manager - they feel the WhatsApp maintenance chaos and the Excel rent reconciliation pain personally.",
+      },
+      {
+        element: "Blocker to Anticipate",
+        details:
+          "Concern that clients (property owners) will not pay for a software upgrade. Mitigation: position Lockated as a competitive advantage the PM company uses to win new mandates and retain existing clients, not an add-on cost passed to clients.",
+      },
+      {
+        element: "What Closes This TG",
+        details:
+          "A 30-minute demo where the CEO sees their biggest pain solved: maintenance tickets tracked with SLA, rent collection dashboard per property owner, and compliance certificates auto-expiry management. The insight that 'this makes their team look professional' is the emotional closer.",
+      },
+    ],
+    marketingChannels: [
+      {
+        channel: "LinkedIn outbound",
+        relevant: "YES",
+        executionApproach:
+          "Targeted to PM company CEOs and Portfolio Managers. CREDAI PM network events. Referral from existing PM company clients.",
+        priorityRank: 1,
+        expectedOutput:
+          "Direct outreach. Real estate industry WhatsApp groups (ROX zonal, high roads). Software Suggest and Capterra India listing with PM-specific positioning.",
+        budgetTimeline: "",
+      },
+    ],
+    launchSequence: [
+      {
+        week: "Days 1-30",
+        salesAction: "15 demos to PM company CEOs. 3 paid pilots.",
+        marketingAction: "",
+        keyProductMilestones:
+          "Days 31-60: 5 paid PM company clients. Referrals programme active.",
+        successMetric:
+          "Days 61-90: 8 paid PM company clients. First client generating referral. ARR target Rs 50-80 lakh from TG3 by Day 90.",
+      },
+    ],
+    partnerships: [
+      {
+        element: "Marketing channels",
+        details:
+          "LinkedIn outbound to PM company CEOs and Portfolio Managers. CREDAI PM network events. Referral from existing PM company clients. Real estate industry WhatsApp groups (ROX zonal, high roads). Software Suggest and Capterra India listing with PM-specific positioning.",
+      },
+      {
+        element: "60-day goal",
+        details:
+          "Days 1-30: 15 demos to PM company CEOs. 3 paid pilots. Days 31-60: 5 paid PM company clients. Referrals programme active. Days 61-90: 8 paid PM company clients. First client generating referral. ARR target Rs 50-80 lakh from TG3 by Day 90.",
+      },
+      {
+        element: "Partnership strategy",
+        details:
+          "CREDAI PM committee membership for credibility and network access. RICS India partnership for professional certification signal. No formal referral partners needed for TG3 - direct relationships with PM company networks are more effective. Consider PM industry WhatsApp community management to establish thought leadership.",
+      },
+    ],
+    tgSummary:
+      "TG 3 SUMMARY: Property management companies are the fastest-closing target group (30-45 day sales cycle, single decision maker) and the highest multiplier target (one PM company client brings all their managed properties onto the platform). The key assumption is that a PM company CEO will see Lockated as a competitive advantage in winning new mandates rather than as an incremental cost. The one metric that tells us if it is working: average properties under management per PM company client above 50 by 90 days post go-live. If clients onboard fewer than 20 properties, the multiplier effect is not activating.",
+  },
+];
+
+export const gtmTargetGroupsLessor: GTMTargetGroup[] = [
+  {
+    name: "TARGET GROUP 1 — COMMERCIAL REAL ESTATE DEVELOPERS AND OWNERS (50-500 PROPERTIES)",
+    profile:
+      "Company size: 100-5,000 employees | Industry: Real estate development, family office real estate arms, industrial park developers | Geography: Pan-India, Tier 1 and 2 cities | Buyer: Head of Asset Management / CFO | Budget: Rs 10-35 lakh/year for property management software | Current stack: Excel rent register + manual billing + WhatsApp maintenance + compliance calendar in Outlook.",
+    elements: [
+      {
+        element: "Primary motion",
+        details:
+          "Direct enterprise sales. Founder-led for first 5 clients. Hire dedicated lessor enterprise AE by Month 3. Sales cycle: 60-90 days for mid-market developers, 90-150 days for large developers with procurement.",
+      },
+      {
+        element: "Entry point",
+        details:
+          "CFO or Head of Asset Management intro through CREDAI chapter event, reference from existing lessee client in the same conglomerate, or inbound from LinkedIn content on rent receivables and data sovereignty.",
+      },
+      {
+        element: "Discovery focus",
+        details:
+          "How many properties do you manage? What is your total annual rental income? How do you track overdue collections today? How long does it take to close monthly books? Have you ever faced a compliance gap (missed NOC renewal, overdue property tax)?",
+      },
+      {
+        element: "Demo script",
+        details:
+          "Open with portfolio dashboard showing rental income vs target and overdue tenant collections. Walk through lease creation → invoice dispatch → payment tracking → receivables aging. Show compliance calendar with alert. Close with data sovereignty architecture slide.",
+      },
+      {
+        element: "Objection — 'We already use Excel'",
+        details:
+          "Excel does not send automatic rent reminders, flag compliance renewals 60 days in advance, or give you a real-time NOI per property. Show the 3-minute demo of what it looks like when a tenant goes overdue and the platform auto-escalates.",
+      },
+      {
+        element: "Objection — 'Yardi does this'",
+        details:
+          "Yardi stores your portfolio data on their cloud in the USA. Does your CFO know that? Yardi costs Rs 25-100 lakh/year plus 12 months of implementation. Lockated deploys on your servers, goes live in 6-8 weeks, and costs a fraction.",
+      },
+      {
+        element: "Pilot structure",
+        details:
+          "90-day pilot on 10-25 properties. Track: rent collection rate, invoices dispatched on time, compliance renewals addressed before deadline. Measure time saved per property manager per week.",
+      },
+      {
+        element: "Close",
+        details:
+          "Annual enterprise contract. Implementation fee of Rs 2-5 lakh for data migration. Signature by CFO or MD. Reference client programme offer for 15% discount in Year 2.",
+      },
+    ],
+    marketingChannels: [
+      {
+        channel: "LinkedIn content",
+        relevant: "YES",
+        executionApproach:
+          "Weekly posts from the founder on: overdue rent collection challenges, compliance failures in Indian commercial real estate, case studies of portfolio digitisation, data sovereignty for property owners. Target: CFOs and Heads of Asset Management at developers.",
+        priorityRank: 1,
+        expectedOutput: "",
+        budgetTimeline: "",
+      },
+      {
+        channel: "CREDAI and developer association events",
+        relevant: "YES",
+        executionApproach:
+          "CREDAI National, CREDAI MahaRERA, CREDAI Pune Metro. Present at panel sessions on PropTech, portfolio digitisation, and REIT readiness. Sponsor 1-2 tier events per year.",
+        priorityRank: 2,
+        expectedOutput: "",
+        budgetTimeline: "",
+      },
+      {
+        channel: "Case study content",
+        relevant: "YES",
+        executionApproach:
+          "Detailed case studies showing: time to close monthly books reduced by X days, rent collection rate improved by Y%, compliance lapses eliminated. Publish on LinkedIn and website. Use in ABM campaigns.",
+        priorityRank: 2,
+        expectedOutput: "",
+        budgetTimeline: "",
+      },
+      {
+        channel: "Account-based marketing",
+        relevant: "YES",
+        executionApproach:
+          "Top 50 commercial real estate developers in India. Custom outreach with portfolio analysis and benchmarking data. LinkedIn InMail + personalised email from founder.",
+        priorityRank: 3,
+        expectedOutput: "",
+        budgetTimeline: "",
+      },
+      {
+        channel: "Referral programme",
+        relevant: "YES",
+        executionApproach:
+          "Lessee clients (corporate occupiers) who also have a property arm refer the lessor product. Cross-sell within Lockated's existing client base where the same corporate group has both lessee and lessor operations.",
+        priorityRank: 4,
+        expectedOutput: "",
+        budgetTimeline: "",
+      },
+    ],
+    launchSequence: [
+      {
+        week: "Days 1-30 — Foundation",
+        salesAction:
+          "Identify top 30 commercial real estate developers in target cities (Mumbai, Bangalore, Delhi NCR, Hyderabad, Pune). Research Head of Asset Management and CFO contacts. Build personalised outreach using portfolio size data. Send 10 personalised LinkedIn outreach messages per week from founder. Schedule 5 discovery calls.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+      {
+        week: "Days 31-60 — Demos and Pilots",
+        salesAction:
+          "Convert discovery calls to demos. Run 3 demos per week. Target: 2 pilot sign-ups in Month 2. Set up pilot on client's own server infrastructure (or private cloud for a fast start). Track: invoices dispatched on time, overdue collections surfaced, compliance alerts triggered.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+      {
+        week: "Days 61-90 — Reference",
+        salesAction:
+          "Convert pilots to paid contracts. Request a case study or LinkedIn testimonial from the pilot client. Use reference client to book 3 warm introductions to developer peers. Present at 1 CREDAI event with pilot client endorsement. Aim for 3 paid clients by end of Day 90.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+    ],
+    partnerships: [
+      {
+        element: "CREDAI partnership",
+        details:
+          "Formal technology partnership with CREDAI chapters to offer Lockated at member-discounted rates. Co-present at annual PropTech Forum. Access to CREDAI member directory for ABM.",
+      },
+      {
+        element: "CA and audit firm partnerships",
+        details:
+          "Partner with top CA firms advising real estate developer clients on IND AS 116/117 compliance and GST on rental income. CA firms recommend Lockated as the compliance-ready platform.",
+      },
+      {
+        element: "Valuation firm partnerships",
+        details:
+          "JLL, CBRE, Colliers, Knight Frank India — partner with their asset management advisory practices to recommend Lockated as part of portfolio digitisation engagements.",
+      },
+    ],
+    tgSummary:
+      "TARGET GROUP 1 SUMMARY (LESSOR) — Commercial real estate developers and owners are the anchor lessor client. Average ACV Rs 12-30 lakh/year. Sales cycle 60-120 days. Entered via CREDAI ecosystem, founder-led enterprise sales, and cross-sell from lessee client base. PM on 10-25 properties. Key proof points: time to close monthly books, rent collection rate, compliance zero-lapse.",
+  },
+  {
+    name: "TARGET GROUP 2 — PROPERTY MANAGEMENT COMPANIES (MANAGING 100-1,000 PROPERTIES FOR MULTIPLE CLIENTS)",
+    profile:
+      "Company size: 20-500 employees | Industry: Professional property management, FM companies with PM arms | Geography: Pan-India, metro cities | Buyer: MD / Head of Operations | Budget: Rs 5-20 lakh/year for platform software | Current stack: Fragmented spreadsheets per client, basic billing software (QuickBooks, Tally), WhatsApp for maintenance.",
+    elements: [
+      {
+        element: "Primary motion",
+        details:
+          "Consultative partnership sales. Position Lockated as the platform of record for property management companies. Multi-client architecture and white-label capability are the primary selling point.",
+      },
+      {
+        element: "Entry point",
+        details:
+          "Direct outreach to MD of top property management companies in India (Jones Lang LaSalle India PM, Knight Frank PM India, CBRE PM India for enterprise, 500+ independent PMs for mid-market). Industry association (IFMA India, RICS India) engagement.",
+      },
+      {
+        element: "Discovery focus",
+        details:
+          "How many client portfolios do you manage? How do you separate client data today? How much time does your team spend on monthly reporting per client? How do you handle maintenance SLA reporting to your landlord clients?",
+      },
+      {
+        element: "Demo script",
+        details:
+          "Open with multi-client portfolio dashboard. Show client-level data separation. Walk through tenant billing workflow, maintenance SLA reporting, and a customised monthly reports per client. Emphasise white-label option.",
+      },
+      {
+        element: "Pilot structure",
+        details:
+          "Start with 1 landlord client's portfolio (50-100 properties) in a 90-day pilot. Measure: monthly report generation time, invoices dispatched on time, maintenance SLA compliance rate.",
+      },
+      {
+        element: "Close",
+        details:
+          "Annual contract per property under management, or flat fee per landlord client managed. White-label licence fee for branded deployment.",
+      },
+    ],
+    marketingChannels: [
+      {
+        channel: "IFMA and RICS India events",
+        relevant: "YES",
+        executionApproach:
+          "International Facility Management Association India chapter and RICS India PropTech events. Property management company decision-makers attend these. Present on portfolio digitisation and operational efficiency.",
+        priorityRank: 1,
+        expectedOutput: "",
+        budgetTimeline: "",
+      },
+      {
+        channel: "Direct outreach to top 50 Indian PMs",
+        relevant: "YES",
+        executionApproach:
+          "Identify top 50 independent and institutional property management companies. Personalised outreach with a portfolio digitisation benchmark report specific to their segment.",
+        priorityRank: 1,
+        expectedOutput: "",
+        budgetTimeline: "",
+      },
+      {
+        channel: "Case studies on multi-client management",
+        relevant: "YES",
+        executionApproach:
+          "Publish detailed case study on how a property management company reduced monthly reporting time from 3 days to 3 hours per client using Lockated. Circulate in IFMA and CREDAI PM committee networks.",
+        priorityRank: 2,
+        expectedOutput: "",
+        budgetTimeline: "",
+      },
+      {
+        channel: "Referral from lessee clients",
+        relevant: "YES",
+        executionApproach:
+          "Lessee corporate clients whose properties are managed by a PM company refer the PM company to Lockated. Incentivise with a referral credit.",
+        priorityRank: 3,
+        expectedOutput: "",
+        budgetTimeline: "",
+      },
+    ],
+    launchSequence: [
+      {
+        week: "Days 1-30",
+        salesAction:
+          "Identify top 30 Indian property management companies. Map MD and Head of Operations contacts. Send 15 personalised LinkedIn outreach messages per week. Schedule 5 discovery calls. Present to 1 IFMA India chapter meeting.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+      {
+        week: "Days 31-60",
+        salesAction:
+          "Run 3 demos per week. Pilot a group target: 2 PM companies. Set up multi-client demo environment. Prioritise companies managing 200-600 properties for maximum platform value demonstration.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+      {
+        week: "Days 61-90",
+        salesAction:
+          "Convert 1 pilot to a paid multi-client contract. Request a case study on monthly report time reduction. Use as a reference to book 3 introductions to peer PM companies. Target: 2 PM company clients by Day 90.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+    ],
+    partnerships: [
+      {
+        element: "IFMA India formal technology partner",
+        details:
+          "Official technology partner status for IFMA India. Member discount for Lockated. Co-present at Annual FM Conclave.",
+      },
+      {
+        element: "White-label reseller programme",
+        details:
+          "Allow large PM companies (Jones Lang LaSalle PM India, Knight Frank PM India) to white-label Lockated under their brand for client deployment. Revenue share model.",
+      },
+    ],
+    tgSummary:
+      "TARGET GROUP 2 SUMMARY (LESSOR) — Property management companies are the fastest-growing lessor segment and have a multiplier effect (each PM company brings 5-20 landlord clients' portfolios). Average ACV Rs 8-25 lakh/year. Sales cycle 60-120 days. Key features required: multi-client architecture, white-label, consolidated and individual client reporting. Priority build item.",
+  },
+  {
+    name: "TARGET GROUP 3 — MALL OPERATORS, INDUSTRIAL PARKS, AND SEZ OPERATORS",
+    profile:
+      "Company size: 50-2,000 employees | Industry: Retail mall operations, industrial/logistics park operations, SEZ development | Geography: Pan-India | Buyer: Head of Mall Management / Head of Asset Management / Operations Head | Budget: Rs 10-40 lakh/year | Current stack: Excel + manual billing + ERP module (partial).",
+    elements: [
+      {
+        element: "Primary motion",
+        details:
+          "Direct enterprise sales targeting CXO and Head of Asset Management at mall developers (DLF, Phoenix Mills, Nexus Malls, Lulu Group), industrial park operators (Mahajan Ors, IndoSpace, ESR India), and SEZ operators (MEPZ, Mahindra World City).",
+      },
+      {
+        element: "Entry point",
+        details:
+          "MAPIC India (retail property trade event), CII Industrial Parks Summit, NASSCOM / SEEPZ SEZ forums.",
+      },
+      {
+        element: "Discovery focus",
+        details:
+          "How do you currently generate monthly rent and utility invoices to 100+ tenants? How do you manage Fire NOC and OC renewals for 3-5 properties? How do you track maintenance SLAs for tenant requests?",
+      },
+      {
+        element: "Demo script",
+        details:
+          "Show utility billing workflows — meter reading capture → consumption calculation → invoice dispatch. Walk through compliance calendar for Fire NOC, CC, and OC renewals. Show tenant maintenance ticket workflow with SLA tracking.",
+      },
+      {
+        element: "Pilot",
+        details:
+          "90-day pilot on one mall or park. Track: utility invoice dispatch accuracy, compliance renewals addressed, maintenance SLA compliance.",
+      },
+    ],
+    marketingChannels: [
+      {
+        channel: "Marketing",
+        relevant: "YES",
+        executionApproach:
+          "MAPIC India, CII Industrial Parks events, SEZ operators conferences. Content on GST compliance for commercial rent, fire NOC renewal management, and utility billing automation for large properties.",
+        priorityRank: 1,
+        expectedOutput: "",
+        budgetTimeline: "",
+      },
+    ],
+    launchSequence: [
+      {
+        week: "Launch Sequence",
+        salesAction:
+          "Days 1-30: identify 20 mall operators, 20 industrial parks, 10 SEZ operators. Days 31-60: 3 demos/week, 1 pilot sign-up. Days 61-90: convert pilot, request reference, 2 paid clients target.",
+        marketingAction: "",
+        keyProductMilestones: "",
+        successMetric: "",
+      },
+    ],
+    partnerships: [
+      {
+        element: "Partnerships",
+        details:
+          "MAPIC India official technology partner. CII National Committee on Real Estate and Housing. SEZ Developers Association India.",
+      },
+    ],
+    tgSummary:
+      "TARGET GROUP 3 SUMMARY (LESSOR) — Mall operators, industrial parks, and SEZ operators have high complexity (utility billing, CAM, multi-zone compliance) and high ACV (Rs 15-40 lakh/year). They are differentiated from commercial developers by the maturity of tenant operations management and utility billing requirements. Entered via sector trade events and direct enterprise sales.",
   },
 ];
 
@@ -4354,6 +5264,462 @@ export const clientMetrics: ClientMetric[] = [
       "Clients with 20+ properties consolidate AMC vendors by an average of 30% and reduce AMC spend by Rs 12 lakh per year using Lockated's vendor performance data.",
   },
 ];
+
+// --- LESSEE: Section 2 - Product Launch Tracking (North Star + Top 10) ---
+
+export const lesseeNorthStarMetric = {
+  name: "Total Active Lease Records Under Management on Lockated Platform (across all paying clients)",
+  why: "Total active lease records is the single metric that captures product adoption depth (clients loading all their leases, not just testing), portfolio breadth (clients with large portfolios generating more value), and revenue health (ACV is directly correlated to lease count). If this metric is growing, it means clients are adopting the platform fully, expanding their usage, and the platform is becoming operationally essential. Target: 1,000 active leases by Month 3, 5,000 by Month 12, 25,000 by Month 36.",
+};
+
+export const lesseeProductLaunchMetrics: ProductLaunchMetric[] = [
+  {
+    id: 1,
+    metric: "New Signups / Trials",
+    whatMeasures:
+      "Number of enterprise organisations starting a paid trial or pilot per month.",
+    activationDefinition:
+      "An organisation is counted as a signup when at least 1 user has logged in and created at least 1 lease record.",
+    thirtyDayCurrent: "5 new organisations",
+    thirtyDayWithPhase1: "8 new organisations",
+    threeMonthCurrent: "20 organisations",
+    threeMonthWithPhase1: "35 organisations",
+    whyItMatters:
+      "Leading indicator of top-of-funnel health and brand awareness.",
+    successSignal:
+      "Consistent week-over-week growth, not spikes from single campaigns.",
+    upliftFromPhase1:
+      "IND AS 116 module and mobile app attract listed companies and FM-driven buyers, expanding the total addressable market by 40%.",
+  },
+  {
+    id: 2,
+    metric: "Activated Users",
+    whatMeasures:
+      "Users who have completed the activation milestone: created a lease record, linked a property from master, and set a renewal alert.",
+    activationDefinition:
+      "Activation = user has created 1+ lease record AND 1+ compliance document AND set 1+ renewal alert within 14 days of account creation.",
+    thirtyDayCurrent: "40% activation rate (2 of 5 trial users)",
+    thirtyDayWithPhase1: "55% activation rate",
+    threeMonthCurrent: "60% of all users in paying clients are active weekly",
+    threeMonthWithPhase1: "75% of all users are active weekly",
+    whyItMatters:
+      "An unactivated user provides zero retention. High activation predicts expansion.",
+    successSignal:
+      "Activation rate above 50% by Day 14 for all new organisations.",
+    upliftFromPhase1:
+      "Bulk import template (Phase 1) reduces time-to-activation from 2 weeks to 3 days.",
+  },
+  {
+    id: 3,
+    metric: "Paid Conversions (Trial to Paid)",
+    whatMeasures:
+      "Percentage of trial organisations converting to paid contracts within 45 days of trial start.",
+    activationDefinition:
+      "Paid = signed annual contract and first invoice raised.",
+    thirtyDayCurrent: "25% conversion rate (1-2 of 5 trials convert)",
+    thirtyDayWithPhase1: "35% conversion rate",
+    threeMonthCurrent: "35% cumulative over 3 months",
+    threeMonthWithPhase1: "50% cumulative",
+    whyItMatters:
+      "Primary revenue driver metric. Validates that demo and trial experience is compelling.",
+    successSignal: "3+ paid contracts per month by Month 2.",
+    upliftFromPhase1:
+      "IND AS 116 module removes the primary objection from listed company buyers ('we need compliance, not just tracking').",
+  },
+  {
+    id: 4,
+    metric: "Feature Adoption Rate (Compliance Module)",
+    whatMeasures:
+      "Percentage of paying clients actively using 5+ compliance documents, Compliance Management module (uploading compliance documents and responding to alerts).",
+    activationDefinition:
+      "Adoption = client has 5+ compliance documents uploaded AND at least 1 alert responded to within first 30 days.",
+    thirtyDayCurrent: "40% of clients using compliance module",
+    thirtyDayWithPhase1: "55% by Day 60",
+    threeMonthCurrent: "60% of clients",
+    threeMonthWithPhase1: "85% of all clients",
+    whyItMatters:
+      "Compliance module is the strongest retention anchor. Clients using 5 of its modules have 1.5x retention compared to those using 1 module.",
+    successSignal: "Compliance adoption by Month 3 above 60%.",
+    upliftFromPhase1:
+      "Phase 1 automates compliance renewal notifications and adds pre-populated Fire NOC and Shop Act template documents, reducing setup from 4 hours to 30 minutes.",
+  },
+  {
+    id: 5,
+    metric: "NPS Proxy (First 90 Day Survey)",
+    whatMeasures:
+      "Net Promoter Score collected via an in-app 1-question survey at Day 30: 'How likely are you to recommend Lockated to a colleague in real estate management? (0-10)'",
+    activationDefinition: "NPS = % Promoters (9-10) minus % Detractors (0-6).",
+    thirtyDayCurrent: "NPS >30 (early adopter bias)",
+    thirtyDayWithPhase1: "NPS >30",
+    threeMonthCurrent: "NPS >40",
+    threeMonthWithPhase1: "NPS >45",
+    whyItMatters:
+      "NPS above +40 indicates referral programme viability and case study collection. Below +20 requires product and case study collection.",
+    successSignal: "NPS above +40 by Month 3 from at least 15 respondents.",
+    upliftFromPhase1:
+      "Mobile app (Phase 1) improves NPS by 5-10 points via convenience. IND AS 116 module adds 'can't live without' compliance and case study functionality.",
+  },
+  {
+    id: 6,
+    metric: "Support Ticket Volume",
+    whatMeasures:
+      "Average number of support tickets per new client per month in their first 3 months (proxy for intuitive UX and quality of onboarding).",
+    activationDefinition:
+      "A ticket is any query submitted via in-app help, email, or chat requiring a response from the Lockated team.",
+    thirtyDayCurrent: "Less than 8 tickets per client per month in Month 1",
+    thirtyDayWithPhase1: "Below 6 per month in Month 1",
+    threeMonthCurrent: "Below 6 per month by Month 3",
+    threeMonthWithPhase1: "Below 3 per month by Month 3",
+    whyItMatters:
+      "High ticket volume signals UX issues, confusing UI, or gaps in onboarding completeness and signals that need remediation.",
+    successSignal:
+      "Ticket volume declining month-over-month for each client cohort. Phase 1 template and in-app support reducing tickets.",
+    upliftFromPhase1:
+      "Bulk import templates and in-app tutorials (Phase 1 items) reduce onboarding confusion — the #1 source of tickets.",
+  },
+  {
+    id: 7,
+    metric: "Monthly Churn Rate",
+    whatMeasures:
+      "Percentage of paying clients who cancel or do not renew their annual contract, measured monthly.",
+    activationDefinition:
+      "A churn event is a client who has paid at least 1 invoice and was deactivated within the last 30 days.",
+    thirtyDayCurrent:
+      "Less than 3% monthly churn target (less than 36% annual - high because product is early)",
+    thirtyDayWithPhase1: "Below 2% monthly",
+    threeMonthCurrent: "Below 1.5% monthly",
+    threeMonthWithPhase1: "Below 1% monthly",
+    whyItMatters:
+      "Churn above 2% monthly means the product-market fit or onboarding is weak. Below 1% is enterprise SaaS benchmark.",
+    successSignal:
+      "Zero churns at first 3 and in first year should not be hard if IND AS and compliance features create lock-in from Month 1.",
+    upliftFromPhase1:
+      "IND AS 116 and loading real data, and embedded compliance creates switching cost. 500 records loaded = virtually zero churn.",
+  },
+  {
+    id: 8,
+    metric: "Active Lease Records (Lease Management)",
+    whatMeasures:
+      "Total number of lease records in Active status across all paying client accounts. This is the North Star metric.",
+    activationDefinition:
+      "A record is active when it is in Active or Expiring status and was accessed within the last 90 days.",
+    thirtyDayCurrent: "500 active lease records by Day 30",
+    thirtyDayWithPhase1: "700 by Day 30",
+    threeMonthCurrent: "2,500 by Month 3",
+    threeMonthWithPhase1: "4,000 by Month 3",
+    whyItMatters:
+      "This is the North Star metric. Growth of active lease records is the strongest predictor of retention and revenue health.",
+    successSignal:
+      "Any client loading 50+ active lease records within 30 days is highly likely to renew and expand.",
+    upliftFromPhase1:
+      "Bulk import automates loading. IND AS 116 requires all leases to be loaded, incentivising 100% portfolio onboarding.",
+  },
+  {
+    id: 9,
+    metric: "Module Breadth per Client (Average Modules Active)",
+    whatMeasures:
+      "Average number of distinct feature modules each paying client is actively using (at least 1 action taken in the module in the past 30 days).",
+    activationDefinition:
+      "Active = at least 1 distinct feature action taken within the module in the past 30 days.",
+    thirtyDayCurrent: "Average 4 modules active per client by Day 30",
+    thirtyDayWithPhase1: "Average 5 modules by Day 30",
+    threeMonthCurrent: "Average 6 modules by Month 3",
+    threeMonthWithPhase1: "Average 8 modules by Month 3",
+    whyItMatters:
+      "Breadth of module usage is the strongest predictor of renewal and revenue growth.",
+    successSignal:
+      "Any client using 7+ modules within 30 days has near-zero churn probability.",
+    upliftFromPhase1:
+      "3 new modules (IND AS 116, mobile, automation) increase the ceiling from 8 to 11 accessible modules.",
+  },
+  {
+    id: 10,
+    metric: "Time to Value (Days from Contract to First Active Lease Record)",
+    whatMeasures:
+      "Number of days from contract signing to the first active lease record being created by the client.",
+    activationDefinition:
+      "Value = client has created and activated 10+ lease records with complete terms (rent, dates).",
+    thirtyDayCurrent: "21 days without bulk import template",
+    thirtyDayWithPhase1: "10 days with bulk import template (Phase 1)",
+    threeMonthCurrent: "Median 14 days across all Month 1-3 clients",
+    threeMonthWithPhase1: "Median 7 days across all Month 1-3 clients",
+    whyItMatters:
+      "Time to value predicts activation and churn. Clients who reach value in 14 days have 3x lower 12-month churn.",
+    successSignal:
+      "Any client reaching 10+ active lease records within 14 days triggers a 1 Year+ for improving time.",
+    upliftFromPhase1:
+      "Bulk import feature is the single biggest Phase 1 item for improving time to value. 2-3 new module users upload via template on Day 1.",
+  },
+];
+
+export const lesseeMetricsSummary = {
+  northStar:
+    "Total Active Lease Records Under Management on Platform. This single number captures adoption depth (clients loading real data), portfolio breadth (large portfolio clients), and revenue health (ACV correlates to lease count). Target: 5,000 active leases by Month 12.",
+  threeLeadingIndicators:
+    "1. Activation rate target 65%+ by Day 14 - predicts whether clients will find value and renew. 2. Compliance module adoption rate target 60%+ by Day 60 - predicts churn, as compliance-embedded clients do not leave. 3. Time to value target 10 days with Phase 1 bulk import - predicts NPS and expansion.",
+  phase1InvestmentPayback:
+    "Expected return: Phase 1 deployment (estimated Rs 30-50 lakh engineering investment) unlocks 30% of currently blocked pipeline. At average ACV of Rs 12 lakh per deal, 4 unblocked deals pay back Phase 1 investment. Total ARR impact of Phase 1 roadmap by Month 12 estimated at Rs 1.5-4 crore. ROI on Phase 1 investment: 3x-6x within 12 months of deployment.",
+};
+
+// --- LESSOR: Section 1 - Client Impact Metrics ---
+
+export const lessorClientMetrics: LessorClientMetric[] = [
+  {
+    id: 1,
+    name: "Rent Collection Rate",
+    whatMeasures:
+      "% of monthly rent receivable collected within 7 days of due date across the portfolio.",
+    howToTrack:
+      "Payment module: monthly receivables report. Collected vs overdue. Received vs Overdue on Day 15-23 days.",
+    baselineBefore:
+      "60-75% collected on time. Rest collected after manual follow-up over 15-23 days.",
+    targetAfter90Days: "85-95% collected within 7 days of due date",
+    landingPageHeadline:
+      "Rent collection rate improved from 65% to 90% in 6 days.",
+    howToPresent:
+      "Before/after collection rate per property. Show total overdue amount eliminated.",
+    portfolioImpact:
+      "Rs 50-500 lakh improvement in cash flow timing per year for the portfolio.",
+    revenueImpact:
+      "Direct rent collection working capital required to fund operations while waiting.",
+    clientROILogic: "",
+  },
+  {
+    id: 2,
+    name: "Days to Close Monthly Books",
+    whatMeasures:
+      "Number of working days after month-end to finalise rental income, receivables, and OPEX report.",
+    howToTrack:
+      "Measure from Day 1 of the month to the date the Finance Manager confirms the monthly income report is complete monthly.",
+    baselineBefore:
+      "5-15 working days to close monthly books due to manual collection status chasing.",
+    targetAfter90Days:
+      "2-3 working days — automated collection status, invoice, dispatch, and payment reconciling eliminates manual chase.",
+    landingPageHeadline:
+      "Monthly book closure reduced from 12 days to 2-3 days.",
+    howToPresent:
+      "Time series chart of closing days per month before and after Lockated.",
+    portfolioImpact: "Finance team time reclaimed: 5-8 working days per month.",
+    revenueImpact:
+      "Quarterly: as timely book closure enables faster management reporting and strategy. Typically Rs 2-5 lakh in Stagnation portfolio.",
+    clientROILogic: "",
+  },
+  {
+    id: 3,
+    name: "Overdue Tenant Collections Covered",
+    whatMeasures:
+      "Total value (Rs) of overdue tenant rent recovered within 30 days of going live on platform.",
+    howToTrack:
+      "Receivables aging dashboard: sort of overdue amount on Day 0 vs Day 90.",
+    baselineBefore:
+      "Leverage portfolio has 8-18% of monthly rent outstanding in Ageing 30 days due to ad hoc manual follow-up.",
+    targetAfter90Days:
+      "Reduce overdue balance by 70-85% within 90 days via real-time receivable reminders and escalation.",
+    landingPageHeadline:
+      "Cleared Rs 48 lakh in overdue rent collections in 60 days.",
+    howToPresent:
+      "Rs value of overdue rent cleared. Before/after portfolio the Rs value of the aging analysis chart.",
+    portfolioImpact:
+      "Cash flow improvement — the Rs value of overdue recovery = Rs 10 lakh on a 50 property portfolio, Rs 50 lakh on 200 property portfolio.",
+    revenueImpact: "",
+    clientROILogic: "",
+  },
+  {
+    id: 4,
+    name: "Compliance Renewals (Zero Lapse Rate)",
+    whatMeasures:
+      "% of property compliance documents (Fire NOC, OC, trade licences) renewed before expiry date.",
+    howToTrack:
+      "Compliance module: count of renewals completed before deadline vs total renewals due in the period.",
+    baselineBefore:
+      "25-40% of compliance documents renewed before deadline. Most renewed after expiry or forgotten. Manual reminder system.",
+    targetAfter90Days:
+      "100% renewals completed before expiry. Zero compliance lapses across 120 property portfolio in 6 months.",
+    landingPageHeadline: "Zero compliance lapses across the portfolio.",
+    howToPresent:
+      "Count of compliance lapses before and after. Identify penalty or commercial cost of each historical lapse.",
+    portfolioImpact:
+      "Eliminates regulatory risk: Fire NOCs, MoEFs, OCs across entire the portfolio.",
+    revenueImpact:
+      "Avoids Rs 10,000-1,00,000+ compliance fines per lapse. Multiple per year in a manual system.",
+    clientROILogic: "",
+  },
+  {
+    id: 5,
+    name: "Tenant Maintenance SLA Compliance Rate",
+    whatMeasures:
+      "% of tenant-raised maintenance requests resolved within the configured SLA per priority category.",
+    howToTrack:
+      "Maintenance module: SLA compliance rate — tickets resolved within SLA vs total raised. Formal SLA measurement in place.",
+    baselineBefore:
+      "40-60% of maintenance requests resolved within SLA. No formal SLA tracking. Emergency tickets: 30%+ within 24-48 SLA.",
+    targetAfter90Days: "80-90% within SLA.",
+    landingPageHeadline:
+      "Maintenance SLA compliance improved from 52% to 87% in 90 days.",
+    howToPresent:
+      "Before/after SLA rate by category. Show reduced tenant escalations. Show cost savings from proactive vs emergency resolution.",
+    portfolioImpact:
+      "SLA compliance rate improvement reduces tenant escalation, improves retention and reduces emergency maintenance spend.",
+    revenueImpact:
+      "Rs 2-5 lakh per property from avoided emergency repair surcharges. Direct saving.",
+    clientROILogic: "",
+  },
+  {
+    id: 6,
+    name: "Invoicing Accuracy and On-Time Dispatch Rate",
+    whatMeasures:
+      "% of monthly invoices (rent, utility, CAM) dispatched to tenant on/before due date without manual correction.",
+    howToTrack:
+      "Invoicing module: count of invoices dispatched by due time. 10-25% require correction or after-the-fact dispatch. Count of re-invoices due to error and correction.",
+    baselineBefore:
+      "60-75% of invoices dispatched on time, error-free, on the correct payment date.",
+    targetAfter90Days:
+      "98%+ invoices dispatched on time — the auto-calculated billing pays off.",
+    landingPageHeadline:
+      "Tenant invoicing accuracy improved to 99% — zero manual correction needed.",
+    howToPresent:
+      "Invoice error rate before/after. Show reduced dispute timeline. Accelerate payments and reduce time saved by finance.",
+    portfolioImpact:
+      "Direct cash flow accelerator. Correct invoicing reduces disputes, delays, and legal spend.",
+    revenueImpact: "",
+    clientROILogic: "",
+  },
+  {
+    id: 7,
+    name: "Occupancy Rate Visibility",
+    whatMeasures:
+      "Real-time view of occupied vs vacant properties and units across the portfolio updated automatically.",
+    howToTrack:
+      "Portfolio dashboard: real-time occupancy rate. Head of Asset Management views on activity reports from property managers. Updated on lease status.",
+    baselineBefore:
+      "No real-time occupancy view. Manual updating required from property managers.",
+    targetAfter90Days:
+      "Real-time occupancy dashboard updated continuously. Reports for every lease status on every lease change.",
+    landingPageHeadline:
+      "Portfolio occupancy rate now visible in real-time — from weekly manual to instant.",
+    howToPresent:
+      "Show the time lag between reporting before and after. Annual vacancy cost per property (for a 100 property portfolio, even 1% vacancy visibility improvement leads to Rs 50 lakh plus per year).",
+    portfolioImpact:
+      "Faster vacancy identification enables immediate re-leasing. Revenue per vacancy per quarter.",
+    revenueImpact: "",
+    clientROILogic: "",
+  },
+  {
+    id: 8,
+    name: "Rental Income vs Target Tracking",
+    whatMeasures:
+      "Monthly comparison of actual rental income received vs budget/target across the portfolio.",
+    howToTrack:
+      "Financial module: monthly lease income report — actual vs target. Portfolio performance; revenue quarterly vs quarterly reporting. Revenue collected for lease, by property and across entire.",
+    baselineBefore:
+      "No systematic tracking of income vs target. Collected and reported in Board meetings with 3-4 weeks lag.",
+    targetAfter90Days:
+      "Monthly income vs target report generated automatically. Head of Asset Management reviews weekly.",
+    landingPageHeadline:
+      "First time in 8 years we have monthly income vs budget at 98% accuracy.",
+    howToPresent:
+      "Before/after: comparison of income reporting frequency and accuracy.",
+    portfolioImpact: "Enables proactive rent renegotiation or forecasting.",
+    revenueImpact:
+      "Even 2% improvement in rental income is Rs 25+ lakh per year on a Rs 12 crore portfolio.",
+    clientROILogic: "",
+  },
+  {
+    id: 9,
+    name: "Time Saved on Monthly Tenant Reporting (Property Management Companies)",
+    whatMeasures:
+      "Hours saved per month by property management company team in compiling monthly client reports.",
+    howToTrack:
+      "Measure: hours taken to compile monthly client reports before Lockated vs after auto-generated reports.",
+    baselineBefore:
+      "2-4 days per client per month for manual report compilation (invoices, maintenance, compliance).",
+    targetAfter90Days:
+      "Auto-generated monthly client reports cut from 3 days to 15 minutes per client.",
+    landingPageHeadline:
+      "Monthly client reporting reduced from 3 days to 15 minutes per portfolio.",
+    howToPresent:
+      "Before/after time comparison for 1 client, scaled to all client base.",
+    portfolioImpact: "For a PM company with 25-30 working days per month.",
+    revenueImpact:
+      "Staff savings: 25-50% reduction in admin headcount per Rs 50,000-Rs 1 lakh/month per admin (Rs 6-12 lakh/year).",
+    clientROILogic: "",
+  },
+  {
+    id: 10,
+    name: "Security Deposit Regular Compliance",
+    whatMeasures:
+      "% of active leases with security deposit amount in Deposit record vs total active leases.",
+    howToTrack:
+      "Security deposit module: count of leases with Deposit record vs total active leases. Fixed: CA accounts. Tallied calculations done manually.",
+    baselineBefore:
+      "40-60% of deposits tracked systematically. Rest in separate records, manual or no separate calculation or review.",
+    targetAfter90Days:
+      "100% of active leases with deposit tracked. Refund and TDS auto-calculated vs manual.",
+    landingPageHeadline:
+      "Security deposit register 100% complete — no more manual calculation or review exit.",
+    howToPresent:
+      "Compliance rate before/after. Show value at risk (deposits, reimburse, advances, reimbursements).",
+    portfolioImpact:
+      "Eliminates deposit disputes, amnesia, and recovery failures on tenant exit.",
+    revenueImpact: "One deposit dispute avoided = legal cost of Rs 2-15 lakh.",
+    clientROILogic: "",
+  },
+];
+
+export const lessorNorthStarMetric = {
+  name: "MONTHLY RENTAL INCOME COLLECTED ON TIME",
+  definition:
+    "% of total contracted monthly rent received within 7 days of due date across all client portfolios on the platform. This metric captures collection efficiency, platform adoption, and client value delivered in a single number. Target: 90%+ for all clients within 90 days of go-live.",
+};
+
+export const lessorLaunchTracking: LessorLaunchTrackingRow[] = [
+  {
+    metric: "Lessor clients onboarded",
+    baselinePreLaunch: "0",
+    thirtyDayTarget: "1-2 pilot clients (10-25 properties each)",
+    ninetyDayTarget: "3-5 paying lessor clients",
+  },
+  {
+    metric: "Properties managed on platform (lessor)",
+    baselinePreLaunch: "0",
+    thirtyDayTarget: "25-50 properties across pilots",
+    ninetyDayTarget: "150-300 properties across 3-5 clients",
+  },
+  {
+    metric: "Tenant invoices dispatched through platform",
+    baselinePreLaunch: "0",
+    thirtyDayTarget: "100% of invoices for pilot properties",
+    ninetyDayTarget: "100% of invoices for all active lessor clients",
+  },
+  {
+    metric: "Rent collection rate for platform properties",
+    baselinePreLaunch: "Manual: 65-75% on time",
+    thirtyDayTarget: "75-85% on time with automated reminders",
+    ninetyDayTarget: "85-95% on time",
+  },
+  {
+    metric: "Compliance renewals actioned before expiry",
+    baselinePreLaunch: "Manual: 60-70% before expiry",
+    thirtyDayTarget: "80% before expiry",
+    ninetyDayTarget: "100% before expiry",
+  },
+  {
+    metric: "NPS from lessor clients",
+    baselinePreLaunch: "N/A (no clients)",
+    thirtyDayTarget:
+      "First NPS collected at Day 30. NPS 40+ target for early lessor clients.",
+    ninetyDayTarget: "",
+  },
+];
+
+export const lessorMetricsSummary = {
+  northStar:
+    "Monthly Rental Income Collected On Time — 90%+ target within 90 days. This single number captures collection efficiency, platform adoption, and client value for lessors.",
+  threeLeadingIndicators:
+    "(1) Invoicing accuracy and dispatch rate — are invoices going out correctly and on time? (2) Compliance renewal zero-lapse rate — are all property compliance documents being renewed before expiry? (3) Tenant maintenance SLA compliance — are tenant requests being resolved within SLA?",
+  phase1InvestmentPayback:
+    "A lessor client with Rs 5 crore annual rental roll: improving collection rate from 70% to 90% on time = Rs 50-100 lakh in improved cash flow timing annually. Platform cost: Rs 10-25 lakh/year. ROI is 4-10x in Year 1 from collection efficiency alone — before accounting for time saved, compliance risk eliminated, and tenant retention improvement.",
+};
 
 // ==================== TAB 10: SWOT ANALYSIS ====================
 
@@ -4739,6 +6105,210 @@ export const enhancementsLessee: Enhancement[] = [
     isAI: false,
     isMCP: true,
     effort: "Low",
+    priority: "P2",
+  },
+  {
+    id: 11,
+    module: "Lease and Rental Agreement Management",
+    feature: "Lease Amendment / Version Control with Diffing",
+    currentBehavior:
+      "When a lease is amended (rent revision, area change, term extension), the existing record is overwritten. Lease Managers manually track the making and timing of changes. Previous versions are only retrievable from Audit Logs. No consolidated amendment history view.",
+    enhancedBehavior:
+      "Version control system maintains a copy of every version of a lease record. Amendment diff view shows exactly what changed between Versions 1 and 2: 'Rent: 50,000 → 55,000, Area: 1,200 → 1,350 sqft.' Version history is one click, timestamped, and attributed to the user who made the amendment.",
+    integrationType: "Native",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Critical for audit readiness. Enterprises with 200+ leases require a clear amendment trail. This feature alone converts 3-5 enterprise deals per year that currently stall on the 'how do we track amendments?' question.",
+    isAI: false,
+    isMCP: false,
+    effort: "Medium",
+    priority: "P1",
+  },
+  {
+    id: 12,
+    module: "Dashboard and Analytics",
+    feature: "Executive Portfolio Intelligence Report (Auto-generated PDF)",
+    currentBehavior:
+      "Board-level and investor-level reporting is created manually by the Head of Real Estate from multiple Lockated exports.",
+    enhancedBehavior:
+      "One-click generation of a professionally formatted 6-10 page PDF report covering portfolio summary, top 10 lease expiries, compliance status, OPEX analysis, and utility cost breakdown.",
+    integrationType: "High",
+    impactLevel: "High",
+    revenueImpact:
+      "Directly enables Head of Real Estate to present to CFO or Board with a 5 min preparation time. Creates a 'magic moment' for new clients.",
+    isAI: false,
+    isMCP: false,
+    effort: "Medium",
+    priority: "S",
+  },
+  {
+    id: 13,
+    module: "Rent Collection and Financial Tracking",
+    feature: "Bank Account Reconciliation Integration",
+    currentBehavior:
+      "Finance Manager manually reconciles rent payments received in bank statements to outstanding invoices. Matches payment records. All matches are manual.",
+    enhancedBehavior:
+      "API integration with client's bank (HDFC, ICICI, Axis, SBI corporate banking APIs) pulls incoming payment data daily. Lockated auto-matches payments to outstanding invoices and flags unmatched amounts for manual review.",
+    integrationType: "API",
+    impactLevel: "High",
+    revenueImpact:
+      "Eliminates 2-4 hours of manual bank reconciliation per Finance team member per month. Directly captures trust of payment-conscious buyers. Accelerates monthly book closure.",
+    isAI: false,
+    isMCP: false,
+    effort: "High",
+    priority: "P1",
+  },
+  {
+    id: 14,
+    module: "Property and Asset Management",
+    feature: "3D Floor Plan / Visual Integration",
+    currentBehavior:
+      "Property records contain text-based area metrics (carpet, chargeable sqft). No visual representation of floor layouts.",
+    enhancedBehavior:
+      "Integration with CAD/BIM platforms (AutoDesk, SketchUp via API) to upload 2D/3D floor plan images linked to each unit record. Space utilisation overlay to visualise vacant vs occupied space on floor plan.",
+    integrationType: "Third-party",
+    impactLevel: "Low",
+    revenueImpact:
+      "Primarily a design feature for corporate real estate and property management. High differentiation in visual demos.",
+    isAI: false,
+    isMCP: false,
+    effort: "High",
+    priority: "P5",
+  },
+  {
+    id: 15,
+    module: "Lease Lifecycle and Renewal Management",
+    feature: "Multi-language Lease Agreement Support",
+    currentBehavior:
+      "Lease creation and document upload is in English only. Lease summaries generated in English. Interface supports Hindi and English only.",
+    enhancedBehavior:
+      "OCR and NLP model with Indian language support reads lease agreements in regional languages (Hindi, Marathi, Tamil, Telugu, Kannada). Interface supports Hindi and English natively. Lease summaries generated in preferred language.",
+    integrationType: "AI - NLP",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Unlocks government, PSU and SMB clients operating in regional languages. Estimated 15-25% of India's commercial lease agreements are in regional languages. Creates a strong differentiation.",
+    isAI: true,
+    isMCP: false,
+    effort: "Medium",
+    priority: "P2",
+  },
+  {
+    id: 16,
+    module: "Invoicing and Payments",
+    feature: "Digital Payment Integration (NEFT, UPI, Auto-debit)",
+    currentBehavior:
+      "Rent payments are recorded manually by the Finance Manager after verifying receipt in bank. No embedded payment initiation.",
+    enhancedBehavior:
+      "Integration with payment gateway (Razorpay, PayU, HDFC SmartHub) enables Lockated to display a 'Pay Now' link on each invoice. NEFT or UPI payment is initiated directly from Lockated. Auto-matches to invoice on receipt confirmation.",
+    integrationType: "Third-party",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Removes this need to switch between bank and Lockated for payment recording. Creates a direct link that reduces payment delay. Opens a new integration revenue stream via platform stickiness.",
+    isAI: false,
+    isMCP: false,
+    effort: "Medium",
+    priority: "P2",
+  },
+  {
+    id: 17,
+    module: "Masters and Configuration Engine",
+    feature: "Lockated to Property Data Platform Sync (MCP)",
+    currentBehavior:
+      "Market rent benchmarking requires manual research. No data integration with commercial real estate data providers.",
+    enhancedBehavior:
+      "MCP integration with Anarock Data, JLL India Market Intelligence, or PropEquity platform for rent per sqft data for each micro-market and property tier. Enables market benchmark alongside proposed and current rent.",
+    integrationType: "MCP",
+    impactLevel: "High",
+    revenueImpact:
+      "Creates a market analysis edge that no India competitor can replicate easily. Makes Lockated indispensable for rent review meetings. Transforms the renewal negotiation module: lease savings estimated at 10-18% on renewals with market benchmark data.",
+    isAI: false,
+    isMCP: true,
+    effort: "Medium",
+    priority: "P1",
+  },
+  {
+    id: 18,
+    module: "Security Deposit Management",
+    feature: "Deposit Interest Calculation and GST on Deposit",
+    currentBehavior:
+      "Security deposit amounts are tracked but interest on deposit is calculated manually. GST implications on forfeiture from deposit are not consolidated.",
+    enhancedBehavior:
+      "Auto-calculation of interest on security deposit as specified in the lease agreement. GST liability for interest calculated and displayed. Compliance with lease deposit-specific surplus/shortfall calculation and adjustment billing for current interest provisions.",
+    integrationType: "Native",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Eliminates manual calculation that Finance teams do quarterly. Reduces the compliance risk on deposit interest. A small but important differentiator for BFSI and funded company clients.",
+    isAI: false,
+    isMCP: false,
+    effort: "Low",
+    priority: "P3",
+  },
+  {
+    id: 19,
+    module: "AMC Management",
+    feature: "Predictive Maintenance Scheduling",
+    currentBehavior:
+      "AMC service visits are scheduled on a calendar basis based on the AMC contract. No predictive adjustment based on equipment usage or condition data.",
+    enhancedBehavior:
+      "AI model trained on equipment service history, sensor data (if available), and historical failure patterns determines optimal preventive maintenance schedule. Pre-diagnosis prioritised by equipment type, age, and performance degradation indicator. Frequency auto-adjusted based on seasonal patterns.",
+    integrationType: "AI - Predictive",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Reduces emergency maintenance incidents by 20-30%. Facilities Management teams can proactively address issues before tenant escalation. Creates a strong retention argument.",
+    isAI: true,
+    isMCP: false,
+    effort: "High",
+    priority: "P2",
+  },
+  {
+    id: 20,
+    module: "Dashboard and Analytics",
+    feature: "ESG and BRSR Reporting Module",
+    currentBehavior:
+      "Utility consumption data is tracked in Lockated but not connected to SEBI BRSR-compliant energy and water consumption reports or sustainability metrics.",
+    enhancedBehavior:
+      "Automated generation of SEBI BRSR-compliant energy and water consumption reports per property. Carbon calculations based on consumption data. Sustainability reporting to be added by default. First India lease tool with native BRSR report generation.",
+    integrationType: "Native",
+    impactLevel: "High",
+    revenueImpact:
+      "SEBI BRSR is mandatory for top 1000 listed companies. Adds a new CFO and Sustainability officer buyer persona. First India lease tool with native BRSR report generation.",
+    isAI: false,
+    isMCP: false,
+    effort: "High",
+    priority: "P2",
+  },
+  {
+    id: 21,
+    module: "Notifications and Alerts",
+    feature: "Intelligent Notification Prioritisation",
+    currentBehavior:
+      "All alerts and notifications are delivered with equal urgency. Lease Managers receive 20-40 notifications per day, leading to alert fatigue and important alerts being missed.",
+    enhancedBehavior:
+      "AI model analyses alert history, user response patterns, and business impact of each alert type to create a risk-based notification hierarchy for each user. Low-value alerts are auto-summarised into 'last week's alerts.' Critical alerts are escalated from 'bell' notification to SMS or email.",
+    integrationType: "AI - LLM",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Reduces the perception of being an 'notification overload.' Users who customise and are active on compliance alerts and compliance deadlines. Initial adoption of mobile version makes the platform operationally essential.",
+    isAI: true,
+    isMCP: false,
+    effort: "Medium",
+    priority: "P1",
+  },
+  {
+    id: 22,
+    module: "Lease and Rental Agreement Management",
+    feature: "Digital Lease Signing Integration (eSign)",
+    currentBehavior:
+      "Signed lease agreements are scanned and uploaded as PDFs. Physical or email-based signing.",
+    enhancedBehavior:
+      "Integration with eSign platforms (Aadhaar eSign, DigiLocker, or SignDesk) allows lease agreements and DSC-based documents to be digitally signed within the Lockated platform. Signed copies auto-archived.",
+    integrationType: "Third-party",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Eliminates the lease contract workflow bottleneck. Faster signing accelerates deal closure. Digital stamp-duty readiness for future states using eStamp. Original lease is on eSign for secure.",
+    isAI: false,
+    isMCP: false,
+    effort: "Medium",
     priority: "P2",
   },
 ];
@@ -5152,6 +6722,211 @@ export const enhancementsLessor: Enhancement[] = [
     impactLevel: "High",
     revenueImpact:
       "Data-driven renewal pricing captures 5–15% additional rent uplift vs informal estimation. On a 100-property portfolio with Rs 5 crore annual rent, a 7% improvement = Rs 35 lakh additional annual income.",
+    isAI: false,
+    isMCP: false,
+    effort: "Medium",
+    priority: "P2",
+  },
+  {
+    id: 11,
+    module: "Utilities Management",
+    feature: "Automated Utility Invoice Generation from Meter Readings",
+    currentBehavior:
+      "Property managers capture meter readings manually in a spreadsheet, calculate consumption and per-unit charges, prepare utility invoices in a separate billing software, and dispatch to tenants monthly.",
+    enhancedBehavior:
+      "Lockated captures meter readings from a meter reading app. System auto-calculates consumption on a per-unit or slab basis, applies the per-unit rate from the lease terms, generates a utility invoice ready for dispatch. One-click sends it to the tenant.",
+    integrationType: "Workflow automation with calculation engine",
+    impactLevel: "High",
+    revenueImpact:
+      "Reduces billing cycle from 5 days to 1 day per building. Prevents billing errors that lose Rs 15 lakh per year on a 50-property portfolio. Auto-captures revenue that manual process misses.",
+    isAI: false,
+    isMCP: false,
+    effort: "Medium",
+    priority: "P1",
+  },
+  {
+    id: 12,
+    module: "Property and Asset Management",
+    feature: "Vacancy Duration and Financial Impact Tracking",
+    currentBehavior:
+      "No systematic tracking of how long a property stays vacant. The rent loss per day of vacancy is not calculated.",
+    enhancedBehavior:
+      "When a lease terminates or a unit is flagged vacant, a 'Vacancy Duration Counter' starts. The rent loss per day (based on last rent or market rent) accumulates visually in the dashboard. Head of Asset Management receives a weekly vacancy cost alert.",
+    integrationType: "Workflow automation",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Visibility into vacancy cost drives urgency in re-leasing. On a 100-property portfolio, reducing vacancy by 15 days = Rs 25-75 lakh in recovered annual rent.",
+    isAI: false,
+    isMCP: false,
+    effort: "Low",
+    priority: "P1",
+  },
+  {
+    id: 13,
+    module: "Compliance Management",
+    feature: "Compliance Audit Pack Auto-Generation",
+    currentBehavior:
+      "Compliance teams manually assemble documents on request. No pre-pack for rapid input to pack for insurance claims, landlord queries, and government inspections.",
+    enhancedBehavior:
+      "One click generates a Compliance Audit Pack for a selected property or portfolio: all compliance documents by category (Fire NOC, land records, trade licences), expiry status, and next renewal dates. Available as PDF download and Digital signature option for final certification.",
+    integrationType: "Document management",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Reduces compliance audit preparation time. Helps clients avoid penalties and creates proactive compliance stance. Total time savings for every lessor client.",
+    isAI: false,
+    isMCP: false,
+    effort: "Low",
+    priority: "P1",
+  },
+  {
+    id: 14,
+    module: "Rent Collection and Financial Tracking",
+    feature: "Late Fee Auto-Calculation and Invoice Addition",
+    currentBehavior:
+      "Finance managers manually calculate late fees when a tenant payment is overdue and add them to the next invoice. Manual process.",
+    enhancedBehavior:
+      "When a tenant payment is marked as Overdue, the system automatically calculates the late fee based on the contractual rate (e.g., 2% per month or flat rate). Late fee is auto-added to the next invoice as a separate line item. Late fee amount is visible in the receivables dashboard.",
+    integrationType: "Workflow automation (formula-based)",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Ensures all late fees are charged consistently. Eliminates revenue leakage from inconsistently applied late fees. For a portfolio with 10% overdue, correct late fee enforcement generates Rs 5-15 lakh per year in recovered fees.",
+    isAI: false,
+    isMCP: false,
+    effort: "Low",
+    priority: "P1",
+  },
+  {
+    id: 15,
+    module: "AMC Management",
+    feature: "AMC Cost vs Service Quality Analysis",
+    currentBehavior:
+      "AMC vendor performance is assessed informally. No systematic comparison of AMC cost vs service quality delivered.",
+    enhancedBehavior:
+      "For each AMC contract, the platform calculates a Cost per Service Unit and compares it against the vendor's SLA compliance rate and response time metrics. A 'Vendor Value Report' is generated showing service quality per rupee spent.",
+    integrationType: "Analytics module",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Helps clients negotiate AMC renewals with data. Reduces AMC cost savings by 10-20% through informed renegotiation. Enterprise deal closer.",
+    isAI: false,
+    isMCP: false,
+    effort: "Medium",
+    priority: "P2",
+  },
+  {
+    id: 16,
+    module: "Tenant and Landlord Management",
+    feature: "Tenant Onboarding Checklist and Digital Welcome Pack",
+    currentBehavior:
+      "New tenant onboarding is done via email and WhatsApp. No standard checklist. Documents are collected ad hoc.",
+    enhancedBehavior:
+      "When a new lease is activated, the system auto-generates a standardised Tenant Onboarding checklist and Digital Welcome Pack: property handover documentation including meter reading capture, security deposit receipt, emergency contacts, maintenance portal link, compliance documents. Each checkbox is tracked.",
+    integrationType: "Workflow automation with document generation",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Reduces onboarding errors and disputes. Tenant perceives professionalism. Reduces Day 1 to a standard, predictable experience. Creates a strong predictor of long-term tenant satisfaction.",
+    isAI: false,
+    isMCP: false,
+    effort: "Low",
+    priority: "P2",
+  },
+  {
+    id: 17,
+    module: "Financial Reporting",
+    feature: "AI-Generated Monthly Portfolio Narrative Report",
+    currentBehavior:
+      "Property managers and Heads of Asset Management compile monthly portfolio reports manually. Format varies for board or investor review.",
+    enhancedBehavior:
+      "AI generates a plain-language monthly portfolio report from the financial data: rent income vs target, occupancy changes, significant lease events (new, renewed, terminated), maintenance SLA summary, and key metrics. Auto-generates narrative and submit. Generated in 5 minutes.",
+    integrationType: "AI (generates narrative from structured financial data)",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Eliminates 2-4 hours of monthly report writing per property manager. Creates 'unstructured financial analysis' valuable for property owners. Differentiator: no competitor auto-generates monthly client narrative reports.",
+    isAI: true,
+    isMCP: false,
+    effort: "Medium",
+    priority: "P2",
+  },
+  {
+    id: 18,
+    module: "Lease Lifecycle and Renewal Management",
+    feature: "AI Optimal Renewal Terms Recommendation",
+    currentBehavior:
+      "Property managers set renewal terms (rent increase, tenure, conditions) based on experience. No data-driven recommendation for optimal terms.",
+    enhancedBehavior:
+      "AI analyses tenant payment history, maintenance request volume, market rent data, lease conditions, and tenure conditions to recommend the optimal terms to make renewal: compromise rent? Match market? Renew with strong concessions? High-risk tenants get a stronger renewal term set with stricter conditions. Low-risk tenants receive incentive terms.",
+    integrationType:
+      "AI (machine learning on historical lease and payment data)",
+    impactLevel: "High",
+    revenueImpact:
+      "Data-driven renewal terms capture 5-10% improvement compared to gut-feel estimation. On a 100-property portfolio, improved renewals = Rs 25-75 lakh additional annual income. Creates a differentiated advisory experience.",
+    isAI: true,
+    isMCP: false,
+    effort: "High",
+    priority: "P2",
+  },
+  {
+    id: 19,
+    module: "Invoicing and Payments",
+    feature: "Recurring Invoice Auto-Generation and Dispatch",
+    currentBehavior:
+      "Finance managers manually create invoices for all tenants each month and update for variations (rent increases, deposits). Manually dispatching 50-100 invoices monthly.",
+    enhancedBehavior:
+      "Monthly recurring invoices are auto-generated on a configured date: base rent, applicable GST, CAM charges (if applicable), any adjustments. Auto-dispatched to tenants via email with receipt tracking. Finance Manager reviews a confirmation dashboard only.",
+    integrationType: "Workflow automation (formula-based)",
+    impactLevel: "High",
+    revenueImpact:
+      "Eliminates 2-3 hours of invoice preparation per month for a 100-property portfolio. Reduces errors by 95%. Ensures 100% of revenue is invoiced on time. Cash flow acceleration.",
+    isAI: false,
+    isMCP: false,
+    effort: "Medium",
+    priority: "P1",
+  },
+  {
+    id: 20,
+    module: "Property and Asset Management",
+    feature: "Property Handover Condition Report (Photo Evidence)",
+    currentBehavior:
+      "Property handover condition at lease start and exit is documented informally or not at all. Photographs stored on personal phones. No structured comparison.",
+    enhancedBehavior:
+      "At lease end, property manager completes a digital Property Handover Condition Report in the platform: each room, area, and fixture photographed and rated. Comparison with onboarding condition report shows damage. Automates damage deduction and deposit refund calculation.",
+    integrationType: "Workflow automation with document generation",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Reduces property deposit disputes. Every dispute avoided saves Rs 50,000-5,00,000 in legal costs and management time. Creates a trackable exit record for every property.",
+    isAI: false,
+    isMCP: false,
+    effort: "Medium",
+    priority: "P2",
+  },
+  {
+    id: 21,
+    module: "Dashboard and Analytics",
+    feature: "ESG and BRSR Reporting Module",
+    currentBehavior:
+      "Utility consumption data is tracked manually. No automated generation of SEBI BRSR-compliant energy and water consumption reports per property. Carbon footprint calculations based on consumption data. No automated ESG report generation for BRSR-listed entities.",
+    enhancedBehavior:
+      "Automated generation of SEBI BRSR-compliant energy and water consumption reports per property. Carbon calculations based on consumption data. Sustainability reporting for top 1000 listed entities. First India property platform with native BRSR reporting.",
+    integrationType: "Native",
+    impactLevel: "High",
+    revenueImpact:
+      "SEBI BRSR is mandatory for top 1000 listed companies. Sustainability officer becomes new buyer persona. Adds a new revenue stream and differentiator in India with native BRSR reporting.",
+    isAI: false,
+    isMCP: false,
+    effort: "High",
+    priority: "P2",
+  },
+  {
+    id: 22,
+    module: "Lease and Rental Agreement Management",
+    feature: "Digital Lease Signing Integration (eSign)",
+    currentBehavior:
+      "Signed lease agreements are scanned and uploaded as PDFs. Physical or email-based signing process.",
+    enhancedBehavior:
+      "Integration with eSign platforms (Aadhaar eSign, DigiLocker, or SignDesk) allows lease agreements to be digitally signed within the Lockated platform. Signed copies auto-archived.",
+    integrationType: "Third-party",
+    impactLevel: "Medium",
+    revenueImpact:
+      "Eliminates the lease contract workflow bottleneck. Faster signing accelerates deal closure from weeks to days. Digital stamp-duty readiness for future regulatory compliance.",
     isAI: false,
     isMCP: false,
     effort: "Medium",
