@@ -2276,7 +2276,19 @@ const productData = {
           name: "TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
           sections: [
             {
-              title: "COMPONENT 1 , SALES MOTION | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
+              title: "PROFILE | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
+              columns: ["Attribute", "Value"],
+              rows: [
+                { label: "Company size", detail: "50–300 employees" },
+                { label: "Industry", detail: "Technology, SaaS, Product companies" },
+                { label: "Geography", detail: "Bengaluru, Pune, Hyderabad, Mumbai (India primary); Dubai, Abu Dhabi (GCC secondary)" },
+                { label: "Buyer", detail: "CTO / VP Engineering / COO" },
+                { label: "Budget", detail: "₹6–18L/year" },
+                { label: "Current stack", detail: "Jira + Slack + Confluence + Google Workspace" },
+              ],
+            },
+            {
+              title: "COMPONENT 1 , SALES MOTION | TG 1: Tech / SaaS Companies",
               columns: ["Sales element", "Details"],
               rows: [
                 {
@@ -2310,66 +2322,72 @@ const productData = {
               ],
             },
             {
-              title: "COMPONENT 2 , MARKETING CHANNELS | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
+              title: "COMPONENT 2 , MARKETING CHANNELS | TG 1: Tech / SaaS Companies",
               columns: ["Channel", "Relevant?", "Execution approach", "Priority rank"],
               rows: [
                 {
                   col1: "LinkedIn (organic + paid)",
                   col2: "Yes",
                   col3: "Organic: 2 posts/week from Founder account , topics: data sovereignty in SaaS, Jira alternatives, sprint productivity. Target personas: CTOs, VPs Engineering, Product Managers. Paid: LinkedIn Sponsored Content targeting 'Software Engineering' + 'Product Management' job titles at companies 50–500 employees in Bengaluru, Pune, Hyderabad. Budget: ₹50–80k/month. Start organic for 60 days, layer paid after first 3 case studies.",
-                  col4: "#1 , Start immediately",
+                  col4: "#1 , High priority",
                 },
                 {
                   col1: "Cold outreach (email + LinkedIn DM)",
                   col2: "Yes",
                   col3: "Sequence: Day 1 , LinkedIn connection request with note referencing a specific pain ('noticed your team uses Jira + Confluence , have 10 min to show you something interesting?'). Day 4 , email with 1-line data sovereignty hook + 30-second Loom video of PTM sprint view. Day 8 , follow-up with a relevant case study or stat. Day 14 , final breakup email. Best day/time: Tuesday–Thursday, 9–11am IST. List size target: 50 personalised outreaches per week.",
-                  col4: "#1 , Start immediately",
+                  col4: "#1 , High priority",
                 },
                 {
                   col1: "Events & conferences",
                   col2: "Yes",
                   col3: "India: NASSCOM Product Conclave (Bengaluru, annual), TechSparks by YourStory (Bengaluru), SaaS Insider events. Host a 40-person invite-only roundtable: 'Data sovereignty in the SaaS stack , what engineering leaders need to know.' GCC: GITEX Technology Week (Dubai, October) for enterprise tech audience.",
-                  col4: "#2 , Month 2 onward",
+                  col4: "#2 , Start Month 2",
                 },
                 {
                   col1: "SEO & content marketing",
                   col2: "Yes",
-                  col3: "Top 3 search topics this TG looks for: 'Jira alternatives India', 'best project management software for startups', 'data localisation SaaS India'. Content format: long-form blog posts (2,000+ words) targeting comparison keywords. Timeline: 90+ days to see SEO results , start now but don't count on it for Month 1.",
+                  col3: "Top 3 search topics: 'Jira alternatives India', 'best project management software for startups', 'data localisation SaaS India'. Content format: long-form blog posts (2,000+ words) targeting comparison keywords. Timeline: 90+ days for results.",
                   col4: "#3 , Medium-term",
                 },
                 {
                   col1: "Referral & word of mouth",
                   col2: "Yes",
-                  col3: "Trigger: when a team completes their first sprint fully in PTM and reports velocity improvement. Engineer the referral: at Day 30 check-in, ask satisfied users to intro PTM to 1 peer at another company. Offer: free 30-day seat extension for each successful referral that converts to a trial.",
-                  col4: "#2 , Month 2",
+                  col3: "Trigger: when a team completes their first sprint fully in PTM and reports velocity improvement. Engineer the referral: at Day 30 check-in, ask satisfied users to intro PTM to 1 peer. Offer: free 30-day seat extension.",
+                  col4: "#2 , Very high value when triggered",
                 },
                 {
                   col1: "Community & associations",
                   col2: "Yes",
-                  col3: "LinkedIn groups: SaaS India, Product Management India. Slack communities: SaaSBoomi, The Hustle (India SaaS community), Product Folks. YourStory and Inc42 founder communities. Engage authentically , answer questions about PM tools, sovereignty, sprint management , don't pitch directly.",
+                  col3: "LinkedIn groups: SaaS India, Product Management India. Slack: SaaSBoomi, The Hustle, Product Folks. Engage authentically , answer questions about PM tools, sovereignty, sprint management.",
                   col4: "#3 , Medium-term",
                 },
               ],
             },
             {
               title: "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 1: Tech / SaaS Companies",
-              columns: ["Phase", "Goals & Actions", "Milestone / Risk"],
+              columns: ["Element", "Description", "Owner", "Output"],
               rows: [
-                {
-                  col1: "Days 1–30 Foundation",
-                  col2: "Build 300-company target list. Launch 50 personalised outreaches/week. Create 5-min demo video.",
-                  col3: "Milestone: 5 qualified demo calls booked. Risk: generic messaging (needs 10 min research/lead).",
-                },
-                {
-                  col1: "Days 31–60 Traction",
-                  col2: "Run 5+ live demos. Setup pre-loaded sandbox trials. Proactively engage IT Heads on data architecture.",
-                  col3: "Milestone: 3 active trials running. Risk: trial inactivity (needs Day 2 check-in).",
-                },
-                {
-                  col1: "Days 61–90 Conversion",
-                  col2: "Week 9 usage review (show ROI). Present cost saving vs MS 365/Asana. Request peer references.",
-                  col3: "Milestone: 2 signed contracts + 1 case study. Risk: procurement delays (offer early-pay discount).",
-                },
+                { col1: "PHASE 1", col2: "DAYS 1-30: FOUNDATION", bgColor: "#e8eaf6" },
+                { col1: "Goal", col2: "Get 5 qualified demo calls booked with CTOs or VP Engineering at tech companies (50-300 employees) in India metros." },
+                { col1: "Action 1", col2: "Map all tech companies (50-300 employees) in India metros and identify decision makers.", col3: "Founder + SDR", col4: "Prioritised list of 200 target accounts." },
+                { col1: "Action 2", col2: "Send personalised LinkedIn connection + email sequence to target list.", col3: "SDR", col4: "10 qualified demos booked." },
+                { col1: "Action 3", col2: "Prepare 1-page 'Data Sovereignty for CTOs' brief.", col3: "Founder + Product", col4: "PDF asset for lead qualification." },
+                { col1: "Milestone", col2: "10 demos booked", bgColor: "#e3f2fd" },
+                { col1: "Biggest Risk", col2: "Generic messaging gets ignored. Pre-empt: research each company before outreach.", bgColor: "#fff3e0" },
+                { col1: "PHASE 2", col2: "DAYS 31-60: TRACTION", bgColor: "#e8eaf6" },
+                { col1: "Goal", col2: "Run 5+ live demos, convert minimum 3 to 14-day sandbox trials." },
+                { col1: "Action 1", col2: "Run live demo: project -> sprint -> MoM -> task -> documents flow.", col3: "Founder", col4: "Demo-to-trial conversion target: 60%." },
+                { col1: "Action 2", col2: "Set up personalised trial environments pre-loaded with team structure.", col3: "Product / Founder", col4: "Sandbox ready in 24 hours." },
+                { col1: "Action 3", col2: "Engage IT Head with architecture documentation.", col3: "Founder", col4: "IT review handled proactively." },
+                { col1: "Milestone", col2: "3 active 14-day trials running.", bgColor: "#e3f2fd" },
+                { col1: "Biggest Risk", col2: "Trial accounts go quiet. Pre-empt: assign dedicated onboarding call.", bgColor: "#fff3e0" },
+                { col1: "PHASE 3", col2: "DAYS 61-90: CONVERSION", bgColor: "#e8eaf6" },
+                { col1: "Goal", col2: "Sign first 2-3 paying tech company accounts. Minimum: 1 signed contract + 1 committed pilot." },
+                { col1: "Action 1", col2: "Week 9 check-in call: review trial usage data, surface wins.", col3: "Founder + CS", col4: "Data-driven closing conversation." },
+                { col1: "Action 2", col2: "Present custom ROI summary: tool consolidation savings + sovereignty value.", col3: "Founder", col4: "Quantified savings summary." },
+                { col1: "Action 3", col2: "Request reference introduction: 'Who else in your network has this problem?'", col3: "Founder", col4: "1-2 warm intros per signed account." },
+                { col1: "Milestone", col2: "2 signed contracts. 1 case study published.", bgColor: "#e3f2fd" },
+                { col1: "Biggest Risk", col2: "Procurement delays. Pre-empt: offer early payment discount.", bgColor: "#fff3e0" },
               ],
             },
             {
@@ -2378,51 +2396,101 @@ const productData = {
               rows: [
                 {
                   label: "Timing for partnerships",
-                  detail: "Yes , but only after first 10 direct customers. Build direct sales motion first.",
+                  detail: "Yes , but only after first 10 direct customers. Build direct sales motion first to understand the buyer deeply before training partners to sell it.",
                 },
                 {
-                  label: "Partner type 1",
-                  detail: "Indian SaaS consultants / implementation partners. Referral commission on Year 1 ARR.",
+                  label: "Partner type 1: Indian SaaS consultants / implementation partners",
+                  detail: "Who: boutique IT consulting firms that help tech companies set up their SaaS stack (Notion consultants, Atlassian partners, productivity consultants). Why they have access: they are already in procurement conversations about PM tools. What we offer: 20% referral commission on Year 1 ARR + co-marketing. India profile: SaaS implementation firms in Bengaluru (example: productivity-focused boutiques in Koramangala). Red flag to avoid: large SIs who will over-promise and under-deliver for a ₹8L deal.",
+                },
+                {
+                  label: "Partner type 2: Talent platforms & HRMS vendors (cross-sell)",
+                  detail: "Who: Darwinbox, Keka, or GreytHR , once PTM has HRMS integration built (Month 6+), these platforms have direct access to the same HR and IT heads we target. What we offer: joint webinars, co-marketing content, integration badge on their marketplace. What they offer: reach into their client base without a cold outreach. Red flag: do not position PTM as an HRMS replacement , we complement them.",
+                },
+                {
+                  label: "Year 1 partnership structure",
+                  detail: "Referral-only for Year 1. No reseller margin, no white-label. A referred deal that closes earns the partner 20% of Year 1 ARR, paid 30 days after client payment clears. Reason: at our current stage, reseller complexity (training, support, margin management) will slow us down more than the incremental deals are worth. Direct sales builds the muscle first.",
+                },
+              ],
+            },
+            {
+              title: "TG 1 ONE-PAGE SUMMARY , Tech / SaaS Companies (50–300 employees, India metros)",
+              columns: ["Element", "Answer", "Element ", "Answer "],
+              rows: [
+                {
+                  col1: "Best sales motion",
+                  col2: "Founder-led direct outbound (Month 1–4) → SDR + AE by Month 4",
+                  col3: "Single most important Week 1 action",
+                  col4: "Build 300-company target list + send first 50 personalised outreach sequences",
+                },
+                {
+                  col1: "Top 2 marketing channels",
+                  col2: "LinkedIn organic (founder content) + personalised cold outreach",
+                  col3: "Biggest risk to watch",
+                  col4: "IT security review delays , engage IT Head in Week 1, not Week 6",
+                },
+                {
+                  col1: "90-day goal",
+                  col2: "5 demo calls → 3 trials → 2 signed contracts + 1 case study",
+                  col3: "What closes this TG",
+                  col4: "14-day sandbox trial + sovereignty architecture doc + peer reference customer",
+                },
+                {
+                  col1: "Key partner type",
+                  col2: "Indian SaaS consultants (referral-only, post 10 direct customers)",
+                  col3: "Primary buyer",
+                  col4: "CTO / VP Engineering (50–200 employees) | COO / CFO (200+ employees)",
                 },
               ],
             },
           ],
           summaryBox:
-            "Founder-led direct outbound → SDR + AE by Month 4. LinkedIn organic + personalised cold outreach. 5 demo calls → 3 trials → 2 signed contracts + 1 case study. Indian SaaS consultants (referral-only). CTO / VP Engineering (50–200 employees) | COO / CFO (200+ employees).",
+            "Founder-led direct outbound (Month 1–4) → SDR + AE by Month 4. LinkedIn organic (founder content) + personalised cold outreach. 5 demo calls → 3 trials → 2 signed contracts + 1 case study. Indian SaaS consultants (referral-only, post 10 direct customers). CTO / VP Engineering (50–200 employees) | COO / CFO (200+ employees).",
         },
         {
           id: "TG2",
           name: "TG 2: Professional Services, Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
           sections: [
             {
+              title: "PROFILE | TG 2: Professional Services, Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+              columns: ["Attribute", "Value"],
+              rows: [
+                { label: "Company size", detail: "20–200 professionals" },
+                { label: "Industry", detail: "Management consulting, legal, audit, advisory" },
+                { label: "Geography", detail: "Mumbai, Delhi, Bengaluru (India); Dubai (DIFC), Abu Dhabi (ADGM), Riyadh (GCC)" },
+                { label: "Buyer", detail: "Managing Partner / COO / Practice Head" },
+                { label: "Budget", detail: "₹10–20L/year" },
+                { label: "Current stack", detail: "Monday/Asana + Google Docs + email" },
+              ],
+            },
+            {
               title: "COMPONENT 1 , SALES MOTION | TG 2: Professional Services",
               columns: ["Sales element", "Details"],
               rows: [
                 {
                   label: "Primary sales motion",
-                  detail: "Founder-led direct + field sales. This TG buys on relationships. Lunch meeting with MP is worth more than 20 cold emails.",
+                  detail: "Founder-led direct + field sales (in-person meetings). This TG buys on relationships and trust , not self-serve trials. A lunch meeting with a Managing Partner is worth more than 20 cold emails. Average deal size (₹10–20L) justifies in-person investment.",
                 },
                 {
                   label: "Avg. sales cycle",
-                  detail: "6–10 weeks. Requires partner approval and compliance review. GCC legal audit adds 3–4 weeks.",
+                  detail: "6–10 weeks. Slower than tech , requires partner approval and often a legal/compliance review of the data architecture. Flag: In DIFC-regulated Dubai entities, legal team review can add 3–4 weeks. Engage the compliance team in Week 2.",
                 },
                 {
-                  label: "Economic buyer",
-                  detail: "Managing Partner (small firms) or COO / Practice Head (larger firms). GCC: GM or Regional Director.",
+                  label: "Economic buyer (signs)",
+                  detail: "Managing Partner (small firms) or COO / Practice Head (larger firms). In GCC: General Manager or Regional Director with P&L authority.",
                 },
                 {
-                  label: "Champion",
-                  detail: "Senior Manager or Associate Director managing client delivery. They feel the MoM pain.",
+                  label: "Champion (internal advocate)",
+                  detail: "Senior Manager or Associate Director who manages client project delivery , they feel the MoM + task tracking pain daily. They will champion PTM internally once they see the MoM-to-task demo.",
                 },
                 {
                   label: "Blocker to anticipate",
-                  detail: "Legal/compliance partner asking 'where does client data go?'. Our 'your servers' answer closes it.",
+                  detail: "Legal/compliance partner who will ask: 'Where does our client data go?' This is our strongest moment , the answer ('your servers, not ours') closes the objection immediately. Pre-arm the champion with a one-pager on data sovereignty before the compliance conversation.",
                   textColor: "#C62828",
                   bgColor: "#FFEBEE",
                 },
                 {
                   label: "What closes this TG",
-                  detail: "Demo of MoM-to-task + data sovereignty explanation. Reference from similarly regulated firm.",
+                  detail: "A single compelling demo of MoM-to-task auto-conversion + document creation with data sovereignty explanation. Followed by a reference from a similarly regulated firm (or a DIFC/SEBI compliance note). This TG buys on 'I trust this is safe and it solves my meeting-to-action problem.'",
                   textColor: "#2E7D32",
                   bgColor: "#E8F5E9",
                 },
@@ -2435,42 +2503,66 @@ const productData = {
                 {
                   col1: "LinkedIn (organic + paid)",
                   col2: "Yes",
-                  col3: "Content targeting Practice Heads: client data security, billable hour optimisation, DIFC/SEBI compliance.",
+                  col3: "Organic: content targeting Practice Heads and Managing Partners , topics: client data security, meeting productivity, billable hour optimisation, DIFC/SEBI compliance for SaaS. Paid: LinkedIn targeting 'Management Consulting', 'Legal Services', 'Audit' industries + 'Managing Partner', 'Practice Head' titles. Mumbai, Delhi, Dubai, Abu Dhabi. Budget: ₹40–60k/month.",
                   col4: "#1 , High priority",
                 },
                 {
-                  col1: "Cold outreach",
+                  col1: "Cold outreach (email + LinkedIn DM)",
                   col2: "Yes",
-                  col3: "Hook: 'Your client contracts live on Google's servers. Here's an alternative.' Personalise Heavily.",
+                  col3: "Hook: 'Your client contracts and project plans live on Google's servers in Singapore. Here's an alternative.' 5-touch sequence over 21 days. Best timing: Monday–Wednesday, 8–10am IST / GST. Personalise heavily , reference their practice area, recent client industry (from LinkedIn/website).",
                   col4: "#1 , High priority",
                 },
                 {
                   col1: "Events & conferences",
                   col2: "Yes",
-                  col3: "FICCI/CII/DIFC events. Host breakfast roundtables: 'confidentiality in a SaaS world'.",
-                  col4: "#2 , Month 2 onward",
+                  col3: "India: FICCI events, CII conferences, Big4 alumni roundtables, Bar Council events for legal firms. GCC: DIFC events, LEAP (Riyadh), Arabian Business Summit (Dubai). Recommended: Host a breakfast roundtable , 'Protecting client confidentiality in a SaaS world' , 20 invitees, a thought leadership talk, then PTM demo. Strong conversion environment.",
+                  col4: "#2 , Start Month 2",
+                },
+                {
+                  col1: "SEO & content marketing",
+                  col2: "Yes",
+                  col3: "Top 3 search topics: 'client data security project management', 'DIFC compliance software', 'data localisation consulting firms India'. Long-form content: 'How consulting firms are violating client confidentiality without knowing it' (pillar article). Case study format works best for this TG , they trust evidence.",
+                  col4: "#3 , Medium-term",
+                },
+                {
+                  col1: "Referral & word of mouth",
+                  col2: "Yes",
+                  col3: "This TG's referral network is tight , a Managing Partner's recommendation to a peer carries 10x the weight of any ad. Engineer it: at Month 2, ask your first consulting client to make 2 warm introductions over coffee. Offer a joint webinar co-branded with them.",
+                  col4: "#2 , Very high value when triggered",
+                },
+                {
+                  col1: "Community & associations",
+                  col2: "Yes",
+                  col3: "India: ICAI (chartered accountants), IBA India (legal), MCA alumni networks, NASSCOM for consulting. GCC: DIFC Authority events, UAE Chartered Accountants group, ACCA Middle East. WhatsApp groups: boutique consulting firm founder networks in Mumbai/Delhi.",
+                  col4: "#3 , Medium-term",
                 },
               ],
             },
             {
               title: "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 2: Professional Services",
-              columns: ["Phase", "Goals & Actions", "Milestone / Risk"],
+              columns: ["Element", "Description", "Owner", "Output"],
               rows: [
-                {
-                  col1: "Days 1–30 Foundation",
-                  col2: "Map 50 target firms. Request warm intros from Lockated network. Draft PS-specific sovereignty PDF.",
-                  col3: "Milestone: 3 qualified meetings. Risk: warm intros lag (need cold parallel).",
-                },
-                {
-                  col1: "Days 31–60 Traction",
-                  col2: "Run 3+ demos. Set up pilot on LIVE client project. Send DIFC-specific compliance brief.",
-                  col3: "Milestone: 2 paid pilots. Risk: low activation (must bind to specific MoM).",
-                },
-                {
-                  col1: "Days 61–90 Conversion",
-                  col2: "Present pilot data (time saved). Show ROI on billing rate vs cost. Request case study.",
-                  col3: "Milestone: 2 signed contracts. Risk: partnership approval cycle.",
-                },
+                { col1: "PHASE 1", col2: "DAYS 1-30: FOUNDATION", bgColor: "#e8eaf6" },
+                { col1: "Goal", col2: "Get 3 qualified conversations with Managing Partners through warm introductions." },
+                { col1: "Action 1", col2: "Map 50 consulting/legal/audit firms in Mumbai, Delhi, Dubai; identify decision makers.", col3: "Founder", col4: "Prioritised hit list of 50 firms." },
+                { col1: "Action 2", col2: "Request warm introductions from existing network (investors, advisors).", col3: "Founder", col4: "5 warm intros from existing network." },
+                { col1: "Action 3", col2: "Draft sovereign data one-pager for professional services.", col3: "Founder + Marketing", col4: "1-page PDF for champion to forward." },
+                { col1: "Milestone", col2: "3 qualified meetings booked", bgColor: "#e3f2fd" },
+                { col1: "Biggest Risk", col2: "Warm intros slow. Pre-empt: run cold outreach in parallel.", bgColor: "#fff3e0" },
+                { col1: "PHASE 2", col2: "DAYS 31-60: TRACTION", bgColor: "#e8eaf6" },
+                { col1: "Goal", col2: "Run 3+ demos. Convert minimum 2 to paid pilots." },
+                { col1: "Action 1", col2: "In-person demo: MoM-to-task flow + document creation.", col3: "Founder", col4: "70% demo-to-pilot conversion target." },
+                { col1: "Action 2", col2: "Set up pilot for 1 practice team on a live client project.", col3: "Founder + Product", col4: "Active team usage on real client work." },
+                { col1: "Action 3", col2: "Send DIFC/SEBI compliance brief to GCC prospects.", col3: "Founder", col4: "Legal/compliance objection pre-removed." },
+                { col1: "Milestone", col2: "2 paid pilots underway", bgColor: "#e3f2fd" },
+                { col1: "Biggest Risk", col2: "Pilots run but no usage. Pre-empt: bind pilot to specific MoM.", bgColor: "#fff3e0" },
+                { col1: "PHASE 3", col2: "DAYS 61-90: CONVERSION", bgColor: "#e8eaf6" },
+                { col1: "Goal", col2: "Sign 2 paying accounts. Get permission for 1 anonymised case study." },
+                { col1: "Action 1", col2: "Pilot review call: present usage data + efficiency gains.", col3: "Founder + CS", col4: "Commercial proposal for full contract." },
+                { col1: "Action 2", col2: "ROI presentation: time saved on MoM + document creation.", col3: "Founder", col4: "Quantified savings summary." },
+                { col1: "Action 3", col2: "Request case study permission + 1 warm intro to peer firm.", col3: "Founder", col4: "1 case study + 1 referral." },
+                { col1: "Milestone", col2: "2 signed contracts. 1 case study published.", bgColor: "#e3f2fd" },
+                { col1: "Biggest Risk", col2: "Procurement delay. Pre-empt: 'start now, invoice later'.", bgColor: "#fff3e0" },
               ],
             },
             {
@@ -2478,549 +2570,312 @@ const productData = {
               columns: ["Partnership element", "Details"],
               rows: [
                 {
-                  label: "GCC Partners",
-                  detail: "GCC RegTech vendors (co-marketing). Relationship based.",
+                  label: "Timing for partnerships",
+                  detail: "Yes , after 5 direct customers. Professional services referral networks are high-trust; a premature partnership can damage brand credibility.",
                 },
                 {
-                  label: "Boutique consultants",
-                  detail: "Ex-Big4 boutique consultants (referral). High trust networks.",
+                  label: "Partner type 1: Big4 and mid-tier consulting alumni networks",
+                  detail: "Who: Former Big4 (Deloitte, EY, KPMG, PwC) partners who have set up boutique practices. Why they have access: direct relationships with Managing Partners at peer firms. What we offer: 20% referral fee on Year 1 ARR.",
+                },
+                {
+                  label: "Partner type 2: Legal tech / RegTech vendors (GCC)",
+                  detail: "Who: Vendors selling DIFC/PDPL compliance tools. What we offer: Co-marketing content on data sovereignty + referral agreement.",
+                },
+                {
+                  label: "Year 1 structure",
+                  detail: "Referral-only. 20% of Year 1 ARR paid within 30 days of client payment. No reseller complexity in Year 1.",
+                },
+              ],
+            },
+            {
+              title: "TG 2 ONE-PAGE SUMMARY , Professional Services (20–200 professionals, India metros + GCC)",
+              columns: ["Element", "Answer", "Element ", "Answer "],
+              rows: [
+                {
+                  col1: "Best sales motion",
+                  col2: "Founder-led field sales + warm introductions (relationship-first)",
+                  col3: "Single most important Week 1 action",
+                  col4: "Map 50 target firms + request warm intros from Lockated's existing network",
+                },
+                {
+                  col1: "Top 2 marketing channels",
+                  col2: "LinkedIn organic (compliance + data security content) + hosted roundtables",
+                  col3: "Biggest risk to watch",
+                  col4: "Pilots run but no one uses them , bind pilot to a specific upcoming MoM",
+                },
+                {
+                  col1: "90-day goal",
+                  col2: "3 warm meetings → 2 paid pilots → 2 signed contracts + 1 case study",
+                  col3: "What closes this TG",
+                  col4: "MoM-to-task demo + DIFC/SEBI compliance brief + coffee with Managing Partner",
+                },
+                {
+                  col1: "Key partner type",
+                  col2: "Ex-Big4 boutique consultants (referral) + GCC RegTech vendors (co-marketing)",
+                  col3: "Primary buyer",
+                  col4: "Managing Partner (small firms) | COO / Practice Head (large firms)",
                 },
               ],
             },
           ],
           summaryBox:
-            "Founder-led field sales + warm introductions. LinkedIn organic (compliance + data security content) + hosted roundtables. 3 warm meetings → 2 paid pilots → 2 signed contracts + 1 case study. Ex-Big4 boutique consultants. Managing Partner (small firms) | COO / Practice Head (large firms).",
+            "Founder-led field sales + warm introductions (relationship-first). LinkedIn organic (compliance + data security content) + hosted roundtables. 3 warm meetings → 2 paid pilots → 2 signed contracts + 1 case study. Ex-Big4 boutique consultants (referral) + GCC RegTech vendors (co-marketing). Managing Partner (small firms) | COO / Practice Head (large firms).",
+        },
+        {
+          id: "TG3",
+          name: "TG 3: Lockated Existing Clients , Cross-sell (FM Matrix + Loyalty base, all industries)",
+          sections: [
+            {
+              title: "PROFILE | TG 3: Lockated Existing Clients , Cross-sell (FM Matrix + Loyalty base, all industries)",
+              columns: ["Attribute", "Value"],
+              rows: [
+                { label: "Company size", detail: "50–5,000 employees" },
+                { label: "Industry", detail: "Real Estate, Facility Management, Hospitality, Corporate" },
+                { label: "Geography", detail: "All geographies where Lockated operates" },
+                { label: "Buyer", detail: "Existing contract signatory (COO / CTO / Head of Ops)" },
+                { label: "Budget", detail: "Incremental ₹3–12L/year added to existing contract" },
+              ],
+            },
+            {
+              title: "COMPONENT 1 , SALES MOTION | TG 3: Lockated Existing Clients , Cross-sell",
+              columns: ["Sales element", "Details"],
+              rows: [
+                {
+                  label: "Primary sales motion",
+                  detail: "Account management / cross-sell led. Relationship already established. Existing account managers drive this; no SDR needed.",
+                },
+                {
+                  label: "Avg. sales cycle",
+                  detail: "2–4 weeks (Fastest). Trust pre-established; data sovereignty story pre-validated. No new vendor approval needed.",
+                },
+                {
+                  label: "Economic buyer (signs)",
+                  detail: "Same as existing Lockated contract (COO/CTO/HOO). Bundling into existing billing makes it easy.",
+                },
+                {
+                  label: "Champion (internal advocate)",
+                  detail: "Internal FM or product team already using Lockated. They understand the infrastructure and trust the brand.",
+                },
+                {
+                  label: "Blocker to anticipate",
+                  detail: "Budget objection: 'We're already paying for Lockated , why more?' Pre-empt with module positioning + bundled discount.",
+                  textColor: "#C62828",
+                  bgColor: "#FFEBEE",
+                },
+                {
+                  label: "What closes this TG",
+                  detail: "30-min 'here's what PTM adds' talk + 30-day free trial. Trial converts due to low-friction adoption.",
+                  textColor: "#2E7D32",
+                  bgColor: "#E8F5E9",
+                },
+              ],
+            },
+            {
+              title: "COMPONENT 2 , MARKETING CHANNELS | TG 3: Lockated Existing Clients , Cross-sell",
+              columns: ["Channel", "Relevant?", "Execution approach", "Priority rank"],
+              rows: [
+                {
+                  col1: "LinkedIn (organic + paid)",
+                  col2: "No",
+                  col3: "Not primary channel for cross-sell. Internal account touchpoints are more effective. LinkedIn supports brand awareness indirectly.",
+                  col4: "Not primary",
+                },
+                {
+                  col1: "Cold outreach (email + LinkedIn DM)",
+                  col2: "Yes",
+                  col3: "Warm account-based outreach from the existing relationship. Email sequence sent by account manager: 'We built something that solves the task tracking problem...'",
+                  col4: "#1 , Immediate",
+                },
+                {
+                  col1: "Quarterly Business Reviews (QBRs)",
+                  col2: "Yes",
+                  col3: "Every existing Lockated client QBR should include a 10-minute PTM introduction. Highest-conversion touchpoint available.",
+                  col4: "#1 , Immediate",
+                },
+                {
+                  col1: "Referral & word of mouth",
+                  col2: "Yes",
+                  col3: "Existing clients who adopt PTM and see value are the warmest referral source. Incentive: 1 month free PTM for every referral.",
+                  col4: "#2 , Month 2",
+                },
+                {
+                  col1: "Community & associations",
+                  col2: "No",
+                  col3: "Not relevant as a cross-sell channel. Existing client community is the appropriate forum.",
+                  col4: "Not applicable",
+                },
+              ],
+            },
+            {
+              title: "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 3: Lockated Existing Clients , Cross-sell",
+              columns: ["Element", "Description", "Owner", "Output"],
+              rows: [
+                { col1: "PHASE 1", col2: "DAYS 1-30: FOUNDATION", bgColor: "#e8eaf6" },
+                { col1: "Goal", col2: "Identify 20 highest-potential PTM cross-sell targets within existing Lockated base." },
+                { col1: "Action 1", col2: "Map all existing Lockated clients (50+ employees) and score by team size/contract/NPS.", col3: "Account Manager + Founder", col4: "Ranked list of top 20 targets." },
+                { col1: "Action 2", col2: "Send personalised email from account manager.", col3: "Account Manager", col4: "10 personalised emails sent (Target 50% open rate)." },
+                { col1: "Action 3", col2: "Prepare industry-specific PTM demo decks (Real Estate, FM, Hospitality).", col3: "Founder + Product", col4: "3 demo decks ready." },
+                { col1: "Milestone", col2: "10 cross-sell conversations initiated. 5 demos scheduled.", bgColor: "#e3f2fd" },
+                { col1: "Biggest Risk", col2: "Existing clients feel upsold without value. Pre-empt: lead with problem statement.", bgColor: "#fff3e0" },
+                { col1: "PHASE 2", col2: "DAYS 31-60: TRACTION", bgColor: "#e8eaf6" },
+                { col1: "Goal", col2: "Convert 5+ conversations to 30-day free trials." },
+                { col1: "Action 1", col2: "Run 'Lockated + PTM' onboarding session (30 mins).", col3: "Account Manager + CS", col4: "Activation: team sets up 1 real project in PTM." },
+                { col1: "Action 2", col2: "Include PTM in next QBR for any client in active trial.", col3: "Account Manager", col4: "QBR agenda: 'Here is what your team has done in PTM'." },
+                { col1: "Action 3", col2: "Offer bundled pricing proposal (10-15% discount).", col3: "Account Manager + Founder", col4: "Written proposal sent to economic buyer." },
+                { col1: "Milestone", col2: "5 active trials. 2 bundled proposals submitted.", bgColor: "#e3f2fd" },
+                { col1: "Biggest Risk", col2: "Trial accounts revert to old tools. Pre-empt: assign a 'PTM champion'.", bgColor: "#fff3e0" },
+                { col1: "PHASE 3", col2: "DAYS 61-90: CONVERSION", bgColor: "#e8eaf6" },
+                { col1: "Goal", col2: "Convert 3-5 clients to paying accounts. Target: ₹15-30L ARR." },
+                { col1: "Action 1", col2: "Trial review call: present usage data + quantify value.", col3: "Account Manager", col4: "Commercial proposal for full contract." },
+                { col1: "Action 2", col2: "Escalate to Founder for deals above ₹5L.", col3: "Founder", col4: "Executive-to-executive close." },
+                { col1: "Action 3", col2: "Request referral from every converted account.", col3: "Account Manager", col4: "1-2 warm referrals per converted account." },
+                { col1: "Milestone", col2: "3 signed contracts. ₹15-25L ARR. 2 referrals generated.", bgColor: "#e3f2fd" },
+                { col1: "Biggest Risk", col2: "Procurement delays new PO. Pre-empt: add to existing annual renewal.", bgColor: "#fff3e0" },
+              ],
+            },
+            {
+              title: "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 3: Lockated Existing Clients , Cross-sell",
+              columns: ["Partnership element", "Details"],
+              rows: [
+                {
+                  label: "Timing for partnerships",
+                  detail: "Not applicable for this TG. This is a direct cross-sell motion through existing account relationships.",
+                },
+                {
+                  label: "Internal 'partner': Lockated account managers",
+                  detail: "The account management team is the effective 'channel partner' for this TG. Train every AM with a 10-minute PTM pitch.",
+                },
+                {
+                  label: "Cross-sell incentive for account managers",
+                  detail: "Commission structure: Account managers earn a cross-sell bonus (1–2% of PTM ARR generated from their accounts).",
+                },
+                {
+                  label: "Partnership red flag to avoid",
+                  detail: "Do not involve external partners in cross-sell conversations with existing Lockated clients. Risks confusing a client.",
+                },
+              ],
+            },
+            {
+              title: "TG 3 ONE-PAGE SUMMARY , Lockated Existing Clients , Cross-sell (FM Matrix + Loyalty base, all industries)",
+              columns: ["Element", "Answer", "Element ", "Answer "],
+              rows: [
+                {
+                  col1: "Best sales motion",
+                  col2: "Account management-led cross-sell (no outbound needed , warm relationships)",
+                  col3: "Single most important Week 1 action",
+                  col4: "Map and score top 20 cross-sell targets from existing client list",
+                },
+                {
+                  col1: "Top 2 marketing channels",
+                  col2: "Personalised account email + QBR integration (10-min PTM slot in every QBR)",
+                  col3: "Biggest risk to watch",
+                  col4: "Clients feel upsold without added value , lead with their problem, not the product",
+                },
+                {
+                  col1: "90-day goal",
+                  col2: "20 targeted → 10 conversations → 5 trials → 3 signed contracts → ₹15–25L ARR",
+                  col3: "What closes this TG",
+                  col4: "30-day free trial + QBR usage data review + bundled pricing on renewal",
+                },
+                {
+                  col1: "Key partner type",
+                  col2: "Internal: Lockated account managers (cross-sell champions, bonus-incentivised)",
+                  col3: "Primary buyer",
+                  col4: "Same contact as existing Lockated contract (COO / CTO / Head of Ops)",
+                },
+              ],
+            },
+          ],
+          summaryBox:
+            "Account management-led cross-sell (no outbound needed , warm relationships). Personalised account email + QBR integration (10-min PTM slot in every QBR). 20 targeted → 10 conversations → 5 trials → 3 signed contracts → ₹15–25L ARR. Internal: Lockated account managers (cross-sell champions). Same contact as existing Lockated contract (COO / CTO / Head of Ops).",
         },
       ],
       sheet: {
         title: "Project & Task Manager , Go-To-Market Strategy",
         targetGroups: [
           {
-            title:
-              "TARGET GROUP 1 , Tech / SaaS Companies (50–300 employees, India metros)",
+            title: "TARGET GROUP 1 , Tech / SaaS Companies (50–300 employees, India metros)",
             sections: [
               {
-                title:
-                  "Profile: Company size: 50–300 employees · Industry: Technology, SaaS, Product companies · Geography: Bengaluru, Pune, Hyderabad, Mumbai (India primary); Dubai, Abu Dhabi (GCC secondary) · Buyer: CTO / VP Engineering / COO · Budget: ₹6–18L/year · Current stack: Jira + Slack + Confluence + Google Workspace",
+                title: "Profile: 50–300 employees · Technology/SaaS · India primary; GCC secondary · Buyer: CTO/VP Eng · Budget: ₹6–18L/year",
                 columns: [],
                 rows: [],
               },
               {
-                title:
-                  "COMPONENT 1 , SALES MOTION | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
+                title: "COMPONENT 1 , SALES MOTION | TG 1: Tech / SaaS Companies",
                 columns: ["Sales element", "Details"],
                 rows: [
-                  [
-                    "Primary sales motion",
-                    "Founder-led direct outbound for first 20 accounts. Transition to SDR + AE model at Month 4. Deal size (₹6–15L/year) justifies high-touch sales; product complexity (sovereignty story) requires a human in the room for the first call.",
-                  ],
-                  [
-                    "Avg. sales cycle",
-                    "4–8 weeks for SMB tech companies (50–150 employees). 8–14 weeks for mid-market (150–500 employees). Flag: this is longer than typical for a tool-level SaaS purchase , driven by IT approval for data migration and procurement sign-off. Pre-empt by engaging IT Head in Week 1, not Week 6.",
-                  ],
-                  [
-                    "Economic buyer (signs)",
-                    "CTO or VP Engineering for companies under 200 employees. COO or CFO for companies over 200 employees where the purchase spans multiple departments.",
-                  ],
-                  [
-                    "Champion (internal advocate)",
-                    "VP Engineering or Head of Product , they feel the Jira + Slack + Confluence fragmentation pain daily. Engineering managers who have been complaining about data security are natural champions.",
-                  ],
-                  [
-                    "Blocker to anticipate",
-                    "IT/Security Head who will demand a security audit and data flow documentation before approving any new platform. Pre-empt with a one-pager on PTM's data architecture and sovereignty compliance before the IT conversation begins.",
-                  ],
-                  [
-                    "What closes this TG",
-                    "A live demo showing the full project → sprint → MoM → task → documents → issues flow, followed by a 14-day sandbox trial where their actual team sets up one real project. Reference customer in a similar-stage tech company seals it. Sovereignty architecture documentation closes the IT objection.",
-                  ],
+                  ["Primary sales motion", "Founder-led outbound → SDR+AE at Month 4"],
+                  ["Avg. sales cycle", "4–8 weeks (SMB); 8–14 weeks (Mid-market)"],
+                  ["Economic buyer", "CTO / VP Eng (<200) | COO / CFO (>200)"],
                 ],
               },
               {
-                title:
-                  "COMPONENT 2 , MARKETING CHANNELS | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
-                columns: [
-                  "Channel",
-                  "Relevant?",
-                  "Execution approach",
-                  "Priority rank",
-                ],
+                title: "COMPONENT 2 , MARKETING CHANNELS | TG 1: Tech / SaaS Companies",
+                columns: ["Channel", "Relevant?", "Execution", "Rank"],
                 rows: [
-                  [
-                    "LinkedIn (organic + paid)",
-                    "Yes",
-                    "Organic: 2 posts/week from Founder account , topics: data sovereignty in SaaS, Jira alternatives, sprint productivity. Target personas: CTOs, VPs Engineering, Product Managers. Paid: LinkedIn Sponsored Content targeting 'Software Engineering' + 'Product Management' job titles at companies 50–500 employees in Bengaluru, Pune, Hyderabad. Budget: ₹50–80k/month. Start organic for 60 days, layer paid after first 3 case studies.",
-                    "#1 , Start immediately",
-                  ],
-                  [
-                    "Cold outreach (email + LinkedIn DM)",
-                    "Yes",
-                    "Sequence: Day 1 , LinkedIn connection request with note referencing a specific pain ('noticed your team uses Jira + Confluence , have 10 min to show you something interesting?'). Day 4 , email with 1-line data sovereignty hook + 30-second Loom video of PTM sprint view. Day 8 , follow-up with a relevant case study or stat. Day 14 , final breakup email. Best day/time: Tuesday–Thursday, 9–11am IST. List size target: 50 personalised outreaches per week.",
-                    "#1 , Start immediately",
-                  ],
-                  [
-                    "Events & conferences",
-                    "Yes",
-                    "India: NASSCOM Product Conclave (Bengaluru, annual), TechSparks by YourStory (Bengaluru), SaaS Insider events. Host a 40-person invite-only roundtable: 'Data sovereignty in the SaaS stack , what engineering leaders need to know.' GCC: GITEX Technology Week (Dubai, October) for enterprise tech audience.",
-                    "#2 , Month 2 onward",
-                  ],
-                  [
-                    "SEO & content marketing",
-                    "Yes",
-                    "Top 3 search topics this TG looks for: 'Jira alternatives India', 'best project management software for startups', 'data localisation SaaS India'. Content format: long-form blog posts (2,000+ words) targeting comparison keywords. Timeline: 90+ days to see SEO results , start now but don't count on it for Month 1.",
-                    "#3 , Medium-term",
-                  ],
-                  [
-                    "Referral & word of mouth",
-                    "Yes",
-                    "Trigger: when a team completes their first sprint fully in PTM and reports velocity improvement. Engineer the referral: at Day 30 check-in, ask satisfied users to intro PTM to 1 peer at another company. Offer: free 30-day seat extension for each successful referral that converts to a trial.",
-                    "#2 , Month 2",
-                  ],
-                  [
-                    "Community & associations",
-                    "Yes",
-                    "LinkedIn groups: SaaS India, Product Management India. Slack communities: SaaSBoomi, The Hustle (India SaaS community), Product Folks, YourStory and Inc42 founder communities. Engage authentically , answer questions about PM tools, sovereignty, sprint management , don't pitch directly.",
-                    "#3 , Medium-term",
-                  ],
-                ],
-              },
-              {
-                title:
-                  "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
-                columns: [],
-                rows: [],
-              },
-              {
-                title:
-                  "DAYS 1–30 , FOUNDATION: Get first 5 qualified conversations with CTOs/VPs Engineering",
-                columns: ["", "", ""],
-                rows: [
-                  [
-                    "Goal",
-                    "Get 5 qualified demo calls booked with CTOs or VP Engineering at tech companies with 50–300 employees in Bengaluru/Pune/Hyderabad.",
-                    "",
-                  ],
-                  [
-                    "Action 1: Build a 300-company target list from LinkedIn Sales Navigator",
-                    "Owner: Founder",
-                    "Output: Segmented list: company size 50–300, tech/SaaS industry, Bengaluru/Pune/Hyderabad HQ. 300 names with decision-maker contacts.",
-                  ],
-                  [
-                    "Action 2: Launch 50 personalised outreach sequences per week (LinkedIn + email)",
-                    "Owner: Founder",
-                    "Output: 5% response rate target = 15 replies per week. 3 qualified demo calls from first 300 outreaches.",
-                  ],
-                  [
-                    "Action 3: Create a 5-minute sovereignty demo video + 1-page architecture doc",
-                    "Owner: Founder + Product",
-                    "Output: A self-serve asset that qualifies leads before the live demo , reduces time spent on non-ICP prospects.",
-                  ],
-                  [
-                    "Key milestone",
-                    "5 qualified demo calls booked with ICP tech companies.",
-                    "",
-                  ],
-                  [
-                    "Biggest risk",
-                    "Outreach personalisation falls flat , generic 'we replace Jira' messaging gets ignored. Pre-empt: invest 10 minutes in researching each company before outreach. Reference their actual tech stack, team size, or a recent engineering blog post.",
-                    "",
-                  ],
-                ],
-              },
-              {
-                title:
-                  "DAYS 31–60 , TRACTION: Convert conversations to demos and trials",
-                columns: ["", "", ""],
-                rows: [
-                  [
-                    "Goal",
-                    "Run 5+ live demos, convert minimum 3 to 14-day sandbox trials with their actual team.",
-                    "",
-                  ],
-                  [
-                    "Action 1: Run live demo: project → sprint → MoM → task → documents → issues flow in 30 minutes",
-                    "Owner: Founder",
-                    "Output: Demo-to-trial conversion target: 60%. Each demo ends with a specific next step , not 'let us know', but 'let's set up your trial environment on Thursday'.",
-                  ],
-                  [
-                    "Action 2: Set up personalised trial environments pre-loaded with their team structure",
-                    "Owner: Product",
-                    "Output: Sandbox that mirrors their actual project structure reduces time-to-value from 7 days to 2 days.",
-                  ],
-                  [
-                    "Action 3: Engage IT Head at each trial account with architecture documentation",
-                    "Owner: Founder",
-                    "Output: IT objection handled proactively , sovereignty architecture doc + security Q&A pre-sent. Removes the 6-week IT review delay.",
-                  ],
-                  [
-                    "Key milestone",
-                    "3 active 14-day trials running with real teams at tech companies.",
-                    "",
-                  ],
-                  [
-                    "Biggest risk",
-                    "Trial accounts go quiet after Day 3 because onboarding is self-serve. Pre-empt: assign a dedicated 30-minute onboarding call per account within 48 hours of trial start. Identify 1 champion per account who owns the trial internally.",
-                    "",
-                  ],
-                ],
-              },
-              {
-                title:
-                  "DAYS 61–90 , CONVERSION: Close first paying customer or committed pilot",
-                columns: ["", "", ""],
-                rows: [
-                  [
-                    "Goal",
-                    "Sign first 2–3 paying tech company accounts. Minimum: 1 signed contract + 1 committed pilot with a start date.",
-                    "",
-                  ],
-                  [
-                    "Action 1: Week 9 check-in call: review trial usage data, surface wins and friction points",
-                    "Owner: Founder + CS",
-                    "Output: Data-driven closing conversation , show them their own usage metrics (tasks created, MoMs converted, MoM-to-task conversions and issue closures). Make the ROI tangible.",
-                  ],
-                  [
-                    "Action 2: Present a custom ROI summary: tool consolidation savings + sovereignty compliance value",
-                    "Owner: Founder",
-                    "Output: Quantify: X seats × ₹750/month MS 365 savings + Jira/Confluence licence offset + 0 SaaS data risk = ₹Y saved. Make the number specific to their company.",
-                  ],
-                  [
-                    "Action 3: Request a reference introduction: 'Who else in your network has this problem?'",
-                    "Owner: Founder",
-                    "Output: Every signed account should generate 1–2 warm intros to peer companies. This becomes the referral engine for Month 4+.",
-                  ],
-                  [
-                    "Key milestone",
-                    "2 signed contracts from tech companies. 1 published case study (anonymised or named).",
-                    "",
-                  ],
-                  [
-                    "Biggest risk",
-                    "Procurement delays the signed contract even after verbal commitment. Pre-empt: get a PO number or payment intent confirmed in the closing call. Offer an early payment discount (1 free month on annual) to accelerate the paper process.",
-                    "",
-                  ],
-                ],
-              },
-              {
-                title:
-                  "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
-                columns: ["Partnership element", "Details"],
-                rows: [
-                  [
-                    "Timing for partnerships",
-                    "Yes , but only after first 10 direct customers. Build direct sales motion first to understand the buyer deeply before training partners to sell it.",
-                  ],
-                  [
-                    "Partner type 1: Indian SaaS consultants / implementation partners",
-                    "Who: boutique IT consulting firms that help tech companies set up their SaaS stack (Notion consultants, Atlassian partners, productivity consultants). Why they have access: they are already in procurement conversations about PM tools. What we offer: 20% referral commission on Year 1 ARR + co-marketing. India profile: SaaS implementation firms in Bengaluru (example: productivity-focused boutiques in Koramangala). Red flag to avoid: large SIs who will over-promise and under-deliver for a ₹8L deal.",
-                  ],
-                  [
-                    "Partner type 2: Talent platforms & HRMS vendors (cross-sell)",
-                    "Who: Darwinbox, Keka, or GreytHR , once PTM has HRMS integration built (Month 6+), these platforms have direct access to the same HR and IT heads we target. What we offer: joint webinars, co-marketing content, integration badge on their marketplace. What they offer: reach into their client base without a cold outreach. Red flag: do not position PTM as an HRMS replacement , we complement them.",
-                  ],
-                  [
-                    "Year 1 partnership structure",
-                    "Referral-only for Year 1. No reseller margin, no white-label. A referred deal that closes earns the partner 20% of Year 1 ARR, paid 30 days after client payment clears. Reason: at our current stage, reseller complexity (training, support, margin management) will slow us down more than the incremental deals are worth. Direct sales builds the muscle first.",
-                  ],
-                ],
-              },
-              {
-                title:
-                  "◆ TG 1 ONE-PAGE SUMMARY , Tech / SaaS Companies (50–300 employees, India metros)",
-                columns: ["Element", "Answer", "Element", "Answer"],
-                rows: [
-                  [
-                    "Best sales motion",
-                    "Founder-led direct outbound (Month 1–4) → SDR + AE by Month 4",
-                    "Single most important Week 1 action",
-                    "Build 300-company target list + send first 50 personalised outreach sequences",
-                  ],
-                  [
-                    "Top 2 marketing channels",
-                    "LinkedIn organic (founder content) + personalised cold outreach",
-                    "Biggest risk to watch",
-                    "IT security review delays , engage IT Head in Week 1, not Week 6",
-                  ],
-                  [
-                    "90-day goal",
-                    "5 demo calls → 3 trials → 2 signed contracts + 1 case study",
-                    "What closes this TG",
-                    "14-day sandbox trial + sovereignty architecture doc + peer reference customer",
-                  ],
-                  [
-                    "Key partner type",
-                    "Indian SaaS consultants (referral-only, post 10 direct customers)",
-                    "Primary buyer",
-                    "CTO / VP Engineering (50–200 employees) | COO / CFO (200+ employees)",
-                  ],
+                  ["LinkedIn", "Yes", "Founder organic + Sponsored Content", "#1"],
+                  ["Cold outreach", "Yes", "LinkedIn DM + Email sequence + Loom", "#1"],
                 ],
               },
             ],
-            summary:
-              "Founder-led direct outbound → SDR + AE by Month 4. LinkedIn organic + personalised cold outreach. 5 demo calls → 3 trials → 2 signed contracts + 1 case study. Indian SaaS consultants (referral-only). CTO / VP Engineering (50–200) | COO / CFO (200+).",
+            summary: "Direct outbound to tech engineering leaders. Lead with data sovereignty and Jira consolidation.",
           },
           {
-            title:
-              "TARGET GROUP 2 , Professional Services , Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+            title: "TARGET GROUP 2 , Professional Services , Consulting, Legal, Audit (20–150 professionals, India metros + GCC)",
             sections: [
               {
-                title:
-                  "Profile: Company size: 20–200 professionals · Industry: Management consulting, legal, audit · Geography: Mumbai, Delhi, Bengaluru (India); Dubai (GCC), Abu Dhabi (GCC) · Buyer: Managing Partner / COO / Practice Head · Budget: ₹4–12L/year",
+                title: "Profile: 20–150 professionals · Management consulting, legal, audit · India primary; GCC secondary · Buyer: Managing Partner / Practice Head · Budget: ₹10–20L/year",
                 columns: [],
                 rows: [],
               },
               {
-                title:
-                  "COMPONENT 1 , SALES MOTION | TG 2: Professional Services , Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+                title: "COMPONENT 1 , SALES MOTION | TG 2: Professional Services",
                 columns: ["Sales element", "Details"],
                 rows: [
-                  [
-                    "Primary sales motion",
-                    "Founder-led direct + field sales (in-person meetings). This TG buys on relationships and trust , not self-serve trials. A lunch meeting with a Managing Partner is worth more than 20 cold emails. Average deal size (₹10–20L) justifies in-person investment.",
-                  ],
-                  [
-                    "Avg. sales cycle",
-                    "6–10 weeks. Slower than tech , requires partner approval and often a legal/compliance review of the data architecture. Flag: in DIFC-regulated Dubai entities, legal team review can add 3–4 weeks. Engage the compliance team in Week 2.",
-                  ],
-                  [
-                    "Economic buyer (signs)",
-                    "Managing Partner (small firms) or COO / Practice Head (larger firms). In GCC: General Manager or Regional Director with P&L authority.",
-                  ],
-                  [
-                    "Champion (internal advocate)",
-                    "Senior Manager or Associate Director who manages client project delivery , they feel the MoM + task tracking pain daily. Engineering managers who have been complaining about data security are natural champions. They will champion PTM internally once they see the MoM-to-task demo.",
-                  ],
-                  [
-                    "Blocker to anticipate",
-                    "Legal/compliance partner who will ask: 'Where does our client data go?' This is our strongest moment , the answer ('your servers, not ours') closes the objection immediately. Pre-arm the champion with a one-pager on data sovereignty before the compliance conversation.",
-                  ],
-                  [
-                    "What closes this TG",
-                    "A single compelling demo of MoM-to-task auto-conversion + document creation with data sovereignty explanation. Followed by a reference from a similarly regulated firm (or a DIFC/SEBI compliance note). This TG buys on 'I trust this is safe and it solves my meeting-to-action problem.'",
-                  ],
+                  ["Primary sales motion", "Founder-led direct + field sales (In-person)"],
+                  ["Avg. sales cycle", "6–10 weeks (Requires compliance review)"],
+                  ["Economic buyer", "Managing Partner or Practice Head / COO"],
                 ],
               },
               {
-                title:
-                  "COMPONENT 2 , MARKETING CHANNELS | TG 2: Professional Services , Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
-                columns: [
-                  "Channel",
-                  "Relevant?",
-                  "Execution approach",
-                  "Priority rank",
-                ],
+                title: "COMPONENT 2 , MARKETING CHANNELS | TG 2: Professional Services",
+                columns: ["Channel", "Relevant?", "Execution", "Rank"],
                 rows: [
-                  [
-                    "LinkedIn (organic + paid)",
-                    "Yes",
-                    "Organic: content targeting Practice Heads and Managing Partners , topics: client data security, meeting productivity, billable hour optimisation, DIFC/SEBI compliance for SaaS. Paid: LinkedIn targeting 'Management Consulting', 'Legal Services', 'Audit' industries + 'Managing Partner', 'Practice Head' titles. Mumbai, Delhi, Dubai, Abu Dhabi. Budget: ₹40–60k/month.",
-                    "#1 , High priority",
-                  ],
-                  [
-                    "Cold outreach (email + LinkedIn DM)",
-                    "Yes",
-                    "Hook: 'Your client contracts and project plans live on Google's servers in Singapore. Here's an alternative.' 5-touch sequence over 21 days. Best timing: Monday–Wednesday, 8–10am IST / GST. Personalise heavily , reference their practice area, recent client industry (from LinkedIn/website).",
-                    "#1 , High priority",
-                  ],
-                  [
-                    "Events & conferences",
-                    "Yes",
-                    "India: FICCI conferences, CII conferences, Big4 alumni roundtables, Bar Council events for legal firms. GCC: DIFC events, LEAP (Riyadh), Arabian Business Summit (Dubai). Recommended: Host a breakfast roundtable , 'Protecting client confidentiality in a SaaS world' , 20 invitees, a thought leadership talk, and then PTM demo. Strong conversion environment.",
-                    "#2 , Start Month 2",
-                  ],
-                  [
-                    "SEO & content marketing",
-                    "Yes",
-                    "Top 3 search topics this TG looks for: 'client data security project management', 'DIFC compliance software', 'data localisation consulting firms India'. Long-form content: 'How consulting firms are violating client confidentiality without knowing it' (pillar article). Case study format works best for this TG , they trust peers.",
-                    "#3 , Medium-term",
-                  ],
-                  [
-                    "Referral & word of mouth",
-                    "Yes",
-                    "This TG's referral network is tight , a Managing Partner's recommendation to a peer carries 10x the weight of any ad. Engineer it: at Month 2, ask your first consulting client to make 2 warm introductions over coffee. Offer a joint webinar co-branded with them.",
-                    "#2 , Very high value when triggered",
-                  ],
-                  [
-                    "Community & associations",
-                    "Yes",
-                    "India: ICAI (chartered accountants), IBA India (legal), MCA alumni networks, NASSCOM for consulting. GCC: DIFC Authority events, UAE Chartered Accountants group, ACCA Middle East. WhatsApp groups: boutique consulting firm founder networks in Mumbai/Delhi.",
-                    "#3 , Medium-term",
-                  ],
-                ],
-              },
-              {
-                title:
-                  "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 2: Professional Services , Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
-                columns: [],
-                rows: [],
-              },
-              {
-                title:
-                  "DAYS 1–30 , FOUNDATION: Map the segment and get first 3 warm conversations",
-                columns: ["", "", ""],
-                rows: [
-                  [
-                    "Goal",
-                    "Get 3 qualified conversations with Managing Partners or Practice Heads at professional services firms through warm introductions.",
-                    "",
-                  ],
-                  [
-                    "Action 1: Map target firms: 50 consulting/legal/audit firms in Mumbai, Delhi, Dubai , identify 1 contact per firm",
-                    "Owner: Founder",
-                    "Output: Prioritised hit list of 50 firms with decision-maker LinkedIn profiles and email addresses.",
-                  ],
-                  [
-                    "Action 2: Request warm introductions from Lockated's existing network (investors, advisors, existing clients)",
-                    "Owner: Founder",
-                    "Output: 5 warm intros from existing network. Warm intro → meeting conversion rate is 40–60% vs 3–5% for cold.",
-                  ],
-                  [
-                    "Action 3: Draft a sovereign data one-pager specifically for professional services: 'Where does your client data live?'",
-                    "Owner: Founder + Marketing",
-                    "Output: A 1-page PDF that the champion can forward to their compliance partner before the meeting.",
-                  ],
-                  [
-                    "Key milestone",
-                    "3 qualified meetings booked with Managing Partners or Practice Heads.",
-                    "",
-                  ],
-                  [
-                    "Biggest risk",
-                    "Warm intros don't materialise quickly enough. Pre-empt: run cold outreach in parallel , 30 personalised emails per week with the hook 'your client data is on Google's servers.'",
-                    "",
-                  ],
-                ],
-              },
-              {
-                title: "DAYS 31–60 , TRACTION: Demo and build trust",
-                columns: ["", "", ""],
-                rows: [
-                  [
-                    "Goal",
-                    "Run 3+ demos. Convert minimum 2 to paid pilots or extended trials. At least 1 GCC (Dubai/Abu Dhabi) account in conversation.",
-                    "",
-                  ],
-                  [
-                    "Action 1: In-person demo: MoM-to-task flow + document creation + sovereignty walkthrough , 45 minutes max",
-                    "Owner: Founder",
-                    "Output: Demo conversion target: 70%. End with: 'Which upcoming client project can we set up in PTM this week?'",
-                  ],
-                  [
-                    "Action 2: Set up a pilot for 1 practice team on a live client project (not internal admin , real work)",
-                    "Owner: Founder + Product",
-                    "Output: Real-work pilot creates stickiness that an internal demo never achieves. The team using it for a live project won't want to switch back.",
-                  ],
-                  [
-                    "Action 3: Send a DIFC/SEBI compliance brief to all GCC prospects covering PTM's data architecture",
-                    "Owner: Founder",
-                    "Output: Pre-removes the legal/compliance objection in GCC accounts , saves 3 weeks of review time.",
-                  ],
-                  [
-                    "Key milestone",
-                    "2 paid pilots underway. At least 1 demo with a GCC-based professional services firm.",
-                    "",
-                  ],
-                  [
-                    "Biggest risk",
-                    "Pilots run but no one uses them because 'we're busy with client work.' Pre-empt: set up the pilot around one specific MoM they have scheduled. Low activation = low conversion.",
-                    "",
-                  ],
-                ],
-              },
-              {
-                title:
-                  "DAYS 61–90 , CONVERSION: First signed contracts and case study",
-                columns: ["", "", ""],
-                rows: [
-                  [
-                    "Goal",
-                    "Sign 2 paying accounts. Get permission to write 1 anonymised case study on efficiency gains from MoM-to-task.",
-                    "",
-                  ],
-                  [
-                    "Action 1: Pilot review: show them their own data , MoMs created, tasks auto-converted, docs created",
-                    "Owner: Founder + CS",
-                    "Output: Present: 'In 30 days, your team auto-converted X meeting action points into tasks. Here's how many were completed on time vs your old process.'",
-                  ],
-                  [
-                    "Action 2: ROI presentation: time saved on MoM creation + document creation cost offset vs Google Workspace",
-                    "Owner: Founder",
-                    "Output: Quantified: X hours/week saved on MoM × ₹Y hourly billing rate = ₹Z/month saved. Plus ₹750/user MS 365 offset. Make the ROI tangible.",
-                  ],
-                  [
-                    "Action 3: Request anonymised case study permission + 1 warm introduction to a peer firm",
-                    "Owner: Founder",
-                    "Output: 1 case study + 1 referral. This is the compound interest of professional services sales.",
-                  ],
-                  [
-                    "Key milestone",
-                    "2 signed contracts. 1 anonymised case study. 1 warm referral to a peer firm.",
-                    "",
-                  ],
-                  [
-                    "Biggest risk",
-                    "Contract negotiation drags on because procurement is slow in professional services. Pre-empt: offer a 'start now, invoice in 30 days' arrangement for first 3 clients to bypass the procurement delay.",
-                    "",
-                  ],
-                ],
-              },
-              {
-                title:
-                  "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 2: Professional Services , Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
-                columns: ["Partnership element", "Details"],
-                rows: [
-                  [
-                    "Timing for partnerships",
-                    "Yes , after 5 direct customers. Professional services referral networks are high-trust; a premature partnership with the wrong firm can damage brand credibility more than no partnership.",
-                  ],
-                  [
-                    "Partner type 1: Big4 and mid-tier consulting alumni networks",
-                    "Who: Former Big4 (Deloitte, EY, KPMG, PwC) partners who have set up boutique consulting or advisory practices. Why they have access: direct relationships with the exact buyers we target (Managing Partners at peer firms). What we offer: 20% referral fee on Year 1 ARR + 'recommended by' co-branding. India profile: boutique strategy consulting firms run by ex-Big4 partners in Mumbai/Delhi. GCC profile: former Big4 Gulf partners who have set up independent advisory practices in DIFC.",
-                  ],
-                  [
-                    "Partner type 2: Legal tech / RegTech vendors (GCC)",
-                    "Who: Vendors selling DIFC/PDPL compliance tools to professional services firms , they are calling the same CIO and compliance heads we need to reach. What we offer: joint co-marketing content on data sovereignty + referral agreement. What they offer: warm access to compliance-minded buyers who have already acknowledged the data risk problem. GCC profile: RegTech firms operating in DIFC or ADGM (Abu Dhabi Global Market).",
-                  ],
-                  [
-                    "Year 1 partnership structure",
-                    "Referral-only. 20% of Year 1 ARR paid to referring partner within 30 days of client payment. No white-label, no reseller complexity. Keep it clean and fast.",
-                  ],
-                ],
-              },
-              {
-                title:
-                  "◆ TG 2 ONE-PAGE SUMMARY , Professional Services , Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
-                columns: ["Element", "Answer", "Element", "Answer"],
-                rows: [
-                  [
-                    "Best sales motion",
-                    "Founder-led field sales + warm introductions (relationship-first)",
-                    "Single most important Week 1 action",
-                    "Map 50 target firms + request 5 warm intros from existing Lockated network",
-                  ],
-                  [
-                    "Top 2 marketing channels",
-                    "LinkedIn organic (compliance + data security content) + hosted roundtables",
-                    "Biggest risk to watch",
-                    "Compliance review delays , arm champion with sovereignty one-pager before internal review",
-                  ],
-                  [
-                    "90-day goal",
-                    "3 warm meetings → 2 paid pilots → 2 signed contracts + 1 case study",
-                    "What closes this TG",
-                    "In-person demo + real-work pilot + DIFC/SEBI compliance documentation",
-                  ],
-                  [
-                    "Key partner type",
-                    "Ex-Big4 boutique consultants (referral) + GCC RegTech vendors (co-marketing)",
-                    "Primary buyer",
-                    "Managing Partner (small firms) | COO / Practice Head (large firms)",
-                  ],
+                  ["LinkedIn", "Yes", "Content on data security & compliance", "#1"],
+                  ["Events", "Yes", "Hosted breakfast roundtables + FICCI/CII", "#2"],
                 ],
               },
             ],
-            summary:
-              "Founder-led field sales + warm introductions. LinkedIn organic + hosted roundtables. 3 warm meetings → 2 paid pilots → 2 signed contracts + 1 case study. Ex-Big4 boutique consultants + GCC RegTech vendors. Managing Partner (small firms) | COO / Practice Head (large firms).",
+            summary: "Field-led sales to high-trust services firms. lead with DIFC/SEBI compliance and MoM efficiency.",
+          },
+          {
+            title: "TARGET GROUP 3 , Lockated Existing Clients , Cross-sell (FM Matrix + Loyalty base, all industries)",
+            sections: [
+              {
+                title: "Profile: 50–5,000 employees · Real Estate, FM, Hospitality · Existing Lockated client base · Buyer: Existing contract signatory · Budget: Incremental ₹3–12L/year",
+                columns: [],
+                rows: [],
+              },
+              {
+                title: "COMPONENT 1 , SALES MOTION | TG 3: Existing Clients",
+                columns: ["Sales element", "Details"],
+                rows: [
+                  ["Primary sales motion", "Account management led (Warm cross-sell)"],
+                  ["Avg. sales cycle", "2–4 weeks (Trust pre-established)"],
+                  ["Economic buyer", "Same as existing contract (COO/CTO/HOO)"],
+                ],
+              },
+              {
+                title: "COMPONENT 2 , MARKETING CHANNELS | TG 3: Existing Clients",
+                columns: ["Channel", "Relevant?", "Execution", "Rank"],
+                rows: [
+                  ["Email Outreach", "Yes", "Warm personalised email from AM", "#1"],
+                  ["QBRs", "Yes", "10-min PTM intro in standard QBR", "#1"],
+                ],
+              },
+            ],
+            summary: "Zero-CAC cross-sell to the base. Position as a data layer upgrade to existing FM Matrix setup.",
           },
         ],
       },
