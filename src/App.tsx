@@ -1016,6 +1016,10 @@ import { SpeechProvider } from "./contexts/SpeechContext";
 import SupportedServiceDashboard from "./pages/SupportedServiceDashboard";
 import { SupportedServiceAdd } from "./pages/SupportedServiceAdd";
 import { SupportedServiceEdit } from "./pages/SupportedServiceEdit";
+import SupportContactSetupPage from "./pages/SupportContactSetupPage";
+import { AddSupportContactPage } from "./pages/AddSupportContactPage";
+import GreSiteAssignmentSetupPage from "./pages/GreSiteAssignmentSetupPage";
+import { AddGreSiteAssignmentPage } from "./pages/AddGreSiteAssignmentPage";
 // import RouteLogger from "./components/RouteLogger";
 
 import { AddBookingSetupClubPage } from "./pages/ClubManagement/AmenityBookingSetupClubAdd";
@@ -5971,6 +5975,26 @@ function App() {
                           <Route
                             path="/pulse/sos-category-setup"
                             element={<SOSCategorySetupPage />}
+                          />
+                          <Route
+                            path="/pulse/support-contact-setup"
+                            element={<SupportContactSetupPage />}
+                          />
+                          <Route
+                            path="/pulse/support-contact-setup/add"
+                            element={<AddSupportContactPage />}
+                          />
+                          <Route
+                            path="/pulse/gre-site-assignment-setup"
+                            element={<GreSiteAssignmentSetupPage />}
+                          />
+                          <Route
+                            path="/pulse/gre-site-assignment-setup/add"
+                            element={<AddGreSiteAssignmentPage />}
+                          />
+                          <Route
+                            path="/pulse/gre-site-assignment-setup/edit/:id"
+                            element={<AddGreSiteAssignmentPage />}
                           />
                         </Route>
 
