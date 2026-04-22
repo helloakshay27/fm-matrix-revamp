@@ -43,7 +43,7 @@ interface Event {
 }
 
 export const EventDetailsTab = () => {
-    const dispatch = useAppDispatch();
+    const dispatch = useAppDispatch()
     const { id } = useParams();
     const navigate = useNavigate();
 
