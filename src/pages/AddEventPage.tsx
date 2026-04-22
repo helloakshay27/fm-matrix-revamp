@@ -624,7 +624,7 @@ export const AddEventPage = () => {
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              {/* <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Per Member Limit<span className="text-[#C72030]">*</span></>}
                   id="perMemberLimit"
@@ -651,7 +651,7 @@ export const AddEventPage = () => {
                     },
                   }}
                 />
-              </div>
+              </div> */}
             </div>
 
             {/* Radio Groups Row */}
