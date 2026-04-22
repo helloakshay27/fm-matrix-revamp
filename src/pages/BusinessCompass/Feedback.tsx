@@ -109,6 +109,16 @@ import {
 } from "@/utils/embeddedMode";
 import { getUser } from "@/utils/auth";
 
+// Lockated / FM Matrix brand tokens (used across product pages)
+const BRAND = {
+  primary: "#DA7756",
+  background: "#f6f4ee",
+  panelBg: "rgba(218, 119, 86, 0.10)", // same as bg-[#DA7756]/10
+  panelBorder: "rgba(218, 119, 86, 0.20)", // same as border-[#DA7756]/20
+  softRowBg: "#fef6f4",
+  danger: "#C72030",
+} as const;
+
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 type SummaryStat = {
@@ -1372,7 +1382,10 @@ function AsyncBoundary({ children }: { children: React.ReactNode }) {
       <React.Suspense
         fallback={
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-neutral-500">
-            <Loader2 className="h-5 w-5 animate-spin text-[#DA7756]" />
+            <Loader2
+              className="h-5 w-5 animate-spin"
+              style={{ color: BRAND.primary }}
+            />
             Loading…
           </div>
         }
@@ -1634,17 +1647,25 @@ function GivenFeedbackList({
 
   return (
     <div className="flex flex-col gap-5 pb-4">
-      <div className="px-4 py-2 bg-[#f4f5f7] border-b border-neutral-200 flex items-center gap-5">
+      <div className="px-4 py-2 bg-[#fef6f4] border-b border-[#DA7756]/20 flex items-center gap-5">
         <button
           type="button"
           onClick={handleSelectAll}
-          className="flex items-center gap-2 px-3 py-1.5 rounded border border-neutral-300 bg-white text-sm font-medium text-neutral-700 hover:bg-neutral-50 shadow-sm"
+          className="flex items-center gap-2 px-3 py-1.5 rounded border border-[#DA7756]/20 bg-white text-sm font-medium text-neutral-700 shadow-sm"
+          style={{ backgroundColor: "#ffffff" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = BRAND.panelBg;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "#ffffff";
+          }}
         >
           <input
             type="checkbox"
             checked={allSelected}
             readOnly
-            className="h-4 w-4 accent-[#DA7756] cursor-pointer"
+            className="h-4 w-4 cursor-pointer"
+            style={{ accentColor: BRAND.primary }}
           />
           {allSelected ? "Deselect All" : "Select All"}
         </button>
@@ -1669,7 +1690,8 @@ function GivenFeedbackList({
                 setSelectedIds(new Set());
               }}
               disabled={deleteMutation.isPending}
-              className="flex items-center gap-2 rounded bg-[#EF4444] px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-600 disabled:opacity-60 transition-colors"
+              className="flex items-center gap-2 rounded px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-600 disabled:opacity-60 transition-colors"
+              style={{ backgroundColor: BRAND.danger }}
             >
               <Trash2 className="h-4 w-4" />
               Delete Selected
@@ -1678,7 +1700,7 @@ function GivenFeedbackList({
         )}
       </div>
 
-      <div className="mx-4 rounded-xl border border-neutral-200 bg-[#FDFBF3] px-6 py-4 grid grid-cols-3 divide-x divide-neutral-200">
+      <div className="mx-4 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] px-6 py-4 grid grid-cols-3 divide-x divide-[#DA7756]/20">
         <div className="flex flex-col gap-1 pr-6">
           <span className="text-xs text-neutral-500 font-medium">
             Average Rating
@@ -1730,11 +1752,11 @@ function GivenFeedbackList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name or content..."
-            className="h-9 w-full rounded-lg border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-300"
+            className="h-9 w-full rounded-lg border border-[#DA7756]/20 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-[#DA7756]/30"
           />
         </div>
         <Select value={ratingFilter} onValueChange={setRatingFilter}>
-          <SelectTrigger className="h-9 w-[130px] rounded-lg border border-neutral-200 bg-white text-sm">
+          <SelectTrigger className="h-9 w-[130px] rounded-lg border border-[#DA7756]/20 bg-white text-sm">
             <SelectValue placeholder="All Ratings" />
           </SelectTrigger>
           <SelectContent>
@@ -1747,7 +1769,7 @@ function GivenFeedbackList({
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-9 w-[90px] rounded-lg border border-neutral-200 bg-white text-sm">
+          <SelectTrigger className="h-9 w-[90px] rounded-lg border border-[#DA7756]/20 bg-white text-sm">
             <SelectValue placeholder="All" />
           </SelectTrigger>
           <SelectContent>
@@ -1761,7 +1783,10 @@ function GivenFeedbackList({
       <div className="px-4 space-y-3">
         {isLoading && filtered.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-neutral-500">
-            <Loader2 className="h-5 w-5 animate-spin text-[#DA7756]" />
+            <Loader2
+              className="h-5 w-5 animate-spin"
+              style={{ color: BRAND.primary }}
+            />
             Loading feedback…
           </div>
         ) : isError && filtered.length === 0 ? (
@@ -1787,18 +1812,20 @@ function GivenFeedbackList({
               <div
                 key={item.id}
                 className={cn(
-                  "rounded-xl border bg-white transition-all",
+                  "rounded-xl border transition-all",
                   expanded
-                    ? "border-[#4A90D9] ring-1 ring-[#4A90D9]/30"
-                    : "border-neutral-200 hover:border-neutral-300"
+                    ? "border-[#DA7756] ring-1 ring-[#DA7756]/30"
+                    : "border-[#DA7756]/20 hover:border-[#DA7756]/30"
                 )}
+                style={{ backgroundColor: BRAND.softRowBg }}
               >
                 <div className="flex items-start gap-3 p-4">
                   <input
                     type="checkbox"
                     checked={selectedIds.has(item.id)}
                     onChange={() => toggleSelect(item.id)}
-                    className="mt-1 h-4 w-4 accent-[#DA7756] cursor-pointer shrink-0"
+                    className="mt-1 h-4 w-4 cursor-pointer shrink-0"
+                    style={{ accentColor: BRAND.primary }}
                   />
 
                   <div
@@ -1883,7 +1910,7 @@ function GivenFeedbackList({
                               !detail.constructiveFeedback &&
                               !detail.positiveClosing &&
                               detail.detailPreview && (
-                                <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+                                <div className="rounded-lg border border-[#DA7756]/20 bg-[#fef6f4] px-3 py-2">
                                   <p className="text-sm text-neutral-700">
                                     {detail.detailPreview}
                                   </p>
@@ -1908,7 +1935,7 @@ function GivenFeedbackList({
                                     }))
                                   }
                                   placeholder="Add your notes about how you'll act on this feedback..."
-                                  className="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-neutral-400 resize-y"
+                                  className="mt-1 w-full rounded-lg border border-[#DA7756]/20 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-[#DA7756]/30 resize-y"
                                 />
                               </div>
                             )}
@@ -1941,7 +1968,13 @@ function GivenFeedbackList({
                     <StarRatingRow value={item.rating} />
                     <button
                       type="button"
-                      className="rounded-md p-1 text-neutral-400 hover:bg-black/5 hover:text-neutral-600"
+                      className="rounded-md p-1 text-neutral-400 hover:text-neutral-600"
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = BRAND.panelBg;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                      }}
                       aria-expanded={expanded}
                       aria-label={expanded ? "Collapse" : "Expand"}
                       onClick={() => handleExpand(item.id)}
@@ -2209,7 +2242,7 @@ function GiveFeedbackForm({
           >
             <SelectTrigger
               id="feedback-recipient"
-              className="h-11 rounded-xl border-neutral-200 bg-white"
+              className="h-11 rounded-xl border-[#DA7756]/20 bg-white"
             >
               {teamMembersLoading ? (
                 <span className="flex items-center gap-2 text-neutral-400">
@@ -2244,7 +2277,14 @@ function GiveFeedbackForm({
               <button
                 type="button"
                 id="feedback-date"
-                className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 text-left text-sm text-neutral-900 outline-none hover:bg-neutral-50/80"
+                className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-[#DA7756]/20 bg-white px-3 text-left text-sm text-neutral-900 outline-none"
+                style={{ backgroundColor: "#ffffff" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = BRAND.panelBg;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#ffffff";
+                }}
               >
                 <span className="tabular-nums">{formatDMY(feedbackDate)}</span>
                 <CalendarIcon
@@ -2302,7 +2342,7 @@ function GiveFeedbackForm({
             </button>
           ))}
         </div>
-        <div className="overflow-hidden rounded-xl border border-neutral-200 shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-[#DA7756]/20 shadow-sm">
           <div className="flex">
             {RATING_SEGMENTS.map((seg) => (
               <button
@@ -2340,7 +2380,7 @@ function GiveFeedbackForm({
           value={context}
           onChange={(e) => setContext(e.target.value)}
           placeholder="e.g., Regarding the client presentation last week..."
-          className="h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none"
+          className="h-11 w-full rounded-xl border border-[#DA7756]/20 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none"
         />
       </div>
 
@@ -2393,7 +2433,7 @@ function GiveFeedbackForm({
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder={placeholder}
-              className="min-h-[100px] resize-y rounded-xl border-neutral-200 bg-white text-sm"
+              className="min-h-[100px] resize-y rounded-xl border-[#DA7756]/20 bg-white text-sm"
             />
           </div>
         ))}
@@ -2414,7 +2454,14 @@ function GiveFeedbackForm({
           type="button"
           onClick={clearForm}
           disabled={isPending}
-          className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-300 bg-white px-6 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-50"
+          className="inline-flex h-11 items-center justify-center rounded-xl border border-[#DA7756]/20 bg-white px-6 text-sm font-semibold text-neutral-700 shadow-sm disabled:opacity-50"
+          style={{ backgroundColor: "#ffffff" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = BRAND.panelBg;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "#ffffff";
+          }}
         >
           Clear form
         </button>
@@ -2520,7 +2567,13 @@ function FeedbackPage() {
   ]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
+    <div
+      className="min-h-[calc(100vh-4rem)] px-4 py-6 sm:px-6"
+      style={{
+        backgroundColor: BRAND.background,
+        fontFamily: "'Poppins', sans-serif",
+      }}
+    >
       <div className="mx-auto max-w-6xl space-y-6">
         {bannerVisible && (
           <div className="flex items-center gap-3 rounded-2xl border border-sky-200/60 bg-sky-50/90 px-4 py-3 pr-2 shadow-sm">
@@ -2558,8 +2611,18 @@ function FeedbackPage() {
         )}
 
         <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-white shadow-sm">
-            <MessageSquare className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
+          <div
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 shadow-sm"
+            style={{
+              borderColor: BRAND.primary,
+              backgroundColor: BRAND.panelBg,
+            }}
+          >
+            <MessageSquare
+              className="h-6 w-6"
+              style={{ color: BRAND.primary }}
+              strokeWidth={2}
+            />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
@@ -2575,9 +2638,9 @@ function FeedbackPage() {
           </div>
         </header>
 
-        <Card className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
+        <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
           {/* Tab bar */}
-          <div className="flex border-b border-neutral-200">
+          <div className="flex border-b border-[#DA7756]/20 bg-[#DA7756]/10">
             {(
               [
                 {
@@ -2608,14 +2671,17 @@ function FeedbackPage() {
                 className={cn(
                   "flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2",
                   feedbackTab === value
-                    ? "border-[#DA7756] bg-white text-neutral-900"
-                    : "border-transparent bg-[#f5f5f5] text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700"
+                    ? "border-[#DA7756] bg-[#DA7756]/10 text-neutral-900"
+                    : "border-transparent text-neutral-600 hover:bg-[#DA7756]/10 hover:text-neutral-900"
                 )}
               >
                 <Icon className="h-4 w-4" />
                 {label}
                 {count !== null && count > 0 && (
-                  <span className="rounded-full bg-[#C72030] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  <span
+                    className="rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white"
+                    style={{ backgroundColor: BRAND.danger }}
+                  >
                     {count}
                   </span>
                 )}
@@ -2625,12 +2691,12 @@ function FeedbackPage() {
 
           {/* View for: dropdown — received tab only */}
           {feedbackTab === "received" && (
-            <div className="px-4 py-3 border-b border-neutral-100 bg-white flex items-center gap-3">
+            <div className="px-4 py-3 border-b border-[#DA7756]/20 bg-[#DA7756]/10 flex items-center gap-3">
               <span className="text-sm text-neutral-600 font-medium">
                 View feedback for:
               </span>
               <Select value={receivedView} onValueChange={setReceivedView}>
-                <SelectTrigger className="h-9 w-[200px] rounded-lg border-neutral-200 bg-white text-sm">
+                <SelectTrigger className="h-9 w-[200px] rounded-lg border-[#DA7756]/20 bg-white text-sm">
                   <SelectValue placeholder={myselfLabel} />
                 </SelectTrigger>
                 <SelectContent>
