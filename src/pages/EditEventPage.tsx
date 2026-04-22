@@ -177,7 +177,7 @@ export const EditEventPage = () => {
             approvalRequired: event.approval_required === true ? "yes" : "no",
             shareWith: event.share_with || "all",
             shareWithCommunities: (event.community_events && event.community_events.length > 0) ? "yes" : "no",
-            eventAt: event.event_at || "",
+            payAt: event.pay_at || "",
             externalLink: event.payment_link || "",
           }));
 
