@@ -253,10 +253,23 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
 
   const handleNotificationClick = async (notification: any) => {
     await handleNotificationClickContext(notification);
+
+    // Navigate based on notification type
     if (notification.ntype === "conversation") {
-      navigate(`/vas/channels/messages/${notification.payload.conversation_id}`);
-    } else if (notification.ntype === "projectspace") {
-      navigate(`/vas/channels/groups/${notification.payload.project_space_id}`);
+      navigate(
+        `/vas/channels/messages/${notification.payload.conversation_id}`
+      );
+    }
+    if (notification.ntype === "projectspace") {
+      navigate(
+        `/vas/channels/groups/${notification.payload.project_space_id}`
+      );
+    }
+    if (notification.payload.ntype === "newtaskmanagement") {
+      navigate(`/vas/tasks/${notification.payload.task_management_id}`);
+    }
+    if (notification.payload.ntype === "newissue") {
+      navigate(`/vas/issues/${notification.payload.issue_id}`);
     }
   };
 
