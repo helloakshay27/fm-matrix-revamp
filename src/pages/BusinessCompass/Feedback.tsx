@@ -112,6 +112,7 @@ import { getUser } from "@/utils/auth";
 // Lockated / FM Matrix brand tokens (used across product pages)
 const BRAND = {
   primary: "#DA7756",
+  secondary: "#c9673f", // hover / emphasis (matches WeeklyReports.tsx)
   background: "#f6f4ee",
   panelBg: "rgba(218, 119, 86, 0.10)", // same as bg-[#DA7756]/10
   panelBorder: "rgba(218, 119, 86, 0.20)", // same as border-[#DA7756]/20
