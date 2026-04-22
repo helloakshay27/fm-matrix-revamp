@@ -16,7 +16,7 @@ const C = {
   primaryBordStrong: '#d4cdc6',
   pageBg:            '#f6f4ee',
   cardBg:            '#ffffff',
-  tealBg:            '#9EC8BA',
+  tealBg:            '#f6f4ee',
   textMain:          '#1a1a1a',
   textMuted:         '#6b7280',
   borderLgt:         '#ebebeb',
@@ -383,10 +383,10 @@ export default function SWOTAnalysis() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <div style={{
-            width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.30)',
+            width: 36, height: 36, borderRadius: 10,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}>
-            <svg style={{ width: 18, height: 18, color: '#1a1a1a' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg style={{ width: 18, height: 18, color: C.primary }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
