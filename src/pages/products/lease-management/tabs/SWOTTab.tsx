@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { swotAnalysisLessee, swotAnalysisLessor } from "../data";
 
 const primary = "#DA7756";
-const darkBg = "#1e293b";
+const darkBg = "#DA7756";
 const cardBorder = "#C4B89D";
 const background = "#F6F4EE";
 
