@@ -13,7 +13,7 @@ import {
 // Lockated Brand Colors
 const BRAND_COLORS = {
   primary: "#DA7756",
-  darkBg: "#1e293b",
+  darkBg: "#DA7756",
   background: "#F6F4EE",
   text: "#2C2C2C",
   textSecondary: "#5A5A5A",

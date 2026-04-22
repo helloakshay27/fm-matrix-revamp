@@ -265,11 +265,11 @@ export default function LeaseManagementPage() {
                     style={{
                       backgroundColor:
                         activeTab === tab.key
-                          ? BRAND_COLORS.white
+                          ? BRAND_COLORS.primary
                           : "transparent",
                       color:
                         activeTab === tab.key
-                          ? BRAND_COLORS.primary
+                          ? BRAND_COLORS.white
                           : BRAND_COLORS.textSecondary,
                       fontFamily: "Poppins, sans-serif",
                       fontWeight: activeTab === tab.key ? 600 : 500,
