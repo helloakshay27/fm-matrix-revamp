@@ -20,7 +20,7 @@ export const postSalesData: ProductData = {
     "The referral and loyalty infrastructure for real estate developers, turning satisfied homebuyers into brand advocates and reducing cost of sales by up to 75%.",
   brief:
     "Post Sales is an enterprise SaaS platform for real estate developers that transforms the homebuyer relationship from a transactional cost to a recurring revenue channel through AI-driven loyalty, structured referrals, and home loan commission tracking.",
-  
+
   // Tab configuration
   tabOrder: [
     "summary",
@@ -51,7 +51,7 @@ export const postSalesData: ProductData = {
   decisionMakers: ["VP Sales", "Head of Loyalty", "CFO", "MD"],
   keyPoints: ["Referral Velocity", "Home Loan Revenue", "Buyer Trust", "Operational Efficiency"],
   roi: ["ROI payback in Year 1", "75% Reduction in broker commission cost", "Net-new Home Loan revenue"],
-  
+
   // Assets & Credentials
   assets: [
     {

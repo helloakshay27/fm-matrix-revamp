@@ -10,10 +10,10 @@ import {
 // Lockated Brand Colors
 const BRAND_COLORS = {
   primary: "#DA7756",
-  darkBg: "#1e293b",
+  darkBg: "#DA7756",
   background: "#F6F4EE",
   text: "#2C2C2C",
-  textSecondary: "#5A5A5A",
+  textSecondary: "#2C2C2C/80",
   cardBorder: "#C4B89D",
   white: "#FFFFFF",
 };
@@ -22,7 +22,7 @@ const SectionTitle: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => (
   <div
-    className="px-4 py-3 font-bold text-white text-sm"
+    className="px-4 py-3 font-bold text-white text-sm font-poppins"
     style={{ backgroundColor: BRAND_COLORS.darkBg }}
   >
     {children}
@@ -33,12 +33,12 @@ export const UseCasesTab: React.FC = () => {
   const [perspective, setPerspective] = useState<"lessee" | "lessor">("lessee");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-poppins">
       {/* Perspective Toggle */}
       <div className="flex gap-2">
         <button
           onClick={() => setPerspective("lessee")}
-          className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+          className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors font-poppins"
           style={{
             backgroundColor:
               perspective === "lessee"
@@ -53,7 +53,7 @@ export const UseCasesTab: React.FC = () => {
         </button>
         <button
           onClick={() => setPerspective("lessor")}
-          className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+          className="px-4 py-2 rounded-lg text-sm font-semibold transition-colors font-poppins"
           style={{
             backgroundColor:
               perspective === "lessor"
@@ -97,9 +97,9 @@ export const UseCasesTab: React.FC = () => {
                     ].map((h) => (
                       <th
                         key={h}
-                        className="px-3 py-2 text-left font-semibold"
+                        className="px-3 py-2 text-left font-semibold font-poppins"
                         style={{
-                          color: BRAND_COLORS.text,
+                          color: BRAND_COLORS.primary,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                         }}
@@ -113,6 +113,7 @@ export const UseCasesTab: React.FC = () => {
                   {useCases.map((uc, i) => (
                     <tr
                       key={i}
+                      className="hover:bg-[#DA7756]/5 transition-colors"
                       style={{
                         backgroundColor:
                           i % 2 === 0
@@ -121,9 +122,9 @@ export const UseCasesTab: React.FC = () => {
                       }}
                     >
                       <td
-                        className="px-3 py-2 font-semibold text-center"
+                        className="px-3 py-2 font-semibold text-center font-poppins"
                         style={{
-                          color: BRAND_COLORS.text,
+                          color: BRAND_COLORS.primary,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           width: 40,
@@ -132,7 +133,7 @@ export const UseCasesTab: React.FC = () => {
                         {uc.rank}
                       </td>
                       <td
-                        className="px-3 py-2 font-semibold"
+                        className="px-3 py-2 font-semibold font-poppins"
                         style={{
                           color: BRAND_COLORS.text,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
@@ -143,9 +144,10 @@ export const UseCasesTab: React.FC = () => {
                         {uc.industry}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 300,
@@ -154,9 +156,10 @@ export const UseCasesTab: React.FC = () => {
                         {uc.howRelevant}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 200,
@@ -165,9 +168,10 @@ export const UseCasesTab: React.FC = () => {
                         {uc.idealProfile}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 120,
@@ -176,9 +180,10 @@ export const UseCasesTab: React.FC = () => {
                         {uc.urgency}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 160,
@@ -187,9 +192,10 @@ export const UseCasesTab: React.FC = () => {
                         {uc.primaryBuyer}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 160,
                         }}
@@ -250,7 +256,7 @@ export const UseCasesTab: React.FC = () => {
                       }}
                     >
                       <td
-                        className="px-3 py-2 font-semibold"
+                        className="px-3 py-2 font-semibold font-poppins"
                         style={{
                           color: BRAND_COLORS.text,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
@@ -261,9 +267,10 @@ export const UseCasesTab: React.FC = () => {
                         {t.team}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 250,
@@ -272,9 +279,10 @@ export const UseCasesTab: React.FC = () => {
                         {t.howRelevant}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 200,
@@ -283,9 +291,10 @@ export const UseCasesTab: React.FC = () => {
                         {t.specificModules}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 200,
@@ -294,9 +303,10 @@ export const UseCasesTab: React.FC = () => {
                         {t.keyBenefit}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 200,
@@ -305,9 +315,10 @@ export const UseCasesTab: React.FC = () => {
                         {t.dayToDay}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 80,
                         }}
@@ -376,9 +387,9 @@ export const UseCasesTab: React.FC = () => {
                       }}
                     >
                       <td
-                        className="px-3 py-2 font-semibold text-center"
+                        className="px-3 py-2 font-semibold text-center font-poppins"
                         style={{
-                          color: BRAND_COLORS.text,
+                          color: BRAND_COLORS.primary,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           width: 40,
@@ -387,7 +398,7 @@ export const UseCasesTab: React.FC = () => {
                         {uc.rank}
                       </td>
                       <td
-                        className="px-3 py-2 font-semibold"
+                        className="px-3 py-2 font-semibold font-poppins"
                         style={{
                           color: BRAND_COLORS.text,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
@@ -398,9 +409,10 @@ export const UseCasesTab: React.FC = () => {
                         {uc.industry}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 300,
@@ -409,9 +421,10 @@ export const UseCasesTab: React.FC = () => {
                         {uc.howRelevant}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 200,
@@ -420,9 +433,10 @@ export const UseCasesTab: React.FC = () => {
                         {uc.idealProfile}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 120,
@@ -431,9 +445,10 @@ export const UseCasesTab: React.FC = () => {
                         {uc.decisionMaker}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 140,
@@ -442,9 +457,10 @@ export const UseCasesTab: React.FC = () => {
                         {uc.currentToolReplaced}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 120,
                         }}
@@ -506,7 +522,7 @@ export const UseCasesTab: React.FC = () => {
                       }}
                     >
                       <td
-                        className="px-3 py-2 font-semibold"
+                        className="px-3 py-2 font-semibold font-poppins"
                         style={{
                           color: BRAND_COLORS.text,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
@@ -517,9 +533,10 @@ export const UseCasesTab: React.FC = () => {
                         {t.teamRole}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 200,
@@ -528,9 +545,10 @@ export const UseCasesTab: React.FC = () => {
                         {t.primaryUseCase}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 280,
@@ -539,9 +557,10 @@ export const UseCasesTab: React.FC = () => {
                         {t.keyActions}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           borderRight: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 180,
@@ -550,9 +569,10 @@ export const UseCasesTab: React.FC = () => {
                         {t.frequencyOfUse}
                       </td>
                       <td
-                        className="px-3 py-2"
+                        className="px-3 py-2 font-poppins"
                         style={{
-                          color: BRAND_COLORS.textSecondary,
+                          color: BRAND_COLORS.text,
+                          opacity: 0.8,
                           borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
                           minWidth: 220,
                         }}

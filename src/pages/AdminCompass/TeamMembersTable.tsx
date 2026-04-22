@@ -1,6 +1,6 @@
-import { ArrowUpDown, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import { ArrowUpDown, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 interface TeamMember {
   user_id: number;
@@ -33,24 +33,40 @@ interface TeamMembersTableProps {
   onPageChange: (page: number) => void;
 }
 
-const TeamMembersTable = ({ members, loading, totalMembers, currentPage, totalPages, onPageChange }: TeamMembersTableProps) => {
+const TeamMembersTable = ({
+  members,
+  loading,
+  totalMembers,
+  currentPage,
+  totalPages,
+  onPageChange,
+}: TeamMembersTableProps) => {
   const getInitials = (name: string) => {
     return name
-      .split(' ')
+      .split(" ")
       .map((n) => n[0])
-      .join('')
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
   const getScoreStyles = (score: number) => {
-    if (score >= 40) return 'bg-emerald-100 text-emerald-700';
-    if (score >= 20) return 'bg-amber-100 text-amber-700';
-    return 'bg-rose-100 text-rose-700';
+    if (score >= 40) return "bg-emerald-100 text-emerald-700";
+    if (score >= 20) return "bg-amber-100 text-amber-700";
+    return "bg-rose-100 text-rose-700";
   };
 
   const getAvatarColor = (index: number) => {
-    const colors = ['bg-blue-500', 'bg-purple-500', 'bg-pink-500', 'bg-green-500', 'bg-orange-500', 'bg-red-500', 'bg-indigo-500', 'bg-cyan-500'];
+    const colors = [
+      "bg-blue-500",
+      "bg-purple-500",
+      "bg-pink-500",
+      "bg-green-500",
+      "bg-orange-500",
+      "bg-red-500",
+      "bg-indigo-500",
+      "bg-cyan-500",
+    ];
     return colors[index % colors.length];
   };
 
@@ -72,11 +88,15 @@ const TeamMembersTable = ({ members, loading, totalMembers, currentPage, totalPa
 
     // Add ellipsis if there's a gap
     if (currentPage - adjacentPages > edgePages + 1) {
-      pages.push('...');
+      pages.push("...");
     }
 
     // Show current page with adjacent pages
-    for (let i = Math.max(edgePages + 1, currentPage - adjacentPages); i <= Math.min(totalPages - edgePages, currentPage + adjacentPages); i++) {
+    for (
+      let i = Math.max(edgePages + 1, currentPage - adjacentPages);
+      i <= Math.min(totalPages - edgePages, currentPage + adjacentPages);
+      i++
+    ) {
       if (!pages.includes(i)) {
         pages.push(i);
       }
@@ -84,11 +104,15 @@ const TeamMembersTable = ({ members, loading, totalMembers, currentPage, totalPa
 
     // Add ellipsis if there's a gap
     if (currentPage + adjacentPages < totalPages - edgePages) {
-      pages.push('...');
+      pages.push("...");
     }
 
     // Always show last page(s)
-    for (let i = Math.max(edgePages + 1, totalPages - edgePages + 1); i <= totalPages; i++) {
+    for (
+      let i = Math.max(edgePages + 1, totalPages - edgePages + 1);
+      i <= totalPages;
+      i++
+    ) {
       if (!pages.includes(i)) {
         pages.push(i);
       }
@@ -101,8 +125,12 @@ const TeamMembersTable = ({ members, loading, totalMembers, currentPage, totalPa
     <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-neutral-900">Team Members Overview</h2>
-          <p className="mt-1 text-xs text-neutral-600">Daily and weekly performance snapshot by team member</p>
+          <h2 className="text-lg font-semibold text-neutral-900">
+            Team Members Overview
+          </h2>
+          <p className="mt-1 text-xs text-neutral-600">
+            Daily and weekly performance snapshot by team member
+          </p>
         </div>
         <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
           {totalMembers} Members
@@ -192,29 +220,42 @@ const TeamMembersTable = ({ members, loading, totalMembers, currentPage, totalPa
               </thead>
               <tbody className="divide-y divide-[#DA7756]/15">
                 {members.map((member, index) => (
-                  <tr key={member.user_id} className="bg-[#fef6f4]/90 transition-colors hover:bg-[#fef6f4]">
+                  <tr
+                    key={member.user_id}
+                    className="bg-[#fef6f4]/90 transition-colors hover:bg-[#fef6f4]"
+                  >
                     <td className="px-3 py-3 text-center">
-                      <div className={`inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 font-bold tabular-nums ${getScoreStyles(member.score)}`}>
+                      <div
+                        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 font-bold tabular-nums ${getScoreStyles(member.score)}`}
+                      >
                         {member.score}
                       </div>
                     </td>
                     <td className="px-3 py-3 text-center">
                       <div className="flex items-center justify-center gap-3">
-                        <div className={`flex h-9 w-9 items-center justify-center rounded-full ${getAvatarColor(index)} text-xs font-bold text-white`}>
+                        <div
+                          className={`flex h-9 w-9 items-center justify-center rounded-full ${getAvatarColor(index)} text-xs font-bold text-white`}
+                        >
                           {getInitials(member.name)}
                         </div>
                         <div className="text-left">
-                          <p className="font-medium text-neutral-900">{member.name}</p>
-                          <p className="text-xs text-neutral-500">{member.email}</p>
+                          <p className="font-medium text-neutral-900">
+                            {member.name}
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            {member.email}
+                          </p>
                         </div>
                       </div>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="text-xs text-neutral-600">{member.designation || '-'}</span>
+                      <span className="text-xs text-neutral-600">
+                        {member.designation || "-"}
+                      </span>
                     </td>
                     <td className="px-3 py-3 text-center">
                       <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 border border-[#DA7756]/20">
-                        {member.department || '-'}
+                        {member.department || "-"}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
@@ -271,7 +312,9 @@ const TeamMembersTable = ({ members, loading, totalMembers, currentPage, totalPa
           {/* Pagination Controls */}
           <div className="mt-6 flex items-center justify-between border-t border-[#DA7756]/20 pt-4">
             <div className="text-xs text-neutral-600">
-              Showing {totalMembers === 0 ? 0 : (currentPage - 1) * 10 + 1} to {Math.min(currentPage * 10, totalMembers)} of {totalMembers} members
+              Showing {totalMembers === 0 ? 0 : (currentPage - 1) * 10 + 1} to{" "}
+              {Math.min(currentPage * 10, totalMembers)} of {totalMembers}{" "}
+              members
             </div>
 
             <div className="flex items-center gap-2">
@@ -287,26 +330,30 @@ const TeamMembersTable = ({ members, loading, totalMembers, currentPage, totalPa
               </Button>
 
               <div className="flex items-center gap-1">
-                {getPaginationPages().map((page, index) => (
-                  page === '...' ? (
-                    <span key={`ellipsis-${index}`} className="px-2 py-1 text-xs text-neutral-500">
+                {getPaginationPages().map((page, index) =>
+                  page === "..." ? (
+                    <span
+                      key={`ellipsis-${index}`}
+                      className="px-2 py-1 text-xs text-neutral-500"
+                    >
                       ...
                     </span>
                   ) : (
                     <Button
                       key={page}
-                      variant={currentPage === page ? 'outline' : 'default'}
+                      variant={currentPage === page ? "outline" : "default"}
                       size="sm"
                       onClick={() => onPageChange(page as number)}
-                      className={`h-8 w-8 rounded-lg p-0 font-semibold ${currentPage === page
-                        ? 'border border-[#DA7756]/25 bg-white text-neutral-700 hover:bg-[#fef6f4]'
-                        : 'bg-[#DA7756] text-white hover:bg-[#DA7756] '
-                        }`}
+                      className={`h-8 w-8 rounded-lg p-0 font-semibold ${
+                        currentPage === page
+                          ? "border border-[#DA7756]/25 bg-white text-neutral-700 hover:bg-[#fef6f4]"
+                          : "bg-[#DA7756] text-white hover:bg-[#DA7756] "
+                      }`}
                     >
                       {page}
                     </Button>
                   )
-                ))}
+                )}
               </div>
 
               <Button

@@ -523,6 +523,29 @@ const DailyTab = () => {
 
   const changeDate = (days: number) => {
     isArrowNav.current = true;
+
+    // 1. Try to find the next/prev valid date within the currently loaded calendar row
+    const currentIndex = calendarRow.findIndex(
+      (d: any) => d.full_date === activeDate
+    );
+
+    if (currentIndex !== -1) {
+      let nextIndex = currentIndex + days;
+
+      // Loop through the array in the direction of the arrow click
+      while (nextIndex >= 0 && nextIndex < calendarRow.length) {
+        const s = calendarRow[nextIndex].status;
+
+        // If the date is valid (not a holiday, non-meeting, or upcoming), set it and stop
+        if (s !== "holiday" && s !== "non_meeting" && s !== "upcoming") {
+          setActiveDate(calendarRow[nextIndex].full_date);
+          return;
+        }
+        nextIndex += days;
+      }
+    }
+
+    // 2. Fallback: If we run out of bounds in the loaded array, just step 1 day mathematically
     const d = new Date(activeDate);
     d.setDate(d.getDate() + days);
     setActiveDate(d.toISOString().split("T")[0]);

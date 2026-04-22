@@ -27,7 +27,7 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
   if (productData.excelLikeSummary) {
     return (
       <div className="animate-fade-in bg-[#F6F4EE]">
-        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-5 rounded-t-xl mb-0 flex justify-between items-center">
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
           <h2 className="text-2xl font-semibold font-poppins uppercase tracking-tight">
             {productData.name} - Product Summary
           </h2>
@@ -40,18 +40,17 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
                   <button
                     key={idx}
                     onClick={() => setActivePerspective(idx)}
-                    className={`px-6 py-2 rounded-full font-semibold font-poppins text-sm uppercase tracking-wide transition-all ${
-                      activePerspective === idx
-                        ? "bg-[#DA7756] text-white shadow-md"
-                        : "bg-white text-[#2C2C2C] border border-[#D3D1C7] hover:bg-[#F6F4EE]"
-                    }`}
+                    className={`px-6 py-2 rounded-full font-semibold font-poppins text-sm uppercase tracking-wide transition-all ${activePerspective === idx
+                      ? "bg-[#DA7756] text-white shadow-md"
+                      : "bg-white text-[#2C2C2C] border border-[#D3D1C7] hover:bg-[#F6F4EE]"
+                      }`}
                   >
                     {p.title}
                   </button>
                 ))}
               </div>
             )}
-            <div className="bg-white text-[#2C2C2C] px-4 py-3 font-semibold font-poppins uppercase tracking-tight text-[16px] text-center border-b border-[#D3D1C7]">
+            <div className="bg-[#DA7756] !text-white px-4 py-3 font-semibold font-poppins uppercase text-[16px] text-center border-b border-[#D3D1C7]">
               {hasPerspectives ? productData.extendedContent?.productSummaryNew?.perspectives?.[activePerspective]?.title : productData.name} - Product Summary Brief
             </div>
             {(!hasPerspectives && productData.extendedContent?.productSummaryNew?.summarySubtitle) && (
@@ -110,8 +109,8 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
     );
   }
 
-  const currentSummaryData = hasPerspectives 
-    ? productData.extendedContent?.productSummaryNew?.perspectives?.[activePerspective] 
+  const currentSummaryData = hasPerspectives
+    ? productData.extendedContent?.productSummaryNew?.perspectives?.[activePerspective]
     : productData.extendedContent?.productSummaryNew;
   const currentSummaryTitle = hasPerspectives
     ? productData.extendedContent?.productSummaryNew?.perspectives?.[activePerspective]?.title
@@ -128,11 +127,10 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
             <button
               key={idx}
               onClick={() => setActivePerspective(idx)}
-              className={`px-6 py-2 rounded-full font-semibold font-poppins text-sm uppercase tracking-wide transition-all ${
-                activePerspective === idx
-                  ? "bg-[#DA7756] text-white shadow-md"
-                  : "bg-white text-[#2C2C2C] border border-[#D3D1C7] hover:bg-[#F6F4EE]"
-              }`}
+              className={`px-6 py-2 rounded-full font-semibold font-poppins text-sm uppercase tracking-wide transition-all ${activePerspective === idx
+                ? "bg-[#DA7756] text-white shadow-md"
+                : "bg-white text-[#2C2C2C] border border-[#D3D1C7] hover:bg-[#F6F4EE]"
+                }`}
             >
               {p.title}
             </button>
@@ -149,63 +147,69 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
       </div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#D3D1C7] p-4 text-center w-1/4 font-poppins">
+                Field
+              </th>
+              <th className="border border-[#D3D1C7] p-4 text-center font-poppins">
+                Detail
+              </th>
+            </tr>
+          </thead>
           <tbody>
-            {currentSummaryData?.identity?.map(
-              (r, i) => (
-                <tr key={i}>
-                  <td className="border border-[#D3D1C7] p-4 font-semibold text-[#2C2C2C] w-1/4 bg-[#F6F4EE] font-poppins">
-                    {r.field}
-                  </td>
-                  <td className="border border-[#D3D1C7] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
-                    {r.detail}
-                  </td>
-                </tr>
-              )
-            )}
+            {currentSummaryData?.identity?.map((r, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#D3D1C7] p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                  {r.field}
+                </td>
+                <td className="border border-[#D3D1C7] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                  {r.detail}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-4 font-semibold text-sm rounded-t-xl font-poppins border-l-4 border-l-[#DA7756]">
+      <div className="bg-[#DA7756] text-white border border-[#C4B89D] p-4 font-semibold text-sm rounded-t-xl font-poppins">
         The Problem It Solves
       </div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-white text-[#2C2C2C] border-b border-[#D3D1C7] font-semibold">
-              <th className="border border-[#D3D1C7] p-4 text-left w-1/4 font-poppins">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#D3D1C7] p-4 text-center w-1/4 font-poppins">
                 Pain Point
               </th>
-              <th className="border border-[#D3D1C7] p-4 text-left font-poppins">
+              <th className="border border-[#D3D1C7] p-4 text-center font-poppins">
                 Our Solution
               </th>
             </tr>
           </thead>
           <tbody>
-            {currentSummaryData?.problemSolves?.map(
-              (r, i) => (
-                <tr key={i}>
-                  <td className="border border-[#D3D1C7] p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
-                    {r.painPoint}
-                  </td>
-                  <td className="border border-[#D3D1C7] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
-                    {r.solution}
-                  </td>
-                </tr>
-              )
-            )}
+            {currentSummaryData?.problemSolves?.map((r, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#D3D1C7] p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                  {r.painPoint}
+                </td>
+                <td className="border border-[#D3D1C7] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                  {r.solution}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border-l-4 border-l-[#DA7756]">
+      <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">
         Who It Is For
       </div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-white text-[#2C2C2C] border-b border-[#D3D1C7] font-semibold">
-              <th className="border border-[#D3D1C7] p-3 text-center w-1/4 font-poppins">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#D3D1C7] p-3 text-center w-1/5 font-poppins">
                 Role
               </th>
               <th className="border border-[#D3D1C7] p-3 text-center w-1/4 font-poppins">
@@ -220,63 +224,80 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
             </tr>
           </thead>
           <tbody>
-            {currentSummaryData?.whoItIsFor?.map(
-              (r, i) => (
-                <tr key={i}>
-                  <td className="border-b border-[#D3D1C7] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
-                    {r.role}
-                  </td>
-                  <td className="border-b border-[#D3D1C7] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
-                    {r.useCase}
-                  </td>
-                  <td className="border-b border-[#D3D1C7] p-3 text-[#2C2C2C]/70 font-medium leading-relaxed italic font-poppins bg-white">
-                    {r.frustration}
-                  </td>
-                  <td className="border-b border-[#D3D1C7] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
-                    {r.gain}
-                  </td>
-                </tr>
-              )
-            )}
+            {currentSummaryData?.whoItIsFor?.map((r, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#D3D1C7] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                  {r.role}
+                </td>
+                <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                  {r.useCase}
+                </td>
+                <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/70 font-medium leading-relaxed italic font-poppins bg-white">
+                  {r.frustration}
+                </td>
+                <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                  {r.gain}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      <div className="bg-white text-[#2C2C2C] px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] border-l-4 border-l-[#DA7756]">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] text-center">
         Feature Summary
       </div>
-      <div className="border border-t-0 border-[#D3D1C7] p-4 text-sm text-[#2C2C2C]/80 bg-[#F6F4EE] font-medium leading-relaxed rounded-b-xl font-poppins">
-        {currentFeatureSummary || productData.extendedContent?.featureSummary || productData.brief}
+      <div className="bg-white overflow-hidden border border-[#D3D1C7]">
+        <table className="w-full border-collapse text-sm">
+          <tbody>
+            {currentFeatureSummary?.modules?.map((module, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-[#FAF9F6]" : "bg-white"}>
+                <td
+                  className={`p-4 w-1/4 font-semibold border-r border-[#D3D1C7] align-top ${module.isUSP
+                    ? "bg-[#DA7756]/10 text-[#DA7756]"
+                    : "text-[#2C2C2C]"
+                    }`}
+                >
+                  {module.module}
+                </td>
+                <td
+                  className={`p-4 text-[#2C2C2C] align-top font-poppins leading-relaxed ${module.isUSP ? "bg-[#DA7756]/10" : ""
+                    }`}
+                >
+                  {module.description}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <div className="bg-white text-[#2C2C2C] px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] border-l-4 border-l-[#DA7756]">
-        Where We Are Today
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] mt-8">
+        Today
       </div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-white text-[#2C2C2C] border-b border-[#D3D1C7] font-semibold">
-              <th className="border-b border-[#D3D1C7] p-3 text-center w-1/4 font-poppins">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#D3D1C7] p-3 text-center w-1/4 font-poppins">
                 Dimension
               </th>
-              <th className="border-b border-[#D3D1C7] p-3 text-center w-3/4 font-poppins">
-                Current State
+              <th className="border border-[#D3D1C7] p-3 text-center w-3/4 font-poppins">
+                State
               </th>
             </tr>
           </thead>
           <tbody>
-            {currentSummaryData?.today?.map(
-              (r, i) => (
-                <tr key={i}>
-                  <td className="border-b border-[#D3D1C7] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
-                    {r.dimension}
-                  </td>
-                  <td className="border-b border-[#D3D1C7] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
-                    {r.state}
-                  </td>
-                </tr>
-              )
-            )}
+            {currentSummaryData?.today?.map((r, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#D3D1C7] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                  {r.dimension}
+                </td>
+                <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white whitespace-pre-line">
+                  {r.state}
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

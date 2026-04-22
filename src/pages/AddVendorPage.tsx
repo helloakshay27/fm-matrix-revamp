@@ -242,7 +242,7 @@ export const AddVendorPage = () => {
   const validateStep = () => {
     const newErrors: any = {};
     let isValid = true;
-    
+
     // Phone number validation regex (10 digits)
     const phoneRegex = /^[6-9]\d{9}$/;
     // PAN validation regex (5 letters, 4 digits, 1 letter)
@@ -263,14 +263,14 @@ export const AddVendorPage = () => {
       }
       return true;
     };
-    
+
     if (activeStep === 0) {
       // Company Name validation (REQUIRED - has red asterisk)
       if (!formData.companyName.trim()) {
         newErrors.companyName = 'Company Name is required';
         isValid = false;
       }
-      
+
       // Email validation (REQUIRED - has red asterisk)
       if (!formData.email.trim()) {
         newErrors.email = 'Email is required';
@@ -279,23 +279,23 @@ export const AddVendorPage = () => {
         newErrors.email = 'Email is invalid';
         isValid = false;
       }
-      
+
       // Optional fields - only validate format if provided
       if (formData.primaryPhone.trim() && !phoneRegex.test(formData.primaryPhone.trim())) {
         newErrors.primaryPhone = 'Please enter a valid 10-digit phone number';
         isValid = false;
       }
-      
+
       if (formData.secondaryPhone.trim() && !phoneRegex.test(formData.secondaryPhone.trim())) {
         newErrors.secondaryPhone = 'Please enter a valid 10-digit phone number';
         isValid = false;
       }
-      
+
       if (formData.pan.trim() && !panRegex.test(formData.pan.trim().toUpperCase())) {
         newErrors.pan = 'Please enter a valid PAN number (e.g., ABCDE1234F)';
         isValid = false;
       }
-      
+
       // Other Details validation
       if (!formData.gstTreatment.trim()) {
         newErrors.gstTreatment = 'GST Treatment is required';
@@ -306,28 +306,28 @@ export const AddVendorPage = () => {
           newErrors.gstin = 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5';
           isValid = false;
         }
-        
+
         // Validate Business Legal Name for registered businesses
         if ((formData.gstTreatment === 'registered_regular' || formData.gstTreatment === 'registered_composition') &&
-            formData.businessLegalName.trim() && !alphabeticRegex.test(formData.businessLegalName.trim())) {
+          formData.businessLegalName.trim() && !alphabeticRegex.test(formData.businessLegalName.trim())) {
           newErrors.businessLegalName = 'Business Legal Name should only contain alphabets and spaces';
           isValid = false;
         }
-        
+
         // Validate Business Trade Name for registered businesses
         if ((formData.gstTreatment === 'registered_regular' || formData.gstTreatment === 'registered_composition') &&
-            formData.businessTradeName.trim() && !alphabeticRegex.test(formData.businessTradeName.trim())) {
+          formData.businessTradeName.trim() && !alphabeticRegex.test(formData.businessTradeName.trim())) {
           newErrors.businessTradeName = 'Business Trade Name should only contain alphabets and spaces';
           isValid = false;
         }
       }
-      
+
       if (formData.websiteUrl.trim() && !urlRegex.test(formData.websiteUrl.trim())) {
         newErrors.websiteUrl = 'Please enter a valid website URL';
         isValid = false;
       }
     }
-    
+
     // Address validation for step 1
     if (activeStep === 1) {
       // Validate at least one address exists
@@ -347,7 +347,7 @@ export const AddVendorPage = () => {
               isValid = false;
             }
           }
-          
+
           // State validation (REQUIRED)
           if (!address.state.trim()) {
             newErrors[`address_${index}_state`] = 'State is required';
@@ -358,7 +358,7 @@ export const AddVendorPage = () => {
               isValid = false;
             }
           }
-          
+
           // City validation (REQUIRED)
           if (!address.city.trim()) {
             newErrors[`address_${index}_city`] = 'City is required';
@@ -369,13 +369,13 @@ export const AddVendorPage = () => {
               isValid = false;
             }
           }
-          
+
           // Address Line1 validation (REQUIRED)
           if (!address.addressLine1.trim()) {
             newErrors[`address_${index}_addressLine1`] = 'Address Line 1 is required';
             isValid = false;
           }
-          
+
           // Pincode validation (optional - only validate format if provided)
           if (address.pincode.trim()) {
             const pincodeRegex = /^[0-9]{6}$/;
@@ -387,7 +387,7 @@ export const AddVendorPage = () => {
         });
       }
     }
-    
+
     // Bank Details validation for step 2 (all optional - no red asterisks)
     if (activeStep === 2) {
       // Only validate format if provided
@@ -395,7 +395,7 @@ export const AddVendorPage = () => {
         newErrors.accountNumber = 'Please enter a valid account number (9-18 digits)';
         isValid = false;
       }
-      
+
       if (formData.ifscCode.trim()) {
         const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
         if (!ifscRegex.test(formData.ifscCode.trim().toUpperCase())) {
@@ -404,7 +404,7 @@ export const AddVendorPage = () => {
         }
       }
     }
-    
+
     // Contact Person validation for step 3
     if (activeStep === 3) {
       contactPersons.forEach((contact, index) => {
@@ -413,13 +413,13 @@ export const AddVendorPage = () => {
           newErrors[`contact_${index}_firstName`] = 'First name is required';
           isValid = false;
         }
-        
+
         // Last name validation (REQUIRED - has red asterisk)
         if (!contact.lastName.trim()) {
           newErrors[`contact_${index}_lastName`] = 'Last name is required';
           isValid = false;
         }
-        
+
         // Primary email validation (REQUIRED - has red asterisk)
         if (!contact.primaryEmail.trim()) {
           newErrors[`contact_${index}_primaryEmail`] = 'Primary email is required';
@@ -428,18 +428,18 @@ export const AddVendorPage = () => {
           newErrors[`contact_${index}_primaryEmail`] = 'Please enter a valid email address';
           isValid = false;
         }
-        
+
         // Optional fields - only validate format if provided
         if (contact.primaryMobile.trim() && !phoneRegex.test(contact.primaryMobile.trim())) {
           newErrors[`contact_${index}_primaryMobile`] = 'Please enter a valid 10-digit mobile number';
           isValid = false;
         }
-        
+
         if (contact.secondaryMobile.trim() && !phoneRegex.test(contact.secondaryMobile.trim())) {
           newErrors[`contact_${index}_secondaryMobile`] = 'Please enter a valid 10-digit mobile number';
           isValid = false;
         }
-        
+
         if (contact.secondaryEmail.trim() && !/\S+@\S+\.\S+/.test(contact.secondaryEmail)) {
           newErrors[`contact_${index}_secondaryEmail`] = 'Please enter a valid email address';
           isValid = false;
@@ -457,7 +457,7 @@ export const AddVendorPage = () => {
       toast.error("Please fill all required fields before submitting.");
       return;
     }
-    
+
     setIsSubmitting(true);
 
     const apiFormData = new FormData();
@@ -483,23 +483,24 @@ export const AddVendorPage = () => {
 
     // Other Details: Primary GST Details - Add with conditional logic
     if (formData.gstTreatment) {
+      apiFormData.append('pms_supplier[gst_preference]', formData.gstTreatment);
       apiFormData.append('pms_supplier[primary_gst_detail_attributes][gst_preference]', formData.gstTreatment);
       apiFormData.append('pms_supplier[primary_gst_detail_attributes][gstin]', formData.gstin || '');
-      
+
       // Business Legal Name - show only for registered regular/composition
       if (formData.gstTreatment === 'registered_regular' || formData.gstTreatment === 'registered_composition') {
         apiFormData.append('pms_supplier[primary_gst_detail_attributes][business_legal_name]', formData.businessLegalName || '');
       } else {
         apiFormData.append('pms_supplier[primary_gst_detail_attributes][business_legal_name]', '');
       }
-      
+
       // Business Trade Name - show only for registered regular/composition
       if (formData.gstTreatment === 'registered_regular' || formData.gstTreatment === 'registered_composition') {
         apiFormData.append('pms_supplier[primary_gst_detail_attributes][business_trade_name]', formData.businessTradeName || '');
       } else {
         apiFormData.append('pms_supplier[primary_gst_detail_attributes][business_trade_name]', '');
       }
-      
+
       // Place of Supply - hide only for overseas
       if (formData.gstTreatment !== 'overseas') {
         apiFormData.append('pms_supplier[primary_gst_detail_attributes][place_of_supply]', formData.placeOfSupply || '');
@@ -507,19 +508,19 @@ export const AddVendorPage = () => {
         apiFormData.append('pms_supplier[primary_gst_detail_attributes][place_of_supply]', '');
       }
     }
-    
+
     // PAN - Send as separate field
     apiFormData.append('pms_supplier[pan_number]', formData.pan || '');
 
-    // Step 1: Addresses - Send addresses array with correct nested structure
     formData.addresses.forEach((address: any, index: number) => {
-      apiFormData.append(`pms_supplier[addresses][${index}][address]`, address.addressLine1 || '');
-      apiFormData.append(`pms_supplier[addresses][${index}][address_type]`, address.addressType || 'billing');
-      apiFormData.append(`pms_supplier[addresses][${index}][country]`, address.country || '');
-      apiFormData.append(`pms_supplier[addresses][${index}][state]`, address.state || '');
-      apiFormData.append(`pms_supplier[addresses][${index}][city]`, address.city || '');
-      apiFormData.append(`pms_supplier[addresses][${index}][pin_code]`, address.pincode || '');
-      apiFormData.append(`pms_supplier[addresses][${index}][address_line_two]`, address.addressLine2 || '');
+      apiFormData.append(`pms_supplier[addresses_attributes][${index}][address]`, address.addressLine1 || '');
+      apiFormData.append(`pms_supplier[addresses_attributes][${index}][address_type]`, address.addressType || 'billing');
+      apiFormData.append(`pms_supplier[addresses_attributes][${index}][country]`, address.country || '');
+      apiFormData.append(`pms_supplier[addresses_attributes][${index}][state]`, address.state || '');
+      apiFormData.append(`pms_supplier[addresses_attributes][${index}][city]`, address.city || '');
+      apiFormData.append(`pms_supplier[addresses_attributes][${index}][pin_code]`, address.pincode || '');
+      apiFormData.append(`pms_supplier[addresses_attributes][${index}][address_line_two]`, address.addressLine2 || '');
+      apiFormData.append(`pms_supplier[addresses_attributes][${index}][default_address]`, 'true');
     });
 
     // Step 2: Bank Details - Send all fields
@@ -578,21 +579,21 @@ export const AddVendorPage = () => {
       // Handle 422 Unprocessable Entity (validation errors)
       if (error.status === 422 && error.validationErrors) {
         const validationErrors = error.validationErrors;
-        
+
         // Check which step the errors belong to and navigate accordingly
         const companyInfoFields = ['company_name', 'email', 'mobile1', 'mobile2', 'pan_number', 'gstin_number'];
         const addressFields = ['country', 'state', 'city', 'pincode', 'address', 'address2'];
         const bankFields = ['account_name', 'account_number', 'bank_branch_name', 'ifsc_code'];
-        
+
         // Set validation errors in the form
         const formErrors: any = {};
         let targetStep = activeStep; // Default to current step
-        
+
         Object.keys(validationErrors).forEach(field => {
-          const errorMessage = Array.isArray(validationErrors[field]) 
-            ? validationErrors[field].join(', ') 
+          const errorMessage = Array.isArray(validationErrors[field])
+            ? validationErrors[field].join(', ')
             : validationErrors[field];
-            
+
           // Map API field names to form field names
           const fieldMapping: { [key: string]: string } = {
             'company_name': 'companyName',
@@ -607,10 +608,10 @@ export const AddVendorPage = () => {
             'ifsc_code': 'ifscCode',
             'account_name': 'accountName'
           };
-          
+
           const formFieldName = fieldMapping[field] || field;
           formErrors[formFieldName] = errorMessage;
-          
+
           // Determine which step to navigate to
           if (companyInfoFields.includes(field)) {
             targetStep = 0; // Company Information step
@@ -620,16 +621,16 @@ export const AddVendorPage = () => {
             targetStep = 2; // Bank Details step
           }
         });
-        
+
         // Set the errors and navigate to the appropriate step
         setErrors(formErrors);
         setActiveStep(targetStep);
-        
+
         // Show error toast with the validation message
         const firstError = Object.values(validationErrors)[0];
         const errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
         toast.error(errorMessage || 'Please check the form for errors');
-        
+
       } else {
         // Handle other errors
         toast.error('Failed to create vendor. Please try again.');
@@ -740,49 +741,49 @@ export const AddVendorPage = () => {
       case 0:
         return (
           <>
-          <SectionCard>
-            <SectionHeader>
-              <Building className="text-[#C72030]" />
-              <SectionTitle>COMPANY INFORMATION</SectionTitle>
-            </SectionHeader>
-            <Box p={3}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <TextField
-                  label={<span>Company Name <span style={{ color: 'red' }}>*</span></span>}
-                  fullWidth
-                  value={formData.companyName}
-                  onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                  error={!!errors.companyName}
-                  helperText={errors.companyName}
-                />
-                <TextField
-                  label="Primary Phone No."
-                  type='numeric'
-                  fullWidth
-                  value={formData.primaryPhone}
-                  onChange={(e) => setFormData({ ...formData, primaryPhone: e.target.value })}
-                  error={!!errors.primaryPhone}
-                  helperText={errors.primaryPhone}
-                />
-                <TextField
-                  label="Secondary Phone No."
-                  fullWidth
-                  value={formData.secondaryPhone}
-                  onChange={(e) => setFormData({ ...formData, secondaryPhone: e.target.value })}
-                  error={!!errors.secondaryPhone}
-                  helperText={errors.secondaryPhone}
-                />
-                <TextField
-                  label={<span>Email <span style={{ color: 'red' }}>*</span></span>}
-                  type="email"
-                  fullWidth
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  error={!!errors.email}
-                  helperText={errors.email}
-                />
-                {/* GST and PAN moved to Other Details section */}
-                {/* <TextField
+            <SectionCard>
+              <SectionHeader>
+                <Building className="text-[#C72030]" />
+                <SectionTitle>COMPANY INFORMATION</SectionTitle>
+              </SectionHeader>
+              <Box p={3}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  <TextField
+                    label={<span>Company Name <span style={{ color: 'red' }}>*</span></span>}
+                    fullWidth
+                    value={formData.companyName}
+                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                    error={!!errors.companyName}
+                    helperText={errors.companyName}
+                  />
+                  <TextField
+                    label="Primary Phone No."
+                    type='numeric'
+                    fullWidth
+                    value={formData.primaryPhone}
+                    onChange={(e) => setFormData({ ...formData, primaryPhone: e.target.value })}
+                    error={!!errors.primaryPhone}
+                    helperText={errors.primaryPhone}
+                  />
+                  <TextField
+                    label="Secondary Phone No."
+                    fullWidth
+                    value={formData.secondaryPhone}
+                    onChange={(e) => setFormData({ ...formData, secondaryPhone: e.target.value })}
+                    error={!!errors.secondaryPhone}
+                    helperText={errors.secondaryPhone}
+                  />
+                  <TextField
+                    label={<span>Email <span style={{ color: 'red' }}>*</span></span>}
+                    type="email"
+                    fullWidth
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    error={!!errors.email}
+                    helperText={errors.email}
+                  />
+                  {/* GST and PAN moved to Other Details section */}
+                  {/* <TextField
                   label="PAN"
                   fullWidth
                   value={formData.pan}
@@ -800,212 +801,212 @@ export const AddVendorPage = () => {
                   helperText={errors.gst}
                   placeholder="22AAAAA0000A1Z5"
                 /> */}
-                <TextField
-                  label="Supplier Type"
-                  select
-                  fullWidth
-                  value={formData.supplierType}
-                  onChange={(e) => setFormData({ ...formData, supplierType: e.target.value })}
-                  disabled={loading.suppliers}
-                  InputProps={{
-                    endAdornment: loading.suppliers ? <CircularProgress size={20} /> : null,
-                  }}
-                >
-                  {loading.suppliers ? (
-                    <MenuItem value="">Loading...</MenuItem>
-                  ) : (
-                    suppliers.map((supplier: any) => (
-                      <MenuItem key={supplier.id} value={supplier.id}>
-                        {supplier.name}
-                      </MenuItem>
-                    ))
-                  )}
-                </TextField>
-                <TextField
-                  label="Website Url"
-                  fullWidth
-                  value={formData.websiteUrl}
-                  onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
-                  error={!!errors.websiteUrl}
-                  helperText={errors.websiteUrl}
-                  placeholder="https://example.com"
-                />
-                <TextField
-                  label={
-                    <span>
-                      Date
-                    </span>
-                  }
-                  type="date"
-                  fullWidth
-                  variant="outlined"
-                  value={formData.date}
-                  onChange={(date) => setFormData({ ...formData, date })}
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  placeholder="Select Date"
-                  inputProps={{
-                    max: formData.date || undefined,
-                  }}
-                />
-                <TextField
-                  label="Services"
-                  select
-                  fullWidth
-                  value={formData.services}
-                  onChange={(e) => setFormData({ ...formData, services: e.target.value })}
-                  disabled={loading.services}
-                  InputProps={{
-                    endAdornment: loading.services ? <CircularProgress size={20} /> : null,
-                  }}
-                >
-                  {loading.services ? (
-                    <MenuItem value="">Loading...</MenuItem>
-                  ) : (
-                    services.map((service: any) => (
-                      <MenuItem key={service.id} value={service.id}>
-                        {service.name}
-                      </MenuItem>
-                    ))
-                  )}
-                </TextField>
+                  <TextField
+                    label="Supplier Type"
+                    select
+                    fullWidth
+                    value={formData.supplierType}
+                    onChange={(e) => setFormData({ ...formData, supplierType: e.target.value })}
+                    disabled={loading.suppliers}
+                    InputProps={{
+                      endAdornment: loading.suppliers ? <CircularProgress size={20} /> : null,
+                    }}
+                  >
+                    {loading.suppliers ? (
+                      <MenuItem value="">Loading...</MenuItem>
+                    ) : (
+                      suppliers.map((supplier: any) => (
+                        <MenuItem key={supplier.id} value={supplier.id}>
+                          {supplier.name}
+                        </MenuItem>
+                      ))
+                    )}
+                  </TextField>
+                  <TextField
+                    label="Website Url"
+                    fullWidth
+                    value={formData.websiteUrl}
+                    onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                    error={!!errors.websiteUrl}
+                    helperText={errors.websiteUrl}
+                    placeholder="https://example.com"
+                  />
+                  <TextField
+                    label={
+                      <span>
+                        Date
+                      </span>
+                    }
+                    type="date"
+                    fullWidth
+                    variant="outlined"
+                    value={formData.date}
+                    onChange={(date) => setFormData({ ...formData, date })}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    placeholder="Select Date"
+                    inputProps={{
+                      max: formData.date || undefined,
+                    }}
+                  />
+                  <TextField
+                    label="Services"
+                    select
+                    fullWidth
+                    value={formData.services}
+                    onChange={(e) => setFormData({ ...formData, services: e.target.value })}
+                    disabled={loading.services}
+                    InputProps={{
+                      endAdornment: loading.services ? <CircularProgress size={20} /> : null,
+                    }}
+                  >
+                    {loading.services ? (
+                      <MenuItem value="">Loading...</MenuItem>
+                    ) : (
+                      services.map((service: any) => (
+                        <MenuItem key={service.id} value={service.id}>
+                          {service.name}
+                        </MenuItem>
+                      ))
+                    )}
+                  </TextField>
                   <div className="col-span-1 md:col-span-2 lg:col-span-3">
-                  <div className="relative w-full">
-                    <textarea
-                      id="serviceDescription"
-                      value={formData.serviceDescription}
-                      onChange={(e) => setFormData({ ...formData, serviceDescription: e.target.value })}
-                      rows={3}
-                      placeholder=" "
-                      className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
+                    <div className="relative w-full">
+                      <textarea
+                        id="serviceDescription"
+                        value={formData.serviceDescription}
+                        onChange={(e) => setFormData({ ...formData, serviceDescription: e.target.value })}
+                        rows={3}
+                        placeholder=" "
+                        className="peer block w-full appearance-none rounded border border-gray-300 bg-white px-3 pt-6 pb-2 text-base text-gray-900 placeholder-transparent 
             focus:outline-none 
             focus:border-[2px] 
             focus:border-[rgb(25,118,210)] 
             resize-vertical"
-                    />
-                    <label
-                      htmlFor="serviceDescription"
-                      className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
+                      />
+                      <label
+                        htmlFor="serviceDescription"
+                        className="absolute left-3 -top-[10px] bg-white px-1 text-sm text-gray-500 z-[1] transition-all duration-200
             peer-placeholder-shown:top-4
             peer-placeholder-shown:text-base
             peer-placeholder-shown:text-gray-400
             peer-focus:-top-[10px]
             peer-focus:text-sm
             peer-focus:text-[rgb(25,118,210)]"
-                    >
-                      Service Description
-                    </label>
+                      >
+                        Service Description
+                      </label>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Box>
-          </SectionCard>
-          <SectionCard>
-            <SectionHeader>
-              <Landmark className="text-[#C72030]" />
-              <SectionTitle>OTHER DETAILS</SectionTitle>
-            </SectionHeader>
-            <Box p={3}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                {/* GST Treatment - Dropdown */}
-                <TextField
-                  label={<span>GST Treatment <span style={{ color: 'red' }}>*</span></span>}
-                  select
-                  fullWidth
-                  value={formData.gstTreatment}
-                  onChange={(e) => setFormData({ ...formData, gstTreatment: e.target.value })}
-                  error={!!errors.gstTreatment}
-                  helperText={errors.gstTreatment}
-                >
-                  <MenuItem value="">Select GST Treatment</MenuItem>
-                  <MenuItem value="registered_regular">Registered Business – Regular</MenuItem>
-                  <MenuItem value="registered_composition">Registered Business – Composition</MenuItem>
-                  <MenuItem value="unregistered">Unregistered Business</MenuItem>
-                  <MenuItem value="consumer">Consumer</MenuItem>
-                  <MenuItem value="overseas">Overseas</MenuItem>
-                  <MenuItem value="sez_unit">Special Economic Zone (SEZ) Unit</MenuItem>
-                  <MenuItem value="deemed_export">Deemed Export</MenuItem>
-                  <MenuItem value="tax_deductor">Tax Deductor</MenuItem>
-                  <MenuItem value="sez_developer">SEZ Developer</MenuItem>
-                  <MenuItem value="isd">Input Service Distributor (ISD)</MenuItem>
-                </TextField>
-
-                {/* Conditionally render fields based on GST Treatment */}
-                {(formData.gstTreatment === 'registered_regular' || 
-                  formData.gstTreatment === 'registered_composition') && (
-                  <>
-                    {/* GSTIN / UIN */}
-                    <TextField
-                      label="GSTIN / UIN"
-                      fullWidth
-                      value={formData.gstin}
-                      onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
-                      error={!!errors.gstin}
-                      helperText={errors.gstin || (formData.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(formData.gstin) ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5' : '')}
-                      placeholder="Enter 15 digit GSTIN"
-                      inputProps={{ maxLength: 15, style: { textTransform: 'uppercase' } }}
-                    />
-
-                    {/* Business Legal Name */}
-                    <TextField
-                      label="Business Legal Name"
-                      fullWidth
-                      value={formData.businessLegalName}
-                      onChange={(e) => setFormData({ ...formData, businessLegalName: e.target.value })}
-                      error={!!errors.businessLegalName}
-                      helperText={errors.businessLegalName}
-                    />
-
-                    {/* Business Trade Name */}
-                    <TextField
-                      label="Business Trade Name"
-                      fullWidth
-                      value={formData.businessTradeName}
-                      onChange={(e) => setFormData({ ...formData, businessTradeName: e.target.value })}
-                      error={!!errors.businessTradeName}
-                      helperText={errors.businessTradeName}
-                    />
-                  </>
-                )}
-
-                {/* Place of Supply - shown for all GST types except overseas */}
-                {formData.gstTreatment !== 'overseas' && formData.gstTreatment && (
+              </Box>
+            </SectionCard>
+            <SectionCard>
+              <SectionHeader>
+                <Landmark className="text-[#C72030]" />
+                <SectionTitle>OTHER DETAILS</SectionTitle>
+              </SectionHeader>
+              <Box p={3}>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                  {/* GST Treatment - Dropdown */}
                   <TextField
-                    label="Place of Supply"
+                    label={<span>GST Treatment <span style={{ color: 'red' }}>*</span></span>}
                     select
                     fullWidth
-                    value={formData.placeOfSupply}
-                    onChange={(e) => setFormData({ ...formData, placeOfSupply: e.target.value })}
-                    error={!!errors.placeOfSupply}
-                    helperText={errors.placeOfSupply}
+                    value={formData.gstTreatment}
+                    onChange={(e) => setFormData({ ...formData, gstTreatment: e.target.value })}
+                    error={!!errors.gstTreatment}
+                    helperText={errors.gstTreatment}
                   >
-                    <MenuItem value="">Select State</MenuItem>
-                    <MenuItem value="Maharashtra">Maharashtra</MenuItem>
-                    <MenuItem value="Karnataka">Karnataka</MenuItem>
-                    <MenuItem value="Delhi">Delhi</MenuItem>
-                    <MenuItem value="Tamil Nadu">Tamil Nadu</MenuItem>
-                    <MenuItem value="Telangana">Telangana</MenuItem>
-                    <MenuItem value="Uttar Pradesh">Uttar Pradesh</MenuItem>
-                    <MenuItem value="Gujarat">Gujarat</MenuItem>
-                    <MenuItem value="West Bengal">West Bengal</MenuItem>
-                    <MenuItem value="Punjab">Punjab</MenuItem>
-                    <MenuItem value="Rajasthan">Rajasthan</MenuItem>
+                    <MenuItem value="">Select GST Treatment</MenuItem>
+                    <MenuItem value="registered_regular">Registered Business – Regular</MenuItem>
+                    <MenuItem value="registered_composition">Registered Business – Composition</MenuItem>
+                    <MenuItem value="unregistered">Unregistered Business</MenuItem>
+                    <MenuItem value="consumer">Consumer</MenuItem>
+                    <MenuItem value="overseas">Overseas</MenuItem>
+                    <MenuItem value="sez_unit">Special Economic Zone (SEZ) Unit</MenuItem>
+                    <MenuItem value="deemed_export">Deemed Export</MenuItem>
+                    <MenuItem value="tax_deductor">Tax Deductor</MenuItem>
+                    <MenuItem value="sez_developer">SEZ Developer</MenuItem>
+                    <MenuItem value="isd">Input Service Distributor (ISD)</MenuItem>
                   </TextField>
-                )}
 
-                {/* PAN - Always shown */}
-                <TextField
-                  label="PAN"
-                  fullWidth
-                  value={formData.pan}
-                  onChange={(e) => setFormData({ ...formData, pan: e.target.value.toUpperCase() })}
-                  error={!!errors.pan}
-                  helperText={errors.pan}
-                  placeholder="ABCDE1234F"
-                />
-              </div>
-            </Box>
-          </SectionCard>
+                  {/* Conditionally render fields based on GST Treatment */}
+                  {(formData.gstTreatment === 'registered_regular' ||
+                    formData.gstTreatment === 'registered_composition') && (
+                      <>
+                        {/* GSTIN / UIN */}
+                        <TextField
+                          label="GSTIN / UIN"
+                          fullWidth
+                          value={formData.gstin}
+                          onChange={(e) => setFormData({ ...formData, gstin: e.target.value.toUpperCase() })}
+                          error={!!errors.gstin}
+                          helperText={errors.gstin || (formData.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(formData.gstin) ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5' : '')}
+                          placeholder="Enter 15 digit GSTIN"
+                          inputProps={{ maxLength: 15, style: { textTransform: 'uppercase' } }}
+                        />
+
+                        {/* Business Legal Name */}
+                        <TextField
+                          label="Business Legal Name"
+                          fullWidth
+                          value={formData.businessLegalName}
+                          onChange={(e) => setFormData({ ...formData, businessLegalName: e.target.value })}
+                          error={!!errors.businessLegalName}
+                          helperText={errors.businessLegalName}
+                        />
+
+                        {/* Business Trade Name */}
+                        <TextField
+                          label="Business Trade Name"
+                          fullWidth
+                          value={formData.businessTradeName}
+                          onChange={(e) => setFormData({ ...formData, businessTradeName: e.target.value })}
+                          error={!!errors.businessTradeName}
+                          helperText={errors.businessTradeName}
+                        />
+                      </>
+                    )}
+
+                  {/* Place of Supply - shown for all GST types except overseas */}
+                  {formData.gstTreatment !== 'overseas' && formData.gstTreatment && (
+                    <TextField
+                      label="Place of Supply"
+                      select
+                      fullWidth
+                      value={formData.placeOfSupply}
+                      onChange={(e) => setFormData({ ...formData, placeOfSupply: e.target.value })}
+                      error={!!errors.placeOfSupply}
+                      helperText={errors.placeOfSupply}
+                    >
+                      <MenuItem value="">Select State</MenuItem>
+                      <MenuItem value="Maharashtra">Maharashtra</MenuItem>
+                      <MenuItem value="Karnataka">Karnataka</MenuItem>
+                      <MenuItem value="Delhi">Delhi</MenuItem>
+                      <MenuItem value="Tamil Nadu">Tamil Nadu</MenuItem>
+                      <MenuItem value="Telangana">Telangana</MenuItem>
+                      <MenuItem value="Uttar Pradesh">Uttar Pradesh</MenuItem>
+                      <MenuItem value="Gujarat">Gujarat</MenuItem>
+                      <MenuItem value="West Bengal">West Bengal</MenuItem>
+                      <MenuItem value="Punjab">Punjab</MenuItem>
+                      <MenuItem value="Rajasthan">Rajasthan</MenuItem>
+                    </TextField>
+                  )}
+
+                  {/* PAN - Always shown */}
+                  <TextField
+                    label="PAN"
+                    fullWidth
+                    value={formData.pan}
+                    onChange={(e) => setFormData({ ...formData, pan: e.target.value.toUpperCase() })}
+                    error={!!errors.pan}
+                    helperText={errors.pan}
+                    placeholder="ABCDE1234F"
+                  />
+                </div>
+              </Box>
+            </SectionCard>
           </>
         );
       case 1:
@@ -1234,7 +1235,7 @@ export const AddVendorPage = () => {
                       </Button>
                     )}
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {errors[`contact_${index}_general`] && (
                       <div className="col-span-full">
