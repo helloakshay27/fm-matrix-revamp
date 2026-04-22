@@ -20,7 +20,7 @@ export const customerPostPossessionData: ProductData = {
     "A comprehensive post-handover ecosystem covering safety, community living, and facility management with 130+ features and a specialized white-label + data-sovereign architecture.",
   brief:
     "Post Possession is an enterprise-grade resident engagement and facility management platform designed for mid-to-large residential developers in India and the GCC. It enables developers to stay connected with their homebuyers long after the keys are handed over, turning a cost-heavy period into a value-driven relationship channel through a developer-branded, white-labeled mobile app.",
-  
+
   // Tab configuration
   tabOrder: [
     "summary",
@@ -88,6 +88,7 @@ const CustomerPostPossessionPage: React.FC = () => {
   return (
     <BaseProductPage
       productData={customerPostPossessionData}
+      tabsVariant="snag360"
       customTabContent={{
         summary: <PostPossessionSummaryTab />,
         features: <PostPossessionFeaturesTab />,

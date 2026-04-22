@@ -182,17 +182,19 @@ const PostPossessionGTMTab: React.FC = () => {
           const isIndia = tg.title.includes("INDIAN");
           const isGCC = tg.title.includes("GCC");
 
-          const groupColor = isIndia
-            ? "border-l-[#1a237e]"
-            : isGCC
-              ? "border-l-[#1b5e20]"
-              : "border-l-[#b71c1c]";
+          // const groupColor = isIndia
+          //   ? "border-l-[#DA7756]"
+          //   : isGCC
+          //     ? "border-l-[#1b5e20]"
+          //     : "border-l-[#b71c1c]";
+          const groupColor = "border-l-[#DA7756]"
 
-          const groupHeaderBg = isIndia
-            ? "bg-[#1a237e]"
-            : isGCC
-              ? "bg-[#1b5e20]"
-              : "bg-[#b71c1c]";
+          // const groupHeaderBg = isIndia
+          //   ? "bg-[#F6F4EE]"
+          //   : isGCC
+          //     ? "bg-[#1b5e20]"
+          //     : "bg-[#b71c1c]";
+          const groupHeaderBg = "bg-[#F6F4EE]"
 
           return (
             <div key={idx} className={`border-l-4 ${groupColor} bg-white rounded-r-xl shadow-sm overflow-hidden`}>
@@ -210,7 +212,7 @@ const PostPossessionGTMTab: React.FC = () => {
                   <div className="overflow-hidden border border-gray-100 rounded-lg">
                     <table className="w-full text-[12px] leading-relaxed">
                       <thead>
-                        <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[10px] border-b border-gray-100 italic">
+                        <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px] border-b border-gray-100 italic">
                           <th className="p-3 text-left border-r border-[#D3D1C7] w-[20%]">Sales Element</th>
                           <th className="p-3 text-left w-[80%]">Details</th>
                         </tr>
@@ -236,7 +238,7 @@ const PostPossessionGTMTab: React.FC = () => {
                   <div className="overflow-hidden border border-gray-100 rounded-lg">
                     <table className="w-full text-[12px] leading-relaxed">
                       <thead>
-                        <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[10px] border-b border-gray-100">
+                        <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px] border-b border-gray-100">
                           {tg.marketingChannels.columns.map((col, cIdx) => (
                             <th key={cIdx} className="p-3 text-left border-r border-gray-100 last:border-0">{col}</th>
                           ))}
@@ -264,7 +266,7 @@ const PostPossessionGTMTab: React.FC = () => {
                   <div className="overflow-x-auto border border-gray-100 rounded-lg">
                     <table className="w-full text-[11px] leading-relaxed min-w-[800px]">
                       <thead>
-                        <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-gray-100 italic">
+                        <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-gray-100 italic">
                           {tg.launchSequence.columns.map((col, cIdx) => (
                             <th key={cIdx} className="p-2 text-left border-r border-[#D3D1C7] last:border-0">{col}</th>
                           ))}
@@ -292,7 +294,7 @@ const PostPossessionGTMTab: React.FC = () => {
                   <div className="overflow-hidden border border-gray-100 rounded-lg">
                     <table className="w-full text-[11px] leading-relaxed">
                       <thead>
-                        <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-gray-100 italic">
+                        <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-gray-100 italic">
                           {tg.partnershipStrategy.columns.map((col, cIdx) => (
                             <th key={cIdx} className="p-2 text-left border-r border-[#D3D1C7] last:border-0">{col}</th>
                           ))}
@@ -350,3 +352,4 @@ const PostPossessionGTMTab: React.FC = () => {
 };
 
 export default PostPossessionGTMTab;
+

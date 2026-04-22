@@ -3,8 +3,8 @@ import React from 'react';
 const PostPossessionFeaturesTab: React.FC = () => {
   const styles: Record<string, React.CSSProperties> = {
     "s11": {
-      "borderBottom": "1px solid #d9d9d9",
-      "backgroundColor": "#d9e2f3",
+      "borderBottom": "1px solid #C4B89D/50",
+      "backgroundColor": "#F6F4EE",
       "textAlign": "left",
       "fontWeight": "bold",
       "color": "#1f1f1f",
@@ -17,9 +17,9 @@ const PostPossessionFeaturesTab: React.FC = () => {
       "padding": "0px 3px 0px 3px"
     },
     "s6": {
-      "borderBottom": "1px solid #d9d9d9",
-      "borderRight": "1px solid #d9d9d9",
-      "backgroundColor": "#d9e2f3",
+      "borderBottom": "1px solid #C4B89D/50",
+      "borderRight": "1px solid #C4B89D/50",
+      "backgroundColor": "#F6F4EE",
       "textAlign": "center",
       "fontWeight": "bold",
       "color": "#1f1f1f",
@@ -30,7 +30,7 @@ const PostPossessionFeaturesTab: React.FC = () => {
       "padding": "0px 3px 0px 3px"
     },
     "s2": {
-      "backgroundColor": "#1f3864",
+      "backgroundColor": "#DA7756",
       "textAlign": "left",
       "fontWeight": "bold",
       "color": "#ffffff",
@@ -53,9 +53,9 @@ const PostPossessionFeaturesTab: React.FC = () => {
       "padding": "0px 3px 0px 3px"
     },
     "s7": {
-      "borderBottom": "1px solid #d9d9d9",
-      "borderRight": "1px solid #d9d9d9",
-      "backgroundColor": "#ddebf7",
+      "borderBottom": "1px solid #C4B89D/50",
+      "borderRight": "1px solid #C4B89D/50",
+      "backgroundColor": "#F6F4EE",
       "textAlign": "left",
       "color": "#1f1f1f",
       "fontFamily": "Arial,Arial",
@@ -68,7 +68,7 @@ const PostPossessionFeaturesTab: React.FC = () => {
     },
     "s1": {
       "borderLeft": "none",
-      "backgroundColor": "#1f3864",
+      "backgroundColor": "#DA7756",
       "textAlign": "left",
       "fontWeight": "bold",
       "color": "#ffffff",
@@ -80,7 +80,7 @@ const PostPossessionFeaturesTab: React.FC = () => {
     },
     "s0": {
       "borderRight": "none",
-      "backgroundColor": "#1f3864",
+      "backgroundColor": "#DA7756",
       "textAlign": "left",
       "fontWeight": "bold",
       "color": "#ffffff",
@@ -92,7 +92,7 @@ const PostPossessionFeaturesTab: React.FC = () => {
     },
     "s3": {
       "borderRight": "1px solid #000000",
-      "backgroundColor": "#1f3864",
+      "backgroundColor": "#DA7756",
       "textAlign": "left",
       "fontWeight": "bold",
       "color": "#ffffff",
@@ -103,12 +103,12 @@ const PostPossessionFeaturesTab: React.FC = () => {
       "padding": "0px 3px 0px 3px"
     },
     "s8": {
-      "borderBottom": "1px solid #d9d9d9",
-      "borderRight": "1px solid #d9d9d9",
-      "backgroundColor": "#ddebf7",
+      "borderBottom": "1px solid #C4B89D/50",
+      "borderRight": "1px solid #C4B89D/50",
+      "backgroundColor": "#F6F4EE",
       "textAlign": "left",
       "fontWeight": "bold",
-      "color": "#1f4e78",
+      "color": "#DA7756",
       "fontFamily": "Arial,Arial",
       "fontSize": "10pt",
       "verticalAlign": "middle",
@@ -118,8 +118,8 @@ const PostPossessionFeaturesTab: React.FC = () => {
       "padding": "0px 3px 0px 3px"
     },
     "s4": {
-      "borderBottom": "1px solid #d9d9d9",
-      "backgroundColor": "#d9e2f3",
+      "borderBottom": "1px solid #C4B89D/50",
+      "backgroundColor": "#F6F4EE",
       "textAlign": "left",
       "fontWeight": "bold",
       "color": "#1f1f1f",
@@ -130,8 +130,8 @@ const PostPossessionFeaturesTab: React.FC = () => {
       "padding": "0px 3px 0px 3px"
     },
     "s9": {
-      "borderBottom": "1px solid #d9d9d9",
-      "borderRight": "1px solid #d9d9d9",
+      "borderBottom": "1px solid #C4B89D/50",
+      "borderRight": "1px solid #C4B89D/50",
       "backgroundColor": "#ffffff",
       "textAlign": "left",
       "color": "#1f1f1f",
@@ -144,9 +144,9 @@ const PostPossessionFeaturesTab: React.FC = () => {
       "padding": "0px 3px 0px 3px"
     },
     "s12": {
-      "borderBottom": "1px solid #d9d9d9",
-      "borderRight": "1px solid #d9d9d9",
-      "backgroundColor": "#d9e2f3",
+      "borderBottom": "1px solid #C4B89D/50",
+      "borderRight": "1px solid #C4B89D/50",
+      "backgroundColor": "#F6F4EE",
       "textAlign": "center",
       "fontWeight": "bold",
       "color": "#1f1f1f",
@@ -159,7 +159,7 @@ const PostPossessionFeaturesTab: React.FC = () => {
       "padding": "0px 3px 0px 3px"
     },
     "s13": {
-      "backgroundColor": "#d9e2f3",
+      "backgroundColor": "#F6F4EE",
       "textAlign": "left",
       "fontWeight": "bold",
       "color": "#1f1f1f",
@@ -172,7 +172,7 @@ const PostPossessionFeaturesTab: React.FC = () => {
       "padding": "0px 3px 0px 3px"
     },
     "s5": {
-      "backgroundColor": "#d9e2f3",
+      "backgroundColor": "#F6F4EE",
       "textAlign": "left",
       "fontWeight": "bold",
       "color": "#1f1f1f",
@@ -3304,3 +3304,4 @@ const PostPossessionFeaturesTab: React.FC = () => {
 };
 
 export default PostPossessionFeaturesTab;
+

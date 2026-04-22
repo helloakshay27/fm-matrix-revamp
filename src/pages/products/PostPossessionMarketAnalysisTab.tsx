@@ -12,12 +12,12 @@ const PostPossessionMarketAnalysisTab: React.FC = () => {
 
       {/* Part A: Target Audience */}
       <section className="space-y-4">
-        <div className="bg-[#2e4057] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
+        <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
           Part A — Target Audience (India, GCC, SE Asia, UK, US, Europe)
         </div>
         <div className="overflow-x-auto border border-[#D3D1C7] rounded-lg bg-white shadow-sm">
           <table className="w-full text-left text-[11px] leading-relaxed border-collapse">
-            <thead className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[10px]">
+            <thead className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px]">
               <tr>
                 <th className="p-3 border border-[#E5E7EB] w-[15%]">Audience Segment</th>
                 <th className="p-3 border border-[#E5E7EB] w-[15%]">Demographics</th>
@@ -36,7 +36,7 @@ const PostPossessionMarketAnalysisTab: React.FC = () => {
                   pains: "1. No standardised post-possession engagement channel.\n2. FM operations run on WhatsApp + Excel.\n3. Referral sales not formally tracked — high CP dependency.",
                   notSolved: "1. Lose 30-40% repeat buyer opportunity.\n2. FM compliance failures create legal liability.\n3. Every untracked referral costs ₹3–10L in commission.",
                   goodEnough: "MyGate for security + WhatsApp + Tally for billing + manual tasks.",
-                  tone: "bg-[#f2f2f2]"
+                  tone: "bg-[#F6F4EE]"
                 },
                 {
                   segment: "Mid-Market Indian Developers (500–5,000 units; Tier-1 and Tier-2 cities)",
@@ -54,7 +54,7 @@ const PostPossessionMarketAnalysisTab: React.FC = () => {
                   pains: "1. Fragmented PropTech landscape.\n2. Requires multi-language support (Arabic, English, Hindi).\n3. Regulatory compliance (RERA UAE, DLD) requires audit-ready docs.",
                   notSolved: "1. Non-compliance leading to fines and licence risk.\n2. 1-star reviews in luxury segment impact future sales.\n3. Missing referrals from high-net-worth residents.",
                   goodEnough: "Locally built portals; Yardi (large operators); no white-label community app.",
-                  tone: "bg-[#f2f2f2]"
+                  tone: "bg-[#F6F4EE]"
                 },
                 {
                   segment: "Southeast Asia (Singapore, Malaysia, Thailand, Vietnam)",
@@ -72,7 +72,7 @@ const PostPossessionMarketAnalysisTab: React.FC = () => {
                   pains: "1. Need resident platforms to compete with homeownership.\n2. Maintenance tools lack community engagement.\n3. GDPR compliance is non-negotiable.",
                   notSolved: "1. Resident retention below 80% = 3–5% revenue loss.\n2. GDPR breach risk = fine up to 4% of global turnover.\n3. Inability to cross-sell services (gym, parking).",
                   goodEnough: "Fixflo (maintenance) + Spike Living (community) + separate billing; fragmented stack.",
-                  tone: "bg-[#f2f2f2]"
+                  tone: "bg-[#F6F4EE]"
                 },
                 {
                   segment: "US Multifamily & HOA Operators",
@@ -85,7 +85,7 @@ const PostPossessionMarketAnalysisTab: React.FC = () => {
                 }
               ].map((item, idx) => (
                 <tr key={idx} className={item.tone}>
-                  <td className="p-3 border border-gray-200 font-bold text-[#1f3864]">{item.segment}</td>
+                  <td className="p-3 border border-gray-200 font-bold text-[#DA7756]">{item.segment}</td>
                   <td className="p-3 border border-gray-200 text-gray-700">{item.demo}</td>
                   <td className="p-3 border border-gray-200 font-medium">{item.industry}</td>
                   <td className="p-3 border border-gray-200 whitespace-pre-line">{item.pains}</td>
@@ -100,12 +100,12 @@ const PostPossessionMarketAnalysisTab: React.FC = () => {
 
       {/* Part B: Competitor Mapping */}
       <section className="space-y-4">
-        <div className="bg-[#2e4057] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
+        <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
           Part B — Competitor Mapping (Global Landscape)
         </div>
         <div className="overflow-x-auto border border-[#D3D1C7] rounded-lg bg-white shadow-sm">
           <table className="w-full text-left text-[11px] leading-relaxed border-collapse">
-            <thead className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[10px]">
+            <thead className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px]">
               <tr>
                 <th className="p-3 border border-[#E5E7EB] w-[12%]">Competitor</th>
                 <th className="p-3 border border-[#E5E7EB] w-[12%]">Target Customer</th>
@@ -128,7 +128,7 @@ const PostPossessionMarketAnalysisTab: React.FC = () => {
                   weakness: "No white-label; no developer loyalty; weak accounting; no data sovereignty",
                   opp: "Position as 'MyGate for developers who own their brand'. Target CRM teams needing referral modules.",
                   threat: "Consumer brand recognition; free tier makes switching cost very low",
-                  tone: "bg-[#f2f2f2]"
+                  tone: "bg-[#F6F4EE]"
                 },
                 {
                   name: "NoBrokerHood",
@@ -150,7 +150,7 @@ const PostPossessionMarketAnalysisTab: React.FC = () => {
                   weakness: "Not white-label; 6–18 month implementation; no community engagement",
                   opp: "Offer faster deployment (weeks), white-label branding, and better engagement.",
                   threat: "AI capabilities; market dominance in US BTR",
-                  tone: "bg-[#f2f2f2]"
+                  tone: "bg-[#F6F4EE]"
                 },
                 {
                   name: "Fixflo / Plentific",
@@ -172,7 +172,7 @@ const PostPossessionMarketAnalysisTab: React.FC = () => {
                   weakness: "US-only; no FM/ops; no security; no billing; no white-label",
                   opp: "Position as 'ops + engagement in one platform' vs their lifestyle-only niche.",
                   threat: "Consumer-grade design sets a very high UX bar",
-                  tone: "bg-[#f2f2f2]"
+                  tone: "bg-[#F6F4EE]"
                 },
                 {
                   name: "Building Link",
@@ -187,13 +187,13 @@ const PostPossessionMarketAnalysisTab: React.FC = () => {
                 }
               ].map((comp, i) => (
                 <tr key={i} className={`${comp.tone} hover:bg-indigo-50 transition-colors`}>
-                  <td className="p-3 border border-gray-200 font-bold uppercase text-[10px] text-[#2e4057]">{comp.name}</td>
+                  <td className="p-3 border border-gray-200 font-bold uppercase text-[10px] text-[#DA7756]">{comp.name}</td>
                   <td className="p-3 border border-gray-200">{comp.customer}</td>
                   <td className="p-3 border border-gray-200 font-medium">{comp.price}</td>
                   <td className="p-3 border border-gray-200 italic">{comp.discovery}</td>
                   <td className="p-3 border border-gray-200 text-gray-700">{comp.usp}</td>
                   <td className="p-3 border border-gray-200 text-red-700">{comp.weakness}</td>
-                  <td className="p-3 border border-gray-200 font-bold text-[#1f3864]">{comp.opp}</td>
+                  <td className="p-3 border border-gray-200 font-bold text-[#DA7756]">{comp.opp}</td>
                   <td className="p-3 border border-gray-200 italic text-gray-600">{comp.threat}</td>
                 </tr>
               ))}
@@ -206,3 +206,4 @@ const PostPossessionMarketAnalysisTab: React.FC = () => {
 };
 
 export default PostPossessionMarketAnalysisTab;
+
