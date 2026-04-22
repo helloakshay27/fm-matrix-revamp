@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import Axios from "axios";
-import { BookOpen, Plus, BarChart3, LineChart } from "lucide-react";
+import { BookOpen, Plus, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -2267,7 +2267,7 @@ const KPI = () => {
                 height: 48,
                 borderRadius: 999,
                 border: "2px solid #DA7756",
-                background: "rgba(218,119,86,0.10)",
+                background: "rgba(218,119,86,0.12)",
                 boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
                 display: "flex",
                 alignItems: "center",
@@ -2275,12 +2275,7 @@ const KPI = () => {
                 flexShrink: 0,
               }}
             >
-              <LineChart
-                size={24}
-                color={T.primary}
-                strokeWidth={2}
-                aria-hidden
-              />
+              <BarChart3 size={24} color={T.primary} strokeWidth={2} aria-hidden />
             </div>
             <div>
               <h1
