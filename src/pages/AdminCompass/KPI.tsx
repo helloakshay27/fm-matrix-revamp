@@ -2559,7 +2559,7 @@ const KPI = () => {
           className="w-full"
         >
           {/* Pill tabs — match Feedback.tsx */}
-          <TabsList className="inline-flex h-12 w-full items-center justify-start gap-2 rounded-full border border-[#DA7756]/20 bg-[#f6f4ee] px-2 shadow-sm sm:w-auto">
+          <TabsList className="inline-flex h-12 w-fit max-w-full items-center justify-start gap-2 overflow-x-auto rounded-full border border-[#DA7756]/20 bg-[#f6f4ee] px-2 shadow-sm">
             {tabs.map(({ name }) => (
               <TabsTrigger
                 key={name}
