@@ -104,7 +104,7 @@ const KPISettingsTab: React.FC<KPISettingsTabProps> = ({
     <div className="w-full">
       <div
         className={cn(
-          "rounded-xl p-6 shadow-sm sm:p-8",
+          "rounded-xl  p-6 shadow-sm ",
           kpiClass.borderSoft,
           kpiClass.surfaceCard
         )}

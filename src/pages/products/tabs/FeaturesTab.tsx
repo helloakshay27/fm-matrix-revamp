@@ -35,7 +35,7 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
 
   return (
     <>
-      <div className="bg-white text-gray-900 border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins uppercase tracking-tight">
           {productData.name} - Feature List
         </h2>
@@ -52,14 +52,14 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
 
       {productData.excelLikeFeatures ? (
         <div className="border border-[#D3D1C7] bg-white">
-          <div className="bg-white text-gray-800 border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+          <div className="bg-[#DA7756] text-white border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
             {productData.name} - Full Feature List
           </div>
           <div className="w-full">
             {hasDetailedFeatureSheet ? (
               <table className="w-full table-fixed border-collapse text-[13px] leading-relaxed font-poppins">
                 <thead>
-                  <tr className="bg-[#F6F4EE] text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
+                  <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#D3D1C7] font-semibold uppercase">
                     <th className="border border-[#E5E7EB] px-2 py-3 text-left w-[16%]">
                       Feature Name
                     </th>
@@ -127,7 +127,7 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
             ) : (
               <table className="w-full border-collapse text-[13px] leading-relaxed font-poppins table-fixed">
                 <thead>
-                  <tr className="bg-[#F6F4EE] text-gray-800 border-b border-[#D3D1C7] font-semibold uppercase">
+                  <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#D3D1C7] font-semibold uppercase">
                     <th className="border border-[#E5E7EB] p-3 text-center w-[5%]">
                       #
                     </th>
@@ -258,20 +258,20 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
                   {productData.extendedContent?.detailedFeatures?.some(
                     (f) => f.subFeatures !== ""
                   ) && (
-                    <th className="border border-[#D3D1C7] p-3 w-[20%] text-left">
-                      Sub-Features
-                    </th>
-                  )}
+                      <th className="border border-[#D3D1C7] p-3 w-[20%] text-left">
+                        Sub-Features
+                      </th>
+                    )}
                   <th className="border border-[#D3D1C7] p-3 text-left">
                     How It Currently Works
                   </th>
                   {productData.extendedContent?.detailedFeatures?.some(
                     (f) => f.userType !== "All" && f.userType !== ""
                   ) && (
-                    <th className="border border-[#D3D1C7] p-3 w-[10%]">
-                      User Type
-                    </th>
-                  )}
+                      <th className="border border-[#D3D1C7] p-3 w-[10%]">
+                        User Type
+                      </th>
+                    )}
                   <th className="border border-[#D3D1C7] p-3 w-[8%]">USP?</th>
                 </tr>
               </thead>
@@ -293,20 +293,20 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
                     {productData.extendedContent?.detailedFeatures?.some(
                       (ft) => ft.subFeatures !== ""
                     ) && (
-                      <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 leading-relaxed font-medium break-words whitespace-pre-line">
-                        {f.subFeatures}
-                      </td>
-                    )}
+                        <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 leading-relaxed font-medium break-words whitespace-pre-line">
+                          {f.subFeatures}
+                        </td>
+                      )}
                     <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/80 leading-relaxed italic break-words whitespace-pre-line">
                       {f.works}
                     </td>
                     {productData.extendedContent?.detailedFeatures?.some(
                       (ft) => ft.userType !== "All" && ft.userType !== ""
                     ) && (
-                      <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/60 font-semibold text-center uppercase tracking-tighter">
-                        {f.userType}
-                      </td>
-                    )}
+                        <td className="border border-[#D3D1C7] p-3 text-[#2C2C2C]/60 font-semibold text-center uppercase tracking-tighter">
+                          {f.userType}
+                        </td>
+                      )}
                     <td className="border border-[#D3D1C7] p-3 text-center">
                       {f.usp && (
                         <div className="flex items-center justify-center text-gray-700 text-sm">

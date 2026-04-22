@@ -1,5 +1,5 @@
-import { apiClient } from '@/utils/apiClient';
-import { ENDPOINTS } from '@/config/apiConfig';
+import { apiClient } from "@/utils/apiClient";
+import { ENDPOINTS } from "@/config/apiConfig";
 
 export interface User {
   id: number;
@@ -132,30 +132,37 @@ export interface ProfileUpdateResponse {
 export const userService = {
   async getAccountDetails(): Promise<ProfileAccountResponse> {
     try {
-      const response = await apiClient.get<ProfileAccountResponse>('/api/users/account.json');
+      const response = await apiClient.get<ProfileAccountResponse>(
+        "/api/users/account.json"
+      );
       return response.data;
     } catch (error) {
-      console.error('Error fetching account details:', error);
+      console.error("Error fetching account details:", error);
       throw error;
     }
   },
 
   async updateProfile(data: FormData | any): Promise<ProfileUpdateResponse> {
     try {
-      const response = await apiClient.put<ProfileUpdateResponse>('/users/profile_update', data);
+      const response = await apiClient.put<ProfileUpdateResponse>(
+        "/users/profile_update.json",
+        data
+      );
       return response.data;
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error("Error updating profile:", error);
       throw error;
     }
   },
 
   async getEscalateToUsers(): Promise<User[]> {
     try {
-      const response = await apiClient.get<UsersResponse>('/pms/users/get_escalate_to_users.json');
+      const response = await apiClient.get<UsersResponse>(
+        "/pms/users/get_escalate_to_users.json"
+      );
       return response.data.users;
     } catch (error) {
-      console.error('Error fetching escalate to users:', error);
+      console.error("Error fetching escalate to users:", error);
       throw error;
     }
   },
@@ -166,17 +173,20 @@ export const userService = {
       if (!searchTerm.trim()) {
         return users;
       }
-      
-      return users.filter(user => 
+
+      return users.filter((user) =>
         user.full_name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     } catch (error) {
-      console.error('Error searching users:', error);
+      console.error("Error searching users:", error);
       throw error;
     }
   },
 
-  async rescheduleTask(taskId: string, data: TaskRescheduleData): Promise<void> {
+  async rescheduleTask(
+    taskId: string,
+    data: TaskRescheduleData
+  ): Promise<void> {
     try {
       const payload = {
         task_id: taskId,
@@ -184,83 +194,104 @@ export const userService = {
         schedule_time: data.time,
         assigned_user_id: data.userId,
         notify_email: data.email,
-        notify_sms: data.sms
+        notify_sms: data.sms,
       };
-      
-      await apiClient.post('/pms/tasks/reschedule.json', payload);
+
+      await apiClient.post("/pms/tasks/reschedule.json", payload);
     } catch (error) {
-      console.error('Error rescheduling task:', error);
+      console.error("Error rescheduling task:", error);
       throw error;
     }
   },
 
-  async inviteUser(payload: UserInvitationPayload): Promise<UserInvitationResponse> {
+  async inviteUser(
+    payload: UserInvitationPayload
+  ): Promise<UserInvitationResponse> {
     try {
-      const response = await apiClient.post<UserInvitationResponse>(ENDPOINTS.INVITE_USER, payload);
+      const response = await apiClient.post<UserInvitationResponse>(
+        ENDPOINTS.INVITE_USER,
+        payload
+      );
       return response.data;
     } catch (error) {
-      console.error('Error inviting user:', error);
+      console.error("Error inviting user:", error);
       throw error;
     }
   },
 
   async bulkInvite(payload: BulkInvitePayload): Promise<BulkInviteResponse> {
     try {
-      const response = await apiClient.post<BulkInviteResponse>(ENDPOINTS.BULK_INVITE, payload);
+      const response = await apiClient.post<BulkInviteResponse>(
+        ENDPOINTS.BULK_INVITE,
+        payload
+      );
       return response.data;
     } catch (error) {
-      console.error('Error in bulk invite:', error);
+      console.error("Error in bulk invite:", error);
       throw error;
     }
   },
 
   async fetchPendingInvitations(params?: any): Promise<InvitationsResponse> {
     try {
-      const response = await apiClient.get<InvitationsResponse>(ENDPOINTS.PENDING_INVITATIONS, { params });
+      const response = await apiClient.get<InvitationsResponse>(
+        ENDPOINTS.PENDING_INVITATIONS,
+        { params }
+      );
       return response.data;
     } catch (error) {
-      console.error('Error fetching pending invitations:', error);
+      console.error("Error fetching pending invitations:", error);
       throw error;
     }
   },
 
   async fetchInvitationHistory(params?: any): Promise<InvitationsResponse> {
     try {
-      const response = await apiClient.get<InvitationsResponse>(ENDPOINTS.INVITATION_HISTORY, { params });
+      const response = await apiClient.get<InvitationsResponse>(
+        ENDPOINTS.INVITATION_HISTORY,
+        { params }
+      );
       return response.data;
     } catch (error) {
-      console.error('Error fetching invitation history:', error);
+      console.error("Error fetching invitation history:", error);
       throw error;
     }
   },
 
   async resendInvitation(id: number | string): Promise<UserInvitationResponse> {
     try {
-      const response = await apiClient.post<UserInvitationResponse>(`${ENDPOINTS.RESEND_INVITATION}/${id}`);
+      const response = await apiClient.post<UserInvitationResponse>(
+        `${ENDPOINTS.RESEND_INVITATION}/${id}`
+      );
       return response.data;
     } catch (error) {
-      console.error('Error resending invitation:', error);
+      console.error("Error resending invitation:", error);
       throw error;
     }
   },
 
   async fetchEmailLogs(params?: any): Promise<EmailLogsResponse> {
     try {
-      const response = await apiClient.get<EmailLogsResponse>(ENDPOINTS.EMAIL_LOGS, { params });
+      const response = await apiClient.get<EmailLogsResponse>(
+        ENDPOINTS.EMAIL_LOGS,
+        { params }
+      );
       return response.data;
     } catch (error) {
-      console.error('Error fetching email logs:', error);
+      console.error("Error fetching email logs:", error);
       throw error;
     }
   },
 
   async withdrawInvitation(id: number | string): Promise<CommonResponse> {
     try {
-      const response = await apiClient.delete<CommonResponse>(`${ENDPOINTS.WITHDRAW_INVITATION}/${id}`);
+      const response = await apiClient.delete<CommonResponse>(
+        `${ENDPOINTS.WITHDRAW_INVITATION}/${id}`
+      );
       return response.data;
     } catch (error) {
-      console.error('Error withdrawing invitation:', error);
+      console.error("Error withdrawing invitation:", error);
       throw error;
     }
-  }
+  },
 };

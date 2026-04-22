@@ -226,7 +226,7 @@ const PostPossessionMetricsTab: React.FC = () => {
   return (
     <div className="space-y-12 animate-fade-in font-poppins">
       {/* Header */}
-      <div className="bg-[#1f3864] text-white p-4 rounded-t-xl shadow-sm">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-bold uppercase tracking-wider">
           Post Possession — Performance & Impact Metrics
         </h2>
@@ -234,27 +234,27 @@ const PostPossessionMetricsTab: React.FC = () => {
 
       {/* Section 1: Client Impact Metrics */}
       <div className="space-y-4">
-        <div className="bg-[#2e4057] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
+        <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
           Section 1 — Client Impact Metrics (Proof Points)
         </div>
-        
+
         <div className="overflow-hidden border border-[#D3D1C7] rounded-xl shadow-sm bg-white">
           <table className="w-full border-collapse table-fixed text-[12px] leading-relaxed">
             <thead>
-              <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[10px]">
+              <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px]">
                 <th className="border border-[#D3D1C7] px-3 py-3 text-center w-[4%]">#</th>
                 <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[14%]">Metric Name</th>
                 <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[18%]">Expected Impact</th>
                 <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[18%]">Feature Driver</th>
                 <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[21%]">How Impact is Caused</th>
-                <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[25%] font-bold text-blue-900 bg-blue-50/50">Landing Page Claim</th>
+                <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[25%] font-bold text-[#DA7756] bg-blue-50/50">Landing Page Claim</th>
               </tr>
             </thead>
             <tbody>
               {metricsData.clientImpact.map((m) => (
                 <tr key={m.id} className="align-top hover:bg-gray-50/50 transition-colors">
                   <td className="border border-[#D3D1C7] px-3 py-4 text-center font-bold text-gray-400">{m.id}</td>
-                  <td className="border border-[#D3D1C7] px-3 py-4 font-bold text-[#1f3864]">{m.name}</td>
+                  <td className="border border-[#D3D1C7] px-3 py-4 font-bold text-[#DA7756]">{m.name}</td>
                   <td className="border border-[#D3D1C7] px-3 py-4 text-[#2C2C2C] font-medium italic">{m.impact}</td>
                   <td className="border border-[#D3D1C7] px-3 py-4 text-[#2C2C2C]/80 text-[11px]">{m.feature}</td>
                   <td className="border border-[#D3D1C7] px-3 py-4 text-gray-600 text-[11px] leading-relaxed">{m.how}</td>
@@ -270,7 +270,7 @@ const PostPossessionMetricsTab: React.FC = () => {
 
       {/* Section 2: Launch Tracking */}
       <div className="space-y-8 mt-12">
-        <div className="bg-[#2e4057] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
+        <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
           Section 2 — Product Launch Tracking (Speed-to-Value)
         </div>
 
@@ -282,7 +282,7 @@ const PostPossessionMetricsTab: React.FC = () => {
           <div className="overflow-hidden border border-[#D3D1C7] rounded-xl bg-white shadow-sm">
             <table className="w-full border-collapse table-fixed text-[11px] leading-relaxed">
               <thead>
-                <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7] italic">
+                <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7] italic">
                   <th className="p-3 text-left w-[15%]">Metric</th>
                   <th className="p-3 text-left w-[20%]">Without Phase 1</th>
                   <th className="p-3 text-left w-[20%] bg-[#fce4d6]/30 text-red-900">WITH Phase 1 Upgrade</th>
@@ -292,7 +292,7 @@ const PostPossessionMetricsTab: React.FC = () => {
               <tbody>
                 {metricsData.launchTracking.thirtyDay.map((row, idx) => (
                   <tr key={idx} className="border-b border-[#D3D1C7] last:border-0 hover:bg-gray-50/30">
-                    <td className="p-3 font-bold text-[#1f3864]">{row.metric}</td>
+                    <td className="p-3 font-bold text-[#DA7756]">{row.metric}</td>
                     <td className="p-3 text-gray-500 italic">{row.withoutPhase1}</td>
                     <td className="p-3 font-semibold text-green-700 bg-green-50/10">{row.withPhase1}</td>
                     <td className="p-3 text-gray-600 leading-relaxed font-medium">{row.why}</td>
@@ -305,23 +305,23 @@ const PostPossessionMetricsTab: React.FC = () => {
 
         {/* 3-Month Targets */}
         <div className="space-y-4">
-          <h3 className="text-sm font-bold text-[#1f4e79] uppercase tracking-[0.2em] border-b border-blue-100 pb-2">
+          <h3 className="text-sm font-bold text-[#DA7756] uppercase tracking-[0.2em] border-b border-blue-100 pb-2">
             3-Month Post-Launch Targets
           </h3>
           <div className="overflow-hidden border border-[#D3D1C7] rounded-xl bg-white shadow-sm">
             <table className="w-full border-collapse table-fixed text-[11px] leading-relaxed">
               <thead>
-                <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7] italic">
+                <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7] italic">
                   <th className="p-3 text-left w-[15%]">Metric</th>
                   <th className="p-3 text-left w-[20%]">Without Phase 1</th>
-                  <th className="p-3 text-left w-[20%] bg-[#ddebf7]/30 text-blue-900">WITH Phase 1 Upgrade</th>
+                  <th className="p-3 text-left w-[20%] bg-[#F6F4EE]/30 text-[#DA7756]">WITH Phase 1 Upgrade</th>
                   <th className="p-3 text-left w-[45%]">Why the Difference (The Unlock)</th>
                 </tr>
               </thead>
               <tbody>
                 {metricsData.launchTracking.threeMonth.map((row, idx) => (
                   <tr key={idx} className="border-b border-[#D3D1C7] last:border-0 hover:bg-gray-50/30">
-                    <td className="p-3 font-bold text-[#1f3864]">{row.metric}</td>
+                    <td className="p-3 font-bold text-[#DA7756]">{row.metric}</td>
                     <td className="p-3 text-gray-500 italic">{row.withoutPhase1}</td>
                     <td className="p-3 font-semibold text-blue-700 bg-blue-50/10">{row.withPhase1}</td>
                     <td className="p-3 text-gray-600 leading-relaxed font-medium">{row.why}</td>
@@ -334,7 +334,7 @@ const PostPossessionMetricsTab: React.FC = () => {
       </div>
 
       {/* Summary Box */}
-      <div className="bg-[#1f3864] text-white rounded-2xl p-8 shadow-xl mt-12 relative overflow-hidden">
+      <div className="bg-[#DA7756] text-white rounded-2xl p-8 shadow-xl mt-12 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 sm:block hidden"></div>
         <div className="relative z-10 space-y-8">
           <div>
@@ -368,3 +368,4 @@ const PostPossessionMetricsTab: React.FC = () => {
 };
 
 export default PostPossessionMetricsTab;
+

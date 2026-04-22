@@ -24,14 +24,14 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
         <div className="mt-6 space-y-8">
           {gtmData.targetGroups?.map((tg: any, i: number) => (
             <div key={i} className="border border-[#D3D1C7] bg-white">
-              <div className="bg-[#1F3A5F] text-white border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-bold tracking-wide uppercase font-poppins">
+              <div className="bg-[#DA7756] text-white border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-bold tracking-wide uppercase font-poppins">
                 {tg.title}
               </div>
               <table className="w-full border-collapse table-fixed text-[11px] leading-relaxed font-poppins">
                 <tbody>
                   {tg.components?.map((c: any, cIdx: number) => (
                     <tr key={cIdx} className="align-top border-b border-[#D3D1C7] last:border-b-0 bg-white">
-                      <td className="w-[20%] border-r border-[#D3D1C7] px-4 py-3 font-bold text-[#1A1A2E] bg-[#F6F4EE]">
+                      <td className="w-[20%] border-r border-[#D3D1C7] px-4 py-3 font-bold text-[#2C2C2C] bg-[#F6F4EE]">
                         {c.component}
                       </td>
                       <td className="w-[80%] px-4 py-3 text-[#2C2C2C] font-medium whitespace-pre-line">
@@ -43,14 +43,14 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
               </table>
 
               {tg.summaryBox && (
-                <div className="bg-[#1F3A5F]/5 border-t border-[#D3D1C7]">
+                <div className="bg-[#DA7756]/5 border-t border-[#D3D1C7]">
                   <table className="w-full border-collapse table-fixed text-[11px] leading-relaxed font-poppins">
                     <tbody>
                       <tr className="align-top">
-                        <td className="w-[20%] border-r border-[#D3D1C7] px-4 py-3 font-bold text-[#1F3A5F] uppercase bg-transparent">
+                        <td className="w-[20%] border-r border-[#D3D1C7] px-4 py-3 font-bold text-[#DA7756] uppercase bg-transparent">
                           TG SUMMARY AND KEY ASSUMPTIONS
                         </td>
-                        <td className="w-[80%] px-4 py-3 text-[#1F3A5F] font-bold whitespace-pre-line leading-relaxed">
+                        <td className="w-[80%] px-4 py-3 text-[#DA7756] font-bold whitespace-pre-line leading-relaxed">
                           {tg.summaryBox}
                         </td>
                       </tr>
@@ -97,12 +97,12 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
                             >
                               {sec.columns.length === 0 &&
                               sec.rows.length === 0 ? (
-                                <div className="px-4 py-2 text-[11px] font-medium text-gray-700 font-poppins italic leading-[1.5] break-words">
+                                <div className="px-4 py-2 text-[11px] font-medium text-[#DA7756] font-poppins italic leading-[1.5] break-words">
                                   {sec.title}
                                 </div>
                               ) : (
                                 <>
-                                  <div className="border-b border-[#E5E7EB] bg-white px-3 py-2 text-[11px] font-bold uppercase text-gray-700 font-poppins">
+                                  <div className="border-b border-[#E5E7EB] bg-white px-3 py-2 text-[11px] font-bold uppercase text-[#DA7756] font-poppins">
                                     {sec.title}
                                   </div>
                                   <table className="w-full table-fixed border-collapse text-[11px] leading-[1.5] font-poppins">
@@ -201,7 +201,7 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
                         <tbody>
                           {group.components.map((comp, cIdx) => (
                             <tr key={cIdx} className="">
-                              <td className="border border-[#C4B89D] p-3 font-semibold text-gray-700 uppercase bg-white">
+                              <td className="border border-[#C4B89D] p-3 font-semibold text-[#DA7756] uppercase bg-white">
                                 {comp.component}
                               </td>
                               <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed italic text-left">
@@ -212,8 +212,8 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
                         </tbody>
                       </table>
                     </div>
-                    <div className="bg-white text-gray-800 p-3 text-[10px] font-semibold font-poppins uppercase tracking-tight rounded-b-xl border border-[#D3D1C7] ">
-                      <span className="text-yellow-400">SUMMARY:</span>{" "}
+                    <div className="bg-white text-[#DA7756] p-3 text-[10px] font-semibold font-poppins uppercase tracking-tight rounded-b-xl border border-[#D3D1C7] ">
+                      <span className="text-[#DA7756]">SUMMARY:</span>{" "}
                       {group.summaryBox}
                     </div>
                   </div>
