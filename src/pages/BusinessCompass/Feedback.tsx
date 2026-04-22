@@ -2561,7 +2561,16 @@ function FeedbackPage() {
   ]);
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
+    <div
+      style={{
+        minHeight: "calc(100vh - 5rem)",
+        background: "#f6f4ee",
+        color: "#1a1a1a",
+        fontFamily: "'Poppins', sans-serif",
+        padding: "24px 16px",
+      }}
+    >
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap'); * { font-family: 'Poppins', sans-serif !important; }`}</style>
       <div className="mx-auto max-w-7xl space-y-6 font-poppins text-[#1a1a1a]">
         {bannerVisible && (
           <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-white shadow-sm">
@@ -2596,23 +2605,26 @@ function FeedbackPage() {
           </Card>
         )}
 
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-6 shadow-sm sm:p-8">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-neutral-500">
+            Giving and receiving feedback
+          </p>
+          <h1 className="mt-1 text-2xl font-black tracking-tight text-neutral-900 sm:text-3xl">
             Team Feedback
           </h1>
-          <p className="mt-1 text-sm text-neutral-500 sm:text-base">
+          <p className="mt-2 text-sm text-neutral-600 sm:text-base">
             Give and receive constructive feedback using the Sandwich technique
           </p>
-          <p className="mt-2 text-xs font-medium uppercase tracking-wide text-neutral-400">
+          <p className="mt-3 text-xs font-medium uppercase tracking-wide text-neutral-400">
             {orgLine}
           </p>
-        </div>
+        </Card>
 
         <Tabs value={feedbackTab} onValueChange={(v) => setFeedbackTab(v as any)} className="w-full">
-          <TabsList className="inline-flex h-auto w-full justify-start rounded-2xl bg-[#DA7756] p-1 sm:w-auto">
+          <TabsList className="inline-flex h-12 w-full items-center justify-start gap-2 rounded-full border border-neutral-200 bg-white px-2 shadow-sm sm:w-auto">
             <TabsTrigger
               value="received"
-              className="rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm data-[state=inactive]:text-white/80"
+              className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
             >
               <Inbox className="mr-2 h-4 w-4" />
               Received
@@ -2627,7 +2639,7 @@ function FeedbackPage() {
             </TabsTrigger>
             <TabsTrigger
               value="given"
-              className="rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm data-[state=inactive]:text-white/80"
+              className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
             >
               <Send className="mr-2 h-4 w-4" />
               Given
@@ -2642,7 +2654,7 @@ function FeedbackPage() {
             </TabsTrigger>
             <TabsTrigger
               value="give"
-              className="rounded-xl px-4 py-2 text-sm font-semibold data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm data-[state=inactive]:text-white/80"
+              className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
             >
               <Pencil className="mr-2 h-4 w-4" />
               Give Feedback
@@ -2650,8 +2662,8 @@ function FeedbackPage() {
           </TabsList>
 
           <TabsContent value="received" className="mt-6 space-y-4">
-            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-white shadow-sm">
-              <div className="flex items-center gap-3 border-b border-neutral-200/40 bg-white/60 px-4 py-4 sm:px-5">
+            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-neutral-50 shadow-sm">
+              <div className="flex items-center gap-3 border-b border-neutral-200/40 bg-neutral-50 px-4 py-4 sm:px-5">
                 <span className="text-sm text-neutral-600 font-medium">
                   View feedback for:
                 </span>
@@ -2699,7 +2711,7 @@ function FeedbackPage() {
           </TabsContent>
 
           <TabsContent value="given" className="mt-6">
-            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-white shadow-sm">
+            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-neutral-50 shadow-sm">
               <div className="p-4 sm:p-5">
                 <AsyncBoundary>
                   <GivenFeedbackList
@@ -2719,7 +2731,7 @@ function FeedbackPage() {
           </TabsContent>
 
           <TabsContent value="give" className="mt-6">
-            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-white shadow-sm">
+            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-neutral-50 shadow-sm">
               <div className="p-4 sm:p-5">
                 <AsyncBoundary>
                   <GiveFeedbackForm
