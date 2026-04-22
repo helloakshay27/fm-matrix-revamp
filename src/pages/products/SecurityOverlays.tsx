@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Camera, ShieldAlert, Lock } from "lucide-react";
 import { SecurityState } from "./useProductSecurity";
 
@@ -49,6 +49,59 @@ export const ModelLoadingScreen: React.FC = () => (
 export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({ security }) => {
   const { showBlankScreen, screenshotBlank, isBlurred, sessionId, showBlackout, blackoutReason, blackoutSubtitle, incidentTime, countdown, dismissBlackout, videoRef, previewVideoRef } = security;
 
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
+
+  const handleStart = (clientX: number, clientY: number) => {
+    setIsDragging(true);
+    dragRef.current = {
+      startX: clientX,
+      startY: clientY,
+      initialX: position.x,
+      initialY: position.y
+    };
+  };
+
+  const handleMove = (clientX: number, clientY: number) => {
+    if (!isDragging) return;
+    const dx = clientX - dragRef.current.startX;
+    const dy = clientY - dragRef.current.startY;
+    setPosition({
+      x: dragRef.current.initialX + dx,
+      y: dragRef.current.initialY + dy
+    });
+  };
+
+  const handleEnd = () => {
+    setIsDragging(false);
+  };
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY);
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        handleMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+    const onMouseUp = handleEnd;
+    const onTouchEnd = handleEnd;
+
+    if (isDragging) {
+      window.addEventListener("mousemove", onMouseMove);
+      window.addEventListener("mouseup", onMouseUp);
+      window.addEventListener("touchmove", onTouchMove, { passive: false });
+      window.addEventListener("touchend", onTouchEnd);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [isDragging]);
+
   return (
     <>
       {/* Blank screen when no face detected */}
@@ -73,8 +126,22 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({ security }) 
       {/* Hidden camera feed for AI detection */}
       <video ref={videoRef} autoPlay playsInline muted width={320} height={240} className="fixed top-0 left-0 opacity-0 pointer-events-none" style={{ width: 320, height: 240 }} />
 
-      {/* Live camera preview badge (top-right) */}
-      <div className="fixed top-4 right-4 z-[9992] flex flex-col items-center gap-1.5 select-none">
+      {/* Live camera preview badge (top-right, draggable) */}
+      <div
+        className="fixed z-[9992] flex flex-col items-center gap-1.5 select-none cursor-grab active:cursor-grabbing touch-none"
+        style={{
+          top: 16,
+          right: 16,
+          transform: `translate(${position.x}px, ${position.y}px)`,
+          transition: isDragging ? "none" : "transform 0.1s ease-out"
+        }}
+        onMouseDown={(e) => handleStart(e.clientX, e.clientY)}
+        onTouchStart={(e) => {
+          if (e.touches.length > 0) {
+            handleStart(e.touches[0].clientX, e.touches[0].clientY);
+          }
+        }}
+      >
         <div className="relative">
           <div className="absolute inset-0 rounded-full animate-ping" style={{ background: isBlurred ? "rgba(239,68,68,0.35)" : "rgba(74,222,128,0.3)", animationDuration: "2s" }} />
           <div className="relative rounded-full p-[2px] " style={{ background: isBlurred ? "linear-gradient(135deg,#ef4444,#b91c1c)" : "linear-gradient(135deg,#4ade80,#16a34a)" }}>

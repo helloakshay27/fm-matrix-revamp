@@ -109,6 +109,17 @@ import {
 } from "@/utils/embeddedMode";
 import { getUser } from "@/utils/auth";
 
+// Lockated / FM Matrix brand tokens (used across product pages)
+const BRAND = {
+  primary: "#DA7756",
+  secondary: "#c9673f", // hover / emphasis (matches WeeklyReports.tsx)
+  background: "#f6f4ee",
+  panelBg: "rgba(218, 119, 86, 0.10)", // same as bg-[#DA7756]/10
+  panelBorder: "rgba(218, 119, 86, 0.20)", // same as border-[#DA7756]/20
+  softRowBg: "#fef6f4",
+  danger: "#C72030",
+} as const;
+
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 type SummaryStat = {
@@ -1372,7 +1383,10 @@ function AsyncBoundary({ children }: { children: React.ReactNode }) {
       <React.Suspense
         fallback={
           <div className="flex items-center justify-center gap-2 py-16 text-sm text-neutral-500">
-            <Loader2 className="h-5 w-5 animate-spin text-[#DA7756]" />
+            <Loader2
+              className="h-5 w-5 animate-spin"
+              style={{ color: BRAND.primary }}
+            />
             Loading…
           </div>
         }
@@ -1634,17 +1648,25 @@ function GivenFeedbackList({
 
   return (
     <div className="flex flex-col gap-5 pb-4">
-      <div className="px-4 py-2 bg-[#f4f5f7] border-b border-neutral-200 flex items-center gap-5">
+      <div className="flex items-center gap-5 border-b border-neutral-200/40 bg-white/60 px-4 py-2">
         <button
           type="button"
           onClick={handleSelectAll}
-          className="flex items-center gap-2 px-3 py-1.5 rounded border border-neutral-300 bg-white text-sm font-medium text-neutral-700 hover:bg-neutral-50 shadow-sm"
+          className="flex items-center gap-2 px-3 py-1.5 rounded border border-[#DA7756]/20 bg-white text-sm font-medium text-neutral-700 shadow-sm"
+          style={{ backgroundColor: "#ffffff" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = BRAND.panelBg;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = "#ffffff";
+          }}
         >
           <input
             type="checkbox"
             checked={allSelected}
             readOnly
-            className="h-4 w-4 accent-[#DA7756] cursor-pointer"
+            className="h-4 w-4 cursor-pointer"
+            style={{ accentColor: BRAND.primary }}
           />
           {allSelected ? "Deselect All" : "Select All"}
         </button>
@@ -1669,7 +1691,8 @@ function GivenFeedbackList({
                 setSelectedIds(new Set());
               }}
               disabled={deleteMutation.isPending}
-              className="flex items-center gap-2 rounded bg-[#EF4444] px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-600 disabled:opacity-60 transition-colors"
+              className="flex items-center gap-2 rounded px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-600 disabled:opacity-60 transition-colors"
+              style={{ backgroundColor: BRAND.danger }}
             >
               <Trash2 className="h-4 w-4" />
               Delete Selected
@@ -1678,7 +1701,7 @@ function GivenFeedbackList({
         )}
       </div>
 
-      <div className="mx-4 rounded-xl border border-neutral-200 bg-[#FDFBF3] px-6 py-4 grid grid-cols-3 divide-x divide-neutral-200">
+      <div className="mx-4 grid grid-cols-3 divide-x divide-[#DA7756]/20 rounded-xl border border-[#DA7756]/20 bg-white px-6 py-4">
         <div className="flex flex-col gap-1 pr-6">
           <span className="text-xs text-neutral-500 font-medium">
             Average Rating
@@ -1730,11 +1753,11 @@ function GivenFeedbackList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name or content..."
-            className="h-9 w-full rounded-lg border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-neutral-300"
+            className="h-9 w-full rounded-lg border border-[#DA7756]/20 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-[#DA7756]/30"
           />
         </div>
         <Select value={ratingFilter} onValueChange={setRatingFilter}>
-          <SelectTrigger className="h-9 w-[130px] rounded-lg border border-neutral-200 bg-white text-sm">
+          <SelectTrigger className="h-9 w-[130px] rounded-lg border border-[#DA7756]/20 bg-white text-sm">
             <SelectValue placeholder="All Ratings" />
           </SelectTrigger>
           <SelectContent>
@@ -1747,7 +1770,7 @@ function GivenFeedbackList({
           </SelectContent>
         </Select>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-9 w-[90px] rounded-lg border border-neutral-200 bg-white text-sm">
+          <SelectTrigger className="h-9 w-[90px] rounded-lg border border-[#DA7756]/20 bg-white text-sm">
             <SelectValue placeholder="All" />
           </SelectTrigger>
           <SelectContent>
@@ -1761,7 +1784,10 @@ function GivenFeedbackList({
       <div className="px-4 space-y-3">
         {isLoading && filtered.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-neutral-500">
-            <Loader2 className="h-5 w-5 animate-spin text-[#DA7756]" />
+            <Loader2
+              className="h-5 w-5 animate-spin"
+              style={{ color: BRAND.primary }}
+            />
             Loading feedback…
           </div>
         ) : isError && filtered.length === 0 ? (
@@ -1787,18 +1813,20 @@ function GivenFeedbackList({
               <div
                 key={item.id}
                 className={cn(
-                  "rounded-xl border bg-white transition-all",
+                  "rounded-xl border transition-all",
                   expanded
-                    ? "border-[#4A90D9] ring-1 ring-[#4A90D9]/30"
-                    : "border-neutral-200 hover:border-neutral-300"
+                    ? "border-[#DA7756] ring-1 ring-[#DA7756]/30"
+                    : "border-[#DA7756]/20 hover:border-[#DA7756]/30"
                 )}
+                style={{ backgroundColor: BRAND.softRowBg }}
               >
                 <div className="flex items-start gap-3 p-4">
                   <input
                     type="checkbox"
                     checked={selectedIds.has(item.id)}
                     onChange={() => toggleSelect(item.id)}
-                    className="mt-1 h-4 w-4 accent-[#DA7756] cursor-pointer shrink-0"
+                    className="mt-1 h-4 w-4 cursor-pointer shrink-0"
+                    style={{ accentColor: BRAND.primary }}
                   />
 
                   <div
@@ -1883,7 +1911,7 @@ function GivenFeedbackList({
                               !detail.constructiveFeedback &&
                               !detail.positiveClosing &&
                               detail.detailPreview && (
-                                <div className="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2">
+                                <div className="rounded-lg border border-[#DA7756]/20 bg-white px-3 py-2">
                                   <p className="text-sm text-neutral-700">
                                     {detail.detailPreview}
                                   </p>
@@ -1908,7 +1936,7 @@ function GivenFeedbackList({
                                     }))
                                   }
                                   placeholder="Add your notes about how you'll act on this feedback..."
-                                  className="mt-1 w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-neutral-400 resize-y"
+                                  className="mt-1 w-full rounded-lg border border-[#DA7756]/20 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-[#DA7756]/30 resize-y"
                                 />
                               </div>
                             )}
@@ -1941,7 +1969,13 @@ function GivenFeedbackList({
                     <StarRatingRow value={item.rating} />
                     <button
                       type="button"
-                      className="rounded-md p-1 text-neutral-400 hover:bg-black/5 hover:text-neutral-600"
+                      className="rounded-md p-1 text-neutral-400 hover:text-neutral-600"
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = BRAND.panelBg;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                      }}
                       aria-expanded={expanded}
                       aria-label={expanded ? "Collapse" : "Expand"}
                       onClick={() => handleExpand(item.id)}
@@ -2209,7 +2243,7 @@ function GiveFeedbackForm({
           >
             <SelectTrigger
               id="feedback-recipient"
-              className="h-11 rounded-xl border-neutral-200 bg-white"
+              className="h-11 rounded-xl border-[#DA7756]/20 bg-white"
             >
               {teamMembersLoading ? (
                 <span className="flex items-center gap-2 text-neutral-400">
@@ -2244,7 +2278,14 @@ function GiveFeedbackForm({
               <button
                 type="button"
                 id="feedback-date"
-                className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-3 text-left text-sm text-neutral-900 outline-none hover:bg-neutral-50/80"
+                className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-[#DA7756]/20 bg-white px-3 text-left text-sm text-neutral-900 outline-none"
+                style={{ backgroundColor: "#ffffff" }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = BRAND.panelBg;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "#ffffff";
+                }}
               >
                 <span className="tabular-nums">{formatDMY(feedbackDate)}</span>
                 <CalendarIcon
@@ -2302,7 +2343,7 @@ function GiveFeedbackForm({
             </button>
           ))}
         </div>
-        <div className="overflow-hidden rounded-xl border border-neutral-200 shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-[#DA7756]/20 shadow-sm">
           <div className="flex">
             {RATING_SEGMENTS.map((seg) => (
               <button
@@ -2340,7 +2381,7 @@ function GiveFeedbackForm({
           value={context}
           onChange={(e) => setContext(e.target.value)}
           placeholder="e.g., Regarding the client presentation last week..."
-          className="h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none"
+          className="h-11 w-full rounded-xl border border-[#DA7756]/20 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none"
         />
       </div>
 
@@ -2393,7 +2434,7 @@ function GiveFeedbackForm({
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder={placeholder}
-              className="min-h-[100px] resize-y rounded-xl border-neutral-200 bg-white text-sm"
+              className="min-h-[100px] resize-y rounded-xl border-[#DA7756]/20 bg-white text-sm"
             />
           </div>
         ))}
@@ -2414,7 +2455,7 @@ function GiveFeedbackForm({
           type="button"
           onClick={clearForm}
           disabled={isPending}
-          className="inline-flex h-11 items-center justify-center rounded-xl border border-neutral-300 bg-white px-6 text-sm font-semibold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-50"
+          className="inline-flex h-11 items-center justify-center rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:opacity-60"
         >
           Clear form
         </button>
@@ -2520,45 +2561,46 @@ function FeedbackPage() {
   ]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
+    <div
+      className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6"
+      style={{ fontFamily: "'Poppins', sans-serif" }}
+    >
       <div className="mx-auto max-w-6xl space-y-6">
         {bannerVisible && (
-          <div className="flex items-center gap-3 rounded-2xl border border-sky-200/60 bg-sky-50/90 px-4 py-3 pr-2 shadow-sm">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500">
-              <Lightbulb className="h-5 w-5 text-white" strokeWidth={2} />
-            </div>
-            <button
-              type="button"
-              className="min-w-0 flex-1 text-left"
-              onClick={() => {}}
-            >
-              <p className="text-sm font-semibold text-sky-950">
-                Giving &amp; Receiving Feedback
-              </p>
-              <p className="text-xs text-sky-700/90">Click to view tips</p>
-            </button>
-            <div className="flex shrink-0 items-center gap-0.5">
-              <button
-                type="button"
-                className="rounded-md p-2 text-sky-700 hover:bg-sky-100"
-                aria-label="Expand tips"
-              >
-                <ChevronRight className="h-4 w-4" />
+          <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-white shadow-sm">
+            <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#DA7756]">
+                <Lightbulb className="h-5 w-5 text-white" strokeWidth={2} />
+              </div>
+              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => {}}>
+                <p className="text-sm font-semibold text-neutral-900">
+                  Giving &amp; Receiving Feedback
+                </p>
+                <p className="text-xs text-neutral-600">Click to view tips</p>
               </button>
-              <button
-                type="button"
-                className="rounded-md p-2 text-sky-700 hover:bg-sky-100"
-                aria-label="Dismiss banner"
-                onClick={() => setBannerVisible(false)}
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex shrink-0 items-center gap-0.5">
+                <button
+                  type="button"
+                  className="rounded-md p-2 text-neutral-600 hover:bg-neutral-100"
+                  aria-label="Expand tips"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  className="rounded-md p-2 text-neutral-600 hover:bg-neutral-100"
+                  aria-label="Dismiss banner"
+                  onClick={() => setBannerVisible(false)}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-          </div>
+          </Card>
         )}
 
         <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-white shadow-sm">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
             <MessageSquare className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
           </div>
           <div>
@@ -2566,8 +2608,7 @@ function FeedbackPage() {
               Team Feedback
             </h1>
             <p className="mt-1 text-sm text-neutral-500 sm:text-base">
-              Give and receive constructive feedback using the Sandwich
-              technique
+              Give and receive constructive feedback using the Sandwich technique
             </p>
             <p className="mt-2 text-xs font-medium uppercase tracking-wide text-neutral-400">
               {orgLine}
@@ -2575,136 +2616,136 @@ function FeedbackPage() {
           </div>
         </header>
 
-        <Card className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
-          {/* Tab bar */}
-          <div className="flex border-b border-neutral-200">
-            {(
-              [
-                {
-                  value: "received",
-                  label: "Received",
-                  icon: Inbox,
-                  count:
-                    allReceivedSummary?.received ?? receivedFeedback.length,
-                },
-                {
-                  value: "given",
-                  label: "Given",
-                  icon: Send,
-                  count: givenSummary?.given ?? givenFeedback.length,
-                },
-                {
-                  value: "give",
-                  label: "Give Feedback",
-                  icon: Pencil,
-                  count: null,
-                },
-              ] as const
-            ).map(({ value, label, icon: Icon, count }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setFeedbackTab(value)}
-                className={cn(
-                  "flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2",
-                  feedbackTab === value
-                    ? "border-[#DA7756] bg-white text-neutral-900"
-                    : "border-transparent bg-[#f5f5f5] text-neutral-500 hover:bg-neutral-100 hover:text-neutral-700"
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-                {count !== null && count > 0 && (
-                  <span className="rounded-full bg-[#C72030] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                    {count}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+        <Tabs value={feedbackTab} onValueChange={(v) => setFeedbackTab(v as any)} className="w-full">
+          <TabsList className="inline-flex h-12 w-full items-center justify-start gap-2 rounded-full border border-[#DA7756]/20 bg-[#f6f4ee] px-2 shadow-sm sm:w-auto">
+            <TabsTrigger
+              value="received"
+              className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
+            >
+              <Inbox className="mr-2 h-4 w-4" />
+              Received
+              {(allReceivedSummary?.received ?? receivedFeedback.length) > 0 && (
+                <span
+                  className="ml-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white"
+                  style={{ backgroundColor: BRAND.danger }}
+                >
+                  {allReceivedSummary?.received ?? receivedFeedback.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="given"
+              className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
+            >
+              <Send className="mr-2 h-4 w-4" />
+              Given
+              {(givenSummary?.given ?? givenFeedback.length) > 0 && (
+                <span
+                  className="ml-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white"
+                  style={{ backgroundColor: BRAND.danger }}
+                >
+                  {givenSummary?.given ?? givenFeedback.length}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="give"
+              className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
+            >
+              <Pencil className="mr-2 h-4 w-4" />
+              Give Feedback
+            </TabsTrigger>
+          </TabsList>
 
-          {/* View for: dropdown — received tab only */}
-          {feedbackTab === "received" && (
-            <div className="px-4 py-3 border-b border-neutral-100 bg-white flex items-center gap-3">
-              <span className="text-sm text-neutral-600 font-medium">
-                View feedback for:
-              </span>
-              <Select value={receivedView} onValueChange={setReceivedView}>
-                <SelectTrigger className="h-9 w-[200px] rounded-lg border-neutral-200 bg-white text-sm">
-                  <SelectValue placeholder={myselfLabel} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="myself">{myselfLabel}</SelectItem>
-                  {teamMembersLoading ? (
-                    <div className="px-3 py-2 text-sm text-neutral-400">
-                      Loading...
-                    </div>
-                  ) : (
-                    teamMembers
-                      .filter((member) => member.id !== currentUserId)
-                      .map((member) => (
-                        <SelectItem key={member.value} value={member.value}>
-                          {member.label}
-                        </SelectItem>
-                      ))
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          <TabsContent value="received" className="mt-6 space-y-4">
+            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
+              <div className="flex items-center gap-3 border-b border-[#DA7756]/20 bg-[#DA7756]/10 px-4 py-4 sm:px-5">
+                <span className="text-sm text-neutral-600 font-medium">
+                  View feedback for:
+                </span>
+                <Select value={receivedView} onValueChange={setReceivedView}>
+                  <SelectTrigger className="h-9 w-[200px] rounded-lg border-[#DA7756]/20 bg-white text-sm">
+                    <SelectValue placeholder={myselfLabel} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="myself">{myselfLabel}</SelectItem>
+                    {teamMembersLoading ? (
+                      <div className="px-3 py-2 text-sm text-neutral-400">
+                        Loading...
+                      </div>
+                    ) : (
+                      teamMembers
+                        .filter((member) => member.id !== currentUserId)
+                        .map((member) => (
+                          <SelectItem key={member.value} value={member.value}>
+                            {member.label}
+                          </SelectItem>
+                        ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="p-4 sm:p-5">
+                <AsyncBoundary>
+                  <GivenFeedbackList
+                    key={`received-${receivedView}`}
+                    onGiveFeedbackClick={() => {
+                      setEditingFeedback(null);
+                      setFeedbackTab("give");
+                    }}
+                    onEditFeedback={(item) => {
+                      setEditingFeedback(item);
+                      setFeedbackTab("give");
+                    }}
+                    direction="from"
+                    filterUserId={null}
+                    itemsOverride={receivedFeedback}
+                  />
+                </AsyncBoundary>
+              </div>
+            </Card>
+          </TabsContent>
 
-          {/* Tab contents */}
-          {feedbackTab === "received" && (
-            <AsyncBoundary>
-              <GivenFeedbackList
-                key={`received-${receivedView}`}
-                onGiveFeedbackClick={() => {
-                  setEditingFeedback(null);
-                  setFeedbackTab("give");
-                }}
-                onEditFeedback={(item) => {
-                  setEditingFeedback(item);
-                  setFeedbackTab("give");
-                }}
-                direction="from"
-                filterUserId={null}
-                itemsOverride={receivedFeedback}
-              />
-            </AsyncBoundary>
-          )}
+          <TabsContent value="given" className="mt-6">
+            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
+              <div className="p-4 sm:p-5">
+                <AsyncBoundary>
+                  <GivenFeedbackList
+                    onGiveFeedbackClick={() => {
+                      setEditingFeedback(null);
+                      setFeedbackTab("give");
+                    }}
+                    onEditFeedback={(item) => {
+                      setEditingFeedback(item);
+                      setFeedbackTab("give");
+                    }}
+                    direction="to"
+                  />
+                </AsyncBoundary>
+              </div>
+            </Card>
+          </TabsContent>
 
-          {feedbackTab === "given" && (
-            <AsyncBoundary>
-              <GivenFeedbackList
-                onGiveFeedbackClick={() => {
-                  setEditingFeedback(null);
-                  setFeedbackTab("give");
-                }}
-                onEditFeedback={(item) => {
-                  setEditingFeedback(item);
-                  setFeedbackTab("give");
-                }}
-                direction="to"
-              />
-            </AsyncBoundary>
-          )}
-
-          {feedbackTab === "give" && (
-            <AsyncBoundary>
-              <GiveFeedbackForm
-                initialFeedback={editingFeedback}
-                onCancelEdit={() => {
-                  setEditingFeedback(null);
-                  setFeedbackTab("given");
-                }}
-                onSubmitted={() => {
-                  setEditingFeedback(null);
-                  setFeedbackTab("given");
-                }}
-              />
-            </AsyncBoundary>
-          )}
-        </Card>
+          <TabsContent value="give" className="mt-6">
+            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
+              <div className="p-4 sm:p-5">
+                <AsyncBoundary>
+                  <GiveFeedbackForm
+                    initialFeedback={editingFeedback}
+                    onCancelEdit={() => {
+                      setEditingFeedback(null);
+                      setFeedbackTab("given");
+                    }}
+                    onSubmitted={() => {
+                      setEditingFeedback(null);
+                      setFeedbackTab("given");
+                    }}
+                  />
+                </AsyncBoundary>
+              </div>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

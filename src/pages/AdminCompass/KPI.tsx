@@ -6,6 +6,7 @@ import Axios from "axios";
 import { BookOpen, Plus, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import KPIManagementTab from "./AdminCompassComponent/KPIManagementTab";
 import ArchivedKPIsTab from "./AdminCompassComponent/ArchivedKPIsTab";
 import MissedEntitiesTab from "./AdminCompassComponent/MissedEntitiesTab";
@@ -2550,67 +2551,33 @@ const KPI = () => {
           </div>
         </div>
 
-        {/* ── TAB BAR — exactly like BusinessPlan teal pill bar ── */}
-        <div
-          style={{
-            display: "flex",
-            width: "fit-content",
-            borderRadius: 20,
-            padding: 4,
-            gap: 4,
-            overflowX: "auto",
-            background: T.primary,
-          }}
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) =>
+            setActiveTab(v as (typeof tabs)[number]["name"])
+          }
+          className="w-full"
         >
-          {tabs.map(({ name }) => {
-            const isActive = activeTab === name;
-            return (
-              <button
+          {/* Pill tabs — match Feedback.tsx */}
+          <TabsList className="inline-flex h-12 w-fit max-w-full items-center justify-start gap-2 overflow-x-auto rounded-full border border-[#DA7756]/20 bg-[#f6f4ee] px-2 shadow-sm">
+            {tabs.map(({ name }) => (
+              <TabsTrigger
                 key={name}
-                onClick={() => setActiveTab(name)}
-                style={{
-                  padding: "9px 18px",
-                  borderRadius: 14,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  border: "none",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                  transition: "all 0.15s",
-                  fontFamily: T.font,
-                  background: isActive ? T.cardBg : "transparent",
-                  color: isActive ? T.primary : "rgba(255,255,255,0.82)",
-                  boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.10)" : "none",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = "rgba(255,255,255,0.12)";
-                    e.currentTarget.style.color = "#fff";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = "rgba(255,255,255,0.82)";
-                  }
-                }}
+                value={name}
+                className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
               >
                 {name}
-              </button>
-            );
-          })}
-        </div>
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        {/* ── TAB CONTENT — wrapped in teal-header container like BhagSection ── */}
-        {/* ── TAB CONTENT ── */}
-        <div>
           <div
             style={{
               background: T.pageBg,
               borderRadius: 20,
             }}
           >
-            {activeTab === "KPI Management" && (
+            <TabsContent value="KPI Management" className="mt-6">
               <KPIManagementTab
                 kpis={kpis}
                 setKpis={setKpis}
@@ -2621,22 +2588,22 @@ const KPI = () => {
                 users={companyUsers}
                 departments={companyDepartments}
               />
-            )}
-            {activeTab === "Archived KPIs" && (
+            </TabsContent>
+            <TabsContent value="Archived KPIs" className="mt-6">
               <ArchivedKPIsTab
                 archived={archivedKpis}
                 onRestoreKpi={handleRestoreArchivedKpi}
                 onDeleteArchivedKpi={handleDeleteArchivedKpi}
               />
-            )}
-            {activeTab === "Missed Entries" && (
+            </TabsContent>
+            <TabsContent value="Missed Entries" className="mt-6">
               <MissedEntitiesTab
                 users={companyUsers}
                 departments={companyDepartments}
                 kpis={kpis.map((kpi) => ({ id: kpi.id, name: kpi.name }))}
               />
-            )}
-            {activeTab === "KPI History" && (
+            </TabsContent>
+            <TabsContent value="KPI History" className="mt-6">
               <KPIHistoryTab
                 users={companyUsers}
                 departments={companyDepartments}
@@ -2644,8 +2611,8 @@ const KPI = () => {
                 entries={historyKpis}
                 onDeleteSelected={handleDeleteSelectedHistory}
               />
-            )}
-            {activeTab === "Settings" && (
+            </TabsContent>
+            <TabsContent value="Settings" className="mt-6">
               <KPISettingsTab
                 units={kpiUnits}
                 isSaving={isSavingKpiUnits}
@@ -2653,14 +2620,14 @@ const KPI = () => {
                 onAddUnit={handleCreateKpiUnit}
                 onDeleteUnit={handleDeleteKpiUnit}
               />
-            )}
-            {activeTab === "KPI Guide" && (
+            </TabsContent>
+            <TabsContent value="KPI Guide" className="mt-6">
               <KPIGuideTab
                 onGoToManagement={() => setActiveTab("KPI Management")}
               />
-            )}
+            </TabsContent>
           </div>
-        </div>
+        </Tabs>
       </div>
     </div>
   );
