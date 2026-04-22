@@ -486,16 +486,16 @@ const HelpCenter = () => {
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList
             className={cn(
-              "flex h-auto w-full flex-wrap justify-start gap-1 rounded-full border border-[#DA7756]/20",
-              "bg-[#DA7756]/10 p-1.5 sm:inline-flex sm:flex-nowrap"
+              // Match pill tabs used in Feedback/KPI pages
+              "inline-flex h-12 w-fit max-w-full items-center justify-start gap-2 overflow-x-auto rounded-full border border-[#DA7756]/20",
+              "bg-[#f6f4ee] px-2 shadow-sm"
             )}
           >
             <TabsTrigger
               value="tutorials"
               className={cn(
-                "gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-neutral-600",
-                "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
-                "data-[state=active]:shadow-sm"
+                "h-9 gap-2 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700",
+                "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
               )}
             >
               <Video className="h-4 w-4 shrink-0" />
@@ -504,9 +504,8 @@ const HelpCenter = () => {
             <TabsTrigger
               value="guide"
               className={cn(
-                "gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-neutral-600",
-                "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
-                "data-[state=active]:shadow-sm"
+                "h-9 gap-2 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700",
+                "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
               )}
             >
               <BookOpen className="h-4 w-4 shrink-0" />
@@ -515,9 +514,8 @@ const HelpCenter = () => {
             <TabsTrigger
               value="faq"
               className={cn(
-                "gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-neutral-600",
-                "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
-                "data-[state=active]:shadow-sm"
+                "h-9 gap-2 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700",
+                "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
               )}
             >
               <MessageSquare className="h-4 w-4 shrink-0" />
@@ -526,9 +524,8 @@ const HelpCenter = () => {
             <TabsTrigger
               value="suggestions"
               className={cn(
-                "gap-2 rounded-full px-4 py-2.5 text-sm font-medium text-neutral-600",
-                "data-[state=active]:bg-[#DA7756]/10 data-[state=active]:text-neutral-900",
-                "data-[state=active]:shadow-sm"
+                "h-9 gap-2 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700",
+                "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
               )}
             >
               <Lightbulb className="h-4 w-4 shrink-0" />

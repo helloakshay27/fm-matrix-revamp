@@ -47,6 +47,8 @@ export const EditEventPage = () => {
   const [formData, setFormData] = useState({
     eventName: "",
     eventType: "",
+    payAt: "",
+    externalLink: "",
     amountPerPerson: "",
     fromDate: "",
     toDate: "",
@@ -106,6 +108,8 @@ export const EditEventPage = () => {
           approvalRequired: localStorage.getItem('approvalRequired') || prev.approvalRequired,
           eventDescription: localStorage.getItem('eventDescription') || prev.eventDescription,
           shareWith: localStorage.getItem('shareWith') || prev.shareWith,
+          payAt: localStorage.getItem('payAt') || prev.payAt,
+          externalLink: localStorage.getItem('externalLink') || prev.externalLink,
         }));
 
         // Restore selected tech parks
@@ -176,6 +180,8 @@ export const EditEventPage = () => {
             approvalRequired: event.approval_required === true ? "yes" : "no",
             shareWith: event.share_with || "all",
             shareWithCommunities: (event.community_events && event.community_events.length > 0) ? "yes" : "no",
+            eventAt: event.event_at || "",
+            externalLink: event.payment_link || "",
           }));
 
           if (event.shared_sites) {
@@ -360,6 +366,8 @@ export const EditEventPage = () => {
       localStorage.setItem('eventDescription', formData.eventDescription);
       localStorage.setItem('shareWith', formData.shareWith);
       localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
+      localStorage.setItem('payAt', formData.payAt);
+      localStorage.setItem('externalLink', formData.externalLink);
       navigate(`/pulse/community?mode=selection&from=edit-event&id=${id}`);
     }
   };
@@ -474,6 +482,8 @@ export const EditEventPage = () => {
       formDataToSend.append('event[of_atype]', 'Pms::Site');
       formDataToSend.append('event[of_atype_id]', localStorage.getItem("selectedSiteId") || "");
       formDataToSend.append("event[share_with]", formData.shareWith);
+      formDataToSend.append("event[pay_at]", formData.payAt);
+      formDataToSend.append("event[payment_link]", formData.externalLink);
 
       if (formData.shareWith === 'individual') {
         selectedTechParks.forEach(id => {
@@ -644,6 +654,33 @@ export const EditEventPage = () => {
                 </FormControl>
               </div>
 
+              {
+                formData.eventType === "1" && (
+                  <div className="flex flex-col gap-1.5">
+                    <FormControl fullWidth size="small">
+                      <InputLabel shrink>Pay at<span className="text-[#C72030]">*</span></InputLabel>
+                      <MuiSelect
+                        name="payAt"
+                        value={formData.payAt}
+                        onChange={(e) => handleSelectChange("payAt", e.target.value)}
+                        label="Pay at*"
+                        displayEmpty
+                        sx={{
+                          backgroundColor: '#FAFAFA',
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#C72030',
+                          },
+                        }}
+                      >
+                        <MenuItem value="" disabled>Select pay at...</MenuItem>
+                        <MenuItem value="internal">Internal</MenuItem>
+                        <MenuItem value="external">External</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                )
+              }
+
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Event Amount Per Person</>}
@@ -673,10 +710,6 @@ export const EditEventPage = () => {
                 />
               </div>
 
-
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>From Date<span className="text-[#C72030]">*</span></>}
@@ -748,9 +781,7 @@ export const EditEventPage = () => {
                   }}
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Event Location<span className="text-[#C72030]">*</span></>}
@@ -953,6 +984,31 @@ export const EditEventPage = () => {
                 />
               </div>
             </div>
+
+            {
+              formData.payAt === "external" && (
+                <TextField
+                  label={<>External Link<span className="text-[#C72030]">*</span></>}
+                  id="externalLink"
+                  name="externalLink"
+                  value={formData.externalLink}
+                  onChange={handleInputChange}
+                  placeholder="Enter external link..."
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: '#FAFAFA',
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                    marginTop: 2,
+                  }}
+                />
+              )
+            }
           </div>
         </div>
 
@@ -1245,4 +1301,3 @@ export const EditEventPage = () => {
     </div>
   );
 };
-
