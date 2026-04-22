@@ -2454,15 +2454,8 @@ function GiveFeedbackForm({
           type="button"
           onClick={clearForm}
           disabled={isPending}
-          className="inline-flex h-11 items-center justify-center rounded-xl border border-[#DA7756]/20 bg-white px-6 text-sm font-semibold text-neutral-700 shadow-sm disabled:opacity-50"
-          style={{ backgroundColor: "#ffffff" }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = BRAND.panelBg;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#ffffff";
-          }}
-          >
+          className="inline-flex h-11 items-center justify-center rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:opacity-60"
+        >
           Clear form
         </button>
         <button
