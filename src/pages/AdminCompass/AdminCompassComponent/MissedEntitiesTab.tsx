@@ -169,7 +169,7 @@ const MissedEntitiesTab: React.FC<MissedEntitiesTabProps> = ({
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border border-[rgba(218,119,86,0.28)] bg-[rgba(218,119,86,0.06)] px-5 py-5 shadow-sm">
+        <div className="rounded-2xl border border-rose-200/90 bg-rose-50/90 px-5 py-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-neutral-600">
@@ -179,13 +179,13 @@ const MissedEntitiesTab: React.FC<MissedEntitiesTabProps> = ({
                 {totalMissed}
               </p>
             </div>
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#DA7756]/15">
-              <AlertCircle className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-rose-100">
+              <AlertCircle className="h-6 w-6 text-rose-600" strokeWidth={2} />
             </span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-[rgba(218,119,86,0.28)] bg-[rgba(218,119,86,0.06)] px-5 py-5 shadow-sm">
+        <div className="rounded-2xl border border-emerald-200/90 bg-emerald-50/90 px-5 py-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <div>
               <p className="text-sm font-semibold text-neutral-600">
@@ -195,8 +195,8 @@ const MissedEntitiesTab: React.FC<MissedEntitiesTabProps> = ({
                 {usersWithMissed}
               </p>
             </div>
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#DA7756]/15">
-              <Users className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100">
+              <Users className="h-6 w-6 text-emerald-600" strokeWidth={2} />
             </span>
           </div>
         </div>

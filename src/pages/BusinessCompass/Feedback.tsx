@@ -114,9 +114,9 @@ const BRAND = {
   primary: "#DA7756",
   secondary: "#c9673f", // hover / emphasis (matches WeeklyReports.tsx)
   background: "#f6f4ee",
-  panelBg: "rgba(218, 119, 86, 0.10)", // same as bg-[#DA7756]/10
+  panelBg: "rgba(218, 119, 86, 0.06)", // match warm tint used across UI
   panelBorder: "rgba(218, 119, 86, 0.20)", // same as border-[#DA7756]/20
-  softRowBg: "#fef6f4",
+  softRowBg: "rgba(218, 119, 86, 0.06)",
   danger: "#C72030",
 } as const;
 
@@ -1648,14 +1648,17 @@ function GivenFeedbackList({
 
   return (
     <div className="flex flex-col gap-5 pb-4">
-      <div className="flex items-center gap-5 border-b border-neutral-200/40 bg-white/60 px-4 py-2">
+      <div
+        className="flex items-center gap-5 border-b border-[#DA7756]/20 px-4 py-2"
+        style={{ backgroundColor: BRAND.panelBg }}
+      >
         <button
           type="button"
           onClick={handleSelectAll}
           className="flex items-center gap-2 px-3 py-1.5 rounded border border-[#DA7756]/20 bg-white text-sm font-medium text-neutral-700 shadow-sm"
           style={{ backgroundColor: "#ffffff" }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = BRAND.panelBg;
+            e.currentTarget.style.backgroundColor = "#ffffff";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = "#ffffff";
@@ -1701,7 +1704,10 @@ function GivenFeedbackList({
         )}
       </div>
 
-      <div className="mx-4 grid grid-cols-3 divide-x divide-[#DA7756]/20 rounded-xl border border-[#DA7756]/20 bg-white px-6 py-4">
+      <div
+        className="mx-4 grid grid-cols-3 divide-x divide-[#DA7756]/20 rounded-xl border border-[#DA7756]/20 px-6 py-4"
+        style={{ backgroundColor: BRAND.panelBg }}
+      >
         <div className="flex flex-col gap-1 pr-6">
           <span className="text-xs text-neutral-500 font-medium">
             Average Rating
