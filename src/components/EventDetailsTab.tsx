@@ -222,17 +222,9 @@ export const EventDetailsTab = () => {
                         {/* Description */}
                         <div className="lg:w-1/2">
                             <h3 className="text-base font-semibold text-gray-900 mb-3">Description</h3>
-                            {/* <p className="text-sm text-gray-600 leading-relaxed">
+                            <p className="text-sm text-gray-600 leading-relaxed">
                                 {eventData.description || "No description provided for this event."}
-                            </p> */}
-                            <div
-                                className="prose prose-sm max-w-none quill-content"
-                                dangerouslySetInnerHTML={{
-                                    __html:
-                                        eventData?.description ||
-                                        "<p>No description provided</p>",
-                                }}
-                            />
+                            </p>
                         </div>
                     </div>
 

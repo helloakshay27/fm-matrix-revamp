@@ -34,7 +34,6 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import axios from "axios";
-import Quill from "quill";
 
 export const AddEventPage = () => {
   const dispatch = useAppDispatch();
@@ -48,6 +47,7 @@ export const AddEventPage = () => {
   const [formData, setFormData] = useState({
     eventName: "",
     eventType: "",
+    payAt: "internal",
     amountPerPerson: "",
     fromDate: "",
     toDate: "",
@@ -59,6 +59,7 @@ export const AddEventPage = () => {
     rsvp: "yes",
     showOnHomeScreen: "no",
     eventDescription: "",
+    externalLink: "",
     approvalRequired: "no",
     shareWith: "all",
     shareWithCommunities: "no",
@@ -66,8 +67,6 @@ export const AddEventPage = () => {
 
   const [attachments, setAttachments] = useState<Array<{ file: File, preview: string | null }>>([]);
   const [isActive, setIsActive] = useState(true);
-  const quillRef = useRef<HTMLDivElement>(null);
-  const quillEditorRef = useRef<Quill | null>(null);
 
   // Tech Park Modal State
   const [isTechParkModalOpen, setIsTechParkModalOpen] = useState(false);
@@ -97,13 +96,11 @@ export const AddEventPage = () => {
     const savedEventDescription = localStorage.getItem('eventDescription');
     const savedShareWith = localStorage.getItem('shareWith');
     const savedSelectedTechParks = localStorage.getItem('selectedTechParks');
+    const savedPayAt = localStorage.getItem('payAt');
+    const savedExternalLink = localStorage.getItem('externalLink');
 
     // If any saved data exists, restore it
     if (savedEventName || savedEventDescription || savedFromDate) {
-      // Update Quill editor if description is being restored
-      if (savedEventDescription && quillEditorRef.current) {
-        quillEditorRef.current.root.innerHTML = savedEventDescription;
-      }
       setFormData(prev => ({
         ...prev,
         eventName: savedEventName || prev.eventName,
@@ -121,6 +118,8 @@ export const AddEventPage = () => {
         approvalRequired: savedApprovalRequired || prev.approvalRequired,
         eventDescription: savedEventDescription || prev.eventDescription,
         shareWith: savedShareWith || prev.shareWith,
+        payAt: savedPayAt || prev.payAt,
+        externalLink: savedExternalLink || prev.externalLink,
       }));
     }
 
@@ -151,6 +150,8 @@ export const AddEventPage = () => {
     localStorage.removeItem('eventDescription');
     localStorage.removeItem('shareWith');
     localStorage.removeItem('selectedTechParks');
+    localStorage.removeItem('payAt');
+    localStorage.removeItem('externalLink');
 
     // Check if returning from community selection
     const savedCommunities = localStorage.getItem('selectedCommunityIds');
@@ -167,52 +168,7 @@ export const AddEventPage = () => {
 
     fetchCommunities();
     fetchTechParks();
-
-    // Initialize Quill editor
-    const initTimer = setTimeout(() => {
-      if (quillRef.current) {
-        if (quillEditorRef.current) {
-          quillEditorRef.current = null;
-        }
-
-        quillEditorRef.current = new Quill(quillRef.current, {
-          theme: "snow",
-          placeholder: "Type description...",
-          modules: {
-            toolbar: [
-              [{ header: [1, 2, 3, false] }],
-              ["bold", "italic", "underline", "strike"],
-              ["blockquote"],
-              [{ list: "ordered" }, { list: "bullet" }],
-              ["link"],
-              ["clean"],
-            ],
-          },
-        });
-
-        // Handle text changes
-        quillEditorRef.current.on("text-change", () => {
-          const htmlContent = quillEditorRef.current?.root.innerHTML;
-          setFormData((prev) => ({
-            ...prev,
-            eventDescription: htmlContent || "",
-          }));
-        });
-      }
-    }, 100);
-
-    return () => clearTimeout(initTimer);
   }, []);
-
-  // Update Quill editor when eventDescription changes
-  useEffect(() => {
-    if (quillEditorRef.current && formData.eventDescription) {
-      const currentContent = quillEditorRef.current.root.innerHTML;
-      if (currentContent !== formData.eventDescription) {
-        quillEditorRef.current.root.innerHTML = formData.eventDescription;
-      }
-    }
-  }, [formData.eventDescription]);
 
   const fetchTechParks = async () => {
     if (techParks.length > 0) return;
@@ -286,6 +242,8 @@ export const AddEventPage = () => {
       localStorage.setItem('approvalRequired', formData.approvalRequired);
       localStorage.setItem('eventDescription', formData.eventDescription);
       localStorage.setItem('shareWith', formData.shareWith);
+      localStorage.setItem('payAt', formData.payAt);
+      localStorage.setItem('externalLink', formData.externalLink);
       localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
       navigate('/pulse/community?mode=selection&from=add-event');
     }
@@ -386,6 +344,8 @@ export const AddEventPage = () => {
       formDataToSend.append('event[of_atype_id]', localStorage.getItem("selectedSiteId") || "");
       formDataToSend.append('event[share_with]', formData.shareWith);
       formDataToSend.append('event[is_paid]', formData.eventType);
+      formData.eventType === "1" && formDataToSend.append('event[pay_at]', formData.payAt);
+      formData.eventType === "1" && formData.payAt === "external" && formDataToSend.append('event[payment_link]', formData.externalLink);
 
       if (formData.shareWith === 'individual') {
         selectedTechParks.forEach(id => {
@@ -427,6 +387,8 @@ export const AddEventPage = () => {
       localStorage.removeItem('shareWith');
       localStorage.removeItem('selectedTechParks');
       localStorage.removeItem('selectedCommunityIds');
+      localStorage.removeItem('payAt');
+      localStorage.removeItem('externalLink');
 
       toast.success("Event created successfully");
       navigate(`/pulse/events`);
@@ -440,43 +402,6 @@ export const AddEventPage = () => {
 
   return (
     <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
-      <style>{`
-        .ql-toolbar {
-          border-top: 1px solid rgba(0, 0, 0, 0.23) !important;
-          border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
-          border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
-          border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
-          border-radius: 4px 4px 0 0;
-          background-color: #fafafa;
-        }
-
-        .ql-container {
-          border-bottom: 1px solid rgba(0, 0, 0, 0.23) !important;
-          border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
-          border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
-          border-radius: 0 0 4px 4px;
-          font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-        }
-
-        .ql-editor {
-          padding: 12px 14px;
-          font-size: 14px;
-          line-height: 1.5;
-        }
-
-        .ql-editor.ql-blank::before {
-          color: rgba(0, 0, 0, 0.6);
-          font-style: normal;
-        }
-
-        .ql-toolbar button:hover {
-          color: #01569E;
-        }
-
-        .ql-toolbar button.ql-active {
-          color: #01569E;
-        }
-      `}</style>
       <Button
         variant="ghost"
         onClick={() => navigate(`/pulse/events`)}
@@ -555,6 +480,33 @@ export const AddEventPage = () => {
                 </FormControl>
               </div>
 
+              {
+                formData.eventType === "1" && (
+                  <div className="flex flex-col gap-1.5">
+                    <FormControl fullWidth size="small">
+                      <InputLabel shrink>Pay at<span className="text-[#C72030]">*</span></InputLabel>
+                      <MuiSelect
+                        name="payAt"
+                        value={formData.payAt}
+                        onChange={(e) => handleSelectChange("payAt", e.target.value)}
+                        label="Pay at*"
+                        displayEmpty
+                        sx={{
+                          backgroundColor: '#FAFAFA',
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#C72030',
+                          },
+                        }}
+                      >
+                        <MenuItem value="" disabled>Select pay at...</MenuItem>
+                        <MenuItem value="internal">Internal</MenuItem>
+                        <MenuItem value="external">External</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                )
+              }
+
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Event Amount Per Person</>}
@@ -583,10 +535,7 @@ export const AddEventPage = () => {
                   }}
                 />
               </div>
-            </div>
 
-            {/* Row 2: From Date, To Date, Event Time */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>From Date<span className="text-[#C72030]">*</span></>}
@@ -658,10 +607,7 @@ export const AddEventPage = () => {
                   }}
                 />
               </div>
-            </div>
 
-            {/* Row 3: Event Location, Member Capacity, Per Member Limit */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Event Location<span className="text-[#C72030]">*</span></>}
@@ -852,10 +798,14 @@ export const AddEventPage = () => {
 
             {/* Event Description */}
             <div>
-              <div className="relative w-full">
+              <div className="relative w-full mt-6">
                 {/* Label */}
                 <label
                   className="
+      absolute
+      -top-2
+      left-3
+      bg-white
       px-1
       text-[12.5px]
       text-black
@@ -865,18 +815,51 @@ export const AddEventPage = () => {
                   Event Description<span className="text-[#C72030]">*</span>
                 </label>
 
-                {/* Quill Editor */}
-                <div
-                  ref={quillRef}
-                  style={{
-                    border: "1px solid rgb(209, 213, 219)",
-                    // borderRadius: "5px",
-                    minHeight: "200px",
-                  }}
+                {/* Textarea */}
+                <textarea
+                  name="eventDescription"
+                  value={formData.eventDescription}
+                  onChange={handleInputChange}
+                  placeholder="Enter Description"
+                  rows={8}
+                  className="
+      w-full
+      rounded-[5px]
+      border
+      border-gray-300
+      p-4
+      text-sm
+      outline-none
+      resize-none
+    "
                 />
               </div>
-
             </div>
+
+            {
+              formData.payAt === "external" && (
+                <TextField
+                  label={<>External Link<span className="text-[#C72030]">*</span></>}
+                  id="externalLink"
+                  name="externalLink"
+                  value={formData.externalLink}
+                  onChange={handleInputChange}
+                  placeholder="Enter external link..."
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: '#FAFAFA',
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                    marginTop: 2,
+                  }}
+                />
+              )
+            }
           </div>
         </div>
 
