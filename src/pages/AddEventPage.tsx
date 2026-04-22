@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import axios from "axios";
+import Quill from "quill";
 
 export const AddEventPage = () => {
   const dispatch = useAppDispatch();
@@ -65,6 +66,8 @@ export const AddEventPage = () => {
 
   const [attachments, setAttachments] = useState<Array<{ file: File, preview: string | null }>>([]);
   const [isActive, setIsActive] = useState(true);
+  const quillRef = useRef<HTMLDivElement>(null);
+  const quillEditorRef = useRef<Quill | null>(null);
 
   // Tech Park Modal State
   const [isTechParkModalOpen, setIsTechParkModalOpen] = useState(false);
@@ -97,6 +100,10 @@ export const AddEventPage = () => {
 
     // If any saved data exists, restore it
     if (savedEventName || savedEventDescription || savedFromDate) {
+      // Update Quill editor if description is being restored
+      if (savedEventDescription && quillEditorRef.current) {
+        quillEditorRef.current.root.innerHTML = savedEventDescription;
+      }
       setFormData(prev => ({
         ...prev,
         eventName: savedEventName || prev.eventName,
@@ -160,7 +167,52 @@ export const AddEventPage = () => {
 
     fetchCommunities();
     fetchTechParks();
+
+    // Initialize Quill editor
+    const initTimer = setTimeout(() => {
+      if (quillRef.current) {
+        if (quillEditorRef.current) {
+          quillEditorRef.current = null;
+        }
+
+        quillEditorRef.current = new Quill(quillRef.current, {
+          theme: "snow",
+          placeholder: "Type description...",
+          modules: {
+            toolbar: [
+              [{ header: [1, 2, 3, false] }],
+              ["bold", "italic", "underline", "strike"],
+              ["blockquote"],
+              [{ list: "ordered" }, { list: "bullet" }],
+              ["link"],
+              ["clean"],
+            ],
+          },
+        });
+
+        // Handle text changes
+        quillEditorRef.current.on("text-change", () => {
+          const htmlContent = quillEditorRef.current?.root.innerHTML;
+          setFormData((prev) => ({
+            ...prev,
+            eventDescription: htmlContent || "",
+          }));
+        });
+      }
+    }, 100);
+
+    return () => clearTimeout(initTimer);
   }, []);
+
+  // Update Quill editor when eventDescription changes
+  useEffect(() => {
+    if (quillEditorRef.current && formData.eventDescription) {
+      const currentContent = quillEditorRef.current.root.innerHTML;
+      if (currentContent !== formData.eventDescription) {
+        quillEditorRef.current.root.innerHTML = formData.eventDescription;
+      }
+    }
+  }, [formData.eventDescription]);
 
   const fetchTechParks = async () => {
     if (techParks.length > 0) return;
@@ -388,6 +440,43 @@ export const AddEventPage = () => {
 
   return (
     <div className="p-4 md:px-8 py-6 bg-white min-h-screen">
+      <style>{`
+        .ql-toolbar {
+          border-top: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+          border-radius: 4px 4px 0 0;
+          background-color: #fafafa;
+        }
+
+        .ql-container {
+          border-bottom: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-left: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-right: 1px solid rgba(0, 0, 0, 0.23) !important;
+          border-radius: 0 0 4px 4px;
+          font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+        }
+
+        .ql-editor {
+          padding: 12px 14px;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+
+        .ql-editor.ql-blank::before {
+          color: rgba(0, 0, 0, 0.6);
+          font-style: normal;
+        }
+
+        .ql-toolbar button:hover {
+          color: #01569E;
+        }
+
+        .ql-toolbar button.ql-active {
+          color: #01569E;
+        }
+      `}</style>
       <Button
         variant="ghost"
         onClick={() => navigate(`/pulse/events`)}
@@ -763,14 +852,10 @@ export const AddEventPage = () => {
 
             {/* Event Description */}
             <div>
-              <div className="relative w-full mt-6">
+              <div className="relative w-full">
                 {/* Label */}
                 <label
                   className="
-      absolute
-      -top-2
-      left-3
-      bg-white
       px-1
       text-[12.5px]
       text-black
@@ -780,23 +865,14 @@ export const AddEventPage = () => {
                   Event Description<span className="text-[#C72030]">*</span>
                 </label>
 
-                {/* Textarea */}
-                <textarea
-                  name="eventDescription"
-                  value={formData.eventDescription}
-                  onChange={handleInputChange}
-                  placeholder="Enter Description"
-                  rows={8}
-                  className="
-      w-full
-      rounded-[5px]
-      border
-      border-gray-300
-      p-4
-      text-sm
-      outline-none
-      resize-none
-    "
+                {/* Quill Editor */}
+                <div
+                  ref={quillRef}
+                  style={{
+                    border: "1px solid rgb(209, 213, 219)",
+                    // borderRadius: "5px",
+                    minHeight: "200px",
+                  }}
                 />
               </div>
 
