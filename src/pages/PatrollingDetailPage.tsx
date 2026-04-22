@@ -1113,8 +1113,8 @@ export const PatrollingDetailPage: React.FC = () => {
                       <span className="text-gray-600 text-xs mb-1">Status</span>
                       <div>
                         <Badge
-                          variant={patrolling.checklist.active ? "default" : "secondary"}
-                          className="text-xs"
+                          variant="outline"
+                          className={`text-xs ${patrolling.checklist.active ? "bg-red-100 text-red-800 border-red-200" : "bg-gray-100 text-gray-600 border-gray-200"}`}
                         >
                           {patrolling.checklist.active ? "Active" : "Inactive"}
                         </Badge>

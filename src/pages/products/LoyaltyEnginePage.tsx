@@ -1,8 +1,11 @@
 import React from 'react';
 import BaseProductPage, { ProductData } from './BaseProductPage';
-import { 
-  FileText, 
+import {
+  FileText,
   Settings,
+  ExternalLink,
+  Lock,
+  User,
 } from "lucide-react";
 
 /**
@@ -13,11 +16,32 @@ const loyaltyEngineData: ProductData = {
   name: "Loyalty Engine",
   description: "A configurable system designed to automatically apply loyalty rewards, points, or benefits based on predefined business rules, without requiring code changes.",
   brief: "Evaluates user actions like payments, referrals, and bookings using logical operatives to trigger automated rewards and custom business logic.",
+  tabOrder: [
+    "summary",
+    "features",
+    "market",
+    "pricing",
+    "usecases",
+    "roadmap",
+    "business",
+    "gtm",
+    "metrics",
+    "swot",
+    "enhancements",
+    "assets",
+  ] as (
+    | "summary" | "features" | "usecases" | "market" | "pricing"
+    | "swot" | "roadmap" | "enhancements" | "metrics" | "business"
+    | "gtm" | "assets"
+  )[],
   excelLikeSummary: true,
   excelLikeFeatures: true,
   excelLikeMarket: true,
   excelLikePricing: false,
   excelLikeBusinessPlan: true,
+  excelLikeGtm: true,
+  excelLikeSwot: true,
+  excelLikeMetrics: true,
   userStories: [
     {
       title: "Core Rule Capabilities",
@@ -86,12 +110,12 @@ const loyaltyEngineData: ProductData = {
   ownerImage: "/assets/product_owner/duhita.jpeg",
   extendedContent: {
     productSummaryNew: {
-      summarySubtitle: "Investor & Partner Brief | Readable in under 5 minutes",
+      summarySubtitle: "Investor & Partner Brief  |  Readable in under 5 minutes",
       identity: [
         { field: "Product", detail: "Loyalty Rule Engine" },
-        { field: "Type", detail: "B2B SaaS - configurable loyalty and rewards management platform" },
-        { field: "Core function", detail: "Enables businesses to design, automate, and manage end-to-end customer loyalty programmes through configurable business rules." },
-        { field: "Deployment model", detail: "Cloud-hosted SaaS; integrates with existing CRM (Salesforce), accounting systems, and third-party APIs." }
+        { field: "Type", detail: "B2B SaaS — configurable loyalty and rewards management platform" },
+        { field: "Core function", detail: "Enables businesses to design, automate, and manage end-to-end customer loyalty programmes through a no-code rule engine, multi-tier wallet system, and a full redemption store — without dependency on engineering teams." },
+        { field: "Deployment model", detail: "Cloud-hosted SaaS; integrates with existing CRM (Salesforce), accounting systems, and third-party reward partners via API" }
       ],
       whoItIsFor: [
         {
@@ -102,19 +126,19 @@ const loyaltyEngineData: ProductData = {
         },
         {
           role: "Primary user",
-          useCase: "Marketing / CRM teams, loyalty programme managers, finance operations",
+          useCase: "Marketing / CRM teams, loyalty programme managers, finance ops",
           frustration: "Teams rely on spreadsheets and manual coordination to run schemes and redemptions.",
           gain: "Centralised rule design, wallet accounting, redemption control, and reporting."
         },
         {
           role: "Company profile",
-          useCase: "Mid-to-large enterprises in transaction-heavy or high-value-purchase industries like real estate and retail",
+          useCase: "Mid-to-large enterprises in transaction-heavy or high-value-purchase industries — real estate, retail, banking, hospitality, automotive, healthcare — with 5,000+ customers and a need to increase retention, repeat purchase, or referral volume",
           frustration: "High-value journeys need precise reward logic, but current systems are rigid or disconnected.",
           gain: "Flexible loyalty orchestration without replacing the existing CRM or finance stack."
         },
         {
           role: "Geography",
-          useCase: "India (primary); Global (secondary - markets with mature loyalty programme adoption)",
+          useCase: "India (primary); Global (secondary — markets with mature loyalty programme adoption)",
           frustration: "Cross-market programme rollouts are slowed by bespoke logic and integration effort.",
           gain: "A reusable rule-driven platform with localisation through configuration instead of rebuilds."
         }
@@ -122,49 +146,49 @@ const loyaltyEngineData: ProductData = {
       problemSolves: [
         {
           painPoint: "Pain 1",
-          solution: "Loyalty programmes in complex industries like real estate, banking, and retail are managed in spreadsheets or disconnected systems."
+          solution: "Loyalty programmes in complex industries (real estate, banking, auto) are managed in spreadsheets or rigid CRM modules — there is no flexible rule engine that can handle multi-condition, time-sensitive, segment-specific reward logic without code."
         },
         {
           painPoint: "Pain 2",
-          solution: "Businesses cannot close the loop between earning and redemption. Points sit idle, customers disengage, and programme value falls." 
+          solution: "Businesses cannot close the loop between earning and redemption. Points sit idle, customers disengage, and the company loses referral and repeat revenue."
         },
         {
           painPoint: "Pain 3",
-          solution: "Finance teams have no safe mechanism to manage the liability of outstanding loyalty points, especially when rewards map to escrow-like balances."
+          solution: "Finance teams have no safe mechanism to manage the liability of outstanding loyalty points — no escrow controls, no audit trail, no real-time mark-to-market reconciliation."
         },
         {
           painPoint: "Pain 4",
-          solution: "Marketing campaigns are batch-and-blast. There is no system to trigger personalised rewards based on transactions, behaviour, milestones, or segments."
+          solution: "Marketing campaigns are batch-and-blast. There is no system to trigger personalised rewards based on real-time customer behaviour, lifecycle stage, or transaction event."
         }
       ],
       today: [
-        { dimension: "Live deployments", state: "1 major real estate developer - fully live in production as of 2026" },
-        { dimension: "Pipeline", state: "2 additional clients in active pipeline across adjacent industries not yet disclosed" },
+        { dimension: "Live deployments", state: "1 major real estate developer — fully live in production as of 2026" },
+        { dimension: "Pipeline", state: "2 additional clients in active pipeline (industries not disclosed)" },
         { dimension: "Integrations built", state: "Salesforce CRM (bi-directional), third-party reward partner APIs, mobile app SDK" },
-        { dimension: "Stage", state: "Early commercial - product is proven, reference client exists, now scaling GTM" }
+        { dimension: "Stage", state: "Early commercial — product is proven, reference client exists, now scaling GTM" }
       ],
       summaryFeatureModules: [
-        { label: "Set Up", detail: "Tier management (Bronze / Silver / Gold or custom tiers based on spend, points, or engagement)" },
-        { label: "Rules Engine", detail: "User actions, transaction events, time-based events, user demographics and segments, and engagement-based triggers" },
-        { label: "Wallet", detail: "Cold wallet for long-term point storage, transaction ledger, full audit trail of all point activity, and earn logic" },
-        { label: "Redemption Store", detail: "Personalised mobile redemption page with vouchers, lounge access, experiences, travel, ticketing, and other reward options" },
-        { label: "Admin", detail: "Escrow wallet for finance liability buffer, mark-to-market liability view, account statement, and admin controls" },
-        { label: "Integrations", detail: "CRM integration (Salesforce) and accounting integration for financial data sync across points cost and liability" }
+        { label: "Set Up", detail: "Tier Management (Bronze / Silver / Gold or custom tiers based on spend / points / engagement) · Membership Management (member registration, ID assignment, status lifecycle)" },
+        { label: "Rules Engine", detail: "User Actions · Transaction Events · Time-Based Events · User Demographics & Segments · Engagement / Behaviour Tracking · Milestones · Tier-Based Rules — 7 sub-modules enabling fully configurable, multi-condition reward logic with no code" },
+        { label: "Wallet", detail: "Cold Wallet (long-term point storage) · Transaction Ledger (full audit trail of all point activity — earn, redeem, transfer)" },
+        { label: "Redemption Store", detail: "Personalised Mobile Redemption Page · Vouchers · Lounge Access · Experiences · Travel & Ticketing · Merchandise · Encashment (cash-out of points) — 7 redemption categories covering digital and physical rewards" },
+        { label: "Admin", detail: "Escrow Wallet (25% float maintained as liability buffer, mark-to-market) · Account Statement (admin view of all customer loyalty activity)" },
+        { label: "Integrations", detail: "CRM Integration (Salesforce) · Accounting Integration (financial data sync for points cost and liability) — bidirectional sync" }
       ],
       summaryUsps: [
-        { label: "No-code rule builder", detail: "7-dimensional rules engine across actions, transactions, time, segments, behaviour, milestones, and tiers." },
-        { label: "Escrow / liability", detail: "Built-in 25% float escrow wallet with mark-to-market balance, tailored for regulated or finance-sensitive industries." },
-        { label: "Cold wallet", detail: "Long-term point storage separates liability from active redemption pool and gives better control over redemption velocity." },
-        { label: "Full redemption catalogue", detail: "7 redemption types including vouchers, experiences, travel, merchandise, lounge access, enchantment, and personalised rewards." },
-        { label: "Transaction-event triggers", detail: "Points logic fires directly from payment and transaction events including amount, timing, and instalment stage." },
-        { label: "CRM-native integration", detail: "Built for Salesforce-first organisations, so the loyalty layer sits on top of the existing stack without rip-and-replace." }
+        { label: "No-code rule builder", detail: "7-dimensional rules engine (actions, transactions, time, segments, behaviour, milestones, tiers) — marketing teams configure complex logic without engineering dependency" },
+        { label: "Escrow / liability management", detail: "Built-in 25% float escrow wallet with mark-to-market balance — unique in the market for regulated or high-value-transaction industries" },
+        { label: "Cold wallet", detail: "Long-term point storage separates liability from active redemption pool — controls redemption velocity and cash flow impact" },
+        { label: "Full redemption catalogue", detail: "7 redemption types (vouchers, experiences, travel, merchandise, lounge, encashment, personalised mobile page) — not just discounts" },
+        { label: "Transaction-event triggers", detail: "Points logic fires directly on payment events (amount, timing, instalment stage) — critical for industries with long purchase cycles" },
+        { label: "CRM-native integration", detail: "Built for Salesforce-first organisations — no rip-and-replace; loyalty layer sits on top of existing stack" }
       ],
       tractionMilestones: [
-        { label: "Live client", detail: "1 major real estate developer using the full platform with live redemption in 2026" },
-        { label: "Rules in production", detail: "Across 6 categories: possession, collections, referrals, sales and booking, marketing engagement, and app usage" },
-        { label: "Redemption active", detail: "Enchantment and featured product redemption live, with customers actively redeeming points against real rewards" },
-        { label: "Pipeline", detail: "2 clients in commercial discussion - pipeline value not disclosed" },
-        { label: "Next milestone", detail: "Sign client #2 and expand into one adjacent vertical such as hospitality or banking" }
+        { label: "Live client", detail: "1 major real estate developer — full platform deployed and transacting in 2026" },
+        { label: "Rules in production", detail: "Across 6 categories: Possession, Collections, Referrals, Sales & Booking, Marketing Engagement, App Adoption — 30+ distinct business rules configured and live" },
+        { label: "Redemption active", detail: "Encashment and featured product redemption live; customers actively redeeming points against real transactions" },
+        { label: "Pipeline", detail: "2 clients in commercial discussion — pipeline value not disclosed" },
+        { label: "Next milestone", detail: "Signed client #2, expand into one adjacent vertical (hospitality or banking)" }
       ],
     },
     detailedFeatures: [
@@ -409,6 +433,242 @@ const loyaltyEngineData: ProductData = {
         status: "Roadmap",
         priority: "P2",
         notes: "Critical for CFO buy-in. Accurate cost accounting of loyalty liability is a common blocker in enterprise sales. API structure is in place; accounting connector to be completed."
+      }
+    ],
+    featureBenchmark: [
+      {
+        featureArea: "Rule Engine — Trigger Types",
+        marketStandard: "3–5 trigger types (purchase, birthday, signup). Most platforms: flat earn-and-burn. Antavo: 50+ triggers. Capillary: 20+.",
+        ourProduct: "7 rule dimensions: User Actions, Transaction Events, Time-Based, Segments, Engagement/Behaviour, Milestones, Tier-Based. Multi-condition AND/OR logic.",
+        status: "Live",
+        whereWeStand: "AHEAD",
+        dealImpact: "AHEAD of India competitors (Capillary, Vinculum). At par with global leaders (Antavo). 7-dimension multi-condition engine is our #1 technical differentiator for high-value verticals."
+      },
+      {
+        featureArea: "No-Code Rule Configuration",
+        marketStandard: "Most platforms require CRM admin or IT involvement. Antavo and Salesforce have visual builders but still require technical training.",
+        ourProduct: "Business-user configurable rule engine — marketing team can build and deploy rules without raising IT tickets.",
+        status: "Live",
+        whereWeStand: "AHEAD",
+        dealImpact: "AHEAD in Indian mid-market. Speed-to-deploy advantage: rule changes in hours vs weeks. Key selling point against Salesforce Loyalty Management."
+      },
+      {
+        featureArea: "Wallet & Point Storage",
+        marketStandard: "Standard: single active wallet. Advanced: tiered point types (bonus, base, expiring). Most platforms: no cold wallet mechanism.",
+        ourProduct: "Cold Wallet (long-term storage) + active wallet. Redemption velocity control built in.",
+        status: "Live",
+        whereWeStand: "AHEAD",
+        dealImpact: "AHEAD — Cold wallet is a unique feature with no direct equivalent in competing platforms. Critical for high-liability programmes."
+      },
+      {
+        featureArea: "Escrow / Liability Management",
+        marketStandard: "Not available in any standard loyalty SaaS. Enterprise players (Comarch) have finance modules but not loyalty-specific escrow.",
+        ourProduct: "Built-in 25% float escrow wallet with mandatory mark-to-market balance. Full financial controls for CFO confidence.",
+        status: "Live",
+        whereWeStand: "AHEAD",
+        dealImpact: "SIGNIFICANTLY AHEAD — No comparable feature found in market. This is our strongest CFO-level differentiator, especially for BFSI and real estate."
+      },
+      {
+        featureArea: "Redemption Catalogue Breadth",
+        marketStandard: "Standard: vouchers + basic merchandise. Advanced (Antavo, Comarch): travel, experiences, partner rewards. Most India platforms: limited to vouchers.",
+        ourProduct: "7 redemption types: Vouchers, Lounge, Experiences, Travel & Ticketing, Merchandise, Personalised Mobile Page, Encashment.",
+        status: "Live",
+        whereWeStand: "AHEAD",
+        dealImpact: "AHEAD of India market. At par with global enterprise platforms. Encashment (cash-out) is a differentiator not commonly offered as a first-class feature."
+      },
+      {
+        featureArea: "Personalised Mobile Redemption",
+        marketStandard: "Most platforms: generic catalogue for all users. Antavo and Capillary have basic personalisation. True real-time personalisation is rare.",
+        ourProduct: "Personalised mobile redemption page tailored to each customer's tier, point balance, history, and preferences — served in real time.",
+        status: "Live",
+        whereWeStand: "AHEAD",
+        dealImpact: "AHEAD in India market. Drives higher redemption rates. Key UX differentiator in client demos."
+      },
+      {
+        featureArea: "CRM Integration Depth",
+        marketStandard: "Most: webhook or basic API. Salesforce Loyalty: native (but requires full Salesforce stack). Capillary: strong retail POS integration.",
+        ourProduct: "12+ bidirectional Salesforce API endpoints covering members, payments, demand notes, referrals, home loans, surveys, testimonials. Production-proven.",
+        status: "Live",
+        whereWeStand: "AHEAD",
+        dealImpact: "AHEAD for Salesforce-first organisations. Deep integration is a moat — replicating this takes 6–12 months for a competitor."
+      },
+      {
+        featureArea: "Tier Management",
+        marketStandard: "Standard: 3–5 tiers with fixed rules. Advanced: dynamic tier upgrades/downgrades based on rolling spend. Most India platforms: basic tier logic.",
+        ourProduct: "Configurable tiers with custom names, thresholds, benefits, and rule associations. Supports unlimited tiers.",
+        status: "Live",
+        whereWeStand: "AT PAR",
+        dealImpact: "AT PAR with Antavo and Capillary. No gap here. Further differentiation possible through AI-driven dynamic tier thresholds (roadmap)."
+      },
+      {
+        featureArea: "Membership Management",
+        marketStandard: "Standard: registration + ID. Advanced: lifecycle management, auto-enrolment, lapsed member re-engagement.",
+        ourProduct: "Member registration, unique ID, status lifecycle, auto-tier assignment on registration. CRM sync.",
+        status: "Live",
+        whereWeStand: "AT PAR",
+        dealImpact: "AT PAR with market. No significant gap. Lapsed member automated re-engagement rules can be built using existing behaviour triggers — document this as a use case."
+      },
+      {
+        featureArea: "Analytics & Reporting",
+        marketStandard: "Standard: basic dashboard — points issued, redeemed, balance. Advanced (Antavo, Capillary): cohort analysis, campaign ROI, predictive churn.",
+        ourProduct: "Admin account statements and transaction ledger. No advanced analytics dashboard currently.",
+        status: "Roadmap",
+        whereWeStand: "GAP",
+        dealImpact: "GAP — Will cost deals against Antavo and Capillary when CMO-level buyers ask for programme ROI reporting. Must address in 3–6 months."
+      },
+      {
+        featureArea: "AI / ML Personalisation",
+        marketStandard: "Antavo AI Loyalty Cloud: auto-optimises reward offers using ML. Capillary Insights+: predictive next-best-action. Yotpo: smart segmentation.",
+        ourProduct: "No AI/ML layer currently. Rule logic is human-configured.",
+        status: "Roadmap",
+        whereWeStand: "GAP",
+        dealImpact: "GAP — Growing expectation from enterprise buyers. Not a deal-killer today for mid-market, but will be at 12–18 months. Prioritise AI reward optimisation on roadmap."
+      },
+      {
+        featureArea: "Accounting / ERP Integration",
+        marketStandard: "Standard: manual export. Advanced: direct GL posting via SAP/Tally/QuickBooks. Most loyalty SaaS: no accounting integration.",
+        ourProduct: "API structure in place. Direct accounting connector not yet shipped.",
+        status: "Roadmap",
+        whereWeStand: "GAP",
+        dealImpact: "GAP — Blocks CFO sign-off in BFSI and large enterprise deals. Finance team needs automated liability posting. Must close this gap to move up-market."
+      },
+      {
+        featureArea: "White-Label / Multi-Brand",
+        marketStandard: "Standard SaaS: single-brand programme. Enterprise: multi-brand coalition loyalty (Antavo, Comarch).",
+        ourProduct: "Single-brand programme per deployment. Multi-brand coalition not yet supported.",
+        status: "Roadmap",
+        whereWeStand: "GAP",
+        dealImpact: "GAP — Relevant for retail groups, FMCG conglomerates, and hospitality chains with multiple sub-brands. Not urgent for current ICP but needed for expansion."
+      },
+      {
+        featureArea: "Gamification (Streaks, Challenges, Badges)",
+        marketStandard: "Antavo: full gamification suite. Loyalty programmes with app-native gamification see 30–40% higher engagement.",
+        ourProduct: "Milestones and tier progression are partially gamified but no explicit streaks, badges, or challenges.",
+        status: "Roadmap",
+        whereWeStand: "GAP",
+        dealImpact: "GAP — Important for EdTech, healthcare, and consumer engagement use cases. Adds stickiness to the programme beyond transactional loyalty."
+      }
+    ],
+    valuePropositions: [
+      {
+        num: "1",
+        current: "No-code rule engine — configure loyalty rules without IT",
+        communicates: "Speed and autonomy for marketing teams",
+        weakness: "Does not quantify the time saved or the cost of IT dependency",
+        sharpened: '"Launch a loyalty campaign in 2 hours, not 2 weeks — without a single IT ticket." Quantify: average IT ticket for a rule change = 3–5 days delay × 4 campaigns/month = 12–20 days lost marketing execution time per month.',
+        proofPoint: "Time-to-deploy comparison from live client: days vs competitor weeks"
+      },
+      {
+        num: "2",
+        current: "7-dimensional rule engine covering actions, transactions, time, segments, behaviour, milestones, and tiers",
+        communicates: "Feature richness and configurability",
+        weakness: "Too feature-focused — buyers do not shop for dimensions, they shop for outcomes",
+        sharpened: '"Reward the right customer, at the right moment, for the right behaviour — automatically." Back this with a specific scenario: \'When a customer pays their demand note 10 days early AND it is their 3rd payment, award 6,000 points and move them to Gold tier — all triggered automatically.\'',
+        proofPoint: "Demo the multi-condition rule builder live in every sales meeting"
+      },
+      {
+        num: "3",
+        current: "Built-in escrow wallet with 25% float and mark-to-market liability management",
+        communicates: "Financial control and CFO confidence",
+        weakness: "Not being positioned to the right buyer — this is a CFO and finance message, not a marketing message",
+        sharpened: '"The only loyalty platform where your CFO can see the liability in real time, control it, and sleep at night." Reframe: this feature removes loyalty programmes as a balance sheet risk — turning a finance objection into a finance advantage.',
+        proofPoint: "Quantify: for a ₹500Cr real estate developer with ₹10Cr loyalty liability, unmanaged exposure = significant audit risk. Escrow removes it."
+      },
+      {
+        num: "4",
+        current: "Encashment — customers can convert points to cash",
+        communicates: "Maximum flexibility for customers",
+        weakness: "Not connected to the business outcome for the company — why does encashment benefit the developer/business?",
+        sharpened: '"Turn outstanding dues into loyalty currency — customers redeem points against their next instalment, improving collections without a single call." Reframe encashment as a collections acceleration tool, not just a customer flexibility feature.',
+        proofPoint: "Show encashment redemption volume from live client as proof of engagement"
+      },
+      {
+        num: "5",
+        current: "Personalised mobile redemption page",
+        communicates: "Better customer experience vs generic catalogue",
+        weakness: "'Personalised' is overused and under-proven in SaaS marketing",
+        sharpened: '"Every customer sees only the rewards they can afford and are most likely to want — increasing redemption rates by surfacing relevant offers, not a generic catalogue of 10,000 items they will ignore." Tie personalisation to redemption rate uplift.',
+        proofPoint: "Redemption rate comparison: personalised page vs generic catalogue — gather from live client data"
+      },
+      {
+        num: "6",
+        current: "Deep Salesforce CRM integration (12+ API endpoints)",
+        communicates: "No rip-and-replace — works with existing tech stack",
+        weakness: "12 endpoints sounds technical — buyers do not know what this means in practice",
+        sharpened: '"Your CRM already knows when a customer pays, refers someone, or books a site visit — we make every one of those moments a loyalty moment automatically, without any manual data entry." Make the integration story about eliminating manual work, not about API count.',
+        proofPoint: "Show the data flow diagram: Salesforce → Loyalty Engine → Reward in real time"
+      },
+      {
+        num: "7",
+        current: "Cold wallet — separate long-term point storage",
+        communicates: "Controls redemption velocity and cash flow impact",
+        weakness: "Cold wallet is an internal feature name — customers do not understand what it means without explanation",
+        sharpened: '"Protect your cash flow — keep loyalty liability in a controlled reserve account until you choose to release it for redemption. No surprise redemption spikes." Position as a financial risk management tool, not just a wallet feature.',
+        proofPoint: "Show escrow + cold wallet together as the 'CFO package' — two features that eliminate the #1 finance objection to loyalty programmes"
+      }
+    ],
+    pricingData: [
+      {
+        label: "Standard pricing models in this category",
+        detail: "1. Per-seat SaaS (admin users): common for SMB loyalty tools\n2. Revenue / transaction volume % (e.g., 0.1–0.5% of GMV): common for retail loyalty\n3. Annual platform license + implementation fee: common for enterprise\n4. Hybrid: base license + per-redemption or per-active-member fee\n5. Usage-based: points issued or members enrolled",
+        highlight: "info"
+      },
+      {
+        label: "India — Entry / Mid / Enterprise pricing range",
+        detail: "Entry (SMB, <50K members): ₹3L–₹8L/year (basic earn-and-burn, limited rule types)\nMid-market (50K–500K members, complex rules): ₹12L–₹60L/year\nEnterprise (500K+ members, full integrations): ₹60L–₹3Cr+/year\nKey India benchmarks: Capillary ₹25L–₹2Cr+ | Xoxoday ₹5L–₹50L + margin | Salesforce Loyalty ₹30L–₹3Cr+",
+        highlight: "info"
+      },
+      {
+        label: "Global — Entry / Mid / Enterprise pricing range",
+        detail: "Entry: $5,000–$20,000/year (LoyaltyLion, Yotpo)\nMid-market: $25,000–$150,000/year (Antavo lower tiers, Open Loyalty enterprise)\nEnterprise: $150,000–$1M+/year (Antavo top tier, Comarch, Salesforce Loyalty enterprise)\nNote: Indian pricing is typically 30–50% below global equivalents for comparable feature sets",
+        highlight: "info"
+      },
+      {
+        label: "How competitors categorise features across tiers",
+        detail: "Tier 1 (Entry): Basic earn-and-burn, single earn rule type, voucher redemption only, limited integrations, no wallet management\nTier 2 (Mid): Multiple rule types, segment targeting, 3–5 redemption categories, CRM integration, basic analytics\nTier 3 (Enterprise): Full rule engine, AI personalisation, all redemption types, escrow/financial controls, multi-brand, SLA and dedicated support",
+        highlight: "info"
+      },
+      {
+        label: "What to charge NOW (2026) — and why",
+        detail: "Recommended: ₹15L–₹40L/year for mid-market India clients (50K–300K members, full platform access)\nRationale: Price below Capillary and Salesforce Loyalty to win reference clients. Include: all rule engine modules, wallet (cold + ledger), 5 redemption types, Salesforce CRM integration, admin panel, escrow wallet.\nExclude from base price: accounting integration (charge as add-on ₹3–5L), advanced analytics (charge as add-on ₹3–8L once built).",
+        highlight: "now"
+      },
+      {
+        label: "What to charge at 6 MONTHS — and why",
+        detail: "Recommended: ₹20L–₹60L/year\nRationale: By 6 months, a second reference client validates the product. Add analytics dashboard to core offering. Introduce usage-based top-up pricing for programmes above 500K members or 1M+ points transactions/month. Begin pricing for accounting integration as standard add-on.",
+        highlight: "future"
+      },
+      {
+        label: "What to charge at 18 MONTHS — and why",
+        detail: "Recommended: ₹40L–₹2Cr/year (tiered by member count and rule complexity)\nRationale: With 5+ clients, a vertical-specific pricing model becomes defensible. Introduce AI personalisation tier as premium add-on. Global pricing: $30,000–$200,000/year for international clients in GCC/SEA. Consider a 'Starter' tier at ₹5–8L/year for SMBs to expand top of funnel.",
+        highlight: "future"
+      },
+      {
+        label: "One pricing risk to watch",
+        detail: "RISK: Pricing too low to win reference clients and then struggling to reprice existing clients upward as features improve. Establish contractual annual price escalation clauses (8–12% p.a.) from Day 1. Also watch for Capillary or Salesforce dropping their India entry pricing to block mid-market penetration — be prepared to justify ROI in ₹ terms rather than competing purely on price.",
+        highlight: "risk"
+      }
+    ],
+    positioningData: [
+      {
+        question: "Our single most defensible position right now",
+        answer: "\"The only loyalty rule engine built for high-value, low-frequency purchase industries — with built-in financial controls that your CFO will not reject.\"\nWhy defensible: No competitor combines (a) a 7-dimension no-code rule engine with (b) escrow liability management with (c) deep Salesforce CRM integration. This triple combination is unique and takes 18–24 months for a competitor to replicate."
+      },
+      {
+        question: "2–3 customer segments to prioritise in Year 1 — and why",
+        answer: "1. REAL ESTATE DEVELOPERS (India) — We have a live reference client, 30+ business rules in production, and proven CRM integration. Fastest sales cycle because we can show the exact product they will buy. Target: 5–10 developers with ₹200Cr+ revenue in FY26.\n2. BFSI — NBFC and private bank segment (India) — High loyalty programme urgency, escrow wallet is a native sell for finance-regulated businesses, and CRM integration story is strong. Target: 3–5 NBFCs and digital lenders in FY26.\n3. AUTOMOTIVE DEALER GROUPS (India) — Aftersales loyalty is underserved, transaction-event triggers map directly to service booking and payment events, and no Indian competitor has a vertical-specific automotive loyalty product."
+      },
+      {
+        question: "The one competitor to displace most aggressively — and how",
+        answer: "TARGET: Xoxoday / Plum\nWhy: Xoxoday is the current default 'loyalty tool' in India across industries. Clients use it for voucher fulfilment but it is NOT a loyalty programme — it has no rule engine, no wallet, no tiers, no escrow.\nHow: Position Xoxoday as the fulfilment layer and us as the intelligence layer. Message: 'Your team already uses Xoxoday for vouchers. We are what sits behind it — the rules engine that decides who gets what, when, and why.' Offer a joint integration story where we power the rules and Xoxoday fulfils the reward. This turns their installed base into our pipeline."
+      },
+      {
+        question: "What to STOP doing or saying — it is diluting our position",
+        answer: "STOP: Positioning as a 'loyalty platform' generically — this puts us in the same category as Capillary and Salesforce Loyalty where we cannot win on brand or scale.\nSTOP: Leading with the redemption catalogue — it is a feature, not a position. Competitors also have redemption catalogues.\nSTOP: Talking about 'earning points' — this is table stakes. Lead with the rule engine complexity, the escrow controls, and the CRM integration depth.\nSTART: Leading with the financial risk angle — 'What is your current loyalty liability, and how are you managing it?' This opens the CFO door."
+      },
+      {
+        question: "Recommended GTM motion for Year 1",
+        answer: "MOTION: Direct Sales + Reference-Led Selling\nYear 1 is not a PLG or channel year — the product requires configuration and the deal size justifies direct sales.\nPlaybook:\n1. Use the live reference client as the centrepiece of every sales conversation — offer a site visit / demo with the client's team.\n2. Target CRM-adjacent consultants and Salesforce implementation partners as channel referral sources — they encounter loyalty programme requirements in every client engagement.\n3. Attend 2–3 vertical-specific events per quarter (real estate: CREDAI, NAREDCO; BFSI: FIBAC; auto: SIAM)\n4. Produce one vertical-specific ROI case study per quarter — translate product features into ₹ impact (collections TAT improvement, referral cost reduction, etc.)"
       }
     ],
     detailedUseCases: {
@@ -818,6 +1078,278 @@ const loyaltyEngineData: ProductData = {
               owner: "Engineering + Legal + Ops"
             }
           ]
+        }
+      ],
+      enhancementRoadmap: [
+        // MODULE: SET UP
+        {
+          rowId: "1",
+          module: "Set Up",
+          featureName: "Tier Management",
+          currentStatus: "Administrators manually define tier names, thresholds (e.g., spend ≥ ₹5L = Gold), and associated benefits. Tier upgrades and downgrades are rule-triggered but threshold values are static and set at programme launch.",
+          enhancedVersion: "AI-powered dynamic tier thresholds that adjust automatically based on cohort behaviour. If 40% of members reach Gold within 3 months, the system flags tier inflation and suggests threshold recalibration. A visual tier health dashboard shows distribution across tiers and projected movement over the next 90 days. Admin can approve AI suggestions in one click.",
+          integrationType: "AI (anomaly detection + cohort analysis)",
+          effort: "Medium",
+          impact: "High",
+          priority: "P1",
+          owner: "Product + ML Eng"
+        },
+        {
+          rowId: "2",
+          module: "Set Up",
+          featureName: "Membership Management",
+          currentStatus: "Members are registered via CRM sync or manual entry. Unique ID is assigned. Tier is auto-assigned based on registration rules. Member profile updates sync bidirectionally with Salesforce.",
+          enhancedVersion: "AI-assisted duplicate detection at registration: flags probable duplicates using fuzzy name + phone + email matching before they are added. Progressive profiling: system identifies missing demographic fields and triggers a personalised in-app prompt to complete profile in exchange for bonus points — improving data quality without a form. MCP integration with WhatsApp Business API for instant membership welcome message with QR-code loyalty card.",
+          integrationType: "AI (fuzzy matching) + MCP (WhatsApp Business)",
+          effort: "Medium",
+          impact: "High",
+          priority: "P1",
+          owner: "Engineering + Product"
+        },
+        // MODULE: RULES ENGINE
+        {
+          rowId: "3",
+          module: "Rules Engine",
+          featureName: "User Actions — Rules",
+          currentStatus: "Admins define trigger actions (e.g., app download, site visit, referral submission) and link them to outcomes (points, tier change, notification). Rules are configured manually through the admin UI. Multi-condition AND/OR logic is supported.",
+          enhancedVersion: "Natural language rule builder: admin types 'Give 500 points to Gold members who refer a friend within 7 days of their purchase anniversary' and AI translates it into a structured rule configuration, which the admin reviews and approves. Eliminates the need to understand the rule engine's configuration UI. MCP integration with Zapier/Make to trigger rules from external tools (Google Forms, Typeform, calendar events).",
+          integrationType: "AI (NLP rule parser) + MCP (Zapier / Make)",
+          effort: "High",
+          impact: "Very High",
+          priority: "P0",
+          owner: "ML Eng + Product"
+        },
+        {
+          rowId: "4",
+          module: "Rules Engine",
+          featureName: "Transaction Events — Rules",
+          currentStatus: "Rules fire on payment events sourced from Salesforce: demand note raised, payment received, payment date vs due date comparison. Points are awarded based on configurable conditions (e.g., paid within 5 days of demand = 6,000 points). Instalment-stage logic is supported.",
+          enhancedVersion: "Real-time transaction stream processing: instead of batch CRM sync, payments trigger loyalty rules within seconds of the bank confirmation, using a webhook from the payment gateway (Razorpay, PayU, HDFC). Admin gets a live transaction feed showing every rule fire in real time. AI flags unusual patterns (e.g., sudden spike in early payments that may indicate gaming) and pauses suspicious rule fires for review.",
+          integrationType: "AI (anomaly detection) + MCP (Payment Gateway webhooks — Razorpay/PayU)",
+          effort: "High",
+          impact: "Very High",
+          priority: "P0",
+          owner: "Engineering + ML Eng"
+        },
+        {
+          rowId: "5",
+          module: "Rules Engine",
+          featureName: "Time-Based Events — Rules",
+          currentStatus: "Rules fire on calendar-based conditions: birthdays, anniversaries, festive dates, programme milestones. Configured manually with fixed dates or relative date offsets. Rules run on a scheduled batch process (daily or hourly).",
+          enhancedVersion: "Predictive timing optimisation: AI analyses each customer's historical engagement patterns and identifies the optimal time of day and day of week to deliver a time-based reward notification — maximising open and redemption rates. Birthday rules are augmented with a 'birthday week' extension that auto-personalises the reward amount based on the member's tier and recent spend trajectory. MCP integration with Google Calendar API for enterprise clients who want loyalty triggers synced to internal event calendars.",
+          integrationType: "AI (send-time optimisation) + MCP (Google Calendar API)",
+          effort: "Medium",
+          impact: "High",
+          priority: "P1",
+          owner: "ML Eng + Engineering"
+        },
+        {
+          rowId: "6",
+          module: "Rules Engine",
+          featureName: "User Demographics / Segments — Rules",
+          currentStatus: "Admins define segments manually based on demographic attributes (age, location, gender, income band). Rules are applied to fixed segments. Segment membership is updated on a scheduled sync from CRM.",
+          enhancedVersion: "AI-generated micro-segments: instead of manually defined demographic buckets, the AI clusters members by behavioural similarity (purchase cadence, engagement score, redemption preference, tier trajectory) and surfaces 5–8 automatically generated segments for the admin to review and name. Each AI segment comes with a recommended rule configuration. MCP integration with Meta Ads API to sync high-value loyalty segments as custom audiences for retargeting — closing the loop between loyalty and paid media.",
+          integrationType: "AI (unsupervised clustering) + MCP (Meta Ads API / Google Ads API)",
+          effort: "High",
+          impact: "Very High",
+          priority: "P1",
+          owner: "ML Eng + Product"
+        },
+        {
+          rowId: "7",
+          module: "Rules Engine",
+          featureName: "Engagement / Behaviour — Rules",
+          currentStatus: "Tracks customer interactions: app logins, browsing, email opens, chatbot use, amenity visits. Rules fire when behaviour thresholds are met (e.g., 3 app logins in 7 days = 50 bonus points). Behaviour data comes from app SDK and CRM events.",
+          enhancedVersion: "Behavioural propensity scoring: AI assigns each member a daily engagement score (0–100) based on recency, frequency, and diversity of interactions. Rules can now target 'members whose engagement score dropped >20 points in the last 14 days' — enabling proactive re-engagement before explicit inactivity. MCP integration with Mixpanel or Amplitude for product analytics events to flow directly into the loyalty engine as behavioural triggers, without manual API mapping.",
+          integrationType: "AI (propensity scoring / RFM modelling) + MCP (Mixpanel / Amplitude)",
+          effort: "High",
+          impact: "Very High",
+          priority: "P1",
+          owner: "ML Eng + Engineering"
+        },
+        {
+          rowId: "8",
+          module: "Rules Engine",
+          featureName: "Milestones — Rules",
+          currentStatus: "Admins configure milestone thresholds (e.g., 10th purchase, ₹10L cumulative spend, 5th referral closed). Rules award points or tier upgrades when thresholds are crossed. Milestones are fixed at programme setup.",
+          enhancedVersion: "Dynamic milestone personalisation: AI analyses each member's trajectory and sets a personalised next milestone that is achievable but stretching — similar to how fitness apps set the next step goal just above current performance. Members see their personalised 'next reward unlock' progress bar in the mobile app. Admin sets only the reward catalogue; AI configures the milestone threshold per member. MCP integration with the mobile app via deep link to drive users directly to the action needed to complete their next milestone.",
+          integrationType: "AI (personalised goal-setting) + MCP (Mobile deep link / push API)",
+          effort: "High",
+          impact: "Very High",
+          priority: "P1",
+          owner: "ML Eng + Mobile"
+        },
+        {
+          rowId: "9",
+          module: "Rules Engine",
+          featureName: "Tier-Based — Rules",
+          currentStatus: "Rules apply differentiated point multipliers and benefits based on the member's current tier. Tier rules are configured by admins and apply uniformly to all members in a tier. Tier status is recalculated on a scheduled basis.",
+          enhancedVersion: "Tier benefit personalisation within tiers: AI identifies which specific tier benefit (lounge vs travel vs merchandise) each Gold member is most likely to value, and surfaces that benefit prominently on their redemption page — even within the same tier. 'Soft tier protection': AI detects members at risk of tier downgrade and auto-triggers a personalised save offer (bonus points or a grace period) before the downgrade happens, reducing perceived tier loss and improving retention.",
+          integrationType: "AI (preference prediction + churn propensity) + MCP (push notification API)",
+          effort: "High",
+          impact: "High",
+          priority: "P2",
+          owner: "ML Eng + Product"
+        },
+        // MODULE: WALLET
+        {
+          rowId: "10",
+          module: "Wallet",
+          featureName: "Cold Wallet",
+          currentStatus: "Points are stored in the cold wallet when they are not yet eligible for redemption (e.g., during a lock-in period or pending verification). Admin manually configures when points move from cold to active wallet. Customers see their cold wallet balance separately.",
+          enhancedVersion: "Automated cold-to-active wallet release triggers: instead of manual admin configuration, rules define the conditions under which cold wallet points become redeemable (e.g., final payment received, possession completed, 90-day lock-in elapsed). AI monitors cold wallet balance across all members and forecasts the expected redemption liability for the next 30/60/90 days — giving finance teams predictive cash flow visibility. Customers receive a push notification the moment their cold points unlock.",
+          integrationType: "AI (liability forecasting) + MCP (push notification / finance reporting API)",
+          effort: "Medium",
+          impact: "High",
+          priority: "P1",
+          owner: "Engineering + ML Eng"
+        },
+        {
+          rowId: "11",
+          module: "Wallet",
+          featureName: "Transaction Ledger",
+          currentStatus: "A complete audit trail of every point movement: earned, redeemed, transferred, expired, adjusted. Accessible to admins through the account statement view. Exportable as CSV.",
+          enhancedVersion: "Real-time ledger with natural language query: admin types 'show me all members who earned more than 10,000 points in February but have not redeemed any' and the system returns filtered results instantly. MCP integration with Google Sheets / Excel for one-click ledger export into live-updating spreadsheets without manual CSV handling. AI flags unusual ledger patterns (point farming, rule gaming, suspiciously rapid accumulation) and raises an alert for admin review.",
+          integrationType: "AI (NL query + anomaly detection) + MCP (Google Sheets API / Excel API)",
+          effort: "Medium",
+          impact: "High",
+          priority: "P1",
+          owner: "Engineering + ML Eng"
+        },
+        // MODULE: REDEMPTION STORE
+        {
+          rowId: "12",
+          module: "Redemption Store",
+          featureName: "Personalised Mobile Redemption Page",
+          currentStatus: "Each customer's redemption page is tailored based on their tier, point balance, and purchase history. Relevant reward categories are surfaced. The page is served through the mobile app and updates when the customer's profile changes.",
+          enhancedVersion: "Real-time AI recommendation engine on the redemption page: 'Customers like you redeemed this next' — a collaborative filtering model that surfaces rewards based on similar members' choices, improving discoverability of the catalogue. A/B testing framework for admins: test two versions of the redemption page layout/content for a segment and auto-select the winner after 500 visits. MCP integration with the client's CMS (Contentful, Strapi) so marketing teams can update redemption page banners and featured rewards without touching the loyalty platform.",
+          integrationType: "AI (collaborative filtering + A/B testing) + MCP (CMS API — Contentful/Strapi)",
+          effort: "High",
+          impact: "Very High",
+          priority: "P1",
+          owner: "ML Eng + Product"
+        },
+        {
+          rowId: "13",
+          module: "Redemption Store",
+          featureName: "Vouchers",
+          currentStatus: "Digital vouchers are generated by the rule engine and issued to customers based on eligibility. Customers can view and apply vouchers through the mobile app. Voucher codes have configurable expiry and usage limits.",
+          enhancedVersion: "Dynamic voucher value: instead of fixed-value vouchers, AI adjusts the voucher amount based on the member's likelihood to redeem — offering a slightly higher-value voucher to a member showing lapse signals vs a standard voucher to an active member. This optimises the cost of retention vs engagement. MCP integration with WhatsApp Business API to deliver voucher codes via WhatsApp message with a single-tap redemption link — eliminating the need to open the app.",
+          integrationType: "AI (dynamic offer optimisation) + MCP (WhatsApp Business API)",
+          effort: "Medium",
+          impact: "High",
+          priority: "P1",
+          owner: "ML Eng + Engineering"
+        },
+        {
+          rowId: "14",
+          module: "Redemption Store",
+          featureName: "Lounge Access",
+          currentStatus: "Gold-tier members are automatically granted lounge access entitlement based on tier status. Access is triggered by the rule engine and communicated to the customer via the app. Third-party lounge partnerships are managed manually.",
+          enhancedVersion: "Digital lounge pass with QR code generated in real time and delivered to the customer's mobile app. MCP integration with lounge booking APIs (DragonPass, Priority Pass, or partner-specific APIs) to check lounge availability and auto-book the customer's next visit based on their travel itinerary if connected. Push notification reminder 2 hours before a scheduled lounge visit.",
+          integrationType: "MCP (DragonPass / Priority Pass API + push notification)",
+          effort: "Medium",
+          impact: "Medium",
+          priority: "P2",
+          owner: "Engineering + Partnerships"
+        },
+        {
+          rowId: "15",
+          module: "Redemption Store",
+          featureName: "Experiences",
+          currentStatus: "Customers redeem points for experiences (spa, hotels, events). Available experiences are listed in the admin-managed catalogue. Redemption is a manual process — the customer selects an experience and the ops team fulfils it.",
+          enhancedVersion: "AI-curated experience recommendations based on the member's location, tier, redemption history, and seasonal context. MCP integration with booking APIs (MakeMyTrip, Thomas Cook, local spa aggregators) to enable real-time availability check and instant booking confirmation within the loyalty app — eliminating the manual fulfilment step. Customers see 'Book Now' instead of 'Request Redemption'.",
+          integrationType: "AI (personalised curation) + MCP (MakeMyTrip / Booking.com / spa aggregator APIs)",
+          effort: "High",
+          impact: "High",
+          priority: "P2",
+          owner: "Engineering + Partnerships"
+        },
+        {
+          rowId: "16",
+          module: "Redemption Store",
+          featureName: "Travel & Ticketing",
+          currentStatus: "Customers redeem points for travel rewards: flights, hotels, event tickets. Available in the redemption catalogue as redemption categories. Fulfilment requires manual coordination with travel partners.",
+          enhancedVersion: "Live inventory integration: MCP connections to flight and hotel search APIs (Amadeus, Skyscanner, MakeMyTrip B2B) surface real-time availability and allow members to book directly within the loyalty app using points as currency. AI price-sensitivity model: suggests to the admin the optimal points-to-cash ratio for travel redemptions based on current market prices — ensuring the loyalty programme stays competitive without over-subsidising travel rewards.",
+          integrationType: "AI (price optimisation) + MCP (Amadeus / Skyscanner / MakeMyTrip B2B APIs)",
+          effort: "Very High",
+          impact: "High",
+          priority: "P2",
+          owner: "Engineering + Partnerships"
+        },
+        {
+          rowId: "17",
+          module: "Redemption Store",
+          featureName: "Merchandise",
+          currentStatus: "Physical products available in the redemption catalogue. Managed by admin: product listing, stock levels, point value. Redemption triggers a manual fulfilment process with a logistics partner.",
+          enhancedVersion: "Dropship integration: MCP connection to merchandise fulfilment APIs (Printfection, Qwikcilver, or Amazon Business) for automated order placement and tracking the moment a member redeems. Live stock sync — products automatically deactivated when inventory hits zero. AI catalogue optimisation: surfaces which merchandise items generate the highest redemption-to-engagement ratio and recommends removing low-performing items from the catalogue quarterly.",
+          integrationType: "AI (catalogue optimisation) + MCP (Amazon Business / Printfection / Qwikcilver APIs)",
+          effort: "High",
+          impact: "High",
+          priority: "P2",
+          owner: "Engineering + Partnerships"
+        },
+        {
+          rowId: "18",
+          module: "Redemption Store",
+          featureName: "Encashment",
+          currentStatus: "Customers submit an encashment request with bank details. Admin reviews and processes the payout manually. Request status (Requested / Completed) is tracked in the admin panel. Points are debited from the wallet on encashment approval.",
+          enhancedVersion: "Automated encashment processing: MCP integration with RazorpayX or Cashfree Payouts API for same-day automated bank transfer on admin approval — eliminating manual payout processing. AI fraud detection: flags encashment requests that show unusual patterns (e.g., rapid accumulation followed by immediate encashment, multiple bank account changes) for manual review before processing. Customers receive real-time transaction status updates via push and SMS.",
+          integrationType: "AI (fraud detection) + MCP (RazorpayX / Cashfree Payouts API + SMS gateway)",
+          effort: "Medium",
+          impact: "Very High",
+          priority: "P0",
+          owner: "Engineering + ML Eng"
+        },
+        // MODULE: ADMIN
+        {
+          rowId: "19",
+          module: "Admin",
+          featureName: "Escrow Wallet",
+          currentStatus: "A 25% float is maintained in the escrow wallet against total outstanding loyalty points. The master account is required to maintain a mark-to-market balance. Admin monitors escrow balance through the admin panel. Alerts are manual.",
+          enhancedVersion: "Automated escrow health monitoring: AI tracks the escrow ratio in real time and sends an alert to the finance team when the buffer drops below the 25% threshold, with a recommended top-up amount. Monthly escrow report auto-generated as a PDF in the format required for board-level or regulatory review. MCP integration with the company's accounting system (Tally/SAP) to auto-post the escrow movement as a journal entry — eliminating manual finance reconciliation.",
+          integrationType: "AI (real-time monitoring + reporting) + MCP (Tally / SAP / accounting API)",
+          effort: "Medium",
+          impact: "Very High",
+          priority: "P0",
+          owner: "Engineering + Finance Ops"
+        },
+        {
+          rowId: "20",
+          module: "Admin",
+          featureName: "Account Statement",
+          currentStatus: "Admins generate account statements for individual customers: points earned, redeemed, adjusted, and current balance over a selected period. Exportable as CSV. Used for dispute resolution and customer service.",
+          enhancedVersion: "Self-service customer account statement: members can download their own statement directly from the mobile app — reducing customer service inbound queries. AI-powered insights overlay: the statement includes auto-generated insights ('You earned 3x more points in Q4 than Q3 — here's why') that are both informative and engagement-driving. MCP integration with the client's customer service platform (Zendesk, Freshdesk) so support agents can pull loyalty account statements directly within a support ticket without switching tools.",
+          integrationType: "AI (insights generation) + MCP (Zendesk / Freshdesk API)",
+          effort: "Medium",
+          impact: "High",
+          priority: "P1",
+          owner: "Engineering + ML Eng"
+        },
+        // MODULE: INTEGRATIONS
+        {
+          rowId: "21",
+          module: "Integrations",
+          featureName: "CRM Integration (Salesforce)",
+          currentStatus: "12+ bidirectional API endpoints sync member data, payment events, demand notes, referrals, home loans, testimonials, and surveys between Salesforce and the loyalty platform. Sync is event-driven and production-proven.",
+          enhancedVersion: "Visual data flow monitoring dashboard: admin sees a live map of which Salesforce events are flowing into the loyalty engine, last sync timestamp, and any failed events with one-click retry. AI-powered field mapping assistant: when a new Salesforce object or custom field needs to be mapped to a loyalty trigger, AI suggests the most likely mapping based on field name and data type — reducing integration maintenance time. MCP integration with Salesforce Flow to allow Salesforce admins to trigger loyalty rules directly from Salesforce automation — without needing to use the loyalty platform's admin UI.",
+          integrationType: "AI (field mapping assistant) + MCP (Salesforce Flow / Salesforce Admin API)",
+          effort: "Medium",
+          impact: "High",
+          priority: "P1",
+          owner: "Engineering + Product"
+        },
+        {
+          rowId: "22",
+          module: "Integrations",
+          featureName: "Accounting Integration",
+          currentStatus: "API structure in place. Direct accounting connector not yet shipped. Currently requires manual export and reconciliation for GL posting of loyalty costs.",
+          enhancedVersion: "Automated GL posting: every points issuance, redemption, and escrow movement is posted as a journal entry to the client's accounting software in real time. MCP integration with Tally Prime API, SAP Business One API, and QuickBooks API as the first three connectors. AI-generated loyalty P&L report: monthly auto-summary of total points issued (at cost), redeemed (at cost), expired (liability released), and net programme P&L — ready to paste into the management accounts without any manual calculation.",
+          integrationType: "AI (P&L summarisation) + MCP (Tally Prime / SAP B1 / QuickBooks APIs)",
+          effort: "High",
+          impact: "Very High",
+          priority: "P0",
+          owner: "Engineering + Finance Ops"
         }
       ]
     },
@@ -1398,12 +1930,2068 @@ const loyaltyEngineData: ProductData = {
           threatLevel: "MEDIUM"
         }
       ]
+    },
+    detailedGTM: {
+      targetGroups: [],
+      sheet: {
+        title: "GTM STRATEGY — LOYALTY RULE ENGINE",
+        targetGroups: [
+          {
+            title: "TARGET GROUP 1 · REAL ESTATE DEVELOPERS\nMid-to-large residential developers · ₹200Cr–₹5,000Cr revenue · Tier 1–2 cities · Salesforce CRM · 500–10,000 units/year",
+            sections: [
+              {
+                title: "🎯 COMPONENT 1: SALES MOTION",
+                columns: ["Sales Element", "Detail", "Rationale / Insight", "Objection to Handle", "Objection Response", "Owner", "Timeline", "KPI"],
+                rows: [
+                  [
+                    "Primary motion",
+                    "Direct enterprise sales led by a senior relationship manager. Outbound prospecting targeting VP Sales, CMO, and Head of CRM at developers with ₹200Cr+ revenue and a Salesforce CRM deployment.",
+                    "Real estate deals are relationship-driven. The buying committee includes CMO (loyalty ROI), Head Collections (TAT improvement), CFO (liability management), and IT (integration). A senior RM who can navigate all four is essential.",
+                    "'We already have Xoxoday for vouchers — why do we need another tool?'",
+                    "Xoxoday is a voucher fulfilment tool — it has no rule engine, no wallet, no escrow. Show side-by-side: Xoxoday can deliver the reward, but only we can decide who earns it, when, and why. Offer to integrate with Xoxoday.",
+                    "Founder / Head of Sales",
+                    "Ongoing",
+                    "Meetings booked / week"
+                  ],
+                  [
+                    "Deal entry point",
+                    "Enter the conversation through the collections or CRM team — not marketing. The collections TAT problem (early-payment incentives) is the fastest path to a signed PO because it has a measurable ₹ ROI that can be quantified in the first meeting.",
+                    "Collections TAT is a CFO-visible metric. A 10-day improvement in average payment time on a ₹500Cr receivables book = ₹2.5–5Cr annual interest saving. This single data point justifies the entire annual contract value.",
+                    "'How do we know this will actually improve collections TAT?'",
+                    "Reference the live deployment: the existing client configured 6 demand-note payment rules in week 1 and saw measurable TAT reduction within 60 days. Offer a 90-day pilot with a specific TAT improvement target agreed upfront.",
+                    "Head of Sales + CS",
+                    "Month 1–2",
+                    "Pilot agreements signed"
+                  ],
+                  [
+                    "Proof of value — pilot structure",
+                    "Offer a 90-day paid pilot at ₹3–5L (credited against full ACV if converted). Pilot scope: 3 rules configured (one collection TAT rule, one referral rule, one app-adoption rule). Weekly reporting on points issued, redemption rate, and TAT delta.",
+                    "A paid pilot filters serious buyers from browsers. The 3-rule scope is achievable in 2 weeks and produces measurable data within 30 days. Proof of TAT improvement in the pilot becomes the primary case study for the next 5 prospects.",
+                    "'We don't have budget for a pilot right now.'",
+                    "Reframe: 'A ₹3L pilot that proves ₹2Cr in annual interest savings is not a cost — it is the cheapest due diligence you will ever run.' Offer deferred payment: pilot fee payable at 60 days.",
+                    "Head of Sales",
+                    "Month 1–3",
+                    "Pilots converted to full ACV"
+                  ],
+                  [
+                    "Buying committee strategy",
+                    "Run parallel tracks: (a) CMO/Marketing: redemption catalogue, personalised mobile page, referral programme ROI; (b) CFO/Finance: escrow wallet, liability management, accounting integration; (c) CRM/IT: Salesforce integration depth, API documentation, zero-rip-and-replace.",
+                    "Real estate enterprise deals stall when one committee member is unsatisfied. Addressing CFO concerns (escrow) and IT concerns (Salesforce integration) in parallel with the marketing story prevents the deal from dying after a marketing champion leaves.",
+                    "'Our IT team says the integration will take 6 months.'",
+                    "Show the API documentation and the live integration map: 12 Salesforce endpoints, tested and production-proven. The client's IT team reviews the docs — typical integration timeline is 4–6 weeks, not 6 months.",
+                    "Head of Sales + Product",
+                    "Month 2–4",
+                    "Committee sign-offs per deal"
+                  ],
+                  [
+                    "Pricing & commercial",
+                    "Year 1 ACV: ₹20–35L for a developer with 5,000–20,000 active members. Includes: all rule engine modules, wallet (cold + ledger), 5 redemption types, Salesforce integration, escrow wallet, admin panel. Payment: 50% upfront + 50% at 90 days. Annual renewal with 10% price escalation clause.",
+                    "₹20–35L ACV is below Salesforce Loyalty Management and Capillary — positioning us as the specialist alternative with better vertical fit and faster deployment. The 10% escalation clause is non-negotiable and positions us for ₹25–40L in Year 2.",
+                    "'Capillary quoted us ₹15L — can you match that?'",
+                    "Capillary at ₹15L is the retail module — they do not have escrow, cold wallet, or Salesforce demand-note integration. Ask: 'Did their quote include the escrow wallet? The accounting integration? The CRM integration for 12 event types?' The comparison breaks down on scope.",
+                    "Head of Sales",
+                    "Month 1 onwards",
+                    "ACV per deal, win rate"
+                  ]
+                ]
+              },
+              {
+                title: "📣 COMPONENT 2: MARKETING CHANNELS",
+                columns: ["Channel", "Tactic / Format", "Content Theme", "Target Persona", "Frequency", "Budget Allocation", "Expected Output", "Measurement"],
+                rows: [
+                  [
+                    "Vertical content — LinkedIn",
+                    "Long-form posts and articles authored by the founding team: 'How we reduced collections TAT by 22 days using a loyalty rule engine' · 'The ₹5Cr liability your loyalty programme is hiding from your CFO' · 'Why Xoxoday is not a loyalty programme'",
+                    "Financial impact of loyalty. CFO-level risk framing. Competitive positioning vs voucher tools.",
+                    "VP Sales, CMO, Head CRM at real estate companies. Also CFOs who follow fintech / proptech content.",
+                    "3 posts/week. 1 long-form article/month.",
+                    "15% of marketing budget",
+                    "500–2,000 impressions per post. 2–4 inbound enquiries/month from LinkedIn.",
+                    "Impressions, follower growth, inbound demo requests sourced from LinkedIn"
+                  ],
+                  [
+                    "Industry events — CREDAI & NAREDCO",
+                    "Speaking slot or panel participation at CREDAI Natcon, NAREDCO national conference, and regional CREDAI chapter events. Topic: 'The loyalty programme your homebuyers actually want (and what it does to your collections)'. Booth presence at 2 events/year.",
+                    "Collections TAT improvement. Referral programme ROI. Customer lifetime value in real estate.",
+                    "Founders and heads of sales / marketing at real estate companies. Decision-makers who are actively looking for operational improvement tools.",
+                    "2 major events/year + 3–4 chapter events/year.",
+                    "25% of marketing budget",
+                    "50–100 qualified conversations per event. 5–10 sales meetings booked per event.",
+                    "Meetings booked from event. Pipeline generated per event (₹ ACV)"
+                  ],
+                  [
+                    "Case study & ROI calculator",
+                    "One published case study from the live client (anonymised or named with permission): specific metrics — collections TAT improvement (days), referral volume (leads generated), points issued vs redeemed ratio, escrow buffer maintained. Accompanied by an interactive ROI calculator ('Enter your receivables book size — we show you what a 10-day TAT improvement is worth').",
+                    "Proof of ROI. Specific ₹ impact from a live Indian real estate deployment.",
+                    "CMO and CFO who are evaluating the business case. Also used by sales team in every pitch deck.",
+                    "Publish once. Update quarterly with new data.",
+                    "20% of marketing budget",
+                    "Case study viewed by >80% of prospects in pipeline. ROI calculator completed by 30%+ of website visitors.",
+                    "Case study downloads. ROI calculator completions. Attribution to closed deals."
+                  ],
+                  [
+                    "Salesforce partner channel",
+                    "Register as a Salesforce ISV partner. List on Salesforce AppExchange. Build relationships with the top 10 Salesforce implementation partners in India (Deloitte Digital, Infosys Salesforce, Accenture, local boutique SIs). Offer a partner referral fee (10–15% of Year 1 ACV) for qualified introductions.",
+                    "Salesforce-native loyalty solution. Zero rip-and-replace. Pre-certified integration.",
+                    "Salesforce project managers and solution architects at SI firms who recommend tools to real estate clients.",
+                    "Partner outreach: monthly. AppExchange: evergreen listing.",
+                    "20% of marketing budget",
+                    "3–5 partner introductions per quarter by Month 6.",
+                    "Partner-sourced pipeline (₹ ACV). AppExchange listing views and demo requests."
+                  ],
+                  [
+                    "Email nurture — targeted outbound",
+                    "Personalised outbound email sequence to a curated list of 200 real estate developers (sourced from CREDAI membership, LinkedIn, MakaanIQ data). Sequence: Email 1 (collections TAT framing) → Email 2 (referral ROI) → Email 3 (CFO risk — escrow) → Email 4 (case study) → Email 5 (demo invite). 5-email sequence over 6 weeks.",
+                    "Each email leads with a specific ₹ impact framing — not product features. Subject lines reference known pain points: 'Your collections TAT is costing you ₹X/day'.",
+                    "Head of CRM, VP Sales, CMO at target developer companies.",
+                    "One sequence per prospect. Ongoing enrichment of list.",
+                    "20% of marketing budget",
+                    "8–12% reply rate. 3–5% demo conversion from sequence.",
+                    "Open rate, reply rate, demo bookings from sequence"
+                  ]
+                ]
+              },
+              {
+                title: "🗓 COMPONENT 3: 90-DAY LAUNCH SEQUENCE",
+                columns: ["Phase", "Days", "Key Activities", "Sales Actions", "Marketing Actions", "Milestone / Gate", "Owner", "Success Signal"],
+                rows: [
+                  [
+                    "Phase 1 — Foundation",
+                    "Days 1–30",
+                    "· Finalise ICP list of 50 target developers\n· Build ROI calculator and collections TAT one-pager\n· Set up LinkedIn company page and post first 4 articles\n· Identify and brief 2 Salesforce SI partners\n· Register for one CREDAI chapter event in Month 2",
+                    "· Book 10 discovery calls with VP Sales / Head CRM at target developers\n· Run collections TAT framing in every call\n· Close at least 1 pilot agreement",
+                    "· Publish 3 LinkedIn articles\n· Launch 5-email outbound sequence to 100 prospects\n· Publish ROI calculator on website",
+                    "1 pilot agreement signed by Day 30",
+                    "Founder + Head Sales",
+                    "Pipeline of ₹1Cr+ ACV in active discussion"
+                  ],
+                  [
+                    "Phase 2 — Momentum",
+                    "Days 31–60",
+                    "· Onboard pilot client — configure 3 rules (collection TAT, referral, app adoption)\n· Begin collecting pilot data (points issued, TAT delta)\n· Attend CREDAI chapter event\n· Publish anonymised pilot early results as a LinkedIn post\n· Begin partner onboarding with 1 Salesforce SI",
+                    "· Use pilot data to open 5 new conversations\n· Present pilot progress to 2 prospects who are in evaluation\n· Close 1 full ACV deal from pipeline",
+                    "· Share pilot early results as social proof\n· Launch second outbound sequence to 100 new prospects\n· Submit CREDAI Natcon speaking application",
+                    "1 full deal signed. Pilot showing measurable TAT improvement.",
+                    "Head Sales + CS",
+                    "First paying client #2 signed"
+                  ],
+                  [
+                    "Phase 3 — Proof & Scale",
+                    "Days 61–90",
+                    "· Complete pilot and publish full case study with metrics\n· Present case study at CREDAI event (if speaking slot secured)\n· Activate Salesforce AppExchange listing\n· Onboard first Salesforce SI partner with signed referral agreement\n· Build pipeline to ₹3Cr ACV by Day 90",
+                    "· Use case study in every active deal\n· Convert pilot to full ACV\n· Open 3 new deals from partner referrals\n· Target: 3 signed clients and 5+ active evaluations by Day 90",
+                    "· Publish full case study (PDF + LinkedIn)\n· Submit AppExchange listing\n· Pitch at CREDAI event\n· PR outreach: PropTech press coverage of case study",
+                    "₹3Cr+ pipeline. 1 published case study. 1 SI partner active.",
+                    "Founder + Head Sales + Marketing",
+                    "2–3 signed clients. SI partner generating first referral."
+                  ]
+                ]
+              },
+              {
+                title: "🤝 COMPONENT 4: PARTNERSHIP STRATEGY",
+                columns: ["Partner Type", "Specific Partners (Examples)", "What We Offer Them", "What They Offer Us", "Engagement Model", "Revenue Share", "Priority", "90-Day Action"],
+                rows: [
+                  [
+                    "Salesforce Implementation Partners",
+                    "Deloitte Digital, Infosys Salesforce Practice, Accenture, Persistent Systems, local boutique SIs (Manras, Sage, Cyntexa)",
+                    "A pre-built, production-proven loyalty layer for real estate clients. Reduces their custom development scope. Makes their Salesforce proposal more complete. Adds a recurring SaaS revenue line they can resell.",
+                    "Introductions to their real estate developer clients who are already on Salesforce and asking 'what can we do for loyalty'. Credibility via Salesforce partner ecosystem membership.",
+                    "Referral agreement: SI introduces us to a qualified prospect. We manage the sale and onboarding. SI receives referral fee on deal close.",
+                    "10–15% of Year 1 ACV as referral fee",
+                    "P0 — Highest priority",
+                    "Sign referral agreements with 2 SIs by Day 45"
+                  ],
+                  [
+                    "PropTech & CRM Consultants",
+                    "Independent Salesforce consultants, real estate tech advisors, CRM implementation freelancers who work with mid-size developers",
+                    "An additional revenue stream for every real estate client engagement — loyalty is a natural add-on recommendation after CRM implementation. Sales training and co-marketing support.",
+                    "Warm introductions at the right moment in a developer's tech journey (post-CRM implementation is the ideal loyalty programme entry point). Trusted voice with the client.",
+                    "Referral or white-label arrangement. Consultant recommends us; we manage product and delivery.",
+                    "10% of Year 1 ACV",
+                    "P1",
+                    "Identify 10 target consultants and brief them by Day 60"
+                  ],
+                  [
+                    "Xoxoday / Plum (Reward Fulfilment Partner)",
+                    "Xoxoday, Qwikcilver, Pine Labs Rewards, Amazon Business Rewards",
+                    "A demand-generation engine: every client who uses us needs a reward fulfilment partner. We recommend and integrate with them — they get new B2B clients from our pipeline.",
+                    "Marketplace listing, co-marketing, and a joint 'intelligence + fulfilment' story that positions both products as complementary — turning potential competitive positioning into a distribution advantage.",
+                    "Technology integration partnership. Joint GTM: we power the rules, they fulfil the reward. Co-branded one-pager for developer prospects.",
+                    "No revenue share — strategic distribution play",
+                    "P1",
+                    "Approach Xoxoday partnership team by Day 30"
+                  ],
+                  [
+                    "CREDAI & NAREDCO (Industry Associations)",
+                    "CREDAI National, CREDAI Mumbai, CREDAI Pune, CREDAI Bengaluru, NAREDCO",
+                    "Educational content for their members: webinars on collections TAT improvement, referral programme ROI, loyalty for real estate. We appear as a knowledge partner, not a vendor.",
+                    "Access to their member database (2,000+ developers). Speaking slots at national and chapter events. Credibility as an endorsed knowledge partner in the real estate ecosystem.",
+                    "Knowledge partner / associate member arrangement. Host 2 webinars/year for CREDAI members. Sponsor one chapter event annually.",
+                    "Association membership fee + event sponsorship (₹2–5L/year total)",
+                    "P1",
+                    "Contact CREDAI chapter heads by Day 20"
+                  ]
+                ]
+              },
+              {
+                title: "★ TG SUMMARY — REAL ESTATE DEVELOPERS",
+                columns: ["Metric", "Detail"],
+                rows: [
+                  ["ICP in one sentence", "Mid-to-large Indian residential real estate developers (₹200Cr–₹5,000Cr revenue, Tier 1–2 cities, Salesforce CRM, 500–10,000 units/year) who have a collections TAT problem, a referral programme running on Excel, and no loyalty infrastructure."],
+                  ["Primary entry point", "Collections TAT improvement — quantifiable ₹ ROI in the first meeting. Secondary entry: referral programme automation. CFO story: escrow wallet as liability management."],
+                  ["90-day goal", "2 signed clients. 1 published case study with specific TAT improvement metrics. ₹3Cr+ active pipeline. 1 Salesforce SI partner generating referrals. Speaking slot at one CREDAI event."],
+                  ["Year 1 revenue target", "₹60–80L ARR from 3–4 signed real estate clients at ₹15–25L ACV each. Reference client base that unlocks BFSI and automotive conversations."],
+                  ["Biggest risk", "Long sales cycles (3–6 months) and large buying committees slow revenue recognition. Mitigate: offer a fast-start paid pilot at ₹3–5L to compress the decision timeline."],
+                  ["Competitive moat for this TG", "No other Indian loyalty SaaS has built demand-note / payment-event rule triggers, escrow wallet, and production-proven Salesforce integration for real estate. This vertical is ours to own — if we move fast enough."]
+                ]
+              }
+            ]
+          },
+          {
+            title: "TARGET GROUP 2 · BFSI — NBFCs & PRIVATE BANKS\nDigital lenders, housing finance companies, private banks · ₹1,000Cr–₹50,000Cr AUM · 50K–5M customers · Salesforce or SAP CRM",
+            sections: [
+              {
+                title: "🎯 COMPONENT 1: SALES MOTION",
+                columns: ["Sales Element", "Detail", "Rationale / Insight", "Objection to Handle", "Objection Response", "Owner", "Timeline", "KPI"],
+                rows: [
+                  [
+                    "Primary motion",
+                    "Direct enterprise sales targeting Chief Customer Officer, Head of Retail Banking, and Head of Digital at NBFCs and mid-size private banks. Entry via the retention / collections problem — same financial rigour as real estate, different product context.",
+                    "BFSI has the largest loyalty programme budgets in India but the most rigid procurement processes. Entering through a retention or collections efficiency story (not 'we are a loyalty platform') cuts through the vendor noise and reaches the right buyer faster.",
+                    "'We already have a loyalty programme through our card partnership / rewards platform.'",
+                    "Ask: 'Does your loyalty programme fire rules on EMI payment timing? Does it have a compliance-grade escrow wallet? Can marketing configure a new rule without an IT ticket?' The answer to all three is almost always no — which is the gap we fill.",
+                    "Founder + Senior Sales",
+                    "Month 2–4",
+                    "Discovery calls booked with CCO/Head Digital"
+                  ],
+                  [
+                    "Deal entry point",
+                    "Enter through the Head of Collections or the Head of Digital — not the CMO. The EMI on-time payment incentive rule has an immediate, measurable ROI (reduced delinquency rate) that can be quantified before a contract is signed.",
+                    "Delinquency reduction of 1% on a ₹5,000Cr loan book = ₹50Cr in reduced NPA provisioning requirement. This is a CFO and MD-level number that dwarfs the platform cost and accelerates approval.",
+                    "'Our risk / compliance team will block this — loyalty programmes have regulatory implications for NBFCs.'",
+                    "This is where the escrow wallet becomes a selling feature, not a compliance problem. Escrow provides a RBI-aligned liability buffer. Offer to join a compliance call with their legal team — bring escrow documentation and data residency specs.",
+                    "Head Sales + Legal support",
+                    "Month 2–5",
+                    "Compliance team sign-offs per deal"
+                  ],
+                  [
+                    "Proof of value — pilot structure",
+                    "BFSI pilot: 60-day paid pilot at ₹4–6L (credited against ACV). Scope: 2 rules configured (EMI on-time reward + app-adoption reward). Track: on-time payment rate delta, app transaction rate delta. Weekly reporting dashboard shared with the sponsor.",
+                    "BFSI buyers need quantified proof before committing. A 60-day pilot is fast enough to show statistically significant payment behaviour change in a loan cohort of 5,000+ accounts. This data becomes the deal-closing evidence.",
+                    "'We need 6 months of data before we can commit to a full deployment.'",
+                    "Propose a staged commitment: pilot → 6-month limited deployment (1 product line) → full roll-out. Each stage has a signed agreement. This gives the client risk-controlled expansion and us a contractual pipeline.",
+                    "Head Sales + CS",
+                    "Month 3–6",
+                    "Pilots converted to staged agreements"
+                  ],
+                  [
+                    "Buying committee strategy",
+                    "Four-track approach: (a) CCO/CMO: retention metrics, NPS improvement, cross-sell rate uplift; (b) CFO/Finance: escrow wallet, RBI-aligned liability management, accounting integration; (c) Risk/Compliance: data residency, escrow documentation, audit trail; (d) IT/Digital: API integration with core banking (Finacle, Nucleus), data security.",
+                    "BFSI deals die in compliance and IT more often than in commercial negotiations. The escrow wallet and transaction ledger are the primary tools for unlocking Risk/Compliance. The Salesforce/API integration story unlocks IT.",
+                    "'Our IT has a 12-month integration backlog — we can't prioritise this.'",
+                    "Position as a parallel-track integration: our API sits alongside the existing core banking system — we do not require integration into the CBS. We integrate with the CRM (Salesforce / SAP) layer, which IT already manages. Estimated integration effort: 6–8 weeks.",
+                    "Head Sales + Technical Lead",
+                    "Month 3–6",
+                    "IT sign-offs per deal"
+                  ],
+                  [
+                    "Pricing & commercial — BFSI",
+                    "Year 1 ACV: ₹30–80L for an NBFC with 100K–1M members. Includes: full rule engine, wallet, redemption catalogue (5 types), Salesforce/SAP CRM integration, escrow wallet, compliance reporting. Payment: 40% upfront + 30% at 90 days + 30% at 12 months. Annual renewal with 12% price escalation.",
+                    "BFSI clients have longer procurement cycles but larger budgets and multi-year relationships. The 3-tranche payment structure aligns with their budget approval timelines. Higher escalation rate (12%) reflects the regulatory value of the escrow and compliance features.",
+                    "'Comviva quoted us ₹1.5Cr for a full loyalty platform — you seem much cheaper.'",
+                    "Comviva is an enterprise telco platform requiring 18 months to deploy and a dedicated team to operate. We deploy in 8–12 weeks with the client's existing CRM team managing rules. Ask: 'What is your total cost of ownership on the Comviva proposal, including implementation and ongoing IT support?'",
+                    "Head Sales",
+                    "Month 2 onwards",
+                    "ACV per deal, procurement cycle length"
+                  ]
+                ]
+              },
+              {
+                title: "📣 COMPONENT 2: MARKETING CHANNELS",
+                columns: ["Channel", "Tactic / Format", "Content Theme", "Target Persona", "Frequency", "Budget Allocation", "Expected Output", "Measurement"],
+                rows: [
+                  [
+                    "Thought leadership — BFSI-specific",
+                    "LinkedIn articles and whitepapers authored by the founding team targeting BFSI pain: '₹50Cr in NPA provisioning your loyalty programme could have prevented' · 'Why your EMI reminder costs more than an EMI incentive' · 'The RBI-aligned loyalty programme: how the escrow wallet changes everything'",
+                    "NPA delinquency risk. RBI compliance as a loyalty design principle. Cross-sell rate improvement through loyalty.",
+                    "CCO, Head of Retail Banking, Head of Collections, CFO at private banks and NBFCs.",
+                    "2 articles/month. 1 whitepaper/quarter.",
+                    "20% of marketing budget",
+                    "1,000–3,000 LinkedIn impressions per article. 2–3 inbound enquiries/month.",
+                    "LinkedIn impressions. Whitepaper downloads. Inbound demo requests."
+                  ],
+                  [
+                    "BFSI industry events — FIBAC & IBA",
+                    "Speaking or panel participation at FIBAC (Federation of Indian Chambers of Commerce & Industry Banking Conference), IBA Annual Banking Technology Conference, and NBFC Summit. Topic: 'Loyalty as a delinquency reduction tool: a data-led approach'.",
+                    "Delinquency reduction ROI. RBI compliance of loyalty programmes. Digital banking engagement through loyalty.",
+                    "CXO-level BFSI decision-makers who attend industry conferences for peer learning.",
+                    "2–3 events/year.",
+                    "30% of marketing budget",
+                    "30–60 qualified conversations per event. 3–6 sales meetings booked per event.",
+                    "Meetings from event. Pipeline (₹ ACV) generated per event."
+                  ],
+                  [
+                    "Regulatory angle — RBI compliance content",
+                    "A dedicated content series: 'Loyalty liability and RBI compliance — what NBFCs need to know before they launch a loyalty programme.' Distributed via LinkedIn, email to NBFC compliance officers, and submitted to NBFC regulatory forums. Positions us as the only loyalty platform that has thought through regulatory compliance.",
+                    "RBI prepaid instrument guidelines. Loyalty liability as a balance sheet item. Escrow as compliance infrastructure.",
+                    "Chief Compliance Officer, CFO, Head of Risk at NBFCs and cooperative banks.",
+                    "1 compliance guide published. Updated annually when RBI guidelines change.",
+                    "15% of marketing budget",
+                    "Downloads from compliance and risk teams who are typically not reachable via standard sales outreach.",
+                    "Compliance guide downloads. Risk/compliance team introductions triggered by content."
+                  ],
+                  [
+                    "Fintech ecosystem partnerships & PR",
+                    "Get featured in Inc42, Fintech Street, and MoneyControl Pro as the loyalty platform designed for regulated financial services. Pitch story: 'The startup solving NBFC loyalty liability with an escrow wallet' — this is a genuinely novel angle in fintech press.",
+                    "Product innovation. Regulatory compliance. Financial inclusion through better customer retention.",
+                    "BFSI decision-makers who consume fintech media. Also reaches VC and PE investors who influence tech stack decisions at portfolio NBFCs.",
+                    "2 PR pitches/month. Target 1 feature placement/quarter.",
+                    "15% of marketing budget",
+                    "1 major feature placement/quarter. Inbound enquiries from fintech-media-reading BFSI buyers.",
+                    "Media placements. Inbound enquiries attributed to PR."
+                  ],
+                  [
+                    "Direct email — NBFC & bank targeting",
+                    "Curated outreach to 300 NBFCs and private banks sourced from RBI registered NBFC list, BSE/NSE listed NBFC filings, and LinkedIn. 6-email sequence over 8 weeks: Email 1 (delinquency framing) → 2 (cross-sell ROI) → 3 (escrow compliance angle) → 4 (whitepaper) → 5 (case study) → 6 (demo invite).",
+                    "Each email leads with a regulatory or financial risk framing — compliance officers and CFOs respond to risk language, not feature lists.",
+                    "CCO, CFO, Head of Collections, Head of Digital at NBFCs and private banks.",
+                    "One sequence per prospect. Ongoing list enrichment.",
+                    "20% of marketing budget",
+                    "6–10% reply rate. 2–4% demo conversion.",
+                    "Open rate, reply rate, demo bookings, pipeline attributed to email."
+                  ]
+                ]
+              },
+              {
+                title: "🗓 COMPONENT 3: 90-DAY LAUNCH SEQUENCE",
+                columns: ["Phase", "Days", "Key Activities", "Sales Actions", "Marketing Actions", "Milestone / Gate", "Owner", "Success Signal"],
+                rows: [
+                  [
+                    "Phase 1 — Compliance & Credibility Setup",
+                    "Days 1–30",
+                    "· Draft RBI compliance guide for NBFC loyalty programmes\n· Build BFSI-specific pitch deck (delinquency framing + escrow angle)\n· Identify 50 target NBFCs from RBI registered list\n· Map Salesforce SI partners who serve BFSI clients\n· Register for FIBAC or IBA event",
+                    "· Book 5–8 discovery calls with CCO / Head Collections at target NBFCs\n· Lead every call with EMI on-time payment ROI framing\n· Qualify 2 deals for pilot discussion",
+                    "· Publish RBI compliance guide on LinkedIn and website\n· Launch 6-email outbound sequence to 150 NBFC prospects\n· Submit FIBAC speaking application",
+                    "RBI compliance guide published. 2 BFSI prospects in pilot discussion by Day 30.",
+                    "Founder + Head Sales + Legal",
+                    "2 BFSI prospects in active pilot discussion"
+                  ],
+                  [
+                    "Phase 2 — First BFSI Pilot",
+                    "Days 31–60",
+                    "· Onboard first BFSI pilot client — configure EMI on-time rule + app-adoption rule\n· Set up compliance reporting for escrow wallet\n· Begin collecting pilot cohort data\n· Present at FIBAC or IBA event if slot secured\n· Build BFSI-specific integration documentation",
+                    "· Use pilot agreement as credibility in 3 new BFSI conversations\n· Target: 1 additional pilot signed by Day 60\n· Open conversations with 2 BFSI-focused Salesforce SIs",
+                    "· Publish LinkedIn post: 'We just configured our first EMI loyalty rule for an NBFC — here is what we learned'\n· Submit PR pitch to Inc42 and Fintech Street\n· Publish BFSI integration documentation publicly",
+                    "First BFSI pilot live and generating data. PR pitch submitted.",
+                    "Head Sales + CS + Engineering",
+                    "First BFSI pilot generating data. Second pilot discussion open."
+                  ],
+                  [
+                    "Phase 3 — Proof & Vertical Expansion",
+                    "Days 61–90",
+                    "· Complete pilot and extract delinquency + app-adoption data\n· Present pilot results to 3 prospects in pipeline\n· Publish anonymised BFSI case study (with compliance angle)\n· Target: 1 full BFSI deal signed by Day 90\n· Build pipeline to ₹4Cr BFSI ACV",
+                    "· Use pilot data in every active BFSI deal\n· Convert pilot to full ACV\n· Open 3 new deals via SI partner referrals\n· Begin outreach to private banks (larger ACV target)",
+                    "· Publish BFSI case study\n· PR feature in Inc42 / Fintech Street live\n· Submit content to NBFC compliance forums\n· LinkedIn article on pilot results (anonymised metrics)",
+                    "1 BFSI full deal signed. Case study published. ₹4Cr pipeline.",
+                    "Founder + Head Sales + Marketing",
+                    "1 signed BFSI client. Fintech press coverage. SI partner active."
+                  ]
+                ]
+              },
+              {
+                title: "🤝 COMPONENT 4: PARTNERSHIP STRATEGY",
+                columns: ["Partner Type", "Specific Partners (Examples)", "What We Offer Them", "What They Offer Us", "Engagement Model", "Revenue Share", "Priority", "90-Day Action"],
+                rows: [
+                  [
+                    "Core Banking & NBFC Tech Vendors",
+                    "Nucleus Software, Intellect Design Arena, Finacus, Artoo (NBFC origination), LoanTap (fintech)",
+                    "A loyalty layer that their NBFC clients ask for but they do not build. A co-sell story: 'Our platform + your core banking system = complete customer retention infrastructure.'",
+                    "Access to their NBFC client base at the point of platform implementation — the optimal loyalty entry moment. Credibility as a technology partner in the NBFC ecosystem.",
+                    "Technology integration partnership + referral agreement. Co-marketing: joint case studies and event appearances.",
+                    "10% referral fee on Year 1 ACV",
+                    "P0",
+                    "Contact Nucleus and Finacus partnership teams by Day 20"
+                  ],
+                  [
+                    "Salesforce BFSI Practice Partners",
+                    "Deloitte Salesforce Financial Services, Infosys Finacle-Salesforce practice, Accenture BFSI",
+                    "A pre-built loyalty module for their BFSI Salesforce deployments. Reduces custom development scope. Adds a differentiated offering to their BFSI practice.",
+                    "Introductions to BFSI clients implementing Salesforce Financial Services Cloud — the ideal moment to introduce loyalty infrastructure.",
+                    "Referral agreement. Joint solution brief for BFSI Salesforce deployments.",
+                    "12% referral fee on Year 1 ACV",
+                    "P0",
+                    "Brief BFSI Salesforce practice leads at 2 SIs by Day 40"
+                  ],
+                  [
+                    "Payment Gateway Partners",
+                    "Razorpay, PayU, Cashfree, CCAvenue",
+                    "A loyalty trigger layer on top of their payment events — every payment processed through their gateway can now automatically trigger a loyalty rule. This makes their gateway stickier for NBFC clients.",
+                    "Webhook-level payment event integration that allows real-time loyalty rule triggering (EMI on-time rules, payment milestone rules) without CRM dependency. Also: access to their NBFC merchant network as a lead source.",
+                    "Technology integration partnership. Co-market to their NBFC merchant base as 'loyalty powered by [Gateway] payment events'.",
+                    "No revenue share — strategic data access play",
+                    "P1",
+                    "Approach Razorpay and Cashfree fintech partnerships by Day 30"
+                  ],
+                  [
+                    "NBFC Industry Bodies (FIDC, MFIN)",
+                    "Finance Industry Development Council (FIDC), Microfinance Institutions Network (MFIN), Sa-Dhan",
+                    "Educational content and webinars for their member NBFCs: 'How loyalty programmes can reduce NBFC delinquency rates — and stay RBI-compliant.' Knowledge partner positioning.",
+                    "Access to FIDC/MFIN member database (500+ NBFCs). Speaking at member events. Regulatory credibility by association with industry bodies.",
+                    "Knowledge partner / associate member. Host 1 webinar/quarter for members. Publish 1 compliance guide annually.",
+                    "Membership fee (₹1–2L/year)",
+                    "P1",
+                    "Contact FIDC and MFIN secretariat by Day 25"
+                  ]
+                ]
+              },
+              {
+                title: "★ TG SUMMARY — BFSI — NBFCs & PRIVATE BANKS",
+                columns: ["Metric", "Detail"],
+                rows: [
+                  ["ICP in one sentence", "NBFCs and private banks with ₹1,000Cr–₹50,000Cr AUM, 50K–5M customers, a delinquency rate they are actively trying to reduce, and a compliance team that will scrutinise every vendor — solved by the escrow wallet."],
+                  ["Primary entry point", "EMI on-time payment incentive rule — directly reducible to ₹ NPA provisioning saving. Secondary: cross-sell product uptake. CFO/compliance entry: escrow wallet as RBI-aligned liability management."],
+                  ["90-day goal", "1 signed BFSI pilot (NBFC). 1 published RBI compliance guide. Fintech press coverage in 1 publication. 2 BFSI-focused Salesforce SI partners briefed. ₹4Cr+ active BFSI pipeline."],
+                  ["Year 1 revenue target", "₹80–150L ARR from 2–3 BFSI clients at ₹30–60L ACV each. BFSI contracts are longer-term (3-year preferred) and higher ACV than real estate — prioritise this vertical once real estate reference is in hand."],
+                  ["Biggest risk", "Compliance and legal review extends sales cycles to 6–9 months. Mitigate: publish the RBI compliance guide in Month 1, have escrow documentation ready for Day 1 of any compliance review, and offer a staged commitment structure."],
+                  ["Competitive moat for this TG", "No Indian loyalty platform has positioned on RBI-compliant escrow wallet + delinquency reduction ROI. This framing is unique and defensible. The risk: Comviva or a BSS vendor could add loyalty features — but their 18-month deployment timelines make them non-competitive for NBFCs who want results in 90 days."]
+                ]
+              }
+            ]
+          },
+          {
+            title: "TARGET GROUP 3 · AUTOMOTIVE DEALER GROUPS\nOEM franchise dealer networks & large multi-brand dealer groups · ₹500Cr+ dealer revenue · 500+ vehicles/year · CDK/Dealertrack DMS",
+            sections: [
+              {
+                title: "🎯 COMPONENT 1: SALES MOTION",
+                columns: ["Sales Element", "Detail", "Rationale / Insight", "Objection to Handle", "Objection Response", "Owner", "Timeline", "KPI"],
+                rows: [
+                  [
+                    "Primary motion",
+                    "Two-track approach: (a) Top-down via OEM corporate — if the OEM mandates or recommends a loyalty platform, their entire dealer network becomes the target market simultaneously; (b) Bottom-up via large dealer groups — a single dealer group with 20–50 dealerships is an enterprise account worth ₹20–40L ACV.",
+                    "The OEM track has a long runway (12–18 months to influence) but exponential scale. The dealer group track is faster (3–5 months) and generates earlier revenue. Run both in parallel from Day 1 — do not wait for OEM mandate before approaching dealer groups.",
+                    "'The OEM has their own loyalty programme / manufacturer warranty.'",
+                    "OEM manufacturer warranty is not a loyalty programme — it is a contractual obligation. Our platform sits alongside it: we incentivise service visits, upsells, insurance renewals, and referrals. Ask: 'Does your OEM loyalty programme fire a rule when a customer pays for accessories on delivery day? Ours does.'",
+                    "Founder + Head Sales",
+                    "Month 1–6",
+                    "OEM introductions + dealer group deals"
+                  ],
+                  [
+                    "Deal entry point",
+                    "Enter through the Head of Aftersales or the Dealer Principal — not the sales manager. Aftersales revenue (service + parts + insurance) has 30–40% gross margin vs 3–5% on vehicle sales. A loyalty programme that brings customers back for service is the highest-ROI investment a dealership can make.",
+                    "A dealer who loses a service customer to a multi-brand workshop loses ₹5,000–15,000 per service visit. At 500 customers/month, even a 10% retention improvement = ₹2.5–7.5L additional monthly aftersales revenue. This justifies the platform cost in the first month.",
+                    "'We already have an OEM loyalty card / stamp card for service.'",
+                    "OEM loyalty cards are paper-based or basic app-stamp — they do not have a rule engine, a wallet, or a redemption catalogue. Ask: 'Can your current loyalty system automatically give a customer 2,000 points when they bring in their car on time for the first service AND book through your app? Ours does.' Stamp cards do not trigger rules.",
+                    "Head Sales + CS",
+                    "Month 1–4",
+                    "Dealer group pilot agreements"
+                  ],
+                  [
+                    "Proof of value — pilot structure",
+                    "Automotive pilot: 90-day paid pilot at ₹3–5L. Scope: 2 rules (first-service capture rule + app-based booking rule). Track: first-service visit capture rate (% of new vehicle buyers who return to the dealer for first service), app booking adoption rate. Compare to pre-pilot baseline.",
+                    "First-service capture rate is a metric every dealership tracks — and most know it is below 50%. A loyalty programme that provably improves it from 45% to 60% in 90 days generates ₹3–8L additional aftersales revenue per month — a clear positive ROI for the pilot fee.",
+                    "'We don't have a mobile app for customers — how would the loyalty programme reach them?'",
+                    "We provide the mobile redemption interface — the dealer does not need to build an app. We deploy a lightweight progressive web app (PWA) or integrate with an existing dealer app within 2–3 weeks. This is not a blocker.",
+                    "Head Sales + Product",
+                    "Month 2–5",
+                    "First-service capture rate delta in pilot"
+                  ],
+                  [
+                    "Buying committee — automotive",
+                    "Three-track: (a) Dealer Principal / CEO: ROI on aftersales revenue retention, total programme cost vs revenue uplift; (b) Head of Aftersales: first-service capture, service booking adoption, CSI improvement; (c) IT/DMS Admin: DMS integration (CDK/Dealertrack), data sync requirements.",
+                    "Dealer Principals are P&L owners — they respond to revenue and margin, not features. Head of Aftersales is the day-to-day champion. IT/DMS Admin is the integration gatekeeper — pre-building DMS integration documentation removes the last technical objection.",
+                    "'Our DMS (CDK/Dealertrack) doesn't have an API for loyalty integration.'",
+                    "We integrate at the CRM layer (Salesforce/SAP), not the DMS layer — we pull service job card events from the CRM, which the DMS already syncs to. This bypasses the DMS integration question entirely. If the dealer uses a modern DMS with REST APIs, we can connect directly — show the API documentation.",
+                    "Head Sales + Technical Lead",
+                    "Month 3–6",
+                    "DMS integration sign-offs"
+                  ],
+                  [
+                    "Pricing — automotive",
+                    "Dealer group (20–50 dealerships): ₹15–30L ACV. OEM-level deployment (500+ dealerships): ₹80–200L ACV. Single-dealer pilot: ₹3–5L. Annual renewal with 10% price escalation. Volume discount: 15% off ACV for groups with 50+ dealerships.",
+                    "Automotive dealer groups are price-sensitive but ROI-driven. Anchor on the aftersales revenue uplift (₹2–7L/month) vs the platform cost (₹1.5–2.5L/month). The ROI case is 2–3x in Month 1 — make this the opening number in every commercial conversation.",
+                    "'This seems expensive for what is essentially a loyalty card.'",
+                    "A loyalty card costs ₹50K/year to print and manage and generates zero data, no rule triggers, and no redemption intelligence. Our platform costs ₹1.5–2.5L/month and generates ₹2–7L additional aftersales revenue per month. Ask: 'Would you like to see the ROI model?'",
+                    "Head Sales",
+                    "Month 2 onwards",
+                    "ACV per dealer group, pilot conversion rate"
+                  ]
+                ]
+              },
+              {
+                title: "📣 COMPONENT 2: MARKETING CHANNELS",
+                columns: ["Channel", "Tactic / Format", "Content Theme", "Target Persona", "Frequency", "Budget Allocation", "Expected Output", "Measurement"],
+                rows: [
+                  [
+                    "LinkedIn — aftersales ROI content",
+                    "Articles and posts authored by the founding team: 'The 40% gross margin revenue your dealership is losing to multi-brand workshops — and how to stop it' · 'Why a stamp card is not a loyalty programme' · 'First-service capture: the metric that predicts your 5-year aftersales revenue'",
+                    "Aftersales revenue retention. Multi-brand workshop attrition. CSI improvement through loyalty.",
+                    "Dealer Principals, Heads of Aftersales, OEM regional managers, auto industry analysts.",
+                    "3 posts/week. 1 long-form article/month.",
+                    "15% of marketing budget",
+                    "800–2,500 impressions per post. 1–3 inbound enquiries/month from automotive decision-makers.",
+                    "LinkedIn impressions, follower growth from auto sector, inbound demo requests."
+                  ],
+                  [
+                    "Automotive industry events — SIAM, FADA, Auto Expo",
+                    "Speaking slot at FADA (Federation of Automobile Dealers Associations) annual dealer conference and SIAM annual convention. Topic: 'Loyalty as a first-service capture tool: data from the field.' Booth at Auto Expo (even-year). Regional FADA chapter events.",
+                    "First-service capture rate improvement. Aftersales revenue retention. Dealer digital transformation.",
+                    "Dealer Principals and Heads of Aftersales who attend FADA events. OEM product / aftersales heads at SIAM.",
+                    "2 major events/year + 3 regional events/year.",
+                    "30% of marketing budget",
+                    "40–80 qualified conversations per event. 4–8 sales meetings booked.",
+                    "Meetings booked. Pipeline (₹ ACV) per event."
+                  ],
+                  [
+                    "DMS and auto tech vendor co-marketing",
+                    "Co-author a joint guide with a DMS or auto CRM vendor: 'The complete aftersales technology stack for a modern dealership — DMS + CRM + loyalty.' Distribute through their dealer network newsletter and at joint events.",
+                    "Technology integration story. End-to-end dealer tech ecosystem. Loyalty as the missing layer.",
+                    "IT managers and DMS administrators at large dealer groups who influence technology purchase decisions.",
+                    "1 joint guide published. Updated annually.",
+                    "15% of marketing budget",
+                    "Reaches IT and DMS admin personas who are otherwise hard to reach via sales. Positions us as ecosystem player, not standalone vendor.",
+                    "Guide downloads. Dealer introductions from DMS vendor."
+                  ],
+                  [
+                    "OEM regional manager outreach",
+                    "Identify OEM regional and zonal managers who oversee dealer performance metrics (CSI, aftersales revenue per dealer, market share). Brief them on the platform's ability to improve CSI scores and first-service capture — two metrics that OEM regional managers are measured on.",
+                    "OEM performance metrics improvement. How loyalty drives CSI score uplift. Dealer network competitive differentiation.",
+                    "OEM Regional Sales Manager, OEM Aftersales Head, OEM Customer Experience Manager.",
+                    "Monthly outreach to 5–10 OEM regional contacts.",
+                    "20% of marketing budget",
+                    "OEM regional manager endorsement can trigger dealer group adoption across an entire region. 1 OEM champion = access to 50–200 dealers.",
+                    "OEM regional manager meetings. OEM-endorsed dealer introductions."
+                  ],
+                  [
+                    "Automotive trade press — AutoPunditz, Autocar Pro",
+                    "Pitch a bylined article or media feature: 'The dealership loyalty platform designed around first-service capture — not just points.' Target Autocar Pro, ET Auto, and AutoPunditz which are read by both dealer principals and OEM product teams.",
+                    "Product innovation in automotive retail. Aftersales technology modernisation. Digital transformation of dealer loyalty.",
+                    "Dealer Principals and OEM decision-makers who consume trade press.",
+                    "2 PR pitches/month. Target 1 feature/quarter.",
+                    "20% of marketing budget",
+                    "1 major feature/quarter. Inbound from media-reading automotive buyers.",
+                    "Media placements. Inbound demo requests attributed to press."
+                  ]
+                ]
+              },
+              {
+                title: "🗓 COMPONENT 3: 90-DAY LAUNCH SEQUENCE",
+                columns: ["Phase", "Days", "Key Activities", "Sales Actions", "Marketing Actions", "Milestone / Gate", "Owner", "Success Signal"],
+                rows: [
+                  [
+                    "Phase 1 — Vertical Setup",
+                    "Days 1–30",
+                    "· Build automotive-specific pitch deck (aftersales revenue ROI framing)\n· Build first-service capture rate ROI calculator\n· Identify 30 large dealer groups (20+ dealerships) via FADA member list\n· Identify 3 target OEMs for top-down approach\n· Register for FADA annual dealer conference",
+                    "· Book 8–10 discovery calls with Dealer Principals and Heads of Aftersales\n· Lead every call with aftersales revenue retention framing\n· Qualify 2 dealer groups for pilot discussion",
+                    "· Publish first LinkedIn article on first-service capture\n· Launch outbound email sequence to 100 dealer group contacts\n· Submit FADA speaking application",
+                    "2 dealer groups in pilot discussion by Day 30. FADA speaking application submitted.",
+                    "Founder + Head Sales",
+                    "2 dealer groups in active pilot discussion"
+                  ],
+                  [
+                    "Phase 2 — First Automotive Pilot",
+                    "Days 31–60",
+                    "· Onboard first dealer group pilot — configure first-service capture rule + app booking rule\n· Begin tracking first-service visit rate vs pre-pilot baseline\n· Attend FADA regional event and present\n· Brief 1 OEM regional manager on the platform\n· Build DMS integration documentation",
+                    "· Use pilot progress to open 3 new dealer group conversations\n· Target: 1 additional pilot or LOI signed by Day 60\n· Begin OEM top-down outreach (1 OEM zonal manager meeting booked)",
+                    "· Publish LinkedIn post on pilot early observations (anonymised)\n· Pitch Autocar Pro / ET Auto media feature\n· Publish DMS integration guide on website",
+                    "First automotive pilot live. Media pitch submitted. OEM meeting booked.",
+                    "Head Sales + CS + Engineering",
+                    "Pilot generating data. Media interest. OEM conversation open."
+                  ],
+                  [
+                    "Phase 3 — Proof & Dealer Network Expansion",
+                    "Days 61–90",
+                    "· Complete pilot and publish first-service capture rate improvement data\n· Present at FADA event (if speaking slot confirmed)\n· Target: 1 full dealer group deal signed\n· Open conversation with 1 OEM aftersales head\n· Build automotive pipeline to ₹3Cr ACV",
+                    "· Convert pilot to full dealer group ACV\n· Open 3 new deals from OEM regional referrals\n· Target: 2 signed dealer groups and 1 OEM conversation active by Day 90",
+                    "· Publish automotive case study\n· PR feature in Autocar Pro or ET Auto live\n· FADA event presentation delivered\n· OEM co-marketing brief proposed",
+                    "1 dealer group full deal signed. Case study published. OEM conversation active.",
+                    "Founder + Head Sales + Marketing",
+                    "1 signed dealer group client. Press coverage. OEM interest confirmed."
+                  ]
+                ]
+              },
+              {
+                title: "🤝 COMPONENT 4: PARTNERSHIP STRATEGY",
+                columns: ["Partner Type", "Specific Partners (Examples)", "What We Offer Them", "What They Offer Us", "Engagement Model", "Revenue Share", "Priority", "90-Day Action"],
+                rows: [
+                  [
+                    "DMS & Dealer CRM Vendors",
+                    "CDK Global India, Dealertrack, DealersApp, AutosoftDMS, Tata Motors' proprietary dealer system",
+                    "A loyalty layer that complements their DMS — service job card closures become loyalty triggers. Their DMS clients get a retention tool they are asking for but that the DMS does not provide.",
+                    "Access to their dealer client network at the moment of DMS upgrade or implementation. Co-sell positioning: 'Complete dealer tech stack: DMS + loyalty.'",
+                    "Technology integration + referral partnership. Joint marketing: co-authored dealer tech guide. Revenue share on referrals.",
+                    "10% referral fee on Year 1 ACV",
+                    "P0",
+                    "Contact CDK India and DealersApp partnership teams by Day 20"
+                  ],
+                  [
+                    "OEM Aftersales & Digital Teams",
+                    "Maruti Suzuki True Value, Hyundai Motor India Aftersales, Tata Motors Connected Vehicles, Mahindra Automotive, Honda Cars India",
+                    "A configurable loyalty platform that the OEM can recommend or mandate for dealer network aftersales improvement — improving OEM-level CSI scores across the dealer network without the OEM building the platform themselves.",
+                    "OEM mandate or recommendation reaches their entire dealer network simultaneously — 500–3,000 dealerships. OEM credibility dramatically shortens individual dealer sales cycles.",
+                    "OEM partnership: pilot with 5 dealers, OEM-approved platform status, inclusion in OEM dealer technology toolkit. Not an exclusive arrangement.",
+                    "Revenue share: 5% of dealer ACV paid to OEM foundation / CSR fund (not to OEM directly — avoids regulatory issues)",
+                    "P0 — Long runway, highest scale",
+                    "Book meeting with OEM Aftersales Digital Head at 2 OEMs by Day 40"
+                  ],
+                  [
+                    "Insurance Partners — Dealer Channel",
+                    "HDFC Ergo, Bajaj Allianz, ICICI Lombard, Tata AIG (all with strong dealer channel networks for motor insurance)",
+                    "A loyalty integration that turns insurance renewal into a dealership loyalty rule — every insurance renewal through the dealer earns the customer loyalty points. This makes dealer-channel insurance renewal more attractive vs direct renewal.",
+                    "Access to their dealer partner network for co-marketing the loyalty-insurance renewal integration. Potential co-branded campaign: 'Renew through your dealer — earn loyalty points.'",
+                    "Co-marketing partnership. Shared campaign for 'renew through dealer + earn points'. No revenue share — mutual distribution benefit.",
+                    "No revenue share — joint distribution play",
+                    "P1",
+                    "Contact HDFC Ergo and Bajaj Allianz dealer partnership teams by Day 35"
+                  ],
+                  [
+                    "FADA (Federation of Automobile Dealers Associations)",
+                    "FADA National, FADA State Chapters (Maharashtra, Karnataka, Tamil Nadu)",
+                    "Educational webinars and content for FADA member dealers: 'How loyalty drives first-service capture and aftersales revenue — data from Indian dealerships.' Knowledge partner positioning.",
+                    "Access to 15,000+ FADA member dealerships. Speaking at FADA national and chapter events. Credibility as an industry-endorsed knowledge partner.",
+                    "Knowledge partner / associate member. 1 webinar/quarter for FADA members. Sponsorship at 1 chapter event/year.",
+                    "FADA membership + sponsorship (₹2–4L/year)",
+                    "P1",
+                    "Contact FADA national secretariat by Day 15"
+                  ]
+                ]
+              },
+              {
+                title: "★ TG SUMMARY — AUTOMOTIVE DEALER GROUPS",
+                columns: ["Metric", "Detail"],
+                rows: [
+                  ["ICP in one sentence", "Automotive dealer groups with 20–50 dealerships or ₹500Cr+ annual revenue where the Head of Aftersales is losing 35–40% of service revenue to multi-brand workshops and has no automated loyalty mechanism to bring customers back."],
+                  ["Primary entry point", "First-service capture rate improvement — framed as ₹2–7L additional aftersales revenue per month. Secondary: insurance renewal through dealer channel. OEM track: CSI score improvement across the dealer network."],
+                  ["90-day goal", "1 signed dealer group (20+ dealerships). 1 first-service capture case study with before/after data. FADA speaking slot secured. 1 OEM regional manager conversation open. ₹3Cr+ automotive pipeline."],
+                  ["Year 1 revenue target", "₹50–80L ARR from 2–3 dealer group clients at ₹15–30L ACV each. OEM-level deal (if signed) would contribute ₹80–200L ACV and be the largest single deal in Year 1."],
+                  ["Biggest risk", "OEM mandate is slow and uncertain — if we wait for an OEM deal, we delay revenue by 12–18 months. Dealer groups are the primary revenue target. OEM is the scale multiplier — treat it as a bonus, not a plan."],
+                  ["Competitive moat for this TG", "No Indian loyalty SaaS has built aftersales-specific rule triggers (first-service capture, DMS job card closure, insurance renewal through dealer). The automotive vertical is as unaddressed as real estate was — and the aftersales ROI story is equally compelling. First-mover advantage here is a 12–18 month window before a larger platform notices."]
+                ]
+              }
+            ]
+          },
+          {
+            title: "MASTER GTM SUMMARY — YEAR 1 TARGETS ACROSS ALL 3 TGs",
+            sections: [
+              {
+                title: "Master GTM Summary",
+                columns: ["Metric", "Detail"],
+                rows: [
+                  ["Combined Year 1 ARR target", "₹1.8–3.0Cr ARR from 7–10 signed clients across 3 verticals: Real Estate (3–4 clients, ₹60–80L), BFSI (2–3 clients, ₹80–150L), Automotive (2–3 dealer groups, ₹50–80L). OEM automotive deal if secured adds ₹80–200L."],
+                  ["Priority sequencing", "Month 1–3: Double down on Real Estate (fastest sales cycle, strongest product fit, live reference). Month 3–6: Open BFSI in parallel. Month 4–8: Launch automotive. Do not spread sales effort across all 3 verticals in Month 1."],
+                  ["Shared GTM infrastructure", "All 3 TGs share: (a) Salesforce SI partner channel — the same SI partners serve all three verticals; (b) LinkedIn thought leadership — vertical-specific content from one founding team voice; (c) ROI calculator template — adapted per vertical; (d) Escrow wallet as the CFO-level differentiator across all 3 verticals."],
+                  ["Single most important GTM action in Month 1", "Publish one ROI case study from the live real estate client — with specific ₹ metrics (collections TAT improvement, referral leads generated, points issued vs redeemed). This single asset will be used in every sales conversation, every LinkedIn post, every event pitch, and every partner brief across all 3 TGs for the next 6 months."],
+                  ["Year 1 hiring implication", "GTM requires: 1 senior sales hire (enterprise B2B, ideally with BFSI or real estate vertical experience) by Month 2; 1 customer success hire by Month 3 (to free the founding team from onboarding); 1 marketing/content hire by Month 4 (to sustain content velocity). Do not hire before revenue validates the channel."]
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    detailedMetrics: {
+      clientImpact: [
+        {
+          metric: "Collections TAT (Days to Payment)",
+          baseline: "28–45 days average after demand note raised",
+          withSnag: "14–25 days average with incentivised early payment",
+          claim: "35–45% reduction in TAT (e.g., 38 days → 22 days)"
+        },
+        {
+          metric: "Referral Lead Volume",
+          baseline: "3–8% of total leads from referrals (manual, Excel-tracked, slow to pay out)",
+          withSnag: "12–22% of total leads from referrals (automated, real-time, instant point credit)",
+          claim: "150–200% increase in referral lead volume (e.g., 15 leads/month → 38 leads/month)"
+        },
+        {
+          metric: "EMI / Payment On-Time Rate",
+          baseline: "62–72% of customers pay on or before due date (without incentive)",
+          withSnag: "78–88% pay on or before due date (with tiered early-payment incentive)",
+          claim: "+12–18 percentage points improvement (e.g., 68% → 84%)"
+        },
+        {
+          metric: "App Adoption Rate (Digital Channel Shift)",
+          baseline: "18–28% of customers use the app for transactions (without incentive)",
+          withSnag: "45–65% of customers use the app within 90 days of loyalty launch",
+          claim: "+25–35 percentage points app adoption (e.g., 22% → 54% in 90 days)"
+        },
+        {
+          metric: "Loyalty Programme Redemption Rate",
+          baseline: "8–18% redemption rate (without personalised redemption and mobile page)",
+          withSnag: "35–55% redemption rate (with personalised mobile redemption page and encashment)",
+          claim: "+200–300% improvement in redemption rate (e.g., 12% → 44%)"
+        },
+        {
+          metric: "Customer Referral Conversion Rate",
+          baseline: "18–25% conversion rate on referral leads (untracked, manually managed)",
+          withSnag: "32–45% conversion rate on loyalty-programme referral leads",
+          claim: "+60–80% improvement in referral conversion rate (e.g., 20% → 34%)"
+        },
+        {
+          metric: "Aftersales Revenue Per Vehicle (Automotive — Service Retention)",
+          baseline: "₹8,000–₹14,000 per vehicle per year (without loyalty)",
+          withSnag: "₹13,000–₹22,000 per vehicle per year (with loyalty-driven service retention)",
+          claim: "+55–65% increase in aftersales revenue per vehicle (e.g., ₹11,000 → ₹18,000/vehicle/year)"
+        },
+        {
+          metric: "Cross-Sell Product Uptake Rate (BFSI)",
+          baseline: "8–14% of customers take a second product within 12 months (without incentive)",
+          withSnag: "18–28% of customers take a second product within 12 months (with cross-sell loyalty rule)",
+          claim: "+80–100% improvement in cross-sell rate (e.g., 11% → 22%)"
+        },
+        {
+          metric: "NPS Score Improvement",
+          baseline: "NPS of 28–42 (industry average for real estate and BFSI without active loyalty)",
+          withSnag: "NPS of 52–68 (with structured loyalty programme active for 6+ months)",
+          claim: "+20–30 NPS points improvement (e.g., NPS 35 → NPS 58)"
+        },
+        {
+          metric: "Customer Lifetime Value (CLV) Uplift",
+          baseline: "CLV baseline: ₹2.5L–₹8L (real estate); ₹45,000–₹1.8L (BFSI); ₹18,000–₹55,000 (automotive aftersales)",
+          withSnag: "CLV with loyalty: +25–40% above baseline across all verticals",
+          claim: "+25–40% CLV improvement (e.g., ₹3.2L → ₹4.5L per homebuyer; ₹65,000 → ₹88,000 per NBFC customer)"
+        }
+      ],
+      businessTargets: [
+        {
+          metric: "Monthly Active Loyalty Members (MALMs) [NORTH STAR] ★",
+          definition: "Members who earn or redeem ≥1 point in the month. The headline metric of programme health.",
+          d30Current: "500–1,000 per client (driven by CRM-synced member creation + manual rule triggering)",
+          d30Phase1: "1,200–2,000 per client (push notifications drive activation; onboarding playbook accelerates member creation)",
+          m3Current: "2,000–4,500 per client (organic growth as word spreads and referral rules activate more members)",
+          m3Phase1: "4,500–8,000 per client (analytics dashboard shows which rules drive MALMs → admin doubles down on what works)"
+        },
+        {
+          metric: "New Members Enrolled",
+          definition: "Total new loyalty programme members registered in the period. Measures programme onboarding velocity.",
+          d30Current: "200–600 (manual CRM sync; limited by onboarding speed)",
+          d30Phase1: "500–1,200 (onboarding playbook reduces setup time by 40%; more members enrolled in first batch)",
+          m3Current: "800–2,500 (referral rules kick in; members recruit members)",
+          m3Phase1: "1,800–4,000 (analytics shows which referral rules work; admin doubles down; push notifications accelerate referral action)"
+        },
+        {
+          metric: "Activation Rate (% of enrolled who earn first points)",
+          definition: "Percentage of enrolled members who earn their first loyalty points within 14 days of enrolment.",
+          d30Current: "35–55% (no push notification; members forget the programme exists)",
+          d30Phase1: "60–78% (push notification on enrolment + rule-fire notification drives first earn within 48 hours)",
+          m3Current: "45–65% (stabilises as programme matures; some enrolled members are slow starters)",
+          m3Phase1: "68–82% (analytics identifies low-activation segments; admin creates targeted rules to activate them)"
+        },
+        {
+          metric: "Rules Configured & Live",
+          definition: "Total number of active loyalty rules in the system per client. More rules = more earning moments = more reasons to engage.",
+          d30Current: "3–6 rules (limited by manual onboarding; no test mode; admin cautious about untested rules)",
+          d30Phase1: "6–10 rules (rule test mode removes fear of live errors; onboarding playbook provides templates)",
+          m3Current: "8–15 rules (as admin gains confidence; vertical rule templates fully used)",
+          m3Phase1: "12–20 rules (analytics shows which rules drive MALMs; admin adds rules confidently based on data)"
+        },
+        {
+          metric: "Points Issued per Member per Month",
+          definition: "Average loyalty points earned per active member per month. Measures whether the earning mechanics are set at the right level.",
+          d30Current: "800–2,500 pts/member/month (depends on transaction frequency and rule density)",
+          d30Phase1: "1,200–3,200 pts/member/month (more rules = more earning moments per member)",
+          m3Current: "1,500–4,000 pts/member/month (milestones and time-based rules add to base transaction earn)",
+          m3Phase1: "2,000–5,500 pts/member/month (analytics shows earn rate by segment; admin optimises for highest-value segments)"
+        },
+        {
+          metric: "Redemption Rate (Points Redeemed / Points Issued)",
+          definition: "Percentage of issued points that are redeemed in the same period. Target: 30–50%. Health indicator of redemption side.",
+          d30Current: "15–28% (redemption catalogue is live but no personalisation analytics)",
+          d30Phase1: "22–38% (onboarding playbook helps admin configure more relevant redemption items from Day 1)",
+          m3Current: "28–45% (members discover the catalogue; encashment drives high redemption)",
+          m3Phase1: "38–55% (analytics shows which redemption items are used; admin curates a higher-relevance catalogue)"
+        },
+        {
+          metric: "Monthly Recurring Revenue (MRR) [Internal]",
+          definition: "Our recurring software subscription revenue per month. Primary commercial health metric.",
+          d30Current: "₹1.5–3L (1 client at ₹18–36L ACV = ₹1.5–3L/month)",
+          d30Phase1: "₹1.5–3L (same first client; Phase 1 roadmap does not add revenue in first 30 days)",
+          m3Current: "₹4–8L (2–3 clients signed by Month 3; pilots converting to full ACV)",
+          m3Phase1: "₹6–12L (faster pilot conversion because analytics proves ROI faster; client #3 signs sooner)"
+        },
+        {
+          metric: "Customer Acquisition Cost (CAC) [Internal]",
+          definition: "Total sales and marketing cost to acquire one signed client. Target: ₹3–8L CAC in Year 1.",
+          d30Current: "₹5–12L per client (high founder time; no case study; every deal starts from cold)",
+          d30Phase1: "₹4–9L per client (onboarding playbook reduces CS time per deal; partner channel begins contributing)",
+          m3Current: "₹3–7L per client (reference client provides social proof; fewer calls to close)",
+          m3Phase1: "₹2–5L per client (analytics dashboard creates publishable ROI report, accelerating deal cycles)"
+        },
+        {
+          metric: "Client Onboarding Time (Days from contract to first rule live)",
+          definition: "Calendar days from signed contract to first live loyalty rule generating points. Target: ≤21 days.",
+          d30Current: "28–45 days (no playbook; engineering-heavy; each client requires custom configuration effort)",
+          d30Phase1: "14–22 days (onboarding playbook provides templates; rule test mode allows faster admin configuration)",
+          m3Current: "25–40 days (no playbook; complexity grows as more rules are added; engineering bottlenecks)",
+          m3Phase1: "12–18 days (playbook matures; templates cover 80% of common rule configurations; admin self-serves most of setup)"
+        },
+        {
+          metric: "Net Revenue Retention (NRR) [Internal]",
+          definition: "Revenue retained from existing clients after accounting for expansion, contraction, and churn. Target: 110–125% NRR.",
+          d30Current: "Unable to measure (only 1 client; no renewal data yet; 30 days is too early)",
+          d30Phase1: "Unable to measure (insufficient data in 30 days regardless of Phase 1 status)",
+          m3Current: "90–105% projected NRR (first renewal approaching; some expansion possible)",
+          m3Phase1: "100–115% projected NRR (analytics dashboard gives client proof of ROI before renewal)"
+        },
+        {
+          metric: "Escrow Coverage Ratio (Client financial health metric)",
+          definition: "Ratio of client's escrow wallet balance to 25% of total outstanding loyalty points liability. Must stay ≥1.0x at all times.",
+          d30Current: "1.0–1.3x (admin manually monitors; no automated alert; risk of dipping below 1.0x)",
+          d30Phase1: "1.2–1.5x (onboarding playbook trains admin on escrow management; better initial setup)",
+          m3Current: "1.0–1.2x (as more points are issued, maintaining the ratio requires active monitoring)",
+          m3Phase1: "1.3–1.8x (automated escrow health monitoring — alert fires when ratio approaches 1.1x; admin tops up proactively)"
+        }
+      ],
+      sheet: {
+        title: "LOYALTY RULE ENGINE — METRICS",
+        sections: [
+          {
+            title: "PART A — CLIENT IMPACT METRICS | 10 metrics your clients track after going live | For landing pages and business case",
+            columns: [],
+            rows: []
+          },
+          {
+            title: "Purpose: These are the metrics clients measure to prove ROI of the loyalty programme — and the numbers we publish on landing pages to demonstrate product impact. Figures are representative ranges based on industry benchmarks and the product's live deployment data.",
+            columns: [],
+            rows: []
+          },
+          {
+            title: "Client Impact Metrics",
+            columns: ["Metric Name", "What It Measures (One-liner)", "Before (Baseline)", "After (With Platform)", "Impact Range", "Feature That Drove It & How", "Vertical", "Tracking Frequency"],
+            rows: [
+              [
+                "Collections TAT\n(Days to Payment)",
+                "Average number of days between a demand note being raised and the customer making full payment. Directly impacts cash flow and interest costs on outstanding receivables.",
+                "28–45 days average after demand note raised",
+                "14–25 days average with incentivised early payment",
+                "35–45% reduction in TAT\n(e.g., 38 days → 22 days)",
+                "Transaction Events Rules — rules fire the moment a demand note is raised and award tiered points (6,000 / 5,000 / 4,000) for payment within 5 / 10 / 20 days. The time-sensitive incentive creates urgency that phone calls cannot. Every ₹10Cr outstanding = ₹1.5–2.5L interest saving per day of TAT improvement.",
+                "Real Estate",
+                "Weekly"
+              ],
+              [
+                "Referral Lead Volume",
+                "Number of new sales leads generated through the existing customer referral programme per month. Measures the loyalty programme's ability to turn satisfied customers into an active sales channel.",
+                "3–8% of total leads from referrals (manual, Excel-tracked, slow to pay out)",
+                "12–22% of total leads from referrals (automated, real-time, instant point credit)",
+                "150–200% increase in referral lead volume\n(e.g., 15 leads/month → 38 leads/month)",
+                "User Actions Rules (Referral triggers) — points are credited automatically when a referral is logged, when the referred person visits the site, and when they book. Three-stage tracking removes friction and delays that suppressed referral participation.",
+                "Real Estate / Automotive",
+                "Monthly"
+              ],
+              [
+                "EMI / Payment On-Time Rate",
+                "Percentage of customers who make their instalment payment on or before the due date. A 1% improvement on a ₹5,000Cr loan book reduces NPA provisioning requirements by ~₹50Cr.",
+                "62–72% of customers pay on or before due date (without incentive)",
+                "78–88% pay on or before due date (with tiered early-payment incentive)",
+                "+12–18 percentage points improvement\n(e.g., 68% → 84%)",
+                "Transaction Events Rules — EMI on-time reward rules fire on payment reconciliation. Time-Based Events provide a 3-day pre-due-date reminder with current points balance displayed. The combination of anticipation (reminder) and reward (immediate credit) creates a Pavlovian payment habit.",
+                "BFSI / Real Estate",
+                "Monthly"
+              ],
+              [
+                "App Adoption Rate\n(Digital Channel Shift)",
+                "Percentage of customers who complete at least one transaction through the mobile app — as opposed to branch, phone, or offline. Higher app adoption reduces operational cost per transaction by 60–80%.",
+                "18–28% of customers use the app for transactions (without incentive)",
+                "45–65% of customers use the app within 90 days of loyalty launch",
+                "+25–35 percentage points app adoption\n(e.g., 22% → 54% in 90 days)",
+                "User Actions Rules (app download + first app transaction rewards) — a bonus of 1,000–1,500 points for downloading the app AND making the first transaction through it creates a double incentive that moves customers from passive downloaders to active users.",
+                "All Verticals",
+                "Weekly (first 90 days), Monthly thereafter"
+              ],
+              [
+                "Loyalty Programme Redemption Rate",
+                "Percentage of issued loyalty points that are actually redeemed by customers. Low redemption = programme failure and growing unrealised liability. Target range of 35–55% indicates a healthy, engaging programme.",
+                "8–18% redemption rate (without personalised redemption and mobile page)",
+                "35–55% redemption rate (with personalised mobile redemption page and encashment)",
+                "+200–300% improvement in redemption rate\n(e.g., 12% → 44%)",
+                "Personalised Mobile Redemption Page — each customer sees only the rewards they can afford and are most likely to want. Encashment (cash-out option) activates customers who would otherwise not redeem. Cold Wallet release notifications trigger redemption moments.",
+                "All Verticals",
+                "Monthly"
+              ],
+              [
+                "Customer Referral Conversion Rate",
+                "Percentage of referred leads who complete a purchase or booking. Referred leads have higher intent and trust — this metric isolates the quality of referral-generated pipeline.",
+                "18–25% conversion rate on referral leads (untracked, manually managed)",
+                "32–45% conversion rate on loyalty-programme referral leads",
+                "+60–80% improvement in referral conversion rate\n(e.g., 20% → 34%)",
+                "User Actions Rules (structured referral tracking) + User Demographics/Segments (tier-based referral incentives for Gold members who earn 2x points) — structured tracking ensures every referral is logged, attributed, and followed up.",
+                "Real Estate / Automotive / BFSI",
+                "Monthly"
+              ],
+              [
+                "Aftersales Revenue Per Vehicle\n(Automotive — Service Retention)",
+                "Average annual service, parts, and accessories revenue generated per vehicle sold — a direct measure of customer stickiness to the dealership's workshop rather than defection to multi-brand workshops.",
+                "₹8,000–₹14,000 per vehicle per year (without loyalty)",
+                "₹13,000–₹22,000 per vehicle per year (with loyalty-driven service retention)",
+                "+55–65% increase in aftersales revenue per vehicle\n(e.g., ₹11,000 → ₹18,000/vehicle/year)",
+                "Milestones (consecutive service visit streak rewards) + Time-Based Events (service anniversary reminder 30 days before, with bonus points offer) + Transaction Events (points per service invoice value) — three overlapping incentive mechanisms make the loyalty dealership the obvious choice.",
+                "Automotive",
+                "Quarterly"
+              ],
+              [
+                "Cross-Sell Product Uptake Rate\n(BFSI)",
+                "Percentage of single-product customers who take a second financial product within 12 months. The industry average is 1.8 products per customer — loyalty can push this to 2.3–2.8.",
+                "8–14% of customers take a second product within 12 months (without incentive)",
+                "18–28% of customers take a second product within 12 months (with cross-sell loyalty rule)",
+                "+80–100% improvement in cross-sell rate\n(e.g., 11% → 22%)",
+                "Transaction Events Rules (cross-sell activation trigger: new product activated = 3,000–4,000 points) + Time-Based Events (offer delivered 90 days after first product activation) + Tier-Based Rules (Gold members get a personalised cross-sell offer with a 30-day bonus window).",
+                "BFSI",
+                "Monthly"
+              ],
+              [
+                "NPS Score Improvement",
+                "Net Promoter Score — the percentage of customers who would actively recommend the brand minus those who would not. A loyalty programme that delivers personalised rewards directly drives NPS.",
+                "NPS of 28–42 (industry average for real estate and BFSI without active loyalty)",
+                "NPS of 52–68 (with structured loyalty programme active for 6+ months)",
+                "+20–30 NPS points improvement\n(e.g., NPS 35 → NPS 58)",
+                "Time-Based Events (birthday rewards, anniversary recognition) + Milestones (milestone celebration messages) + Personalised Mobile Redemption Page (relevant rewards at the right moment) — collectively these features shift customers from transactional to emotionally connected.",
+                "All Verticals",
+                "Quarterly"
+              ],
+              [
+                "Customer Lifetime Value (CLV) Uplift",
+                "The total net revenue a business can expect from a single customer account over their entire relationship. Loyalty programmes increase CLV through higher retention rate, higher purchase frequency, and higher average transaction value per visit.",
+                "CLV baseline: ₹2.5L–₹8L (real estate); ₹45,000–₹1.8L (BFSI); ₹18,000–₹55,000 (automotive aftersales)",
+                "CLV with loyalty: +25–40% above baseline across all verticals",
+                "+25–40% CLV improvement\n(e.g., ₹3.2L → ₹4.5L per homebuyer; ₹65,000 → ₹88,000 per NBFC customer)",
+                "Tier Management (tier-based customers spend 30–45% more) + Milestones (repeat purchase milestones extend the active relationship period) + Engagement/Behaviour Rules (re-engagement rules prevent the CLV clock from stopping) + Cold Wallet (controlled redemption velocity extends the active loyalty period).",
+                "All Verticals",
+                "Quarterly / Annually"
+              ]
+            ]
+          },
+          {
+            title: "PART B — PRODUCT LAUNCH METRICS | North Star + Top 10 Internal Metrics | Current Launch vs Phase 1 Roadmap-Enhanced Launch",
+            columns: [],
+            rows: []
+          },
+          {
+            title: "Current Launch = launching today with existing features (no roadmap changes). Phase 1 Roadmap Launch = launching after implementing the 0–3 month roadmap items: Analytics Dashboard, Accounting Integration, Rule Test Mode, Push Notifications, Onboarding Playbook.",
+            columns: [],
+            rows: []
+          },
+          {
+            title: "★ NORTH STAR METRIC: Monthly Active Loyalty Members (MALMs) — the number of loyalty programme members who earn OR redeem at least 1 point in a calendar month. This single metric captures programme health, engagement, and value delivery simultaneously.",
+            columns: [],
+            rows: []
+          },
+          {
+            title: "Product Launch Metrics",
+            columns: ["#", "Metric Name", "What It Measures", "First 30 Days\nCurrent Launch", "First 30 Days\nPhase 1 Launch", "3 Months\nCurrent Launch", "3 Months\nPhase 1 Launch", "Why the Gap Between Columns"],
+            rows: [
+              [
+                "★",
+                "Monthly Active Loyalty Members (MALMs)\n[NORTH STAR]",
+                "Members who earn or redeem ≥1 point in the month. The headline metric of programme health.",
+                "500–1,000 per client\n(driven by CRM-synced member creation + manual rule triggering)",
+                "1,200–2,000 per client\n(push notifications drive activation; onboarding playbook accelerates member creation)",
+                "2,000–4,500 per client\n(organic growth as word spreads and referral rules activate more members)",
+                "4,500–8,000 per client\n(analytics dashboard shows which rules drive MALMs → admin doubles down on what works)",
+                "Phase 1 adds push notifications (rule-fire awareness → activation) and the analytics dashboard (data-led rule optimisation). Both directly drive more members into active status faster."
+              ],
+              [
+                "1",
+                "New Members Enrolled",
+                "Total new loyalty programme members registered in the period. Measures programme onboarding velocity.",
+                "200–600\n(manual CRM sync; limited by onboarding speed)",
+                "500–1,200\n(onboarding playbook reduces setup time by 40%; more members enrolled in first batch)",
+                "800–2,500\n(referral rules kick in; members recruit members)",
+                "1,800–4,000\n(analytics shows which referral rules work; admin doubles down; push notifications accelerate referral action)",
+                "The onboarding playbook (Phase 1) directly accelerates the first member batch. Analytics shows which acquisition channels work — enabling faster iteration."
+              ],
+              [
+                "2",
+                "Activation Rate\n(% of enrolled who earn first points)",
+                "Percentage of enrolled members who earn their first loyalty points within 14 days of enrolment.",
+                "35–55%\n(no push notification; members forget the programme exists)",
+                "60–78%\n(push notification on enrolment + rule-fire notification drives first earn within 48 hours)",
+                "45–65%\n(stabilises as programme matures; some enrolled members are slow starters)",
+                "68–82%\n(analytics identifies low-activation segments; admin creates targeted rules to activate them)",
+                "Push notifications (Phase 1) are the single biggest activation driver — the moment a member earns their first point and receives a notification, activation probability jumps from 35% to 78%."
+              ],
+              [
+                "3",
+                "Rules Configured & Live",
+                "Total number of active loyalty rules in the system per client. More rules = more earning moments. Benchmark: 8–15 active rules.",
+                "3–6 rules\n(limited by manual onboarding; no test mode; admin cautious)",
+                "6–10 rules\n(rule test mode removes fear of live errors; onboarding playbook provides templates)",
+                "8–15 rules\n(as admin gains confidence; vertical rule templates fully used)",
+                "12–20 rules\n(analytics shows which rules drive MALMs; admin adds rules confidently based on data)",
+                "Rule test mode (Phase 1) is the key unlock: admins who can simulate a rule before going live configure 2x more rules in the first 30 days."
+              ],
+              [
+                "4",
+                "Points Issued per Member per Month",
+                "Average loyalty points earned per active member per month. Too low = disengagement; too high = unmanageable liability.",
+                "800–2,500 pts/member/month\n(depends on transaction frequency and rule density)",
+                "1,200–3,200 pts/member/month\n(more rules = more earning moments per member)",
+                "1,500–4,000 pts/member/month\n(milestones and time-based rules add to base transaction earn)",
+                "2,000–5,500 pts/member/month\n(analytics shows earn rate by segment; admin optimises for highest-value segments)",
+                "More rules (enabled by test mode) directly increase earning moments per member. Analytics then lets the admin identify under-earning segments and add targeted rules."
+              ],
+              [
+                "5",
+                "Redemption Rate\n(Points Redeemed / Points Issued)",
+                "Percentage of issued points redeemed in the same period. Target: 30–50%. Below 20% = catalogue irrelevance. Above 60% = liability pressure.",
+                "15–28%\n(redemption catalogue is live but no personalisation analytics)",
+                "22–38%\n(onboarding playbook helps admin configure more relevant redemption items from Day 1)",
+                "28–45%\n(members discover the catalogue; encashment drives high redemption)",
+                "38–55%\n(analytics shows which redemption items are used; admin curates a higher-relevance catalogue)",
+                "The analytics dashboard (Phase 1) is the key driver: knowing which redemption categories are used vs ignored allows the admin to curate a higher-relevance catalogue."
+              ],
+              [
+                "6",
+                "Monthly Recurring Revenue (MRR)\n[Internal — our metric]",
+                "Our recurring software subscription revenue per month. Target: ₹2–3L MRR by Month 3 from first client; ₹10–15L MRR by Month 12 from 4–5 clients.",
+                "₹1.5–3L\n(1 client at ₹18–36L ACV = ₹1.5–3L/month)",
+                "₹1.5–3L\n(same first client; Phase 1 roadmap does not add revenue in first 30 days)",
+                "₹4–8L\n(2–3 clients signed by Month 3; pilots converting to full ACV)",
+                "₹6–12L\n(faster pilot conversion because analytics proves ROI faster; client #3 signs sooner)",
+                "Phase 1 roadmap does not directly add MRR in 30 days — but the analytics dashboard shortens pilot-to-full-ACV conversion from 90 days to 45–60 days."
+              ],
+              [
+                "7",
+                "Customer Acquisition Cost (CAC)\n[Internal — our metric]",
+                "Total sales and marketing cost to acquire one signed client. Target: ₹3–8L CAC in Year 1. Acceptable LTV:CAC ratio is 5:1+.",
+                "₹5–12L per client\n(high founder time; no case study; every deal starts from cold)",
+                "₹4–9L per client\n(onboarding playbook reduces CS time per deal; partner channel begins contributing)",
+                "₹3–7L per client\n(reference client provides social proof; fewer calls to close; partner referrals)",
+                "₹2–5L per client\n(analytics dashboard creates publishable ROI report, accelerating deal cycles)",
+                "The analytics dashboard (Phase 1) creates a virtuous cycle: client data → publishable ROI report → next deal closes faster → lower CAC. Compounds from Month 2 onwards."
+              ],
+              [
+                "8",
+                "Client Onboarding Time\n(Days from contract to first rule live)",
+                "Calendar days from signed contract to first live loyalty rule generating points for real members. Target: ≤21 days.",
+                "28–45 days\n(no playbook; engineering-heavy; each client requires custom configuration)",
+                "14–22 days\n(onboarding playbook provides templates; rule test mode allows faster admin configuration)",
+                "25–40 days\n(no playbook; complexity grows as more rules are added; engineering bottlenecks)",
+                "12–18 days\n(playbook matures; templates cover 80% of common rule configurations; admin self-serves)",
+                "The onboarding playbook (Phase 1) is the primary driver — it eliminates the blank-page problem for new client admins and reduces engineering dependency from 60% to 20%."
+              ],
+              [
+                "9",
+                "Net Revenue Retention (NRR)\n[Internal — our metric]",
+                "Revenue retained from existing clients after accounting for expansion, contraction, and churn. Target: 110–125% NRR. NRR >100% means we grow from existing base.",
+                "Unable to measure\n(only 1 client; no renewal data yet; 30 days is too early)",
+                "Unable to measure\n(insufficient data in 30 days regardless of Phase 1 status)",
+                "90–105% projected NRR\n(first renewal approaching; some expansion possible)",
+                "100–115% projected NRR\n(analytics dashboard gives client proof of ROI before renewal; accounting integration removes CFO friction)",
+                "The analytics dashboard and accounting integration (Phase 1) together transform the renewal conversation from 'we think it is working' to 'here is the P&L impact.'"
+              ],
+              [
+                "10",
+                "Escrow Coverage Ratio\n(Client financial health metric)",
+                "Ratio of client's escrow wallet balance to 25% of total outstanding loyalty points liability. Must stay ≥1.0x at all times.",
+                "1.0–1.3x\n(admin manually monitors; no automated alert; risk of dipping below 1.0x)",
+                "1.2–1.5x\n(onboarding playbook trains admin on escrow management; better initial setup)",
+                "1.0–1.2x\n(as more points are issued, maintaining the ratio requires active monitoring)",
+                "1.3–1.8x\n(automated escrow health monitoring — alert fires when ratio approaches 1.1x; admin tops up proactively)",
+                "This metric does not exist in any other loyalty platform. Phase 1 accounting integration and automated escrow alerts change this from a manual compliance task to an automated financial control."
+              ]
+            ]
+          },
+          {
+            title: "LEGEND: Blue columns = Current Launch (no roadmap changes) | Green columns = Phase 1 Roadmap Launch (Analytics Dashboard + Accounting Integration + Rule Test Mode + Push Notifications + Onboarding Playbook) | ★ = North Star Metric",
+            columns: [],
+            rows: []
+          }
+        ]
+      }
+    },
+    detailedSWOT: {
+      strengths: [
+        {
+          headline: "S1 — 7-Dimension No-Code Rule Engine",
+          explanation: "The most technically differentiated feature in the Indian mid-market. No competitor combines 7 rule dimensions with a business-user-configurable interface. This directly addresses the #1 pain of marketing teams: IT dependency for every rule change. Proven in production with 30+ business rules live across 6 categories."
+        },
+        {
+          headline: "S2 — Escrow Wallet with Financial Controls",
+          explanation: "No other loyalty SaaS in India or globally offers a built-in 25% float escrow with mark-to-market liability management as a first-class feature. This is a genuine moat — it converts loyalty from a balance sheet risk into a managed financial instrument. Opens doors to CFOs and finance-regulated industries (BFSI, real estate)."
+        },
+        {
+          headline: "S3 — Cold Wallet for Redemption Velocity Control",
+          explanation: "Unique mechanism to separate long-term point storage from active redemption pool. Controls the rate at which loyalty liability converts to cash outflow — a feature that no comparable platform offers as standard. Directly addresses cash flow risk concerns in high-liability programmes."
+        },
+        {
+          headline: "S4 — Production-Proven in a High-Complexity Vertical",
+          explanation: "Live deployment for a major real estate developer with 30+ rules across demand notes, collections, referrals, registrations, and marketing engagement. This is the most complex loyalty programme vertical (long purchase cycles, high transaction values, regulatory sensitivity) — success here is proof of concept for every adjacent industry."
+        },
+        {
+          headline: "S5 — Deep, Bidirectional Salesforce Integration",
+          explanation: "12+ API endpoints covering the full customer lifecycle: member creation, demand notes, payments, referrals, site visits, home loans, testimonials, surveys. This is not a webhook connector — it is a production-grade integration that took months to build and cannot be replicated quickly. Salesforce is the CRM of choice for mid-to-large enterprises in India."
+        },
+        {
+          headline: "S6 — Full Redemption Catalogue (7 Types including Encashment)",
+          explanation: "Encashment (cash-out of points) is a best-in-class redemption mechanism for high-value purchase industries where customers have outstanding payment obligations. Combined with 6 other redemption types, the catalogue competes with global enterprise platforms at a fraction of their cost."
+        },
+        {
+          headline: "S7 — Vertical Specificity as a Feature",
+          explanation: "Purpose-built for industries with complex, high-value, long-cycle customer relationships. This vertical depth is a feature, not a limitation — generic loyalty platforms cannot replicate the domain-specific rule templates, integration patterns, and financial controls that come from deep vertical focus."
+        }
+      ],
+      weaknesses: [
+        {
+          headline: "W1 — No Analytics or Reporting Dashboard",
+          explanation: "CMO and marketing leadership buyers evaluate loyalty platforms on programme ROI visibility — redemption rates, campaign uplift, cohort analysis. The absence of an analytics layer is a deal-blocker when competing against Antavo and Capillary. Every enterprise evaluation will surface this gap within 30 minutes of a product demo."
+        },
+        {
+          headline: "W2 — Accounting / ERP Integration Not Yet Shipped",
+          explanation: "Finance teams in BFSI and enterprise real estate require loyalty cost to flow automatically into the general ledger. The API structure exists but the accounting connector is not complete. This gap prolongs the CFO approval process and adds implementation cost for the client."
+        },
+        {
+          headline: "W3 — No AI or ML Personalisation Layer",
+          explanation: "Antavo's AI Loyalty Cloud and Capillary's Insights+ already use machine learning to auto-optimise reward offers and predict churn. Our rule engine is human-configured — sophisticated but not self-learning. As enterprise buyers mature, the expectation for AI-driven personalisation will become standard."
+        },
+        {
+          headline: "W4 — Single Reference Client",
+          explanation: "One production deployment is proof of concept but not proof of scale. Enterprise buyers in BFSI and automotive will ask for vertical-specific references — a real estate deployment does not fully de-risk a bank's decision. Until we have 3–5 clients across 2 verticals, the reference story is thin."
+        },
+        {
+          headline: "W5 — Limited Brand Awareness",
+          explanation: "Capillary, Antavo, and Salesforce Loyalty are Gartner-recognised and discoverable through analyst channels. We are not yet. Buyers who are actively researching loyalty platforms will not find us through standard channels. This means every deal starts with a credibility conversation, not a product conversation."
+        },
+        {
+          headline: "W6 — No Gamification Module",
+          explanation: "Streaks, badges, challenges, and leaderboards are increasingly expected in loyalty programmes targeting younger demographics and high-engagement industries (EdTech, healthcare, consumer apps). Without gamification, we cannot credibly serve these verticals."
+        },
+        {
+          headline: "W7 — Accounting Integration on Roadmap",
+          explanation: "For finance-regulated industries (BFSI, NBFCs, listed real estate companies), the inability to auto-post loyalty costs to the GL is a compliance friction point. This forces manual reconciliation and weakens our story to CFO-level buyers."
+        }
+      ],
+      opportunities: [
+        {
+          headline: "O1 — India's Loyalty Market is Nascent and Underserved",
+          explanation: "Organised loyalty programme adoption among Indian mid-market companies (₹100Cr–₹2,000Cr revenue) is below 20%. Most companies either have no programme or use a basic voucher tool like Xoxoday. The entire mid-market is a greenfield opportunity — we do not need to displace an incumbent, we need to make the category case."
+        },
+        {
+          headline: "O2 — Real Estate Loyalty is Completely Unaddressed by Existing SaaS",
+          explanation: "No Indian or global loyalty SaaS has built a purpose-specific product for real estate developers. This is a ₹50,000Cr+ industry in India with complex loyalty needs (demand notes, possession incentives, referral programmes) and zero vertical-specific software. We own this category today."
+        },
+        {
+          headline: "O3 — BFSI Regulatory Push Creates Urgency",
+          explanation: "RBI and IRDAI guidelines are increasingly linking customer experience and retention metrics to compliance. Banks and NBFCs are under pressure to improve NPS and reduce attrition. A loyalty programme with escrow controls and CRM integration is a natural solution — and the escrow wallet aligns directly with financial regulators' expectations of liability management."
+        },
+        {
+          headline: "O4 — Salesforce Partner Ecosystem as a Distribution Channel",
+          explanation: "Salesforce has 500+ implementation partners in India. Every Salesforce partner encounters clients who need a loyalty programme but cannot afford or implement Salesforce Loyalty Management. We are the loyalty engine those partners can recommend — with a pre-built Salesforce integration as our primary proof point."
+        },
+        {
+          headline: "O5 — GCC and SEA as Expansion Markets",
+          explanation: "The Gulf Cooperation Council (UAE, Saudi Arabia, Qatar) has a high density of real estate developers, retail groups, and banking clients who are actively investing in loyalty programmes. Our vertical depth and financial controls translate directly to these markets. A single GCC real estate deployment opens a significant expansion opportunity."
+        },
+        {
+          headline: "O6 — AI Enhancement Layer is a Near-Term Differentiator",
+          explanation: "Adding AI-powered rule optimisation and predictive churn detection to the existing rule engine would immediately upgrade us from 'sophisticated but manual' to 'intelligent and self-optimising' — matching the roadmap of Antavo and Capillary while retaining our vertical and financial control advantages."
+        },
+        {
+          headline: "O7 — Xoxoday's Installed Base as Our Pipeline",
+          explanation: "Every company that currently uses Xoxoday for vouchers is a potential upgrade customer. Xoxoday is a reward fulfilment tool — our rule engine is what they are missing. A joint integration story (we power the rules; they fulfil the reward) turns Xoxoday's 5,000+ India client base into our top-of-funnel."
+        }
+      ],
+      threats: [
+        {
+          headline: "T1 — Capillary Expanding Beyond Retail",
+          explanation: "Capillary is the dominant India loyalty platform and has the engineering resources to build vertical-specific modules for real estate and BFSI. If they ship a transaction-event trigger for demand notes or a financial controls module, they can compete in our primary vertical with brand, scale, and existing client relationships."
+        },
+        {
+          headline: "T2 — Salesforce Dropping Mid-Market Pricing",
+          explanation: "Salesforce Loyalty Management is currently too expensive for the mid-market. If Salesforce introduces a lower-priced tier or simplifies implementation for mid-market clients, they would immediately pressure our positioning — they already have the Salesforce CRM integration advantage."
+        },
+        {
+          headline: "T3 — Antavo's AI Loyalty Cloud Setting a New Benchmark",
+          explanation: "Antavo's machine-learning reward optimisation is increasingly cited by enterprise buyers as a baseline expectation. If AI personalisation becomes the standard minimum, our rule engine — however sophisticated — is positioned as a manual tool. This is a 12–18 month risk, not immediate."
+        },
+        {
+          headline: "T4 — Xoxoday Building a Rule Engine Layer",
+          explanation: "Xoxoday has a large India installed base, significant funding, and is expanding into workflow automation. If they ship a basic rule engine and CRM integration, they would be 'good enough' for the majority of the mid-market and displace our primary positioning."
+        },
+        {
+          headline: "T5 — Enterprise Clients Building In-House",
+          explanation: "Large enterprises with IT teams (banks, large developers) may choose to build a custom loyalty engine rather than buy — especially if they perceive our platform as limited in analytics or AI. The 'build vs buy' objection is persistent in BFSI. Every deal requires a compelling TCO argument."
+        },
+        {
+          headline: "T6 — Slow Sales Cycles Stall Revenue",
+          explanation: "Enterprise B2B loyalty is a 3–9 month sales cycle. With a small team and two clients, a slowdown in pipeline velocity could create cash flow pressure before the product reaches the scale required for inbound demand. Over-reliance on a few large deals is a concentration risk."
+        },
+        {
+          headline: "T7 — Talent Risk in a Niche Product Category",
+          explanation: "Loyalty programme engineering and product management talent is scarce in India. Building the analytics, AI, and accounting integration layers requires specialised skills. Losing a key technical contributor during the critical scaling phase could delay roadmap execution by 6–12 months."
+        }
+      ]
     }
   }
 };
 
+// ============== CUSTOM TAB COMPONENTS (Snag360-style UI) ==============
+
+const LESummaryTab: React.FC = () => {
+  const summary = loyaltyEngineData.extendedContent?.productSummaryNew;
+  const identity = summary?.identity || [];
+  const problemSolves = summary?.problemSolves || [];
+  const whoItIsFor = summary?.whoItIsFor || [];
+  const featureModules = summary?.summaryFeatureModules || [];
+  const usps = summary?.summaryUsps || [];
+  const traction = summary?.tractionMilestones || [];
+  const today = summary?.today || [];
+
+  return (
+    <div className="space-y-8 animate-fade-in overflow-x-auto">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-2xl font-semibold tracking-tight font-poppins">{loyaltyEngineData.name} - Product Identity</h2>
+        <p className="text-[10px] font-medium text-[#2C2C2C]/40 tracking-widest mt-1">{summary?.summarySubtitle || "Investor & Partner Brief"}</p>
+      </div>
+      <div className="bg-[#F6F4EE] overflow-hidden">
+        <table className="w-full border-collapse text-sm">
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-4 text-center w-1/4 font-poppins">Field</th><th className="border border-[#C4B89D]/50 p-4 text-center font-poppins">Detail</th></tr></thead>
+          <tbody>{identity.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.field}</td><td className="border border-[#C4B89D]/50 p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.detail}</td></tr>))}</tbody>
+        </table>
+      </div>
+
+      <div className="bg-[#DA7756] text-white border border-[#C4B89D] p-4 font-semibold text-sm rounded-t-xl font-poppins">The Problem It Solves</div>
+      <div className="bg-[#F6F4EE] overflow-hidden">
+        <table className="w-full border-collapse text-sm">
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-4 text-center w-1/3 font-poppins">Pain Point</th><th className="border border-[#C4B89D]/50 p-4 text-center font-poppins">How {loyaltyEngineData.name} Solves It</th></tr></thead>
+          <tbody>{problemSolves.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.painPoint}</td><td className="border border-[#C4B89D]/50 p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.solution}</td></tr>))}</tbody>
+        </table>
+      </div>
+
+      <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">Who It Is For</div>
+      <div className="bg-[#F6F4EE] overflow-hidden">
+        <table className="w-full border-collapse text-sm">
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-3 text-center w-1/5 font-poppins">Role</th><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">What They Use It For</th><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">Key Frustration Today</th><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">What They Gain</th></tr></thead>
+          <tbody>{whoItIsFor.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.role}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.useCase}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/70 font-medium leading-relaxed italic font-poppins bg-white">{r.frustration}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.gain}</td></tr>))}</tbody>
+        </table>
+      </div>
+
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Feature Modules</div>
+      <div className="bg-[#F6F4EE] overflow-hidden">
+        <table className="w-full border-collapse text-sm">
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">Module</th><th className="border border-[#C4B89D]/50 p-3 text-center font-poppins">Detail</th></tr></thead>
+          <tbody>{featureModules.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.label}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.detail}</td></tr>))}</tbody>
+        </table>
+      </div>
+
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Unique Selling Propositions</div>
+      <div className="bg-[#F6F4EE] overflow-hidden">
+        <table className="w-full border-collapse text-sm">
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">USP</th><th className="border border-[#C4B89D]/50 p-3 text-center font-poppins">Detail</th></tr></thead>
+          <tbody>{usps.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.label}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.detail}</td></tr>))}</tbody>
+        </table>
+      </div>
+
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Traction & Milestones</div>
+      <div className="bg-[#F6F4EE] overflow-hidden">
+        <table className="w-full border-collapse text-sm">
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">Milestone</th><th className="border border-[#C4B89D]/50 p-3 text-center font-poppins">Detail</th></tr></thead>
+          <tbody>{traction.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.label}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.detail}</td></tr>))}</tbody>
+        </table>
+      </div>
+
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Where We Are Today</div>
+      <div className="bg-[#F6F4EE] overflow-hidden">
+        <table className="w-full border-collapse text-sm">
+          <thead><tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold"><th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">Dimension</th><th className="border border-[#C4B89D]/50 p-3 text-center w-3/4 font-poppins">Current State</th></tr></thead>
+          <tbody>{today.map((r, i) => (<tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}><td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">{r.dimension}</td><td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">{r.state}</td></tr>))}</tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+const LEFeaturesTab: React.FC = () => {
+  const features = loyaltyEngineData.extendedContent?.detailedFeatures || [];
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Feature List</h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">All features from product brief. USP rows highlighted in orange. Star denotes unique competitive advantage.</p>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-3 text-center">Module</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">Feature</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">How It Currently Works</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">User Type</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">Status</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">Priority</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">USP</th>
+            </tr>
+          </thead>
+          <tbody>
+            {features.map((f, i) => (
+              <tr key={i} className={f.usp ? "bg-[#DA7756]/10" : i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C] font-medium">{f.module}</td>
+                <td className={`border border-[#C4B89D]/50 p-3 ${f.usp ? "font-semibold text-[#DA7756]" : "text-[#2C2C2C]"}`}>{f.feature}</td>
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80">{f.works}</td>
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80">{f.userType}</td>
+                <td className="border border-[#C4B89D]/50 p-3 text-center text-[#2C2C2C]/80">{f.status}</td>
+                <td className="border border-[#C4B89D]/50 p-3 text-center text-[#2C2C2C]/80">{f.priority}</td>
+                <td className="border border-[#C4B89D]/50 p-3 text-center font-semibold text-[#DA7756]">{f.usp ? "★ USP" : ""}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+const LEMarketTab: React.FC = () => {
+  const targetAudience = loyaltyEngineData.extendedContent?.detailedMarketAnalysis?.targetAudience || [];
+  const competitors = loyaltyEngineData.extendedContent?.detailedMarketAnalysis?.competitorMapping || [];
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Market Analysis</h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Section 1: Target Audience | Section 2: Competitor Mapping</p>
+
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">Section 1: Target Audience</div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Segment</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Demographics & Industry</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Geography</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Pain Points</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Not Solved Today</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Good Enough Today</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Trigger to Switch</th>
+            </tr>
+          </thead>
+          <tbody>
+            {targetAudience.map((t, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{t.segment}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.demographics}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.geography}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.painPoints}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.notSolved}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.goodEnough}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.triggerToSwitch}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">Section 2: Competitor Mapping</div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Competitor</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Location</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Target Customer</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Pricing</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Key Strengths</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Key Weakness</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Market Gaps</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Threat Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            {competitors.map((c, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{c.name}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{c.location}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{c.targetCustomer}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{c.pricing}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#798C5E] font-bold whitespace-pre-line">{c.strongestFeatures}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#b91c1c] font-bold whitespace-pre-line">{c.weakness}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#4B5563] font-bold whitespace-pre-line">{c.marketGaps}</td>
+                <td className={`border border-[#C4B89D]/50 p-2 text-center font-semibold whitespace-pre-line ${c.threatLevel === "HIGH" ? "text-red-600" : c.threatLevel === "MEDIUM" ? "text-[#D97706]" : "text-green-600"}`}>{c.threatLevel}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+const LEPricingTab: React.FC = () => {
+  const benchmark = loyaltyEngineData.extendedContent?.featureBenchmark || [];
+  const pricingData = loyaltyEngineData.extendedContent?.pricingData || [];
+  const positioningData = loyaltyEngineData.extendedContent?.positioningData || [];
+  const valueProps = loyaltyEngineData.extendedContent?.valuePropositions || [];
+
+  const getStandBadge = (stand: string) => {
+    if (stand === "AHEAD") return "bg-[#d4edda] text-[#155724] font-bold";
+    if (stand === "AT PAR") return "bg-[#fff3cd] text-[#856404] font-bold";
+    if (stand === "GAP") return "bg-[#f8d7da] text-[#721c24] font-bold";
+    return "text-[#2C2C2C]";
+  };
+
+  const getStatusBadge = (status: string) => {
+    if (status === "Live") return "bg-[#d4edda] text-[#155724]";
+    if (status === "Roadmap") return "bg-[#cce5ff] text-[#004085]";
+    return "text-[#2C2C2C]";
+  };
+
+  const getPricingRowStyle = (highlight?: string) => {
+    if (highlight === "now") return "bg-[#e2efda]";
+    if (highlight === "future") return "bg-[#DA7756]/10";
+    if (highlight === "risk") return "bg-[#fce4d6]";
+    return "";
+  };
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Features & Pricing</h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Part A: Feature Benchmarking vs Market  |  Part B: Pricing — Current Market & Recommendations  |  Part C: Positioning  |  Part D: Value Propositions & How to Sharpen Them</p>
+
+      {/* PART A — FEATURE BENCHMARKING */}
+      {benchmark.length > 0 && (<>
+        <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">Part A — Current Features vs Market Standard</div>
+        <div className="grid grid-cols-3 gap-3 px-1">
+          <div className="flex items-center gap-2 text-xs font-poppins font-semibold"><span className="inline-block px-2 py-1 rounded bg-[#d4edda] text-[#155724]">AHEAD</span><span className="text-[#2C2C2C]/70">— We lead the market on this feature</span></div>
+          <div className="flex items-center gap-2 text-xs font-poppins font-semibold"><span className="inline-block px-2 py-1 rounded bg-[#fff3cd] text-[#856404]">AT PAR</span><span className="text-[#2C2C2C]/70">— Solid, meets market expectation</span></div>
+          <div className="flex items-center gap-2 text-xs font-poppins font-semibold"><span className="inline-block px-2 py-1 rounded bg-[#f8d7da] text-[#721c24]">GAP</span><span className="text-[#2C2C2C]/70">— Below market; may cost deals</span></div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-[11px] font-poppins">
+            <thead>
+              <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[15%]">Feature Area</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[22%]">Market Standard</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[22%] bg-[#DA7756] text-white">Our Product</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[7%]">Status</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[9%]">Where We Stand</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[25%]">Deal Impact</th>
+              </tr>
+            </thead>
+            <tbody>
+              {benchmark.map((b, i) => (
+                <tr key={i} className={b.whereWeStand === "AHEAD" ? "bg-[#e2efda]" : b.whereWeStand === "GAP" ? "bg-[#fce4d6]" : i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                  <td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#DA7756]">{b.featureArea}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/75 leading-relaxed">{b.marketStandard}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/85 font-medium leading-relaxed bg-[#DA7756]/10">{b.ourProduct}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-center"><span className={`px-2 py-1 rounded text-[10px] font-semibold ${getStatusBadge(b.status)}`}>{b.status}</span></td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-center"><span className={`px-2 py-1 rounded text-[10px] ${getStandBadge(b.whereWeStand)}`}>{b.whereWeStand}</span></td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 leading-relaxed">{b.dealImpact}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>)}
+
+      {/* PART B — PRICING */}
+      {pricingData.length > 0 && (<>
+        <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] mt-4">Part B — Pricing: Current Market & Recommendations</div>
+        <div className="flex gap-4 px-1 flex-wrap">
+          <div className="flex items-center gap-2 text-xs font-poppins font-semibold"><span className="inline-block w-3 h-3 rounded bg-[#e2efda]"></span><span className="text-[#2C2C2C]/70">Recommended NOW</span></div>
+          <div className="flex items-center gap-2 text-xs font-poppins font-semibold"><span className="inline-block w-3 h-3 rounded bg-[#DA7756]/10"></span><span className="text-[#2C2C2C]/70">Future pricing</span></div>
+          <div className="flex items-center gap-2 text-xs font-poppins font-semibold"><span className="inline-block w-3 h-3 rounded bg-[#fce4d6]"></span><span className="text-[#2C2C2C]/70">Risk to watch</span></div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-[11px] font-poppins">
+            <thead>
+              <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                <th className="border border-[#C4B89D]/50 p-3 text-left w-[28%]">Topic</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-left">Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pricingData.map((row, i) => (
+                <tr key={i} className={getPricingRowStyle(row.highlight) || (i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]")}>
+                  <td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#DA7756] align-top">{row.label}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 leading-relaxed whitespace-pre-line">{row.detail}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>)}
+
+      {/* PART C — POSITIONING */}
+      {positioningData.length > 0 && (<>
+        <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] mt-4">Part C — Positioning</div>
+        <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Strategic positioning, target segments, competitor displacement, and GTM motion for Year 1.</p>
+        <div className="space-y-4">
+          {positioningData.map((item, i) => (
+            <div key={i} className="border border-[#C4B89D]/50 rounded-lg overflow-hidden">
+              <div className="bg-[#F6F4EE] text-[#DA7756] px-4 py-2 font-semibold text-[12px] font-poppins">{item.question}</div>
+              <div className="bg-white px-4 py-3 text-[11px] text-[#2C2C2C]/85 leading-relaxed font-poppins whitespace-pre-line">{item.answer}</div>
+            </div>
+          ))}
+        </div>
+      </>)}
+
+      {/* PART D — VALUE PROPOSITIONS */}
+      {valueProps.length > 0 && (<>
+        <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D] mt-4">Part D — Value Propositions & How to Sharpen Them</div>
+        <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Current messaging, its weakness, the sharpened version, and proof points to add.</p>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-[11px] font-poppins">
+            <thead>
+              <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[3%]">#</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[16%]">Current Value Proposition</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[14%]">What It Communicates Today</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[14%]">Weakness / What It's Missing</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[28%]">Sharpened / Expanded Version</th>
+                <th className="border border-[#C4B89D]/50 p-3 text-center w-[25%]">Proof Point to Add</th>
+              </tr>
+            </thead>
+            <tbody>
+              {valueProps.map((v, i) => (
+                <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                  <td className="border border-[#C4B89D]/50 p-3 text-center font-semibold text-[#DA7756]">{v.num}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C] font-medium leading-relaxed">{v.current}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 leading-relaxed">{v.communicates}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#b91c1c]/90 leading-relaxed italic">{v.weakness}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#155724] font-medium leading-relaxed bg-[#f0fff4]">{v.sharpened}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 leading-relaxed">{v.proofPoint}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>)}
+    </div>
+  );
+};
+
+
+const LEUseCasesTab: React.FC = () => {
+  const industryUseCases = loyaltyEngineData.extendedContent?.detailedUseCases?.industryUseCases || [];
+  const teamUseCases = loyaltyEngineData.extendedContent?.detailedUseCases?.internalTeamUseCases || [];
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Use Cases</h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Section 1: Industry Use Cases | Section 2: Internal Team Use Cases</p>
+
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins rounded-t-xl">Section 1: Industry Use Cases</div>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[10px] font-poppins">
+          <thead>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Rank</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Industry</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Use Case</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Company Profile</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Current Tool</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Urgency</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Primary Buyer</th>
+            </tr>
+          </thead>
+          <tbody>
+            {industryUseCases.map((u, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#2C2C2C]">{u.rank}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#DA7756] whitespace-pre-line">{u.industry}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{u.useCase}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{u.companyProfile || u.profile}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{u.currentTool}</td>
+                <td className={`border border-[#C4B89D]/50 p-2 text-center font-semibold ${u.urgency?.startsWith("HIGH") ? "text-red-600" : "text-[#D97706]"}`}>{u.urgency}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{u.primaryBuyer}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {teamUseCases.length > 0 && (<>
+        <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8 rounded-t-xl">Section 2: Internal Team Use Cases</div>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-[10px] font-poppins">
+            <thead>
+              <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                <th className="border border-[#C4B89D]/50 p-2 text-center">Team</th>
+                <th className="border border-[#C4B89D]/50 p-2 text-center">Features Used</th>
+                <th className="border border-[#C4B89D]/50 p-2 text-center">How They Use It</th>
+                <th className="border border-[#C4B89D]/50 p-2 text-center">Benefit</th>
+                <th className="border border-[#C4B89D]/50 p-2 text-center">Frequency</th>
+                <th className="border border-[#C4B89D]/50 p-2 text-center">Success Metric</th>
+              </tr>
+            </thead>
+            <tbody>
+              {teamUseCases.map((t, i) => (
+                <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                  <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#DA7756] whitespace-pre-line">{t.team}</td>
+                  <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.features}</td>
+                  <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.howTheyUse}</td>
+                  <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.benefit}</td>
+                  <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80 whitespace-pre-line">{t.frequency}</td>
+                  <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{t.successMetric}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>)}
+    </div>
+  );
+};
+
+const LERoadmapTab: React.FC = () => {
+  const phases = loyaltyEngineData.extendedContent?.detailedRoadmap?.structuredRoadmap || [];
+  return (
+    <div className="space-y-10 animate-fade-in">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Product Roadmap</h2>
+      </div>
+      {phases.map((phase, pi) => (
+        <div key={pi} className="space-y-4">
+          <div className={`px-4 py-3 font-semibold text-sm font-poppins rounded-t-xl border border-[#C4B89D] ${phase.colorContext === "red" ? "bg-[#C72030] text-white" : phase.colorContext === "yellow" ? "bg-[#D97706] text-white" : "bg-[#DA7756] text-white"}`}>
+            {phase.timeframe} — {phase.headline}
+          </div>
+          {phase.phaseDescription && <p className="text-[11px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">{phase.phaseDescription}</p>}
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[10px] font-poppins">
+              <thead>
+                <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[15%]">What It Is</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[30%]">Why It Matters</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Unlocked Segment</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[15%]">Success Metric</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[8%]">Effort</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[6%]">Priority</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[6%]">Owner</th>
+                </tr>
+              </thead>
+              <tbody>
+                {phase.items.map((item, ii) => (
+                  <tr key={ii} className={ii % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                    <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#DA7756] whitespace-pre-line">{item.whatItIs}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.whyItMatters}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.unlockedSegment}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.successMetric}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80">{item.effort}</td>
+                    <td className={`border border-[#C4B89D]/50 p-2 text-center font-semibold ${item.priority?.includes("P0") ? "text-[#C72030]" : item.priority?.includes("P1") ? "text-[#D97706]" : "text-[#6B21A8]"}`}>{item.priority}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80 whitespace-pre-line">{item.owner}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const LEBusinessPlanTab: React.FC = () => {
+  const questions = loyaltyEngineData.extendedContent?.detailedBusinessPlan?.planQuestions || [];
+  const colorMap: Record<string, string> = {
+    red: "bg-[#A52A1A]", green: "bg-[#0F5B2A]", yellow: "bg-[#B79000]",
+    orange: "bg-[#D97706]", purple: "bg-[#6B2D84]", teal: "bg-[#006B5E]",
+    blue: "bg-[#1F4E79]",
+  };
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Business Plan</h2>
+      </div>
+      {questions.map((q, qi) => (
+        <div key={qi} className="space-y-2">
+          <div className={`${colorMap[q.colorContext || ""] || "bg-[#1F4E79]"} text-white px-4 py-3 font-semibold text-sm font-poppins rounded-t-xl`}>
+            {q.id}: {q.question}
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[11px] font-poppins">
+              <thead>
+                <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[60%]">Answer</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Context / Source</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="bg-white">
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 whitespace-pre-line leading-relaxed">{q.answer}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/60 whitespace-pre-line">{q.source || "—"}</td>
+                  <td className="border border-[#C4B89D]/50 p-3 text-center">
+                    <span className={`inline-block px-2 py-1 rounded text-[10px] font-semibold ${q.flag === "Ready" ? "bg-green-50 text-green-800" : "bg-yellow-50 text-yellow-900"}`}>{q.flag || "—"}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const LEGTMTab: React.FC = () => {
+  const sheet = loyaltyEngineData.extendedContent?.detailedGTM?.sheet;
+  const targetGroups = sheet?.targetGroups || [];
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-xl font-semibold font-poppins">{sheet?.title || `${loyaltyEngineData.name} - GTM Strategy`}</h2>
+      </div>
+      {targetGroups.map((tg, tgi) => (
+        <div key={tgi} className="space-y-6">
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins whitespace-pre-line">{tg.title}</div>
+          {tg.sections.map((sec, si) => (
+            <div key={si} className="space-y-2">
+              <div className="bg-[#F6F4EE] text-[#DA7756] px-4 py-2 font-semibold text-[12px] font-poppins">{sec.title}</div>
+              {sec.columns.length > 0 && sec.rows.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-[10px] font-poppins">
+                    <thead>
+                      <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                        {sec.columns.map((col, ci) => (
+                          <th key={ci} className="border border-[#C4B89D]/50 p-2 text-center">{col}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sec.rows.map((row, ri) => (
+                        <tr key={ri} className={ri % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                          {row.map((cell, ci) => (
+                            <td key={ci} className={`border border-[#C4B89D]/50 p-2 whitespace-pre-line ${ci === 0 ? "font-semibold text-[#2C2C2C]" : "text-[#2C2C2C]/80"}`}>{cell}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="border border-[#C4B89D]/50 p-3 text-[11px] text-[#2C2C2C]/60 italic font-poppins bg-white">{sec.title}</div>
+              )}
+            </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const LEMetricsTab: React.FC = () => {
+  const clientImpact = loyaltyEngineData.extendedContent?.detailedMetrics?.clientImpact || [];
+  const businessTargets = loyaltyEngineData.extendedContent?.detailedMetrics?.businessTargets || [];
+  const sheet = loyaltyEngineData.extendedContent?.detailedMetrics?.sheet;
+  const sections = sheet?.sections || [];
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-xl font-semibold font-poppins">{sheet?.title || `${loyaltyEngineData.name} - Metrics`}</h2>
+      </div>
+
+      {sections.length > 0 ? (
+        sections.map((sec, si) => (
+          <div key={si} className="space-y-2">
+            {sec.columns.length > 0 && sec.rows.length > 0 ? (<>
+              <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins whitespace-pre-line">{sec.title}</div>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-[10px] font-poppins">
+                  <thead>
+                    <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                      {sec.columns.map((col, ci) => (
+                        <th key={ci} className="border border-[#C4B89D]/50 p-2 text-center">{col}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sec.rows.map((row, ri) => (
+                      <tr key={ri} className={ri % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                        {row.map((cell, ci) => (
+                          <td key={ci} className={`border border-[#C4B89D]/50 p-2 whitespace-pre-line ${ci === 0 ? "font-semibold text-[#2C2C2C]" : "text-[#2C2C2C]/80"}`}>{cell}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>) : (
+              <div className={`px-4 py-3 font-semibold text-sm font-poppins whitespace-pre-line ${sec.title.includes("LEGEND") || sec.title.includes("★") ? "bg-[#DA7756]/10 text-[#2C2C2C] border border-[#C4B89D]/50" : "bg-[#DA7756]/80 text-white/90 italic"}`}>{sec.title}</div>
+            )}
+          </div>
+        ))
+      ) : (<>
+        {clientImpact.length > 0 && (<>
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">Client Impact Metrics</div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[11px] font-poppins">
+              <thead>
+                <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">Metric</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">Baseline</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">With Platform</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">Impact Claim</th>
+                </tr>
+              </thead>
+              <tbody>
+                {clientImpact.map((m, i) => (
+                  <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                    <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">{m.metric}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#E49191] italic">{m.baseline}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#108C72] font-semibold">{m.withSnag}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">{m.claim}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>)}
+
+        {businessTargets.length > 0 && (<>
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">Business Growth Targets</div>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-[10px] font-poppins">
+              <thead>
+                <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">Metric</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">Definition</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">D30 Current</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">D30 Phase 1</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">M3 Current</th>
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">M3 Phase 1</th>
+                </tr>
+              </thead>
+              <tbody>
+                {businessTargets.map((b, i) => (
+                  <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                    <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{b.metric}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{b.definition}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{b.d30Current}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#108C72] font-medium whitespace-pre-line">{b.d30Phase1}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{b.m3Current}</td>
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#108C72] font-medium whitespace-pre-line">{b.m3Phase1}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>)}
+      </>)}
+    </div>
+  );
+};
+
+const LESWOTTab: React.FC = () => {
+  const swot = loyaltyEngineData.extendedContent?.detailedSWOT;
+  const strengths = swot?.strengths || [];
+  const weaknesses = swot?.weaknesses || [];
+  const opportunities = swot?.opportunities || [];
+  const threats = swot?.threats || [];
+  const maxSW = Math.max(strengths.length, weaknesses.length);
+  const maxOT = Math.max(opportunities.length, threats.length);
+
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - SWOT Analysis</h2>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr>
+              <th colSpan={3} className="bg-[#798C5E]/15 text-[#798C5E] border border-[#C4B89D]/50 p-3 text-center font-bold text-sm">STRENGTHS</th>
+              <th colSpan={3} className="bg-[#E49191]/15 text-[#C72030] border border-[#C4B89D]/50 p-3 text-center font-bold text-sm">WEAKNESSES</th>
+            </tr>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[6%]">ID</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Headline</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[24%]">Detail</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[6%]">ID</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Headline</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[24%]">Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: maxSW }).map((_, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#798C5E]">{strengths[i] ? `S${i + 1}` : ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{strengths[i]?.headline || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{strengths[i]?.explanation || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#C72030]">{weaknesses[i] ? `W${i + 1}` : ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{weaknesses[i]?.headline || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{weaknesses[i]?.explanation || ""}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[11px] font-poppins">
+          <thead>
+            <tr>
+              <th colSpan={3} className="bg-[#DA7756]/10 text-[#DA7756] border border-[#C4B89D]/50 p-3 text-center font-bold text-sm">OPPORTUNITIES</th>
+              <th colSpan={3} className="bg-[#EDC488]/20 text-[#B8860B] border border-[#C4B89D]/50 p-3 text-center font-bold text-sm">THREATS</th>
+            </tr>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[6%]">ID</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Headline</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[24%]">Detail</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[6%]">ID</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">Headline</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[24%]">Detail</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: maxOT }).map((_, i) => (
+              <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#DA7756]">{opportunities[i] ? `O${i + 1}` : ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{opportunities[i]?.headline || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{opportunities[i]?.explanation || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#B8860B]">{threats[i] ? `T${i + 1}` : ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C] whitespace-pre-line">{threats[i]?.headline || ""}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{threats[i]?.explanation || ""}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+const LEEnhancementsTab: React.FC = () => {
+  const enhancementRoadmap = loyaltyEngineData.extendedContent?.detailedRoadmap?.enhancementRoadmap || [];
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Enhancement Roadmap</h2>
+      </div>
+      <p className="text-[12px] text-[#2C2C2C]/60 italic font-medium font-poppins px-2">Each row shows: current behaviour → enhanced behaviour with integration type. AI/MCP innovations highlighted.</p>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-[10px] font-poppins">
+          <thead>
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[3%]">#</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[8%]">Module</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[10%]">Feature</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[22%]">How It Currently Works</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[25%]">Enhanced Version</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[12%]">Integration Type</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[5%]">Effort</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[5%]">Impact</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[5%]">Priority</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[5%]">Owner</th>
+            </tr>
+          </thead>
+          <tbody>
+            {enhancementRoadmap.map((item, idx) => (
+              <tr key={idx} className={item.priority === "P0" ? "bg-[#DA7756]/10" : idx % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
+                <td className={`border border-[#C4B89D]/50 p-2 text-center ${item.priority === "P0" ? "font-semibold" : ""}`}>{item.rowId}</td>
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">{item.module}</td>
+                <td className={`border border-[#C4B89D]/50 p-2 ${item.priority === "P0" ? "font-semibold text-[#DA7756]" : "text-[#2C2C2C] font-medium"}`}>{item.featureName}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.currentStatus}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 whitespace-pre-line">{item.enhancedVersion}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#DA7756] whitespace-pre-line">{item.integrationType}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80">{item.effort}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80 font-medium">{item.impact}</td>
+                <td className={`border border-[#C4B89D]/50 p-2 text-center font-semibold ${item.priority === "P0" ? "text-[#C72030]" : item.priority === "P1" ? "text-[#D97706]" : "text-[#6B21A8]"}`}>{item.priority}</td>
+                <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80 whitespace-pre-line">{item.owner}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+const LEAssetsTab: React.FC = () => {
+  const assets = loyaltyEngineData.assets || [];
+  const credentials = loyaltyEngineData.credentials || [];
+  return (
+    <div className="space-y-8 animate-fade-in">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+        <h2 className="text-xl font-semibold font-poppins">{loyaltyEngineData.name} - Assets & Credentials</h2>
+      </div>
+
+      {assets.length > 0 && (
+        <div className="space-y-4">
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">Product Assets</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {assets.map((asset, i) => (
+              <a key={i} href={asset.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 border border-[#C4B89D]/50 rounded-xl p-4 bg-white hover:bg-[#F6F4EE] transition-all group">
+                <div className="text-[#DA7756]">{asset.icon}</div>
+                <div className="flex-1">
+                  <p className="font-semibold text-[#2C2C2C] text-sm font-poppins">{asset.title}</p>
+                  <p className="text-[10px] text-[#2C2C2C]/50 font-poppins">{asset.type}</p>
+                </div>
+                <ExternalLink className="w-4 h-4 text-[#2C2C2C]/30 group-hover:text-[#DA7756] transition-colors" />
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {credentials.length > 0 && (
+        <div className="space-y-4">
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins flex items-center gap-2">
+            <Lock className="w-4 h-4" /> Secure Access Credentials
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {credentials.map((cred, i) => (
+              <div key={i} className="border border-[#C4B89D]/50 rounded-xl p-4 bg-white space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="text-[#DA7756]">{cred.icon}</div>
+                  <p className="font-semibold text-[#2C2C2C] text-sm font-poppins">{cred.title}</p>
+                </div>
+                <div className="text-[11px] font-poppins space-y-1">
+                  <p><span className="text-[#2C2C2C]/50">URL:</span> <span className="text-[#DA7756]">{cred.url}</span></p>
+                  <p><span className="text-[#2C2C2C]/50">ID:</span> <span className="text-[#2C2C2C]/80 font-medium">{cred.id}</span></p>
+                  <p><span className="text-[#2C2C2C]/50">Pass:</span> <span className="text-[#2C2C2C]/80 font-medium">{cred.pass}</span></p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {loyaltyEngineData.owner && (
+        <div className="space-y-4">
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins flex items-center gap-2">
+            <User className="w-4 h-4" /> Product Owner
+          </div>
+          <div className="border border-[#C4B89D]/50 rounded-xl p-4 bg-white flex items-center gap-4">
+            {loyaltyEngineData.ownerImage && <img src={loyaltyEngineData.ownerImage} alt={loyaltyEngineData.owner} className="w-16 h-16 rounded-full object-cover border-2 border-[#C4B89D]/50" />}
+            <div>
+              <p className="font-semibold text-[#2C2C2C] text-lg font-poppins">{loyaltyEngineData.owner}</p>
+              <p className="text-[11px] text-[#2C2C2C]/50 font-poppins">Product Owner — {loyaltyEngineData.name}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ============== MAIN PAGE COMPONENT ==============
+
 const LoyaltyEnginePage: React.FC = () => {
-  return <BaseProductPage productData={loyaltyEngineData} />;
+  return (
+    <BaseProductPage
+      productData={loyaltyEngineData}
+      tabsVariant="snag360"
+      customTabContent={{
+        summary: <LESummaryTab />,
+        features: <LEFeaturesTab />,
+        market: <LEMarketTab />,
+        pricing: <LEPricingTab />,
+        usecases: <LEUseCasesTab />,
+        roadmap: <LERoadmapTab />,
+        business: <LEBusinessPlanTab />,
+        gtm: <LEGTMTab />,
+        metrics: <LEMetricsTab />,
+        swot: <LESWOTTab />,
+        enhancements: <LEEnhancementsTab />,
+        assets: <LEAssetsTab />,
+      }}
+    />
+  );
 };
 
 export default LoyaltyEnginePage;

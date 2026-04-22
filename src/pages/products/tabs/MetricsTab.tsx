@@ -17,10 +17,10 @@ const MetricsTab: React.FC<MetricsTabProps> = ({ productData }) => {
           <div className="w-full rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
               <div
-                className={`bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 font-poppins uppercase ${isCpManagement ? "text-left text-sm font-semibold tracking-wide" : "text-center text-[16px] font-bold tracking-tight"}`}
+                className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center"
               >
-                {productData.extendedContent?.detailedMetrics?.sheet?.title ||
-                  `${productData.name} — Performance Metrics`}
+                <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{productData.extendedContent?.detailedMetrics?.sheet?.title ||
+                  `${productData.name} — Performance Metrics`}</h2>
               </div>
 
               {sheetSections.length ? (
@@ -227,8 +227,8 @@ const MetricsTab: React.FC<MetricsTabProps> = ({ productData }) => {
         </div>
       ) : (
         <>
-          <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] p-5 rounded-xl mb-0 flex justify-between items-center">
-            <h2 className="text-xl font-semibold tracking-tight font-poppins">
+          <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
+            <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
               {productData.name} — Performance Metrics
             </h2>
           </div>

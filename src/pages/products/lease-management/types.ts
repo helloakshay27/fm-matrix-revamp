@@ -72,6 +72,33 @@ export interface UseCase {
   primaryUser?: string;
 }
 
+export interface LesseeTeamUseCase {
+  team: string;
+  howRelevant: string;
+  specificModules: string;
+  keyBenefit: string;
+  dayToDay: string;
+  frequencyOfUse: string;
+}
+
+export interface LessorIndustryUseCase {
+  rank: number;
+  industry: string;
+  howRelevant: string;
+  idealProfile: string;
+  decisionMaker: string;
+  currentToolReplaced: string;
+  estimatedDealSize: string;
+}
+
+export interface LessorTeamUseCase {
+  teamRole: string;
+  primaryUseCase: string;
+  keyActions: string;
+  frequencyOfUse: string;
+  metricsTracked: string;
+}
+
 export interface RoadmapItem {
   item?: string;
   feature?: string;
@@ -104,6 +131,32 @@ export interface GTMSalesElement {
   details: string;
 }
 
+export interface GTMMarketingChannel {
+  channel: string;
+  relevant: string;
+  executionApproach: string;
+  priorityRank: number;
+  expectedOutput: string;
+  budgetTimeline: string;
+}
+
+export interface GTMLaunchWeek {
+  week: string;
+  salesAction: string;
+  marketingAction: string;
+  keyProductMilestones: string;
+  successMetric: string;
+}
+
+export interface GTMPartnershipElement {
+  element: string;
+  details: string;
+}
+
+export interface GTMOnePageSummary {
+  [key: string]: string;
+}
+
 export interface GTMTargetGroup {
   targetGroup?: string;
   painPoint?: string;
@@ -111,7 +164,13 @@ export interface GTMTargetGroup {
   channel?: string;
   closingTactic?: string;
   name?: string;
+  profile?: string;
   elements?: GTMSalesElement[];
+  marketingChannels?: GTMMarketingChannel[];
+  launchSequence?: GTMLaunchWeek[];
+  partnerships?: GTMPartnershipElement[];
+  onePageSummary?: GTMOnePageSummary;
+  tgSummary?: string;
 }
 
 export interface ClientMetric {
@@ -125,6 +184,41 @@ export interface ClientMetric {
   featureDriving?: string;
   howCaused?: string;
   landingClaim?: string;
+}
+
+export interface ProductLaunchMetric {
+  id: number;
+  metric: string;
+  whatMeasures: string;
+  activationDefinition: string;
+  thirtyDayCurrent: string;
+  thirtyDayWithPhase1: string;
+  threeMonthCurrent: string;
+  threeMonthWithPhase1: string;
+  whyItMatters: string;
+  successSignal: string;
+  upliftFromPhase1: string;
+}
+
+export interface LessorClientMetric {
+  id: number;
+  name: string;
+  whatMeasures: string;
+  howToTrack: string;
+  baselineBefore: string;
+  targetAfter90Days: string;
+  landingPageHeadline: string;
+  howToPresent: string;
+  portfolioImpact: string;
+  revenueImpact: string;
+  clientROILogic: string;
+}
+
+export interface LessorLaunchTrackingRow {
+  metric: string;
+  baselinePreLaunch: string;
+  thirtyDayTarget: string;
+  ninetyDayTarget: string;
 }
 
 export interface SWOTItem {
@@ -191,6 +285,92 @@ export interface PricingTier {
   recommended?: boolean;
 }
 
+// Features and Pricing - Extended Types
+export interface CompetitiveSummaryItem {
+  category: string;
+  detail: string;
+  implication: string;
+}
+
+export interface StandardPricingModel {
+  question: string;
+  answer: string;
+}
+
+export interface TypicalPriceRange {
+  tier: string;
+  indiaPrice: string;
+  indiaWho: string;
+  globalPrice: string;
+  globalWho: string;
+}
+
+export interface CompetitorFeaturePlan {
+  feature: string;
+  freeStarter: string;
+  professionalGrowth: string;
+  enterprise: string;
+}
+
+export interface RecommendedPricingLessee {
+  pricingStage: string;
+  indiaEntryTier: string;
+  indiaMidMarket: string;
+  globalEntryTier: string;
+  globalMidMarket: string;
+  notes: string;
+}
+
+export interface PositioningItem {
+  label: string;
+  description: string;
+}
+
+export interface ValueProposition {
+  currentValue: string;
+  whoResonates: string;
+  whatsWeak: string;
+  improvedValue: string;
+}
+
+// Lessor Perspective Types
+export interface LessorFeatureComparison {
+  area: string;
+  marketStandard: string;
+  ourProduct: string;
+  status: "AHEAD" | "AT PAR" | "GAP";
+}
+
+export interface LessorCompetitiveSummaryItem {
+  category: string;
+  detail: string;
+}
+
+export interface LessorPricingModel {
+  model: string;
+  howItWorks: string;
+  whoUsesIt: string;
+  indiaApplicability: string;
+}
+
+export interface RecommendedPricingLessor {
+  segment: string;
+  now: string;
+  sixMonths: string;
+  eighteenMonths: string;
+}
+
+export interface LessorPositioning {
+  level: string;
+  description: string;
+}
+
+export interface LessorValueProposition {
+  title: string;
+  currentState: string;
+  improvedValue: string;
+}
+
 export interface TopEnhancement {
   rank: number;
   feature: string;
@@ -199,4 +379,46 @@ export interface TopEnhancement {
   why?: string;
   isAI: boolean;
   isMCP: boolean;
+}
+
+// Market Analysis Types
+export interface CompanyPainPoint {
+  companyType: string;
+  painPoint1: string;
+  painPoint2: string;
+  painPoint3: string;
+  costRisk: string;
+}
+
+export interface MarketCompetitor {
+  competitor: string;
+  primaryTargetCustomer: string;
+  pricingModel: string;
+  howBuyersDiscover: string;
+  strongestFeatures: string;
+  keyWeaknesses: string;
+  marketGap: string;
+  recentInnovation: string;
+}
+
+export interface LessorTargetAudience {
+  segment: string;
+  whoTheyAre: string;
+  sizeOfSegment: string;
+  primaryPainPoint: string;
+  whatTheyNeedMost: string;
+  decisionMaker: string;
+  budgetRange: string;
+  priority: string;
+}
+
+export interface LessorCompetitor {
+  competitor: string;
+  lessorUseCaseCoverage: string;
+  keyLessorFeatures: string;
+  pricing: string;
+  lessorMarketPosition: string;
+  indiaLessorFit: string;
+  ourAdvantage: string;
+  threatLevel: string;
 }

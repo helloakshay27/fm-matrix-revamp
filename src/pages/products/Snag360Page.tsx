@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as tf from "@tensorflow/tfjs";
 import * as cocoSsd from "@tensorflow-models/coco-ssd";
+import { useProductSecurity } from "./useProductSecurity";
+import {
+  CameraPermissionPending,
+  CameraPermissionDenied,
+  ModelLoadingScreen,
+  SecurityOverlays,
+} from "./SecurityOverlays";
 import {
   ArrowLeft,
   Monitor,
@@ -2572,11 +2579,11 @@ const Snag360SummaryTab: React.FC = () => {
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-4 text-center w-1/4 font-poppins">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-4 text-center w-1/4 font-poppins">
                 Field
               </th>
-              <th className="border border-[#b8cce4] p-4 text-center font-poppins">
+              <th className="border border-[#C4B89D]/50 p-4 text-center font-poppins">
                 Detail
               </th>
             </tr>
@@ -2584,10 +2591,10 @@ const Snag360SummaryTab: React.FC = () => {
           <tbody>
             {identity.map((r, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                <td className="border border-[#C4B89D]/50 p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
                   {r.field}
                 </td>
-                <td className="border border-[#b8cce4] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                <td className="border border-[#C4B89D]/50 p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
                   {r.detail}
                 </td>
               </tr>
@@ -2597,17 +2604,17 @@ const Snag360SummaryTab: React.FC = () => {
       </div>
 
       {/* Problem Solves Section */}
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-4 font-semibold text-sm rounded-t-xl font-poppins">
+      <div className="bg-[#DA7756] text-white border border-[#C4B89D] p-4 font-semibold text-sm rounded-t-xl font-poppins">
         The Problem It Solves
       </div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-4 text-center w-1/3 font-poppins">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-4 text-center w-1/3 font-poppins">
                 Pain Point
               </th>
-              <th className="border border-[#b8cce4] p-4 text-center font-poppins">
+              <th className="border border-[#C4B89D]/50 p-4 text-center font-poppins">
                 How Snag 360 Solves It
               </th>
             </tr>
@@ -2615,10 +2622,10 @@ const Snag360SummaryTab: React.FC = () => {
           <tbody>
             {problemSolves.map((r, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                <td className="border border-[#C4B89D]/50 p-4 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
                   {r.painPoint}
                 </td>
-                <td className="border border-[#b8cce4] p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                <td className="border border-[#C4B89D]/50 p-4 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
                   {r.solution}
                 </td>
               </tr>
@@ -2628,23 +2635,23 @@ const Snag360SummaryTab: React.FC = () => {
       </div>
 
       {/* Who It Is For Section */}
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">
+      <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins">
         Who It Is For
       </div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-3 text-center w-1/5 font-poppins">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-3 text-center w-1/5 font-poppins">
                 Role
               </th>
-              <th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">
+              <th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">
                 What They Use It For
               </th>
-              <th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">
+              <th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">
                 Key Frustration Today
               </th>
-              <th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">
+              <th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">
                 What They Gain
               </th>
             </tr>
@@ -2652,16 +2659,16 @@ const Snag360SummaryTab: React.FC = () => {
           <tbody>
             {whoItIsFor.map((r, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                <td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
                   {r.role}
                 </td>
-                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
                   {r.useCase}
                 </td>
-                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/70 font-medium leading-relaxed italic font-poppins bg-white">
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/70 font-medium leading-relaxed italic font-poppins bg-white">
                   {r.frustration}
                 </td>
-                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
                   {r.gain}
                 </td>
               </tr>
@@ -2671,25 +2678,25 @@ const Snag360SummaryTab: React.FC = () => {
       </div>
 
       {/* Feature Summary Section */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">
         Feature Summary
       </div>
-      <div className="border border-t-0 border-[#b8cce4] p-4 text-sm text-[#2C2C2C]/80 bg-white font-medium leading-relaxed rounded-b-xl font-poppins">
+      <div className="border border-t-0 border-[#C4B89D]/50 p-4 text-sm text-[#2C2C2C]/80 bg-white font-medium leading-relaxed rounded-b-xl font-poppins">
         {featureSummary}
       </div>
 
       {/* Where We Are Today Section */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm rounded-t-xl font-poppins border border-[#C4B89D]">
         Where We Are Today
       </div>
       <div className="bg-[#F6F4EE] overflow-hidden">
         <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-3 text-center w-1/4 font-poppins">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-3 text-center w-1/4 font-poppins">
                 Dimension
               </th>
-              <th className="border border-[#b8cce4] p-3 text-center w-3/4 font-poppins">
+              <th className="border border-[#C4B89D]/50 p-3 text-center w-3/4 font-poppins">
                 Current State
               </th>
             </tr>
@@ -2697,10 +2704,10 @@ const Snag360SummaryTab: React.FC = () => {
           <tbody>
             {today.map((r, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
+                <td className="border border-[#C4B89D]/50 p-3 font-semibold text-[#2C2C2C] bg-[#F6F4EE] font-poppins">
                   {r.dimension}
                 </td>
-                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80 font-medium leading-relaxed font-poppins bg-white">
                   {r.state}
                 </td>
               </tr>
@@ -2718,7 +2725,7 @@ const Snag360FeaturesTab: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl flex justify-between items-center">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Feature List
         </h2>
@@ -2730,23 +2737,23 @@ const Snag360FeaturesTab: React.FC = () => {
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-3 text-center">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-3 text-center">
                 Module
               </th>
-              <th className="border border-[#b8cce4] p-3 text-center">
+              <th className="border border-[#C4B89D]/50 p-3 text-center">
                 Feature
               </th>
-              <th className="border border-[#b8cce4] p-3 text-center">
+              <th className="border border-[#C4B89D]/50 p-3 text-center">
                 Sub-Features
               </th>
-              <th className="border border-[#b8cce4] p-3 text-center">
+              <th className="border border-[#C4B89D]/50 p-3 text-center">
                 How It Currently Works
               </th>
-              <th className="border border-[#b8cce4] p-3 text-center">
+              <th className="border border-[#C4B89D]/50 p-3 text-center">
                 User Type
               </th>
-              <th className="border border-[#b8cce4] p-3 text-center">USP</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">USP</th>
             </tr>
           </thead>
           <tbody>
@@ -2755,30 +2762,30 @@ const Snag360FeaturesTab: React.FC = () => {
                 key={i}
                 className={
                   f.usp
-                    ? "bg-[#d9e1f2]"
+                    ? "bg-[#DA7756]/10"
                     : i % 2 === 0
                       ? "bg-white"
                       : "bg-[#F6F4EE]"
                 }
               >
-                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C] font-medium">
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C] font-medium">
                   {f.module}
                 </td>
                 <td
-                  className={`border border-[#b8cce4] p-3 ${f.usp ? "font-semibold text-[#1f3a5f]" : "text-[#2C2C2C]"}`}
+                  className={`border border-[#C4B89D]/50 p-3 ${f.usp ? "font-semibold text-[#DA7756]" : "text-[#2C2C2C]"}`}
                 >
                   {f.feature}
                 </td>
-                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80">
                   {f.subFeatures}
                 </td>
-                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80">
                   {f.works}
                 </td>
-                <td className="border border-[#b8cce4] p-3 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-3 text-[#2C2C2C]/80">
                   {f.userType}
                 </td>
-                <td className="border border-[#b8cce4] p-3 text-center font-semibold text-[#DA7756]">
+                <td className="border border-[#C4B89D]/50 p-3 text-center font-semibold text-[#DA7756]">
                   {f.usp ? "* USP" : ""}
                 </td>
               </tr>
@@ -2805,7 +2812,7 @@ const Snag360MarketTab: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Market Size Section */}
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Market Analysis
         </h2>
@@ -2816,30 +2823,30 @@ const Snag360MarketTab: React.FC = () => {
       </p>
 
       {/* Market Size Table */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">
         Section 1: Market Size and Growth Drivers
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Segment
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 2024-25 Value
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 2026 Value
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Forecast
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">CAGR</th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">CAGR</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Primary Driver
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 India Relevance
               </th>
             </tr>
@@ -2847,25 +2854,25 @@ const Snag360MarketTab: React.FC = () => {
           <tbody>
             {marketSize.map((m, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">
                   {m.segment}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 text-right">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 text-right">
                   {m.val2425}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 text-right">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 text-right">
                   {m.val26}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 text-right">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 text-right">
                   {m.forecast}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 text-center">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 text-center">
                   {m.cagr}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {m.driver}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {m.india}
                 </td>
               </tr>
@@ -2875,27 +2882,27 @@ const Snag360MarketTab: React.FC = () => {
       </div>
 
       {/* Top Industries Table */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
         Section 2: Top 10 Industries for Snag 360
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">Rank</th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Rank</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Industry
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Why They Buy
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Scale / Evidence
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Decision Maker
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Deal Size (Annual)
               </th>
             </tr>
@@ -2903,22 +2910,22 @@ const Snag360MarketTab: React.FC = () => {
           <tbody>
             {topIndustries.map((ind, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#2C2C2C]">
                   {ind.rank}
                 </td>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">
                   {ind.industry}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {ind.buyReason}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {ind.scale}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {ind.decisionMaker}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 text-right">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 text-right">
                   {ind.dealSize}
                 </td>
               </tr>
@@ -2928,35 +2935,35 @@ const Snag360MarketTab: React.FC = () => {
       </div>
 
       {/* Competitors Table */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
         Section 3: 10 Key Competitors
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Competitor
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 HQ / Market
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 India Price
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Global Price
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Key Strength
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Key Weakness
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Data Sovereignty
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Target Segment
               </th>
             </tr>
@@ -2964,28 +2971,28 @@ const Snag360MarketTab: React.FC = () => {
           <tbody>
             {competitors.map((c, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">
                   {c.name}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {c.hq}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {c.indiaPrice}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {c.globalPrice}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {c.strength}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {c.weakness}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-center text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-center text-[#2C2C2C]/80">
                   {c.sovereignty}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {c.segment}
                 </td>
               </tr>
@@ -2995,7 +3002,7 @@ const Snag360MarketTab: React.FC = () => {
       </div>
 
       {/* Competitor Summary */}
-      <div className="bg-[#d9e1f2] border border-[#b8cce4] p-4 text-sm text-[#2C2C2C] font-medium leading-relaxed font-poppins mt-4">
+      <div className="bg-[#DA7756]/10 border border-[#C4B89D]/50 p-4 text-sm text-[#2C2C2C] font-medium leading-relaxed font-poppins mt-4">
         <strong>Competitive Summary:</strong> {competitorSummary}
       </div>
     </div>
@@ -3012,7 +3019,7 @@ const Snag360PricingTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Features and Pricing
         </h2>
@@ -3023,33 +3030,33 @@ const Snag360PricingTab: React.FC = () => {
       </p>
 
       {/* Feature Comparison Table */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">
         Section 1: Feature Comparison vs Key Competitors
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[10px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Feature
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center bg-[#DA7756]">
+              <th className="border border-[#C4B89D]/50 p-2 text-center bg-[#DA7756] text-white">
                 Snag 360
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 FalconBrick
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Procore
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Novade
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">SnagR</th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">SnagR</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 SafetyCulture
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Status
               </th>
             </tr>
@@ -3068,29 +3075,29 @@ const Snag360PricingTab: React.FC = () => {
                         : "bg-[#F6F4EE]"
                 }
               >
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">
                   {f.feature}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C] font-medium bg-[#DA7756]/10">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C] font-medium bg-[#DA7756]/10">
                   {f.snag360}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {f.falconBrick}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {f.procore}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {f.novade}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {f.snagR}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {f.safetyCulture}
                 </td>
                 <td
-                  className={`border border-[#b8cce4] p-2 text-center font-semibold ${f.status === "AHEAD" ? "text-green-600" : f.status === "GAP" ? "text-red-600" : "text-[#2C2C2C]"}`}
+                  className={`border border-[#C4B89D]/50 p-2 text-center font-semibold ${f.status === "AHEAD" ? "text-green-600" : f.status === "GAP" ? "text-red-600" : "text-[#2C2C2C]"}`}
                 >
                   {f.status}
                 </td>
@@ -3101,27 +3108,27 @@ const Snag360PricingTab: React.FC = () => {
       </div>
 
       {/* Pricing Landscape Table */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
         Section 2: Pricing Landscape
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Tier / Product
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">Model</th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Model</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 India Price
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Global Price
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 What's Included
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Target Segment
               </th>
             </tr>
@@ -3139,23 +3146,23 @@ const Snag360PricingTab: React.FC = () => {
                 }
               >
                 <td
-                  className={`border border-[#b8cce4] p-2 ${p.tier.includes("Snag 360") ? "font-semibold text-[#DA7756]" : "text-[#2C2C2C]"}`}
+                  className={`border border-[#C4B89D]/50 p-2 ${p.tier.includes("Snag 360") ? "font-semibold text-[#DA7756]" : "text-[#2C2C2C]"}`}
                 >
                   {p.tier}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {p.model}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {p.indiaPrice}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {p.globalPrice}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {p.included}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {p.segment}
                 </td>
               </tr>
@@ -3165,28 +3172,28 @@ const Snag360PricingTab: React.FC = () => {
       </div>
 
       {/* Positioning Statement */}
-      <div className="bg-[#d9e1f2] border border-[#b8cce4] p-4 text-sm text-[#2C2C2C] font-medium leading-relaxed font-poppins mt-4">
+      <div className="bg-[#DA7756]/10 border border-[#C4B89D]/50 p-4 text-sm text-[#2C2C2C] font-medium leading-relaxed font-poppins mt-4">
         <strong>Competitive Positioning:</strong> {positioningStatement}
       </div>
 
       {/* Value Props Table */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
         Section 3: Value Proposition by Role
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Buyer Role
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Value Proposition Statement
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Measurable Outcome
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Key Feature
               </th>
             </tr>
@@ -3194,16 +3201,16 @@ const Snag360PricingTab: React.FC = () => {
           <tbody>
             {valueProps.map((v, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">
                   {v.role}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {v.prop}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {v.outcome}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {v.feature}
                 </td>
               </tr>
@@ -3221,7 +3228,7 @@ const Snag360RoadmapTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Product Roadmap
         </h2>
@@ -3233,29 +3240,29 @@ const Snag360RoadmapTab: React.FC = () => {
 
       {phases.map((phase, phaseIdx) => (
         <div key={phaseIdx} className="space-y-4">
-          <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">
             {phase.title}
           </div>
-          <div className="bg-[#d9e1f2] border border-[#b8cce4] p-3 text-[11px] text-[#2C2C2C] font-medium leading-relaxed font-poppins italic">
+          <div className="bg-[#DA7756]/10 border border-[#C4B89D]/50 p-3 text-[11px] text-[#2C2C2C] font-medium leading-relaxed font-poppins italic">
             {phase.summary}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[11px] font-poppins">
               <thead>
-                <tr className="bg-[#4f81bd] text-white font-semibold">
-                  <th className="border border-[#b8cce4] p-2 text-center">
+                <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">
                     Initiative
                   </th>
-                  <th className="border border-[#b8cce4] p-2 text-center">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">
                     Feature Description
                   </th>
-                  <th className="border border-[#b8cce4] p-2 text-center">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">
                     Segment Unlocked
                   </th>
-                  <th className="border border-[#b8cce4] p-2 text-center">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">
                     Business Impact
                   </th>
-                  <th className="border border-[#b8cce4] p-2 text-center">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center">
                     Timeline
                   </th>
                 </tr>
@@ -3266,19 +3273,19 @@ const Snag360RoadmapTab: React.FC = () => {
                     key={i}
                     className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}
                   >
-                    <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                    <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">
                       {init.initiative}
                     </td>
-                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                       {init.feature}
                     </td>
-                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                       {init.segment}
                     </td>
-                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                       {init.impact}
                     </td>
-                    <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#DA7756]">
+                    <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#DA7756]">
                       {init.timeline}
                     </td>
                   </tr>
@@ -3301,7 +3308,7 @@ const Snag360BusinessPlanTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Business Plan Builder
         </h2>
@@ -3311,26 +3318,26 @@ const Snag360BusinessPlanTab: React.FC = () => {
       </p>
 
       {/* Q&A Table */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">
         Investor Q&A Framework
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center w-[5%]">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[5%]">
                 #
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[20%]">
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">
                 Question
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[55%]">
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[55%]">
                 Answer
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[10%]">
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[10%]">
                 Source
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center w-[10%]">
+              <th className="border border-[#C4B89D]/50 p-2 text-center w-[10%]">
                 Status
               </th>
             </tr>
@@ -3347,20 +3354,20 @@ const Snag360BusinessPlanTab: React.FC = () => {
                       : "bg-[#F6F4EE]"
                 }
               >
-                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#2C2C2C]">
                   {q.id}
                 </td>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">
                   {q.question}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 leading-relaxed">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 leading-relaxed">
                   {q.answer}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/60 text-center">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/60 text-center">
                   {q.source}
                 </td>
                 <td
-                  className={`border border-[#b8cce4] p-2 text-center text-[10px] ${q.flag?.includes("Ready") ? "text-green-600" : "text-orange-600"}`}
+                  className={`border border-[#C4B89D]/50 p-2 text-center text-[10px] ${q.flag?.includes("Ready") ? "text-green-600" : "text-orange-600"}`}
                 >
                   {q.flag}
                 </td>
@@ -3371,23 +3378,23 @@ const Snag360BusinessPlanTab: React.FC = () => {
       </div>
 
       {/* Founder Checklist */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
         Founder Checklist - Data to Validate
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Linked Q
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Item to Verify
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 How to Verify
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Status
               </th>
             </tr>
@@ -3395,16 +3402,16 @@ const Snag360BusinessPlanTab: React.FC = () => {
           <tbody>
             {founderChecklist.map((c, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#2C2C2C]">
                   {c.id}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {c.item}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {c.verify}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-orange-600">
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-orange-600">
                   {c.status}
                 </td>
               </tr>
@@ -3423,7 +3430,7 @@ const Snag360GTMTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - GTM Strategy
         </h2>
@@ -3435,17 +3442,17 @@ const Snag360GTMTab: React.FC = () => {
 
       {targetGroups.map((tg, tgIdx) => (
         <div key={tgIdx} className="space-y-4 mb-8">
-          <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">
             {tg.title}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-[11px] font-poppins">
               <thead>
-                <tr className="bg-[#4f81bd] text-white font-semibold">
-                  <th className="border border-[#b8cce4] p-2 text-center w-[20%]">
+                <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[20%]">
                     Component
                   </th>
-                  <th className="border border-[#b8cce4] p-2 text-center w-[80%]">
+                  <th className="border border-[#C4B89D]/50 p-2 text-center w-[80%]">
                     Detail
                   </th>
                 </tr>
@@ -3456,10 +3463,10 @@ const Snag360GTMTab: React.FC = () => {
                     key={i}
                     className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}
                   >
-                    <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                    <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">
                       {comp.component}
                     </td>
-                    <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80 leading-relaxed">
+                    <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 leading-relaxed">
                       {comp.detail}
                     </td>
                   </tr>
@@ -3467,7 +3474,7 @@ const Snag360GTMTab: React.FC = () => {
               </tbody>
             </table>
           </div>
-          <div className="bg-[#d9e1f2] border border-[#b8cce4] p-4 text-[11px] text-[#2C2C2C] font-medium leading-relaxed font-poppins">
+          <div className="bg-[#DA7756]/10 border border-[#C4B89D]/50 p-4 text-[11px] text-[#2C2C2C] font-medium leading-relaxed font-poppins">
             <strong>TG Summary:</strong> {tg.summaryBox}
           </div>
         </div>
@@ -3485,7 +3492,7 @@ const Snag360MetricsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Key Metrics and Targets
         </h2>
@@ -3496,24 +3503,24 @@ const Snag360MetricsTab: React.FC = () => {
       </p>
 
       {/* Client Impact Metrics */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins">
         Section 1: Client Impact Metrics (for Landing Page and Sales Deck)
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">#</th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">#</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Metric
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Current Baseline (Manual / Paper)
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 With Snag 360
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Landing Page Claim
               </th>
             </tr>
@@ -3521,19 +3528,19 @@ const Snag360MetricsTab: React.FC = () => {
           <tbody>
             {clientImpact.map((m, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#2C2C2C]">
                   {i + 1}
                 </td>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">
                   {m.metric}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {m.baseline}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {m.withSnag}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#DA7756] font-semibold">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#DA7756] font-semibold">
                   {m.claim}
                 </td>
               </tr>
@@ -3543,29 +3550,29 @@ const Snag360MetricsTab: React.FC = () => {
       </div>
 
       {/* Business Targets */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
         Section 2: Product and Business Metrics with Targets
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Metric
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Activation Definition
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 30-Day Current Product
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 30-Day with Phase 1
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 3-Month Current Product
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 3-Month with Phase 1
               </th>
             </tr>
@@ -3573,22 +3580,22 @@ const Snag360MetricsTab: React.FC = () => {
           <tbody>
             {businessTargets.map((t, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">
                   {t.metric}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {t.definition}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {t.d30Current}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {t.d30Phase1}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {t.m3Current}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {t.m3Phase1}
                 </td>
               </tr>
@@ -3610,7 +3617,7 @@ const Snag360SWOTTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - SWOT Analysis
         </h2>
@@ -3622,14 +3629,14 @@ const Snag360SWOTTab: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Strengths */}
         <div>
-          <div className="bg-[#4f81bd] text-white px-4 py-3 font-semibold text-center font-poppins">
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-center font-poppins">
             STRENGTHS
           </div>
-          <div className="border border-[#b8cce4]">
+          <div className="border border-[#C4B89D]/50">
             {strengths.map((s, i) => (
               <div
                 key={i}
-                className="bg-[#e2efda] border-b border-[#b8cce4] p-3 text-[11px] font-poppins"
+                className="bg-[#e2efda] border-b border-[#C4B89D]/50 p-3 text-[11px] font-poppins"
               >
                 <strong>
                   {i + 1}. {s.headline}:
@@ -3642,14 +3649,14 @@ const Snag360SWOTTab: React.FC = () => {
 
         {/* Weaknesses */}
         <div>
-          <div className="bg-[#4f81bd] text-white px-4 py-3 font-semibold text-center font-poppins">
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-center font-poppins">
             WEAKNESSES
           </div>
-          <div className="border border-[#b8cce4]">
+          <div className="border border-[#C4B89D]/50">
             {weaknesses.map((w, i) => (
               <div
                 key={i}
-                className="bg-[#fce4d6] border-b border-[#b8cce4] p-3 text-[11px] font-poppins"
+                className="bg-[#fce4d6] border-b border-[#C4B89D]/50 p-3 text-[11px] font-poppins"
               >
                 <strong>
                   {i + 1}. {w.headline}:
@@ -3662,14 +3669,14 @@ const Snag360SWOTTab: React.FC = () => {
 
         {/* Opportunities */}
         <div>
-          <div className="bg-[#4f81bd] text-white px-4 py-3 font-semibold text-center font-poppins">
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-center font-poppins">
             OPPORTUNITIES
           </div>
-          <div className="border border-[#b8cce4]">
+          <div className="border border-[#C4B89D]/50">
             {opportunities.map((o, i) => (
               <div
                 key={i}
-                className="bg-[#deeaf1] border-b border-[#b8cce4] p-3 text-[11px] font-poppins"
+                className="bg-[#DA7756]/10 border-b border-[#C4B89D]/50 p-3 text-[11px] font-poppins"
               >
                 <strong>
                   {i + 1}. {o.headline}:
@@ -3682,14 +3689,14 @@ const Snag360SWOTTab: React.FC = () => {
 
         {/* Threats */}
         <div>
-          <div className="bg-[#4f81bd] text-white px-4 py-3 font-semibold text-center font-poppins">
+          <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-center font-poppins">
             THREATS
           </div>
-          <div className="border border-[#b8cce4]">
+          <div className="border border-[#C4B89D]/50">
             {threats.map((t, i) => (
               <div
                 key={i}
-                className="bg-[#fff2cc] border-b border-[#b8cce4] p-3 text-[11px] font-poppins"
+                className="bg-[#fff2cc] border-b border-[#C4B89D]/50 p-3 text-[11px] font-poppins"
               >
                 <strong>
                   {i + 1}. {t.headline}:
@@ -3713,7 +3720,7 @@ const Snag360EnhancementsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Future Enhancement Roadmap (Innovation Layer)
         </h2>
@@ -3727,24 +3734,24 @@ const Snag360EnhancementsTab: React.FC = () => {
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[10px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">#</th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">#</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Enhancement Name
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Category
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Description
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Business Value
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Competitor Leapfrogged
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Priority
               </th>
             </tr>
@@ -3755,44 +3762,44 @@ const Snag360EnhancementsTab: React.FC = () => {
                 key={i}
                 className={
                   item.priority === "High Impact"
-                    ? "bg-[#d9e1f2]"
+                    ? "bg-[#DA7756]/10"
                     : i % 2 === 0
                       ? "bg-white"
                       : "bg-[#F6F4EE]"
                 }
               >
                 <td
-                  className={`border border-[#b8cce4] p-2 text-center ${item.priority === "High Impact" ? "font-semibold" : ""}`}
+                  className={`border border-[#C4B89D]/50 p-2 text-center ${item.priority === "High Impact" ? "font-semibold" : ""}`}
                 >
                   {item.id}
                 </td>
                 <td
-                  className={`border border-[#b8cce4] p-2 ${item.priority === "High Impact" ? "font-semibold text-[#1f3a5f]" : "text-[#2C2C2C]"}`}
+                  className={`border border-[#C4B89D]/50 p-2 ${item.priority === "High Impact" ? "font-semibold text-[#DA7756]" : "text-[#2C2C2C]"}`}
                 >
                   {item.name}
                 </td>
                 <td
-                  className={`border border-[#b8cce4] p-2 ${item.priority === "High Impact" ? "font-semibold" : ""}`}
+                  className={`border border-[#C4B89D]/50 p-2 ${item.priority === "High Impact" ? "font-semibold" : ""}`}
                 >
                   {item.category}
                 </td>
                 <td
-                  className={`border border-[#b8cce4] p-2 ${item.priority === "High Impact" ? "font-semibold" : ""}`}
+                  className={`border border-[#C4B89D]/50 p-2 ${item.priority === "High Impact" ? "font-semibold" : ""}`}
                 >
                   {item.description}
                 </td>
                 <td
-                  className={`border border-[#b8cce4] p-2 ${item.priority === "High Impact" ? "font-semibold" : ""}`}
+                  className={`border border-[#C4B89D]/50 p-2 ${item.priority === "High Impact" ? "font-semibold" : ""}`}
                 >
                   {item.value}
                 </td>
                 <td
-                  className={`border border-[#b8cce4] p-2 ${item.priority === "High Impact" ? "font-semibold" : ""}`}
+                  className={`border border-[#C4B89D]/50 p-2 ${item.priority === "High Impact" ? "font-semibold" : ""}`}
                 >
                   {item.leapfrog}
                 </td>
                 <td
-                  className={`border border-[#b8cce4] p-2 text-center ${item.priority === "High Impact" ? "font-semibold text-[#DA7756]" : ""}`}
+                  className={`border border-[#C4B89D]/50 p-2 text-center ${item.priority === "High Impact" ? "font-semibold text-[#DA7756]" : ""}`}
                 >
                   {item.priority}
                 </td>
@@ -3803,21 +3810,21 @@ const Snag360EnhancementsTab: React.FC = () => {
       </div>
 
       {/* Top 5 Impact Summary */}
-      <div className="bg-[#1f3a5f] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
+      <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
         Top 5 Highest-Impact Enhancements Summary
       </div>
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
-            <tr className="bg-[#4f81bd] text-white font-semibold">
-              <th className="border border-[#b8cce4] p-2 text-center">Rank</th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">Rank</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Enhancement
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Why It Matters Most
               </th>
-              <th className="border border-[#b8cce4] p-2 text-center">
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Competitor It Leapfrogs
               </th>
             </tr>
@@ -3825,16 +3832,16 @@ const Snag360EnhancementsTab: React.FC = () => {
           <tbody>
             {top5Impact.map((item, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}>
-                <td className="border border-[#b8cce4] p-2 text-center font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 text-center font-semibold text-[#2C2C2C]">
                   {item.rank}
                 </td>
-                <td className="border border-[#b8cce4] p-2 font-semibold text-[#2C2C2C]">
+                <td className="border border-[#C4B89D]/50 p-2 font-semibold text-[#2C2C2C]">
                   {item.name}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {item.logic}
                 </td>
-                <td className="border border-[#b8cce4] p-2 text-[#2C2C2C]/80">
+                <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80">
                   {item.leapfrog}
                 </td>
               </tr>
@@ -3853,7 +3860,7 @@ const Snag360AssetsTab: React.FC = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      <div className="bg-[#1f3a5f] text-white border border-[#C4B89D] p-5 rounded-t-xl">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-semibold font-poppins">
           SNAG 360 - Assets & Credentials
         </h2>
@@ -3966,7 +3973,19 @@ const Snag360AssetsTab: React.FC = () => {
 // ============== MAIN SNAG 360 PAGE COMPONENT ==============
 const Snag360Page: React.FC = () => {
   const navigate = useNavigate();
+  const security = useProductSecurity();
   const snagTabsScrollRef = useRef<HTMLDivElement>(null);
+
+  // Security checks
+  if (security.cameraPermission === "pending") {
+    return <CameraPermissionPending />;
+  }
+  if (security.cameraPermission === "denied") {
+    return <CameraPermissionDenied />;
+  }
+  if (security.modelLoading) {
+    return <ModelLoadingScreen />;
+  }
 
   // Extract use cases data for custom component
   const industryUseCases =
@@ -3977,7 +3996,16 @@ const Snag360Page: React.FC = () => {
   const tabOrder = productData.tabOrder;
 
   return (
-    <div className="min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300">
+    <div
+      className="min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300"
+      style={{
+        filter: security.isBlurred ? "blur(20px)" : "none",
+        transition: "filter 0.3s ease",
+      }}
+    >
+      {/* Security Overlays */}
+      <SecurityOverlays security={security} />
+
       {/* Header */}
       <div className="relative mb-4 flex flex-col items-center bg-[#F6F4EE] pt-4">
         <div className="w-full max-w-7xl px-6 lg:px-10 mb-4">
@@ -4014,7 +4042,7 @@ const Snag360Page: React.FC = () => {
                   <TabsTrigger
                     key={tabId}
                     value={tabId}
-                    className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:font-semibold data-[state=inactive]:text-[#2C2C2C]/50 data-[state=inactive]:hover:text-[#DA7756]/70 whitespace-nowrap flex-shrink-0 bg-transparent"
+                    className="px-6 py-2.5 rounded-full text-[13px] font-medium tracking-wider transition-all duration-300 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:font-semibold data-[state=inactive]:text-[#2C2C2C]/50 data-[state=inactive]:hover:text-[#DA7756]/70 whitespace-nowrap flex-shrink-0 bg-transparent"
                   >
                     {snagTabLabels[tabId]}
                   </TabsTrigger>

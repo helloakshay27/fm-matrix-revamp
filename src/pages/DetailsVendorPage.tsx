@@ -39,7 +39,29 @@ interface Attachment {
     document_url: string; // Changed from file_url to document_url
     document_size?: number;
     attachment_id: number;
-    category: string; 
+    category: string;
+}
+
+interface Address {
+    id: number;
+    attention: string | null;
+    address: string;
+    active: boolean | null;
+    resource_id: number;
+    resource_type: string;
+    email: string | null;
+    address_type: string;
+    address_line_two: string;
+    address_line_three: string | null;
+    country: string;
+    state: string;
+    city: string;
+    location_id: number | null;
+    pin_code: string;
+    telephone_number: string | null;
+    fax_number: string | null;
+    mobile: string | null;
+    contact_person: string | null;
 }
 
 interface Vendor {
@@ -54,6 +76,14 @@ interface Vendor {
     secondary_phone: string | null;
     pan_number: string;
     gstin_number: string;
+    primary_gst_detail?: {
+        id: number;
+        gstin: string;
+        place_of_supply: string;
+        business_legal_name: string;
+        business_trade_name: string;
+        primary: boolean;
+    };
     supplier_type: string | null;
     country: string;
     state: string;
@@ -61,6 +91,8 @@ interface Vendor {
     pincode: string;
     address: string;
     address2: string;
+    default_billing_address?: Address;
+    default_shipping_address?: Address;
     service_description: string | null;
     signed_on_contract: string | null;
     account_name: string;
@@ -146,15 +178,15 @@ const DetailsVendorPage = () => {
                 // Consolidate all attachments into a single array
                 const consolidatedAttachments: Attachment[] = [];
                 const attachmentFields: (keyof Vendor)[] = [
-                    'attachments', 'tan_attachments', 'pan_attachments', 
-                    'gst_attachments', 'kyc_attachments', 'other_attachments', 
+                    'attachments', 'tan_attachments', 'pan_attachments',
+                    'gst_attachments', 'kyc_attachments', 'other_attachments',
                     'compliance_attachments', 'cancle_checque'
                 ];
 
                 attachmentFields.forEach(field => {
                     const attachments = vendorData[field] as Attachment[];
                     if (attachments && attachments.length > 0) {
-                        consolidatedAttachments.push(...attachments.map(att => ({...att, category: field.replace('_attachments', '').replace('_', ' ') })));
+                        consolidatedAttachments.push(...attachments.map(att => ({ ...att, category: field.replace('_attachments', '').replace('_', ' ') })));
                     }
                 });
                 setAllAttachments(consolidatedAttachments);
@@ -169,8 +201,8 @@ const DetailsVendorPage = () => {
         fetchVendorDetails();
     }, [id]);
 
-    console.log("vendor:-",vendor);
-    
+    console.log("vendor:-", vendor);
+
 
     const renderDetailField = (label: string, value: any) => (
         <Grid item xs={12} sm={6} md={4}>
@@ -202,12 +234,12 @@ const DetailsVendorPage = () => {
 
     if (loading) {
         return (
-          <div className="flex items-center justify-center h-32">
-            <div className="flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">Loading...</span>
+            <div className="flex items-center justify-center h-32">
+                <div className="flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <span className="ml-2">Loading...</span>
+                </div>
             </div>
-          </div>
         );
     }
 
@@ -240,9 +272,9 @@ const DetailsVendorPage = () => {
                         </div>
                         <div className="text-sm text-gray-600">
                             Vendor # {vendor?.id} • Created by{" "}
-                            {vendor?.created_by || vendor?.first_name && vendor?.last_name 
-                                ? `${vendor.first_name} ${vendor.last_name}`.trim() 
-                                : "Unknown"} 
+                            {vendor?.created_by || vendor?.first_name && vendor?.last_name
+                                ? `${vendor.first_name} ${vendor.last_name}`.trim()
+                                : "Unknown"}
                             {vendor?.updated_at && (() => {
                                 const date = new Date(vendor.updated_at);
                                 const day = String(date.getDate()).padStart(2, '0');
@@ -378,14 +410,23 @@ const DetailsVendorPage = () => {
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">GST</span>
                                         <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.gstin_number || '-'}</span>
+                                        <span className="text-gray-900 font-medium">
+                                            {vendor?.primary_gst_detail?.gstin || vendor?.gstin_number || '-'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-start">
+                                        <span className="text-gray-500 min-w-[140px]">Source of Supply</span>
+                                        <span className="text-gray-500 mx-2">:</span>
+                                        <span className="text-gray-900 font-medium">
+                                            {vendor?.primary_gst_detail?.place_of_supply || '-'}
+                                        </span>
                                     </div>
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Supplier Type</span>
                                         <span className="text-gray-500 mx-2">:</span>
                                         <span className="text-gray-900 font-medium">{vendor?.supplier_type || '-'}</span>
                                     </div>
-                                    <div className="flex items-start">
+                                    {/* <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Country</span>
                                         <span className="text-gray-500 mx-2">:</span>
                                         <span className="text-gray-900 font-medium">{vendor?.country || '-'}</span>
@@ -404,13 +445,13 @@ const DetailsVendorPage = () => {
                                         <span className="text-gray-500 min-w-[140px]">Pincode</span>
                                         <span className="text-gray-500 mx-2">:</span>
                                         <span className="text-gray-900 font-medium">{vendor?.pincode || '-'}</span>
-                                    </div>
+                                    </div> */}
                                     <div className="flex items-start">
                                         <span className="text-gray-500 min-w-[140px]">Average Rating</span>
                                         <span className="text-gray-500 mx-2">:</span>
                                         <span className="text-gray-900 font-medium">{vendor?.average_rating ? `${vendor.average_rating}/5` : 'Not Rated'}</span>
                                     </div>
-                                    <div className="flex items-start col-span-2">
+                                    {/* <div className="flex items-start col-span-2">
                                         <span className="text-gray-500 min-w-[140px]">Address Line 1</span>
                                         <span className="text-gray-500 mx-2">:</span>
                                         <span className="text-gray-900 font-medium">{vendor?.address || '-'}</span>
@@ -419,22 +460,86 @@ const DetailsVendorPage = () => {
                                         <span className="text-gray-500 min-w-[140px]">Address Line 2</span>
                                         <span className="text-gray-500 mx-2">:</span>
                                         <span className="text-gray-900 font-medium">{vendor?.address2 || '-'}</span>
-                                    </div>
+                                    </div> */}
                                     <div className="flex items-start col-span-2">
                                         <span className="text-gray-500 min-w-[140px]">Service Description</span>
                                         <span className="text-gray-500 mx-2">:</span>
                                         <span className="text-gray-900 font-medium">{vendor?.service_description || '-'}</span>
                                     </div>
-                                    <div className="flex items-start">
-                                        <span className="text-gray-500 min-w-[140px]">Service</span>
-                                        <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.services?.map(s => s.service_name).join(', ') || '-'}</span>
-                                    </div>
-                                    <div className="flex items-start">
-                                        <span className="text-gray-500 min-w-[140px]">Signed On Contract</span>
-                                        <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">{vendor?.signed_on_contract ? new Date(vendor.signed_on_contract).toLocaleDateString() : '-'}</span>
-                                    </div>
+
+                                    {/* Billing and Shipping Addresses Side by Side */}
+                                    {(vendor?.default_billing_address || vendor?.default_shipping_address) && (
+                                        <div className="col-span-2">
+                                            <h4 className="text-sm font-semibold text-gray-900 mb-6">Addresses</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {/* Billing Address */}
+                                                {vendor?.default_billing_address && (
+                                                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                                        <h5 className="text-sm font-semibold text-gray-900 mb-4">Billing Address</h5>
+                                                        <div className="space-y-2 text-sm">
+                                                            <div className="flex items-start">
+                                                                <span className="text-gray-500 min-w-[100px]">Address:</span>
+                                                                <span className="text-gray-900 font-medium">{vendor.default_billing_address.address || '-'}</span>
+                                                            </div>
+                                                            <div className="flex items-start">
+                                                                <span className="text-gray-500 min-w-[100px]">Address Line 2:</span>
+                                                                <span className="text-gray-900 font-medium">{vendor.default_billing_address.address_line_two || '-'}</span>
+                                                            </div>
+                                                            <div className="flex items-start">
+                                                                <span className="text-gray-500 min-w-[100px]">Country:</span>
+                                                                <span className="text-gray-900 font-medium">{vendor.default_billing_address.country || '-'}</span>
+                                                            </div>
+                                                            <div className="flex items-start">
+                                                                <span className="text-gray-500 min-w-[100px]">State:</span>
+                                                                <span className="text-gray-900 font-medium">{vendor.default_billing_address.state || '-'}</span>
+                                                            </div>
+                                                            <div className="flex items-start">
+                                                                <span className="text-gray-500 min-w-[100px]">City:</span>
+                                                                <span className="text-gray-900 font-medium">{vendor.default_billing_address.city || '-'}</span>
+                                                            </div>
+                                                            <div className="flex items-start">
+                                                                <span className="text-gray-500 min-w-[100px]">Pin Code:</span>
+                                                                <span className="text-gray-900 font-medium">{vendor.default_billing_address.pin_code || '-'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Shipping Address */}
+                                                {vendor?.default_shipping_address && (
+                                                    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                                        <h5 className="text-sm font-semibold text-gray-900 mb-4">Shipping Address</h5>
+                                                        <div className="space-y-2 text-sm">
+                                                            <div className="flex items-start">
+                                                                <span className="text-gray-500 min-w-[100px]">Address:</span>
+                                                                <span className="text-gray-900 font-medium">{vendor.default_shipping_address.address || '-'}</span>
+                                                            </div>
+                                                            <div className="flex items-start">
+                                                                <span className="text-gray-500 min-w-[100px]">Address Line 2:</span>
+                                                                <span className="text-gray-900 font-medium">{vendor.default_shipping_address.address_line_two || '-'}</span>
+                                                            </div>
+                                                            <div className="flex items-start">
+                                                                <span className="text-gray-500 min-w-[100px]">Country:</span>
+                                                                <span className="text-gray-900 font-medium">{vendor.default_shipping_address.country || '-'}</span>
+                                                            </div>
+                                                            <div className="flex items-start">
+                                                                <span className="text-gray-500 min-w-[100px]">State:</span>
+                                                                <span className="text-gray-900 font-medium">{vendor.default_shipping_address.state || '-'}</span>
+                                                            </div>
+                                                            <div className="flex items-start">
+                                                                <span className="text-gray-500 min-w-[100px]">City:</span>
+                                                                <span className="text-gray-900 font-medium">{vendor.default_shipping_address.city || '-'}</span>
+                                                            </div>
+                                                            <div className="flex items-start">
+                                                                <span className="text-gray-500 min-w-[100px]">Pin Code:</span>
+                                                                <span className="text-gray-900 font-medium">{vendor.default_shipping_address.pin_code || '-'}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -622,7 +727,7 @@ const DetailsVendorPage = () => {
                                                                     const isPdf = /\.pdf$/i.test(url);
                                                                     const isExcel = /\.(xls|xlsx|csv)$/i.test(url);
                                                                     const isWord = /\.(doc|docx)$/i.test(url);
-                                                                    
+
                                                                     let type = 'file';
                                                                     if (isImage) type = 'image';
                                                                     else if (isPdf) type = 'pdf';
@@ -758,7 +863,7 @@ const DetailsVendorPage = () => {
                                             <span className="text-gray-900 font-medium">{vendor?.approval_info?.all_level_approved ? 'Yes' : 'No'}</span>
                                         </div>
                                     </div>
-                                    
+
                                     {vendor?.approval_info?.approval_levels && vendor.approval_info.approval_levels.length > 0 && (
                                         <div className="overflow-x-auto">
                                             <div className="rounded-lg border border-gray-200 overflow-hidden">
@@ -776,7 +881,7 @@ const DetailsVendorPage = () => {
                                                                 <TableCell className="py-3 px-4 font-medium">{level.name}</TableCell>
                                                                 <TableCell className="py-3 px-4">{level.order}</TableCell>
                                                                 <TableCell className="py-3 px-4">
-                                                                    <div 
+                                                                    <div
                                                                         className="text-xs p-2 rounded-md inline-block font-medium"
                                                                         style={getStatusBadgeStyles(level.approval_history.status_text)}
                                                                     >

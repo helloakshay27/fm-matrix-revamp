@@ -61,6 +61,7 @@ export interface ProductData {
   extendedContent: {
     rawSummaryTable?: React.ReactNode | null;
     rawFeaturesTable?: React.ReactNode | null;
+    rawUseCasesTable?: React.ReactNode | null;
     featureSummary?: string | React.ReactNode;
     productSummaryNew: {
       summarySubtitle?: string;
@@ -104,7 +105,33 @@ export interface ProductData {
       priority?: string;
       notes?: string;
     }[];
+    featureBenchmark?: {
+      featureArea: string;
+      marketStandard: string;
+      ourProduct: string;
+      status: string;
+      whereWeStand: string;
+      dealImpact: string;
+    }[];
+    valuePropositions?: {
+      num: string;
+      current: string;
+      communicates: string;
+      weakness: string;
+      sharpened: string;
+      proofPoint: string;
+    }[];
+    pricingData?: {
+      label: string;
+      detail: string;
+      highlight?: "info" | "now" | "future" | "risk";
+    }[];
+    positioningData?: {
+      question: string;
+      answer: string;
+    }[];
     detailedMarketAnalysis?: {
+      isClubMarket?: boolean;
       marketMatrixSubtitle?: string;
       marketMatrixRows?: {
         segment: string;
@@ -119,6 +146,19 @@ export interface ProductData {
         risk: string;
         entryWedge: string;
         opportunity: string;
+      }[];
+      globalMarketSize?: {
+        metric: string;
+        value: string;
+        source: string;
+      }[];
+      industries?: {
+        rank: string | number;
+        segment: string;
+        indicator: string;
+        whyMatters: string;
+        painPoints: string;
+        revenuePotential: string;
       }[];
       marketSize?: {
         segment: string;
@@ -430,6 +470,7 @@ export interface ProductData {
         integrationType: string;
         effort?: string;
         impact?: string;
+        outcome?: string;
         priority?: string;
         owner?: string;
       }[];
@@ -517,6 +558,24 @@ export interface ProductData {
       weaknesses: { headline: string; explanation: string }[];
       opportunities: { headline: string; explanation: string }[];
       threats: { headline: string; explanation: string }[];
+    };
+    detailedEnhancementRoadmap?: {
+      isClubEnhancement?: boolean;
+      innovations: {
+        id: string | number;
+        enhancement: string;
+        type: string;
+        description: string;
+        segment: string;
+        impact: string;
+      }[];
+      top5: {
+        enhancement: string;
+        type: string;
+        whyItMatters: string;
+        competitor: string;
+        timeline: string;
+      }[];
     };
     detailedEnhancements?: {
       roadmap: {

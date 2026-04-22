@@ -722,9 +722,9 @@ export const InvoiceDashboardDetailsPage = () => {
                             <CardContent>
                                 {journalData.length > 0 ? (
                                     <>
-                                        <div className="text-sm text-muted-foreground mb-3">
+                                        {/* <div className="text-sm text-muted-foreground mb-3">
                                             Amount is displayed in your base currency ₹
-                                        </div>
+                                        </div> */}
 
                                         <div className="border rounded-lg overflow-hidden">
                                             <Table>

@@ -21,6 +21,7 @@ import {
   X,
   Save,
   Plus,
+  Trash2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,11 @@ import { format, parse, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import { getBaseUrl, getToken, getUser } from "@/utils/auth";
-import { userService, ProfileAccountResponse, ProfileUpdateResponse } from "@/services/userService";
+import {
+  userService,
+  ProfileAccountResponse,
+  ProfileUpdateResponse,
+} from "@/services/userService";
 import { toast } from "sonner";
 import "./BusinessCompass.css";
 
@@ -41,7 +46,7 @@ const AdvancedDatePicker = ({
   value,
   onChange,
   placeholder = "Select date",
-  className
+  className,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -63,14 +68,24 @@ const AdvancedDatePicker = ({
     if (date) {
       onChange(format(date, "dd/MM/yyyy"));
     } else {
-      onChange('');
+      onChange("");
     }
   };
 
   const years = Array.from({ length: 131 }, (_, i) => 1900 + i);
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   return (
@@ -101,20 +116,28 @@ const AdvancedDatePicker = ({
             <div className="flex gap-1">
               <select
                 value={months[date.getMonth()]}
-                onChange={({ target: { value } }) => changeMonth(months.indexOf(value))}
+                onChange={({ target: { value } }) =>
+                  changeMonth(months.indexOf(value))
+                }
                 className="text-xs font-semibold bg-transparent border-0 focus:ring-0 cursor-pointer hover:text-blue-600 outline-none"
               >
                 {months.map((option) => (
-                  <option key={option} value={option}>{option}</option>
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
                 ))}
               </select>
               <select
                 value={date.getFullYear()}
-                onChange={({ target: { value } }) => changeYear(parseInt(value))}
+                onChange={({ target: { value } }) =>
+                  changeYear(parseInt(value))
+                }
                 className="text-xs font-semibold bg-transparent border-0 focus:ring-0 cursor-pointer hover:text-blue-600 outline-none"
               >
                 {years.map((option) => (
-                  <option key={option} value={option}>{option}</option>
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
                 ))}
               </select>
             </div>
@@ -208,6 +231,14 @@ const InfoField = ({
     </div>
   );
 };
+
+// ─── Document types ───────────────────────────────────────────────────────────
+interface DocumentEntry {
+  id: string;
+  title: string;
+  file: File | null;
+  url: string | null; // existing remote URL (if any)
+}
 
 const BusinessCompassProfile = () => {
   type ProfileFormData = {
@@ -306,14 +337,21 @@ const BusinessCompassProfile = () => {
       email: accountData.email || currentData.email,
       phone: accountData.mobile || currentData.phone,
       jobTitle:
-        accountData.designation || accountData.profile_type || currentData.jobTitle,
+        accountData.designation ||
+        accountData.profile_type ||
+        currentData.jobTitle,
       address: accountData.alternate_address || currentData.address,
       city: extra.city || currentData.city,
       state: extra.state || currentData.state,
-      pinCode: extra.pin_code || extra.pincode || extra.zip_code || currentData.pinCode,
+      pinCode:
+        extra.pin_code ||
+        extra.pincode ||
+        extra.zip_code ||
+        currentData.pinCode,
       dob: formatApiDateToUi(accountData.birth_date) || currentData.dob,
       anniversaryDate:
-        formatApiDateToUi(extra.anniversary_date) || currentData.anniversaryDate,
+        formatApiDateToUi(extra.anniversary_date) ||
+        currentData.anniversaryDate,
       doj: formatApiDateToUi(extra.date_of_joining) || currentData.doj,
       emergencyContactName:
         extra.emergency_contact_name || currentData.emergencyContactName,
@@ -347,10 +385,23 @@ const BusinessCompassProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
-  const [formData, setFormData] = useState<ProfileFormData>(getInitialProfileData);
-  const [profileImage, setProfileImage] = useState<string>(() => localStorage.getItem("bc-profile-avatar") || "");
+  const [formData, setFormData] = useState<ProfileFormData>(
+    getInitialProfileData
+  );
+  const [profileImage, setProfileImage] = useState<string>(
+    () => localStorage.getItem("bc-profile-avatar") || ""
+  );
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [removeProfileImage, setRemoveProfileImage] = useState(false);
+
+  // ─── Document state ─────────────────────────────────────────────────────────
+  const [documents, setDocuments] = useState<DocumentEntry[]>([]);
+  const [docTitle, setDocTitle] = useState("");
+  const [docFile, setDocFile] = useState<File | null>(null);
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const docFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -379,7 +430,10 @@ const BusinessCompassProfile = () => {
         }
       } catch (error) {
         if (!localStorage.getItem("bc-profile-data")) {
-          const message = error instanceof Error ? error.message : "Unable to load profile details";
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Unable to load profile details";
           toast.error(message);
         }
       } finally {
@@ -395,7 +449,9 @@ const BusinessCompassProfile = () => {
     fileInputRef.current?.click();
   };
 
-  const handleProfileImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProfileImageSelect = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -407,11 +463,98 @@ const BusinessCompassProfile = () => {
       const result = typeof reader.result === "string" ? reader.result : "";
       if (result) {
         setProfileImage(result);
+        setRemoveProfileImage(false);
       }
     };
     reader.readAsDataURL(file);
     setProfileImageFile(file);
     event.target.value = "";
+  };
+
+  // ─── Remove profile image handler ──────────────────────────────────────────
+  const handleRemoveProfileImage = () => {
+    setProfileImage("");
+    setProfileImageFile(null);
+    setRemoveProfileImage(true);
+  };
+
+  // ─── Document handlers ──────────────────────────────────────────────────────
+  const handleDocFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setDocFile(file);
+      // Pre-fill title from filename if empty
+      if (!docTitle.trim()) {
+        setDocTitle(file.name.replace(/\.[^/.]+$/, ""));
+      }
+    }
+    e.target.value = "";
+  };
+
+  const handleAddDocument = async () => {
+    if (!docTitle.trim()) {
+      toast.error("Please enter a document title");
+      return;
+    }
+    if (!docFile) {
+      toast.error("Please select a file to upload");
+      return;
+    }
+
+    setIsUploadingDoc(true);
+    try {
+      // Build multipart payload — attach document under user[avatar] or a dedicated key
+      // Adjust the field name to match your API contract
+      const multipartPayload = new FormData();
+      multipartPayload.append("firstname", formData.displayName.trim());
+      multipartPayload.append("lastname", "");
+      multipartPayload.append("email", formData.email.trim());
+      multipartPayload.append("mobile", formData.phone.trim());
+      multipartPayload.append("user[firstname]", formData.displayName.trim());
+      multipartPayload.append("user[lastname]", "");
+      multipartPayload.append("user[email]", formData.email.trim());
+      multipartPayload.append("user[mobile]", formData.phone.trim());
+      multipartPayload.append(
+        "user[alternate_address]",
+        formData.address.trim()
+      );
+      multipartPayload.append("user[user_title]", formData.jobTitle.trim());
+      multipartPayload.append(
+        "user[birth_date]",
+        formatUiDateToApi(formData.dob) || ""
+      );
+      multipartPayload.append(
+        "user[alternate_mobile]",
+        formData.emergencyContactNumber.trim()
+      );
+      // document-specific fields
+      multipartPayload.append("user[document_title]", docTitle.trim());
+      multipartPayload.append("user[document]", docFile);
+
+      await userService.updateProfile(multipartPayload);
+
+      const newDoc: DocumentEntry = {
+        id: `doc-${Date.now()}`,
+        title: docTitle.trim(),
+        file: docFile,
+        url: URL.createObjectURL(docFile),
+      };
+      setDocuments((prev) => [...prev, newDoc]);
+      setDocTitle("");
+      setDocFile(null);
+      toast.success("Document added successfully");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to upload document";
+      toast.error(message);
+    } finally {
+      setIsUploadingDoc(false);
+    }
+  };
+
+  const handleRemoveDocument = (id: string) => {
+    setDocuments((prev) => prev.filter((d) => d.id !== id));
+    toast.success("Document removed");
   };
 
   const handleSave = async () => {
@@ -420,7 +563,7 @@ const BusinessCompassProfile = () => {
 
       const firstName = formData.displayName.trim();
       const birthDate = formatUiDateToApi(formData.dob) || "";
-      const useFormData = !!profileImageFile;
+      const useFormData = !!profileImageFile || removeProfileImage;
       let updatedProfile: ProfileUpdateResponse;
 
       if (useFormData) {
@@ -433,11 +576,23 @@ const BusinessCompassProfile = () => {
         multipartPayload.append("user[lastname]", "");
         multipartPayload.append("user[email]", formData.email.trim());
         multipartPayload.append("user[mobile]", formData.phone.trim());
-        multipartPayload.append("user[alternate_address]", formData.address.trim());
+        multipartPayload.append(
+          "user[alternate_address]",
+          formData.address.trim()
+        );
         multipartPayload.append("user[user_title]", formData.jobTitle.trim());
         multipartPayload.append("user[birth_date]", birthDate);
-        multipartPayload.append("user[alternate_mobile]", formData.emergencyContactNumber.trim());
-        multipartPayload.append("user[avatar]", profileImageFile);
+        multipartPayload.append(
+          "user[alternate_mobile]",
+          formData.emergencyContactNumber.trim()
+        );
+
+        if (profileImageFile) {
+          multipartPayload.append("user[avatar]", profileImageFile);
+        } else if (removeProfileImage) {
+          // Signal to API to remove avatar — adjust key/value per your backend contract
+          multipartPayload.append("user[remove_avatar]", "true");
+        }
 
         updatedProfile = await userService.updateProfile(multipartPayload);
       } else {
@@ -464,16 +619,22 @@ const BusinessCompassProfile = () => {
       const mergedData = mergeApiProfileIntoForm(formData, updatedProfile);
       setFormData(mergedData);
       persistProfileDataLocally(mergedData);
-      if (profileImage) {
+
+      if (removeProfileImage) {
+        localStorage.removeItem("bc-profile-avatar");
+      } else if (profileImage) {
         localStorage.setItem("bc-profile-avatar", profileImage);
       } else {
         localStorage.removeItem("bc-profile-avatar");
       }
+
       setProfileImageFile(null);
+      setRemoveProfileImage(false);
       setIsEditing(false);
       toast.success("Profile updated successfully");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update profile";
+      const message =
+        error instanceof Error ? error.message : "Failed to update profile";
       toast.error(message);
     } finally {
       setIsSaving(false);
@@ -482,18 +643,22 @@ const BusinessCompassProfile = () => {
 
   const handleCancel = () => {
     setIsEditing(false);
-    const savedData = localStorage.getItem('bc-profile-data');
+    const savedData = localStorage.getItem("bc-profile-data");
     if (savedData) setFormData(JSON.parse(savedData));
     setProfileImage(localStorage.getItem("bc-profile-avatar") || "");
     setProfileImageFile(null);
+    setRemoveProfileImage(false);
+    setDocTitle("");
+    setDocFile(null);
   };
 
-  const profileInitials = formData.displayName
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || "")
-    .join("") || "U";
+  const profileInitials =
+    formData.displayName
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() || "")
+      .join("") || "U";
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins bg-[#F6F4EE]/30 min-h-screen">
@@ -503,35 +668,20 @@ const BusinessCompassProfile = () => {
           <User size={28} strokeWidth={2.5} />
         </div>
         <div className="space-y-0.5">
-          <h1 className="text-3xl font-bold text-[#1a1a1a] tracking-tight">My Profile</h1>
-          <p className="text-gray-500 text-sm font-medium">Manage your personal and professional profile details</p>
+          <h1 className="text-3xl font-bold text-[#1a1a1a] tracking-tight">
+            My Profile
+          </h1>
+          <p className="text-gray-500 text-sm font-medium">
+            Manage your personal and professional profile details
+          </p>
         </div>
       </div>
 
       {/* Main Profile Card */}
       <Card className="rounded-[16px] border-2 border-[#C4B89D] bg-white shadow-sm relative overflow-hidden">
+        {/* ── Top-right buttons ── */}
         <div className="absolute top-6 right-6 z-10 flex gap-2">
-          {isEditing ? (
-            <>
-              <Button
-                variant="outline"
-                onClick={handleCancel}
-                disabled={isSaving || isProfileLoading}
-                className="h-9 px-4 text-gray-600 border-gray-200 font-bold hover:bg-gray-50"
-              >
-                <X size={16} className="mr-2" strokeWidth={2.5} />
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSave}
-                disabled={isSaving || isProfileLoading}
-                className="bg-[#108C72] hover:bg-[#0d735e] text-white font-bold h-9 px-6 shadow-sm"
-              >
-                <Save size={16} className="mr-2" strokeWidth={2.5} />
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
-            </>
-          ) : (
+          {!isEditing ? (
             <Button
               onClick={() => setIsEditing(true)}
               disabled={isProfileLoading}
@@ -540,6 +690,16 @@ const BusinessCompassProfile = () => {
               <Edit2 size={13} className="mr-1.5" strokeWidth={3} />
               Edit Profile
             </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isSaving || isProfileLoading}
+              className="h-9 px-4 text-gray-600 border-gray-200 font-bold hover:bg-gray-50"
+            >
+              <X size={16} className="mr-2" strokeWidth={2.5} />
+              Cancel
+            </Button>
           )}
         </div>
 
@@ -547,24 +707,38 @@ const BusinessCompassProfile = () => {
           <div className="flex flex-col lg:flex-row gap-12 lg:gap-20 items-start">
             {/* Left Column: Profile Pic */}
             <div className="flex flex-col items-center gap-6 w-full lg:w-48 pt-4">
-              <div className="relative group">
-                {profileImage ? (
-                  <img
-                    src={profileImage}
-                    alt="Profile"
-                    className="w-40 h-40 rounded-full object-cover shadow-xl border-4 border-white"
-                  />
+              <div className="relative group w-40 h-40">
+                {profileImage && !removeProfileImage ? (
+                  <>
+                    <img
+                      src={profileImage}
+                      alt="Profile"
+                      className="w-40 h-40 rounded-full object-cover shadow-xl border-4 border-white"
+                    />
+                    {isEditing && (
+                      <>
+                        {/* Hover overlay to replace */}
+                        <div
+                          onClick={triggerProfileUpload}
+                          className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        >
+                          <Upload size={24} className="text-white" />
+                        </div>
+                        {/* Remove button — stays inside the circle */}
+                        <button
+                          onClick={handleRemoveProfileImage}
+                          className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center shadow-lg transition-colors"
+                          title="Remove photo"
+                          type="button"
+                        >
+                          <X size={12} strokeWidth={3} />
+                        </button>
+                      </>
+                    )}
+                  </>
                 ) : (
                   <div className="w-40 h-40 rounded-full bg-[#B91C1C] flex items-center justify-center text-white text-[48px] font-black shadow-xl border-4 border-white">
                     {profileInitials}
-                  </div>
-                )}
-                {isEditing && (
-                  <div
-                    onClick={triggerProfileUpload}
-                    className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                  >
-                    <Upload size={24} className="text-white" />
                   </div>
                 )}
               </div>
@@ -695,10 +869,16 @@ const BusinessCompassProfile = () => {
                     <span>Work Details</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-100 px-3 py-1 font-bold rounded-md">
+                    <Badge
+                      variant="outline"
+                      className="bg-blue-50 text-blue-600 border-blue-100 px-3 py-1 font-bold rounded-md"
+                    >
                       Company Admin
                     </Badge>
-                    <Badge variant="outline" className="bg-green-50 text-green-600 border-green-100 px-3 py-1 font-bold rounded-md">
+                    <Badge
+                      variant="outline"
+                      className="bg-green-50 text-green-600 border-green-100 px-3 py-1 font-bold rounded-md"
+                    >
                       Active Member
                     </Badge>
                   </div>
@@ -715,7 +895,9 @@ const BusinessCompassProfile = () => {
                       label="Trusted Contact"
                       value={formData.emergencyContactName}
                       isEditing={isEditing}
-                      onChange={(v) => handleInputChange("emergencyContactName", v)}
+                      onChange={(v) =>
+                        handleInputChange("emergencyContactName", v)
+                      }
                       placeholder="Name"
                     />
                     <InfoField
@@ -723,7 +905,9 @@ const BusinessCompassProfile = () => {
                       label="Recovery Phone"
                       value={formData.emergencyContactNumber}
                       isEditing={isEditing}
-                      onChange={(v) => handleInputChange("emergencyContactNumber", v)}
+                      onChange={(v) =>
+                        handleInputChange("emergencyContactNumber", v)
+                      }
                       placeholder="Number"
                     />
                   </div>
@@ -732,24 +916,115 @@ const BusinessCompassProfile = () => {
 
               <Separator className="bg-gray-100" />
 
-              {/* Documents */}
+              {/* ── Documents (Professional Vault) ─────────────────────────── */}
               <div className="space-y-6">
                 <div className="flex items-center gap-2 font-bold text-gray-700">
                   <FileText size={18} className="text-purple-500" />
                   <span>Professional Vault</span>
                 </div>
-                {!isEditing && !formData.cv ? (
-                  <p className="text-sm text-gray-400 italic">No professional documents secured yet.</p>
-                ) : (
-                  <div className="flex gap-4 max-w-md">
-                    <Input className="h-10 bg-[#FAFAFA]" placeholder="Document title..." />
-                    <Button className="bg-[#3B82F6] hover:bg-blue-600 font-bold px-6 h-10 rounded-md shadow-sm">
-                      <Upload size={16} className="mr-2" />
-                      Add Document
-                    </Button>
+
+                {/* Add document row */}
+                <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
+                  <Input
+                    className="h-10 bg-[#FAFAFA] flex-1"
+                    placeholder="Document title..."
+                    value={docTitle}
+                    onChange={(e) => setDocTitle(e.target.value)}
+                    disabled={isUploadingDoc}
+                  />
+                  <input
+                    ref={docFileInputRef}
+                    type="file"
+                    className="hidden"
+                    onChange={handleDocFileSelect}
+                  />
+                  <Button
+                    variant="outline"
+                    className="h-10 border-dashed border-gray-300 text-gray-500 hover:border-purple-400 hover:text-purple-500 whitespace-nowrap"
+                    onClick={() => docFileInputRef.current?.click()}
+                    disabled={isUploadingDoc}
+                  >
+                    {docFile ? (
+                      <span className="text-xs font-semibold text-purple-600 truncate max-w-[140px]">
+                        {docFile.name}
+                      </span>
+                    ) : (
+                      <>
+                        <Plus size={14} className="mr-1.5" />
+                        Choose File
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    className="bg-[#3B82F6] hover:bg-blue-600 font-bold px-6 h-10 rounded-md shadow-sm whitespace-nowrap"
+                    onClick={handleAddDocument}
+                    disabled={isUploadingDoc}
+                  >
+                    <Upload size={16} className="mr-2" />
+                    {isUploadingDoc ? "Uploading..." : "Add Document"}
+                  </Button>
+                </div>
+
+                {/* Document list */}
+                {documents.length > 0 && (
+                  <div className="space-y-2 max-w-2xl">
+                    {documents.map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between gap-3 px-4 py-3 bg-[#F8F7FF] border border-purple-100 rounded-xl group"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <FileText
+                            size={16}
+                            className="text-purple-400 shrink-0"
+                          />
+                          <span className="text-sm font-semibold text-gray-700 truncate">
+                            {doc.title}
+                          </span>
+                          {doc.url && (
+                            <a
+                              href={doc.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-blue-500 hover:underline shrink-0"
+                            >
+                              View
+                            </a>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => handleRemoveDocument(doc.id)}
+                          className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                          title="Remove document"
+                          type="button"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
+
+                {documents.length === 0 && !isEditing && (
+                  <p className="text-sm text-gray-400 italic">
+                    No professional documents secured yet.
+                  </p>
+                )}
               </div>
+
+              {/* ── Bottom Save / Cancel buttons (only when editing) ──────── */}
+              {isEditing && (
+                <div className="flex justify-end pt-4 border-t border-gray-100">
+                  <Button
+                    onClick={handleSave}
+                    disabled={isSaving || isProfileLoading}
+                    className="bg-[#108C72] hover:bg-[#0d735e] text-white font-bold h-10 px-8 shadow-sm"
+                  >
+                    <Save size={16} className="mr-2" strokeWidth={2.5} />
+                    {isSaving ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
@@ -762,10 +1037,14 @@ const BusinessCompassProfile = () => {
             <Star size={20} className="fill-green-500 text-green-500" />
             My Objectives (KPIs & KRAs)
           </CardTitle>
-          <Badge className="bg-green-100 text-green-700 border-green-200 px-3 h-6 rounded-full font-bold">0 Active</Badge>
+          <Badge className="bg-green-100 text-green-700 border-green-200 px-3 h-6 rounded-full font-bold">
+            0 Active
+          </Badge>
         </CardHeader>
         <CardContent className="py-12 flex items-center justify-center opacity-40">
-          <p className="text-gray-400 font-bold tracking-tight">Focus targets haven't been assigned yet.</p>
+          <p className="text-gray-400 font-bold tracking-tight">
+            Focus targets haven't been assigned yet.
+          </p>
         </CardContent>
       </Card>
     </div>

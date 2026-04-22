@@ -1,421 +1,522 @@
 // Lease Management - Market Tab Component
-import React from "react";
-import { targetAudiences } from "../data";
+import React, { useState } from "react";
 import {
-  Target,
-  Building2,
-  Briefcase,
-  MapPin,
-  Users,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  UserCheck,
-} from "lucide-react";
+  targetAudiences,
+  companyPainPoints,
+  marketCompetitors,
+  competitorSummaryLessee,
+  lessorTargetAudiences,
+  lessorCompetitors,
+  competitorSummaryLessor,
+} from "../data";
 
 // Lockated Brand Colors
 const BRAND_COLORS = {
   primary: "#DA7756",
-  primaryLight: "rgba(218, 119, 86, 0.1)",
+  darkBg: "#1e293b",
   background: "#F6F4EE",
   text: "#2C2C2C",
   textSecondary: "#5A5A5A",
   cardBorder: "#C4B89D",
   white: "#FFFFFF",
-  success: "#89F7E7",
-  warning: "#EDC488",
-  secondaryGreen: "#798C5E",
-  secondaryTeal: "#9EC8BA",
 };
 
-const segmentIcons: Record<
-  string,
-  React.FC<{ className?: string; style?: React.CSSProperties }>
-> = {
-  "Corporate Real Estate Teams at Large Enterprises": Building2,
-  "Commercial Real Estate Developers": Briefcase,
-  "Retail Chains with Leased Store Locations": MapPin,
-  "Co-working Space Operators": Users,
-};
+const SectionTitle: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => (
+  <div
+    className="px-4 py-3 font-bold text-white text-sm"
+    style={{ backgroundColor: BRAND_COLORS.darkBg }}
+  >
+    {children}
+  </div>
+);
+
+const SubSectionTitle: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => (
+  <div
+    className="px-4 py-2 font-semibold text-white text-sm"
+    style={{ backgroundColor: BRAND_COLORS.primary }}
+  >
+    {children}
+  </div>
+);
 
 export const MarketTab: React.FC = () => {
+  const [perspective, setPerspective] = useState<"lessee" | "lessor">("lessee");
+
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div
-          className="p-2 rounded-lg"
-          style={{ backgroundColor: BRAND_COLORS.primaryLight }}
+    <div className="space-y-6">
+      {/* Perspective Toggle */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setPerspective("lessee")}
+          className="px-6 py-2 rounded-lg text-sm font-semibold transition-all"
+          style={{
+            backgroundColor:
+              perspective === "lessee"
+                ? BRAND_COLORS.darkBg
+                : BRAND_COLORS.white,
+            color:
+              perspective === "lessee" ? BRAND_COLORS.white : BRAND_COLORS.text,
+            border: `1px solid ${BRAND_COLORS.cardBorder}`,
+          }}
         >
-          <Target className="w-5 h-5" style={{ color: BRAND_COLORS.primary }} />
-        </div>
-        <div>
-          <h2
-            className="text-xl font-semibold"
-            style={{
-              color: BRAND_COLORS.text,
-              fontFamily: "Poppins, sans-serif",
-            }}
-          >
-            Target Audience Analysis
-          </h2>
-          <p className="text-sm" style={{ color: BRAND_COLORS.textSecondary }}>
-            Understanding our market segments and their needs
-          </p>
-        </div>
+          Lessee Perspective
+        </button>
+        <button
+          onClick={() => setPerspective("lessor")}
+          className="px-6 py-2 rounded-lg text-sm font-semibold transition-all"
+          style={{
+            backgroundColor:
+              perspective === "lessor"
+                ? BRAND_COLORS.darkBg
+                : BRAND_COLORS.white,
+            color:
+              perspective === "lessor" ? BRAND_COLORS.white : BRAND_COLORS.text,
+            border: `1px solid ${BRAND_COLORS.cardBorder}`,
+          }}
+        >
+          Lessor Perspective
+        </button>
       </div>
 
-      {/* Market Overview Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div
-          className="rounded-lg border p-4 text-center"
-          style={{
-            borderColor: BRAND_COLORS.cardBorder,
-            backgroundColor: BRAND_COLORS.white,
-          }}
-        >
-          <p
-            className="text-2xl font-bold"
-            style={{ color: BRAND_COLORS.primary }}
-          >
-            {targetAudiences.length}
-          </p>
-          <p className="text-xs" style={{ color: BRAND_COLORS.textSecondary }}>
-            Market Segments
-          </p>
-        </div>
-        <div
-          className="rounded-lg border p-4 text-center"
-          style={{
-            borderColor: BRAND_COLORS.cardBorder,
-            backgroundColor: BRAND_COLORS.white,
-          }}
-        >
-          <p
-            className="text-2xl font-bold"
-            style={{ color: BRAND_COLORS.secondaryGreen }}
-          >
-            CRE
-          </p>
-          <p className="text-xs" style={{ color: BRAND_COLORS.textSecondary }}>
-            Primary Focus
-          </p>
-        </div>
-        <div
-          className="rounded-lg border p-4 text-center"
-          style={{
-            borderColor: BRAND_COLORS.cardBorder,
-            backgroundColor: BRAND_COLORS.white,
-          }}
-        >
-          <p
-            className="text-2xl font-bold"
-            style={{ color: BRAND_COLORS.primary }}
-          >
-            India
-          </p>
-          <p className="text-xs" style={{ color: BRAND_COLORS.textSecondary }}>
-            Primary Market
-          </p>
-        </div>
-        <div
-          className="rounded-lg border p-4 text-center"
-          style={{
-            borderColor: BRAND_COLORS.cardBorder,
-            backgroundColor: BRAND_COLORS.white,
-          }}
-        >
-          <p className="text-2xl font-bold" style={{ color: "#0D9488" }}>
-            B2B
-          </p>
-          <p className="text-xs" style={{ color: BRAND_COLORS.textSecondary }}>
-            Business Model
-          </p>
-        </div>
-      </div>
-
-      {/* Target Audience Cards */}
-      <div className="space-y-6">
-        {targetAudiences.map((audience, index) => {
-          const IconComponent = segmentIcons[audience.segment] || Building2;
-          return (
+      {perspective === "lessee" ? (
+        <div className="space-y-8">
+          {/* SECTION 1 - TARGET AUDIENCE */}
+          <div>
+            <SectionTitle>SECTION 1 — TARGET AUDIENCE</SectionTitle>
+            <SubSectionTitle>
+              PART A — TARGET AUDIENCE (Geographies: India, Global)
+            </SubSectionTitle>
             <div
-              key={index}
-              className="rounded-xl border overflow-hidden"
+              className="overflow-x-auto border"
+              style={{ borderColor: BRAND_COLORS.cardBorder }}
+            >
+              <table
+                className="w-full text-xs"
+                style={{ color: BRAND_COLORS.text }}
+              >
+                <thead>
+                  <tr
+                    style={{
+                      backgroundColor: BRAND_COLORS.darkBg,
+                      color: BRAND_COLORS.white,
+                    }}
+                  >
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Audience Segment
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Demographics
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Industry and Company Profile
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Key Pain Points (3 per segment)
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      What happens if pain points are NOT solved
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      What good enough looks like to them
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Urgency
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Primary Buyer
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {targetAudiences.map((audience, index) => (
+                    <tr
+                      key={index}
+                      style={{
+                        backgroundColor:
+                          index % 2 === 0
+                            ? BRAND_COLORS.white
+                            : BRAND_COLORS.background,
+                        borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                      }}
+                    >
+                      <td className="px-3 py-2 font-medium">
+                        {audience.segment}
+                      </td>
+                      <td className="px-3 py-2">{audience.demographics}</td>
+                      <td className="px-3 py-2">{audience.industryProfile}</td>
+                      <td className="px-3 py-2">
+                        {audience.painPoints?.map((p, i) => (
+                          <div key={i}>
+                            {i + 1}. {p}
+                          </div>
+                        ))}
+                      </td>
+                      <td className="px-3 py-2">{audience.unsolved}</td>
+                      <td className="px-3 py-2">{audience.goodEnough}</td>
+                      <td className="px-3 py-2">{audience.urgency}</td>
+                      <td className="px-3 py-2">{audience.buyerTitle}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* PART B - COMPANY-LEVEL PAIN POINTS */}
+          <div>
+            <SubSectionTitle>
+              PART B — COMPANY-LEVEL PAIN POINTS (India and Global)
+            </SubSectionTitle>
+            <div
+              className="overflow-x-auto border"
+              style={{ borderColor: BRAND_COLORS.cardBorder }}
+            >
+              <table
+                className="w-full text-xs"
+                style={{ color: BRAND_COLORS.text }}
+              >
+                <thead>
+                  <tr
+                    style={{
+                      backgroundColor: BRAND_COLORS.darkBg,
+                      color: BRAND_COLORS.white,
+                    }}
+                  >
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Company Type and Size
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Pain Point 1
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Pain Point 2
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Pain Point 3
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Cost / Risk if unsolved
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {companyPainPoints.map((item, index) => (
+                    <tr
+                      key={index}
+                      style={{
+                        backgroundColor:
+                          index % 2 === 0
+                            ? BRAND_COLORS.white
+                            : BRAND_COLORS.background,
+                        borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                      }}
+                    >
+                      <td className="px-3 py-2 font-medium">
+                        {item.companyType}
+                      </td>
+                      <td className="px-3 py-2">{item.painPoint1}</td>
+                      <td className="px-3 py-2">{item.painPoint2}</td>
+                      <td className="px-3 py-2">{item.painPoint3}</td>
+                      <td className="px-3 py-2">{item.costRisk}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* SECTION 2 - COMPETITOR MAPPING */}
+          <div>
+            <SectionTitle>
+              SECTION 2 — COMPETITOR MAPPING (10 Competitors, India and Global)
+            </SectionTitle>
+            <p
+              className="text-xs px-3 py-2 italic"
               style={{
-                borderColor: BRAND_COLORS.cardBorder,
-                backgroundColor: BRAND_COLORS.white,
+                color: BRAND_COLORS.textSecondary,
+                backgroundColor: BRAND_COLORS.background,
               }}
             >
-              {/* Segment Header */}
-              <div
-                className="px-5 py-4 flex items-center gap-3"
-                style={{ backgroundColor: BRAND_COLORS.background }}
+              India-specific and global competitors. Pricing in INR for India
+              competitors, USD for global. All pricing approximate as of Q1
+              2026.
+            </p>
+            <div
+              className="overflow-x-auto border"
+              style={{ borderColor: BRAND_COLORS.cardBorder }}
+            >
+              <table
+                className="w-full text-xs"
+                style={{ color: BRAND_COLORS.text }}
               >
-                <div
-                  className="p-2 rounded-lg"
-                  style={{ backgroundColor: BRAND_COLORS.primaryLight }}
-                >
-                  <IconComponent
-                    className="w-5 h-5"
-                    style={{ color: BRAND_COLORS.primary }}
-                  />
-                </div>
-                <div>
-                  <h3
-                    className="font-semibold"
-                    style={{ color: BRAND_COLORS.text }}
+                <thead>
+                  <tr
+                    style={{
+                      backgroundColor: BRAND_COLORS.darkBg,
+                      color: BRAND_COLORS.white,
+                    }}
                   >
-                    {audience.segment}
-                  </h3>
-                  <p
-                    className="text-xs"
-                    style={{ color: BRAND_COLORS.textSecondary }}
-                  >
-                    Target Market Segment
-                  </p>
-                </div>
-              </div>
-
-              {/* Segment Content */}
-              <div className="p-5 space-y-5">
-                {/* Demographics */}
-                {audience.demographics && (
-                  <div className="flex items-start gap-3">
-                    <Users
-                      className="w-5 h-5 mt-0.5 flex-shrink-0"
-                      style={{ color: BRAND_COLORS.primary }}
-                    />
-                    <div>
-                      <h4
-                        className="text-sm font-semibold mb-1"
-                        style={{ color: BRAND_COLORS.text }}
-                      >
-                        Demographics
-                      </h4>
-                      <p
-                        className="text-sm"
-                        style={{ color: BRAND_COLORS.textSecondary }}
-                      >
-                        {audience.demographics}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Industry Profile */}
-                {audience.industryProfile && (
-                  <div className="flex items-start gap-3">
-                    <TrendingUp
-                      className="w-5 h-5 mt-0.5 flex-shrink-0"
-                      style={{ color: BRAND_COLORS.secondaryGreen }}
-                    />
-                    <div>
-                      <h4
-                        className="text-sm font-semibold mb-1"
-                        style={{ color: BRAND_COLORS.text }}
-                      >
-                        Industry Profile
-                      </h4>
-                      <p
-                        className="text-sm"
-                        style={{ color: BRAND_COLORS.textSecondary }}
-                      >
-                        {audience.industryProfile}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Pain Points */}
-                {audience.painPoints && audience.painPoints.length > 0 && (
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle
-                      className="w-5 h-5 mt-0.5 flex-shrink-0"
-                      style={{ color: "#D97706" }}
-                    />
-                    <div>
-                      <h4
-                        className="text-sm font-semibold mb-2"
-                        style={{ color: BRAND_COLORS.text }}
-                      >
-                        Pain Points
-                      </h4>
-                      <ul className="space-y-1">
-                        {audience.painPoints.map((point, idx) => (
-                          <li
-                            key={idx}
-                            className="text-sm flex items-start gap-2"
-                            style={{ color: BRAND_COLORS.textSecondary }}
-                          >
-                            <span
-                              className="inline-block w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0"
-                              style={{ backgroundColor: "#D97706" }}
-                            />
-                            {point}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                )}
-
-                {/* Unsolved Problem */}
-                {audience.unsolved && (
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle
-                      className="w-5 h-5 mt-0.5 flex-shrink-0"
-                      style={{ color: "#DC2626" }}
-                    />
-                    <div>
-                      <h4
-                        className="text-sm font-semibold mb-1"
-                        style={{ color: BRAND_COLORS.text }}
-                      >
-                        Unsolved Problem
-                      </h4>
-                      <p
-                        className="text-sm p-3 rounded-lg"
-                        style={{
-                          backgroundColor: "#FEE2E2",
-                          color: "#DC2626",
-                        }}
-                      >
-                        {audience.unsolved}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Good Enough Alternative */}
-                {audience.goodEnough && (
-                  <div className="flex items-start gap-3">
-                    <CheckCircle
-                      className="w-5 h-5 mt-0.5 flex-shrink-0"
-                      style={{ color: BRAND_COLORS.secondaryGreen }}
-                    />
-                    <div>
-                      <h4
-                        className="text-sm font-semibold mb-1"
-                        style={{ color: BRAND_COLORS.text }}
-                      >
-                        Current "Good Enough" Solution
-                      </h4>
-                      <p
-                        className="text-sm"
-                        style={{ color: BRAND_COLORS.textSecondary }}
-                      >
-                        {audience.goodEnough}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Urgency */}
-                {audience.urgency && (
-                  <div className="flex items-start gap-3">
-                    <Clock
-                      className="w-5 h-5 mt-0.5 flex-shrink-0"
-                      style={{ color: "#0D9488" }}
-                    />
-                    <div>
-                      <h4
-                        className="text-sm font-semibold mb-1"
-                        style={{ color: BRAND_COLORS.text }}
-                      >
-                        Urgency & Trigger
-                      </h4>
-                      <p
-                        className="text-sm p-3 rounded-lg"
-                        style={{
-                          backgroundColor: BRAND_COLORS.primaryLight,
-                          color: BRAND_COLORS.primary,
-                          fontStyle: "italic",
-                        }}
-                      >
-                        {audience.urgency}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Buyer Title */}
-                {audience.buyerTitle && (
-                  <div className="flex items-start gap-3">
-                    <UserCheck
-                      className="w-5 h-5 mt-0.5 flex-shrink-0"
-                      style={{ color: BRAND_COLORS.primary }}
-                    />
-                    <div>
-                      <h4
-                        className="text-sm font-semibold mb-1"
-                        style={{ color: BRAND_COLORS.text }}
-                      >
-                        Typical Buyer
-                      </h4>
-                      <span
-                        className="inline-block px-3 py-1 rounded-full text-xs font-medium"
-                        style={{
-                          backgroundColor: BRAND_COLORS.primaryLight,
-                          color: BRAND_COLORS.primary,
-                        }}
-                      >
-                        {audience.buyerTitle}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
+                    <th className="px-3 py-2 text-left font-semibold w-8">#</th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Competitor
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Primary Target Customer
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Pricing Model and Approx Price (India INR / Global USD)
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      How buyers discover them
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Their 3 Strongest Features
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Their 3 Key Weaknesses
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Market Gap they leave open
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Recent product or marketing innovation
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {marketCompetitors.map((comp, index) => (
+                    <tr
+                      key={index}
+                      style={{
+                        backgroundColor:
+                          index % 2 === 0
+                            ? BRAND_COLORS.white
+                            : BRAND_COLORS.background,
+                        borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                      }}
+                    >
+                      <td className="px-3 py-2 font-medium">{index + 1}</td>
+                      <td className="px-3 py-2 font-medium">
+                        {comp.competitor}
+                      </td>
+                      <td className="px-3 py-2">
+                        {comp.primaryTargetCustomer}
+                      </td>
+                      <td className="px-3 py-2">{comp.pricingModel}</td>
+                      <td className="px-3 py-2">{comp.howBuyersDiscover}</td>
+                      <td className="px-3 py-2">{comp.strongestFeatures}</td>
+                      <td className="px-3 py-2">{comp.keyWeaknesses}</td>
+                      <td className="px-3 py-2">{comp.marketGap}</td>
+                      <td className="px-3 py-2">{comp.recentInnovation}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          );
-        })}
-      </div>
-
-      {/* Market Strategy Summary */}
-      <div
-        className="rounded-xl border p-6"
-        style={{
-          borderColor: BRAND_COLORS.primary,
-          backgroundColor: BRAND_COLORS.primaryLight,
-        }}
-      >
-        <h3
-          className="font-semibold mb-4 flex items-center gap-2"
-          style={{ color: BRAND_COLORS.text }}
-        >
-          <Target className="w-5 h-5" style={{ color: BRAND_COLORS.primary }} />
-          Market Strategy Summary
-        </h3>
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <h4
-              className="text-sm font-semibold mb-2"
-              style={{ color: BRAND_COLORS.primary }}
-            >
-              Primary Focus
-            </h4>
-            <p className="text-sm" style={{ color: BRAND_COLORS.text }}>
-              Corporate Real Estate Teams and Commercial Real Estate Developers
-              with multiple properties requiring centralized lease tracking and
-              compliance management.
-            </p>
           </div>
+
+          {/* COMPETITOR SUMMARY */}
           <div>
-            <h4
-              className="text-sm font-semibold mb-2"
-              style={{ color: BRAND_COLORS.primary }}
+            <SectionTitle>COMPETITOR SUMMARY</SectionTitle>
+            <div
+              className="px-4 py-3 text-sm"
+              style={{
+                backgroundColor: BRAND_COLORS.background,
+                color: BRAND_COLORS.text,
+                borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+              }}
             >
-              Go-to-Market Approach
-            </h4>
-            <p className="text-sm" style={{ color: BRAND_COLORS.text }}>
-              Value-based selling focusing on cost savings, compliance
-              automation (IND AS 116), and operational efficiency gains for
-              lease portfolio management.
-            </p>
+              {competitorSummaryLessee}
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="space-y-8">
+          {/* LESSOR - SECTION 1 — TARGET AUDIENCE */}
+          <div>
+            <SectionTitle>SECTION 1 — TARGET AUDIENCE (LESSOR)</SectionTitle>
+            <SubSectionTitle>
+              PART A — TARGET AUDIENCE FOR LESSOR USE CASE (Geographies: India,
+              Global)
+            </SubSectionTitle>
+            <div
+              className="overflow-x-auto border"
+              style={{ borderColor: BRAND_COLORS.cardBorder }}
+            >
+              <table
+                className="w-full text-xs"
+                style={{ color: BRAND_COLORS.text }}
+              >
+                <thead>
+                  <tr
+                    style={{
+                      backgroundColor: BRAND_COLORS.darkBg,
+                      color: BRAND_COLORS.white,
+                    }}
+                  >
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Audience Segment
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Who They Are
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Size of Segment
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Primary Pain Point
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      What They Need Most
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Decision Maker
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Budget Range
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Priority
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lessorTargetAudiences.map((audience, index) => (
+                    <tr
+                      key={index}
+                      style={{
+                        backgroundColor:
+                          index % 2 === 0
+                            ? BRAND_COLORS.white
+                            : BRAND_COLORS.background,
+                        borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                      }}
+                    >
+                      <td className="px-3 py-2 font-medium">
+                        {audience.segment}
+                      </td>
+                      <td className="px-3 py-2">{audience.whoTheyAre}</td>
+                      <td className="px-3 py-2">{audience.sizeOfSegment}</td>
+                      <td className="px-3 py-2">{audience.primaryPainPoint}</td>
+                      <td className="px-3 py-2">{audience.whatTheyNeedMost}</td>
+                      <td className="px-3 py-2">{audience.decisionMaker}</td>
+                      <td className="px-3 py-2">{audience.budgetRange}</td>
+                      <td className="px-3 py-2">{audience.priority}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* LESSOR - SECTION 2: COMPETITOR MAPPING */}
+          <div>
+            <SectionTitle>
+              SECTION 2 — COMPETITOR MAPPING (LESSOR PERSPECTIVE)
+            </SectionTitle>
+            <p
+              className="text-xs px-3 py-2 italic"
+              style={{
+                color: BRAND_COLORS.textSecondary,
+                backgroundColor: BRAND_COLORS.background,
+              }}
+            >
+              How the same 10 competitors position for the LESSOR use case
+            </p>
+            <div
+              className="overflow-x-auto border"
+              style={{ borderColor: BRAND_COLORS.cardBorder }}
+            >
+              <table
+                className="w-full text-xs"
+                style={{ color: BRAND_COLORS.text }}
+              >
+                <thead>
+                  <tr
+                    style={{
+                      backgroundColor: BRAND_COLORS.darkBg,
+                      color: BRAND_COLORS.white,
+                    }}
+                  >
+                    <th className="px-3 py-2 text-left font-semibold w-8">#</th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Competitor
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Lessor Use Case Coverage
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Key Lessor Features
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Pricing (Lessor)
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Lessor Market Position
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      India Lessor Fit
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Our Advantage vs This Competitor
+                    </th>
+                    <th className="px-3 py-2 text-left font-semibold">
+                      Threat Level
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lessorCompetitors.map((comp, index) => (
+                    <tr
+                      key={index}
+                      style={{
+                        backgroundColor:
+                          index % 2 === 0
+                            ? BRAND_COLORS.white
+                            : BRAND_COLORS.background,
+                        borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+                      }}
+                    >
+                      <td className="px-3 py-2 font-medium">{index + 1}</td>
+                      <td className="px-3 py-2 font-medium">
+                        {comp.competitor}
+                      </td>
+                      <td className="px-3 py-2">
+                        {comp.lessorUseCaseCoverage}
+                      </td>
+                      <td className="px-3 py-2">{comp.keyLessorFeatures}</td>
+                      <td className="px-3 py-2">{comp.pricing}</td>
+                      <td className="px-3 py-2">{comp.lessorMarketPosition}</td>
+                      <td className="px-3 py-2">{comp.indiaLessorFit}</td>
+                      <td className="px-3 py-2">{comp.ourAdvantage}</td>
+                      <td className="px-3 py-2">{comp.threatLevel}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* COMPETITOR SUMMARY — LESSOR */}
+          <div>
+            <SectionTitle>COMPETITOR SUMMARY — LESSOR</SectionTitle>
+            <div
+              className="px-4 py-3 text-sm"
+              style={{
+                backgroundColor: BRAND_COLORS.background,
+                color: BRAND_COLORS.text,
+                borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
+              }}
+            >
+              {competitorSummaryLessor}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

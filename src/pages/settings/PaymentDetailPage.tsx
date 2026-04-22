@@ -14,11 +14,21 @@ import {
   User,
   Calendar,
   Hash,
+  Paperclip,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { API_CONFIG } from "@/config/apiConfig";
+
+interface Attachment {
+  id: number;
+  document_file_name: string;
+  document_content_type: string;
+  document_file_size: number;
+  attachment_url: string;
+}
 
 interface LockPayment {
   id: number;
@@ -67,6 +77,7 @@ interface LockPayment {
   resource_id: number;
   resource_type: string;
   sgst: string | null;
+  attachments?: Attachment[];
   user?: {
     id: number;
     firstname: string;
@@ -213,6 +224,14 @@ export const PaymentDetailPage = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
   const renderPaymentStatusBadge = (status: string | null) => {
@@ -669,7 +688,7 @@ export const PaymentDetailPage = () => {
                   <span className="task-info-label-enhanced">User Type</span>
                   <span className="task-info-separator-enhanced">:</span>
                   <span className="task-info-value-enhanced capitalize">
-                    {payment.club_member_payee_details.user_type.replace(/_/g, " ")}
+                    {payment?.club_member_payee_details.user_type?.replace(/_/g, " ")}
                   </span>
                 </div>
                 {payment.club_member_payee_details.flat && (
@@ -831,6 +850,63 @@ export const PaymentDetailPage = () => {
             </div>
           </div>
         </Card>
+
+        {/* Attachments */}
+        {payment.attachments && payment.attachments.length > 0 && (
+          <Card className="w-full bg-transparent shadow-none border-none">
+            <div className="figma-card-header">
+              <div className="flex items-center gap-3">
+                <div className="figma-card-icon-wrapper">
+                  <Paperclip className="figma-card-icon" />
+                </div>
+                <h3 className="figma-card-title">Attachments</h3>
+              </div>
+            </div>
+            <div className="figma-card-content">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {payment.attachments.map((attachment) => (
+                  <div
+                    key={attachment.id}
+                    className="flex flex-col border border-gray-200 rounded-lg overflow-hidden bg-white hover:border-[#C72030] transition-colors group"
+                  >
+                    {attachment.document_content_type.startsWith("image/") ? (
+                      <div className="h-32 bg-gray-100 flex items-center justify-center overflow-hidden">
+                        <img
+                          src={attachment.attachment_url}
+                          alt={attachment.document_file_name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-32 bg-gray-100 flex items-center justify-center">
+                        <FileText className="w-12 h-12 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="p-3 flex flex-col gap-1">
+                      <p className="text-sm font-medium text-gray-900 truncate" title={attachment.document_file_name}>
+                        {attachment.document_file_name}
+                      </p>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs text-gray-500">
+                          {formatFileSize(attachment.document_file_size)}
+                        </span>
+                        <a
+                          href={attachment.attachment_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-full hover:bg-gray-100 text-[#C72030] transition-colors"
+                          title="View Attachment"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Payment Method Details */}
         <Card className="w-full bg-transparent shadow-none border-none">

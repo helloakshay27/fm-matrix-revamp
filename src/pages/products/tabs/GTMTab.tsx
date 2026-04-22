@@ -14,8 +14,8 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
   if (isClubGTM) {
     return (
       <div className="space-y-4 animate-fade-in">
-        <div className="bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 uppercase font-poppins text-[14px] font-bold tracking-wide">
-          {productData.name} - Go-To-Market Strategy
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
+          <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{productData.name} - Go-To-Market Strategy</h2>
         </div>
         <div className="bg-[#F6F4EE] border border-[#D3D1C7] border-t-0 px-4 py-2 text-sm text-gray-600 font-medium italic font-poppins">
           3 Target Groups based on product fit | Each TG has Sales Motion, Marketing Channels, 90-Day Launch Sequence, Partnership Strategy, and Summary
@@ -24,14 +24,14 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
         <div className="mt-6 space-y-8">
           {gtmData.targetGroups?.map((tg: any, i: number) => (
             <div key={i} className="border border-[#D3D1C7] bg-white">
-              <div className="bg-[#1F3A5F] text-white border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-bold tracking-wide uppercase font-poppins">
+              <div className="bg-[#DA7756] text-white border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-bold tracking-wide uppercase font-poppins">
                 {tg.title}
               </div>
               <table className="w-full border-collapse table-fixed text-[11px] leading-relaxed font-poppins">
                 <tbody>
                   {tg.components?.map((c: any, cIdx: number) => (
                     <tr key={cIdx} className="align-top border-b border-[#D3D1C7] last:border-b-0 bg-white">
-                      <td className="w-[20%] border-r border-[#D3D1C7] px-4 py-3 font-bold text-[#1A1A2E] bg-[#F6F4EE]">
+                      <td className="w-[20%] border-r border-[#D3D1C7] px-4 py-3 font-bold text-[#2C2C2C] bg-[#F6F4EE]">
                         {c.component}
                       </td>
                       <td className="w-[80%] px-4 py-3 text-[#2C2C2C] font-medium whitespace-pre-line">
@@ -43,14 +43,14 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
               </table>
 
               {tg.summaryBox && (
-                <div className="bg-[#1F3A5F]/5 border-t border-[#D3D1C7]">
+                <div className="bg-[#DA7756]/5 border-t border-[#D3D1C7]">
                   <table className="w-full border-collapse table-fixed text-[11px] leading-relaxed font-poppins">
                     <tbody>
                       <tr className="align-top">
-                        <td className="w-[20%] border-r border-[#D3D1C7] px-4 py-3 font-bold text-[#1F3A5F] uppercase bg-transparent">
+                        <td className="w-[20%] border-r border-[#D3D1C7] px-4 py-3 font-bold text-[#DA7756] uppercase bg-transparent">
                           TG SUMMARY AND KEY ASSUMPTIONS
                         </td>
-                        <td className="w-[80%] px-4 py-3 text-[#1F3A5F] font-bold whitespace-pre-line leading-relaxed">
+                        <td className="w-[80%] px-4 py-3 text-[#DA7756] font-bold whitespace-pre-line leading-relaxed">
                           {tg.summaryBox}
                         </td>
                       </tr>
@@ -72,10 +72,10 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
           <div className="w-full rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
               <div
-                className={`bg-white text-[#2C2C2C] border border-[#D3D1C7] px-4 py-3 font-poppins uppercase ${isCpManagement ? "text-sm font-semibold tracking-wide text-left" : "font-bold tracking-tight text-[14px] text-center"}`}
+                className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center"
               >
-                {productData.extendedContent?.detailedGTM?.sheet?.title ||
-                  "Post Possession — Go-to-market Strategy"}
+                <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">{productData.extendedContent?.detailedGTM?.sheet?.title ||
+                  "Post Possession — Go-to-market Strategy"}</h2>
               </div>
 
               {productData.extendedContent?.detailedGTM?.sheet?.targetGroups
@@ -97,12 +97,12 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
                             >
                               {sec.columns.length === 0 &&
                               sec.rows.length === 0 ? (
-                                <div className="px-4 py-2 text-[11px] font-medium text-gray-700 font-poppins italic leading-[1.5] break-words">
+                                <div className="px-4 py-2 text-[11px] font-medium text-[#DA7756] font-poppins italic leading-[1.5] break-words">
                                   {sec.title}
                                 </div>
                               ) : (
                                 <>
-                                  <div className="border-b border-[#E5E7EB] bg-white px-3 py-2 text-[11px] font-bold uppercase text-gray-700 font-poppins">
+                                  <div className="border-b border-[#E5E7EB] bg-white px-3 py-2 text-[11px] font-bold uppercase text-[#DA7756] font-poppins">
                                     {sec.title}
                                   </div>
                                   <table className="w-full table-fixed border-collapse text-[11px] leading-[1.5] font-poppins">
@@ -173,7 +173,7 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
         </div>
       ) : (
         <>
-          <div className="p-4 rounded-t-xl mb-0 flex justify-between items-center">
+          <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
             <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
               {productData.name} - GTM Strategy
             </h2>
@@ -201,7 +201,7 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
                         <tbody>
                           {group.components.map((comp, cIdx) => (
                             <tr key={cIdx} className="">
-                              <td className="border border-[#C4B89D] p-3 font-semibold text-gray-700 uppercase bg-white">
+                              <td className="border border-[#C4B89D] p-3 font-semibold text-[#DA7756] uppercase bg-white">
                                 {comp.component}
                               </td>
                               <td className="border border-[#C4B89D] p-3 text-[#2C2C2C]/80 font-medium leading-relaxed italic text-left">
@@ -212,8 +212,8 @@ const GTMTab: React.FC<GTMTabProps> = ({ productData }) => {
                         </tbody>
                       </table>
                     </div>
-                    <div className="bg-white text-gray-800 p-3 text-[10px] font-semibold font-poppins uppercase tracking-tight rounded-b-xl border border-[#D3D1C7] ">
-                      <span className="text-yellow-400">SUMMARY:</span>{" "}
+                    <div className="bg-white text-[#DA7756] p-3 text-[10px] font-semibold font-poppins uppercase tracking-tight rounded-b-xl border border-[#D3D1C7] ">
+                      <span className="text-[#DA7756]">SUMMARY:</span>{" "}
                       {group.summaryBox}
                     </div>
                   </div>
