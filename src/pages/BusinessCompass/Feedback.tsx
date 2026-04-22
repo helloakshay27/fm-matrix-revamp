@@ -1911,7 +1911,7 @@ function GivenFeedbackList({
                               !detail.constructiveFeedback &&
                               !detail.positiveClosing &&
                               detail.detailPreview && (
-                                <div className="rounded-lg border border-[#DA7756]/20 bg-[#fef6f4] px-3 py-2">
+                                <div className="rounded-lg border border-[#DA7756]/20 bg-white px-3 py-2">
                                   <p className="text-sm text-neutral-700">
                                     {detail.detailPreview}
                                   </p>
@@ -2562,16 +2562,10 @@ function FeedbackPage() {
 
   return (
     <div
-      style={{
-        minHeight: "calc(100vh - 5rem)",
-        background: "#f6f4ee",
-        color: "#1a1a1a",
-        fontFamily: "'Poppins', sans-serif",
-        padding: "24px 16px",
-      }}
+      className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6"
+      style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap'); * { font-family: 'Poppins', sans-serif !important; }`}</style>
-      <div className="mx-auto max-w-7xl space-y-6 font-poppins text-[#1a1a1a]">
+      <div className="mx-auto max-w-6xl space-y-6">
         {bannerVisible && (
           <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-white shadow-sm">
             <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
@@ -2605,23 +2599,25 @@ function FeedbackPage() {
           </Card>
         )}
 
-        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-6 shadow-sm sm:p-8">
-          <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-neutral-500">
-            Giving and receiving feedback
-          </p>
-          <h1 className="mt-1 text-2xl font-black tracking-tight text-neutral-900 sm:text-3xl">
-            Team Feedback
-          </h1>
-          <p className="mt-2 text-sm text-neutral-600 sm:text-base">
-            Give and receive constructive feedback using the Sandwich technique
-          </p>
-          <p className="mt-3 text-xs font-medium uppercase tracking-wide text-neutral-400">
-            {orgLine}
-          </p>
-        </Card>
+        <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
+            <MessageSquare className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+              Team Feedback
+            </h1>
+            <p className="mt-1 text-sm text-neutral-500 sm:text-base">
+              Give and receive constructive feedback using the Sandwich technique
+            </p>
+            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-neutral-400">
+              {orgLine}
+            </p>
+          </div>
+        </header>
 
         <Tabs value={feedbackTab} onValueChange={(v) => setFeedbackTab(v as any)} className="w-full">
-          <TabsList className="inline-flex h-12 w-full items-center justify-start gap-2 rounded-full border border-neutral-200 bg-white px-2 shadow-sm sm:w-auto">
+          <TabsList className="inline-flex h-12 w-full items-center justify-start gap-2 rounded-full border border-[#DA7756]/20 bg-white px-2 shadow-sm sm:w-auto">
             <TabsTrigger
               value="received"
               className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
@@ -2662,8 +2658,8 @@ function FeedbackPage() {
           </TabsList>
 
           <TabsContent value="received" className="mt-6 space-y-4">
-            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-neutral-50 shadow-sm">
-              <div className="flex items-center gap-3 border-b border-neutral-200/40 bg-neutral-50 px-4 py-4 sm:px-5">
+            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
+              <div className="flex items-center gap-3 border-b border-[#DA7756]/20 bg-[#DA7756]/10 px-4 py-4 sm:px-5">
                 <span className="text-sm text-neutral-600 font-medium">
                   View feedback for:
                 </span>
@@ -2711,7 +2707,7 @@ function FeedbackPage() {
           </TabsContent>
 
           <TabsContent value="given" className="mt-6">
-            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-neutral-50 shadow-sm">
+            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
               <div className="p-4 sm:p-5">
                 <AsyncBoundary>
                   <GivenFeedbackList
@@ -2731,7 +2727,7 @@ function FeedbackPage() {
           </TabsContent>
 
           <TabsContent value="give" className="mt-6">
-            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-neutral-50 shadow-sm">
+            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
               <div className="p-4 sm:p-5">
                 <AsyncBoundary>
                   <GiveFeedbackForm
