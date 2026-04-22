@@ -2617,7 +2617,7 @@ function FeedbackPage() {
         </header>
 
         <Tabs value={feedbackTab} onValueChange={(v) => setFeedbackTab(v as any)} className="w-full">
-          <TabsList className="inline-flex h-12 w-full items-center justify-start gap-2 rounded-full border border-[#DA7756]/20 bg-white px-2 shadow-sm sm:w-auto">
+          <TabsList className="inline-flex h-12 w-full items-center justify-start gap-2 rounded-full border border-[#DA7756]/20 bg-[#f6f4ee] px-2 shadow-sm sm:w-auto">
             <TabsTrigger
               value="received"
               className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
