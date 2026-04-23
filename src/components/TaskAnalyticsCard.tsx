@@ -98,11 +98,11 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
             {/* Bar Chart — fixed height, never shrinks */}
             <div className="h-52 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
+                <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" fontSize={10} />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip cursor={{ fill: 'transparent' }} />
                   <Bar dataKey="open" stackId="a" fill={CHART_COLORS.primary} name="Open" />
                   <Bar dataKey="closed" stackId="a" fill={CHART_COLORS.secondary} name="Closed" />
                   <Bar dataKey="work_in_progress" stackId="a" fill={CHART_COLORS.tertiary} name="Work in Progress" />
@@ -170,11 +170,11 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
             {/* Bar Chart — fixed height */}
             <div className="h-52 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
+                <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="type" angle={-35} textAnchor="end" height={80} fontSize={9} />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip cursor={{ fill: 'transparent' }} />
                   <Bar dataKey="count">
                     {chartData.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.fill} />
@@ -233,11 +233,11 @@ export const TaskAnalyticsCard: React.FC<TaskAnalyticsCardProps> = ({
             {/* Stacked Bar Chart — fixed height */}
             <div className="h-52 flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
+                <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="site" fontSize={10} />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip cursor={{ fill: 'transparent' }} />
                   <Bar dataKey="open" stackId="a" fill={CHART_COLORS.primary} name="Open" />
                   <Bar dataKey="closed" stackId="a" fill={CHART_COLORS.secondary} name="Closed" />
                   <Bar dataKey="work_in_progress" stackId="a" fill={CHART_COLORS.tertiary} name="Work in Progress" />
