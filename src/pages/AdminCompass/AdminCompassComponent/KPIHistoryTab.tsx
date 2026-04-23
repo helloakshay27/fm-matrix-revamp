@@ -59,12 +59,17 @@ const normalizeExportFilters = (
   user: normalizeFilterValue(filters.user),
   frequency: normalizeFilterValue(filters.frequency),
   status: normalizeFilterValue(filters.status),
-  fromDate: filters.fromDate ? format(filters.fromDate, "yyyy-MM-dd") : undefined,
+  fromDate: filters.fromDate
+    ? format(filters.fromDate, "yyyy-MM-dd")
+    : undefined,
   toDate: filters.toDate ? format(filters.toDate, "yyyy-MM-dd") : undefined,
 });
 
 const buildExportEndpoints = (): string[] => {
-  const base = KPI_EXPORT_HISTORY_ENDPOINT.replace(/\/kpis\/export_history\.json$/, "");
+  const base = KPI_EXPORT_HISTORY_ENDPOINT.replace(
+    /\/kpis\/export_history\.json$/,
+    ""
+  );
   return Array.from(
     new Set([
       KPI_EXPORT_HISTORY_ENDPOINT,
@@ -92,11 +97,22 @@ const buildHistoryApiEndpoints = (): string[] => {
   const plainEndpoint = jsonEndpoint.replace(/\.json$/, "");
 
   // Prefer history_export API naming first, then fall back to history endpoints.
-  const historyExportJson = jsonEndpoint.replace("/kpis/history.json", "/kpis/history_export.json");
-  const historyExportPlain = plainEndpoint.replace("/kpis/history", "/kpis/history_export");
+  const historyExportJson = jsonEndpoint.replace(
+    "/kpis/history.json",
+    "/kpis/history_export.json"
+  );
+  const historyExportPlain = plainEndpoint.replace(
+    "/kpis/history",
+    "/kpis/history_export"
+  );
 
   return Array.from(
-    new Set([historyExportJson, historyExportPlain, jsonEndpoint, plainEndpoint])
+    new Set([
+      historyExportJson,
+      historyExportPlain,
+      jsonEndpoint,
+      plainEndpoint,
+    ])
   );
 };
 
@@ -203,7 +219,9 @@ const normalizeHistoryRowForExport = (raw: RawHistoryEntry): KPIHistoryRow => {
     kpiName: raw.kpi_name ?? raw.kpi?.name ?? raw.kpi?.kpi_name ?? "-",
     department: raw.department_name ?? raw.department ?? "-",
     user: raw.user_name ?? raw.assignee_name ?? raw.user ?? "-",
-    planned: String(raw.planned_value ?? raw.target_value ?? raw.planned ?? "-"),
+    planned: String(
+      raw.planned_value ?? raw.target_value ?? raw.planned ?? "-"
+    ),
     actual: String(raw.actual_value ?? raw.current_value ?? raw.actual ?? "-"),
     achievement: String(raw.achievement_percentage ?? raw.achievement ?? "-"),
     status: raw.status ?? "-",
@@ -432,7 +450,9 @@ const downloadExportHistory = async (
     const contentType = response.headers.get("content-type") ?? "";
     if (!contentType.includes("json")) {
       const disposition = response.headers.get("content-disposition") ?? "";
-      const nameMatch = disposition.match(/filename[^;=\n]*=(['"]?)([^'"\n;]+)\1/);
+      const nameMatch = disposition.match(
+        /filename[^;=\n]*=(['"]?)([^'"\n;]+)\1/
+      );
       const filename = nameMatch?.[2]?.trim() || "kpi_history_export.xlsx";
       const blob = await response.blob();
       downloadBlob(blob, filename);
@@ -458,8 +478,11 @@ const downloadExportHistory = async (
       });
 
       if (fileResponse.ok) {
-        const disposition = fileResponse.headers.get("content-disposition") ?? "";
-        const nameMatch = disposition.match(/filename[^;=\n]*=(['"]?)([^'"\n;]+)\1/);
+        const disposition =
+          fileResponse.headers.get("content-disposition") ?? "";
+        const nameMatch = disposition.match(
+          /filename[^;=\n]*=(['"]?)([^'"\n;]+)\1/
+        );
         const filename = nameMatch?.[2]?.trim() || "kpi_history_export.xlsx";
         const blob = await fileResponse.blob();
         downloadBlob(blob, filename);
@@ -695,7 +718,9 @@ const KPIHistoryTab: React.FC<KPIHistoryTabProps> = ({
       toast.success("Selected KPIs deleted");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Failed to delete selected KPIs";
+        error instanceof Error
+          ? error.message
+          : "Failed to delete selected KPIs";
       toast.error(message);
     } finally {
       setIsDeleting(false);
@@ -754,7 +779,15 @@ const KPIHistoryTab: React.FC<KPIHistoryTabProps> = ({
         matchesStatus
       );
     });
-  }, [entries, search, selectedDepartment, selectedKpi, selectedUser, selectedFrequency, selectedStatus]);
+  }, [
+    entries,
+    search,
+    selectedDepartment,
+    selectedKpi,
+    selectedUser,
+    selectedFrequency,
+    selectedStatus,
+  ]);
 
   const sorted = useMemo(() => {
     if (!sortKey) return filtered;

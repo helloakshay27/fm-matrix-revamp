@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import ReactDOM from "react-dom";
 import {
   CheckCircle2,
   ChevronRight,
@@ -35,14 +42,7 @@ import {
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -53,14 +53,198 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
+// ── Design Tokens (matches BusinessPlanAndGoles) ──
+const C = {
+  primary: "#DA7756",
+  primaryHov: "#c9673f",
+  primaryBg: "#fdf9f7",
+  primaryTint: "rgba(218,119,86,0.06)",
+  primaryBord: "#e8e3de",
+  primaryBordStrong: "#d4cdc6",
+  pageBg: "#f6f4ee",
+  cardBg: "#ffffff",
+  textMain: "#1a1a1a",
+  textMuted: "#6b7280",
+  borderLgt: "#ebebeb",
+  font: "'Poppins', sans-serif",
+};
+
+// ─────────────────────────────────────────────
+// THEME STYLES (matches BusinessPlanAndGoles)
+// ─────────────────────────────────────────────
+const ThemeStyle = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+.sop-wrap * { font-family: 'Poppins', sans-serif !important; }
+.sop-modal-box, .sop-modal-box * { font-family: 'Poppins', sans-serif !important; }    .sop-modal-portal {
+      position: fixed; inset: 0; z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px;
+      background: rgba(0,0,0,0.40);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .sop-modal-box {
+      background: #f6f4ee;
+      border-radius: 20px;
+      border: 1px solid rgba(218,119,86,0.20);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.20);
+      width: 100%; max-width: 580px;
+      display: flex; flex-direction: column;
+      max-height: 90vh; overflow: hidden;
+    }
+    .bp-input {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 9px 12px;
+      font-size: 13px; font-weight: 600;
+      color: #1a1a1a;
+      background: #fffaf8;
+      transition: border-color .15s, box-shadow .15s;
+      outline: none;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif !important;
+    }
+    .bp-input:focus { border-color: #DA7756; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
+    .bp-input::placeholder { color: #a3a3a3; font-weight: 500; }
+    .bp-select {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 9px 36px 9px 12px;
+      font-size: 13px; font-weight: 600;
+      color: #1a1a1a;
+      background: #fffaf8;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a3a3a3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      background-size: 16px;
+      cursor: pointer; outline: none; box-sizing: border-box;
+      font-family: 'Poppins', sans-serif !important;
+    }
+    .bp-select:focus { border-color: #DA7756; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
+    .bp-scroll::-webkit-scrollbar { width: 6px; }
+    .bp-scroll::-webkit-scrollbar-track { background: transparent; }
+    .bp-scroll::-webkit-scrollbar-thumb { background: #C4B89D; border-radius: 10px; }
+    .bp-scroll::-webkit-scrollbar-thumb:hover { background: #DA7756; }
+    .bh-slider-modal { -webkit-appearance:none; appearance:none; width:100%; height:6px; border-radius:99px; outline:none; cursor:pointer; display:block; }
+    .bh-slider-modal::-webkit-slider-thumb { -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:#DA7756; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.2); cursor:pointer; transition:transform .15s; }
+    .bh-slider-modal::-webkit-slider-thumb:hover { transform:scale(1.2); }
+    .bh-slider-modal::-moz-range-thumb { width:18px; height:18px; border-radius:50%; background:#DA7756; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.2); cursor:pointer; }
+    .bp-card-lift { transition: box-shadow .2s, transform .2s; }
+    .bp-card-lift:hover { box-shadow: 0 8px 32px rgba(218,119,86,0.12); transform: translateY(-1px); }
+    .sop-kanban-card {
+      border-radius: 16px;
+      border: 1px solid #ebebeb;
+      background: #ffffff;
+      padding: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      transition: box-shadow .2s, transform .2s;
+    }
+    .sop-kanban-card:hover { box-shadow: 0 6px 20px rgba(218,119,86,0.10); transform: translateY(-1px); }
+    .sop-col-panel {
+      border-radius: 20px;
+      border: 1px solid #e8e3de;
+      overflow: hidden;
+    }
+    .drag-over-col { border: 2px dashed #DA7756 !important; opacity: 0.6; }
+  `}</style>
+);
+
+// ─────────────────────────────────────────────
+// SHARED BUTTONS (matches BusinessPlanAndGoles)
+// ─────────────────────────────────────────────
+const BtnPrimary = ({
+  children,
+  onClick,
+  disabled = false,
+  className = "",
+}: any) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.97] disabled:opacity-60 ${className}`}
+    style={{ background: C.primary, fontFamily: C.font }}
+    onMouseEnter={(e) => {
+      if (!disabled) e.currentTarget.style.background = C.primaryHov;
+    }}
+    onMouseLeave={(e) => (e.currentTarget.style.background = C.primary)}
+  >
+    {children}
+  </button>
+);
+
+const BtnOutline = ({
+  children,
+  onClick,
+  disabled = false,
+  className = "",
+}: any) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    className={`inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm font-bold bg-white shadow-sm transition-all duration-150 active:scale-[0.97] border disabled:opacity-60 ${className}`}
+    style={{ borderColor: C.primaryBord, color: C.primary, fontFamily: C.font }}
+    onMouseEnter={(e) => {
+      if (!disabled) {
+        e.currentTarget.style.background = C.primaryBg;
+        e.currentTarget.style.borderColor = C.primaryBordStrong;
+      }
+    }}
+    onMouseLeave={(e) => {
+      if (!disabled) {
+        e.currentTarget.style.background = "#fff";
+        e.currentTarget.style.borderColor = C.primaryBord;
+      }
+    }}
+  >
+    {children}
+  </button>
+);
+
+const BtnIcon = ({ children, onClick, title = "" }: any) => (
+  <button
+    onClick={onClick}
+    title={title}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.background = C.primaryBg;
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.background = "#fff";
+    }}
+    className="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-white shadow-sm transition-all duration-150 active:scale-[0.95] border"
+    style={{ borderColor: C.primaryBord, color: C.textMuted }}
+  >
+    {children}
+  </button>
+);
+
+const LoaderIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg className={`${className} animate-spin`} fill="none" viewBox="0 0 24 24">
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth={4}
+    />
+    <path
+      className="opacity-75"
+      fill="currentColor"
+      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+    />
+  </svg>
+);
+
 // ─────────────────────────────────────────────
 // API CONFIG
 // ─────────────────────────────────────────────
 const BASE_URL = () => localStorage.getItem("baseUrl") || "";
 const getToken = () => localStorage.getItem("token") || "";
 
-// FIX: User data is stored as a JSON object under the "user" key in localStorage.
-// Structure: { id: 188925, email: "...", firstname: "...", ... }
 const getUserId = () => {
   try {
     const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -137,39 +321,25 @@ const fetchMySops = async (): Promise<SopCardData[]> => {
   const res = await fetch(`https://${BASE_URL()}/system_sops`, {
     headers: apiHeaders(),
   });
-
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
   const json = await res.json();
   const arr = Array.isArray(json)
     ? json
     : (json.data ?? json.system_sops ?? []);
-
-  // FIX: Now correctly compares against the real logged-in user's id
-  const mySops = arr.filter(
-    (sop: any) => String(sop.assignee_id) === String(userId)
-  );
-
-  return mySops.map(normalizeSopFromAPI);
+  return arr
+    .filter((sop: any) => String(sop.assignee_id) === String(userId))
+    .map(normalizeSopFromAPI);
 };
 
-// API call to fetch users
 const fetchUsersData = async (): Promise<
   { value: string; label: string }[]
 > => {
   const orgId = localStorage.getItem("org_id") || "";
-
-  if (!orgId) {
-    console.warn("org_id is missing in localStorage! Users will not load.");
-    return [];
-  }
-
+  if (!orgId) return [];
   try {
     const res = await fetch(
       `https://${BASE_URL()}/api/users?organization_id=${orgId}`,
-      {
-        headers: apiHeaders(),
-      }
+      { headers: apiHeaders() }
     );
     if (!res.ok) throw new Error("Failed to fetch users");
     const json = await res.json();
@@ -188,7 +358,6 @@ const fetchUsersData = async (): Promise<
   }
 };
 
-// API call to fetch departments
 const fetchDepartmentsData = async (): Promise<
   { value: string; label: string; id: number }[]
 > => {
@@ -198,11 +367,9 @@ const fetchDepartmentsData = async (): Promise<
     });
     if (!res.ok) throw new Error("Failed to fetch departments");
     const json = await res.json();
-
     const arr = Array.isArray(json)
       ? json
       : (json.data ?? json.departments ?? []);
-
     return arr.map((d: any) => ({
       value: String(d.name || d.id),
       label: d.name || d.department_name,
@@ -292,12 +459,6 @@ type SopCardData = {
   _raw?: any;
 };
 
-const PRIORITY_STYLES: Record<SopCardData["priority"], string> = {
-  low: "bg-sky-100 text-sky-900",
-  medium: "bg-orange-100 text-orange-900",
-  high: "bg-rose-100 text-rose-900",
-};
-
 function coerceHealthPercent(n: unknown): number {
   const v = Number(n);
   if (!Number.isFinite(v)) return 0;
@@ -336,11 +497,256 @@ function parseCardId(id: string | number): string | null {
 }
 
 // ─────────────────────────────────────────────
-// DIALOGS
+// LABEL FIELD WRAPPER
 // ─────────────────────────────────────────────
-function SopFormDialog({
+const FieldBox = ({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) => (
+  <div
+    className="rounded-2xl border p-4 bg-white"
+    style={{ borderColor: C.primaryBord }}
+  >
+    <label
+      className="block text-[12px] font-black mb-2"
+      style={{ color: C.textMain }}
+    >
+      {label} {required && <span style={{ color: C.primary }}>*</span>}
+    </label>
+    {children}
+  </div>
+);
+
+// ─────────────────────────────────────────────
+// MODAL (matches BusinessPlanAndGoles portal style)
+// ─────────────────────────────────────────────
+const Modal = ({
+  children,
+  onClose,
+}: {
+  children: React.ReactNode;
+  onClose: () => void;
+}) => {
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+  return ReactDOM.createPortal(
+    <div
+      className="sop-modal-portal"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      {children}
+    </div>,
+    document.body
+  );
+};
+
+// ─────────────────────────────────────────────
+// SEARCHABLE SELECT (ported from BhagSection)
+// ─────────────────────────────────────────────
+const SearchableSelect = ({
+  value,
+  onChange,
+  options,
+  placeholder = "Search...",
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
+  }, []);
+
+  const selected = options.find((o) => o.value === value);
+  const filtered = options.filter((o) =>
+    o.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div ref={ref} style={{ position: "relative", zIndex: open ? 9999 : 1 }}>
+      <div style={{ position: "relative" }}>
+        <input
+          type="text"
+          className="bp-input"
+          placeholder={placeholder}
+          value={open ? search : (selected?.label ?? "")}
+          onClick={() => {
+            setOpen(true);
+            setSearch("");
+          }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setOpen(true);
+          }}
+          style={{ paddingRight: 36, cursor: "pointer" }}
+          readOnly={!open}
+        />
+        <div
+          style={{
+            position: "absolute",
+            right: 12,
+            top: "50%",
+            transform: "translateY(-50%)",
+            color: "#9ca3af",
+            pointerEvents: "none",
+            transition: "transform .2s",
+            ...(open ? { transform: "translateY(-50%) rotate(180deg)" } : {}),
+          }}
+        >
+          <svg
+            width="14"
+            height="14"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
+      </div>
+
+      {open && (
+        <div
+          style={{
+            position: "absolute",
+            bottom: "calc(100% + 4px)",
+            left: 0,
+            right: 0,
+            background: "#fff",
+            border: `1px solid ${C.borderLgt}`,
+            borderRadius: 12,
+            boxShadow: "0 -8px 24px rgba(0,0,0,0.10)",
+            maxHeight: 200,
+            overflowY: "auto",
+            zIndex: 9999,
+            fontFamily: C.font,
+          }}
+        >
+          {/* Clear option */}
+          {value && (
+            <div
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+                setSearch("");
+              }}
+              style={{
+                padding: "10px 12px",
+                fontSize: 12,
+                fontWeight: 700,
+                color: "#ef4444",
+                cursor: "pointer",
+                borderBottom: `1px solid ${C.borderLgt}`,
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#fef2f2")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "transparent")
+              }
+            >
+              ✕ Clear
+            </div>
+          )}
+          {filtered.length === 0 ? (
+            <div
+              style={{
+                padding: "12px",
+                fontSize: 13,
+                color: C.textMuted,
+                textAlign: "center",
+              }}
+            >
+              No results found
+            </div>
+          ) : (
+            filtered.map((o) => (
+              <div
+                key={o.value}
+                onClick={() => {
+                  onChange(o.value);
+                  setOpen(false);
+                  setSearch("");
+                }}
+                style={{
+                  padding: "10px 12px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: o.value === value ? C.primary : C.textMain,
+                  background: o.value === value ? C.primaryTint : "transparent",
+                  cursor: "pointer",
+                  borderBottom: `1px solid ${C.borderLgt}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+                onMouseEnter={(e) => {
+                  if (o.value !== value)
+                    e.currentTarget.style.background = "#f9fafb";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background =
+                    o.value === value ? C.primaryTint : "transparent";
+                }}
+              >
+                {o.label}
+                {o.value === value && (
+                  <svg
+                    width="13"
+                    height="13"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke={C.primary}
+                    strokeWidth={2.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─────────────────────────────────────────────
+// SOP FORM DIALOG (restyled)
+// ─────────────────────────────────────────────
+function SopFormModal({
   open,
-  onOpenChange,
+  onClose,
   isEdit,
   initialData,
   onSave,
@@ -348,7 +754,7 @@ function SopFormDialog({
   departments,
 }: {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
   isEdit: boolean;
   initialData?: SopCardData | null;
   onSave: (data: any, column: ColumnKey) => Promise<void>;
@@ -361,7 +767,7 @@ function SopFormDialog({
   const [statusColumn, setStatusColumn] = useState<ColumnKey>("toStart");
   const [priority, setPriority] = useState<SopCardData["priority"]>("medium");
   const [assignUser, setAssignUser] = useState("");
-  const [healthScore, setHealthScore] = useState<number[]>([0]);
+  const [healthScore, setHealthScore] = useState(0);
   const [docUrl, setDocUrl] = useState("");
   const [kpiInvoice, setKpiInvoice] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -377,7 +783,7 @@ function SopFormDialog({
         );
         setPriority(initialData.priority);
         setAssignUser(String(initialData.assigneeId ?? ""));
-        setHealthScore([initialData.healthPercent]);
+        setHealthScore(initialData.healthPercent);
         setDocUrl(initialData.docUrl ?? "");
         setKpiInvoice((initialData.kpis ?? []).some((k) => k.kpi_id === 10));
       } else {
@@ -387,24 +793,22 @@ function SopFormDialog({
         setStatusColumn("toStart");
         setPriority("medium");
         setAssignUser("");
-        setHealthScore([0]);
+        setHealthScore(0);
         setDocUrl("");
         setKpiInvoice(false);
       }
     }
   }, [open, isEdit, initialData]);
 
+  if (!open) return null;
+
   const handleSubmit = async () => {
-    const name = systemName.trim();
-    if (!name) return toast.error("Please enter a system name");
+    if (!systemName.trim()) return toast.error("Please enter a system name");
     if (!department) return toast.error("Please select a department");
     if (!assignUser) return toast.error("Please assign a user");
-
     setIsSaving(true);
     try {
       const selectedDept = departments.find((d) => d.value === department);
-      const targetDeptId = selectedDept ? selectedDept.id : 1;
-
       const kpis = kpiInvoice
         ? [
             {
@@ -417,13 +821,13 @@ function SopFormDialog({
           ]
         : [];
       const payload = {
-        system_name: name,
+        system_name: systemName.trim(),
         description: description.trim() || undefined,
-        department_id: targetDeptId,
+        department_id: selectedDept ? selectedDept.id : 1,
         status: COL_TO_STATUS[statusColumn],
         priority: priority.charAt(0).toUpperCase() + priority.slice(1),
         assignee_id: parseInt(assignUser, 10),
-        health_score: healthScore[0] ?? 0,
+        health_score: healthScore,
         documentation_url: docUrl.trim() || undefined,
         kpis: isEdit ? initialData?.kpis : kpis,
       };
@@ -433,305 +837,247 @@ function SopFormDialog({
     }
   };
 
-  const fw = (bc: string, bg: string, children: React.ReactNode) => (
-    <div
-      className={cn("rounded-xl border-2 px-3 py-2.5 sm:px-4 sm:py-3", bc, bg)}
-    >
-      {children}
-    </div>
-  );
+  const statusOptions = [
+    {
+      value: "toStart",
+      label: "To Start",
+      icon: <Clock className="w-4 h-4" style={{ color: "#0284c7" }} />,
+    },
+    {
+      value: "broken",
+      label: "Broken",
+      icon: <XCircle className="w-4 h-4" style={{ color: "#dc2626" }} />,
+    },
+    {
+      value: "running",
+      label: "Running",
+      icon: <CheckCircle2 className="w-4 h-4" style={{ color: "#16a34a" }} />,
+    },
+  ];
+
+  const priorityOptions = [
+    { value: "low", label: "Low", dot: "#0284c7" },
+    { value: "medium", label: "Medium", dot: "#f59e0b" },
+    { value: "high", label: "High", dot: "#dc2626" },
+  ];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto rounded-2xl border border-[#DA7756]/20 bg-[#fef6f4] p-0 shadow-xl">
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-neutral-100 bg-[#fef6f4] px-5 py-4">
-          <DialogHeader className="m-0 flex-1 space-y-0 p-0 text-left">
-            <DialogTitle className="flex items-center gap-2 text-xl font-bold text-[#DA7756]">
-              {isEdit ? (
-                <Pencil className="h-5 w-5 shrink-0 text-[#C72030]" />
-              ) : (
-                <Plus className="h-5 w-5 shrink-0 text-[#C72030]" />
-              )}
-              {isEdit ? "Edit System/SOP" : "Add New System/SOP"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100"
+    <Modal onClose={onClose}>
+      <div className="sop-modal-box">
+        {/* Header */}
+        <div
+          className="flex justify-between items-center px-6 py-5 border-b"
+          style={{ background: C.cardBg, borderColor: C.primaryBord }}
+        >
+          <div className="flex items-center gap-3">
+            <span
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: "50%",
+                background: C.primary,
+                flexShrink: 0,
+                display: "inline-block",
+              }}
+            />
+            <h2
+              className="font-black text-[17px] m-0"
+              style={{ color: C.textMain }}
             >
-              <X className="h-5 w-5" />
-            </button>
+              {isEdit ? "Edit System / SOP" : "Add New System / SOP"}
+            </h2>
           </div>
+          <BtnIcon onClick={onClose}>
+            <X className="w-3.5 h-3.5" />
+          </BtnIcon>
         </div>
 
-        <div className="space-y-4 px-5 py-5 sm:px-6">
-          {fw(
-            "border-neutral-200",
-            "bg-white",
-            <>
-              <Label className="font-semibold text-neutral-900">
-                System Name <span className="text-[#DA7756]">*</span>
-              </Label>
-              <input
-                value={systemName}
-                onChange={(e) => setSystemName(e.target.value)}
-                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-              />
-            </>
-          )}
+        {/* Body */}
+        <div className="p-6 flex-1 overflow-y-auto bp-scroll space-y-4">
+          <FieldBox label="System Name" required>
+            <input
+              className="bp-input"
+              value={systemName}
+              onChange={(e) => setSystemName(e.target.value)}
+              placeholder="e.g. Invoice Processing System"
+            />
+          </FieldBox>
 
-          {fw(
-            "border-neutral-200",
-            "bg-neutral-50/30",
-            <>
-              <Label className="font-semibold text-neutral-900">
-                Description
-              </Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="mt-2 min-h-[88px] resize-y rounded-xl border-neutral-200 bg-white text-sm"
-              />
-            </>
-          )}
+          <FieldBox label="Description">
+            <textarea
+              className="bp-input resize-y"
+              style={{ minHeight: 88 }}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe what this system does..."
+            />
+          </FieldBox>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {fw(
-              "border-neutral-200",
-              "bg-white",
-              <>
-                <Label className="font-semibold text-neutral-900">
-                  Department <span className="text-[#DA7756]">*</span>
-                </Label>
-                <Select
-                  value={department || undefined}
-                  onValueChange={setDepartment}
-                >
-                  <SelectTrigger className="mt-2 h-11 rounded-xl border-neutral-200 bg-white">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((d) => (
-                      <SelectItem key={d.id} value={d.value}>
-                        {d.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </>
-            )}
-            {fw(
-              "border-sky-200/90",
-              "bg-sky-50/40",
-              <>
-                <Label className="font-semibold text-neutral-900">
-                  Status <span className="text-[#DA7756]">*</span>
-                </Label>
-                <Select
-                  value={statusColumn}
-                  onValueChange={(v) => setStatusColumn(v as ColumnKey)}
-                >
-                  <SelectTrigger className="mt-2 h-11 rounded-xl border-neutral-200 bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="toStart">
-                      <span className="flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-sky-600" /> To Start
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="broken">
-                      <span className="flex items-center gap-2">
-                        <XCircle className="h-4 w-4 text-rose-600" /> Broken
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="running">
-                      <span className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />{" "}
-                        Running
-                      </span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </>
-            )}
+          <div className="grid grid-cols-2 gap-4">
+            <FieldBox label="Department" required>
+              <SearchableSelect
+                value={department}
+                onChange={setDepartment}
+                options={departments.map((d) => ({
+                  value: d.value,
+                  label: d.label,
+                }))}
+                placeholder="Search department..."
+              />
+            </FieldBox>
+            <FieldBox label="Status" required>
+              <select
+                className="bp-select"
+                value={statusColumn}
+                onChange={(e) => setStatusColumn(e.target.value as ColumnKey)}
+              >
+                {statusOptions.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </FieldBox>
           </div>
 
-          {fw(
-            "border-orange-200/90",
-            "bg-orange-50/40",
-            <>
-              <Label className="font-semibold text-neutral-900">Priority</Label>
-              <Select
-                value={priority}
-                onValueChange={(v) => setPriority(v as SopCardData["priority"])}
-              >
-                <SelectTrigger className="mt-2 h-11 rounded-xl border-neutral-200 bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">
-                    <span className="flex items-center gap-2">
-                      <Circle className="h-3.5 w-3.5 text-sky-500" /> Low
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="medium">
-                    <span className="flex items-center gap-2">
-                      <Circle className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />{" "}
-                      Medium
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="high">
-                    <span className="flex items-center gap-2">
-                      <Circle className="h-3.5 w-3.5 text-rose-500" /> High
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </>
-          )}
+          <FieldBox label="Priority">
+            <div className="flex gap-2 mt-1">
+              {priorityOptions.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() =>
+                    setPriority(p.value as SopCardData["priority"])
+                  }
+                  className="flex-1 py-2 rounded-xl text-[12px] font-black border transition-all"
+                  style={{
+                    borderColor: priority === p.value ? C.primary : C.borderLgt,
+                    background: priority === p.value ? C.primaryTint : "#fff",
+                    color: priority === p.value ? C.primary : C.textMuted,
+                    boxShadow:
+                      priority === p.value
+                        ? `0 0 0 2px ${C.primary}33`
+                        : "none",
+                  }}
+                >
+                  <span
+                    className="inline-block w-2 h-2 rounded-full mr-1.5"
+                    style={{ background: p.dot }}
+                  />
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </FieldBox>
 
-          {fw(
-            "border-neutral-200",
-            "bg-white",
-            <>
-              <Label className="font-semibold text-neutral-900">
-                Assign to User <span className="text-[#DA7756]">*</span>
-              </Label>
-              <Select
-                value={assignUser || undefined}
-                onValueChange={setAssignUser}
-              >
-                <SelectTrigger className="mt-2 h-11 rounded-xl border-neutral-200 bg-white">
-                  <div className="flex items-center gap-2">
-                    <User className="h-4 w-4 text-violet-500" />
-                    <SelectValue placeholder="Select user" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  {users.map((u) => (
-                    <SelectItem key={u.value} value={u.value}>
-                      {u.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </>
-          )}
+          <FieldBox label="Assign to User" required>
+            <SearchableSelect
+              value={assignUser}
+              onChange={setAssignUser}
+              options={users}
+              placeholder="Search user..."
+            />
+          </FieldBox>
 
-          {/* DYNAMIC FILL SLIDER */}
-          {fw(
-            "border-emerald-200/90",
-            "bg-emerald-50/40",
-            <>
-              <div className="flex items-center justify-between gap-2">
-                <Label className="font-semibold text-neutral-900">
-                  Health Score
-                </Label>
-                <span className="text-sm font-semibold tabular-nums text-emerald-600">
-                  {healthScore[0] ?? 0}%
+          <FieldBox label={`Health Score — ${healthScore}%`}>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={healthScore}
+              onChange={(e) =>
+                setHealthScore(parseInt(e.target.value, 10) || 0)
+              }
+              className="bh-slider-modal w-full mt-1"
+              style={{
+                background: `linear-gradient(to right, ${C.primary} 0%, ${C.primary} ${healthScore}%, #e5e7eb ${healthScore}%, #e5e7eb 100%)`,
+              }}
+            />
+          </FieldBox>
+
+          <FieldBox label="Documentation URL">
+            <input
+              type="url"
+              className="bp-input"
+              value={docUrl}
+              onChange={(e) => setDocUrl(e.target.value)}
+              placeholder="https://..."
+            />
+          </FieldBox>
+
+          {!isEdit && (
+            <FieldBox label="Link KPIs">
+              <div
+                className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
+                style={{
+                  borderColor: kpiInvoice ? C.primary : C.borderLgt,
+                  background: kpiInvoice ? C.primaryTint : "#fff",
+                }}
+                onClick={() => setKpiInvoice(!kpiInvoice)}
+              >
+                <input
+                  type="checkbox"
+                  checked={kpiInvoice}
+                  onChange={(e) => setKpiInvoice(e.target.checked)}
+                  className="w-4 h-4 accent-[#DA7756] cursor-pointer"
+                />
+                <span
+                  className="text-[13px] font-black"
+                  style={{ color: C.textMain }}
+                >
+                  Invoices Raised
+                </span>
+                <span
+                  className="ml-auto px-2 py-0.5 rounded-md text-[11px] font-black"
+                  style={{ background: "#f3f4f6", color: C.textMuted }}
+                >
+                  Invoices
                 </span>
               </div>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                step={1}
-                value={healthScore[0] ?? 0}
-                onChange={(e) =>
-                  setHealthScore([parseInt(e.target.value, 10) || 0])
-                }
-                className="mt-4 w-full h-2.5 appearance-none rounded-full cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-[3px] [&::-webkit-slider-thumb]:border-emerald-500 [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-[3px] [&::-moz-range-thumb]:border-emerald-500 [&::-moz-range-thumb]:shadow-md"
-                style={{
-                  background: `linear-gradient(to right, #10b981 0%, #10b981 ${healthScore[0] ?? 0}%, #e5e7eb ${healthScore[0] ?? 0}%, #e5e7eb 100%)`,
-                }}
-              />
-            </>
+            </FieldBox>
           )}
-
-          {fw(
-            "border-cyan-200/90",
-            "bg-cyan-50/40",
-            <>
-              <Label className="font-semibold text-neutral-900">
-                Documentation URL
-              </Label>
-              <input
-                type="url"
-                value={docUrl}
-                onChange={(e) => setDocUrl(e.target.value)}
-                placeholder="https://..."
-                className="mt-2 h-11 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-              />
-            </>
-          )}
-
-          {!isEdit &&
-            fw(
-              "border-amber-200/90",
-              "bg-amber-50/40",
-              <>
-                <Label className="font-semibold text-neutral-900">
-                  Link KPIs
-                </Label>
-                <div className="mt-3 rounded-xl border border-neutral-200/80 bg-white p-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="add-kpi-invoices"
-                        checked={kpiInvoice}
-                        onCheckedChange={(c) => setKpiInvoice(c === true)}
-                      />
-                      <label
-                        htmlFor="add-kpi-invoices"
-                        className="text-sm font-medium text-neutral-800"
-                      >
-                        Invoices Raised
-                      </label>
-                    </div>
-                    <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs text-neutral-600">
-                      Invoices
-                    </span>
-                  </div>
-                </div>
-              </>
-            )}
         </div>
 
-        <div className="sticky bottom-0 z-10 flex items-center justify-end gap-2 border-t border-neutral-100 bg-[#fef6f4] px-5 py-4 sm:px-6">
-          <button
-            type="button"
-            onClick={() => onOpenChange(false)}
-            className="inline-flex h-10 items-center rounded-xl border border-neutral-200 bg-white px-4 text-sm font-semibold text-neutral-700 hover:bg-neutral-50"
-          >
+        {/* Footer */}
+        <div
+          className="p-5 flex justify-end gap-3 border-t"
+          style={{ background: C.cardBg, borderColor: C.primaryBord }}
+        >
+          <BtnOutline onClick={onClose} disabled={isSaving}>
             Cancel
-          </button>
+          </BtnOutline>
           <button
-            type="button"
             onClick={handleSubmit}
             disabled={isSaving}
-            className="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#DA7756] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:opacity-60"
+            className="px-6 py-2 text-[13px] font-black text-white rounded-xl transition-colors shadow-sm active:scale-[0.97] flex items-center gap-2 disabled:opacity-60"
+            style={{ background: "#1a1a1a", fontFamily: C.font }}
+            onMouseEnter={(e) => {
+              if (!isSaving) e.currentTarget.style.background = "#000";
+            }}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "#1a1a1a")}
           >
-            {isSaving ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : isEdit ? (
-              <Save className="h-4 w-4" />
-            ) : (
-              <Sparkles className="h-4 w-4" />
-            )}
-            {isSaving ? "Saving…" : isEdit ? "Update SOP" : "Create SOP"}
+            {isSaving && <LoaderIcon />}
+            {isSaving ? "Saving..." : isEdit ? "Update SOP" : "Create SOP"}
           </button>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </Modal>
   );
 }
 
 // ─────────────────────────────────────────────
 // KANBAN CARD
 // ─────────────────────────────────────────────
+const PRIORITY_CHIP: Record<
+  SopCardData["priority"],
+  { bg: string; color: string }
+> = {
+  low: { bg: "#e0f2fe", color: "#0369a1" },
+  medium: { bg: "#fff7ed", color: "#c2410c" },
+  high: { bg: "#fee2e2", color: "#b91c1c" },
+};
+
 function SopKanbanCard({
   item,
   column,
@@ -750,73 +1096,89 @@ function SopKanbanCard({
   onDeleteClick?: () => void;
 }) {
   const health = coerceHealthPercent(displayHealthPercent);
-  const statusBadge =
-    column === "running" ? (
-      <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-900">
-        Running
-      </span>
-    ) : column === "toStart" ? (
-      <span className="rounded-md bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-sky-900">
-        To start
-      </span>
-    ) : (
-      <span className="rounded-md bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-800">
-        Broken
-      </span>
-    );
-  const barClass =
+  const barColor =
     column === "running"
-      ? "bg-emerald-500"
+      ? "#22c55e"
       : column === "toStart"
-        ? "bg-sky-400"
-        : "bg-rose-500";
+        ? "#38bdf8"
+        : "#ef4444";
+  const pChip = PRIORITY_CHIP[item.priority];
+
+  const statusChip =
+    column === "running"
+      ? { label: "Running", bg: "#dcfce7", color: "#15803d" }
+      : column === "toStart"
+        ? { label: "To Start", bg: "#e0f2fe", color: "#0369a1" }
+        : { label: "Broken", bg: "#fee2e2", color: "#b91c1c" };
 
   return (
     <div
       {...(dragHandleProps ?? {})}
-      className={cn(
-        "rounded-xl border border-neutral-200/90 bg-white p-3 shadow-sm",
-        dragHandleProps &&
-          "cursor-grab touch-manipulation select-none active:cursor-grabbing"
-      )}
+      className={`sop-kanban-card bp-card-lift ${dragHandleProps ? "cursor-grab active:cursor-grabbing select-none touch-manipulation" : ""}`}
     >
-      <p className="font-semibold leading-snug text-neutral-900">
+      <p
+        className="font-black text-[14px] leading-snug mb-3"
+        style={{ color: C.textMain }}
+      >
         {item.title}
       </p>
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700">
+
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        <span
+          className="px-2 py-0.5 rounded-lg text-[11px] font-black"
+          style={{ background: "#f3f4f6", color: C.textMuted }}
+        >
           {item.department}
         </span>
         <span
-          className={cn(
-            "rounded-md px-2 py-0.5 text-xs font-medium capitalize",
-            PRIORITY_STYLES[item.priority]
-          )}
+          className="px-2 py-0.5 rounded-lg text-[11px] font-black capitalize"
+          style={{ background: pChip.bg, color: pChip.color }}
         >
           {item.priority}
         </span>
         {item.assigneeName && (
-          <span className="rounded-md bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800">
+          <span
+            className="px-2 py-0.5 rounded-lg text-[11px] font-black"
+            style={{ background: "#ede9fe", color: "#7c3aed" }}
+          >
             {item.assigneeName}
           </span>
         )}
       </div>
-      <div className="mt-3 space-y-1.5">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-medium text-neutral-600">Health</span>
-          {statusBadge}
+
+      <div className="space-y-1.5 mb-4">
+        <div className="flex items-center justify-between">
+          <span
+            className="text-[11px] font-black"
+            style={{ color: C.textMuted }}
+          >
+            Health
+          </span>
+          <span
+            className="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wide"
+            style={{ background: statusChip.bg, color: statusChip.color }}
+          >
+            {statusChip.label}
+          </span>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-neutral-200">
+        <div
+          className="h-2 w-full rounded-full overflow-hidden"
+          style={{ background: "#f3f4f6" }}
+        >
           <div
-            className={cn("h-full rounded-full transition-colors", barClass)}
-            style={{ width: `${health}%` }}
+            className="h-full rounded-full transition-all"
+            style={{ width: `${health}%`, background: barColor }}
           />
         </div>
-        <p className="text-right text-[11px] font-medium tabular-nums text-neutral-500">
+        <p
+          className="text-right text-[11px] font-black tabular-nums"
+          style={{ color: C.textMuted }}
+        >
           {health}%
         </p>
       </div>
-      <div className="mt-3 flex items-center gap-2">
+
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onPointerDown={(e) => e.stopPropagation()}
@@ -824,9 +1186,14 @@ function SopKanbanCard({
             e.stopPropagation();
             onEditClick?.();
           }}
-          className="inline-flex min-h-9 flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#DA7756] px-3 text-xs font-semibold text-white shadow-sm hover:bg-[#DA7756]/85"
+          className="flex-1 py-2 rounded-xl text-[12px] font-black text-white flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.97]"
+          style={{ background: C.primary }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.background = C.primaryHov)
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.background = C.primary)}
         >
-          <Pencil className="h-3.5 w-3.5" /> Edit
+          <Pencil className="w-3.5 h-3.5" /> Edit
         </button>
         <button
           type="button"
@@ -835,9 +1202,10 @@ function SopKanbanCard({
             e.stopPropagation();
             onDuplicateClick?.();
           }}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-neutral-300 bg-white text-neutral-600 shadow-sm hover:bg-neutral-50"
+          className="w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all active:scale-[0.97] hover:bg-gray-50"
+          style={{ borderColor: C.borderLgt, color: C.textMuted }}
         >
-          <Copy className="h-3.5 w-3.5" />
+          <Copy className="w-3.5 h-3.5" />
         </button>
         <button
           type="button"
@@ -846,9 +1214,10 @@ function SopKanbanCard({
             e.stopPropagation();
             onDeleteClick?.();
           }}
-          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-rose-200 bg-white text-rose-600 shadow-sm hover:bg-rose-50"
+          className="w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all active:scale-[0.97] hover:bg-red-50"
+          style={{ borderColor: "#fecaca", color: "#ef4444" }}
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <Trash2 className="w-3.5 h-3.5" />
         </button>
       </div>
     </div>
@@ -899,10 +1268,7 @@ function SopColumnBody({ colKey, children, emptySlot }: any) {
   return (
     <div
       ref={setNodeRef}
-      className={cn(
-        "flex min-h-[200px] min-w-0 flex-1 flex-col rounded-xl border-2 border-dashed border-transparent p-1 transition-colors",
-        isOver && "border-[#DA7756]/50 bg-black/[0.02]"
-      )}
+      className={`flex min-h-[180px] flex-1 flex-col rounded-2xl border-2 border-dashed border-transparent p-1 transition-colors ${isOver ? "drag-over-col" : ""}`}
     >
       {children}
       {emptySlot}
@@ -915,92 +1281,39 @@ const COLUMN_META = [
     key: "toStart" as const,
     title: "To Start",
     icon: Clock,
-    badgeClass: "bg-sky-600 text-white",
-    headerIconClass: "text-sky-600",
-    panelClass: "bg-sky-50/90 border-sky-200/60",
-    emptyIcon: Clock,
-    emptyIconClass: "text-sky-400",
+    headerBg: "#e0f2fe",
+    headerBorder: "#bae6fd",
+    iconColor: "#0284c7",
+    badgeBg: "#0284c7",
+    panelBorder: "#bae6fd",
+    panelBg: "#f0f9ff",
+    emptyIconColor: "#7dd3fc",
   },
   {
     key: "broken" as const,
     title: "Broken",
     icon: XCircle,
-    badgeClass: "bg-rose-600 text-white",
-    headerIconClass: "text-rose-600",
-    panelClass: "bg-rose-50/90 border-rose-200/60",
-    emptyIcon: XCircle,
-    emptyIconClass: "text-rose-400",
+    headerBg: "#fee2e2",
+    headerBorder: "#fecaca",
+    iconColor: "#dc2626",
+    badgeBg: "#dc2626",
+    panelBorder: "#fecaca",
+    panelBg: "#fff5f5",
+    emptyIconColor: "#fca5a5",
   },
   {
     key: "running" as const,
     title: "Running",
     icon: CheckCircle2,
-    badgeClass: "bg-[#2E7D32] text-white",
-    headerIconClass: "text-[#2E7D32]",
-    panelClass: "bg-[#E3F4E8]/90 border-emerald-200/60",
-    emptyIcon: CheckCircle2,
-    emptyIconClass: "text-emerald-500",
+    headerBg: "#dcfce7",
+    headerBorder: "#bbf7d0",
+    iconColor: "#16a34a",
+    badgeBg: "#16a34a",
+    panelBorder: "#bbf7d0",
+    panelBg: "#f0fdf4",
+    emptyIconColor: "#86efac",
   },
 ];
-
-function FilterSelect({
-  label,
-  value,
-  onChange,
-  users = [],
-  departments = [],
-}: {
-  label: string;
-  value: string;
-  onChange: (val: string) => void;
-  users?: { value: string; label: string }[];
-  departments?: { value: string; label: string; id: number }[];
-}) {
-  const getOptions = () => {
-    if (label === "All Status")
-      return [
-        { value: "all", label: "All Status" },
-        { value: "toStart", label: "To Start" },
-        { value: "broken", label: "Broken" },
-        { value: "running", label: "Running" },
-      ];
-    if (label === "All Departments")
-      return [
-        { value: "all", label: "All Departments" },
-        ...departments.map((d) => ({ value: d.value, label: d.label })),
-      ];
-    if (label === "All People")
-      return [
-        { value: "all", label: "All People" },
-        ...users.map((p) => ({ value: p.value, label: p.label })),
-      ];
-    if (label === "All Priorities")
-      return [
-        { value: "all", label: "All Priorities" },
-        { value: "low", label: "Low" },
-        { value: "medium", label: "Medium" },
-        { value: "high", label: "High" },
-      ];
-    return [{ value: "all", label }];
-  };
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="h-10 w-full min-w-[140px] rounded-xl border-neutral-200 bg-white text-sm">
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-neutral-400 flex-shrink-0" />
-          <SelectValue placeholder={label} />
-        </div>
-      </SelectTrigger>
-      <SelectContent>
-        {getOptions().map((o) => (
-          <SelectItem key={o.value} value={o.value}>
-            {o.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
 
 // ─────────────────────────────────────────────
 // MAIN COMPONENT
@@ -1009,7 +1322,6 @@ const SystemAndSOP = () => {
   const [bannerVisible, setBannerVisible] = useState(true);
   const [sopTab, setSopTab] = useState<SopTab>("my");
   const [search, setSearch] = useState("");
-
   const [filterDept, setFilterDept] = useState("all");
   const [filterAssignee, setFilterAssignee] = useState("all");
   const [filterPriority, setFilterPriority] = useState("all");
@@ -1110,24 +1422,18 @@ const SystemAndSOP = () => {
 
   const activeFilters = useMemo(() => {
     const filters = [];
-    if (filterDept !== "all") {
-      const deptName =
-        departments.find((d) => d.value === filterDept)?.label || filterDept;
+    if (filterDept !== "all")
       filters.push({
         id: "dept",
-        label: `Dept: ${deptName}`,
+        label: `Dept: ${departments.find((d) => d.value === filterDept)?.label || filterDept}`,
         onClear: () => setFilterDept("all"),
       });
-    }
-    if (filterAssignee !== "all") {
-      const assigneeName =
-        users.find((a) => a.value === filterAssignee)?.label || filterAssignee;
+    if (filterAssignee !== "all")
       filters.push({
         id: "assignee",
-        label: `Person: ${assigneeName}`,
+        label: `Person: ${users.find((a) => a.value === filterAssignee)?.label || filterAssignee}`,
         onClear: () => setFilterAssignee("all"),
       });
-    }
     if (filterPriority !== "all")
       filters.push({
         id: "priority",
@@ -1161,7 +1467,6 @@ const SystemAndSOP = () => {
     if (!over) return;
     const activeCardId = parseCardId(active.id);
     if (!activeCardId) return;
-
     setColumns((prev) => {
       const sourceCol = findColumnForCard(prev, activeCardId);
       if (!sourceCol) return prev;
@@ -1178,17 +1483,14 @@ const SystemAndSOP = () => {
         }
       }
       if (!targetCol) return prev;
-
       const fromList = [...prev[sourceCol]];
       const fromIdx = fromList.findIndex((c) => c.id === activeCardId);
       if (fromIdx < 0) return prev;
       const [moved] = fromList.splice(fromIdx, 1);
-
       if (sourceCol !== targetCol)
         patchSopStatus(activeCardId, COL_TO_STATUS[targetCol])
           .then(() => toast.success(`Moved to ${COL_TO_STATUS[targetCol]}`))
           .catch((e) => toast.error(`Status update failed: ${e.message}`));
-
       if (sourceCol === targetCol) {
         const list = fromList;
         let idx = insertBeforeId
@@ -1293,94 +1595,26 @@ const SystemAndSOP = () => {
     ? findColumnForCard(columns, activeDragId)
     : null;
 
-  const KanbanGrid = () => (
-    <div className="grid gap-4 lg:grid-cols-3">
-      {COLUMN_META.map((col) => {
-        const Icon = col.icon;
-        const EmptyIcon = col.emptyIcon;
-        const list = displayedByCol[col.key];
-        const hasCards = list.length > 0;
-
-        return (
-          <Card
-            key={col.key}
-            className={cn(
-              "flex min-h-[280px] flex-col rounded-2xl border shadow-sm",
-              col.panelClass
-            )}
-          >
-            <div className="flex items-center gap-2 border-b border-neutral-200/40 bg-white/60 px-3 py-3 sm:px-4">
-              <Icon className={cn("h-5 w-5 shrink-0", col.headerIconClass)} />
-              <span className="min-w-0 flex-1 text-sm font-semibold text-neutral-900">
-                {col.title}
-              </span>
-              <span
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-xs font-bold tabular-nums",
-                  col.badgeClass
-                )}
-              >
-                {counts[col.key]}
-              </span>
-            </div>
-            <div className="flex flex-1 flex-col p-3 sm:p-4">
-              <SopColumnBody
-                colKey={col.key}
-                emptySlot={
-                  !hasCards ? (
-                    <div className="pointer-events-none flex flex-1 flex-col items-center justify-center py-6">
-                      <div className="flex w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-neutral-300/80 bg-white/50 py-10">
-                        <EmptyIcon
-                          className={cn("mb-2 h-10 w-10", col.emptyIconClass)}
-                          strokeWidth={1.25}
-                        />
-                        <p className="text-sm font-medium text-neutral-500">
-                          No systems here
-                        </p>
-                      </div>
-                    </div>
-                  ) : null
-                }
-              >
-                {hasCards && (
-                  <div className="flex flex-col gap-3">
-                    {list.map((item) => (
-                      <DraggableSopCard
-                        key={item.id}
-                        item={item}
-                        column={col.key}
-                        displayHealthPercent={item.healthPercent}
-                        disabled={false}
-                        onEditClick={() => {
-                          setEditTarget({ item, column: col.key });
-                          setEditOpen(true);
-                        }}
-                        onDuplicateClick={() =>
-                          handleDuplicateCard(item, col.key)
-                        }
-                        onDeleteClick={() => handleDeleteCard(item.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </SopColumnBody>
-            </div>
-          </Card>
-        );
-      })}
-    </div>
+  const Shimmer = ({ w = "100%", h = 16 }: { w?: string; h?: number }) => (
+    <div
+      className="animate-pulse rounded-xl"
+      style={{ width: w, height: h, background: "#e5e1d8" }}
+    />
   );
 
   return (
     <div
-      className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6"
-      style={{ fontFamily: "'Poppins', sans-serif" }}
+      className="sop-wrap min-h-screen p-4 md:p-8 w-full mx-auto space-y-6"
+      style={{ background: C.pageBg, color: C.textMain, fontFamily: C.font }}
     >
-      <SopFormDialog
+      <ThemeStyle />
+
+      {/* Modals */}
+      <SopFormModal
         open={editOpen}
-        onOpenChange={(o) => {
-          setEditOpen(o);
-          if (!o) setEditTarget(null);
+        onClose={() => {
+          setEditOpen(false);
+          setEditTarget(null);
         }}
         isEdit={true}
         initialData={editTarget?.item}
@@ -1388,247 +1622,471 @@ const SystemAndSOP = () => {
         users={users}
         departments={departments}
       />
-      <SopFormDialog
+      <SopFormModal
         open={addOpen}
-        onOpenChange={setAddOpen}
+        onClose={() => setAddOpen(false)}
         isEdit={false}
         onSave={handleAddCreate}
         users={users}
         departments={departments}
       />
 
-      <div className="mx-auto max-w-6xl space-y-6">
-        {bannerVisible && (
-          <div className="flex items-center gap-3 rounded-2xl border border-sky-200/60 bg-sky-50/90 px-4 py-3 shadow-sm pr-2">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-sky-500">
-              <Lightbulb className="h-5 w-5 text-white" strokeWidth={2} />
-            </div>
-            <button type="button" className="min-w-0 flex-1 text-left">
-              <p className="text-sm font-semibold text-sky-950">
-                Creating Systems &amp; SOPs
-              </p>
-              <p className="text-xs text-sky-700/90">Click to view tips</p>
-            </button>
-            <div className="flex shrink-0 items-center gap-0.5">
-              <button
-                type="button"
-                className="rounded-md p-2 text-sky-700 hover:bg-sky-100"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                className="rounded-md p-2 text-sky-700 hover:bg-sky-100"
-                onClick={() => setBannerVisible(false)}
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
-        )}
+      {/* ── Page Header ── */}
+      <div
+        className="overflow-hidden rounded-2xl border shadow-sm p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
+        style={{
+          background: "rgba(218,119,86,0.10)",
+          borderColor: C.primaryBord,
+        }}
+      >
+        <div>
+          <p
+            className="text-[10px] font-black uppercase tracking-[0.18em] mb-1"
+            style={{ color: C.textMuted }}
+          >
+            Monitor your business systems health
+          </p>
+          <h1
+            className="text-2xl font-black tracking-tight"
+            style={{ color: "#111" }}
+          >
+            Systems &amp; SOPs
+          </h1>
+          <p
+            className="text-sm font-semibold mt-1"
+            style={{ color: C.textMuted }}
+          >
+            Standard Operating Procedures
+          </p>
+        </div>
+        <div className="flex gap-3 shrink-0">
+          <BtnIcon onClick={loadSops} title="Refresh">
+            <RefreshCw
+              className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+              style={{ color: C.primary }}
+            />
+          </BtnIcon>
+          <BtnPrimary onClick={() => setAddOpen(true)}>
+            <Plus className="w-4 h-4" /> Add System
+          </BtnPrimary>
+        </div>
+      </div>
 
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-              Systems &amp; SOPs
-            </h1>
-            <p className="mt-1 text-sm text-neutral-500 sm:text-base">
-              Monitor your business systems health
+      {/* ── Tab Bar (matches BusinessPlanAndGoles) ── */}
+      <div
+        className="flex w-fit rounded-2xl p-1 gap-1 overflow-x-auto"
+        style={{ background: C.primary }}
+      >
+        {(["my", "all"] as SopTab[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setSopTab(t)}
+            className="py-2 px-5 rounded-xl text-sm font-bold transition-all duration-150 whitespace-nowrap"
+            style={{
+              background: sopTab === t ? "#fff" : "transparent",
+              color: sopTab === t ? C.primary : "rgba(255,255,255,0.85)",
+              boxShadow: sopTab === t ? "0 1px 4px rgba(0,0,0,0.10)" : "none",
+            }}
+          >
+            {t === "my" ? "My SOPs" : "All SOPs"}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Banner ── */}
+      {bannerVisible && (
+        <div
+          className="flex items-center gap-3 rounded-2xl border px-5 py-3 shadow-sm"
+          style={{ background: C.primaryTint, borderColor: C.primaryBord }}
+        >
+          <div
+            className="flex w-9 h-9 shrink-0 items-center justify-center rounded-xl"
+            style={{ background: "rgba(218,119,86,0.14)" }}
+          >
+            <Lightbulb
+              className="w-5 h-5"
+              style={{ color: C.primary }}
+              strokeWidth={2}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-black" style={{ color: C.textMain }}>
+              Creating Systems &amp; SOPs
+            </p>
+            <p
+              className="text-[11px] font-semibold"
+              style={{ color: C.textMuted }}
+            >
+              Click to view tips for building effective SOPs
             </p>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-            <div className="inline-flex rounded-full bg-neutral-200/70 p-1">
-              <button
-                type="button"
-                onClick={() => setSopTab("my")}
-                className={cn(
-                  "rounded-full px-4 py-2 text-sm font-medium transition-all",
-                  sopTab === "my"
-                    ? "bg-white text-neutral-900 shadow-sm"
-                    : "text-neutral-600 hover:text-neutral-900"
-                )}
-              >
-                My SOPs
-              </button>
-              <button
-                type="button"
-                onClick={() => setSopTab("all")}
-                className={cn(
-                  "rounded-full px-4 py-2 text-sm font-medium transition-all",
-                  sopTab === "all"
-                    ? "bg-white text-neutral-900 shadow-sm"
-                    : "text-neutral-600 hover:text-neutral-900"
-                )}
-              >
-                All SOPs
-              </button>
-            </div>
+          <div className="flex shrink-0 items-center gap-1">
             <button
-              type="button"
-              onClick={loadSops}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-neutral-200 bg-white text-neutral-600 shadow-sm hover:bg-neutral-50"
+              className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+              style={{
+                background: "rgba(218,119,86,0.12)",
+                color: C.primary,
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "rgba(218,119,86,0.18)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "rgba(218,119,86,0.12)")
+              }
             >
-              <RefreshCw
-                className={cn("h-4 w-4", isLoading && "animate-spin")}
-              />
+              <ChevronRight className="w-4 h-4" />
             </button>
             <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 sm:px-5"
+              onClick={() => setBannerVisible(false)}
+              className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+              style={{
+                background: "rgba(218,119,86,0.12)",
+                color: C.primary,
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "rgba(218,119,86,0.18)")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "rgba(218,119,86,0.12)")
+              }
             >
-              <Plus className="h-4 w-4" strokeWidth={2} /> Add System
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>
+      )}
 
-        <div className="flex flex-col gap-3">
-          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-3 shadow-sm sm:p-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-center">
-              <div className="grid flex-1 grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                <FilterSelect
-                  label="All Departments"
-                  value={filterDept}
-                  onChange={setFilterDept}
-                  departments={departments}
-                />
-                <FilterSelect
-                  label="All People"
-                  value={filterAssignee}
-                  onChange={setFilterAssignee}
-                  users={users}
-                />
-                <FilterSelect
-                  label="All Priorities"
-                  value={filterPriority}
-                  onChange={setFilterPriority}
-                />
-                <FilterSelect
-                  label="All Status"
-                  value={filterStatus}
-                  onChange={setFilterStatus}
-                />
-              </div>
-              <div className="relative min-w-0 lg:min-w-[180px] lg:max-w-xs lg:flex-shrink-0">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search systems..."
-                  className="h-10 w-full rounded-xl border border-neutral-200 bg-white py-2 pl-10 pr-3 text-sm placeholder:text-neutral-400 outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
-                />
-              </div>
-            </div>
-          </Card>
-
-          {activeFilters.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold text-neutral-500">
-                Active Filters:
-              </span>
-              {activeFilters.map((f) => (
-                <span
-                  key={f.id}
-                  className="inline-flex items-center gap-1 rounded-full bg-[#DA7756]/10 pl-2.5 pr-1.5 py-1 text-xs font-medium text-[#DA7756] border border-[#DA7756]/20 shadow-sm"
-                >
-                  {f.label}
-                  <button
-                    onClick={f.onClear}
-                    className="hover:bg-[#DA7756]/20 rounded-full p-0.5 transition-colors"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
+      {/* ── Filters ── */}
+      <div
+        className="rounded-2xl border p-4 shadow-sm space-y-3"
+        style={{
+          background: "rgba(218,119,86,0.06)",
+          borderColor: C.primaryBord,
+        }}
+      >
+        <p
+          className="text-[10px] font-black uppercase tracking-[0.18em]"
+          style={{ color: C.textMuted }}
+        >
+          Filters
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {[
+            {
+              label: "All Departments",
+              value: filterDept,
+              setter: setFilterDept,
+              opts: [
+                { value: "all", label: "All Departments" },
+                ...departments.map((d) => ({ value: d.value, label: d.label })),
+              ],
+            },
+            {
+              label: "All People",
+              value: filterAssignee,
+              setter: setFilterAssignee,
+              opts: [
+                { value: "all", label: "All People" },
+                ...users.map((u) => ({ value: u.value, label: u.label })),
+              ],
+            },
+            {
+              label: "All Priorities",
+              value: filterPriority,
+              setter: setFilterPriority,
+              opts: [
+                { value: "all", label: "All Priorities" },
+                { value: "low", label: "Low" },
+                { value: "medium", label: "Medium" },
+                { value: "high", label: "High" },
+              ],
+            },
+            {
+              label: "All Status",
+              value: filterStatus,
+              setter: setFilterStatus,
+              opts: [
+                { value: "all", label: "All Status" },
+                { value: "toStart", label: "To Start" },
+                { value: "broken", label: "Broken" },
+                { value: "running", label: "Running" },
+              ],
+            },
+          ].map((f) => (
+            <select
+              key={f.label}
+              className="bp-select"
+              value={f.value}
+              onChange={(e) => f.setter(e.target.value)}
+            >
+              {f.opts.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
               ))}
-              <button
-                onClick={() => {
-                  setFilterDept("all");
-                  setFilterAssignee("all");
-                  setFilterPriority("all");
-                  setFilterStatus("all");
-                  setSearch("");
-                }}
-                className="text-xs font-semibold text-neutral-500 hover:text-neutral-800 underline underline-offset-2 ml-1 transition-colors"
-              >
-                Clear All
-              </button>
-            </div>
-          )}
+            </select>
+          ))}
+        </div>
+        <div className="relative">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
+            style={{ color: C.textMuted }}
+          />
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search systems..."
+            className="bp-input"
+            style={{ paddingLeft: 38 }}
+          />
         </div>
 
-        {apiError && (
-          <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 shadow-sm">
-            <AlertTriangle className="h-4 w-4 shrink-0" />
-            <span className="flex-1">Failed to load SOPs: {apiError}</span>
-            <button
-              type="button"
-              onClick={loadSops}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50"
+        {activeFilters.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span
+              className="text-[11px] font-black"
+              style={{ color: C.textMuted }}
             >
-              <RefreshCw className="h-3.5 w-3.5" /> Retry
+              Active:
+            </span>
+            {activeFilters.map((f) => (
+              <span
+                key={f.id}
+                className="inline-flex items-center gap-1 rounded-full pl-3 pr-1.5 py-1 text-[11px] font-black border"
+                style={{
+                  background: C.primaryTint,
+                  color: C.primary,
+                  borderColor: C.primaryBord,
+                }}
+              >
+                {f.label}
+                <button
+                  onClick={f.onClear}
+                  className="rounded-full p-0.5 transition-colors hover:bg-[rgba(218,119,86,0.20)]"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+            <button
+              onClick={() => {
+                setFilterDept("all");
+                setFilterAssignee("all");
+                setFilterPriority("all");
+                setFilterStatus("all");
+                setSearch("");
+              }}
+              className="text-[11px] font-black underline underline-offset-2 transition-colors"
+              style={{ color: C.textMuted }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = C.primary)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = C.textMuted)}
+            >
+              Clear All
             </button>
           </div>
         )}
-
-        {isLoading ? (
-          <div className="grid gap-4 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="rounded-2xl border border-neutral-200 bg-white p-4 animate-pulse space-y-3"
-              >
-                <div className="h-4 bg-neutral-100 rounded w-1/2" />
-                {[1, 2, 3].map((j) => (
-                  <div key={j} className="h-24 bg-neutral-100 rounded-xl" />
-                ))}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragCancel={handleDragCancel}
-          >
-            <KanbanGrid />
-            <DragOverlay dropAnimation={null}>
-              {activeItem && activeColumn ? (
-                <div className="w-[min(100vw-2rem,320px)] cursor-grabbing opacity-95 shadow-xl">
-                  <SopKanbanCard
-                    item={activeItem}
-                    column={activeColumn}
-                    displayHealthPercent={activeItem.healthPercent}
-                  />
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        )}
-
-        {!isLoading &&
-          !apiError &&
-          counts.toStart === 0 &&
-          counts.broken === 0 &&
-          counts.running === 0 && (
-            <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 py-16 shadow-sm">
-              <div className="flex flex-col items-center justify-center px-4 text-center">
-                <FileText
-                  className="mb-4 h-14 w-14 text-[#DA7756]/40"
-                  strokeWidth={1.25}
-                />
-                <p className="text-lg font-semibold text-neutral-900">
-                  No systems found
-                </p>
-                <p className="mt-2 max-w-md text-sm text-neutral-500">
-                  Add your first system/SOP or clear active filters
-                </p>
-              </div>
-            </Card>
-          )}
       </div>
+
+      {/* ── Error ── */}
+      {apiError && (
+        <div
+          className="flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm shadow-sm"
+          style={{
+            borderColor: "#fecaca",
+            background: "#fee2e2",
+            color: "#991b1b",
+          }}
+        >
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          <span className="flex-1 font-semibold">
+            Failed to load SOPs: {apiError}
+          </span>
+          <button
+            onClick={loadSops}
+            className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-[12px] font-black"
+            style={{
+              borderColor: "#fecaca",
+              background: "#fff",
+              color: "#991b1b",
+            }}
+          >
+            <RefreshCw className="w-3.5 h-3.5" /> Retry
+          </button>
+        </div>
+      )}
+
+      {/* ── Kanban Grid ── */}
+      {isLoading ? (
+        <div className="grid gap-4 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="rounded-2xl border p-5 space-y-3 animate-pulse"
+              style={{ borderColor: C.primaryBord, background: C.cardBg }}
+            >
+              <Shimmer w="50%" h={18} />
+              {[1, 2, 3].map((j) => (
+                <Shimmer key={j} h={100} />
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
+        >
+          <div className="grid gap-4 lg:grid-cols-3">
+            {COLUMN_META.map((col) => {
+              const Icon = col.icon;
+              const list = displayedByCol[col.key];
+              return (
+                <div
+                  key={col.key}
+                  className="sop-col-panel flex flex-col"
+                  style={{
+                    background: col.panelBg,
+                    borderColor: col.panelBorder,
+                    border: `1px solid ${col.panelBorder}`,
+                  }}
+                >
+                  {/* Column Header */}
+                  <div
+                    className="flex items-center gap-2 px-4 py-3 border-b"
+                    style={{
+                      background: col.headerBg,
+                      borderColor: col.headerBorder,
+                    }}
+                  >
+                    <Icon
+                      className="w-5 h-5 shrink-0"
+                      style={{ color: col.iconColor }}
+                    />
+                    <span
+                      className="flex-1 font-black text-[13px]"
+                      style={{ color: C.textMain }}
+                    >
+                      {col.title}
+                    </span>
+                    <span
+                      className="rounded-full px-2.5 py-0.5 text-[11px] font-black text-white tabular-nums"
+                      style={{ background: col.badgeBg }}
+                    >
+                      {counts[col.key]}
+                    </span>
+                  </div>
+
+                  {/* Column Body */}
+                  <div className="flex flex-1 flex-col p-3">
+                    <SopColumnBody
+                      colKey={col.key}
+                      emptySlot={
+                        list.length === 0 ? (
+                          <div className="pointer-events-none flex flex-1 flex-col items-center justify-center py-8">
+                            <div
+                              className="w-full flex flex-col items-center justify-center rounded-2xl border-2 border-dashed py-10"
+                              style={{ borderColor: col.headerBorder }}
+                            >
+                              <Icon
+                                className="w-10 h-10 mb-2"
+                                style={{
+                                  color: col.emptyIconColor,
+                                  strokeWidth: 1.25,
+                                }}
+                              />
+                              <p
+                                className="text-[13px] font-black"
+                                style={{ color: C.textMuted }}
+                              >
+                                No systems here
+                              </p>
+                            </div>
+                          </div>
+                        ) : null
+                      }
+                    >
+                      {list.length > 0 && (
+                        <div className="flex flex-col gap-3">
+                          {list.map((item) => (
+                            <DraggableSopCard
+                              key={item.id}
+                              item={item}
+                              column={col.key}
+                              displayHealthPercent={item.healthPercent}
+                              disabled={false}
+                              onEditClick={() => {
+                                setEditTarget({ item, column: col.key });
+                                setEditOpen(true);
+                              }}
+                              onDuplicateClick={() =>
+                                handleDuplicateCard(item, col.key)
+                              }
+                              onDeleteClick={() => handleDeleteCard(item.id)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </SopColumnBody>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <DragOverlay dropAnimation={null}>
+            {activeItem && activeColumn ? (
+              <div
+                className="w-[min(100vw-2rem,320px)] cursor-grabbing opacity-95"
+                style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.20))" }}
+              >
+                <SopKanbanCard
+                  item={activeItem}
+                  column={activeColumn}
+                  displayHealthPercent={activeItem.healthPercent}
+                />
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      )}
+
+      {/* ── All empty state ── */}
+      {!isLoading &&
+        !apiError &&
+        counts.toStart === 0 &&
+        counts.broken === 0 &&
+        counts.running === 0 && (
+          <div
+            className="rounded-2xl border py-16 flex flex-col items-center justify-center text-center px-4 shadow-sm"
+            style={{
+              background: "rgba(218,119,86,0.06)",
+              borderColor: C.primaryBord,
+            }}
+          >
+            <FileText
+              className="w-14 h-14 mb-4"
+              style={{ color: C.primary, opacity: 0.35, strokeWidth: 1.25 }}
+            />
+            <p className="text-[17px] font-black" style={{ color: C.textMain }}>
+              No systems found
+            </p>
+            <p
+              className="mt-2 text-[13px] font-semibold max-w-md"
+              style={{ color: C.textMuted }}
+            >
+              Add your first system/SOP or clear active filters
+            </p>
+            <div className="mt-5">
+              <BtnPrimary onClick={() => setAddOpen(true)}>
+                <Plus className="w-4 h-4" /> Add First System
+              </BtnPrimary>
+            </div>
+          </div>
+        )}
     </div>
   );
 };

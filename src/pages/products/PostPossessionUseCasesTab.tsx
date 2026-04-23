@@ -12,7 +12,8 @@ const postPossessionUseCases = {
       idealCompanyProfile:
         "India/GCC/SE Asia; mid-large developers; 500–50,000 units; mature IT adoption",
       currentToolUsed: "Fragmented: WhatsApp, Excel, MyGate, Tally, email",
-      urgency: "High — Post-possession experience is now a buyer evaluation criterion",
+      urgency:
+        "High — Post-possession experience is now a buyer evaluation criterion",
       primaryBuyer:
         "VP-CRM / Head of Customer Experience — measured on NPS, referral conversion, repeat purchase",
       primaryUser:
@@ -20,7 +21,8 @@ const postPossessionUseCases = {
     },
     {
       rank: "2",
-      industry: "Township & Integrated Development Operators",
+      industry:
+        "2. Township & Integrated Development Operators (Community Management)",
       relevantFeatures:
         "Full platform: F&B, transport mgmt, space mgmt, services marketplace, facility booking, security",
       howTheyUseIt:
@@ -29,7 +31,8 @@ const postPossessionUseCases = {
         "India/GCC; large townships with retail, hospitality, residential; 2,000+ units",
       currentToolUsed:
         "Multiple point solutions; no single integrated platform exists for townships",
-      urgency: "High — Scale demands integration; current fragmentation causes resident complaints",
+      urgency:
+        "High — Scale demands integration; current fragmentation causes resident complaints",
       primaryBuyer:
         "CEO/COO of township management entity — measured on resident satisfaction and cost efficiency",
       primaryUser:
@@ -37,15 +40,18 @@ const postPossessionUseCases = {
     },
     {
       rank: "3",
-      industry: "Gated Community RWAs (Resident Welfare Associations)",
+      industry:
+        "Gated Community RWAs (Resident Welfare Associations)(Community Management)",
       relevantFeatures:
         "Security, helpdesk, accounting (CAM), communication, facility booking",
       howTheyUseIt:
         "RWA uses platform to replace paper registers, WhatsApp billing, and manual complaint logging",
       idealCompanyProfile:
         "India primary; 100–2,000 units; RWAs with collected CAM > ₹5L/month",
-      currentToolUsed: "MyGate (security only), WhatsApp (communication), Tally (accounting)",
-      urgency: "High — CAM collection compliance and security are immediate pain points",
+      currentToolUsed:
+        "MyGate (security only), WhatsApp (communication), Tally (accounting)",
+      urgency:
+        "High — CAM collection compliance and security are immediate pain points",
       primaryBuyer:
         "RWA Treasurer/Secretary — measured on CAM collection rate and complaint closure",
       primaryUser:
@@ -53,7 +59,8 @@ const postPossessionUseCases = {
     },
     {
       rank: "4",
-      industry: "Luxury & Ultra-Luxury Residential Projects",
+      industry:
+        "Luxury & Ultra-Luxury Residential Projects (Residential Real Estate )",
       relevantFeatures:
         "White-label app, services marketplace, F&B, e-intercom, concierge, loyalty, computer vision",
       howTheyUseIt:
@@ -62,7 +69,8 @@ const postPossessionUseCases = {
         "India (Mumbai, Delhi, Bengaluru), GCC (Dubai, Abu Dhabi); developers of ₹3Cr+ units",
       currentToolUsed:
         "Hospitality-grade PMS (Salesforce, custom apps); no community-specific solution",
-      urgency: "High — Luxury brand experience post-handover is now a competitive differentiator",
+      urgency:
+        "High — Luxury brand experience post-handover is now a competitive differentiator",
       primaryBuyer:
         "Chief Experience Officer / Brand Head — measured on resident NPS and brand reviews",
       primaryUser:
@@ -70,14 +78,15 @@ const postPossessionUseCases = {
     },
     {
       rank: "5",
-      industry: "Co-Living & Managed Residential Operators",
+      industry: "Co-Living",
       relevantFeatures:
         "Space management, transport, mailroom, services marketplace, staff management, billing",
       howTheyUseIt:
         "Operator manages bookings, billing, housekeeping, and community across multiple properties",
       idealCompanyProfile:
         "India/SE Asia/UK; 50–5,000 beds per operator; fast-growing segment",
-      currentToolUsed: "Custom-built portals, Stayca, NestAway dashboard — none are comprehensive",
+      currentToolUsed:
+        "Custom-built portals, Stayca, NestAway dashboard — none are comprehensive",
       urgency: "Medium — Market growing rapidly; operators seeking scale tools",
       primaryBuyer:
         "Operations Head — measured on occupancy rate and operating cost per bed",
@@ -86,7 +95,8 @@ const postPossessionUseCases = {
     },
     {
       rank: "6",
-      industry: "Commercial Real Estate Developers (Workplace/Tech Parks)",
+      industry:
+        "Commercial Real Estate Developers (Workplace/Tech Parks) (IT park)",
       relevantFeatures:
         "Space management, transport, visitor management, helpdesk, facility booking, AQI, IoT",
       howTheyUseIt:
@@ -95,7 +105,8 @@ const postPossessionUseCases = {
         "India (Bengaluru, Pune, Hyderabad), GCC; Grade A office parks; 200,000+ sq ft",
       currentToolUsed:
         "ServiceMax, Archibus, FM systems; no resident-engagement equivalent for CRE",
-      urgency: "Medium — CRE developers entering residential are an expansion segment",
+      urgency:
+        "Medium — CRE developers entering residential are an expansion segment",
       primaryBuyer:
         "Asset Manager / Facility Director — measured on tenant retention and OPEX",
       primaryUser:
@@ -103,7 +114,8 @@ const postPossessionUseCases = {
     },
     {
       rank: "7",
-      industry: "Affordable Housing / Government Schemes (PMAY)",
+      industry:
+        "Affordable Housing / Government Schemes (PMAY) (Residential Real Estate )",
       relevantFeatures:
         "Security, helpdesk, CAM billing, communication, digital documents",
       howTheyUseIt:
@@ -112,7 +124,8 @@ const postPossessionUseCases = {
         "India; 200–5,000 units; PMAY-linked developers; price-sensitive",
       currentToolUsed:
         "Manual registers, WhatsApp, basic apps with no billing integration",
-      urgency: "Medium — Government digitisation push; low budget but high volume opportunity",
+      urgency:
+        "Medium — Government digitisation push; low budget but high volume opportunity",
       primaryBuyer:
         "Project Director / State Housing Board Officer — measured on complaint resolution rate",
       primaryUser:
@@ -120,15 +133,17 @@ const postPossessionUseCases = {
     },
     {
       rank: "8",
-      industry: "Senior Living & Retirement Communities",
+      industry: "Senior Living & Retirement Communities (Community Management)",
       relevantFeatures:
         "Golden Ticket, health declaration, wellness programs, e-intercom, emergency alerts, visitor management",
       howTheyUseIt:
         "Safety-first feature set for elderly residents; family members monitor via app",
       idealCompanyProfile:
         "India/GCC/UK; 50–500 unit senior living facilities; premium segment",
-      currentToolUsed: "Basic nurse-call systems; no integrated digital community platform",
-      urgency: "Medium — Growing segment with acute safety and communication needs",
+      currentToolUsed:
+        "Basic nurse-call systems; no integrated digital community platform",
+      urgency:
+        "Medium — Growing segment with acute safety and communication needs",
       primaryBuyer:
         "CEO/MD of senior living operator — measured on resident safety incidents and family satisfaction",
       primaryUser:
@@ -136,7 +151,8 @@ const postPossessionUseCases = {
     },
     {
       rank: "9",
-      industry: "Real Estate Developers Entering GCC / SEA Markets",
+      industry:
+        "Real Estate Developers Entering GCC / SEA Markets (Mix real estate)",
       relevantFeatures:
         "White-label, visitor management, CAM billing, communication, e-marketing, referral",
       howTheyUseIt:
@@ -145,7 +161,8 @@ const postPossessionUseCases = {
         "GCC (UAE, Saudi, Qatar), SE Asia (Singapore, Malaysia); developers with 500–10,000 units",
       currentToolUsed:
         "Building custom apps or using local point solutions; no integrated white-label platform",
-      urgency: "Medium — GCC market growing; lack of mature local competitors is an opportunity",
+      urgency:
+        "Medium — GCC market growing; lack of mature local competitors is an opportunity",
       primaryBuyer:
         "Head of International Business — measured on activation rate and referral pipeline",
       primaryUser:
@@ -162,7 +179,8 @@ const postPossessionUseCases = {
         "India/GCC; 500+ units with integrated retail; large township or high-street developments",
       currentToolUsed:
         "Separate apps for retail (loyalty) and residential (community); no integration",
-      urgency: "Low-Medium — High potential but complex integration; long sales cycle",
+      urgency:
+        "Low-Medium — High potential but complex integration; long sales cycle",
       primaryBuyer:
         "Business Head (Mixed-Use) — measured on retail footfall from residential base",
       primaryUser:
@@ -196,7 +214,8 @@ const postPossessionUseCases = {
         "Loyalty program, rolling banners, wellness programs, offers/coupons, events, brand content",
       dayToDayUsage:
         "Designs and deploys in-app loyalty campaigns; runs resident engagement programs; tracks participation rates",
-      primaryBenefit: "Keeps brand alive post-possession; builds advocacy and NPS",
+      primaryBenefit:
+        "Keeps brand alive post-possession; builds advocacy and NPS",
       frequencyOfUse: "Weekly",
     },
     {
@@ -275,7 +294,8 @@ const postPossessionUseCases = {
         "Project setup, occupancy status, parking allocation, space management, fitout",
       dayToDayUsage:
         "Manages unit occupancy data; handles parking disputes; oversees fitout process",
-      primaryBenefit: "Ground-level operations become data-driven rather than ad hoc",
+      primaryBenefit:
+        "Ground-level operations become data-driven rather than ad hoc",
       frequencyOfUse: "Daily",
     },
     {
@@ -284,7 +304,8 @@ const postPossessionUseCases = {
         "Inventory management (PO/WO/GRN), procurement approval workflow, cost approval",
       dayToDayUsage:
         "Raises and approves purchase orders; tracks stock levels; generates GRN on delivery",
-      primaryBenefit: "Formalises procurement; reduces maverick spending and stock-outs",
+      primaryBenefit:
+        "Formalises procurement; reduces maverick spending and stock-outs",
       frequencyOfUse: "Daily / Weekly",
     },
   ],
@@ -299,60 +320,83 @@ const PostPossessionUseCasesTab: React.FC = () => {
       {/* Industry Level Section */}
       <div className="space-y-4">
         {/* Header */}
-        <div className="bg-[#1f3864] text-white p-4 rounded-t-xl shadow-sm">
-          <h2 className="text-xl font-bold uppercase tracking-wider">
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+          <h2 className="text-xl font-bold uppercase tracking-wider font-poppins">
             Part 1 — Industry Level (Residential Real Estate)
           </h2>
         </div>
 
-        <div className="border border-[#D3D1C7] bg-white rounded-b-xl overflow-x-auto shadow-sm">
+        <div className="border border-[#C4B89D]/50 bg-white rounded-b-xl overflow-x-auto shadow-sm">
           <table className="min-w-[1200px] w-full table-fixed border-collapse text-[13px] leading-relaxed font-poppins">
             <thead>
-              <tr className="bg-[#bdd7ee] text-[#2C2C2C] border-b border-[#D3D1C7] font-bold uppercase text-[10px] text-center sticky top-0">
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[4%]">Rank</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[12%]">Industry (Ranked)</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[15%]">Relevant Features & Teams Used</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[15%]">How They Will Use It</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[12%]">Ideal Company Profile</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[12%]">Current Tool Used</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[10%]">Urgency</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[10%]">Primary Buyer (Measured On)</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[10%]">Primary User (Daily Frustration)</th>
+              <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#C4B89D]/50 font-bold uppercase text-[10px] text-center sticky top-0">
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[4%]">
+                  Rank
+                </th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[12%]">
+                  Industry (Ranked)
+                </th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[15%]">
+                  Relevant Features & Teams Used
+                </th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[15%]">
+                  How They Will Use It
+                </th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[12%]">
+                  Ideal Company Profile
+                </th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[12%]">
+                  Current Tool Used
+                </th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[10%]">
+                  Urgency
+                </th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[10%]">
+                  Primary Buyer (Measured On)
+                </th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[10%]">
+                  Primary User (Daily Frustration)
+                </th>
               </tr>
             </thead>
             <tbody>
               {postPossessionUseCases.industryLevel.map((useCase, i) => {
                 const isHighUrgency = useCase.urgency.includes("High");
-                const bgClass = isHighUrgency ? "bg-[#fef5f2]" : "bg-white";
+                const bgClass = i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]";
                 return (
-                  <tr key={`industry-${i}`} className={`${bgClass} align-top border-b border-[#D3D1C7]`}>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-center font-bold text-[#1f3864]">
+                  <tr
+                    key={`industry-${i}`}
+                    className={`${bgClass} align-top border-b border-[#C4B89D]/50 hover:bg-[#DA7756]/5 transition-colors`}
+                  >
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-center font-bold text-[#DA7756]">
                       {useCase.rank}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal font-semibold">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] break-words whitespace-normal font-semibold">
                       {useCase.industry}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                       {useCase.relevantFeatures}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                       {useCase.howTheyUseIt}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                       {useCase.idealCompanyProfile}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                       {useCase.currentToolUsed}
                     </td>
-                    <td className={`border border-[#d9d9d9] px-2 py-2 text-[11px] break-words whitespace-normal font-bold ${
-                      isHighUrgency ? "text-[#c5504f]" : "text-[#666]"
-                    }`}>
+                    <td
+                      className={`border border-[#C4B89D]/50 px-2 py-2 text-[11px] break-words whitespace-normal font-bold ${
+                        isHighUrgency ? "text-[#c5504f]" : "text-[#2C2C2C]/60"
+                      }`}
+                    >
                       {useCase.urgency}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                       {useCase.primaryBuyer}
                     </td>
-                    <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                    <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                       {useCase.primaryUser}
                     </td>
                   </tr>
@@ -366,37 +410,50 @@ const PostPossessionUseCasesTab: React.FC = () => {
       {/* Internal Teams Section */}
       <div className="space-y-4">
         {/* Header */}
-        <div className="bg-[#2e4057] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
+        <div className="bg-[#DA7756] text-white px-4 py-3 font-bold text-sm uppercase tracking-wide rounded-t-xl font-poppins">
           Part 2 — Internal Teams Level
         </div>
 
-        <div className="border border-[#D3D1C7] bg-white rounded-lg overflow-x-auto shadow-sm">
+        <div className="border border-[#C4B89D]/50 bg-white overflow-x-auto shadow-sm">
           <table className="min-w-[1200px] w-full table-fixed border-collapse text-[13px] leading-relaxed font-poppins">
             <thead>
-              <tr className="bg-[#bdd7ee] text-[#2C2C2C] border-b border-[#D3D1C7] font-bold uppercase text-[10px] text-center sticky top-0">
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[15%]">Team Name</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[18%]">Relevant Features & Processes</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[20%]">How They Use It Day-to-Day</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-left w-[27%]">Primary Benefit to This Team</th>
-                <th className="border border-[#d9d9d9] px-2 py-2 text-center w-[12%]">Frequency of Use</th>
+              <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#C4B89D]/50 font-bold uppercase text-[10px] text-center sticky top-0">
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[15%]">
+                  Team Name
+                </th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[18%]">
+                  Relevant Features & Processes
+                </th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[20%]">
+                  How They Use It Day-to-Day
+                </th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[27%]">
+                  Primary Benefit to This Team
+                </th>
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-center w-[12%]">
+                  Frequency of Use
+                </th>
               </tr>
             </thead>
             <tbody>
               {postPossessionUseCases.internalTeamsLevel.map((team, i) => (
-                <tr key={`team-${i}`} className="bg-white align-top border-b border-[#D3D1C7]">
-                  <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal font-semibold text-[11px]">
+                <tr
+                  key={`team-${i}`}
+                  className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"} align-top border-b border-[#C4B89D]/50 hover:bg-[#DA7756]/5 transition-colors`}
+                >
+                  <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C] break-words whitespace-normal font-semibold text-[11px]">
                     {team.teamName}
                   </td>
-                  <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                  <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                     {team.relevantFeatures}
                   </td>
-                  <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                  <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                     {team.dayToDayUsage}
                   </td>
-                  <td className="border border-[#d9d9d9] px-2 py-2 text-[#1f1f1f] break-words whitespace-normal text-[11px]">
+                  <td className="border border-[#C4B89D]/50 px-2 py-2 text-[#2C2C2C]/80 break-words whitespace-normal text-[11px]">
                     {team.primaryBenefit}
                   </td>
-                  <td className="border border-[#d9d9d9] px-2 py-2 text-center text-[#1f1f1f] text-[11px]">
+                  <td className="border border-[#C4B89D]/50 px-2 py-2 text-center text-[#2C2C2C]/80 text-[11px]">
                     {team.frequencyOfUse}
                   </td>
                 </tr>
@@ -407,12 +464,13 @@ const PostPossessionUseCasesTab: React.FC = () => {
       </div>
 
       {/* Legend / Disclaimer */}
-      <div className="bg-[#f9f9f9] border border-[#D3D1C7] rounded-xl p-3">
-        <p className="text-[11px] text-[#666] font-poppins">
-          ◆ <strong>Industry Table:</strong> Ranked by commercial relevance. High-urgency use cases highlighted.
-          <br />
-          ◆ <strong>Teams Table:</strong> Internal organizational roles showing how teams use the platform
-          daily across developer organizations.
+      <div className="bg-[#F6F4EE] border border-[#C4B89D] rounded-xl p-4">
+        <p className="text-[11px] text-[#2C2C2C]/60 font-poppins">
+          ◆ <strong>Industry Table:</strong> Ranked by commercial relevance.
+          Alternating row colors for readability.
+          <br />◆ <strong>Teams Table:</strong> Internal organizational roles
+          showing how teams use the platform daily across developer
+          organizations.
         </p>
       </div>
     </div>

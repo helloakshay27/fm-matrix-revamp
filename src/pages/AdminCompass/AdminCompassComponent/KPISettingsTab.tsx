@@ -104,9 +104,9 @@ const KPISettingsTab: React.FC<KPISettingsTabProps> = ({
     <div className="w-full">
       <div
         className={cn(
-          "rounded-xl p-6 shadow-sm sm:p-8",
+          "rounded-xl p-6 shadow-sm",
           kpiClass.borderSoft,
-          kpiClass.surfaceCard
+          "bg-[rgba(218,119,86,0.06)]"
         )}
       >
         <h2 className="text-lg font-bold text-[#1a1a1a] sm:text-xl">
@@ -124,7 +124,7 @@ const KPISettingsTab: React.FC<KPISettingsTabProps> = ({
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-[#1a1a1a] shadow-sm",
                 kpiClass.border,
-                kpiClass.surfacePanel
+                "bg-white"
               )}
             >
               <span className="max-w-[min(100%,18rem)] truncate">{unit}</span>

@@ -142,7 +142,7 @@ const PostPossessionEnhancementsTab: React.FC = () => {
   return (
     <div className="space-y-12 animate-fade-in font-poppins pb-10">
       {/* Header */}
-      <div className="bg-[#1f3864] text-white p-4 rounded-t-xl shadow-sm">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-bold uppercase tracking-wider">
           Post Possession — Enhancement Roadmap
         </h2>
@@ -151,20 +151,20 @@ const PostPossessionEnhancementsTab: React.FC = () => {
       {/* Legend Block */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mt-4">
         <div className="flex items-center gap-2 bg-blue-50/50 p-2 rounded-lg border border-blue-100">
-           <div className="w-3 h-3 bg-blue-400 rounded-sm"></div>
-           <span className="text-[10px] font-bold text-blue-900 uppercase tracking-tighter">AI-Powered</span>
+          <div className="w-3 h-3 bg-blue-400 rounded-sm"></div>
+          <span className="text-[10px] font-bold text-[#DA7756] uppercase tracking-tighter">AI-Powered</span>
         </div>
         <div className="flex items-center gap-2 bg-green-50/50 p-2 rounded-lg border border-green-100">
-           <div className="w-3 h-3 bg-green-400 rounded-sm"></div>
-           <span className="text-[10px] font-bold text-green-900 uppercase tracking-tighter">MCP Integrations</span>
+          <div className="w-3 h-3 bg-green-400 rounded-sm"></div>
+          <span className="text-[10px] font-bold text-green-900 uppercase tracking-tighter">MCP Integrations</span>
         </div>
         <div className="flex items-center gap-2 bg-orange-50/50 p-2 rounded-lg border border-orange-100">
-           <div className="w-3 h-3 bg-orange-400 rounded-sm"></div>
-           <span className="text-[10px] font-bold text-orange-900 uppercase tracking-tighter">IoT Integrations</span>
+          <div className="w-3 h-3 bg-orange-400 rounded-sm"></div>
+          <span className="text-[10px] font-bold text-orange-900 uppercase tracking-tighter">IoT Integrations</span>
         </div>
         <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-100">
-           <div className="w-3 h-3 bg-gray-300 rounded-sm"></div>
-           <span className="text-[10px] font-bold text-gray-600 uppercase tracking-tighter">Other / UI / Platform</span>
+          <div className="w-3 h-3 bg-gray-300 rounded-sm"></div>
+          <span className="text-[10px] font-bold text-gray-600 uppercase tracking-tighter">Other / UI / Platform</span>
         </div>
       </div>
 
@@ -172,7 +172,7 @@ const PostPossessionEnhancementsTab: React.FC = () => {
       <div className="overflow-hidden border border-[#D3D1C7] rounded-xl shadow-lg bg-white mt-8">
         <table className="w-full border-collapse text-[11px] leading-relaxed">
           <thead>
-            <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7] sticky top-0 z-10 shadow-sm">
+            <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7] sticky top-0 z-10 shadow-sm">
               <th className="p-3 text-left w-[12%]">Feature Name</th>
               <th className="p-3 text-left w-[15%]">How It Currently Works</th>
               <th className="p-3 text-left w-[22%]">Enhanced Version</th>
@@ -186,13 +186,13 @@ const PostPossessionEnhancementsTab: React.FC = () => {
           <tbody>
             {enhancements.map((item) => (
               <tr key={item.id} className={`border-b border-[#D3D1C7] last:border-0 hover:brightness-95 transition-all ${getRowColor(item.type)}`}>
-                <td className="p-3 font-bold text-[#1f3864] align-top">{item.name}</td>
+                <td className="p-3 font-bold text-[#DA7756] align-top">{item.name}</td>
                 <td className="p-3 text-gray-500 italic align-top">{item.current}</td>
                 <td className="p-3 text-[#1a1a2e] font-medium align-top leading-normal">{item.enhanced}</td>
                 <td className="p-3 align-top">
-                   <span className="px-2 py-0.5 rounded-full bg-black/5 text-[9px] font-bold uppercase tracking-tighter text-gray-600 border border-black/5">
+                  <span className="px-2 py-0.5 rounded-full bg-black/5 text-[9px] font-bold uppercase tracking-tighter text-gray-600 border border-black/5">
                     {item.type}
-                   </span>
+                  </span>
                 </td>
                 <td className="p-3 text-center align-top">
                   <span className={`font-bold ${item.effort === 'VH' ? 'text-red-600' : item.effort === 'H' ? 'text-orange-600' : 'text-gray-600'}`}>
@@ -220,3 +220,4 @@ const PostPossessionEnhancementsTab: React.FC = () => {
 };
 
 export default PostPossessionEnhancementsTab;
+

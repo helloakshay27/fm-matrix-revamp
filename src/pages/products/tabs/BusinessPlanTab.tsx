@@ -30,12 +30,12 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
         <div className="mt-6 space-y-6">
           {bpData.planQuestions?.map((q: any, i: number) => (
             <div key={i} className="border border-[#D3D1C7] bg-white">
-              <div className="bg-[#1F3A5F] text-white border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-bold tracking-wide font-poppins">
+              <div className="bg-[#DA7756] text-white border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-bold tracking-wide font-poppins">
                 {q.question}
               </div>
               <table className="w-full border-collapse table-fixed text-[11px] leading-relaxed font-poppins">
                 <thead>
-                  <tr className="bg-[#F6F4EE] text-[#1A1A2E] font-bold uppercase text-[10px]">
+                  <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px]">
                     <th className="border border-[#D3D1C7] px-3 py-2 text-left w-[60%]">
                       Suggested Answer
                     </th>
@@ -55,7 +55,7 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
                     <td className="border border-[#D3D1C7] px-3 py-3 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words">
                       {q.source || "-"}
                     </td>
-                    <td className="border border-[#D3D1C7] px-3 py-3 text-[#1A1A2E] font-semibold whitespace-pre-line break-words bg-[#D9E1F2]/30">
+                    <td className="border border-[#D3D1C7] px-3 py-3 text-[#DA7756] font-semibold whitespace-pre-line break-words bg-[#DA7756]/5">
                       {q.flag}
                     </td>
                   </tr>
@@ -66,12 +66,12 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
 
           {bpData.checklist?.length > 0 && (
             <div className="mt-8 border border-[#D3D1C7] bg-white">
-              <div className="bg-[#4F81BD] text-white border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-bold tracking-wide font-poppins text-center">
+              <div className="bg-[#DA7756] text-white border-b border-[#D3D1C7] px-4 py-3 text-[13px] font-bold tracking-wide font-poppins text-center">
                 FOUNDER REVIEW CHECKLIST - Items requiring personal input before investor or partner use
               </div>
               <table className="w-full border-collapse text-[11px] leading-relaxed font-poppins">
                 <thead>
-                  <tr className="bg-[#F6F4EE] text-[#1A1A2E] font-bold uppercase text-[10px]">
+                  <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px]">
                     <th className="border border-[#D3D1C7] px-4 py-2 text-left w-[30%]">Question Reference</th>
                     <th className="border border-[#D3D1C7] px-4 py-2 text-left w-[70%]">What to verify or complete</th>
                   </tr>
@@ -79,7 +79,7 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
                 <tbody>
                   {bpData.checklist.map((item: any, idx: number) => (
                     <tr key={idx} className="align-top bg-white border-b border-[#D3D1C7]">
-                      <td className="border-r border-[#D3D1C7] px-4 py-2 font-bold text-[#1A1A2E]">{item.reference}</td>
+                      <td className="border-r border-[#D3D1C7] px-4 py-2 font-bold text-[#DA7756]">{item.reference}</td>
                       <td className="px-4 py-2 text-[#2C2C2C]">{item.action}</td>
                     </tr>
                   ))}
@@ -113,16 +113,16 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
               {productData.name === "Lease Management" ? (
                 ["Lessee", "Lessor"].map((perspective) => (
                   <div key={perspective} className="space-y-4">
-                    <div className="bg-[#4B5563] text-white px-4 py-2 text-xs font-bold uppercase tracking-widest font-poppins">
+                    <div className="bg-[#DA7756] text-white px-4 py-2 text-xs font-bold uppercase tracking-widest font-poppins">
                       {perspective} Perspective
                     </div>
                     {bpData!.planQuestions.filter(q => q.id?.includes(perspective)).map((q, i) => {
-                      const headerTone = q.colorContext === "red" ? "bg-[#A52A1A] text-white" : 
-                                      q.colorContext === "green" ? "bg-[#0F5B2A] text-white" : 
-                                      q.colorContext === "yellow" ? "bg-[#B79000] text-white" : 
-                                      q.colorContext === "orange" ? "bg-[#D97706] text-white" :
-                                      q.colorContext === "purple" ? "bg-[#6B2D84] text-white" : 
-                                      q.colorContext === "teal" ? "bg-[#006B5E] text-white" : "bg-[#1F4E79] text-white";
+                      const headerTone = q.colorContext === "red" ? "bg-[#A52A1A] text-white" :
+                        q.colorContext === "green" ? "bg-[#0F5B2A] text-white" :
+                          q.colorContext === "yellow" ? "bg-[#B79000] text-white" :
+                            q.colorContext === "orange" ? "bg-[#D97706] text-white" :
+                              q.colorContext === "purple" ? "bg-[#6B2D84] text-white" :
+                                q.colorContext === "teal" ? "bg-[#006B5E] text-white" : "bg-[#DA7756] text-white";
                       return (
                         <div key={i} className="border border-[#D3D1C7] bg-white">
                           <div className={`${headerTone} border-b border-[#D3D1C7] px-4 py-2.5 text-[13px] font-bold tracking-wide font-poppins`}>
@@ -130,7 +130,7 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
                           </div>
                           <table className="w-full border-collapse table-fixed text-[10px] leading-[1.5] font-poppins">
                             <thead>
-                              <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
+                              <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-semibold uppercase text-[9px]">
                                 <th className="border border-[#D3D1C7] px-3 py-1.5 text-left w-[58%]">Suggested Answer</th>
                                 <th className="border border-[#D3D1C7] px-3 py-1.5 text-left w-[22%]">Source Reference</th>
                                 <th className="border border-[#D3D1C7] px-3 py-1.5 text-left w-[20%]">Review Status</th>
@@ -140,7 +140,7 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
                               <tr className="align-top bg-white">
                                 <td className="border border-[#D3D1C7] px-3 py-2.5 text-[#2C2C2C] font-medium whitespace-pre-line break-words leading-relaxed">{q.answer}</td>
                                 <td className="border border-[#D3D1C7] px-3 py-2.5 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words italic">{q.source || "-"}</td>
-                                <td className="border border-[#D3D1C7] px-3 py-2.5 text-[#2C2C2C] font-bold whitespace-pre-line break-words">{q.flag}</td>
+                                <td className="border border-[#D3D1C7] px-3 py-2.5 text-[#DA7756] font-bold whitespace-pre-line break-words">{q.flag}</td>
                               </tr>
                             </tbody>
                           </table>
@@ -160,11 +160,11 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
                           ? "bg-[#B79000] text-white"
                           : q.colorContext === "orange"
                             ? "bg-[#D97706] text-white"
-                        : q.colorContext === "purple"
-                          ? "bg-[#6B2D84] text-white"
-                          : q.colorContext === "teal"
-                            ? "bg-[#006B5E] text-white"
-                            : "bg-[#1F4E79] text-white";
+                            : q.colorContext === "purple"
+                              ? "bg-[#6B2D84] text-white"
+                              : q.colorContext === "teal"
+                                ? "bg-[#006B5E] text-white"
+                                : "bg-[#DA7756] text-white";
                   return (
                     <div key={i} className="border border-[#D3D1C7] bg-white">
                       <div className={`${headerTone} border-b border-[#D3D1C7] px-4 py-3 text-sm font-semibold tracking-wide font-poppins`}>
@@ -172,7 +172,7 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
                       </div>
                       <table className="w-full border-collapse table-fixed text-[10px] leading-[1.5] font-poppins">
                         <thead>
-                          <tr className="bg-[#F6F4EE] text-gray-800 font-semibold uppercase text-[9px]">
+                          <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-semibold uppercase text-[9px]">
                             <th className="border border-[#D3D1C7] px-3 py-2 text-left w-[58%]">
                               {hasFounderVoice ? "Founder's Answer" : "Suggested Answer"}
                             </th>
@@ -192,7 +192,7 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
                             <td className="border border-[#D3D1C7] px-3 py-2 text-[#2C2C2C]/80 font-medium whitespace-pre-line break-words">
                               {q.source || "-"}
                             </td>
-                            <td className="border border-[#D3D1C7] px-3 py-2 text-[#2C2C2C] font-semibold whitespace-pre-line break-words">
+                            <td className="border border-[#D3D1C7] px-3 py-2 text-[#DA7756] font-semibold whitespace-pre-line break-words">
                               {q.flag}
                             </td>
                           </tr>
@@ -211,7 +211,7 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
                   </div>
                   <table className="w-full border-collapse text-[10px] font-poppins leading-relaxed">
                     <thead>
-                      <tr className="bg-[#F6F4EE] text-[#1A1A2E] font-bold uppercase text-[9px]">
+                      <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px]">
                         <th className="border border-[#D3D1C7] px-4 py-2 text-left w-[10%]">Ref</th>
                         <th className="border border-[#D3D1C7] px-4 py-2 text-left w-[40%]">Checklist Item</th>
                         <th className="border border-[#D3D1C7] px-4 py-2 text-left w-[40%]">Verification Required</th>
@@ -220,12 +220,12 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
                     </thead>
                     <tbody>
                       {bpData.founderChecklist.map((item: any, idx: number) => (
-                        <tr key={idx} className="align-top bg-white border-b border-[#D3D1C7] last:border-0 hover:bg-gray-50/50">
-                          <td className="border-r border-[#D3D1C7] px-4 py-2.5 font-bold text-[#1F3A5F]">{item.id}</td>
+                        <tr key={idx} className="align-top bg-white border-b border-[#D3D1C7] last:border-0 hover:bg-[#DA7756]/5">
+                          <td className="border-r border-[#D3D1C7] px-4 py-2.5 font-bold text-[#DA7756]">{item.id}</td>
                           <td className="border-r border-[#D3D1C7] px-4 py-2.5 font-semibold text-[#2C2C2C]">{item.item}</td>
-                          <td className="border-r border-[#D3D1C7] px-4 py-2.5 text-[#4B5563] italic">{item.verify}</td>
+                          <td className="border-r border-[#D3D1C7] px-4 py-2.5 text-[#2C2C2C]/70 italic">{item.verify}</td>
                           <td className="px-4 py-2.5 text-center">
-                            <span className="inline-block px-1.5 py-0.5 bg-yellow-50 text-yellow-800 border border-yellow-200 text-[8px] font-bold uppercase rounded-sm">
+                            <span className="inline-block px-1.5 py-0.5 bg-[#DA7756]/10 text-[#DA7756] border border-[#DA7756]/20 text-[8px] font-bold uppercase rounded-sm">
                               {item.status}
                             </span>
                           </td>
@@ -283,7 +283,7 @@ const BusinessPlanTab: React.FC<BusinessPlanTabProps> = ({ productData }) => {
                             <td className="border border-[#E5E7EB] px-1 py-1 text-center font-bold text-[#2C2C2C]/60">
                               {i + 1}
                             </td>
-                            <td className="border border-[#E5E7EB] px-1.5 py-1 font-semibold text-gray-700 whitespace-pre-line break-words">
+                            <td className="border border-[#E5E7EB] px-1.5 py-1 font-semibold text-[#DA7756] whitespace-pre-line break-words">
                               {q.question}
                             </td>
                             <td className="border border-[#E5E7EB] px-1.5 py-1 text-[#2C2C2C] font-medium whitespace-pre-line break-words">

@@ -55,6 +55,7 @@ export const AddEventPage = () => {
   const [formData, setFormData] = useState({
     eventName: "",
     eventType: "",
+    payAt: "internal",
     amountPerPerson: "",
     fromDate: "",
     toDate: "",
@@ -66,6 +67,7 @@ export const AddEventPage = () => {
     rsvp: "yes",
     showOnHomeScreen: "no",
     eventDescription: "",
+    externalLink: "",
     approvalRequired: "no",
     shareWith: "all",
     shareWithCommunities: "no",
@@ -88,22 +90,24 @@ export const AddEventPage = () => {
 
   useEffect(() => {
     // Restore form data from localStorage if exists
-    const savedEventName = localStorage.getItem("eventName");
-    const savedEventType = localStorage.getItem("eventType");
-    const savedAmountPerPerson = localStorage.getItem("amountPerPerson");
-    const savedFromDate = localStorage.getItem("fromDate");
-    const savedToDate = localStorage.getItem("toDate");
-    const savedEventTime = localStorage.getItem("eventTime");
-    const savedEventLocation = localStorage.getItem("eventLocation");
-    const savedMemberCapacity = localStorage.getItem("memberCapacity");
-    const savedPerMemberLimit = localStorage.getItem("perMemberLimit");
-    const savedPulseCategory = localStorage.getItem("pulseCategory");
-    const savedRsvp = localStorage.getItem("rsvp");
-    const savedShowOnHomeScreen = localStorage.getItem("showOnHomeScreen");
-    const savedApprovalRequired = localStorage.getItem("approvalRequired");
-    const savedEventDescription = localStorage.getItem("eventDescription");
-    const savedShareWith = localStorage.getItem("shareWith");
-    const savedSelectedTechParks = localStorage.getItem("selectedTechParks");
+    const savedEventName = localStorage.getItem('eventName');
+    const savedEventType = localStorage.getItem('eventType');
+    const savedAmountPerPerson = localStorage.getItem('amountPerPerson');
+    const savedFromDate = localStorage.getItem('fromDate');
+    const savedToDate = localStorage.getItem('toDate');
+    const savedEventTime = localStorage.getItem('eventTime');
+    const savedEventLocation = localStorage.getItem('eventLocation');
+    const savedMemberCapacity = localStorage.getItem('memberCapacity');
+    const savedPerMemberLimit = localStorage.getItem('perMemberLimit');
+    const savedPulseCategory = localStorage.getItem('pulseCategory');
+    const savedRsvp = localStorage.getItem('rsvp');
+    const savedShowOnHomeScreen = localStorage.getItem('showOnHomeScreen');
+    const savedApprovalRequired = localStorage.getItem('approvalRequired');
+    const savedEventDescription = localStorage.getItem('eventDescription');
+    const savedShareWith = localStorage.getItem('shareWith');
+    const savedSelectedTechParks = localStorage.getItem('selectedTechParks');
+    const savedPayAt = localStorage.getItem('payAt');
+    const savedExternalLink = localStorage.getItem('externalLink');
 
     // If any saved data exists, restore it
     if (savedEventName || savedEventDescription || savedFromDate) {
@@ -124,6 +128,8 @@ export const AddEventPage = () => {
         approvalRequired: savedApprovalRequired || prev.approvalRequired,
         eventDescription: savedEventDescription || prev.eventDescription,
         shareWith: savedShareWith || prev.shareWith,
+        payAt: savedPayAt || prev.payAt,
+        externalLink: savedExternalLink || prev.externalLink,
       }));
     }
 
@@ -138,22 +144,24 @@ export const AddEventPage = () => {
     }
 
     // Clean up localStorage after restoration
-    localStorage.removeItem("eventName");
-    localStorage.removeItem("eventType");
-    localStorage.removeItem("amountPerPerson");
-    localStorage.removeItem("fromDate");
-    localStorage.removeItem("toDate");
-    localStorage.removeItem("eventTime");
-    localStorage.removeItem("eventLocation");
-    localStorage.removeItem("memberCapacity");
-    localStorage.removeItem("perMemberLimit");
-    localStorage.removeItem("pulseCategory");
-    localStorage.removeItem("rsvp");
-    localStorage.removeItem("showOnHomeScreen");
-    localStorage.removeItem("approvalRequired");
-    localStorage.removeItem("eventDescription");
-    localStorage.removeItem("shareWith");
-    localStorage.removeItem("selectedTechParks");
+    localStorage.removeItem('eventName');
+    localStorage.removeItem('eventType');
+    localStorage.removeItem('amountPerPerson');
+    localStorage.removeItem('fromDate');
+    localStorage.removeItem('toDate');
+    localStorage.removeItem('eventTime');
+    localStorage.removeItem('eventLocation');
+    localStorage.removeItem('memberCapacity');
+    localStorage.removeItem('perMemberLimit');
+    localStorage.removeItem('pulseCategory');
+    localStorage.removeItem('rsvp');
+    localStorage.removeItem('showOnHomeScreen');
+    localStorage.removeItem('approvalRequired');
+    localStorage.removeItem('eventDescription');
+    localStorage.removeItem('shareWith');
+    localStorage.removeItem('selectedTechParks');
+    localStorage.removeItem('payAt');
+    localStorage.removeItem('externalLink');
 
     // Check if returning from community selection
     const savedCommunities = localStorage.getItem("selectedCommunityIds");
@@ -236,26 +244,25 @@ export const AddEventPage = () => {
     }
     if (name === "shareWithCommunities" && value === "yes") {
       // Save form data to localStorage before navigation
-      localStorage.setItem("eventName", formData.eventName);
-      localStorage.setItem("eventType", formData.eventType);
-      localStorage.setItem("amountPerPerson", formData.amountPerPerson);
-      localStorage.setItem("fromDate", formData.fromDate);
-      localStorage.setItem("toDate", formData.toDate);
-      localStorage.setItem("eventTime", formData.eventTime);
-      localStorage.setItem("eventLocation", formData.eventLocation);
-      localStorage.setItem("memberCapacity", formData.memberCapacity);
-      localStorage.setItem("perMemberLimit", formData.perMemberLimit);
-      localStorage.setItem("pulseCategory", formData.pulseCategory);
-      localStorage.setItem("rsvp", formData.rsvp);
-      localStorage.setItem("showOnHomeScreen", formData.showOnHomeScreen);
-      localStorage.setItem("approvalRequired", formData.approvalRequired);
-      localStorage.setItem("eventDescription", formData.eventDescription);
-      localStorage.setItem("shareWith", formData.shareWith);
-      localStorage.setItem(
-        "selectedTechParks",
-        JSON.stringify(selectedTechParks)
-      );
-      navigate("/pulse/community?mode=selection&from=add-event");
+      localStorage.setItem('eventName', formData.eventName);
+      localStorage.setItem('eventType', formData.eventType);
+      localStorage.setItem('amountPerPerson', formData.amountPerPerson);
+      localStorage.setItem('fromDate', formData.fromDate);
+      localStorage.setItem('toDate', formData.toDate);
+      localStorage.setItem('eventTime', formData.eventTime);
+      localStorage.setItem('eventLocation', formData.eventLocation);
+      localStorage.setItem('memberCapacity', formData.memberCapacity);
+      localStorage.setItem('perMemberLimit', formData.perMemberLimit);
+      localStorage.setItem('pulseCategory', formData.pulseCategory);
+      localStorage.setItem('rsvp', formData.rsvp);
+      localStorage.setItem('showOnHomeScreen', formData.showOnHomeScreen);
+      localStorage.setItem('approvalRequired', formData.approvalRequired);
+      localStorage.setItem('eventDescription', formData.eventDescription);
+      localStorage.setItem('shareWith', formData.shareWith);
+      localStorage.setItem('payAt', formData.payAt);
+      localStorage.setItem('externalLink', formData.externalLink);
+      localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
+      navigate('/pulse/community?mode=selection&from=add-event');
     }
   };
 
@@ -374,14 +381,13 @@ export const AddEventPage = () => {
         formData.approvalRequired === "yes" ? "1" : "0"
       );
       formDataToSend.append("event[description]", formData.eventDescription);
-      formDataToSend.append("event[of_phase]", "pms");
-      formDataToSend.append("event[of_atype]", "Pms::Site");
-      formDataToSend.append(
-        "event[of_atype_id]",
-        localStorage.getItem("selectedSiteId") || ""
-      );
-      formDataToSend.append("event[share_with]", formData.shareWith);
-      formDataToSend.append("event[is_paid]", formData.eventType);
+      formDataToSend.append('event[of_phase]', 'pms');
+      formDataToSend.append('event[of_atype]', 'Pms::Site');
+      formDataToSend.append('event[of_atype_id]', localStorage.getItem("selectedSiteId") || "");
+      formDataToSend.append('event[share_with]', formData.shareWith);
+      formDataToSend.append('event[is_paid]', formData.eventType);
+      formData.eventType === "1" && formDataToSend.append('event[pay_at]', formData.payAt);
+      formData.eventType === "1" && formData.payAt === "external" && formDataToSend.append('event[payment_link]', formData.externalLink);
 
       if (formData.shareWith === "individual") {
         selectedTechParks.forEach((id) => {
@@ -411,23 +417,25 @@ export const AddEventPage = () => {
       ).unwrap();
 
       // Clean up localStorage after successful submission
-      localStorage.removeItem("eventName");
-      localStorage.removeItem("eventType");
-      localStorage.removeItem("amountPerPerson");
-      localStorage.removeItem("fromDate");
-      localStorage.removeItem("toDate");
-      localStorage.removeItem("eventTime");
-      localStorage.removeItem("eventLocation");
-      localStorage.removeItem("memberCapacity");
-      localStorage.removeItem("perMemberLimit");
-      localStorage.removeItem("pulseCategory");
-      localStorage.removeItem("rsvp");
-      localStorage.removeItem("showOnHomeScreen");
-      localStorage.removeItem("approvalRequired");
-      localStorage.removeItem("eventDescription");
-      localStorage.removeItem("shareWith");
-      localStorage.removeItem("selectedTechParks");
-      localStorage.removeItem("selectedCommunityIds");
+      localStorage.removeItem('eventName');
+      localStorage.removeItem('eventType');
+      localStorage.removeItem('amountPerPerson');
+      localStorage.removeItem('fromDate');
+      localStorage.removeItem('toDate');
+      localStorage.removeItem('eventTime');
+      localStorage.removeItem('eventLocation');
+      localStorage.removeItem('memberCapacity');
+      localStorage.removeItem('perMemberLimit');
+      localStorage.removeItem('pulseCategory');
+      localStorage.removeItem('rsvp');
+      localStorage.removeItem('showOnHomeScreen');
+      localStorage.removeItem('approvalRequired');
+      localStorage.removeItem('eventDescription');
+      localStorage.removeItem('shareWith');
+      localStorage.removeItem('selectedTechParks');
+      localStorage.removeItem('selectedCommunityIds');
+      localStorage.removeItem('payAt');
+      localStorage.removeItem('externalLink');
 
       toast.success("Event created successfully");
       navigate(`/pulse/events`);
@@ -535,6 +543,33 @@ export const AddEventPage = () => {
                 </FormControl>
               </div>
 
+              {
+                formData.eventType === "1" && (
+                  <div className="flex flex-col gap-1.5">
+                    <FormControl fullWidth size="small">
+                      <InputLabel shrink>Pay at<span className="text-[#C72030]">*</span></InputLabel>
+                      <MuiSelect
+                        name="payAt"
+                        value={formData.payAt}
+                        onChange={(e) => handleSelectChange("payAt", e.target.value)}
+                        label="Pay at*"
+                        displayEmpty
+                        sx={{
+                          backgroundColor: '#FAFAFA',
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#C72030',
+                          },
+                        }}
+                      >
+                        <MenuItem value="" disabled>Select pay at...</MenuItem>
+                        <MenuItem value="internal">Internal</MenuItem>
+                        <MenuItem value="external">External</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                )
+              }
+
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Event Amount Per Person</>}
@@ -563,10 +598,7 @@ export const AddEventPage = () => {
                   }}
                 />
               </div>
-            </div>
 
-            {/* Row 2: From Date, To Date, Event Time */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={
@@ -652,10 +684,7 @@ export const AddEventPage = () => {
                   }}
                 />
               </div>
-            </div>
 
-            {/* Row 3: Event Location, Member Capacity, Per Member Limit */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={
@@ -715,7 +744,7 @@ export const AddEventPage = () => {
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              {/* <div className="flex flex-col gap-1.5">
                 <TextField
                   label={
                     <>
@@ -746,7 +775,7 @@ export const AddEventPage = () => {
                     },
                   }}
                 />
-              </div>
+              </div> */}
             </div>
 
             {/* Radio Groups Row */}
@@ -971,6 +1000,31 @@ export const AddEventPage = () => {
                 />
               </div>
             </div>
+
+            {
+              formData.payAt === "external" && (
+                <TextField
+                  label={<>External Link<span className="text-[#C72030]">*</span></>}
+                  id="externalLink"
+                  name="externalLink"
+                  value={formData.externalLink}
+                  onChange={handleInputChange}
+                  placeholder="Enter external link..."
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: '#FAFAFA',
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                    marginTop: 2,
+                  }}
+                />
+              )
+            }
           </div>
         </div>
 

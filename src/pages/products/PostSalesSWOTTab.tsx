@@ -2,16 +2,16 @@ import React from 'react';
 
 const PostSalesSWOTTab: React.FC = () => {
   // ── Style objects mapped 1:1 from HTML CSS classes ────────────────────────
-  const s0: React.CSSProperties  = { borderBottom: '1px solid transparent', backgroundColor: '#1a2744', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '16pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
-  const s1: React.CSSProperties  = { borderBottom: '1px solid transparent', backgroundColor: '#f5f5f5', textAlign: 'center', fontStyle: 'italic', color: '#666666', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
-  const s2: React.CSSProperties  = { backgroundColor: '#ffffff', textAlign: 'left', color: '#000000', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'bottom', whiteSpace: 'nowrap', padding: '0px 3px' };
-  const s3: React.CSSProperties  = { borderBottom: '1px solid #cccccc', backgroundColor: '#ffffff', textAlign: 'left', color: '#000000', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'bottom', whiteSpace: 'nowrap', padding: '0px 3px' };
-  const s4: React.CSSProperties  = { borderRight: '1px solid #cccccc', backgroundColor: '#ffffff', textAlign: 'left', color: '#000000', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'bottom', whiteSpace: 'nowrap', padding: '0px 3px' };
-  const s5: React.CSSProperties  = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#1b5e20', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '12pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
-  const s6: React.CSSProperties  = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#b71c1c', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '12pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
-  const s7: React.CSSProperties  = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f1f8e9', textAlign: 'left', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
-  const s8: React.CSSProperties  = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f1f8e9', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
-  const s9: React.CSSProperties  = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#fff8f8', textAlign: 'left', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
+  const s0: React.CSSProperties = { borderBottom: '1px solid transparent', backgroundColor: '#DA7756', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '16pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
+  const s1: React.CSSProperties = { borderBottom: '1px solid transparent', backgroundColor: '#F6F4EE', textAlign: 'center', fontStyle: 'italic', color: '#666666', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
+  const s2: React.CSSProperties = { backgroundColor: '#ffffff', textAlign: 'left', color: '#000000', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'bottom', whiteSpace: 'nowrap', padding: '0px 3px' };
+  const s3: React.CSSProperties = { borderBottom: '1px solid #cccccc', backgroundColor: '#ffffff', textAlign: 'left', color: '#000000', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'bottom', whiteSpace: 'nowrap', padding: '0px 3px' };
+  const s4: React.CSSProperties = { borderRight: '1px solid #cccccc', backgroundColor: '#ffffff', textAlign: 'left', color: '#000000', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'bottom', whiteSpace: 'nowrap', padding: '0px 3px' };
+  const s5: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#1b5e20', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '12pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
+  const s6: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#b71c1c', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '12pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
+  const s7: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f1f8e9', textAlign: 'left', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
+  const s8: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f1f8e9', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
+  const s9: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#fff8f8', textAlign: 'left', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
   const s10: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#fff8f8', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
   const s11: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#e8f5e9', textAlign: 'left', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
   const s12: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#e8f5e9', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
@@ -19,8 +19,8 @@ const PostSalesSWOTTab: React.FC = () => {
   const s14: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#ffebee', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
   const s15: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#0d47a1', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '12pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
   const s16: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#e65100', textAlign: 'center', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '12pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 3px' };
-  const s17: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#eef2ff', textAlign: 'left', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
-  const s18: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#eef2ff', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
+  const s17: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#F6F4EE', textAlign: 'left', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
+  const s18: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#F6F4EE', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
   const s19: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#fff3e0', textAlign: 'left', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
   const s20: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#fff3e0', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
   const s21: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#e8eeff', textAlign: 'left', fontWeight: 'bold', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '0px 3px' };
@@ -32,7 +32,11 @@ const PostSalesSWOTTab: React.FC = () => {
   // We skip the freeze column; render as A + B + C | D + E + F (6 cols total)
 
   return (
-    <div className="w-full overflow-x-auto bg-white p-4 font-sans">
+    <div className="w-full overflow-x-auto font-sans">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] text-xl font-bold mb-4">
+        Post Sales  ·  SWOT Analysis
+      </div>
+
       <table
         style={{ borderCollapse: 'collapse', tableLayout: 'fixed', width: '100%', minWidth: '1080px', backgroundColor: 'white' }}
         cellSpacing={0}
@@ -47,11 +51,6 @@ const PostSalesSWOTTab: React.FC = () => {
           <col style={{ width: '363px' }} />
         </colgroup>
         <tbody>
-
-          {/* ── Row 1: Title ─────────────────────────────────────── */}
-          <tr style={{ height: '47px' }}>
-            <td style={s0} colSpan={6}>Post Sales  ·  SWOT Analysis</td>
-          </tr>
 
           {/* ── Row 2: Subtitle ──────────────────────────────────── */}
           <tr style={{ height: '25px' }}>

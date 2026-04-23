@@ -356,6 +356,16 @@ const modulesByPackage = {
       icon: Settings,
       href: "/pulse/sos-category-setup",
     },
+    {
+      name: "Support Contact Setup",
+      icon: Settings,
+      href: "/pulse/support-contact-setup",
+    },
+    {
+      name: "GRE Site Assignment Setup",
+      icon: Settings,
+      href: "/pulse/gre-site-assignment-setup",
+    },
     // {
     //   name: 'Currency',
     //   icon: Currency,

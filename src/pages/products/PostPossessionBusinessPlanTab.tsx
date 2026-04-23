@@ -8,7 +8,7 @@ const postPossessionBusinessPlan = {
       answer: "We exist because the relationship between a real estate developer and their homebuyer shouldn't end the moment keys are handed over. For decades, possession was the full stop in the developer–buyer journey — after that, residents were on their own, and developers lost every opportunity to stay relevant in their lives.\n\nPost Possession exists to change that. We built a platform that turns the post-handover period into the most valuable phase of the customer relationship — for both sides. Residents get a single app that manages their home, their community, and their daily life. Developers get a living channel to engage, delight, earn referrals, and build loyalty with every buyer they've ever sold to.\n\nOur deeper impact: we are making India's — and the world's — residential communities safer, more organised, and more connected, while simultaneously making developers more profitable and more trusted as long-term brands in their customers' lives.",
       source: "Tab 1 (Product Summary): What it is, Problem it solves, Key USPs",
       flag: "Ready to use as-is",
-      colorContext: "blue",
+      colorContext: "orange",
     },
     {
       id: "Q2",
@@ -72,7 +72,7 @@ const postPossessionBusinessPlan = {
       answer: "NORTH STAR METRIC: Referral Transactions Processed (₹ crore of property value attributed annually).\n\nCOMMERCIAL METRICS: ARR/MRR (net new), Net Revenue Retention (target 110%+), ACV (increase as adoption deepens), Sales Cycle Length (<90 days).\n\nENGAGEMENT METRICS: Monthly Active Communities (>50% resident DAU), Ticket Resolution SLA (>85%), CAM Collection Rate, Feature Adoption Breadth (>5/8 module groups).\n\nOPERATIONAL METRICS: Implementation Time (<45 days), Support Ticket Volume per Community (declining), Churn Rate (<5% annually).",
       source: "Tab 11 (Metrics), Tab 5B (Performance Pricing)",
       flag: "Requires Founder Calibration",
-      colorContext: "blue",
+      colorContext: "orange",
     },
     {
       id: "Q10",
@@ -101,7 +101,7 @@ const PostPossessionBusinessPlanTab: React.FC = () => {
   return (
     <div className="space-y-12 animate-fade-in font-poppins">
       {/* Header */}
-      <div className="bg-[#1f3864] text-white p-4 rounded-t-xl shadow-sm">
+      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
         <h2 className="text-xl font-bold uppercase tracking-wider">
           Post Possession — Business Plan Builder
         </h2>
@@ -122,7 +122,7 @@ const PostPossessionBusinessPlanTab: React.FC = () => {
                       ? "bg-[#6B2D84]"
                       : q.colorContext === "teal"
                         ? "bg-[#006B5E]"
-                        : "bg-[#1F4E79]";
+                        : "bg-[#DA7756]";
 
           return (
             <div key={i} className="border border-[#D3D1C7] bg-white rounded-lg overflow-hidden shadow-sm">
@@ -131,7 +131,7 @@ const PostPossessionBusinessPlanTab: React.FC = () => {
               </div>
               <table className="w-full border-collapse table-fixed text-[13px] leading-relaxed">
                 <thead>
-                  <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[10px]">
+                  <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px]">
                     <th className="border border-[#D3D1C7] px-4 py-2 text-left w-[60%]">Founder's Suggested Answer</th>
                     <th className="border border-[#D3D1C7] px-4 py-2 text-left w-[20%]">Source / Context</th>
                     <th className="border border-[#D3D1C7] px-4 py-2 text-center w-[20%]">Review Status</th>
@@ -146,9 +146,8 @@ const PostPossessionBusinessPlanTab: React.FC = () => {
                       {q.source}
                     </td>
                     <td className="border border-[#D3D1C7] px-4 py-4 text-center">
-                      <span className={`px-2 py-1 rounded-sm font-bold text-[9px] uppercase tracking-wider ${
-                        q.flag.includes("Ready") ? "bg-green-100 text-green-700 border border-green-200" : "bg-yellow-100 text-yellow-700 border border-yellow-200"
-                      }`}>
+                      <span className={`px-2 py-1 rounded-sm font-bold text-[9px] uppercase tracking-wider ${q.flag.includes("Ready") ? "bg-green-100 text-green-700 border border-green-200" : "bg-yellow-100 text-yellow-700 border border-yellow-200"
+                        }`}>
                         {q.flag}
                       </span>
                     </td>
@@ -161,7 +160,7 @@ const PostPossessionBusinessPlanTab: React.FC = () => {
 
         {/* Founder Review Checklist section */}
         <div className="mt-12 border border-[#D3D1C7] bg-white rounded-xl overflow-hidden shadow-md">
-          <div className="bg-[#2e4057] text-white px-4 py-4 text-[15px] font-bold tracking-widest uppercase text-center border-b border-[#D3D1C7]">
+          <div className="bg-[#DA7756] text-white px-4 py-4 text-[15px] font-bold tracking-widest uppercase text-center border-b border-[#D3D1C7]">
             Founder Review Checklist
           </div>
           <div className="bg-[#fff2cc] px-4 py-2 text-[11px] text-[#444] font-semibold italic text-center border-b border-[#D3D1C7]">
@@ -180,7 +179,7 @@ const PostPossessionBusinessPlanTab: React.FC = () => {
               {postPossessionBusinessPlan.founderChecklist.map((item, idx) => (
                 <tr key={idx} className="align-top bg-white border-b border-[#D3D1C7] last:border-0 hover:bg-gray-50/50 transition-colors">
                   <td className="border border-[#D3D1C7] px-4 py-3 text-center font-bold text-gray-300 text-xl">□</td>
-                  <td className="border border-[#D3D1C7] px-4 py-3 font-bold text-[#1f3864]">{item.id}</td>
+                  <td className="border border-[#D3D1C7] px-4 py-3 font-bold text-[#DA7756]">{item.id}</td>
                   <td className="border border-[#D3D1C7] px-4 py-3 font-semibold text-[#2c2c2c]">{item.item}</td>
                   <td className="border border-[#D3D1C7] px-4 py-3 text-[#555] italic leading-relaxed">{item.verify}</td>
                 </tr>
@@ -189,13 +188,13 @@ const PostPossessionBusinessPlanTab: React.FC = () => {
           </table>
         </div>
       </div>
-      
+
       {/* Strategic Footer */}
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-4 shadow-sm border-l-4 border-l-[#1f3864]">
-        <h4 className="text-xs font-bold uppercase tracking-widest text-[#1f3864] mb-2">Internal Use Only</h4>
+      <div className="bg-white border border-[#D3D1C7] rounded-xl p-4 shadow-sm border-l-4 border-l-[#DA7756]">
+        <h4 className="text-xs font-bold uppercase tracking-widest text-[#DA7756] mb-2">Internal Use Only</h4>
         <p className="text-[11px] text-[#666] leading-relaxed italic">
-          This business plan builder is a work-in-progress internal tool for the founding team. 
-          The suggested answers are pre-filled based on current product capabilities and market gaps. 
+          This business plan builder is a work-in-progress internal tool for the founding team.
+          The suggested answers are pre-filled based on current product capabilities and market gaps.
           Please complete the Founder Review Checklist above before using these answers in external conversations.
         </p>
       </div>
@@ -204,3 +203,4 @@ const PostPossessionBusinessPlanTab: React.FC = () => {
 };
 
 export default PostPossessionBusinessPlanTab;
+
