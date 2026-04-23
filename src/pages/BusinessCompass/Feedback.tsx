@@ -1,20 +1,15 @@
 /**
  * Feedback.tsx — Full production version with robust API integration
- *
- * Key improvements over original:
- *  1. Centralized Axios instance with request/response interceptors
- *  2. Token refresh coalescing (single in-flight refresh promise)
- *  3. Exponential backoff with jitter via React Query
- *  4. Zod schema validation for response normalization
- *  5. Classified error types (network / auth / forbidden / server / unknown)
- *  6. React Query for all data fetching (no manual useEffect fetch loops)
- *  7. Global AsyncBoundary (ErrorBoundary + Suspense) wrapping each tab
- *  8. Consistent loading / error / empty states throughout
- *  9. Mutations via React Query useMutation with cache invalidation
- * 10. All original UI preserved pixel-for-pixel
+ * Styled to match the warm, rounded-2xl DISC Personality Assessment theme.
  */
 
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 import axios, { AxiosError } from "axios";
 import { useSelector } from "react-redux";
 import {
@@ -25,6 +20,7 @@ import {
   QueryClientProvider,
   useQueryErrorResetBoundary,
 } from "@tanstack/react-query";
+
 // Custom ErrorBoundary (replaces react-error-boundary)
 type FallbackProps = { error: Error; resetErrorBoundary: () => void };
 type ErrorBoundaryProps = {
@@ -60,9 +56,9 @@ class ErrorBoundary extends React.Component<
     return this.props.children;
   }
 }
+
 import { z } from "zod";
 import {
-  ArrowUp,
   Calendar as CalendarIcon,
   ChevronDown,
   ChevronRight,
@@ -100,7 +96,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import {
   getEmbeddedOrgId,
@@ -109,26 +104,18 @@ import {
 } from "@/utils/embeddedMode";
 import { getUser } from "@/utils/auth";
 
-// Lockated / FM Matrix brand tokens (used across product pages)
+// Unified Brand Tokens
 const BRAND = {
   primary: "#DA7756",
-  secondary: "#c9673f", // hover / emphasis (matches WeeklyReports.tsx)
+  secondary: "#BC6B4A",
   background: "#f6f4ee",
-  panelBg: "rgba(218, 119, 86, 0.06)", // match warm tint used across UI
-  panelBorder: "rgba(218, 119, 86, 0.20)", // same as border-[#DA7756]/20
-  softRowBg: "rgba(218, 119, 86, 0.06)",
+  panelBg: "#FFF9F6",
+  panelBorder: "rgba(218, 119, 86, 0.18)",
+  softRowBg: "rgba(218, 119, 86, 0.04)",
   danger: "#C72030",
 } as const;
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
-
-type SummaryStat = {
-  label: string;
-  value: string | number;
-  icon: React.ElementType;
-  bgClass: string;
-  iconClass: string;
-};
 
 export type FeedbackItem = {
   id: string;
@@ -178,13 +165,6 @@ export type AppError = {
 
 // ─── React Query Client ────────────────────────────────────────────────────────
 
-/**
- * QueryClient with global retry strategy:
- * - Never retry 401/403/404 (retrying won't help)
- * - Retry up to 3x for network and 5xx errors
- * - Exponential backoff: min(1000 * 2^attempt + jitter, 15s)
- * - Mutations never auto-retry (avoid duplicate state changes)
- */
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -204,11 +184,6 @@ const queryClient = new QueryClient({
 
 // ─── Token / Auth Service ──────────────────────────────────────────────────────
 
-/**
- * In-memory token store. Credentials are never persisted beyond what
- * the host app already puts in storage for bootstrap.
- * After initial load the token lives only in module-scope memory.
- */
 let _accessToken: string | null = null;
 let _refreshPromise: Promise<string> | null = null;
 
@@ -219,54 +194,32 @@ function getAccessToken(): string {
     _accessToken = embedded;
     return embedded;
   }
-  return getAuthHeader(); // returns "Bearer ..." string from host
-}
-
-function setAccessToken(token: string): void {
-  _accessToken = token;
+  return getAuthHeader();
 }
 
 function clearAccessToken(): void {
   _accessToken = null;
 }
 
-/**
- * Refresh the access token.
- * Multiple concurrent callers coalesce onto a single Promise — only
- * one HTTP request ever goes out, preventing token-refresh races.
- */
 async function refreshAccessToken(): Promise<string> {
   if (_refreshPromise) return _refreshPromise;
-
   _refreshPromise = apiClient
     .post<{ access_token: string }>(
       "/auth/refresh",
       {},
       { headers: { "x-skip-auth-retry": "1" } }
     )
-    .then(({ data }) => {
-      // setAccessToken(data.access_token);
-      return data.access_token;
-    })
+    .then(({ data }) => data.access_token)
     .finally(() => {
       _refreshPromise = null;
     });
-
   return _refreshPromise;
 }
 
-// ─── Error Normalization ───────────────────────────────────────────────────────
-
-/**
- * Converts any thrown value into a classified AppError.
- * Used by the Axios interceptor and throughout query/mutation functions.
- */
 function normalizeError(error: unknown): AppError {
-  // Already normalized
   if (error && typeof error === "object" && "kind" in error) {
     return error as AppError;
   }
-
   if (error instanceof AxiosError) {
     const status = error.response?.status;
     const data = error.response?.data as Record<string, unknown> | undefined;
@@ -307,20 +260,14 @@ function normalizeError(error: unknown): AppError {
     }
     return { message: raw || "Unexpected error.", status, kind: "unknown" };
   }
-
   if (error instanceof Error) {
     return { message: error.message, kind: "unknown" };
   }
-
   return { message: "An unexpected error occurred.", kind: "unknown" };
 }
 
 // ─── Axios Instance ────────────────────────────────────────────────────────────
 
-/**
- * Centralized Axios instance. Every request goes through here so auth
- * injection, token refresh, and error normalization are always applied.
- */
 const apiClient = axios.create({
   timeout: 30_000,
   headers: { Accept: "application/json" },
@@ -328,9 +275,7 @@ const apiClient = axios.create({
 
 async function resolveBaseUrl(): Promise<string> {
   const base = API_CONFIG.BASE_URL;
-  if (base) {
-    return base.replace(/\/+$/, "");
-  }
+  if (base) return base.replace(/\/+$/, "");
 
   const embeddedOrgId = getEmbeddedOrgId();
   if (embeddedOrgId) {
@@ -348,22 +293,18 @@ async function resolveBaseUrl(): Promise<string> {
   } as AppError;
 }
 
-// Request interceptor — attach base URL and Authorization header
 apiClient.interceptors.request.use(async (config) => {
   if (!config.baseURL) {
     config.baseURL = await resolveBaseUrl();
   }
   const token = getAccessToken();
-  // Extract raw token value (strip "Bearer " prefix if present)
   const rawToken = token?.startsWith("Bearer ") ? token.slice(7) : token;
   if (rawToken) {
-    // Set Authorization header
     config.headers.Authorization = `Bearer ${rawToken}`;
   }
   return config;
 });
 
-// Response interceptor — refresh token on 401, normalize all errors
 apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -372,7 +313,6 @@ apiClient.interceptors.response.use(
       headers: Record<string, string>;
     };
 
-    // Attempt one token refresh on 401, skip refresh endpoint itself
     if (
       error.response?.status === 401 &&
       !original._retried &&
@@ -385,11 +325,9 @@ apiClient.interceptors.response.use(
         return apiClient(original);
       } catch {
         clearAccessToken();
-        // Signal app-level logout (the app can listen for this)
         window.dispatchEvent(new CustomEvent("auth:expired"));
       }
     }
-
     return Promise.reject(normalizeError(error));
   }
 );
@@ -412,11 +350,6 @@ async function fetchFeedbackDetail(
 
 // ─── Zod Schemas ───────────────────────────────────────────────────────────────
 
-/**
- * Runtime schema for a single feedback record.
- * z.coerce handles string/number type mismatches from various API versions.
- * .catch() provides safe fallbacks so partial records don't crash the list.
- */
 const FeedbackSchema = z.object({
   id: z.coerce.string(),
   score: z.number().min(1).max(5).catch(1),
@@ -478,11 +411,6 @@ const FeedbackSchema = z.object({
 
 type RawFeedback = z.infer<typeof FeedbackSchema>;
 
-/**
- * Handles all known API response shapes — plain array, { feedbacks: [] },
- * { team_feedbacks: [] }, { data: [] }, etc.
- * Falls back to [] on total parse failure so the UI never hard-crashes.
- */
 const FeedbackListSchema = z
   .union([
     z.array(FeedbackSchema),
@@ -611,7 +539,7 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
     ratingFromName: ratingFromName || undefined,
     date: formatApiDate(raw.created_at ?? raw.createdAt ?? raw.date),
     rating: score,
-    status: raw.read ? "read" : "unread",
+    status: raw.read || !!raw.read_at ? "read" : "unread",
     detailPreview: preview || undefined,
     resourceId,
     ratingFromType: raw.rating_from_type ?? ratingFrom?.type ?? "User",
@@ -822,11 +750,6 @@ function getRatingsDetailEndpoints(feedbackId: string): string[] {
 
 // ─── API Functions ─────────────────────────────────────────────────────────────
 
-/**
- * Tries feedback endpoints in order, returning parsed + mapped items.
- * Stops immediately on auth/permission errors (retrying other endpoints
- * won't help if the token is invalid or the user lacks access).
- */
 async function fetchFeedbackList(
   direction: "given" | "received",
   userId: number | null
@@ -849,9 +772,6 @@ async function fetchFeedbackList(
         params,
       });
 
-      console.log(data);
-
-      // Extract summary if present
       let summary: FeedbackSummary | undefined;
       if (data && typeof data === "object" && "summary" in data) {
         const rawSummary = data.summary as {
@@ -871,7 +791,6 @@ async function fetchFeedbackList(
       }
 
       const raw = FeedbackListSchema.parse(data);
-      console.log(raw);
       const mapped = raw.map(mapRawFeedback);
       const filtered = mapped.filter((item) => {
         if (!userId) return true;
@@ -938,9 +857,44 @@ async function fetchFeedbackList(
 }
 
 async function fetchTeamMembers(): Promise<TeamMemberOption[]> {
-  const { data } = await apiClient.get(TEAM_MEMBERS_ENDPOINT, {
-    params: {},
+  // localStorage se base URL aur org_id nikalo
+  const baseUrl = (
+    localStorage.getItem("baseUrl") ||
+    API_CONFIG.BASE_URL ||
+    ""
+  ).replace(/\/+$/, "");
+
+  const orgId =
+    localStorage.getItem("organization_id") ||
+    localStorage.getItem("org_id") ||
+    localStorage.getItem("orgId") ||
+    getEmbeddedOrgId();
+
+  if (!baseUrl) {
+    throw {
+      message: "Base URL not found. Please log in again.",
+      kind: "unknown",
+    } as AppError;
+  }
+
+  if (!orgId) {
+    throw {
+      message: "Organization ID not found. Please log in again.",
+      kind: "unknown",
+    } as AppError;
+  }
+
+  const { data } = await axios.get(`${baseUrl}/api/users`, {
+    params: { organization_id: orgId },
+    headers: {
+      Authorization:
+        (apiClient.defaults.headers.Authorization as string) ||
+        `Bearer ${getAccessToken()?.replace("Bearer ", "")}`,
+      Accept: "application/json",
+    },
+    timeout: 30_000,
   });
+
   const raw = TeamMembersListSchema.parse(data);
   return raw
     .map(mapTeamMember)
@@ -1020,15 +974,22 @@ async function updateFeedback(
   return data;
 }
 
-async function markRatingAsRead(id: string, readComment?: string): Promise<unknown> {
+async function markRatingAsRead(
+  id: string,
+  readComment?: string
+): Promise<unknown> {
   const trimmedId = id.trim();
   if (!trimmedId) {
     throw { message: "Invalid feedback id.", kind: "unknown" } as AppError;
   }
 
+  const payload = {
+    read_comment: readComment?.trim() ? readComment.trim() : "Reviewed",
+  };
+
   const { data } = await apiClient.patch(
     `/ratings/${encodeURIComponent(trimmedId)}/mark_as_read`,
-    readComment?.trim() ? { read_comment: readComment.trim() } : {},
+    payload,
     { headers: { "Content-Type": "application/json" } }
   );
   return data;
@@ -1040,23 +1001,15 @@ async function deleteFeedback(id: string): Promise<void> {
     throw { message: "Invalid feedback id.", kind: "unknown" } as AppError;
   }
 
-  // Try DELETE /ratings/:id.json (standard Rails RESTful destroy)
-  for (const endpoint of getRatingsDetailEndpoints(trimmedId)) {
-    try {
-      await apiClient.delete(endpoint);
-      return; // API confirmed deletion
-    } catch (err) {
-      const error = normalizeError(err);
-      if (error.kind === "auth" || error.kind === "forbidden") {
-        throw error; // Real permission errors should surface
-      }
-      // 404 or other errors — continue to next endpoint
+  try {
+    await apiClient.delete(`/ratings/${encodeURIComponent(trimmedId)}.json`);
+  } catch (err) {
+    const error = normalizeError(err);
+    if (error.kind === "auth" || error.kind === "forbidden") {
+      throw error;
     }
+    throw error;
   }
-
-  // If DELETE is not supported by the backend (404), remove locally.
-  // The useDeleteFeedback hook will strip it from cache and query data.
-  return;
 }
 
 // ─── React Query Hooks ─────────────────────────────────────────────────────────
@@ -1091,7 +1044,7 @@ function useTeamMembers() {
   return useQuery<TeamMemberOption[], AppError>({
     queryKey: ["teamMembers"],
     queryFn: fetchTeamMembers,
-    staleTime: 5 * 60_000, // 5 min — roster changes infrequently
+    staleTime: 5 * 60_000,
     placeholderData: [],
   });
 }
@@ -1133,7 +1086,6 @@ function useCreateFeedback() {
         LAST_SUCCESSFUL_FEEDBACK[givenMemoryKey]
       );
 
-      // Sync with canonical server payload (create responses can omit full record fields).
       qc.invalidateQueries({ queryKey: ["feedback", "given"] });
       qc.invalidateQueries({ queryKey: ["feedback", "received"] });
     },
@@ -1213,7 +1165,6 @@ function useUpdateFeedback() {
         );
       }
 
-      // Ensure edited feedback rehydrates from source of truth.
       qc.invalidateQueries({ queryKey: ["feedback", "given"] });
       qc.invalidateQueries({ queryKey: ["feedback", "received"] });
     },
@@ -1288,46 +1239,372 @@ function useMarkAsRead() {
   const qc = useQueryClient();
   return useMutation<unknown, AppError, { id: string; readComment?: string }>({
     mutationFn: ({ id, readComment }) => markRatingAsRead(id, readComment),
-    onSuccess: (_, variables) => {
-      const currentUserId = getCurrentUserId();
+    onMutate: async (variables) => {
+      await qc.cancelQueries({ queryKey: ["feedback"] });
+
       qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "received"] },
         (old) => {
-          const items = (old?.items ?? []).map((item) =>
-            item.id === variables.id
-              ? { ...item, status: "read" as const }
-              : item
-          );
-          return { items, summary: old?.summary };
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.map((item) =>
+              String(item.id) === String(variables.id)
+                ? { ...item, status: "read" as const }
+                : item
+            ),
+          };
         }
       );
-      qc.setQueryData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
-        ["feedback", "received", currentUserId],
-        (old) => {
-          const items = (old?.items ?? []).map((item) =>
-            item.id === variables.id
-              ? { ...item, status: "read" as const }
-              : item
-          );
-          return { items, summary: old?.summary };
-        }
-      );
-      const receivedMemoryKey = getFeedbackCacheKey("received", currentUserId);
-      if (LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]) {
-        LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey] = LAST_SUCCESSFUL_FEEDBACK[
-          receivedMemoryKey
-        ].map((item) =>
-          item.id === variables.id ? { ...item, status: "read" as const } : item
-        );
-        writeFeedbackCache(
-          "received",
-          currentUserId,
-          LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]
-        );
-      }
+    },
+    onError: (err) => {
+      console.error("Mark as read failed:", err);
     },
   });
 }
+
+// ─── Searchable User Select (BhagSection style) ────────────────────────────────
+
+const UserSelectFeedback = ({
+  value,
+  onChange,
+  users,
+  placeholder = "Search team member...",
+  disabled = false,
+}: {
+  value: string | undefined;
+  onChange: (val: string) => void;
+  users: TeamMemberOption[];
+  placeholder?: string;
+  disabled?: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedUser = users.find((u) => u.value === value);
+  const displayValue = selectedUser ? selectedUser.label : "";
+
+  const filteredUsers = users.filter((u) =>
+    u.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div style={{ position: "relative", zIndex: open ? 9999 : 1 }} ref={ref}>
+      <input
+        type="text"
+        disabled={disabled}
+        placeholder={disabled ? "Loading members…" : placeholder}
+        value={open ? search : displayValue}
+        onClick={() => {
+          if (!disabled) {
+            setOpen(true);
+            setSearch("");
+          }
+        }}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setOpen(true);
+        }}
+        className="h-12 w-full rounded-xl border border-neutral-200 bg-white px-4 text-sm text-neutral-900 placeholder:text-neutral-400 shadow-sm outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{ paddingRight: "40px", fontFamily: "inherit" }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          right: "12px",
+          top: "50%",
+          transform: "translateY(-50%)",
+          color: "#9ca3af",
+          pointerEvents: "none",
+        }}
+      >
+        {disabled ? (
+          <Loader2
+            style={{
+              width: "16px",
+              height: "16px",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+        ) : (
+          <svg
+            width="16"
+            height="16"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        )}
+      </div>
+      {open && !disabled && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            right: 0,
+            marginTop: "4px",
+            backgroundColor: "#ffffff",
+            border: "1px solid #e5e7eb",
+            borderRadius: "12px",
+            boxShadow: "0 10px 24px rgba(0,0,0,0.10)",
+            maxHeight: "220px",
+            overflowY: "auto",
+            overflowX: "hidden",
+            zIndex: 9999,
+            fontFamily: "inherit",
+          }}
+        >
+          {value && (
+            <div
+              style={{
+                padding: "10px 14px",
+                fontSize: "13px",
+                cursor: "pointer",
+                borderBottom: "1px solid #f3f4f6",
+                color: "#ef4444",
+                fontWeight: 600,
+              }}
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+                setSearch("");
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#fef2f2")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
+            >
+              Clear selection
+            </div>
+          )}
+          {filteredUsers.length === 0 ? (
+            <div
+              style={{
+                padding: "14px",
+                fontSize: "13px",
+                color: "#9ca3af",
+                textAlign: "center",
+              }}
+            >
+              No members found
+            </div>
+          ) : (
+            filteredUsers.map((u) => (
+              <div
+                key={u.value}
+                style={{
+                  padding: "10px 14px",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  borderBottom: "1px solid #f9fafb",
+                  color: "#1a1a1a",
+                  transition: "background 0.1s",
+                }}
+                onClick={() => {
+                  onChange(u.value);
+                  setOpen(false);
+                  setSearch("");
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#fef6f4")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "transparent")
+                }
+              >
+                {u.label}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Searchable User Select for Received Tab ───────────────────────────────────
+
+const UserSelectReceived = ({
+  value,
+  onChange,
+  users,
+  myselfLabel,
+  currentUserId,
+  disabled = false,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  users: TeamMemberOption[];
+  myselfLabel: string;
+  currentUserId: number | null;
+  disabled?: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const allOptions = [
+    { value: "myself", label: myselfLabel },
+    ...users.filter((m) => m.id !== currentUserId),
+  ];
+
+  const selectedOption = allOptions.find((o) => o.value === value);
+  const displayValue = selectedOption ? selectedOption.label : myselfLabel;
+
+  const filteredOptions = allOptions.filter((o) =>
+    o.label.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div style={{ position: "relative", zIndex: open ? 9999 : 1 }} ref={ref}>
+      <input
+        type="text"
+        disabled={disabled}
+        placeholder={disabled ? "Loading…" : "Search member…"}
+        value={open ? search : displayValue}
+        onClick={() => {
+          if (!disabled) {
+            setOpen(true);
+            setSearch("");
+          }
+        }}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setOpen(true);
+        }}
+        className="h-10 w-[240px] rounded-xl border border-neutral-200 bg-white px-4 text-sm font-semibold text-neutral-900 shadow-sm outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{ paddingRight: "36px", fontFamily: "inherit" }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          right: "10px",
+          top: "50%",
+          transform: "translateY(-50%)",
+          color: "#9ca3af",
+          pointerEvents: "none",
+        }}
+      >
+        {disabled ? (
+          <Loader2
+            style={{
+              width: "15px",
+              height: "15px",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+        ) : (
+          <svg
+            width="15"
+            height="15"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        )}
+      </div>
+      {open && !disabled && (
+        <div
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            right: 0,
+            marginTop: "4px",
+            backgroundColor: "#ffffff",
+            border: "1px solid #e5e7eb",
+            borderRadius: "12px",
+            boxShadow: "0 10px 24px rgba(0,0,0,0.10)",
+            maxHeight: "220px",
+            overflowY: "auto",
+            overflowX: "hidden",
+            zIndex: 9999,
+            fontFamily: "inherit",
+          }}
+        >
+          {filteredOptions.length === 0 ? (
+            <div
+              style={{
+                padding: "12px 14px",
+                fontSize: "13px",
+                color: "#9ca3af",
+                textAlign: "center",
+              }}
+            >
+              No members found
+            </div>
+          ) : (
+            filteredOptions.map((o) => (
+              <div
+                key={o.value}
+                style={{
+                  padding: "10px 14px",
+                  cursor: "pointer",
+                  fontSize: "13px",
+                  borderBottom: "1px solid #f9fafb",
+                  color: "#1a1a1a",
+                  fontWeight: o.value === value ? 600 : 400,
+                  transition: "background 0.1s",
+                }}
+                onClick={() => {
+                  onChange(o.value);
+                  setOpen(false);
+                  setSearch("");
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#fef6f4")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "transparent")
+                }
+              >
+                {o.label}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // ─── Error Boundary ────────────────────────────────────────────────────────────
 
@@ -1500,7 +1777,6 @@ function GivenFeedbackList({
   const items = itemsOverride ?? queriedItems;
   const deleteMutation = useDeleteFeedback();
   const markAsReadMutation = useMarkAsRead();
-  const currentUserId = getCurrentUserId();
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1512,7 +1788,11 @@ function GivenFeedbackList({
   const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
   const [lastStableItems, setLastStableItems] = useState<FeedbackItem[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [localReadOverrides, setLocalReadOverrides] = useState<
+    Record<string, boolean>
+  >({});
 
   useEffect(() => {
     if (!isError && items.length > 0) {
@@ -1534,27 +1814,22 @@ function GivenFeedbackList({
     setExpandedId(isCollapsing ? null : itemId);
     if (isCollapsing) return;
 
-    // Pre-populate cache with data already in the list item so the 3 sections
-    // (positiveOpening, constructiveFeedback, positiveClosing) render immediately
     const existingItem = sourceItems.find((i) => i.id === itemId);
     if (existingItem && !detailCache[itemId]) {
       setDetailCache((prev) => ({ ...prev, [itemId]: existingItem }));
     }
 
-    // Skip detail fetch if we already have enriched data cached
     if (detailCache[itemId]) return;
 
     setLoadingDetailId(itemId);
     try {
       const detail = await fetchFeedbackDetail(itemId);
       if (detail) {
-        // Merge: prefer detail API data for each field, fallback to list data
         setDetailCache((prev) => ({
           ...prev,
           [itemId]: {
             ...(existingItem ?? {}),
             ...detail,
-            // Ensure the 3 key fields are never lost
             positiveOpening:
               detail.positiveOpening ?? existingItem?.positiveOpening,
             constructiveFeedback:
@@ -1565,7 +1840,7 @@ function GivenFeedbackList({
         }));
       }
     } catch {
-      /* ignore — we already have list-level data in cache */
+      /* ignore */
     } finally {
       setLoadingDetailId(null);
     }
@@ -1594,11 +1869,23 @@ function GivenFeedbackList({
           (item.detailPreview?.toLowerCase().includes(q) ?? false);
         const matchesRating =
           ratingFilter === "all" || String(item.rating) === ratingFilter;
+
+        const displayStatus = localReadOverrides[item.id]
+          ? "read"
+          : item.status;
         const matchesStatus =
-          statusFilter === "all" || item.status === statusFilter;
+          statusFilter === "all" || displayStatus === statusFilter;
+
         return matchesSearch && matchesRating && matchesStatus;
       }),
-    [sourceItems, searchQuery, ratingFilter, statusFilter, direction]
+    [
+      sourceItems,
+      searchQuery,
+      ratingFilter,
+      statusFilter,
+      direction,
+      localReadOverrides,
+    ]
   );
 
   const avgRating =
@@ -1648,21 +1935,51 @@ function GivenFeedbackList({
 
   return (
     <div className="flex flex-col gap-5 pb-4">
-      <div
-        className="flex items-center gap-5 border-b border-[#DA7756]/20 px-4 py-2"
-        style={{ backgroundColor: BRAND.panelBg }}
-      >
+      {/* Search and Filter Row */}
+      <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+        <div className="flex flex-1 items-center gap-3">
+          <div className="relative flex-1 max-w-sm">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
+              aria-hidden
+            />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by name or content..."
+              className="h-10 w-full rounded-xl border border-neutral-200 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all"
+            />
+          </div>
+          <Select value={ratingFilter} onValueChange={setRatingFilter}>
+            <SelectTrigger className="h-10 w-[130px] rounded-xl border border-neutral-200 bg-white text-sm focus:ring-[#DA7756]/20">
+              <SelectValue placeholder="All Ratings" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border border-neutral-200">
+              <SelectItem value="all">All Ratings</SelectItem>
+              <SelectItem value="5">5 stars</SelectItem>
+              <SelectItem value="4">4 stars</SelectItem>
+              <SelectItem value="3">3 stars</SelectItem>
+              <SelectItem value="2">2 stars</SelectItem>
+              <SelectItem value="1">1 star</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-10 w-[100px] rounded-xl border border-neutral-200 bg-white text-sm focus:ring-[#DA7756]/20">
+              <SelectValue placeholder="All" />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl border border-neutral-200">
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="unread">Unread</SelectItem>
+              <SelectItem value="read">Read</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         <button
           type="button"
           onClick={handleSelectAll}
-          className="flex items-center gap-2 px-3 py-1.5 rounded border border-[#DA7756]/20 bg-white text-sm font-medium text-neutral-700 shadow-sm"
-          style={{ backgroundColor: "#ffffff" }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = "#ffffff";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = "#ffffff";
-          }}
+          className="flex items-center gap-2 rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50"
         >
           <input
             type="checkbox"
@@ -1675,8 +1992,8 @@ function GivenFeedbackList({
         </button>
 
         {selectedIds.size > 0 && (
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium text-neutral-700">
+          <div className="flex items-center gap-3 ml-2">
+            <span className="text-sm font-medium text-neutral-600">
               {selectedIds.size} selected
             </span>
             <button
@@ -1694,8 +2011,7 @@ function GivenFeedbackList({
                 setSelectedIds(new Set());
               }}
               disabled={deleteMutation.isPending}
-              className="flex items-center gap-2 rounded px-4 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-red-600 disabled:opacity-60 transition-colors"
-              style={{ backgroundColor: BRAND.danger }}
+              className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 disabled:opacity-60 transition-colors"
             >
               <Trash2 className="h-4 w-4" />
               Delete Selected
@@ -1704,90 +2020,7 @@ function GivenFeedbackList({
         )}
       </div>
 
-      <div
-        className="mx-4 grid grid-cols-3 divide-x divide-[#DA7756]/20 rounded-xl border border-[#DA7756]/20 px-6 py-4"
-        style={{ backgroundColor: BRAND.panelBg }}
-      >
-        <div className="flex flex-col gap-1 pr-6">
-          <span className="text-xs text-neutral-500 font-medium">
-            Average Rating
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-amber-500">
-              {avgRating}
-            </span>
-            <div className="flex gap-0.5">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Star
-                  key={i}
-                  className={cn(
-                    "h-4 w-4",
-                    i <= Math.round(avgRatingNum)
-                      ? "fill-amber-400 text-amber-400"
-                      : "fill-transparent text-neutral-300"
-                  )}
-                  strokeWidth={i <= Math.round(avgRatingNum) ? 0 : 1.5}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-xs text-neutral-500 font-medium">
-            Total Feedback
-          </span>
-          <span className="text-2xl font-bold text-neutral-900">
-            {totalFeedback}
-          </span>
-        </div>
-        <div className="flex flex-col items-end gap-1 pl-6">
-          <span className="text-xs text-neutral-500 font-medium">
-            Points from Feedback
-          </span>
-          <span className="text-2xl font-bold text-neutral-900">{points}</span>
-        </div>
-      </div>
-
-      <div className="px-4 flex gap-3 items-center">
-        <div className="relative flex-1">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400"
-            aria-hidden
-          />
-          <input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name or content..."
-            className="h-9 w-full rounded-lg border border-[#DA7756]/20 bg-white py-2 pl-9 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none focus:border-[#DA7756]/30"
-          />
-        </div>
-        <Select value={ratingFilter} onValueChange={setRatingFilter}>
-          <SelectTrigger className="h-9 w-[130px] rounded-lg border border-[#DA7756]/20 bg-white text-sm">
-            <SelectValue placeholder="All Ratings" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Ratings</SelectItem>
-            <SelectItem value="5">5 stars</SelectItem>
-            <SelectItem value="4">4 stars</SelectItem>
-            <SelectItem value="3">3 stars</SelectItem>
-            <SelectItem value="2">2 stars</SelectItem>
-            <SelectItem value="1">1 star</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="h-9 w-[90px] rounded-lg border border-[#DA7756]/20 bg-white text-sm">
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="unread">Unread</SelectItem>
-            <SelectItem value="read">Read</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="px-4 space-y-3">
+      <div className="space-y-3">
         {isLoading && filtered.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-12 text-sm text-neutral-500">
             <Loader2
@@ -1808,6 +2041,11 @@ function GivenFeedbackList({
             const expanded = expandedId === item.id;
             const detail = detailCache[item.id] ?? item;
             const isLoadingDetail = loadingDetailId === item.id;
+
+            const displayStatus = localReadOverrides[item.id]
+              ? "read"
+              : item.status;
+
             const displayName =
               direction === "from"
                 ? item.ratingFromName || item.recipientName
@@ -1819,24 +2057,23 @@ function GivenFeedbackList({
               <div
                 key={item.id}
                 className={cn(
-                  "rounded-xl border transition-all",
+                  "rounded-2xl border transition-all duration-200 bg-white shadow-sm hover:shadow-md",
                   expanded
-                    ? "border-[#DA7756] ring-1 ring-[#DA7756]/30"
-                    : "border-[#DA7756]/20 hover:border-[#DA7756]/30"
+                    ? "border-[#DA7756] ring-1 ring-[#DA7756]/10"
+                    : "border-neutral-200 hover:border-[#DA7756]/40"
                 )}
-                style={{ backgroundColor: BRAND.softRowBg }}
               >
-                <div className="flex items-start gap-3 p-4">
+                <div className="flex items-start gap-4 p-5">
                   <input
                     type="checkbox"
                     checked={selectedIds.has(item.id)}
                     onChange={() => toggleSelect(item.id)}
-                    className="mt-1 h-4 w-4 cursor-pointer shrink-0"
+                    className="mt-1.5 h-4 w-4 cursor-pointer shrink-0"
                     style={{ accentColor: BRAND.primary }}
                   />
 
                   <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white shadow-sm"
                     style={{ backgroundColor: avatarBg }}
                   >
                     {initial}
@@ -1845,37 +2082,38 @@ function GivenFeedbackList({
                   <div className="flex-1 min-w-0">
                     <button
                       type="button"
-                      className="w-full text-left"
+                      className="w-full text-left focus:outline-none"
                       onClick={() => handleExpand(item.id)}
                     >
-                      <p className="font-semibold text-[#1a1a1a] text-sm">
-                        {direction === "from" ? "From: " : "To: "}{displayName}
+                      <p className="font-bold text-neutral-900 text-[15px]">
+                        {direction === "from" ? "From: " : "To: "}
+                        {displayName}
                       </p>
-                      <div className="flex items-center gap-2 mt-0.5">
+                      <div className="flex items-center gap-2 mt-1">
                         <CalendarIcon className="h-3.5 w-3.5 text-neutral-400 shrink-0" />
-                        <span className="text-xs text-neutral-500">
+                        <span className="text-[13px] text-neutral-500">
                           {item.date}
                         </span>
                         <span
                           className={cn(
-                            "rounded px-2 py-0.5 text-[10px] font-semibold",
-                            item.status === "unread"
-                              ? "bg-blue-100 text-blue-700"
-                              : "bg-green-100 text-green-700"
+                            "rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                            displayStatus === "unread"
+                              ? "bg-blue-50 text-blue-700 border border-blue-200"
+                              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                           )}
                         >
-                          {item.status === "unread" ? "Unread" : "Read"}
+                          {displayStatus === "unread" ? "Unread" : "Read"}
                         </span>
                       </div>
                       {!expanded && (
-                        <p className="text-[11px] text-neutral-400 italic mt-0.5">
+                        <p className="text-xs text-neutral-400 italic mt-1.5">
                           Click to expand feedback details
                         </p>
                       )}
                     </button>
 
                     {expanded && (
-                      <div className="mt-3 space-y-3">
+                      <div className="mt-4 space-y-3">
                         {isLoadingDetail ? (
                           <div className="flex items-center gap-2 text-xs text-neutral-400">
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -1884,31 +2122,31 @@ function GivenFeedbackList({
                         ) : (
                           <>
                             {detail.positiveOpening && (
-                              <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2">
-                                <p className="text-[11px] font-semibold text-green-700 mb-1">
+                              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                                <p className="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-1">
                                   ✓ What You're Doing Well
                                 </p>
-                                <p className="text-sm text-neutral-700">
+                                <p className="text-sm text-neutral-800 leading-relaxed">
                                   {detail.positiveOpening}
                                 </p>
                               </div>
                             )}
                             {detail.constructiveFeedback && (
-                              <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2">
-                                <p className="text-[11px] font-semibold text-orange-600 mb-1">
+                              <div className="rounded-xl border border-orange-200 bg-orange-50 px-4 py-3">
+                                <p className="text-xs font-bold uppercase tracking-wider text-orange-600 mb-1">
                                   → Area for Growth
                                 </p>
-                                <p className="text-sm text-neutral-700">
+                                <p className="text-sm text-neutral-800 leading-relaxed">
                                   {detail.constructiveFeedback}
                                 </p>
                               </div>
                             )}
                             {detail.positiveClosing && (
-                              <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2">
-                                <p className="text-[11px] font-semibold text-sky-600 mb-1">
+                              <div className="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3">
+                                <p className="text-xs font-bold uppercase tracking-wider text-sky-700 mb-1">
                                   ★ Encouragement
                                 </p>
-                                <p className="text-sm text-neutral-700">
+                                <p className="text-sm text-neutral-800 leading-relaxed">
                                   {detail.positiveClosing}
                                 </p>
                               </div>
@@ -1917,54 +2155,77 @@ function GivenFeedbackList({
                               !detail.constructiveFeedback &&
                               !detail.positiveClosing &&
                               detail.detailPreview && (
-                                <div className="rounded-lg border border-[#DA7756]/20 bg-white px-3 py-2">
-                                  <p className="text-sm text-neutral-700">
+                                <div className="rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3">
+                                  <p className="text-sm text-neutral-800 leading-relaxed">
                                     {detail.detailPreview}
                                   </p>
                                 </div>
                               )}
-                            {/* Notes — only meaningful for received feedback (as the recipient acting on it) */}
-                            {direction === "from" && (
-                              <div className="mt-2">
-                                <label className="text-xs font-semibold text-neutral-600">
-                                  Your Notes / Action Items{" "}
-                                  <span className="font-normal text-neutral-400">
-                                    (Optional)
-                                  </span>
-                                </label>
-                                <textarea
-                                  rows={3}
-                                  value={notes[item.id] || ""}
-                                  onChange={(e) =>
-                                    setNotes((prev) => ({
-                                      ...prev,
-                                      [item.id]: e.target.value,
-                                    }))
-                                  }
-                                  placeholder="Add your notes about how you'll act on this feedback..."
-                                  className="mt-1 w-full rounded-lg border border-[#DA7756]/20 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-[#DA7756]/30 resize-y"
-                                />
-                              </div>
-                            )}
-                            {/* Mark as Read — only for received (from) unread items */}
-                            {direction === "from" && item.status === "unread" && (
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  markAsReadMutation.mutate({
-                                    id: item.id,
-                                    readComment: notes[item.id] || undefined,
-                                  })
-                                }
-                                disabled={markAsReadMutation.isPending}
-                                className="inline-flex items-center gap-2 rounded-lg bg-[#2E7D32] px-4 py-2 text-xs font-semibold text-white hover:bg-[#1B5E20] transition-colors disabled:opacity-50"
-                              >
-                                <CheckCircle className="h-3.5 w-3.5" />
-                                {markAsReadMutation.isPending
-                                  ? "Marking..."
-                                  : "Mark as Read"}
-                              </button>
-                            )}
+
+                            {direction === "from" &&
+                              displayStatus === "unread" && (
+                                <div className="mt-4 space-y-3 border-t border-neutral-100 pt-4">
+                                  <div>
+                                    <label className="text-xs font-bold uppercase tracking-wider text-neutral-500">
+                                      Your Notes / Action Items{" "}
+                                      <span className="font-normal normal-case text-neutral-400">
+                                        (Optional)
+                                      </span>
+                                    </label>
+                                    <textarea
+                                      rows={2}
+                                      value={notes[item.id] || ""}
+                                      onChange={(e) =>
+                                        setNotes((prev) => ({
+                                          ...prev,
+                                          [item.id]: e.target.value,
+                                        }))
+                                      }
+                                      placeholder="Add your notes about how you'll act on this feedback..."
+                                      className="mt-1.5 w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-700 placeholder:text-neutral-400 outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 resize-y"
+                                    />
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setLocalReadOverrides((prev) => ({
+                                        ...prev,
+                                        [item.id]: true,
+                                      }));
+                                      markAsReadMutation.mutate({
+                                        id: item.id,
+                                        readComment: notes[item.id]?.trim()
+                                          ? notes[item.id].trim()
+                                          : "Reviewed",
+                                      });
+                                    }}
+                                    disabled={markAsReadMutation.isPending}
+                                    className="inline-flex items-center gap-2 rounded-xl bg-[#10b981] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#059669] transition-colors shadow-sm disabled:opacity-50"
+                                  >
+                                    <CheckCircle className="h-4 w-4" />
+                                    {markAsReadMutation.isPending
+                                      ? "Marking..."
+                                      : "Mark as Read"}
+                                  </button>
+                                </div>
+                              )}
+
+                            {direction === "from" &&
+                              displayStatus === "read" &&
+                              detail.readComment &&
+                              detail.readComment !== "Reviewed" && (
+                                <div className="mt-4 border-t border-neutral-100 pt-4">
+                                  <p className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-1">
+                                    Your Saved Notes
+                                  </p>
+                                  <div className="rounded-xl bg-neutral-50 px-4 py-3 border border-neutral-100">
+                                    <p className="text-sm text-neutral-800 leading-relaxed italic">
+                                      "{detail.readComment}"
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
                           </>
                         )}
                       </div>
@@ -1975,13 +2236,7 @@ function GivenFeedbackList({
                     <StarRatingRow value={item.rating} />
                     <button
                       type="button"
-                      className="rounded-md p-1 text-neutral-400 hover:text-neutral-600"
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = BRAND.panelBg;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                      }}
+                      className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
                       aria-expanded={expanded}
                       aria-label={expanded ? "Collapse" : "Expand"}
                       onClick={() => handleExpand(item.id)}
@@ -1994,35 +2249,47 @@ function GivenFeedbackList({
                       />
                     </button>
                     {direction === "to" && (
-                      <div className="flex gap-1">
-                        {/* Edit — only shown for incomplete feedback (missing ≥1 of the 3 sections) */}
-                        {(!item.positiveOpening ||
-                          !item.constructiveFeedback ||
-                          !item.positiveClosing) && (
-                          <button
-                            type="button"
-                            className="rounded p-1 text-neutral-400 hover:text-neutral-700"
-                            title="Edit (incomplete feedback)"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onEditFeedback(item);
-                            }}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </button>
-                        )}
+                      <div className="flex items-center gap-2 mt-1.5">
                         <button
                           type="button"
-                          className="rounded p-1 text-neutral-400 hover:text-red-600"
-                          title="Delete"
+                          className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 hover:border-neutral-300"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (window.confirm("Delete this feedback?")) {
+                            onEditFeedback(item);
+                          }}
+                        >
+                          <Pencil className="h-3.5 w-3.5 text-neutral-500" />
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          className="flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50/50 px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm transition-colors hover:bg-red-100/70 disabled:opacity-50"
+                          disabled={
+                            deleteMutation.isPending &&
+                            deleteMutation.variables?.id === item.id
+                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (
+                              window.confirm(
+                                "Are you sure you want to delete this feedback?"
+                              )
+                            ) {
                               deleteMutation.mutate({ id: item.id });
                             }
                           }}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          {deleteMutation.isPending &&
+                          deleteMutation.variables?.id === item.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5" />
+                          )}
+                          {deleteMutation.isPending &&
+                          deleteMutation.variables?.id === item.id
+                            ? "Deleting..."
+                            : "Delete"}
                         </button>
                       </div>
                     )}
@@ -2032,6 +2299,190 @@ function GivenFeedbackList({
             );
           })
         )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Edit Feedback Modal ───────────────────────────────────────────────────────
+
+function EditFeedbackModal({
+  isOpen,
+  onClose,
+  feedbackItem,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  feedbackItem: FeedbackItem | null;
+}) {
+  const updateMutation = useUpdateFeedback();
+
+  const [rating, setRating] = useState(0);
+  const [context, setContext] = useState("");
+  const [positiveOpen, setPositiveOpen] = useState("");
+  const [constructive, setConstructive] = useState("");
+  const [positiveClose, setPositiveClose] = useState("");
+
+  useEffect(() => {
+    if (feedbackItem && isOpen) {
+      setRating(feedbackItem.rating || 0);
+      setContext(feedbackItem.reviews || "");
+      setPositiveOpen(feedbackItem.positiveOpening || "");
+      setConstructive(feedbackItem.constructiveFeedback || "");
+      setPositiveClose(feedbackItem.positiveClosing || "");
+    }
+  }, [feedbackItem, isOpen]);
+
+  if (!isOpen || !feedbackItem) return null;
+
+  const handleSubmit = () => {
+    if (rating === 0) {
+      alert("Please select a star rating.");
+      return;
+    }
+
+    const payload: FeedbackPayload = {
+      resource_type: "User",
+      resource_id: feedbackItem.resourceId,
+      score: rating,
+      rating_from_type: feedbackItem.ratingFromType || "User",
+      rating_from_id: feedbackItem.ratingFromId,
+      positive_opening: positiveOpen,
+      constructive_feedback: constructive,
+      positive_closing: positiveClose,
+      reviews: context,
+    };
+
+    updateMutation.mutate(
+      {
+        id: feedbackItem.id,
+        payload,
+        recipientName: feedbackItem.recipientName,
+      },
+      { onSuccess: onClose }
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-6">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-xl flex flex-col">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-100 bg-white px-6 py-4">
+          <h2 className="text-[17px] font-bold text-neutral-900">
+            Edit Feedback
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="space-y-1.5">
+            <Label className="text-[13px] font-bold text-neutral-800">
+              Star Rating
+            </Label>
+            <div
+              className="flex gap-1"
+              role="radiogroup"
+              aria-label="Star rating"
+            >
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  role="radio"
+                  aria-checked={rating === n}
+                  onClick={() => setRating(n)}
+                  className="rounded-lg transition-transform hover:scale-110 focus:outline-none"
+                >
+                  <Star
+                    className={cn(
+                      "h-8 w-8 sm:h-10 sm:w-10 drop-shadow-sm",
+                      n <= rating
+                        ? "fill-[#facc15] text-[#facc15]"
+                        : "fill-transparent text-neutral-200"
+                    )}
+                    strokeWidth={n <= rating ? 0 : 1.5}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-[13px] font-bold text-neutral-800">
+              Context (Optional)
+            </Label>
+            <input
+              type="text"
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              className="h-10 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm text-neutral-900 shadow-sm outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-[13px] font-bold text-emerald-700 flex items-center gap-1.5">
+              <span>✓</span> Positive Opening
+            </Label>
+            <Textarea
+              value={positiveOpen}
+              onChange={(e) => setPositiveOpen(e.target.value)}
+              className="min-h-[80px] resize-y rounded-xl border-emerald-100 bg-emerald-50/50 p-3 text-sm shadow-sm focus:border-emerald-300 focus:ring-emerald-200 transition-all"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-[13px] font-bold text-[#d97706] flex items-center gap-1.5">
+              <span>→</span> Constructive Feedback
+            </Label>
+            <Textarea
+              value={constructive}
+              onChange={(e) => setConstructive(e.target.value)}
+              className="min-h-[80px] resize-y rounded-xl border-orange-100 bg-[#fffbeb] p-3 text-sm shadow-sm focus:border-orange-300 focus:ring-orange-200 transition-all"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-[13px] font-bold text-blue-600 flex items-center gap-1.5">
+              <span>★</span> Positive Closing
+            </Label>
+            <Textarea
+              value={positiveClose}
+              onChange={(e) => setPositiveClose(e.target.value)}
+              className="min-h-[80px] resize-y rounded-xl border-blue-100 bg-blue-50/50 p-3 text-sm shadow-sm focus:border-blue-300 focus:ring-blue-200 transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="sticky bottom-0 z-10 flex items-center justify-end gap-3 border-t border-neutral-100 bg-white px-6 py-4">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={updateMutation.isPending}
+            className="inline-flex h-10 items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 text-sm font-bold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-60 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={updateMutation.isPending}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-bold text-white shadow-sm hover:bg-[#BC6B4A] disabled:opacity-60 transition-all"
+          >
+            {updateMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Updating...
+              </>
+            ) : (
+              "Save Changes"
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -2056,24 +2507,14 @@ const RATING_SEGMENTS = [
 
 // ─── Give Feedback Form ────────────────────────────────────────────────────────
 
-function GiveFeedbackForm({
-  onSubmitted,
-  initialFeedback,
-  onCancelEdit,
-}: {
-  onSubmitted: () => void;
-  initialFeedback: FeedbackItem | null;
-  onCancelEdit: () => void;
-}) {
+function GiveFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
   const { data: teamMembers = [], isLoading: teamMembersLoading } =
     useTeamMembers();
   const createMutation = useCreateFeedback();
-  const updateMutation = useUpdateFeedback();
 
-  const isEditMode = !!initialFeedback;
-  const isPending = createMutation.isPending || updateMutation.isPending;
-  const mutationError = createMutation.error ?? updateMutation.error;
-  const isSuccess = createMutation.isSuccess || updateMutation.isSuccess;
+  const isPending = createMutation.isPending;
+  const mutationError = createMutation.error;
+  const isSuccess = createMutation.isSuccess;
 
   const [recipient, setRecipient] = useState<string | undefined>(undefined);
   const [feedbackDate, setFeedbackDate] = useState<Date>(() => new Date());
@@ -2084,22 +2525,6 @@ function GiveFeedbackForm({
   const [constructive, setConstructive] = useState("");
   const [positiveClose, setPositiveClose] = useState("");
   const [localError, setLocalError] = useState("");
-
-  useEffect(() => {
-    if (!initialFeedback) return;
-    const recipientOption = initialFeedback.resourceId
-      ? teamMembers.find((m) => m.id === initialFeedback.resourceId)
-      : undefined;
-    setRecipient(recipientOption?.value);
-    setRating(initialFeedback.rating || 0);
-    setPositiveOpen(initialFeedback.positiveOpening || "");
-    setConstructive(initialFeedback.constructiveFeedback || "");
-    setPositiveClose(initialFeedback.positiveClosing || "");
-    setLocalError("");
-    createMutation.reset();
-    updateMutation.reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialFeedback, teamMembers]);
 
   const clearForm = useCallback(() => {
     setRecipient(undefined);
@@ -2112,7 +2537,6 @@ function GiveFeedbackForm({
     setPositiveClose("");
     setLocalError("");
     createMutation.reset();
-    updateMutation.reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -2134,13 +2558,13 @@ function GiveFeedbackForm({
     setLocalError("");
     const currentUser = getUser();
     const currentUserId = currentUser?.id || getCurrentUserId();
-    const ratingFromId = initialFeedback?.ratingFromId ?? currentUserId;
+    const ratingFromId = currentUserId;
 
     const payload: FeedbackPayload = {
       resource_type: "User",
       resource_id: selectedMember.id,
       score: rating,
-      rating_from_type: initialFeedback?.ratingFromType ?? "User",
+      rating_from_type: "User",
       rating_from_id: ratingFromId,
       positive_opening: positiveOpen,
       constructive_feedback: constructive,
@@ -2148,44 +2572,30 @@ function GiveFeedbackForm({
       reviews: context,
     };
 
-    if (!isEditMode) payload.created_at = feedbackDate.toISOString();
+    payload.created_at = feedbackDate.toISOString();
 
-    if (isEditMode && initialFeedback?.id) {
-      updateMutation.mutate(
-        {
-          id: initialFeedback.id,
-          payload,
-          recipientName: selectedMember.label,
-        },
-        { onSuccess: onSubmitted }
-      );
-    } else {
-      createMutation.mutate(
-        { payload, recipientName: selectedMember.label },
-        { onSuccess: onSubmitted }
-      );
-    }
+    createMutation.mutate(
+      { payload, recipientName: selectedMember.label },
+      { onSuccess: onSubmitted }
+    );
   };
 
   if (isSuccess) {
     return (
       <div className="flex flex-col items-center justify-center gap-5 px-4 py-20 text-center sm:px-6">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-          <CheckCircle className="h-8 w-8 text-green-600" strokeWidth={2} />
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
+          <CheckCircle className="h-8 w-8 text-emerald-600" strokeWidth={2} />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-neutral-900">
-            {isEditMode ? "Feedback Updated!" : "Feedback Sent!"}
-          </h3>
+          <h3 className="text-lg font-bold text-neutral-900">Feedback Sent!</h3>
           <p className="mt-1 text-sm text-neutral-500">
-            Your feedback has been {isEditMode ? "updated" : "submitted"}{" "}
-            successfully.
+            Your feedback has been submitted successfully.
           </p>
         </div>
         <button
           type="button"
           onClick={clearForm}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85"
+          className="mt-2 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-bold text-white shadow-sm hover:bg-[#BC6B4A] transition-colors"
         >
           <Pencil className="h-4 w-4" strokeWidth={2} />
           Give More Feedback
@@ -2198,85 +2608,59 @@ function GiveFeedbackForm({
 
   return (
     <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6">
-      {isEditMode && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
-          ✏️ You are editing an existing feedback entry.
-        </div>
-      )}
-
-      <div className="rounded-xl border border-sky-100 bg-sky-50 px-4 py-3 text-sm leading-relaxed text-sky-950">
-        <span className="font-semibold">Sandwich technique: </span>
+      <div className="rounded-xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm leading-relaxed text-sky-900 shadow-sm">
+        <span className="font-bold">Sandwich technique: </span>
         Start with something positive, share constructive feedback in the
         middle, and close with encouragement —{" "}
-        <span className="font-medium">Positive → Constructive → Positive</span>.
+        <span className="font-bold underline decoration-sky-300 underline-offset-2">
+          Positive → Constructive → Positive
+        </span>
+        .
       </div>
 
       {displayError && (
-        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-5 py-4 shadow-sm">
           <AlertCircle
             className="mt-0.5 h-5 w-5 shrink-0 text-red-500"
             strokeWidth={2}
           />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-red-800">
-              Submission Failed
-            </p>
-            <p className="mt-0.5 text-sm text-red-700">{displayError}</p>
+            <p className="text-sm font-bold text-red-900">Submission Failed</p>
+            <p className="mt-1 text-sm text-red-700">{displayError}</p>
           </div>
           <button
             type="button"
             onClick={() => {
               setLocalError("");
               createMutation.reset();
-              updateMutation.reset();
             }}
-            className="shrink-0 rounded-md p-1 text-red-500 hover:bg-red-100"
+            className="shrink-0 rounded-lg p-1 text-red-500 hover:bg-red-100 transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-6 sm:grid-cols-2">
+        {/* ── Searchable recipient dropdown (BhagSection style) ── */}
         <div className="space-y-2">
-          <Label htmlFor="feedback-recipient" className="text-neutral-800">
+          <Label className="text-sm font-bold text-neutral-800">
             Give Feedback To <span className="text-[#DA7756]">*</span>
           </Label>
-          <Select
+          <UserSelectFeedback
             value={recipient}
-            onValueChange={setRecipient}
+            onChange={setRecipient}
+            users={teamMembers}
             disabled={teamMembersLoading}
-          >
-            <SelectTrigger
-              id="feedback-recipient"
-              className="h-11 rounded-xl border-[#DA7756]/20 bg-white"
-            >
-              {teamMembersLoading ? (
-                <span className="flex items-center gap-2 text-neutral-400">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Loading members…
-                </span>
-              ) : (
-                <SelectValue placeholder="Select team member" />
-              )}
-            </SelectTrigger>
-            <SelectContent>
-              {teamMembers.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-neutral-400">
-                  No members found
-                </div>
-              ) : (
-                teamMembers.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>
-                    {m.label}
-                  </SelectItem>
-                ))
-              )}
-            </SelectContent>
-          </Select>
+            placeholder="Search team member..."
+          />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="feedback-date" className="text-neutral-800">
+          <Label
+            htmlFor="feedback-date"
+            className="text-sm font-bold text-neutral-800"
+          >
             Date
           </Label>
           <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
@@ -2284,16 +2668,11 @@ function GiveFeedbackForm({
               <button
                 type="button"
                 id="feedback-date"
-                className="flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-[#DA7756]/20 bg-white px-3 text-left text-sm text-neutral-900 outline-none"
-                style={{ backgroundColor: "#ffffff" }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = BRAND.panelBg;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "#ffffff";
-                }}
+                className="flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-neutral-200 bg-white px-4 text-left text-sm text-neutral-900 shadow-sm outline-none focus:ring-2 focus:ring-[#DA7756]/20 hover:bg-neutral-50 transition-colors"
               >
-                <span className="tabular-nums">{formatDMY(feedbackDate)}</span>
+                <span className="tabular-nums font-medium">
+                  {formatDMY(feedbackDate)}
+                </span>
                 <CalendarIcon
                   className="h-4 w-4 shrink-0 text-neutral-500"
                   strokeWidth={2}
@@ -2301,7 +2680,10 @@ function GiveFeedbackForm({
                 />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start">
+            <PopoverContent
+              className="w-auto p-0 rounded-xl border border-neutral-200 shadow-md"
+              align="start"
+            >
               <Calendar
                 mode="single"
                 selected={feedbackDate}
@@ -2312,6 +2694,7 @@ function GiveFeedbackForm({
                   }
                 }}
                 initialFocus
+                className="p-3"
               />
             </PopoverContent>
           </Popover>
@@ -2320,14 +2703,18 @@ function GiveFeedbackForm({
 
       <div className="space-y-3">
         <div>
-          <Label className="text-neutral-800">
+          <Label className="text-sm font-bold text-neutral-800">
             Star Rating <span className="text-[#DA7756]">*</span>
           </Label>
-          <p className="mt-0.5 text-sm text-neutral-500">
+          <p className="mt-1 text-xs text-neutral-500">
             Rate overall performance (1–5 stars)
           </p>
         </div>
-        <div className="flex gap-1" role="radiogroup" aria-label="Star rating">
+        <div
+          className="flex gap-1.5"
+          role="radiogroup"
+          aria-label="Star rating"
+        >
           {[1, 2, 3, 4, 5].map((n) => (
             <button
               key={n}
@@ -2335,39 +2722,39 @@ function GiveFeedbackForm({
               role="radio"
               aria-checked={rating === n}
               onClick={() => setRating(n)}
-              className="rounded-md p-0.5 transition-transform hover:scale-110"
+              className="rounded-lg p-1 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#DA7756]/40"
             >
               <Star
                 className={cn(
-                  "h-8 w-8 sm:h-9 sm:w-9",
+                  "h-9 w-9 sm:h-10 sm:w-10 drop-shadow-sm",
                   n <= rating
                     ? "fill-amber-400 text-amber-400"
-                    : "fill-transparent text-neutral-300"
+                    : "fill-transparent text-neutral-200"
                 )}
                 strokeWidth={n <= rating ? 0 : 1.5}
               />
             </button>
           ))}
         </div>
-        <div className="overflow-hidden rounded-xl border border-[#DA7756]/20 shadow-sm">
-          <div className="flex">
+        <div className="overflow-hidden rounded-xl border border-neutral-200 shadow-sm mt-2">
+          <div className="flex divide-x divide-white/20">
             {RATING_SEGMENTS.map((seg) => (
               <button
                 key={seg.stars}
                 type="button"
                 onClick={() => setRating(seg.stars)}
                 className={cn(
-                  "min-w-0 flex-1 px-0.5 py-2.5 text-center transition-all sm:px-1 sm:py-3",
+                  "min-w-0 flex-1 px-1 py-3 text-center transition-all",
                   seg.bg,
                   seg.text,
                   rating === seg.stars &&
-                    "relative z-10 ring-2 ring-inset ring-neutral-900/80"
+                    "relative z-10 ring-2 ring-inset ring-neutral-900/40 shadow-inner brightness-90"
                 )}
               >
-                <span className="block text-[10px] font-semibold leading-tight sm:text-xs">
+                <span className="block text-[11px] font-bold leading-tight sm:text-[13px]">
                   {seg.stars}★
                 </span>
-                <span className="mt-0.5 block text-[9px] font-medium opacity-95 sm:text-[11px]">
+                <span className="mt-0.5 block text-[10px] font-semibold opacity-90 sm:text-[11px]">
                   {seg.pts}
                 </span>
               </button>
@@ -2377,9 +2764,12 @@ function GiveFeedbackForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="feedback-context" className="text-neutral-800">
+        <Label
+          htmlFor="feedback-context"
+          className="text-sm font-bold text-neutral-800"
+        >
           Context / Situation{" "}
-          <span className="font-normal text-neutral-400">(Optional)</span>
+          <span className="font-medium text-neutral-400">(Optional)</span>
         </Label>
         <input
           id="feedback-context"
@@ -2387,15 +2777,15 @@ function GiveFeedbackForm({
           value={context}
           onChange={(e) => setContext(e.target.value)}
           placeholder="e.g., Regarding the client presentation last week..."
-          className="h-11 w-full rounded-xl border border-[#DA7756]/20 bg-white px-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none"
+          className="h-12 w-full rounded-xl border border-neutral-200 bg-white px-4 text-sm text-neutral-900 placeholder:text-neutral-400 shadow-sm outline-none focus:border-[#DA7756]/40 focus:ring-1 focus:ring-[#DA7756]/20 transition-all"
         />
       </div>
 
-      <div className="space-y-6 border-t border-neutral-100 pt-6">
+      <div className="space-y-6 border-t border-neutral-200 pt-6">
         {[
           {
             step: 1,
-            color: "bg-[#2E7D32]",
+            color: "bg-[#10b981]",
             title: "Positive opening",
             desc: "Start with genuine appreciation and what they're doing well.",
             value: positiveOpen,
@@ -2404,7 +2794,7 @@ function GiveFeedbackForm({
           },
           {
             step: 2,
-            color: "bg-orange-500",
+            color: "bg-[#f59e0b]",
             title: "Constructive feedback",
             desc: "Provide specific, actionable feedback for improvement.",
             value: constructive,
@@ -2413,7 +2803,7 @@ function GiveFeedbackForm({
           },
           {
             step: 3,
-            color: "bg-sky-600",
+            color: "bg-[#3b82f6]",
             title: "Positive closing",
             desc: "End with encouragement and confidence in their abilities.",
             value: positiveClose,
@@ -2422,46 +2812,36 @@ function GiveFeedbackForm({
           },
         ].map(({ step, color, title, desc, value, onChange, placeholder }) => (
           <div key={step} className="space-y-3">
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-center">
               <div
                 className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white",
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-extrabold text-white shadow-sm",
                   color
                 )}
               >
                 {step}
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900">{title}</h3>
-                <p className="text-sm text-neutral-500">{desc}</p>
+                <h3 className="font-bold text-neutral-900">{title}</h3>
+                <p className="text-[13px] text-neutral-500">{desc}</p>
               </div>
             </div>
             <Textarea
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder={placeholder}
-              className="min-h-[100px] resize-y rounded-xl border-[#DA7756]/20 bg-white text-sm"
+              className="min-h-[100px] resize-y rounded-xl border-neutral-200 bg-white p-4 text-sm shadow-sm focus:border-[#DA7756]/40 focus:ring-[#DA7756]/20 transition-all"
             />
           </div>
         ))}
       </div>
 
-      <div className="flex flex-col-reverse gap-3 border-t border-neutral-100 pt-6 sm:flex-row sm:justify-end">
-        {isEditMode && (
-          <button
-            type="button"
-            onClick={onCancelEdit}
-            disabled={isPending}
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-6 text-sm font-semibold text-amber-900 shadow-sm hover:bg-amber-100 disabled:opacity-50"
-          >
-            Cancel edit
-          </button>
-        )}
+      <div className="flex flex-col-reverse gap-3 border-t border-neutral-200 pt-6 sm:flex-row sm:justify-end">
         <button
           type="button"
           onClick={clearForm}
           disabled={isPending}
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:opacity-60"
+          className="inline-flex h-12 items-center justify-center rounded-xl border border-neutral-200 bg-white px-6 text-sm font-bold text-neutral-700 shadow-sm hover:bg-neutral-50 disabled:opacity-60 transition-colors"
         >
           Clear form
         </button>
@@ -2469,17 +2849,17 @@ function GiveFeedbackForm({
           type="button"
           onClick={handleSubmit}
           disabled={isPending || teamMembersLoading}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-6 text-sm font-semibold text-white shadow-sm hover:bg-[#DA7756]/85 disabled:opacity-60"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-8 text-sm font-bold text-white shadow-sm hover:bg-[#BC6B4A] disabled:opacity-60 transition-all"
         >
           {isPending ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2} />
-              {isEditMode ? "Updating…" : "Sending…"}
+              Sending…
             </>
           ) : (
             <>
               <Send className="h-4 w-4" strokeWidth={2} />
-              {isEditMode ? "Update feedback" : "Send feedback"}
+              Send feedback
             </>
           )}
         </button>
@@ -2496,6 +2876,7 @@ function FeedbackPage() {
   const [editingFeedback, setEditingFeedback] = useState<FeedbackItem | null>(
     null
   );
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [receivedView, setReceivedView] = useState("myself");
   const currentUser = getUser();
   const currentUserId = currentUser?.id || getCurrentUserId();
@@ -2510,27 +2891,18 @@ function FeedbackPage() {
   const selectedReceivedUserId =
     receivedView === "myself" ? currentUserId : Number(receivedView) || null;
 
-  const selectedCompany = useSelector(
-    (state: RootState) => state.project.selectedCompany
-  );
-  const orgLine = selectedCompany?.name?.toUpperCase() ?? "YOUR ORGANIZATION";
-
   const { data: givenFeedbackData = { items: [] } } = useFeedbackList(
     "given",
     currentUserId
   );
   const givenFeedback = givenFeedbackData.items;
   const givenSummary = givenFeedbackData.summary;
+
   const { data: selectedReceivedFeedbackData = { items: [] } } =
     useFeedbackList("received", selectedReceivedUserId);
   const selectedReceivedFeedback = selectedReceivedFeedbackData.items;
   const selectedReceivedSummary = selectedReceivedFeedbackData.summary;
-  const { data: allReceivedFeedbackData = { items: [] } } = useFeedbackList(
-    "received",
-    null
-  );
-  const allReceivedFeedback = allReceivedFeedbackData.items;
-  const allReceivedSummary = allReceivedFeedbackData.summary;
+
   const selectedReceivedMember =
     selectedReceivedUserId == null
       ? null
@@ -2538,33 +2910,11 @@ function FeedbackPage() {
   const selectedReceivedName =
     receivedView === "myself" ? currentUserName : selectedReceivedMember?.label;
 
-  const receivedFeedback = useMemo(() => {
-    const merged = mergeFeedbackItems(
-      selectedReceivedFeedback,
-      allReceivedFeedback
-    );
+  const receivedFeedback = selectedReceivedFeedback;
 
-    if (selectedReceivedUserId != null && merged.length > 0) {
-      return merged;
-    }
-
-    const normalizedSelectedName = selectedReceivedName?.trim().toLowerCase();
-    if (!normalizedSelectedName) return merged;
-
-    const exactMatches = merged.filter(
-      (item) => item.recipientName.toLowerCase() === normalizedSelectedName
-    );
-    if (exactMatches.length > 0) return exactMatches;
-
-    return merged.filter((item) =>
-      item.recipientName.toLowerCase().includes(normalizedSelectedName)
-    );
-  }, [
-    selectedReceivedFeedback,
-    allReceivedFeedback,
-    selectedReceivedUserId,
-    selectedReceivedName,
-  ]);
+  // ── Count for badge: use selected user's actual feedback count ──
+  const receivedBadgeCount =
+    selectedReceivedSummary?.received ?? selectedReceivedFeedback.length;
 
   return (
     <div
@@ -2573,81 +2923,89 @@ function FeedbackPage() {
     >
       <div className="mx-auto max-w-6xl space-y-6">
         {bannerVisible && (
-          <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-white shadow-sm">
-            <div className="flex items-center gap-3 px-4 py-3 sm:px-5">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#DA7756]">
+          <Card className="overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white shadow-sm">
+            <div className="flex items-center gap-3 px-5 py-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#DA7756] shadow-sm">
                 <Lightbulb className="h-5 w-5 text-white" strokeWidth={2} />
               </div>
-              <button type="button" className="min-w-0 flex-1 text-left" onClick={() => {}}>
-                <p className="text-sm font-semibold text-neutral-900">
+              <button
+                type="button"
+                className="min-w-0 flex-1 text-left"
+                onClick={() => {}}
+              >
+                <p className="text-[15px] font-bold text-neutral-900">
                   Giving &amp; Receiving Feedback
                 </p>
-                <p className="text-xs text-neutral-600">Click to view tips</p>
+                <p className="text-xs text-neutral-500 font-medium">
+                  Click to view tips
+                </p>
               </button>
-              <div className="flex shrink-0 items-center gap-0.5">
+              <div className="flex shrink-0 items-center gap-1">
                 <button
                   type="button"
-                  className="rounded-md p-2 text-neutral-600 hover:bg-neutral-100"
+                  className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
                   aria-label="Expand tips"
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-5 w-5" />
                 </button>
                 <button
                   type="button"
-                  className="rounded-md p-2 text-neutral-600 hover:bg-neutral-100"
+                  className="rounded-lg p-2 text-neutral-400 hover:bg-red-50 hover:text-red-500 transition-colors"
                   aria-label="Dismiss banner"
                   onClick={() => setBannerVisible(false)}
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </button>
               </div>
             </div>
           </Card>
         )}
 
-        <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
-            <MessageSquare className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
+        <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-5">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
+            <MessageSquare className="h-7 w-7 text-white" strokeWidth={2} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+            <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
               Team Feedback
             </h1>
-            <p className="mt-1 text-sm text-neutral-500 sm:text-base">
-              Give and receive constructive feedback using the Sandwich technique
-            </p>
-            <p className="mt-2 text-xs font-medium uppercase tracking-wide text-neutral-400">
-              {orgLine}
+            <p className="mt-1 text-sm font-medium text-neutral-500">
+              Give and receive constructive feedback using the Sandwich
+              technique
             </p>
           </div>
         </header>
 
-        <Tabs value={feedbackTab} onValueChange={(v) => setFeedbackTab(v as any)} className="w-full">
-          <TabsList className="inline-flex h-12 w-full items-center justify-start gap-2 rounded-full border border-[#DA7756]/20 bg-[#f6f4ee] px-2 shadow-sm sm:w-auto">
+        <Tabs
+          value={feedbackTab}
+          onValueChange={(v) => setFeedbackTab(v as any)}
+          className="w-full"
+        >
+          <TabsList className="inline-flex h-auto p-1.5 w-full items-center justify-start gap-1 rounded-[16px] border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] shadow-sm sm:w-auto">
             <TabsTrigger
               value="received"
-              className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
+              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756]"
             >
               <Inbox className="mr-2 h-4 w-4" />
               Received
-              {(allReceivedSummary?.received ?? receivedFeedback.length) > 0 && (
+              {receivedBadgeCount > 0 && (
                 <span
-                  className="ml-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white"
+                  className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm"
                   style={{ backgroundColor: BRAND.danger }}
                 >
-                  {allReceivedSummary?.received ?? receivedFeedback.length}
+                  {receivedBadgeCount}
                 </span>
               )}
             </TabsTrigger>
             <TabsTrigger
               value="given"
-              className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
+              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756]"
             >
               <Send className="mr-2 h-4 w-4" />
               Given
               {(givenSummary?.given ?? givenFeedback.length) > 0 && (
                 <span
-                  className="ml-2 rounded-full px-1.5 py-0.5 text-[10px] font-bold text-white"
+                  className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm"
                   style={{ backgroundColor: BRAND.danger }}
                 >
                   {givenSummary?.given ?? givenFeedback.length}
@@ -2656,52 +3014,40 @@ function FeedbackPage() {
             </TabsTrigger>
             <TabsTrigger
               value="give"
-              className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
+              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756]"
             >
               <Pencil className="mr-2 h-4 w-4" />
               Give Feedback
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="received" className="mt-6 space-y-4">
-            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
-              <div className="flex items-center gap-3 border-b border-[#DA7756]/20 bg-[#DA7756]/10 px-4 py-4 sm:px-5">
-                <span className="text-sm text-neutral-600 font-medium">
+          <TabsContent
+            value="received"
+            className="mt-6 space-y-4 focus-visible:outline-none"
+          >
+            <Card className="overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white shadow-sm">
+              <div className="flex items-center gap-3 border-b border-[rgba(218,119,86,0.10)] bg-[#FFF9F6] px-5 py-4">
+                <span className="text-sm text-neutral-600 font-bold uppercase tracking-wider">
                   View feedback for:
                 </span>
-                <Select value={receivedView} onValueChange={setReceivedView}>
-                  <SelectTrigger className="h-9 w-[200px] rounded-lg border-[#DA7756]/20 bg-white text-sm">
-                    <SelectValue placeholder={myselfLabel} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="myself">{myselfLabel}</SelectItem>
-                    {teamMembersLoading ? (
-                      <div className="px-3 py-2 text-sm text-neutral-400">
-                        Loading...
-                      </div>
-                    ) : (
-                      teamMembers
-                        .filter((member) => member.id !== currentUserId)
-                        .map((member) => (
-                          <SelectItem key={member.value} value={member.value}>
-                            {member.label}
-                          </SelectItem>
-                        ))
-                    )}
-                  </SelectContent>
-                </Select>
+                {/* ── Searchable dropdown (BhagSection style) ── */}
+                <UserSelectReceived
+                  value={receivedView}
+                  onChange={setReceivedView}
+                  users={teamMembers}
+                  myselfLabel={myselfLabel}
+                  currentUserId={currentUserId}
+                  disabled={teamMembersLoading}
+                />
               </div>
-              <div className="p-4 sm:p-5">
+              <div className="p-5">
                 <AsyncBoundary>
                   <GivenFeedbackList
                     key={`received-${receivedView}`}
-                    onGiveFeedbackClick={() => {
-                      setEditingFeedback(null);
-                      setFeedbackTab("give");
-                    }}
+                    onGiveFeedbackClick={() => setFeedbackTab("give")}
                     onEditFeedback={(item) => {
                       setEditingFeedback(item);
-                      setFeedbackTab("give");
+                      setIsEditModalOpen(true);
                     }}
                     direction="from"
                     filterUserId={null}
@@ -2712,18 +3058,18 @@ function FeedbackPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="given" className="mt-6">
-            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
-              <div className="p-4 sm:p-5">
+          <TabsContent
+            value="given"
+            className="mt-6 focus-visible:outline-none"
+          >
+            <Card className="overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white shadow-sm">
+              <div className="p-5">
                 <AsyncBoundary>
                   <GivenFeedbackList
-                    onGiveFeedbackClick={() => {
-                      setEditingFeedback(null);
-                      setFeedbackTab("give");
-                    }}
+                    onGiveFeedbackClick={() => setFeedbackTab("give")}
                     onEditFeedback={(item) => {
                       setEditingFeedback(item);
-                      setFeedbackTab("give");
+                      setIsEditModalOpen(true);
                     }}
                     direction="to"
                   />
@@ -2732,20 +3078,12 @@ function FeedbackPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="give" className="mt-6">
-            <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
-              <div className="p-4 sm:p-5">
+          <TabsContent value="give" className="mt-6 focus-visible:outline-none">
+            <Card className="overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] shadow-sm">
+              <div className="p-2 sm:p-4">
                 <AsyncBoundary>
                   <GiveFeedbackForm
-                    initialFeedback={editingFeedback}
-                    onCancelEdit={() => {
-                      setEditingFeedback(null);
-                      setFeedbackTab("given");
-                    }}
-                    onSubmitted={() => {
-                      setEditingFeedback(null);
-                      setFeedbackTab("given");
-                    }}
+                    onSubmitted={() => setFeedbackTab("given")}
                   />
                 </AsyncBoundary>
               </div>
@@ -2753,18 +3091,23 @@ function FeedbackPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {isEditModalOpen && editingFeedback && (
+        <EditFeedbackModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingFeedback(null);
+          }}
+          feedbackItem={editingFeedback}
+        />
+      )}
     </div>
   );
 }
 
 // ─── Root Export ───────────────────────────────────────────────────────────────
 
-/**
- * Default export wraps the page in QueryClientProvider.
- *
- * If your app root already provides a QueryClient, import and use
- * FeedbackPage directly instead to share the cache.
- */
 const Feedback = () => (
   <QueryClientProvider client={queryClient}>
     <FeedbackPage />
