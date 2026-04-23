@@ -3258,7 +3258,8 @@ const clubData: ProductData = {
       ],
     },
     detailedPricing: {
-      featureComparison: [
+      isClubPricing: true,
+      clubFeatureComparison: [
         {
           feature: "Data Sovereignty (client-owned servers)",
           lockated: "AHEAD",
@@ -3510,7 +3511,7 @@ const clubData: ProductData = {
       ],
       priceCompetitiveness:
         "Lockated is priced at a 10-30% premium over Omnify and TeamUp but at a 30-50% discount to MINDBODY and Virtuagym. The premium vs Omnify is justified by AI features and data sovereignty. The discount vs MINDBODY removes the primary budget objection for Indian clubs.",
-      pricingLandscapeRows: [
+      clubPricingLandscapeRows: [
         {
           competitor: "Lockated Club Management",
           model:
@@ -3577,7 +3578,7 @@ const clubData: ProductData = {
           segment: "No dedicated India presence",
         },
       ],
-      positioning: [
+      clubPositioning: [
         {
           dimension: "Value Proposition Statement",
           statement:
@@ -3619,6 +3620,8 @@ const clubData: ProductData = {
             "Reduces monthly finance close from 3 days to real-time; improves investor reporting credibility",
           feature:
             "Super Admin dashboard with branch comparison and revenue forecast engine",
+          objection:
+            "Yes it costs INR 30,000/month but saves 40+ hours of admin per month and prevents INR 2L+ in revenue leakage from no-shows",
         },
         {
           currentProp:
@@ -3634,6 +3637,8 @@ const clubData: ProductData = {
             "Reduces no-show rate from typical 18-25% to under 10%, saving court revenue",
           feature:
             "Conflict-free booking engine, trainer availability sync, AI no-show prediction per booking",
+          objection:
+            "Our bookings are simple - our members call in. Response: Members who can self-book on mobile book 3x more frequently per month.",
         },
         {
           currentProp:
@@ -3649,6 +3654,8 @@ const clubData: ProductData = {
             "Reduces month-end close by 2 days; CA audit cost savings of INR 30,000-50,000/year",
           feature:
             "Auto-generated GST invoices (CGST+SGST/IGST), tax liability report, aging of receivables",
+          objection:
+            "We already use Tally for invoicing. Response: Lockated exports GST data to Tally in one click via CSV.",
         },
         {
           currentProp:
@@ -3664,6 +3671,8 @@ const clubData: ProductData = {
             "Member books 2.5x more sessions/month when they can find a partner vs booking solo",
           feature:
             "Co-player matching with skill-level AI, in-app invite with split payment, one-tap booking",
+          objection:
+            "Our members are not tech-savvy. Response: 3-tap navigation rule; dark mode; biometric login; tested at sub-1.5s startup.",
         },
       ],
     },
