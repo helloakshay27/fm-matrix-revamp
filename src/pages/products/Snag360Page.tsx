@@ -2753,7 +2753,9 @@ const Snag360FeaturesTab: React.FC = () => {
               <th className="border border-[#C4B89D]/50 p-3 text-center">
                 User Type
               </th>
-              <th className="border border-[#C4B89D]/50 p-3 text-center">USP</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">
+                USP
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -2842,7 +2844,9 @@ const Snag360MarketTab: React.FC = () => {
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Forecast
               </th>
-              <th className="border border-[#C4B89D]/50 p-2 text-center">CAGR</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
+                CAGR
+              </th>
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Primary Driver
               </th>
@@ -2889,7 +2893,9 @@ const Snag360MarketTab: React.FC = () => {
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
             <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
-              <th className="border border-[#C4B89D]/50 p-2 text-center">Rank</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
+                Rank
+              </th>
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Industry
               </th>
@@ -3052,7 +3058,9 @@ const Snag360PricingTab: React.FC = () => {
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Novade
               </th>
-              <th className="border border-[#C4B89D]/50 p-2 text-center">SnagR</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
+                SnagR
+              </th>
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 SafetyCulture
               </th>
@@ -3118,7 +3126,9 @@ const Snag360PricingTab: React.FC = () => {
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Tier / Product
               </th>
-              <th className="border border-[#C4B89D]/50 p-2 text-center">Model</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
+                Model
+              </th>
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 India Price
               </th>
@@ -3817,7 +3827,9 @@ const Snag360EnhancementsTab: React.FC = () => {
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
             <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
-              <th className="border border-[#C4B89D]/50 p-2 text-center">Rank</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
+                Rank
+              </th>
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Enhancement
               </th>

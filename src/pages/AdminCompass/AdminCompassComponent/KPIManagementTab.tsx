@@ -648,7 +648,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
 
       <div
         className="flex flex-col gap-4 rounded-xl border border-[rgba(218,119,86,0.22)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5"
-        style={{ backgroundColor: C.primaryBg }}
+        style={{ backgroundColor: "rgba(218,119,86,0.06)" }}
       >
         <div>
           <h3 className="text-sm font-bold text-[#1a1a1a]">

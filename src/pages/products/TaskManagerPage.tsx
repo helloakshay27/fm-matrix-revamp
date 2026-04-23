@@ -1402,7 +1402,7 @@ const productData = {
       industryUseCases: [
         {
           rank: "1",
-          industry: "Technology & SaaS Companies",
+          industry: "Technology & SaaS Companies (IT/ITES)",
           features:
             "Dev teams use Sprints + Issues + Kanban for engineering workflows. PM teams run project dashboards with milestone tracking. Product managers create MoMs from client calls and auto-convert to tasks. Leadership monitors assignee-level completion and burn rates. All teams use Channels + DMs for collaboration. Data sovereignty is critical as code and product roadmaps are IP.",
           useCase:
@@ -1420,7 +1420,7 @@ const productData = {
         },
         {
           rank: "2",
-          industry: "Real Estate Developers & Construction",
+          industry: "Real Estate Developers & Construction (EPCE)",
           features:
             "Project tracking across multiple site construction milestones. Client issue register to track snags, requests, and complaints post-handover. MoM for weekly site reviews auto-converted to site tasks. Attendance tracking for site staff. Document drive for BOQs, drawings, and reports (replacing Google Drive + WhatsApp).",
           useCase:
@@ -1490,7 +1490,7 @@ const productData = {
         },
         {
           rank: "6",
-          industry: "Co-working Spaces & Managed Offices",
+          industry: "Co-working Spaces",
           features:
             "Facility project tracking using Projects and Tasks (fit-out timelines, maintenance projects). Client issue register for tenant complaints and facility requests. MoM for tenant and team meetings with auto-task conversion. Document drive for lease agreements and compliance documents. Channels for internal team communication. Opportunity Register for community improvement suggestions from members.",
           useCase:
@@ -1507,7 +1507,7 @@ const productData = {
         },
         {
           rank: "7",
-          industry: "Educational Institutions, Universities & EdTech",
+          industry: "Educational",
           features:
             "Academic project tracking for research, curriculum development, and administrative projects. MoM for faculty committee meetings auto-converted to action items. Document drive for course materials and research papers (data sovereignty matters for institution IP). Attendance for staff and faculty. Opportunity register for student/faculty innovation ideas. Recognition feed for academic achievements.",
           useCase:
@@ -1524,7 +1524,7 @@ const productData = {
         },
         {
           rank: "8",
-          industry: "Healthcare & Hospitals",
+          industry: "Healthcare & Hospitals (pharma)",
           features:
             "Operational project tracking for hospital expansion, accreditation, and compliance projects. Document drive for clinical protocols, SOPs, and NABH/JCI documents. MoM for clinical committee meetings. Issues register for patient complaints or quality non-conformances. Attendance for nursing and administrative staff. Roster management for shift planning.",
           useCase:
@@ -1558,7 +1558,7 @@ const productData = {
         },
         {
           rank: "10",
-          industry: "Government & PSUs",
+          industry: "Government & PSUs (Tenants)",
           features:
             "Project tracking for government schemes and infrastructure projects. Document drive for government orders and compliance files (data sovereignty is a statutory requirement, must stay on government infrastructure). MoM for inter-departmental meetings. Attendance for government employees. Issues register for citizen complaints or audit observations.",
           useCase:

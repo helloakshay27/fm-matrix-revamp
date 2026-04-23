@@ -693,19 +693,19 @@ const ProjectTasksPage = () => {
         const fetchProjects = async () => {
             try {
                 const response = baseUrl
-                    ? await axios.get(`https://${baseUrl}/project_managements.json`, {
+                    ? await axios.get(`https://${baseUrl}/project_managements/projects_for_dropdown.json`, {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },
                     })
-                    : await baseClient.get(`/project_managements.json`, {
+                    : await baseClient.get(`/project_managements/projects_for_dropdown.json`, {
                         headers: {
                             Authorization: `Bearer ${token}`,
                         },
                     });
-                if (response.data && Array.isArray(response.data.project_managements)) {
+                if (response.data && Array.isArray(response.data)) {
                     setProjectOptions(
-                        response.data.project_managements.map((project: any) => ({
+                        response.data.map((project: any) => ({
                             label: project.name || project.title,
                             value: project.id,
                         }))

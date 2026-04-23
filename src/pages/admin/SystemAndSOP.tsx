@@ -63,7 +63,6 @@ const C = {
   primaryBordStrong: "#d4cdc6",
   pageBg: "#f6f4ee",
   cardBg: "#ffffff",
-  tealBg: "#9EC8BA",
   textMain: "#1a1a1a",
   textMuted: "#6b7280",
   borderLgt: "#ebebeb",
@@ -1698,21 +1697,25 @@ const SystemAndSOP = () => {
       {bannerVisible && (
         <div
           className="flex items-center gap-3 rounded-2xl border px-5 py-3 shadow-sm"
-          style={{ background: C.tealBg, borderColor: "rgba(0,0,0,0.08)" }}
+          style={{ background: C.primaryTint, borderColor: C.primaryBord }}
         >
           <div
             className="flex w-9 h-9 shrink-0 items-center justify-center rounded-xl"
-            style={{ background: "rgba(255,255,255,0.30)" }}
+            style={{ background: "rgba(218,119,86,0.14)" }}
           >
-            <Lightbulb className="w-5 h-5 text-white" strokeWidth={2} />
+            <Lightbulb
+              className="w-5 h-5"
+              style={{ color: C.primary }}
+              strokeWidth={2}
+            />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-black" style={{ color: "#070707" }}>
+            <p className="text-[13px] font-black" style={{ color: C.textMain }}>
               Creating Systems &amp; SOPs
             </p>
             <p
               className="text-[11px] font-semibold"
-              style={{ color: "rgba(0,0,0,0.55)" }}
+              style={{ color: C.textMuted }}
             >
               Click to view tips for building effective SOPs
             </p>
@@ -1720,12 +1723,15 @@ const SystemAndSOP = () => {
           <div className="flex shrink-0 items-center gap-1">
             <button
               className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
-              style={{ background: "rgba(255,255,255,0.20)", color: "#fff" }}
+              style={{
+                background: "rgba(218,119,86,0.12)",
+                color: C.primary,
+              }}
               onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
+                (e.currentTarget.style.background = "rgba(218,119,86,0.18)")
               }
               onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
+                (e.currentTarget.style.background = "rgba(218,119,86,0.12)")
               }
             >
               <ChevronRight className="w-4 h-4" />
@@ -1733,12 +1739,15 @@ const SystemAndSOP = () => {
             <button
               onClick={() => setBannerVisible(false)}
               className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
-              style={{ background: "rgba(255,255,255,0.20)", color: "#fff" }}
+              style={{
+                background: "rgba(218,119,86,0.12)",
+                color: C.primary,
+              }}
               onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
+                (e.currentTarget.style.background = "rgba(218,119,86,0.18)")
               }
               onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
+                (e.currentTarget.style.background = "rgba(218,119,86,0.12)")
               }
             >
               <X className="w-4 h-4" />

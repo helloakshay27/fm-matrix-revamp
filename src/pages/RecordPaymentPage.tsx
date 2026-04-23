@@ -382,12 +382,134 @@ export const RecordPaymentPage: React.FC = () => {
     );
   };
 
-  const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = error => reject(error);
-  });
+  // const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+  //   const reader = new FileReader();
+  //   reader.readAsDataURL(file);
+  //   reader.onload = () => resolve(reader.result as string);
+  //   reader.onerror = error => reject(error);
+  // });
+
+  // const handleSubmit = async (status: "draft" | "paid") => {
+  //   // Centralized Validation for mandatory fields
+  //   const errors: string[] = [];
+  //   if (!selectedCustomerId) errors.push("Customer Name is required");
+  //   if (!date) errors.push("Payment Date is required");
+  //   if (!paymentNumber) errors.push("Payment # is required");
+
+  //   if (activeTab === 0) {
+  //     if (!amountReceived || parseFloat(amountReceived) <= 0) {
+  //       errors.push("Amount Received must be a valid number greater than 0");
+  //     }
+  //     if (!depositTo) {
+  //       errors.push("Deposit To account is required");
+  //     }
+  //   } else {
+  //     // Customer Advance specific validation
+  //     if (!advanceAmount || parseFloat(advanceAmount) <= 0) {
+  //       errors.push("Amount Received must be a valid number greater than 0");
+  //     }
+  //     if (!advanceDepositTo) {
+  //       errors.push("Deposit To account is required");
+  //     }
+  //     if (selectedCustomerId && !placeOfSupply) {
+  //       errors.push("Place of Supply is required");
+  //     }
+  //   }
+
+  //   if (errors.length > 0) {
+  //     errors.forEach(err => toast.error(err));
+  //     return;
+  //   }
+
+  //   setSubmitting(true);
+  //   try {
+  //     let payload: any = {};
+
+  //     if (activeTab === 0) {
+  //       const excessAmount = Math.max(
+  //         0,
+  //         (parseFloat(amountReceived) || 0) - totalPayment
+  //       );
+  //       payload = {
+  //         lock_payment: {
+  //           payment_of: "LockAccountCustomer",
+  //           payment_of_id: selectedCustomerId,
+  //           payment_made: false,
+  //           paid_amount: parseFloat(amountReceived) || 0,
+  //           bank_charges: parseFloat(bankCharges) || 0,
+  //           payment_date: format(parseISO(date), "dd/MM/yyyy"),
+  //           payment_mode: paymentMode,
+  //           order_number: reference,
+  //           deposit_to_ledger_id: depositTo ? parseInt(depositTo) : null,
+  //           tax_deducted: taxDeducted === "yes",
+  //           tds_lock_account_ledger_id:
+  //             taxDeducted === "yes" && tdsAccount ? tdsAccount : null,
+  //           notes,
+  //           payment_amount: totalPayment,
+  //           excess_amount: excessAmount,
+  //           status,
+  //           lock_bill_payments_attributes: invoiceRows
+  //             .filter((r) => parseFloat(r.payment) > 0)
+  //             .map((r) => ({
+  //               resource_id: r.id,
+  //               resource_type: "LockAccountInvoice",
+  //               amount: parseFloat(r.payment) || 0,
+  //               payment_date: r.paymentReceivedOn,
+  //             })),
+  //           attachments_attributes: [],
+  //         },
+  //       };
+  //     } else {
+  //       payload = {
+  //         lock_payment: {
+  //           payment_of: "LockAccountCustomer",
+  //           payment_of_id: selectedCustomerId,
+  //           payment_made: false,
+  //           paid_amount: parseFloat(advanceAmount) || 0,
+  //           bank_charges: parseFloat(advanceBankCharges) || 0,
+  //           payment_date: format(parseISO(date), "dd/MM/yyyy"),
+  //           payment_mode: paymentMode,
+  //           order_number: reference,
+  //           advance: true,
+  //           deposit_to_ledger_id: advanceDepositTo ? parseInt(advanceDepositTo) : null,
+  //           notes,
+  //           place_of_supply: placeOfSupply,
+  //           description_of_supply: descriptionOfSupply,
+  //           tax_rate_id: advanceTax ? parseInt(advanceTax.replace(/\D/g, '')) || 1 : null,
+  //           attachments_attributes: [],
+  //         },
+  //       };
+  //     }
+
+  //     // Format attachments to base64
+  //     if (attachments.length > 0) {
+  //       try {
+  //         const base64Files = await Promise.all(attachments.map(toBase64));
+  //         payload.lock_payment.attachments_attributes = attachments.map((f, i) => ({
+  //           document: base64Files[i],
+  //           active: true
+  //         }));
+  //       } catch (e) {
+  //         console.error("Failed to convert attachments:", e);
+  //       }
+  //     }
+
+  //     await axios.post(
+  //       `https://${baseUrl}/lock_payments.json?lock_account_id=${lock_account_id}`,
+  //       payload,
+  //       { headers: { ...authHeaders, "Content-Type": "application/json" } }
+  //     );
+  //     toast.success(
+  //       `Payment ${status === "draft" ? "saved as draft" : "recorded"} successfully!`
+  //     );
+  //     navigate(-1);
+  //   } catch (err) {
+  //     console.error("Failed to save payment:", err);
+  //     toast.error("Failed to save payment");
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
 
   const handleSubmit = async (status: "draft" | "paid") => {
     // Centralized Validation for mandatory fields
@@ -404,7 +526,6 @@ export const RecordPaymentPage: React.FC = () => {
         errors.push("Deposit To account is required");
       }
     } else {
-      // Customer Advance specific validation
       if (!advanceAmount || parseFloat(advanceAmount) <= 0) {
         errors.push("Amount Received must be a valid number greater than 0");
       }
@@ -423,82 +544,107 @@ export const RecordPaymentPage: React.FC = () => {
 
     setSubmitting(true);
     try {
-      let payload: any = {};
+      let lp: any = {};
 
       if (activeTab === 0) {
         const excessAmount = Math.max(
           0,
           (parseFloat(amountReceived) || 0) - totalPayment
         );
-        payload = {
-          lock_payment: {
-            payment_of: "LockAccountCustomer",
-            payment_of_id: selectedCustomerId,
-            payment_made: false,
-            paid_amount: parseFloat(amountReceived) || 0,
-            bank_charges: parseFloat(bankCharges) || 0,
-            payment_date: format(parseISO(date), "dd/MM/yyyy"),
-            payment_mode: paymentMode,
-            order_number: reference,
-            deposit_to_ledger_id: depositTo ? parseInt(depositTo) : null,
-            tax_deducted: taxDeducted === "yes",
-            tds_lock_account_ledger_id:
-              taxDeducted === "yes" && tdsAccount ? tdsAccount : null,
-            notes,
-            payment_amount: totalPayment,
-            excess_amount: excessAmount,
-            status,
-            lock_bill_payments_attributes: invoiceRows
-              .filter((r) => parseFloat(r.payment) > 0)
-              .map((r) => ({
-                resource_id: r.id,
-                resource_type: "LockAccountInvoice",
-                amount: parseFloat(r.payment) || 0,
-                payment_date: r.paymentReceivedOn,
-              })),
-            attachments_attributes: [],
-          },
+        lp = {
+          payment_of: "LockAccountCustomer",
+          payment_of_id: selectedCustomerId,
+          payment_made: false,
+          paid_amount: parseFloat(amountReceived) || 0,
+          bank_charges: parseFloat(bankCharges) || 0,
+          payment_date: format(parseISO(date), "dd/MM/yyyy"),
+          payment_mode: paymentMode,
+          order_number: reference,
+          deposit_to_ledger_id: depositTo ? parseInt(depositTo) : null,
+          tax_deducted: taxDeducted === "yes",
+          tds_lock_account_ledger_id: taxDeducted === "yes" && tdsAccount ? tdsAccount : null,
+          notes,
+          payment_amount: totalPayment,
+          excess_amount: excessAmount,
+          status,
+          lock_bill_payments_attributes: invoiceRows
+            .filter((r) => parseFloat(r.payment) > 0)
+            .map((r) => ({
+              resource_id: r.id,
+              resource_type: "LockAccountInvoice",
+              amount: parseFloat(r.payment) || 0,
+              payment_date: r.paymentReceivedOn,
+            })),
         };
       } else {
-        payload = {
-          lock_payment: {
-            payment_of: "LockAccountCustomer",
-            payment_of_id: selectedCustomerId,
-            payment_made: false,
-            paid_amount: parseFloat(advanceAmount) || 0,
-            bank_charges: parseFloat(advanceBankCharges) || 0,
-            payment_date: format(parseISO(date), "dd/MM/yyyy"),
-            payment_mode: paymentMode,
-            order_number: reference,
-            advance: true,
-            deposit_to_ledger_id: advanceDepositTo ? parseInt(advanceDepositTo) : null,
-            notes,
-            place_of_supply: placeOfSupply,
-            description_of_supply: descriptionOfSupply,
-            tax_rate_id: advanceTax ? parseInt(advanceTax.replace(/\D/g, '')) || 1 : null,
-            attachments_attributes: [],
-          },
+        lp = {
+          payment_of: "LockAccountCustomer",
+          payment_of_id: selectedCustomerId,
+          payment_made: false,
+          paid_amount: parseFloat(advanceAmount) || 0,
+          bank_charges: parseFloat(advanceBankCharges) || 0,
+          payment_date: format(parseISO(date), "dd/MM/yyyy"),
+          payment_mode: paymentMode,
+          order_number: reference,
+          advance: true,
+          deposit_to_ledger_id: advanceDepositTo ? parseInt(advanceDepositTo) : null,
+          notes,
+          place_of_supply: placeOfSupply,
+          description_of_supply: descriptionOfSupply,
+          tax_rate_id: advanceTax ? parseInt(advanceTax.replace(/\D/g, '')) || 1 : null,
         };
       }
 
-      // Format attachments to base64
-      if (attachments.length > 0) {
-        try {
-          const base64Files = await Promise.all(attachments.map(toBase64));
-          payload.lock_payment.attachments_attributes = attachments.map((f, i) => ({
-            document: base64Files[i],
-            active: true
-          }));
-        } catch (e) {
-          console.error("Failed to convert attachments:", e);
-        }
+      // Build FormData — all fields in bracket notation
+      const formData = new FormData();
+
+      formData.append("lock_payment[payment_of]", lp.payment_of);
+      formData.append("lock_payment[payment_of_id]", String(lp.payment_of_id));
+      formData.append("lock_payment[payment_made]", String(lp.payment_made));
+      formData.append("lock_payment[paid_amount]", String(lp.paid_amount));
+      formData.append("lock_payment[bank_charges]", String(lp.bank_charges));
+      formData.append("lock_payment[payment_date]", lp.payment_date);
+      formData.append("lock_payment[payment_mode]", lp.payment_mode ?? "");
+      formData.append("lock_payment[order_number]", lp.order_number ?? "");
+      formData.append("lock_payment[deposit_to_ledger_id]", String(lp.deposit_to_ledger_id ?? ""));
+      formData.append("lock_payment[tax_deducted]", String(lp.tax_deducted ?? false));
+      formData.append("lock_payment[tds_lock_account_ledger_id]", lp.tds_lock_account_ledger_id ?? "");
+      formData.append("lock_payment[notes]", lp.notes ?? "");
+      formData.append("lock_payment[payment_amount]", String(lp.payment_amount ?? 0));
+      formData.append("lock_payment[excess_amount]", String(lp.excess_amount ?? 0));
+      formData.append("lock_payment[status]", lp.status ?? "");
+
+      // Advance tab extra fields
+      if (lp.advance) {
+        formData.append("lock_payment[advance]", String(lp.advance));
+        formData.append("lock_payment[place_of_supply]", lp.place_of_supply ?? "");
+        formData.append("lock_payment[description_of_supply]", lp.description_of_supply ?? "");
+        formData.append("lock_payment[tax_rate_id]", String(lp.tax_rate_id ?? ""));
       }
 
+      // Invoice payment rows
+      if (lp.lock_bill_payments_attributes?.length > 0) {
+        lp.lock_bill_payments_attributes.forEach((row: any, index: number) => {
+          formData.append(`lock_payment[lock_bill_payments_attributes][${index}][resource_id]`, String(row.resource_id));
+          formData.append(`lock_payment[lock_bill_payments_attributes][${index}][resource_type]`, row.resource_type);
+          formData.append(`lock_payment[lock_bill_payments_attributes][${index}][amount]`, String(row.amount));
+          formData.append(`lock_payment[lock_bill_payments_attributes][${index}][payment_date]`, row.payment_date);
+        });
+      }
+
+      // Attachments as real File blobs — multipart
+      attachments.forEach((file, index) => {
+        formData.append(`lock_payment[attachments_attributes][${index}][document]`, file, file.name);
+        formData.append(`lock_payment[attachments_attributes][${index}][active]`, "true");
+      });
+
+      // No Content-Type header — axios sets multipart/form-data + boundary automatically
       await axios.post(
         `https://${baseUrl}/lock_payments.json?lock_account_id=${lock_account_id}`,
-        payload,
-        { headers: { ...authHeaders, "Content-Type": "application/json" } }
+        formData,
+        { headers: authHeaders }
       );
+
       toast.success(
         `Payment ${status === "draft" ? "saved as draft" : "recorded"} successfully!`
       );
@@ -589,11 +735,10 @@ export const RecordPaymentPage: React.FC = () => {
                     <button
                       key={t}
                       onClick={() => setDrawerActiveTab(i)}
-                      className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${
-                        drawerActiveTab === i
-                          ? "border-[#C72030] text-[#C72030]"
-                          : "border-transparent text-gray-500 hover:text-gray-700"
-                      }`}
+                      className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${drawerActiveTab === i
+                        ? "border-[#C72030] text-[#C72030]"
+                        : "border-transparent text-gray-500 hover:text-gray-700"
+                        }`}
                     >
                       {t}
                     </button>
@@ -645,7 +790,7 @@ export const RecordPaymentPage: React.FC = () => {
                     {/* Contact Persons */}
                     {customerDetail.contact_persons && customerDetail.contact_persons.length > 0 && (
                       <div className="border border-gray-200 rounded-lg">
-                        <div 
+                        <div
                           className="flex items-center justify-between px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
                           onClick={() => setContactPersonsExpanded(!contactPersonsExpanded)}
                         >
@@ -672,7 +817,7 @@ export const RecordPaymentPage: React.FC = () => {
                                     </div>
                                   )}
                                 </div>
-                                
+
                                 <div className="flex-1">
                                   <div className="text-sm font-medium text-gray-900 mb-1">
                                     {[cp.salutation, cp.first_name, cp.last_name].filter(Boolean).join(" ")}
@@ -709,7 +854,7 @@ export const RecordPaymentPage: React.FC = () => {
 
                     {/* Address */}
                     <div className="border border-gray-200 rounded-lg">
-                      <div 
+                      <div
                         className="px-4 py-3 border-b border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
                         onClick={() => setAddressExpanded(!addressExpanded)}
                       >
@@ -763,15 +908,15 @@ export const RecordPaymentPage: React.FC = () => {
                                     ? " " + customerDetail.shipping_address.pin_code
                                     : ""}
                                 </div>
-                              {customerDetail.shipping_address.country && (
-                                <div>{customerDetail.shipping_address.country}</div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="text-xs text-[#C72030] italic border-l-4 border-[#C72030] pl-2">No Shipping Address</div>
-                          )}
+                                {customerDetail.shipping_address.country && (
+                                  <div>{customerDetail.shipping_address.country}</div>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-[#C72030] italic border-l-4 border-[#C72030] pl-2">No Shipping Address</div>
+                            )}
+                          </div>
                         </div>
-                      </div>
                       )}
                     </div>
                   </div>
@@ -796,8 +941,8 @@ export const RecordPaymentPage: React.FC = () => {
       )}
 
       <header className="flex items-center justify-between mb-2">
-        <Tabs 
-          value={activeTab} 
+        <Tabs
+          value={activeTab}
           onChange={(e, v) => setActiveTab(v)}
           sx={{
             "& .MuiTab-root": { textTransform: "none", fontWeight: 600, fontSize: "1.1rem", paddingX: 3 },
@@ -809,661 +954,661 @@ export const RecordPaymentPage: React.FC = () => {
       </header>
 
       {activeTab === 0 && (
-      <div className="space-y-6">
-        {/* Customer Section */}
-        <Section
-          title="Customer Information"
-          icon={<Receipt className="w-5 h-5" />}
-        >
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Customer Name<span className="text-red-500">*</span>
-                </label>
-                <FormControl fullWidth>
-                  <Select
-                    value={selectedCustomerId}
-                    onChange={(e) =>
-                      setSelectedCustomerId(e.target.value as number)
-                    }
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="" disabled>
-                      Select a customer
-                    </MenuItem>
-                    {customers.map((customer) => (
-                      <MenuItem key={customer.id} value={customer.id}>
-                        {getCustomerDisplayName(customer)}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                {selectedCustomer && (
-                  <div className="mt-2 text-[12px] text-gray-500 space-y-1">
-                    <p>PAN: <span className="text-blue-500">{selectedCustomer.pan || "—"}</span></p>
-                  </div>
-                )}
-                {selectedCustomer && (
-                  <div className="mt-3">
-                    <MuiButton
-                      onClick={openCustomerDrawer}
-                      variant="outlined"
-                      endIcon={<ChevronRight className="w-4 h-4" />}
-                      sx={{
-                        textTransform: "none",
-                        borderColor: "#404b69",
-                        color: "#404b69",
-                        "&:hover": { borderColor: "#353f5a", bgcolor: "#404b69", color: "white" },
-                      }}
-                    >
-                      {getCustomerDisplayName(selectedCustomer)}'s Details
-                    </MuiButton>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </Section>
-
-        {/* Payment Details Section */}
-        <Section
-          title="Payment Details"
-          icon={<DollarSign className="w-5 h-5" />}
-        >
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Amount Received<span className="text-red-500">*</span>
-                </label>
-                <TextField
-                  fullWidth
-                  type="number"
-                  value={amountReceived}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    if (val < 0) {
-                      toast.error('Amount Received cannot be negative');
-                      setAmountReceived('0');
-                    } else {
-                      setAmountReceived(e.target.value);
-                    }
-                  }}
-                  placeholder="0.00"
-                  sx={fieldStyles}
-                  inputProps={{ min: 0, step: 0.01 }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">INR</InputAdornment>
-                    ),
-                  }}
-                />
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={receivedFullAmount}
-                      onChange={(e) => {
-                        setReceivedFullAmount(e.target.checked);
-                        if (!e.target.checked) {
-                          setAmountReceived("");
-                          setInvoiceRows([]);
-                        }
-                      }}
-                      size="small"
-                    />
-                  }
-                  label={
-                    <span className="text-sm text-gray-600">
-                      Received full amount
-                      {invoiceRows.length > 0 && (
-                        <span className="text-gray-500">
-                          {" "}
-                          (₹{totalPayment.toFixed(2)})
-                        </span>
-                      )}
-                    </span>
-                  }
-                  className="mt-1"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Bank Charges (if any)
-                </label>
-                <TextField
-                  fullWidth
-                  type="number"
-                  value={bankCharges}
-                  onChange={(e) => {
-                    const val = parseFloat(e.target.value);
-                    if (val < 0) {
-                      toast.error('Bank Charges cannot be negative');
-                      setBankCharges('0');
-                    } else {
-                      setBankCharges(e.target.value);
-                    }
-                  }}
-                  placeholder="0.00"
-                  sx={fieldStyles}
-                  inputProps={{ min: 0, step: 0.01 }}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Payment Date<span className="text-red-500">*</span>
-                </label>
-                <TextField
-                  fullWidth
-                  type="date"
-                  value={date}
-                  onChange={(e) => {
-                    const selectedDate = new Date(e.target.value);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    if (selectedDate > today) {
-                      toast.error('Payment Date cannot be in the future');
-                      setDate(format(today, "yyyy-MM-dd"));
-                    } else {
-                      setDate(e.target.value);
-                    }
-                  }}
-                  sx={{
-                    ...fieldStyles,
-                    '& .MuiInputBase-input': {
-                      color: date ? 'transparent' : 'inherit',
-                    }
-                  }}
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    startAdornment: date ? (
-                      <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
-                        {format(parseISO(date), 'dd/MM/yyyy')}
-                      </InputAdornment>
-                    ) : null
-                  }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Payment Mode
-                </label>
-                <FormControl fullWidth>
-                  <Select
-                    value={paymentMode}
-                    onChange={(e) => setPaymentMode(e.target.value as string)}
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="" disabled>
-                      Select payment mode
-                    </MenuItem>
-                    {PAYMENT_MODES.map((mode) => (
-                      <MenuItem key={mode} value={mode}>
-                        {mode}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Deposit To<span className="text-red-500">*</span>
-                </label>
-                <FormControl fullWidth>
-                  <Select
-                    value={depositTo}
-                    onChange={(e) => setDepositTo(e.target.value as string)}
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="" disabled>
-                      Select ledger
-                    </MenuItem>
-                    {ledgers.map((l) => (
-                      <MenuItem key={l.id} value={String(l.id)}>
-                        {l.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Reference #
-                </label>
-                <TextField
-                  fullWidth
-                  value={reference}
-                  onChange={(e) => setReference(e.target.value)}
-                  placeholder="Enter reference number"
-                  sx={fieldStyles}
-                />
-              </div>
-            </div>
-          </div>
-        </Section>
-
-        {/* Tax Section */}
-        <Section
-          title="Tax Information"
-          icon={<CreditCard className="w-5 h-5" />}
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Tax deducted?
-              </label>
-              <RadioGroup
-                row
-                value={taxDeducted}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setTaxDeducted(val);
-                  if (val === "no") {
-                    setInvoiceRows((rows) =>
-                      rows.map((r) => ({ ...r, withholdingTax: "" }))
-                    );
-                  }
-                }}
-              >
-                <FormControlLabel
-                  value="no"
-                  control={<Radio size="small" />}
-                  label="No Tax deducted"
-                />
-                <FormControlLabel
-                  value="yes"
-                  control={<Radio size="small" />}
-                  label="Yes, TDS (Income Tax)"
-                />
-              </RadioGroup>
-            </div>
-
-            {taxDeducted === "yes" && (
+        <div className="space-y-6">
+          {/* Customer Section */}
+          <Section
+            title="Customer Information"
+            icon={<Receipt className="w-5 h-5" />}
+          >
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
-                    TDS Tax Account<span className="text-red-500">*</span>
+                    Customer Name<span className="text-red-500">*</span>
                   </label>
                   <FormControl fullWidth>
                     <Select
-                      value={tdsAccount}
-                      onChange={(e) => setTdsAccount(e.target.value as string)}
+                      value={selectedCustomerId}
+                      onChange={(e) =>
+                        setSelectedCustomerId(e.target.value as number)
+                      }
+                      displayEmpty
                       sx={fieldStyles}
                     >
-                      <MenuItem value="Advance Tax">Advance Tax</MenuItem>
-                      <MenuItem value="Employee Advance">
-                        Employee Advance
+                      <MenuItem value="" disabled>
+                        Select a customer
                       </MenuItem>
-                      <MenuItem value="Prepaid Expenses">
-                        Prepaid Expenses
+                      {customers.map((customer) => (
+                        <MenuItem key={customer.id} value={customer.id}>
+                          {getCustomerDisplayName(customer)}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  {selectedCustomer && (
+                    <div className="mt-2 text-[12px] text-gray-500 space-y-1">
+                      <p>PAN: <span className="text-blue-500">{selectedCustomer.pan || "—"}</span></p>
+                    </div>
+                  )}
+                  {selectedCustomer && (
+                    <div className="mt-3">
+                      <MuiButton
+                        onClick={openCustomerDrawer}
+                        variant="outlined"
+                        endIcon={<ChevronRight className="w-4 h-4" />}
+                        sx={{
+                          textTransform: "none",
+                          borderColor: "#404b69",
+                          color: "#404b69",
+                          "&:hover": { borderColor: "#353f5a", bgcolor: "#404b69", color: "white" },
+                        }}
+                      >
+                        {getCustomerDisplayName(selectedCustomer)}'s Details
+                      </MuiButton>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Section>
+
+          {/* Payment Details Section */}
+          <Section
+            title="Payment Details"
+            icon={<DollarSign className="w-5 h-5" />}
+          >
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Amount Received<span className="text-red-500">*</span>
+                  </label>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    value={amountReceived}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (val < 0) {
+                        toast.error('Amount Received cannot be negative');
+                        setAmountReceived('0');
+                      } else {
+                        setAmountReceived(e.target.value);
+                      }
+                    }}
+                    placeholder="0.00"
+                    sx={fieldStyles}
+                    inputProps={{ min: 0, step: 0.01 }}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">INR</InputAdornment>
+                      ),
+                    }}
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={receivedFullAmount}
+                        onChange={(e) => {
+                          setReceivedFullAmount(e.target.checked);
+                          if (!e.target.checked) {
+                            setAmountReceived("");
+                            setInvoiceRows([]);
+                          }
+                        }}
+                        size="small"
+                      />
+                    }
+                    label={
+                      <span className="text-sm text-gray-600">
+                        Received full amount
+                        {invoiceRows.length > 0 && (
+                          <span className="text-gray-500">
+                            {" "}
+                            (₹{totalPayment.toFixed(2)})
+                          </span>
+                        )}
+                      </span>
+                    }
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Bank Charges (if any)
+                  </label>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    value={bankCharges}
+                    onChange={(e) => {
+                      const val = parseFloat(e.target.value);
+                      if (val < 0) {
+                        toast.error('Bank Charges cannot be negative');
+                        setBankCharges('0');
+                      } else {
+                        setBankCharges(e.target.value);
+                      }
+                    }}
+                    placeholder="0.00"
+                    sx={fieldStyles}
+                    inputProps={{ min: 0, step: 0.01 }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Payment Date<span className="text-red-500">*</span>
+                  </label>
+                  <TextField
+                    fullWidth
+                    type="date"
+                    value={date}
+                    onChange={(e) => {
+                      const selectedDate = new Date(e.target.value);
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      if (selectedDate > today) {
+                        toast.error('Payment Date cannot be in the future');
+                        setDate(format(today, "yyyy-MM-dd"));
+                      } else {
+                        setDate(e.target.value);
+                      }
+                    }}
+                    sx={{
+                      ...fieldStyles,
+                      '& .MuiInputBase-input': {
+                        color: date ? 'transparent' : 'inherit',
+                      }
+                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                      startAdornment: date ? (
+                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                          {format(parseISO(date), 'dd/MM/yyyy')}
+                        </InputAdornment>
+                      ) : null
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Payment Mode
+                  </label>
+                  <FormControl fullWidth>
+                    <Select
+                      value={paymentMode}
+                      onChange={(e) => setPaymentMode(e.target.value as string)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="" disabled>
+                        Select payment mode
                       </MenuItem>
-                      <MenuItem value="TDS Receivable">TDS Receivable</MenuItem>
+                      {PAYMENT_MODES.map((mode) => (
+                        <MenuItem key={mode} value={mode}>
+                          {mode}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Deposit To<span className="text-red-500">*</span>
+                  </label>
+                  <FormControl fullWidth>
+                    <Select
+                      value={depositTo}
+                      onChange={(e) => setDepositTo(e.target.value as string)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="" disabled>
+                        Select ledger
+                      </MenuItem>
+                      {ledgers.map((l) => (
+                        <MenuItem key={l.id} value={String(l.id)}>
+                          {l.name}
+                        </MenuItem>
+                      ))}
                     </Select>
                   </FormControl>
                 </div>
               </div>
-            )}
-          </div>
-        </Section>
 
-        {/* Unpaid Invoices Section */}
-        <Section
-          title="Unpaid Invoices"
-          icon={<FileText className="w-5 h-5" />}
-        >
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <p className="text-sm text-gray-500">
-                {invoiceRows.length > 0
-                  ? `${invoiceRows.length} unpaid invoice(s) found`
-                  : "Select a customer and check 'Received full amount' to load invoices"}
-              </p>
-              {invoiceRows.length > 0 && (
-                <MuiButton
-                  variant="text"
-                  size="small"
-                  onClick={() =>
-                    setInvoiceRows((rows) =>
-                      rows.map((r) => ({ ...r, payment: "" }))
-                    )
-                  }
-                  sx={{ textTransform: "none", color: "primary.main" }}
-                >
-                  Clear Applied Amount
-                </MuiButton>
-              )}
-            </div>
-
-            {invoicesLoading ? (
-              <div className="py-10 text-center">
-                <CircularProgress size={32} />
-                <p className="text-sm text-gray-500 mt-2">Loading invoices…</p>
-              </div>
-            ) : invoiceError ? (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center text-red-600 text-sm">
-                {invoiceError}
-              </div>
-            ) : invoiceRows.length === 0 ? (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center text-gray-500 text-sm">
-                There are no unpaid invoices associated with this customer.
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b-2 border-gray-200 bg-gray-50">
-                      <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide py-3 px-4">
-                        Date
-                      </th>
-                      <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide py-3 px-4">
-                        Invoice Number
-                      </th>
-                      <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wide py-3 px-4">
-                        Invoice Amount
-                      </th>
-                      <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wide py-3 px-4">
-                        Amount Due
-                      </th>
-                      <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide py-3 px-4">
-                        Payment Received On
-                      </th>
-                      <th
-                        className={`text-left text-xs font-semibold uppercase tracking-wide py-3 px-4 ${taxDeducted === "yes" ? "text-gray-500" : "text-gray-300"}`}
-                      >
-                        Withholding Tax
-                      </th>
-                      <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wide py-3 px-4">
-                        Payment
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {invoiceRows.map((row) => (
-                      <tr
-                        key={row.id}
-                        className="border-b border-gray-100 hover:bg-gray-50/50"
-                      >
-                        <td className="py-3 px-4 align-top">
-                          <div className="text-gray-800">
-                            {row.invoice_date
-                              ? format(new Date(row.invoice_date), "dd/MM/yyyy")
-                              : "—"}
-                          </div>
-                          {row.due_date && (
-                            <div className="text-xs text-gray-500 mt-0.5">
-                              Due:{" "}
-                              {format(new Date(row.due_date), "dd/MM/yyyy")}
-                            </div>
-                          )}
-                        </td>
-                        <td className="py-3 px-4 align-top text-primary font-medium">
-                          {row.invoice_number}
-                        </td>
-                        <td className="py-3 px-4 align-top text-right">
-                          {row.total?.toFixed(2)}
-                        </td>
-                        <td className="py-3 px-4 align-top text-right text-primary font-medium">
-                          {row.balance_due?.toFixed(2)}
-                        </td>
-                        <td className="py-3 px-4 align-top">
-                          <TextField
-                            type="date"
-                            value={row.paymentReceivedOn}
-                            onChange={(e) => {
-                              const selectedDate = new Date(e.target.value);
-                              const today = new Date();
-                              today.setHours(0, 0, 0, 0);
-                              if (selectedDate > today) {
-                                toast.error('Payment Date cannot be in the future');
-                                handleInvoiceRowChange(row.id, "paymentReceivedOn", format(today, "yyyy-MM-dd"));
-                              } else {
-                                handleInvoiceRowChange(row.id, "paymentReceivedOn", e.target.value);
-                              }
-                            }}
-                            size="small"
-                            sx={{
-                              width: 150,
-                              "& .MuiInputBase-input": {
-                                padding: "6px 10px",
-                                fontSize: "0.875rem",
-                              },
-                            }}
-                          />
-                        </td>
-                        <td className="py-3 px-4 align-top">
-                          <TextField
-                            value={row.withholdingTax}
-                            onChange={(e) =>
-                              handleInvoiceRowChange(
-                                row.id,
-                                "withholdingTax",
-                                e.target.value
-                              )
-                            }
-                            size="small"
-                            placeholder="0.00"
-                            disabled={taxDeducted !== "yes"}
-                            sx={{
-                              width: 130,
-                              "& .MuiInputBase-input": {
-                                padding: "6px 10px",
-                                fontSize: "0.875rem",
-                              },
-                              ...(taxDeducted !== "yes" && {
-                                bgcolor: "action.disabledBackground",
-                                "& .MuiInputBase-input": {
-                                  padding: "6px 10px",
-                                  fontSize: "0.875rem",
-                                  color: "text.disabled",
-                                },
-                              }),
-                            }}
-                          />
-                        </td>
-                        <td className="py-3 px-4 align-top text-right">
-                          <TextField
-                            value={row.payment}
-                            onChange={(e) =>
-                              handleInvoiceRowChange(
-                                row.id,
-                                "payment",
-                                e.target.value
-                              )
-                            }
-                            size="small"
-                            placeholder="0.00"
-                            sx={{
-                              width: 120,
-                              "& .MuiInputBase-input": {
-                                padding: "6px 10px",
-                                fontSize: "0.875rem",
-                                textAlign: "right",
-                              },
-                            }}
-                          />
-                          <div
-                            className="text-xs text-primary cursor-pointer mt-1 text-right hover:underline"
-                            onClick={() => handlePayInFull(row.id)}
-                          >
-                            Pay in Full
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="border-t-2 border-gray-200">
-                      <td
-                        colSpan={4}
-                        className="pt-3 px-4 text-xs text-gray-500 italic"
-                      >
-                        **List contains only SENT invoices
-                      </td>
-                      <td className="pt-3 px-4 text-right font-semibold text-gray-700">
-                        Total
-                      </td>
-                      <td></td>
-                      <td className="pt-3 px-4 text-right font-semibold text-gray-700">
-                        {totalPayment.toFixed(2)}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            )}
-          </div>
-        </Section>
-
-        {/* Notes & Attachments Section */}
-        <Section
-          title="Notes & Attachments"
-          icon={<FileText className="w-5 h-5" />}
-        >
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Notes{" "}
-                <span className="text-gray-400 font-normal">
-                  (Internal use. Not visible to customer)
-                </span>
-              </label>
-              <textarea
-                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
-                rows={4}
-                value={notes}
-                onChange={(e) => {
-                  if (e.target.value.length <= 500) setNotes(e.target.value);
-                }}
-                placeholder="Add notes for internal reference... (max 500 characters)"
-                maxLength={500}
-              />
-              <div className="text-xs text-gray-400 text-right mt-1">
-                {notes?.length || 0}/500
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Reference #
+                  </label>
+                  <TextField
+                    fullWidth
+                    value={reference}
+                    onChange={(e) => setReference(e.target.value)}
+                    placeholder="Enter reference number"
+                    sx={fieldStyles}
+                  />
+                </div>
               </div>
             </div>
+          </Section>
 
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Attachments
-              </label>
-              <div className="flex items-center gap-4">
-                <MuiButton
-                  variant="outlined"
-                  component="label"
-                  startIcon={<CloudUpload />}
-                  sx={{
-                    textTransform: "none",
-                    borderColor: "divider",
-                    color: "text.secondary",
-                    "&:hover": {
-                      borderColor: "primary.main",
-                      bgcolor: "primary.main",
-                      color: "white",
-                    },
+          {/* Tax Section */}
+          <Section
+            title="Tax Information"
+            icon={<CreditCard className="w-5 h-5" />}
+          >
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Tax deducted?
+                </label>
+                <RadioGroup
+                  row
+                  value={taxDeducted}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setTaxDeducted(val);
+                    if (val === "no") {
+                      setInvoiceRows((rows) =>
+                        rows.map((r) => ({ ...r, withholdingTax: "" }))
+                      );
+                    }
                   }}
                 >
-                  Upload File
-                  <input
-                    type="file"
-                    multiple
-                    hidden
-                    onChange={(e) => {
-                      if (e.target.files)
-                        setAttachments(Array.from(e.target.files));
-                    }}
+                  <FormControlLabel
+                    value="no"
+                    control={<Radio size="small" />}
+                    label="No Tax deducted"
                   />
-                </MuiButton>
-                <span className="text-sm text-gray-500">
-                  You can upload a maximum of 5 files, 5MB each
-                </span>
+                  <FormControlLabel
+                    value="yes"
+                    control={<Radio size="small" />}
+                    label="Yes, TDS (Income Tax)"
+                  />
+                </RadioGroup>
               </div>
-              {attachments.length > 0 && (
-                <ul className="mt-3 text-sm list-disc list-inside text-gray-600">
-                  {attachments.map((f, idx) => (
-                    <li key={idx}>{f.name}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
 
-            <div>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={sendThankYou}
-                    onChange={(e) => setSendThankYou(e.target.checked)}
-                    size="small"
-                  />
-                }
-                label={
-                  <span className="text-sm">
-                    Send a "Thank you" note for this payment
-                  </span>
-                }
-              />
-              {selectedCustomer && sendThankYou && (
-                <div className="mt-2 flex items-center gap-2 flex-wrap">
-                  <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm flex items-center gap-2">
-                    <Checkbox defaultChecked size="small" />
-                    <span>
-                      {getCustomerDisplayName(selectedCustomer)} &lt;
-                      {selectedCustomer.email}&gt;
-                    </span>
+              {taxDeducted === "yes" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      TDS Tax Account<span className="text-red-500">*</span>
+                    </label>
+                    <FormControl fullWidth>
+                      <Select
+                        value={tdsAccount}
+                        onChange={(e) => setTdsAccount(e.target.value as string)}
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value="Advance Tax">Advance Tax</MenuItem>
+                        <MenuItem value="Employee Advance">
+                          Employee Advance
+                        </MenuItem>
+                        <MenuItem value="Prepaid Expenses">
+                          Prepaid Expenses
+                        </MenuItem>
+                        <MenuItem value="TDS Receivable">TDS Receivable</MenuItem>
+                      </Select>
+                    </FormControl>
                   </div>
                 </div>
               )}
             </div>
-          </div>
-        </Section>
+          </Section>
 
-        {/* Payment Summary Section */}
-        <Section
-          title="Payment Summary"
-          icon={<DollarSign className="w-5 h-5" />}
-        >
-          <div className="max-w-md space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Amount Received</span>
-              <span className="text-sm font-medium">
-                ₹ {amountReceived || "0.00"}
-              </span>
+          {/* Unpaid Invoices Section */}
+          <Section
+            title="Unpaid Invoices"
+            icon={<FileText className="w-5 h-5" />}
+          >
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <p className="text-sm text-gray-500">
+                  {invoiceRows.length > 0
+                    ? `${invoiceRows.length} unpaid invoice(s) found`
+                    : "Select a customer and check 'Received full amount' to load invoices"}
+                </p>
+                {invoiceRows.length > 0 && (
+                  <MuiButton
+                    variant="text"
+                    size="small"
+                    onClick={() =>
+                      setInvoiceRows((rows) =>
+                        rows.map((r) => ({ ...r, payment: "" }))
+                      )
+                    }
+                    sx={{ textTransform: "none", color: "primary.main" }}
+                  >
+                    Clear Applied Amount
+                  </MuiButton>
+                )}
+              </div>
+
+              {invoicesLoading ? (
+                <div className="py-10 text-center">
+                  <CircularProgress size={32} />
+                  <p className="text-sm text-gray-500 mt-2">Loading invoices…</p>
+                </div>
+              ) : invoiceError ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center text-red-600 text-sm">
+                  {invoiceError}
+                </div>
+              ) : invoiceRows.length === 0 ? (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center text-gray-500 text-sm">
+                  There are no unpaid invoices associated with this customer.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b-2 border-gray-200 bg-gray-50">
+                        <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide py-3 px-4">
+                          Date
+                        </th>
+                        <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide py-3 px-4">
+                          Invoice Number
+                        </th>
+                        <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wide py-3 px-4">
+                          Invoice Amount
+                        </th>
+                        <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wide py-3 px-4">
+                          Amount Due
+                        </th>
+                        <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wide py-3 px-4">
+                          Payment Received On
+                        </th>
+                        <th
+                          className={`text-left text-xs font-semibold uppercase tracking-wide py-3 px-4 ${taxDeducted === "yes" ? "text-gray-500" : "text-gray-300"}`}
+                        >
+                          Withholding Tax
+                        </th>
+                        <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wide py-3 px-4">
+                          Payment
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invoiceRows.map((row) => (
+                        <tr
+                          key={row.id}
+                          className="border-b border-gray-100 hover:bg-gray-50/50"
+                        >
+                          <td className="py-3 px-4 align-top">
+                            <div className="text-gray-800">
+                              {row.invoice_date
+                                ? format(new Date(row.invoice_date), "dd/MM/yyyy")
+                                : "—"}
+                            </div>
+                            {row.due_date && (
+                              <div className="text-xs text-gray-500 mt-0.5">
+                                Due:{" "}
+                                {format(new Date(row.due_date), "dd/MM/yyyy")}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 align-top text-primary font-medium">
+                            {row.invoice_number}
+                          </td>
+                          <td className="py-3 px-4 align-top text-right">
+                            {row.total?.toFixed(2)}
+                          </td>
+                          <td className="py-3 px-4 align-top text-right text-primary font-medium">
+                            {row.balance_due?.toFixed(2)}
+                          </td>
+                          <td className="py-3 px-4 align-top">
+                            <TextField
+                              type="date"
+                              value={row.paymentReceivedOn}
+                              onChange={(e) => {
+                                const selectedDate = new Date(e.target.value);
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                if (selectedDate > today) {
+                                  toast.error('Payment Date cannot be in the future');
+                                  handleInvoiceRowChange(row.id, "paymentReceivedOn", format(today, "yyyy-MM-dd"));
+                                } else {
+                                  handleInvoiceRowChange(row.id, "paymentReceivedOn", e.target.value);
+                                }
+                              }}
+                              size="small"
+                              sx={{
+                                width: 150,
+                                "& .MuiInputBase-input": {
+                                  padding: "6px 10px",
+                                  fontSize: "0.875rem",
+                                },
+                              }}
+                            />
+                          </td>
+                          <td className="py-3 px-4 align-top">
+                            <TextField
+                              value={row.withholdingTax}
+                              onChange={(e) =>
+                                handleInvoiceRowChange(
+                                  row.id,
+                                  "withholdingTax",
+                                  e.target.value
+                                )
+                              }
+                              size="small"
+                              placeholder="0.00"
+                              disabled={taxDeducted !== "yes"}
+                              sx={{
+                                width: 130,
+                                "& .MuiInputBase-input": {
+                                  padding: "6px 10px",
+                                  fontSize: "0.875rem",
+                                },
+                                ...(taxDeducted !== "yes" && {
+                                  bgcolor: "action.disabledBackground",
+                                  "& .MuiInputBase-input": {
+                                    padding: "6px 10px",
+                                    fontSize: "0.875rem",
+                                    color: "text.disabled",
+                                  },
+                                }),
+                              }}
+                            />
+                          </td>
+                          <td className="py-3 px-4 align-top text-right">
+                            <TextField
+                              value={row.payment}
+                              onChange={(e) =>
+                                handleInvoiceRowChange(
+                                  row.id,
+                                  "payment",
+                                  e.target.value
+                                )
+                              }
+                              size="small"
+                              placeholder="0.00"
+                              sx={{
+                                width: 120,
+                                "& .MuiInputBase-input": {
+                                  padding: "6px 10px",
+                                  fontSize: "0.875rem",
+                                  textAlign: "right",
+                                },
+                              }}
+                            />
+                            <div
+                              className="text-xs text-primary cursor-pointer mt-1 text-right hover:underline"
+                              onClick={() => handlePayInFull(row.id)}
+                            >
+                              Pay in Full
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-gray-200">
+                        <td
+                          colSpan={4}
+                          className="pt-3 px-4 text-xs text-gray-500 italic"
+                        >
+                          **List contains only SENT invoices
+                        </td>
+                        <td className="pt-3 px-4 text-right font-semibold text-gray-700">
+                          Total
+                        </td>
+                        <td></td>
+                        <td className="pt-3 px-4 text-right font-semibold text-gray-700">
+                          {totalPayment.toFixed(2)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              )}
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">
-                Amount used for Payments
-              </span>
-              <span className="text-sm font-medium">
-                ₹ {totalPayment.toFixed(2)}
-              </span>
+          </Section>
+
+          {/* Notes & Attachments Section */}
+          <Section
+            title="Notes & Attachments"
+            icon={<FileText className="w-5 h-5" />}
+          >
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Notes{" "}
+                  <span className="text-gray-400 font-normal">
+                    (Internal use. Not visible to customer)
+                  </span>
+                </label>
+                <textarea
+                  className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                  rows={4}
+                  value={notes}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 500) setNotes(e.target.value);
+                  }}
+                  placeholder="Add notes for internal reference... (max 500 characters)"
+                  maxLength={500}
+                />
+                <div className="text-xs text-gray-400 text-right mt-1">
+                  {notes?.length || 0}/500
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Attachments
+                </label>
+                <div className="flex items-center gap-4">
+                  <MuiButton
+                    variant="outlined"
+                    component="label"
+                    startIcon={<CloudUpload />}
+                    sx={{
+                      textTransform: "none",
+                      borderColor: "divider",
+                      color: "text.secondary",
+                      "&:hover": {
+                        borderColor: "primary.main",
+                        bgcolor: "primary.main",
+                        color: "white",
+                      },
+                    }}
+                  >
+                    Upload File
+                    <input
+                      type="file"
+                      multiple
+                      hidden
+                      onChange={(e) => {
+                        if (e.target.files)
+                          setAttachments(Array.from(e.target.files));
+                      }}
+                    />
+                  </MuiButton>
+                  <span className="text-sm text-gray-500">
+                    You can upload a maximum of 5 files, 5MB each
+                  </span>
+                </div>
+                {attachments.length > 0 && (
+                  <ul className="mt-3 text-sm list-disc list-inside text-gray-600">
+                    {attachments.map((f, idx) => (
+                      <li key={idx}>{f.name}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={sendThankYou}
+                      onChange={(e) => setSendThankYou(e.target.checked)}
+                      size="small"
+                    />
+                  }
+                  label={
+                    <span className="text-sm">
+                      Send a "Thank you" note for this payment
+                    </span>
+                  }
+                />
+                {selectedCustomer && sendThankYou && (
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
+                    <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm flex items-center gap-2">
+                      <Checkbox defaultChecked size="small" />
+                      <span>
+                        {getCustomerDisplayName(selectedCustomer)} &lt;
+                        {selectedCustomer.email}&gt;
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Amount Refunded</span>
-              <span className="text-sm font-medium">₹ 0.00</span>
+          </Section>
+
+          {/* Payment Summary Section */}
+          <Section
+            title="Payment Summary"
+            icon={<DollarSign className="w-5 h-5" />}
+          >
+            <div className="max-w-md space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Amount Received</span>
+                <span className="text-sm font-medium">
+                  ₹ {amountReceived || "0.00"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">
+                  Amount used for Payments
+                </span>
+                <span className="text-sm font-medium">
+                  ₹ {totalPayment.toFixed(2)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Amount Refunded</span>
+                <span className="text-sm font-medium">₹ 0.00</span>
+              </div>
+              <div className="flex justify-between items-center pt-3 border-t border-gray-200">
+                <span className="text-sm text-red-500 font-medium">
+                  ⚠ Amount in Excess
+                </span>
+                <span className="text-sm font-semibold">
+                  ₹{" "}
+                  {Math.max(
+                    0,
+                    (parseFloat(amountReceived) || 0) - totalPayment
+                  ).toFixed(2)}
+                </span>
+              </div>
             </div>
-            <div className="flex justify-between items-center pt-3 border-t border-gray-200">
-              <span className="text-sm text-red-500 font-medium">
-                ⚠ Amount in Excess
-              </span>
-              <span className="text-sm font-semibold">
-                ₹{" "}
-                {Math.max(
-                  0,
-                  (parseFloat(amountReceived) || 0) - totalPayment
-                ).toFixed(2)}
-              </span>
-            </div>
-          </div>
-        </Section>
-      </div>
+          </Section>
+        </div>
       )}
 
       {activeTab === 1 && (
