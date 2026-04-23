@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
-import { API_CONFIG, BASE_URL, TOKEN } from '@/config/apiConfig';
+import { API_CONFIG } from '@/config/apiConfig';
 import { getToken } from '@/utils/auth';
 
 interface NextEscalation {
@@ -183,16 +183,18 @@ const AssignTicketsPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       const complaint_ids = selectedTickets.map(t => t.id);
-      console.log('🎯 Selected ticket IDs for bulk update:', complaint_ids);
-      console.log('👤 Selected user ID:', selectedUser);
-      console.log('📊 Selected status ID:', selectedStatus);
       
       // Get authentication token and base URL from API config
-      const authToken = TOKEN || getToken();
-      const baseUrl = BASE_URL;
-      
-      console.log('🔐 Using auth token from API config:', authToken ? 'Token present' : 'Token missing');
-      console.log('🌐 Using base URL from API config:', baseUrl);
+      const authToken = API_CONFIG.TOKEN || getToken();
+      const baseUrl = API_CONFIG.BASE_URL;
+
+      if (!baseUrl) {
+        throw new Error('Base URL is not configured. Please log in again.');
+      }
+
+      if (!authToken) {
+        throw new Error('Authentication token is not available. Please log in again.');
+      }
       
       // Sequential API calls - first status update, then assignment
       let statusResult = null;
@@ -200,21 +202,14 @@ const AssignTicketsPage: React.FC = () => {
 
       // Step 1: Update status if selected
       if (selectedStatus) {
-        console.log('🔄 Step 1: Updating status...');
         const formData = new FormData();
         complaint_ids.forEach(id => {
           formData.append('complaint_ids[]', id.toString());
         });
         formData.append('issue_status', selectedStatus);
-        
-        console.log('📤 Status API FormData:');
-        for (const [key, value] of formData.entries()) {
-          console.log(key, value);
-        }
-        
+
         const statusUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.BULK_UPDATE_STATUS}`;
-        console.log('🎯 Status API URL:', statusUrl);
-        
+
         const statusResponse = await fetch(statusUrl, {
           method: 'POST',
           headers: {
@@ -230,27 +225,19 @@ const AssignTicketsPage: React.FC = () => {
         }
         
         statusResult = await statusResponse.json();
-        console.log('✅ Status API response:', statusResult);
       }
 
       // Step 2: Assign user if selected
       if (selectedUser) {
-        console.log('🔄 Step 2: Assigning user...');
         const formData = new FormData();
         complaint_ids.forEach(id => {
           formData.append('complaint_ids[]', id.toString());
         });
         formData.append('assigned_to_ids[]', selectedUser);
         formData.append('comment', 'Assigned from bulk assignment');
-        
-        console.log('📤 Assign API FormData:');
-        for (const [key, value] of formData.entries()) {
-          console.log(key, value);
-        }
-        
+
         const assignUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.BULK_ASSIGN_TICKETS}`;
-        console.log('🎯 Assign API URL:', assignUrl);
-        
+
         const assignResponse = await fetch(assignUrl, {
           method: 'POST',
           headers: {
@@ -266,10 +253,7 @@ const AssignTicketsPage: React.FC = () => {
         }
         
         assignResult = await assignResponse.json();
-        console.log('✅ Assign API response:', assignResult);
       }
-      
-      console.log('🎉 All API calls completed successfully:', { statusResult, assignResult });
       
       toast({
         title: "Success",
@@ -465,6 +449,7 @@ const AssignTicketsPage: React.FC = () => {
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">Status</label>
               <select
+                aria-label="Status"
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
                 className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer shadow-sm"
@@ -487,6 +472,7 @@ const AssignTicketsPage: React.FC = () => {
             <div className="space-y-1">
               <label className="block text-sm font-medium text-gray-700">Assigned To</label>
               <select
+                aria-label="Assigned To"
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
                 className="h-10 w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none cursor-pointer shadow-sm"
