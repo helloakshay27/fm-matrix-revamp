@@ -703,7 +703,7 @@ const ProjectTasksPage = () => {
                             Authorization: `Bearer ${token}`,
                         },
                     });
-                if (response.data && Array.isArray(response.data.project_managements)) {
+                if (response.data && Array.isArray(response.data)) {
                     setProjectOptions(
                         response.data.map((project: any) => ({
                             label: project.name || project.title,
