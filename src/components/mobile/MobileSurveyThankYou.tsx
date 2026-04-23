@@ -20,6 +20,7 @@ interface SurveyData {
   floor_name: string;
   area_name: string;
   room_name: string | null;
+  company_logo_url?: string | null;
   snag_checklist: {
     id: number;
     name: string;
@@ -132,7 +133,13 @@ export const MobileSurveyThankYou: React.FC = () => {
       )}
       <div className="absolute top-8 right-6 z-10">
         <div className="w-32 h-32 sm:w-48 sm:h-32 flex items-center justify-center overflow-hidden   p-2">
-          {window.location.origin === "https://oig.gophygital.work" ? (
+          {surveyData?.company_logo_url ? (
+            <img
+              src={surveyData.company_logo_url}
+              alt="Company Logo"
+              className="w-full h-full object-contain"
+            />
+          ) : window.location.origin === "https://oig.gophygital.work" ? (
             <img
               src="/Without bkg.svg"
               alt="OIG Logo"
@@ -145,7 +152,7 @@ export const MobileSurveyThankYou: React.FC = () => {
               className="w-full h-full object-contain"
             />
           ) : window.location.origin === "https://fm-matrix.lockated.com" ? (
-              <img
+            <img
               src="/gophygital-logo-min.jpg"
               alt="gophygital Logo"
               className="w-full h-full object-contain"
