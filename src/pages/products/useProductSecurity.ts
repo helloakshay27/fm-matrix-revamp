@@ -222,7 +222,7 @@ export function useProductSecurity(): SecurityState {
     return () => window.clearInterval(tick);
   }, [showBlackout]);
 
-  // Keyboard shortcut blocking
+  // Enhanced keyboard shortcut blocking
   useEffect(() => {
     const flashBlank = () => {
       setScreenshotBlank(true);
@@ -230,10 +230,12 @@ export function useProductSecurity(): SecurityState {
     };
     const screenshotKeys = [
       (e: KeyboardEvent) => e.key === "PrintScreen",
-      (e: KeyboardEvent) =>
-        e.metaKey && e.shiftKey && e.key.toLowerCase() === "s",
-      (e: KeyboardEvent) =>
-        e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key),
+      (e: KeyboardEvent) => e.key === "Snapshot",
+      (e: KeyboardEvent) => e.key === "PrtSc",
+      (e: KeyboardEvent) => e.key === "PrtScn",
+      (e: KeyboardEvent) => e.metaKey && e.shiftKey && e.key.toLowerCase() === "s",
+      (e: KeyboardEvent) => e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key),
+      (e: KeyboardEvent) => e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s",
     ];
     const blockedCombos = [
       (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "p",
@@ -241,17 +243,24 @@ export function useProductSecurity(): SecurityState {
       (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "u",
       (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "a",
       (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "c",
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "x",
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "v",
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "f",
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "g",
       (e: KeyboardEvent) => e.key === "F12",
-      (e: KeyboardEvent) =>
-        (e.ctrlKey || e.metaKey) &&
-        e.shiftKey &&
-        ["i", "j", "c"].includes(e.key.toLowerCase()),
+      (e: KeyboardEvent) => e.key === "F10",
+      (e: KeyboardEvent) => e.key === "F9",
+      (e: KeyboardEvent) => e.key === "F8",
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.shiftKey && ["i", "j", "c"].includes(e.key.toLowerCase()),
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === "i",
     ];
     const handleKeyDown = (e: KeyboardEvent) => {
       if (screenshotKeys.some((check) => check(e))) {
         e.preventDefault();
         e.stopPropagation();
         flashBlank();
+        // Clear clipboard to prevent screenshot paste
+        navigator.clipboard?.writeText("");
         return;
       }
       if (blockedCombos.some((check) => check(e))) {
@@ -264,9 +273,10 @@ export function useProductSecurity(): SecurityState {
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === "PrintScreen") {
+      if (e.key === "PrintScreen" || e.key === "Snapshot" || e.key === "PrtSc" || e.key === "PrtScn") {
         e.preventDefault();
         flashBlank();
+        navigator.clipboard?.writeText("");
       }
     };
     window.addEventListener("keydown", handleKeyDown, true);
@@ -306,21 +316,81 @@ export function useProductSecurity(): SecurityState {
     };
   }, []);
 
-  // DevTools detection
+  // Enhanced DevTools detection with multiple methods
   useEffect(() => {
     const THRESHOLD = 160;
+    let devToolsDetected = false;
+
+    // Method 1: Window size difference detection
     const checkDevTools = () => {
       const widthDiff = window.outerWidth - window.innerWidth;
       const heightDiff = window.outerHeight - window.innerHeight;
       if (widthDiff > THRESHOLD || heightDiff > THRESHOLD) {
+        devToolsDetected = true;
         triggerBlackout(
           "Developer Tools Detected",
           "Developer tools are not permitted while viewing proprietary product data."
         );
       }
     };
-    const interval = window.setInterval(checkDevTools, 1500);
-    return () => window.clearInterval(interval);
+
+    // Method 2: Console timing attack detection
+    const detectConsole = () => {
+      const start = performance.now();
+      console.clear();
+      const end = performance.now();
+      if (end - start > 100 && !devToolsDetected) {
+        devToolsDetected = true;
+        triggerBlackout(
+          "Developer Tools Detected",
+          "Developer tools are not permitted while viewing proprietary product data."
+        );
+      }
+    };
+
+    // Method 3: Debugger statement detection
+    const detectDebugger = () => {
+      const start = performance.now();
+      // eslint-disable-next-line no-debugger
+      debugger;
+      const end = performance.now();
+      if (end - start > 100 && !devToolsDetected) {
+        devToolsDetected = true;
+        triggerBlackout(
+          "Developer Tools Detected",
+          "Developer tools are not permitted while viewing proprietary product data."
+        );
+      }
+    };
+
+    // Method 4: Element inspection prevention
+    const preventInspect = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // Run detection checks
+    const interval = window.setInterval(() => {
+      if (!devToolsDetected) {
+        checkDevTools();
+        detectConsole();
+        detectDebugger();
+      }
+    }, 1500);
+
+    // Add event listeners for element inspection
+    document.addEventListener('contextmenu', preventInspect, true);
+    document.addEventListener('selectstart', preventInspect, true);
+    document.addEventListener('copy', preventInspect, true);
+    document.addEventListener('cut', preventInspect, true);
+
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener('contextmenu', preventInspect, true);
+      document.removeEventListener('selectstart', preventInspect, true);
+      document.removeEventListener('copy', preventInspect, true);
+      document.removeEventListener('cut', preventInspect, true);
+    };
   }, [triggerBlackout]);
 
   // Print blackout
@@ -339,6 +409,214 @@ export function useProductSecurity(): SecurityState {
     const block = (e: DragEvent) => e.preventDefault();
     document.addEventListener("dragstart", block);
     return () => document.removeEventListener("dragstart", block);
+  }, []);
+
+  // Screen recording detection and prevention
+  useEffect(() => {
+    let recordingDetected = false;
+
+    // Method 1: Detect getDisplayMedia API usage (screen sharing)
+    const originalGetDisplayMedia = navigator.mediaDevices?.getDisplayMedia;
+    if (navigator.mediaDevices?.getDisplayMedia) {
+      navigator.mediaDevices.getDisplayMedia = async (...args) => {
+        recordingDetected = true;
+        triggerBlackout(
+          "Screen Recording Detected",
+          "Screen recording and screen sharing are strictly prohibited on this page."
+        );
+        return Promise.reject(new Error("Screen recording is not allowed"));
+      };
+    }
+
+    // Method 2: Detect MediaRecorder usage
+    const originalMediaRecorder = window.MediaRecorder;
+    if (window.MediaRecorder) {
+      window.MediaRecorder = function(...args) {
+        recordingDetected = true;
+        triggerBlackout(
+          "Screen Recording Detected",
+          "Screen recording is strictly prohibited on this page."
+        );
+        throw new Error("MediaRecorder is not allowed");
+      } as any;
+      window.MediaRecorder.prototype = originalMediaRecorder.prototype;
+    }
+
+    // Method 3: Detect video capture stream
+    const originalCaptureStream = HTMLCanvasElement.prototype.captureStream;
+    if (HTMLCanvasElement.prototype.captureStream) {
+      HTMLCanvasElement.prototype.captureStream = function(...args) {
+        recordingDetected = true;
+        triggerBlackout(
+          "Screen Recording Detected",
+          "Screen recording is strictly prohibited on this page."
+        );
+        throw new Error("Canvas capture is not allowed");
+      };
+    }
+
+    return () => {
+      if (originalGetDisplayMedia && navigator.mediaDevices?.getDisplayMedia) {
+        navigator.mediaDevices.getDisplayMedia = originalGetDisplayMedia;
+      }
+      if (originalMediaRecorder) {
+        window.MediaRecorder = originalMediaRecorder;
+      }
+      if (originalCaptureStream) {
+        HTMLCanvasElement.prototype.captureStream = originalCaptureStream;
+      }
+    };
+  }, [triggerBlackout]);
+
+  // Clipboard monitoring and protection
+  useEffect(() => {
+    const handleCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      triggerBlackout(
+        "Clipboard Access Blocked",
+        "Copying content from this page is not permitted."
+      );
+    };
+
+    const handleCut = (e: ClipboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      triggerBlackout(
+        "Clipboard Access Blocked",
+        "Cutting content from this page is not permitted."
+      );
+    };
+
+    const handlePaste = (e: ClipboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    // Periodically clear clipboard
+    const clearClipboardInterval = window.setInterval(() => {
+      navigator.clipboard?.writeText("").catch(() => {
+        // Ignore errors if clipboard access is denied
+      });
+    }, 5000);
+
+    document.addEventListener("copy", handleCopy, true);
+    document.addEventListener("cut", handleCut, true);
+    document.addEventListener("paste", handlePaste, true);
+
+    return () => {
+      window.clearInterval(clearClipboardInterval);
+      document.removeEventListener("copy", handleCopy, true);
+      document.removeEventListener("cut", handleCut, true);
+      document.removeEventListener("paste", handlePaste, true);
+    };
+  }, [triggerBlackout]);
+
+  // Aggressive content protection with CSS
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.id = "fm-content-protection";
+    style.textContent = `
+      * {
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+        -webkit-touch-callout: none !important;
+      }
+      body {
+        -webkit-user-drag: none !important;
+        user-drag: none !important;
+      }
+      img, video, canvas {
+        -webkit-user-drag: none !important;
+        user-drag: none !important;
+        pointer-events: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => document.getElementById("fm-content-protection")?.remove();
+  }, []);
+
+  // Enhanced window focus/blur detection with immediate blur effect
+  useEffect(() => {
+    let blurTimeout: number | undefined;
+
+    const handleBlur = () => {
+      setIsBlurred(true);
+      // Immediately flash blank screen when window loses focus (common during screenshots)
+      setScreenshotBlank(true);
+    };
+
+    const handleFocus = () => {
+      if (blurTimeout) window.clearTimeout(blurTimeout);
+      blurTimeout = window.setTimeout(() => {
+        setIsBlurred(false);
+        setScreenshotBlank(false);
+      }, 200);
+    };
+
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      if (blurTimeout) window.clearTimeout(blurTimeout);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, []);
+
+  // Aggressive screenshot protection - blank screen on any key press
+  useEffect(() => {
+    const handleAnyKeyDown = (e: KeyboardEvent) => {
+      // Flash blank screen on any key press to prevent screenshot timing
+      setScreenshotBlank(true);
+      setTimeout(() => setScreenshotBlank(false), 300);
+    };
+
+    window.addEventListener("keydown", handleAnyKeyDown, true);
+    return () => window.removeEventListener("keydown", handleAnyKeyDown, true);
+  }, []);
+
+  // Continuous protection overlay - makes screenshots unreadable
+  useEffect(() => {
+    const protectionDiv = document.createElement("div");
+    protectionDiv.id = "fm-protection-overlay";
+    protectionDiv.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 99999;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.05),
+        rgba(0, 0, 0, 0.05) 1px,
+        transparent 1px,
+        transparent 2px
+      );
+      mix-blend-mode: multiply;
+    `;
+    document.body.appendChild(protectionDiv);
+
+    // Add random color flickering to interfere with screenshots
+    const flickerInterval = window.setInterval(() => {
+      const randomOpacity = Math.random() * 0.1;
+      protectionDiv.style.background = `repeating-linear-gradient(
+        0deg,
+        rgba(${Math.random() * 50}, ${Math.random() * 50}, ${Math.random() * 50}, ${randomOpacity}),
+        rgba(${Math.random() * 50}, ${Math.random() * 50}, ${Math.random() * 50}, ${randomOpacity}) 1px,
+        transparent 1px,
+        transparent 2px
+      )`;
+    }, 100);
+
+    return () => {
+      window.clearInterval(flickerInterval);
+      document.getElementById("fm-protection-overlay")?.remove();
+    };
   }, []);
 
   // Mobile screenshot detection — sudden minor resize can indicate screenshot toolbar
