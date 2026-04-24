@@ -224,6 +224,7 @@ export const MaterialPRDetailsPage = () => {
   const [wbsCodes, setWbsCodes] = useState([]);
   const [openDeletionModal, setOpenDeletionModal] = useState(false)
   const [printing, setPrinting] = useState(false)
+  const [testRunLoading, setTestRunLoading] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
   }>({});
@@ -261,8 +262,9 @@ export const MaterialPRDetailsPage = () => {
           editWbsCode: response.can_edit_wbs_codes,
         });
         // Set external API calls if available
-        if (response.external_api_calls && Array.isArray(response.external_api_calls)) {
-          setExternalApiCalls(response.external_api_calls);
+        if (response.api_calls && Array.isArray(response.api_calls)) {
+          setExternalApiCalls(response.api_calls);
+          console.log("API Calls set in state:", response.api_calls);
         }
         // Initialize updatedWbsCodes with current WBS codes
         const initialWbsCodes = response.pms_pr_inventories?.reduce(
@@ -470,9 +472,32 @@ export const MaterialPRDetailsPage = () => {
       );
       toast.success(response.data.message);
     } catch (error: any) {
-      toast.error(error.message || "Failed to send to SAP");
+      toast.error(error.message || "Failed to w SAP");
     }
   }, [id]);
+
+  // Handle test run
+  const handleTestRun = useCallback(async () => {
+    if (!baseUrl || !token || !id) {
+      toast.error("Missing required configuration");
+      return;
+    }
+
+    try {
+      setTestRunLoading(true);
+      const response = await axios.get<{ message: string }>(
+        `https://${baseUrl}/pms/purchase_orders/test_run.json?id=${id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success(response.data.message || "test run completed successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to run test run");
+    } finally {
+      setTestRunLoading(false);
+    }
+  }, [id, baseUrl, token]);
 
   const handleDelete = async () => {
     const payload = {
@@ -622,7 +647,26 @@ export const MaterialPRDetailsPage = () => {
                 </Button>
               </>
             ) : (
+              
               <>
+              {!buttonCondition.showSap && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-blue-600 text-white"
+                  onClick={handleTestRun}
+                  disabled={testRunLoading}
+                >
+                  {testRunLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Running...
+                    </>
+                  ) : (
+                    "Test run"
+                  )}
+                </Button>
+              )}
                 {buttonCondition.showSap && (
                   <Button
                     size="sm"
@@ -630,7 +674,7 @@ export const MaterialPRDetailsPage = () => {
                     className="border-gray-300 bg-purple-600 text-white"
                     onClick={handleSendToSap}
                   >
-                    Send To SAP Team
+                    Push To SAP
                   </Button>
                 )}
                 {
@@ -1235,16 +1279,17 @@ export const MaterialPRDetailsPage = () => {
                     <div className="md:col-span-2">
                       <p className="text-sm text-gray-600 font-semibold">Message</p>
                       <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
-                        {apiCall.eval_status && apiCall.eval_status.trim()
-                          ? apiCall.eval_status
-                          : (apiCall.response_string ? JSON.stringify(JSON.parse(apiCall.response_string), null, 2) : '-')}
+                        {apiCall.message || '-'}
                       </p>
                     </div>
-                    <div className="md:col-span-2">
-                      <p className="text-xs text-gray-500">
-                        Created: {apiCall.created_at ? new Date(apiCall.created_at).toLocaleString() : '-'}
-                      </p>
-                    </div>
+                    
+                    {apiCall.created_at && (
+                      <div className="md:col-span-2">
+                        <p className="text-xs text-gray-500">
+                          Created: {new Date(apiCall.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
