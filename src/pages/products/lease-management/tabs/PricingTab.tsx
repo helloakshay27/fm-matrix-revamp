@@ -26,7 +26,7 @@ const BRAND_COLORS = {
   textSecondary: "#5A5A5A",
   cardBorder: "#C4B89D",
   white: "#FFFFFF",
-  darkBg: "#1e293b",
+  darkBg: "#DA7756",
 };
 
 const StatusBadge: React.FC<{ status: string }> = ({ status }) => (

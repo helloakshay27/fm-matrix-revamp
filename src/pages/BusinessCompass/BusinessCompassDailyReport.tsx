@@ -122,6 +122,14 @@ interface DailyReport {
   is_absent?: boolean;
 }
 
+interface AccomplishmentItem {
+  id: string;
+  text: string;
+  completed: boolean;
+  starred: boolean;
+  fromYesterday?: boolean;
+}
+
 const BusinessCompassDailyReport: React.FC = () => {
   const navigate = useNavigate();
   const now = new Date();
@@ -140,9 +148,9 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState(
     now.getFullYear().toString()
   );
-  const [accomplishments, setAccomplishments] = useState<
-    { id: string; text: string; completed: boolean; starred: boolean }[]
-  >([]);
+  const [accomplishments, setAccomplishments] = useState<AccomplishmentItem[]>(
+    []
+  );
   const [planningItems, setPlanningItems] = useState<
     { id: string; text: string; starred: boolean }[]
   >([]);
@@ -172,7 +180,6 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [closureAttachments, setClosureAttachments] = useState<any[]>([]);
   const [isClosureSubmitting, setIsClosureSubmitting] = useState(false);
 
-  // Tasks and Issues data state
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const [mergedTasksIssues, setMergedTasksIssues] = useState<any[]>([]);
@@ -182,22 +189,17 @@ const BusinessCompassDailyReport: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  console.log(selectedTasksIssues)
-
-  // Pagination state
   const [currentTasksPage, setCurrentTasksPage] = useState(1);
   const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
   const [hasMoreTasks, setHasMoreTasks] = useState(true);
   const [hasMoreIssues, setHasMoreIssues] = useState(true);
 
-  // Get current user for filtering my tasks/issues
   const user =
     typeof localStorage !== "undefined"
       ? JSON.parse(localStorage.getItem("user") || "{}")
       : {};
   const userId = user?.id;
 
-  // Build filter for my issues
   const myIssuesFilter = `
   q[status_in][]=open
   &q[status_in][]=overdued
@@ -205,7 +207,6 @@ const BusinessCompassDailyReport: React.FC = () => {
   ${userId ? `&q[responsible_person_id_eq]=${userId}` : ""}
 `.replace(/\s+/g, "");
 
-  // Fetch tasks and issues with pagination
   const { data: tasksData, isLoading: tasksLoading } = useTasks({
     taskType: "my",
     page: currentTasksPage,
@@ -222,13 +223,11 @@ const BusinessCompassDailyReport: React.FC = () => {
     enabled: !!token && !!userId,
   });
 
-  // Merge and filter tasks and issues with infinite scroll support
   useEffect(() => {
     const tasks =
       tasksData?.data?.task_managements || tasksData?.task_managements || [];
     const issues = issuesData?.issues || [];
 
-    // Check if there are more pages
     const tasksPagination =
       tasksData?.data?.pagination || tasksData?.pagination;
     const issuesPagination = issuesData?.pagination;
@@ -236,10 +235,9 @@ const BusinessCompassDailyReport: React.FC = () => {
     setHasMoreTasks(currentTasksPage < (tasksPagination?.total_pages || 1));
     setHasMoreIssues(currentIssuesPage < (issuesPagination?.total_pages || 1));
 
-    // Transform tasks
     const transformedTasks = tasks.map((task: any) => ({
       id: `task-${task.id}`,
-      title: task.title,
+      title: task.title, // <-- API mein field name "title" hai ya "name"?
       type: "task",
       status: task.status || "open",
       priority: task.priority || "Medium",
@@ -248,7 +246,6 @@ const BusinessCompassDailyReport: React.FC = () => {
       originalData: task,
     }));
 
-    // Transform issues
     const transformedIssues = issues.map((issue: any) => ({
       id: `issue-${issue.id}`,
       title: issue.title,
@@ -266,12 +263,10 @@ const BusinessCompassDailyReport: React.FC = () => {
         new Date(a.created_at || 0).getTime()
     );
 
-    // For first page, replace data; for subsequent pages, append
     if (currentTasksPage === 1 && currentIssuesPage === 1) {
       setMergedTasksIssues(newData);
     } else {
       setMergedTasksIssues((prev) => {
-        // Remove duplicates by ID and append new data
         const existingIds = new Set(prev.map((item) => item.id));
         const uniqueNewData = newData.filter(
           (item) => !existingIds.has(item.id)
@@ -288,7 +283,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     setIsLoadingMore(false);
   }, [tasksData, issuesData, currentTasksPage, currentIssuesPage]);
 
-  // Auto-select completed/closed tasks and issues
   useEffect(() => {
     const completedItems: { [key: string]: boolean } = {};
     mergedTasksIssues.forEach((item) => {
@@ -299,7 +293,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     setSelectedTasksIssues(completedItems);
   }, [mergedTasksIssues]);
 
-  // Handle infinite scroll
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -310,21 +303,9 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       if (isNearBottom && !isLoadingMore && !tasksLoading && !issuesLoading) {
         setIsLoadingMore(true);
-
-        // Load next page of tasks if available
-        if (hasMoreTasks) {
-          setCurrentTasksPage((prev) => prev + 1);
-        }
-
-        // Load next page of issues if available
-        if (hasMoreIssues) {
-          setCurrentIssuesPage((prev) => prev + 1);
-        }
-
-        // If no more pages, stop loading
-        if (!hasMoreTasks && !hasMoreIssues) {
-          setIsLoadingMore(false);
-        }
+        if (hasMoreTasks) setCurrentTasksPage((prev) => prev + 1);
+        if (hasMoreIssues) setCurrentIssuesPage((prev) => prev + 1);
+        if (!hasMoreTasks && !hasMoreIssues) setIsLoadingMore(false);
       }
     };
 
@@ -332,7 +313,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     return () => container.removeEventListener("scroll", handleScroll);
   }, [isLoadingMore, tasksLoading, issuesLoading, hasMoreTasks, hasMoreIssues]);
 
-  // Calculate counts for different statuses
   const taskIssueCounts = useMemo(() => {
     const completed = mergedTasksIssues.filter(
       (item) => item.status === "completed" || item.status === "closed"
@@ -360,19 +340,15 @@ const BusinessCompassDailyReport: React.FC = () => {
     };
   }, [mergedTasksIssues]);
 
-  // KPI State
   const [kpis, setKpis] = useState<any[]>([]);
   const [kpiLoading, setKpiLoading] = useState(false);
   const [kpiEntries, setKpiEntries] = useState<{ [key: number]: string }>({});
 
-  // Calculate daily score based on current form data
   const dailyScore = useMemo(() => {
-    // Convert kpi entries to the format expected by the calculator
     const kpisWithActualValues = kpis.map((kpi) => ({
       ...kpi,
       actual_value: kpiEntries[kpi.kpi_id] || 0,
     }));
-
     return calculateLivePreviewScore(
       kpisWithActualValues,
       accomplishments,
@@ -381,18 +357,13 @@ const BusinessCompassDailyReport: React.FC = () => {
     );
   }, [kpis, kpiEntries, accomplishments, mergedTasksIssues, planningItems]);
 
-  // Fetch KPIs based on selected date
   useEffect(() => {
     const fetchKpis = async () => {
       try {
         setKpiLoading(true);
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
-
-        if (!baseUrl || !token) {
-          console.warn("Missing baseUrl or token");
-          return;
-        }
+        if (!baseUrl || !token) return;
 
         const response = await axios.get(
           `https://${baseUrl}/kpis/due_entries.json?date=${startDate}&journal_type=daily`,
@@ -404,14 +375,12 @@ const BusinessCompassDailyReport: React.FC = () => {
           }
         );
 
-        if (response.data && response.data.success && response.data.data) {
+        if (response.data?.success && response.data?.data) {
           setKpis(response.data.data.kpis || []);
-          // Initialize entries from existing data
           const entries: { [key: number]: string } = {};
           response.data.data.kpis?.forEach((kpi: any) => {
-            if (kpi.entry && kpi.entry.actual_value) {
+            if (kpi.entry?.actual_value)
               entries[kpi.kpi_id] = kpi.entry.actual_value;
-            }
           });
           setKpiEntries(entries);
         }
@@ -421,13 +390,9 @@ const BusinessCompassDailyReport: React.FC = () => {
         setKpiLoading(false);
       }
     };
-
-    if (startDate) {
-      fetchKpis();
-    }
+    if (startDate) fetchKpis();
   }, [startDate]);
 
-  // Helper function to determine if file is an image
   const isImageFile = (fileName: string, contentType: string) => {
     const imageExtensions = [
       ".jpg",
@@ -448,7 +413,13 @@ const BusinessCompassDailyReport: React.FC = () => {
   const addAccomplishment = () => {
     setAccomplishments([
       ...accomplishments,
-      { id: Date.now().toString(), text: "", completed: true, starred: false },
+      {
+        id: Date.now().toString(),
+        text: "",
+        completed: true,
+        starred: false,
+        fromYesterday: false,
+      },
     ]);
   };
 
@@ -503,7 +474,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     );
   };
 
-  // Transfer unchecked accomplishments to tomorrow's plan
   const transferUncheckedToTomorrow = () => {
     const unchecked = accomplishments.filter((a) => !a.completed);
     const newPlanItems = unchecked.map((a) => ({
@@ -515,20 +485,14 @@ const BusinessCompassDailyReport: React.FC = () => {
     setAccomplishments((prev) => prev.filter((a) => a.completed));
   };
 
-  const triggerFileUpload = () => {
-    fileInputRef.current?.click();
-  };
-
-  const triggerClosureFileUpload = () => {
-    closureFileInputRef.current?.click();
-  };
+  const triggerFileUpload = () => fileInputRef.current?.click();
+  const triggerClosureFileUpload = () => closureFileInputRef.current?.click();
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = event.target.files;
     if (!files) return;
-
     const newFiles = await Promise.all(
       Array.from(files).map(async (file) => {
         const base64 = await new Promise<string>((resolve) => {
@@ -536,7 +500,6 @@ const BusinessCompassDailyReport: React.FC = () => {
           reader.onload = () => resolve(reader.result as string);
           reader.readAsDataURL(file);
         });
-
         return {
           id: Math.random().toString(36).substr(2, 9),
           name: file.name,
@@ -547,9 +510,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         };
       })
     );
-
     setUploadedFiles((prev) => [...prev, ...newFiles].slice(0, 5));
-    // Reset input
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -558,7 +519,6 @@ const BusinessCompassDailyReport: React.FC = () => {
   ) => {
     const files = event.target.files;
     if (!files) return;
-
     const newFiles = await Promise.all(
       Array.from(files).map(async (file) => {
         const base64 = await new Promise<string>((resolve) => {
@@ -566,7 +526,6 @@ const BusinessCompassDailyReport: React.FC = () => {
           reader.onload = () => resolve(reader.result as string);
           reader.readAsDataURL(file);
         });
-
         return {
           id: Math.random().toString(36).substr(2, 9),
           name: file.name,
@@ -577,119 +536,74 @@ const BusinessCompassDailyReport: React.FC = () => {
         };
       })
     );
-
     setClosureAttachments((prev) => [...prev, ...newFiles].slice(0, 5));
-    // Reset input
     if (closureFileInputRef.current) closureFileInputRef.current.value = "";
   };
 
   const handleMarkItemClosed = async () => {
     if (!closureItem || !baseUrl || !token) return;
-    console.log(closureItem)
-
     setIsClosureSubmitting(true);
     try {
       const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
       const isTask = closureItem.type === "task";
       const urlBase = `https://${baseUrl}`;
-
-      // 🚨 FIX 1: "task-123" mein se sirf number nikalo API ke liye
       const realId = closureItem.id.replace("task-", "").replace("issue-", "");
 
-      // 🚨 FIX 2: UI aur color ko turant update karo (Optimistic Update)
       setMergedTasksIssues((prev) =>
         prev.map((item) =>
           item.id === closureItem.id ? { ...item, status: "completed" } : item
         )
       );
-
-      setSelectedTasksIssues((prev) => ({
-        ...prev,
-        [closureItem.id]: true,
-      }));
+      setSelectedTasksIssues((prev) => ({ ...prev, [closureItem.id]: true }));
 
       const formDataToSend = new FormData();
-
-      // Step 1: Update the item status in API
       if (isTask) {
         formDataToSend.append("task_management[status]", "completed");
-        closureAttachments.forEach((attachment) => {
+        closureAttachments.forEach((attachment) =>
           formDataToSend.append(
             `task_management[attachments][]`,
             attachment.file
-          );
-        });
-
+          )
+        );
         await axios.put(
-          `${urlBase}/task_managements/${realId}.json`, // Yahan realId use kiya
+          `${urlBase}/task_managements/${realId}.json`,
           formDataToSend,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
         formDataToSend.append("issue[status]", "completed");
-        closureAttachments.forEach((attachment) => {
-          formDataToSend.append(`issue[attachments][]`, attachment.file);
+        closureAttachments.forEach((attachment) =>
+          formDataToSend.append(`issue[attachments][]`, attachment.file)
+        );
+        await axios.put(`${urlBase}/issues/${realId}.json`, formDataToSend, {
+          headers: { Authorization: `Bearer ${token}` },
         });
+      }
 
-        await axios.put(
-          `${urlBase}/issues/${realId}.json`, // Yahan realId use kiya
-          formDataToSend,
+      if (closureRemarks.trim()) {
+        await axios.post(
+          `${urlBase}/comments.json`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
+            comment: {
+              body: `Closure Remarks: ${closureRemarks}`,
+              commentable_id: realId,
+              commentable_type: isTask ? "TaskManagement" : "Issue",
+              commentor_id: userId,
+              active: true,
             },
-          }
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
         );
       }
 
-      // Step 2: Add closure remarks as a comment
-      if (closureRemarks.trim()) {
-        const commentPayload = {
-          comment: {
-            body: `Closure Remarks: ${closureRemarks}`,
-            commentable_id: realId, // Yahan realId use kiya
-            commentable_type: isTask ? "TaskManagement" : "Issue",
-            commentor_id: userId,
-            active: true,
-          },
-        };
-
-        await axios.post(`${urlBase}/comments.json`, commentPayload, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-      }
-
-      // Close modal and reset
       setShowClosureModal(false);
       setClosureRemarks("");
       setClosureAttachments([]);
       setClosureItem(null);
-
-      // Fetch updated tasks and issues
       setCurrentTasksPage(1);
       setCurrentIssuesPage(1);
-
-      // Show success message
-      const itemName = isTask ? "Task" : "Issue";
-      const message =
-        closureRemarks.trim() || closureAttachments.length > 0
-          ? `${itemName} marked as closed with remarks and attachments`
-          : `${itemName} marked as closed`;
-
-      if (typeof window !== "undefined" && (window as any).toast) {
-        (window as any).toast.success(message);
-      }
     } catch (error) {
       console.error("Error marking item as closed:", error);
-      const itemName = closureItem?.type === "task" ? "task" : "issue";
-
-      // Agar API fail ho jaye toh color wapas pehle jaisa kar do (Optional but safe)
       setMergedTasksIssues((prev) =>
         prev.map((item) =>
           item.id === closureItem.id
@@ -697,14 +611,11 @@ const BusinessCompassDailyReport: React.FC = () => {
             : item
         )
       );
-
-      if (typeof window !== "undefined" && (window as any).toast) {
-        (window as any).toast.error(`Failed to close ${itemName}`);
-      }
     } finally {
       setIsClosureSubmitting(false);
     }
   };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -716,7 +627,6 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [viewStartDate, setViewStartDate] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    // Start from 3 days ago to center today
     d.setDate(d.getDate() - 3);
     return d;
   });
@@ -725,7 +635,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     const result = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
     const date = new Date(viewStartDate);
     for (let i = 0; i < 9; i++) {
       const dateStr = date.toLocaleDateString("en-CA");
@@ -733,12 +642,9 @@ const BusinessCompassDailyReport: React.FC = () => {
       const isPast = date.getTime() < today.getTime();
       const isFuture = date.getTime() > today.getTime();
       const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-
       const report = reportsList.find((r) => r.start_date === dateStr);
-
       let type: "filled" | "missed" | "holiday" | "upcoming" = "upcoming";
       let status = "";
-
       if (report) {
         type = "filled";
         status = report.report_data?.total_score
@@ -754,7 +660,6 @@ const BusinessCompassDailyReport: React.FC = () => {
         type = "upcoming";
         status = "";
       }
-
       result.push({
         day: date.toLocaleString("default", { weekday: "short" }),
         date: date.getDate().toString(),
@@ -773,8 +678,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     const newDate = new Date(viewStartDate);
     newDate.setDate(newDate.getDate() - 7);
     setViewStartDate(newDate);
-
-    // Update month/year display
     const midWeek = new Date(newDate);
     midWeek.setDate(midWeek.getDate() + 3);
     setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
@@ -785,8 +688,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     const newDate = new Date(viewStartDate);
     newDate.setDate(newDate.getDate() + 7);
     setViewStartDate(newDate);
-
-    // Update month/year display
     const midWeek = new Date(newDate);
     midWeek.setDate(midWeek.getDate() + 3);
     setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
@@ -801,36 +702,59 @@ const BusinessCompassDailyReport: React.FC = () => {
     );
     setSelectedYear(item.actualDate.getFullYear().toString());
 
-    // Find the report for this date from reportsList
     const report = reportsList.find((r) => r.start_date === item.fullDate);
+
+    // Get previous day's plan regardless of if today's report exists
+    const prevDate = new Date(item.actualDate);
+    prevDate.setDate(prevDate.getDate() - 1);
+    const prevDateStr = prevDate.toLocaleDateString("en-CA");
+    const prevReport = reportsList.find((r) => r.start_date === prevDateStr);
+
+    let carriedPlanItems: AccomplishmentItem[] = [];
+    if (prevReport?.report_data?.tomorrow_plan?.length) {
+      carriedPlanItems = prevReport.report_data.tomorrow_plan.map(
+        (p: any, idx: number) => ({
+          id: `carried-${idx}-${Date.now()}`,
+          text: p.title || "",
+          completed: false,
+          starred: false,
+          fromYesterday: true,
+        })
+      );
+    }
 
     if (report && report.id) {
       setCurrentReportId(report.id);
 
-      // Populate accomplishments
+      let currentAccomplishments: AccomplishmentItem[] = [];
       if (report.report_data?.accomplishments?.items) {
-        setAccomplishments(
-          report.report_data.accomplishments.items.map(
-            (ach: any, idx: number) => ({
-              id: `fetched-ach-${idx}`,
-              text: ach.title || "",
-              completed: true,
-              starred: false,
-            })
-          )
+        currentAccomplishments = report.report_data.accomplishments.items.map(
+          (ach: any, idx: number) => ({
+            id: `fetched-ach-${idx}`,
+            text: ach.title || "",
+            completed: true,
+            starred: false,
+            fromYesterday: false,
+          })
         );
-      } else {
-        setAccomplishments([]);
       }
 
-      // Load report attachments (from API response)
-      if (report.attachments && report.attachments.length > 0) {
+      // Merge existing accomplishments with carried items to prevent overwriting
+      const existingTexts = new Set(
+        currentAccomplishments.map((a) => a.text.toLowerCase().trim())
+      );
+      const newCarried = carriedPlanItems.filter(
+        (cp) => !existingTexts.has(cp.text.toLowerCase().trim())
+      );
+
+      setAccomplishments([...currentAccomplishments, ...newCarried]);
+
+      if (report.attachments?.length) {
         setReportAttachments(report.attachments);
       } else {
         setReportAttachments([]);
       }
 
-      // Populate planning items (tomorrow's plan)
       if (report.report_data?.tomorrow_plan) {
         setPlanningItems(
           report.report_data.tomorrow_plan.map((p: any, idx: number) => ({
@@ -843,7 +767,6 @@ const BusinessCompassDailyReport: React.FC = () => {
         setPlanningItems([]);
       }
 
-      // Populate KPI entries
       if (report.report_data?.past_kpis) {
         const entries: { [key: number]: string } = {};
         report.report_data.past_kpis.forEach((kpiEntry: any) => {
@@ -854,15 +777,12 @@ const BusinessCompassDailyReport: React.FC = () => {
         setKpiEntries({});
       }
 
-      // Set absence and rating
       if (report.is_absent !== undefined) setIsAbsent(report.is_absent);
       if (report.description) setAbsenceReason(report.description);
       if (report.self_rating !== undefined) setSelfRating([report.self_rating]);
       setSelectedTasksIssues({});
     } else {
-      // No report found for this date, clear the form
       setCurrentReportId(null);
-      setAccomplishments([]);
       setUploadedFiles([]);
       setReportAttachments([]);
       setPlanningItems([]);
@@ -871,6 +791,9 @@ const BusinessCompassDailyReport: React.FC = () => {
       setIsAbsent(false);
       setAbsenceReason("");
       setSelfRating([2]);
+
+      // No report today, just load carried items
+      setAccomplishments(carriedPlanItems);
     }
   };
 
@@ -880,15 +803,9 @@ const BusinessCompassDailyReport: React.FC = () => {
         `${selectedDate} ${selectedMonth} ${selectedYear}`
       );
       if (isNaN(dateObj.getTime())) return "";
-
       const nextDay = new Date(dateObj);
       nextDay.setDate(nextDay.getDate() + 1);
-
-      // If next day is Sunday (0), skip to Monday (+1 day)
-      if (nextDay.getDay() === 0) {
-        nextDay.setDate(nextDay.getDate() + 1);
-      }
-
+      if (nextDay.getDay() === 0) nextDay.setDate(nextDay.getDate() + 1);
       return nextDay.toLocaleDateString("en-GB", {
         weekday: "short",
         day: "numeric",
@@ -899,7 +816,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   }, [selectedDate, selectedMonth, selectedYear]);
 
-  // Fetch report for the selected date to see if we should PUT or POST
   React.useEffect(() => {
     const fetchExistingReport = async () => {
       try {
@@ -907,18 +823,68 @@ const BusinessCompassDailyReport: React.FC = () => {
         const token = getToken();
         if (!token) return;
 
+        // Safely extract year, month, and day to avoid Javascript Date UTC shift bugs
+        const [year, month, day] = startDate.split("-");
+        const prevDateObj = new Date(
+          Number(year),
+          Number(month) - 1,
+          Number(day)
+        );
+        prevDateObj.setDate(prevDateObj.getDate() - 1);
+        const prevDateStr = `${prevDateObj.getFullYear()}-${String(prevDateObj.getMonth() + 1).padStart(2, "0")}-${String(prevDateObj.getDate()).padStart(2, "0")}`;
+
         const queryParams = new URLSearchParams();
         queryParams.append("q[journal_type_eq]", "daily");
         queryParams.append("q[start_date_eq]", startDate);
-
         const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
-        const response = await axios.get(url, {
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+
+        const prevParams = new URLSearchParams();
+        prevParams.append("q[journal_type_eq]", "daily");
+        prevParams.append("q[start_date_eq]", prevDateStr);
+        const prevUrl = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${prevParams.toString()}`;
+
+        // Fetch both today's report and yesterday's report concurrently
+        const [response, prevResponse] = await Promise.all([
+          axios.get(url, {
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+          axios
+            .get(prevUrl, {
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            })
+            .catch(() => null),
+        ]);
+
+        let carriedPlanItems: AccomplishmentItem[] = [];
+        if (prevResponse && prevResponse.status === 200) {
+          const prevData = prevResponse.data;
+          const prevJournals = Array.isArray(prevData)
+            ? prevData
+            : prevData.user_journals || [];
+          const prevReport = prevJournals.find(
+            (j: any) => j.start_date === prevDateStr
+          );
+
+          if (prevReport?.report_data?.tomorrow_plan?.length) {
+            carriedPlanItems = prevReport.report_data.tomorrow_plan.map(
+              (p: any, idx: number) => ({
+                id: `carried-${idx}-${Date.now()}`,
+                text: p.title || "",
+                completed: false,
+                starred: false,
+                fromYesterday: true,
+              })
+            );
+          }
+        }
 
         if (response.status === 200) {
           const data = response.data;
@@ -933,33 +899,39 @@ const BusinessCompassDailyReport: React.FC = () => {
             }) => j.start_date === startDate
           );
 
-          if (existingReport && existingReport.id) {
+          if (existingReport?.id) {
             setCurrentReportId(existingReport.id);
-            // Populate state with data from existing report
             if (existingReport.report_data) {
               const rData = existingReport.report_data as any;
 
+              let currentAccomplishments: AccomplishmentItem[] = [];
               if (rData.accomplishments?.items) {
-                setAccomplishments(
-                  rData.accomplishments.items.map((ach: any, idx: number) => ({
+                currentAccomplishments = rData.accomplishments.items.map(
+                  (ach: any, idx: number) => ({
                     id: `fetched-ach-${idx}`,
                     text: ach.title || "",
                     completed: true,
                     starred: false,
-                  }))
+                    fromYesterday: false,
+                  })
                 );
               }
 
-              // Load report attachments (from API response)
-              if (
-                existingReport.attachments &&
-                existingReport.attachments.length > 0
-              ) {
+              // Merge logic
+              const existingTexts = new Set(
+                currentAccomplishments.map((a) => a.text.toLowerCase().trim())
+              );
+              const newCarried = carriedPlanItems.filter(
+                (cp) => !existingTexts.has(cp.text.toLowerCase().trim())
+              );
+
+              setAccomplishments([...currentAccomplishments, ...newCarried]);
+
+              if (existingReport.attachments?.length) {
                 setReportAttachments(existingReport.attachments);
               } else {
                 setReportAttachments([]);
               }
-
               if (rData.tomorrow_plan) {
                 setPlanningItems(
                   rData.tomorrow_plan.map((p: any, idx: number) => ({
@@ -969,7 +941,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                   }))
                 );
               }
-
               if (rData.past_kpis) {
                 const entries: { [key: number]: string } = {};
                 rData.past_kpis.forEach((kpiEntry: any) => {
@@ -979,7 +950,6 @@ const BusinessCompassDailyReport: React.FC = () => {
               } else {
                 setKpiEntries({});
               }
-
               if (existingReport.is_absent !== undefined)
                 setIsAbsent(existingReport.is_absent);
               if (existingReport.description)
@@ -990,7 +960,6 @@ const BusinessCompassDailyReport: React.FC = () => {
             }
           } else {
             setCurrentReportId(null);
-            setAccomplishments([]);
             setUploadedFiles([]);
             setReportAttachments([]);
             setPlanningItems([]);
@@ -999,13 +968,15 @@ const BusinessCompassDailyReport: React.FC = () => {
             setIsAbsent(false);
             setAbsenceReason("");
             setSelfRating([2]);
+
+            // No report today, just apply carried items
+            setAccomplishments(carriedPlanItems);
           }
         }
       } catch (err) {
         console.error("Failed to fetch existing report:", err);
       }
     };
-
     fetchExistingReport();
   }, [startDate]);
 
@@ -1018,33 +989,21 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       const queryParams = new URLSearchParams();
       queryParams.append("q[journal_type_eq]", "daily");
-
-      // Filter by current month/year
       const monthIndex =
         new Date(`${selectedMonth} 1, ${selectedYear}`).getMonth() + 1;
-      const startDate = `${selectedYear}-${monthIndex
-        .toString()
-        .padStart(2, "0")}-01`;
+      const startDate = `${selectedYear}-${monthIndex.toString().padStart(2, "0")}-01`;
       const lastDay = new Date(parseInt(selectedYear), monthIndex, 0).getDate();
-      const endDate = `${selectedYear}-${monthIndex
-        .toString()
-        .padStart(2, "0")}-${lastDay.toString().padStart(2, "0")}`;
-
+      const endDate = `${selectedYear}-${monthIndex.toString().padStart(2, "0")}-${lastDay.toString().padStart(2, "0")}`;
       queryParams.append("q[start_date_gteq]", startDate);
       queryParams.append("q[start_date_lteq]", endDate);
 
-      const url = `${baseUrl.replace(
-        /\/+$/,
-        ""
-      )}/user_journals.json?${queryParams.toString()}`;
-
+      const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
       const response = await axios.get(url, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
-
       setReportsList(response.data || []);
     } catch (err) {
       console.error("Failed to fetch reports history:", err);
@@ -1058,10 +1017,14 @@ const BusinessCompassDailyReport: React.FC = () => {
   }, [selectedMonth, selectedYear]);
 
   const handleSubmit = async () => {
-    // Basic validation
-    if (!isAbsent && accomplishments.length === 0) {
+    // Only completed items should count towards submitting successfully
+    const completedAccomplishments = accomplishments.filter(
+      (a) => a.completed && a.text.trim() !== ""
+    );
+
+    if (!isAbsent && completedAccomplishments.length === 0) {
       setSubmitError(
-        "Please add at least one accomplishment before submitting."
+        "Please add and complete at least one accomplishment before submitting."
       );
       return;
     }
@@ -1089,8 +1052,10 @@ const BusinessCompassDailyReport: React.FC = () => {
           description: isAbsent ? absenceReason : null,
           report_data: {
             accomplishments: {
-              items: accomplishments.map((a) => ({
+              // Ensure we only save items that were actually completed!
+              items: completedAccomplishments.map((a) => ({
                 title: a.text,
+                star: a.starred,
               })),
               attachments: uploadedFiles.map((f) => ({
                 filename: f.name,
@@ -1099,23 +1064,16 @@ const BusinessCompassDailyReport: React.FC = () => {
               })),
             },
             tasks_issues: mergedTasksIssues
-              .filter(
-                (item) =>
-                  selectedTasksIssues[item.id] ||
-                  item.status === "completed" ||
-                  item.status === "closed"
-              )
+              .filter((item) => selectedTasksIssues[item.id] === true)
               .map((item) => ({
-                id: item.originalData?.id,
-                name: item.title,
-                type: item.type,
+                title:
+                  item.originalData?.title ||
+                  item.originalData?.name ||
+                  item.title ||
+                  "",
                 status: "completed",
-                original_status: item.status,
-                priority: item.priority,
               })),
-            tomorrow_plan: planningItems.map((p) => ({
-              title: p.text,
-            })),
+            tomorrow_plan: planningItems.map((p) => ({ title: p.text })),
             past_kpis: kpis.map((kpi) => ({
               kpi_id: kpi.kpi_id,
               actual_value: kpiEntries[kpi.kpi_id]
@@ -1130,17 +1088,15 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       const queryParams = new URLSearchParams();
       queryParams.append("q[journal_type_eq]", "daily");
-
       const endpoint = currentReportId
         ? `/user_journals/${currentReportId}.json`
         : "/user_journals.json";
       const method = currentReportId ? "PUT" : "POST";
-
       const url = `${baseUrl.replace(/\/+$/, "")}${endpoint}?${queryParams.toString()}`;
 
       const response = await axios({
-        method: method,
-        url: url,
+        method,
+        url,
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
@@ -1156,18 +1112,9 @@ const BusinessCompassDailyReport: React.FC = () => {
       }
 
       const data = response.data;
-
-      // If we just created it, store the new ID to allow subsequent PUT updates
-      if (!currentReportId && data.id) {
-        setCurrentReportId(data.id);
-      }
-
+      if (!currentReportId && data.id) setCurrentReportId(data.id);
       setSubmitSuccess(true);
-
-      // Refetch reports list to update history
       fetchReportsList();
-
-      // Redirect to history tab after a short delay
       setTimeout(() => {
         setSubmitSuccess(false);
         setActiveTab("history");
@@ -1262,7 +1209,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                     </li>
                   </ul>
                 </div>
-
                 <div className="space-y-2">
                   <h5 className="text-sm font-bold text-[#1e3a8a] flex items-center gap-2">
                     💡 Best Practices:
@@ -1305,16 +1251,16 @@ const BusinessCompassDailyReport: React.FC = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-gray-100 p-1.5 rounded-[12px] h-auto inline-flex shadow-inner mb-6">
+          <TabsList className="bg-[#DA7756] p-1.5 rounded-[12px] h-auto inline-flex shadow-inner mb-6">
             <TabsTrigger
               value="submit"
-              className="rounded-[10px] px-8 py-2 data-[state=active]:bg-white data-[state=active]:text-[#1a1a1a] data-[state=active]:shadow-md bg-transparent text-gray-500 transition-all font-bold text-sm"
+              className="rounded-[10px] px-8 py-2 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-md bg-transparent text-white transition-all font-bold text-sm"
             >
               Submit Report
             </TabsTrigger>
             <TabsTrigger
               value="history"
-              className="rounded-[10px] px-8 py-2 data-[state=active]:bg-white data-[state=active]:text-[#1a1a1a] data-[state=active]:shadow-md bg-transparent text-gray-500 transition-all font-bold text-sm"
+              className="rounded-[10px] px-8 py-2 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-md bg-transparent text-white transition-all font-bold text-sm"
             >
               Report History
             </TabsTrigger>
@@ -1322,7 +1268,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
           <TabsContent value="submit" className="space-y-6 mt-0">
             {/* Calendar Card */}
-            <Card className="rounded-[16px] border border-gray-200 shadow-sm overflow-hidden bg-white">
+            <Card className="rounded-[16px] border border-gray-200 shadow-sm overflow-hidden bg-[#DA7756]/15">
               <CardContent className="p-8">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-3">
@@ -1387,22 +1333,28 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                 {/* Legend */}
                 <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 pt-4 border-t border-gray-50 mt-2">
-                  <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-                    <div className="w-3.5 h-3.5 rounded-[5px] bg-[#22c55e] shadow-sm" />
-                    <span className="opacity-80">Filled</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-                    <div className="w-3.5 h-3.5 rounded-[5px] bg-[#ef4444] shadow-sm" />
-                    <span className="opacity-80">Missed (click to fill)</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-                    <div className="w-3.5 h-3.5 rounded-[5px] bg-[#facd55] shadow-sm" />
-                    <span className="opacity-80">Holiday</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
-                    <div className="w-3.5 h-3.5 rounded-[5px] bg-[#f1f5f9] shadow-inner border border-gray-100" />
-                    <span className="opacity-80">Upcoming</span>
-                  </div>
+                  {[
+                    { color: "bg-[#22c55e]", label: "Filled" },
+                    { color: "bg-[#ef4444]", label: "Missed (click to fill)" },
+                    { color: "bg-[#facd55]", label: "Holiday" },
+                    {
+                      color: "bg-[#f1f5f9] border border-gray-100",
+                      label: "Upcoming",
+                    },
+                  ].map(({ color, label }) => (
+                    <div
+                      key={label}
+                      className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider"
+                    >
+                      <div
+                        className={cn(
+                          "w-3.5 h-3.5 rounded-[5px] shadow-sm",
+                          color
+                        )}
+                      />
+                      <span className="opacity-80">{label}</span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
@@ -1469,9 +1421,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                   </Card>
                 )}
 
-                {/* Today's Accomplishments Card */}
-                <Card className="rounded-[16px] border-2 border-[#10b981] overflow-hidden bg-white shadow-sm">
-                  <div className="bg-[#ecfdf5] p-5 flex items-center justify-between border-b border-[#10b981]/10">
+                {/* ─── Today's Accomplishments Card ──────────────────────────────────── */}
+                <Card className="rounded-[16px] border-2 border-white overflow-hidden bg-white shadow-sm">
+                  <div className="p-5 flex items-center justify-between ">
                     <div className="flex items-center gap-3">
                       <div className="bg-white p-1 rounded-full border border-[#10b981]/30">
                         <CheckCircle2 size={18} className="text-[#10b981]" />
@@ -1495,66 +1447,82 @@ const BusinessCompassDailyReport: React.FC = () => {
                         >
                           <div
                             className={cn(
-                              "flex items-center gap-4 bg-white border rounded-[10px] p-3 transition-all",
+                              "flex flex-col gap-1 bg-white border rounded-[10px] p-3 transition-all",
                               item.completed
                                 ? "border-[#10b981] bg-green-50/10"
-                                : "border-gray-200"
+                                : "border-gray-200",
+                              // Highlight carried-over items with a subtle amber tint
+                              item.fromYesterday &&
+                                !item.completed &&
+                                "border-amber-300 bg-amber-50/30"
                             )}
                           >
-                            <div
-                              className={cn(
-                                "h-6 w-6 rounded-[6px] flex items-center justify-center cursor-pointer transition-colors border-2",
-                                item.completed
-                                  ? "bg-[#1a1a1a] border-[#1a1a1a]"
-                                  : "bg-white border-gray-300"
-                              )}
-                              onClick={() => toggleAccomplishment(item.id)}
-                            >
-                              {item.completed && (
-                                <CheckCircle2
-                                  size={14}
-                                  className="text-white"
-                                />
-                              )}
+                            <div className="flex items-center gap-4">
+                              <div
+                                className={cn(
+                                  "h-6 w-6 rounded-[6px] flex items-center justify-center cursor-pointer transition-colors border-2 shrink-0",
+                                  item.completed
+                                    ? "bg-[#1a1a1a] border-[#1a1a1a]"
+                                    : "bg-white border-gray-300"
+                                )}
+                                onClick={() => toggleAccomplishment(item.id)}
+                              >
+                                {item.completed && (
+                                  <CheckCircle2
+                                    size={14}
+                                    className="text-white"
+                                  />
+                                )}
+                              </div>
+
+                              <Star
+                                size={18}
+                                className={cn(
+                                  "cursor-pointer transition-all shrink-0",
+                                  item.starred
+                                    ? "text-[#eab308] fill-[#eab308]"
+                                    : "text-gray-300 hover:text-gray-400"
+                                )}
+                                onClick={() => toggleStar(item.id)}
+                              />
+
+                              <input
+                                type="text"
+                                value={item.text}
+                                onChange={(e) =>
+                                  updateAccomplishmentText(
+                                    item.id,
+                                    e.target.value
+                                  )
+                                }
+                                placeholder="Describe your accomplishment..."
+                                className={cn(
+                                  "flex-1 bg-transparent border-none outline-none text-sm font-medium transition-all",
+                                  item.completed
+                                    ? "text-gray-400 line-through"
+                                    : "text-gray-700"
+                                )}
+                              />
+
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                onClick={() => removeAccomplishment(item.id)}
+                              >
+                                <X size={16} className="text-red-500" />
+                              </Button>
                             </div>
 
-                            <Star
-                              size={18}
-                              className={cn(
-                                "cursor-pointer transition-all",
-                                item.starred
-                                  ? "text-[#eab308] fill-[#eab308]"
-                                  : "text-gray-300 hover:text-gray-400"
-                              )}
-                              onClick={() => toggleStar(item.id)}
-                            />
-
-                            <input
-                              type="text"
-                              value={item.text}
-                              onChange={(e) =>
-                                updateAccomplishmentText(
-                                  item.id,
-                                  e.target.value
-                                )
-                              }
-                              placeholder="Describe your accomplishment..."
-                              className={cn(
-                                "flex-1 bg-transparent border-none outline-none text-sm font-medium transition-all",
-                                item.completed
-                                  ? "text-gray-400 line-through"
-                                  : "text-gray-700"
-                              )}
-                            />
-
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => removeAccomplishment(item.id)}
-                            >
-                              <X size={16} className="text-red-500" />
-                            </Button>
+                            {/* ── "From Yesterday" badge ── */}
+                            {item.fromYesterday && (
+                              <div className="pl-10 pt-0.5">
+                                <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
+                                  <CalendarIcon size={10} />
+                                  From Yesterday
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -1588,7 +1556,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                           <Plus size={18} />
                           Add Item
                         </Button>
-
                         {accomplishments.some((a) => !a.completed) && (
                           <Button
                             variant="outline"
@@ -1672,7 +1639,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     )}
 
-                    {/* Report Attachments Section */}
                     {reportAttachments && reportAttachments.length > 0 && (
                       <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
                         <div className="flex items-center gap-2">
@@ -1710,7 +1676,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         href={attachment.document_url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2 group-hover:text-purple-700 transition-colors"
+                                        className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2"
                                       >
                                         {attachment.document_file_name}
                                       </a>
@@ -1730,13 +1696,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       </span>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2 shrink-0 ml-3">
-                                    <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
-                                      {attachment.active
-                                        ? "Active"
-                                        : "Inactive"}
-                                    </Badge>
-                                  </div>
+                                  <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                    {attachment.active ? "Active" : "Inactive"}
+                                  </Badge>
                                 </div>
                               );
                             }
@@ -1748,7 +1710,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                 </Card>
 
                 {/* Tasks & Issues Card */}
-                <Card className="rounded-[8px] border-2 border-[#b91c1c] overflow-hidden bg-white shadow-sm mt-6">
+                <Card className="rounded-[8px] border-2 border-white overflow-hidden bg-white shadow-sm mt-6">
                   <div className="bg-[#fef2f2] p-4 border-b border-[#b91c1c]/10">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-2">
@@ -1889,15 +1851,19 @@ const BusinessCompassDailyReport: React.FC = () => {
                             />
                             <button
                               onClick={() => {
-                                const detailsUrl = item.type === "task"
-                                  ? `/vas/tasks/${item.originalData?.id}`
-                                  : `/vas/issues/${item.originalData?.id}`;
+                                const detailsUrl =
+                                  item.type === "task"
+                                    ? `/vas/tasks/${item.originalData?.id}`
+                                    : `/vas/issues/${item.originalData?.id}`;
                                 navigate(detailsUrl);
                               }}
                               className="p-1.5 hover:bg-gray-200 rounded-[6px] transition-colors"
                               title={`View ${item.type} details`}
                             >
-                              <Eye size={16} className="text-gray-600 hover:text-gray-800" />
+                              <Eye
+                                size={16}
+                                className="text-gray-600 hover:text-gray-800"
+                              />
                             </button>
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white text-gray-600 uppercase">
@@ -1936,28 +1902,25 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 {item.status.replace(/_/g, " ")}
                               </p>
                             </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span
-                                className="text-[10px] px-2 py-1 rounded-full font-bold"
-                                style={{
-                                  backgroundColor:
-                                    item.priority === "High"
-                                      ? "#fee2e2"
-                                      : item.priority === "Medium"
-                                        ? "#fef3c7"
-                                        : "#dcfce7",
-                                  color:
-                                    item.priority === "High"
-                                      ? "#991b1b"
-                                      : item.priority === "Medium"
-                                        ? "#92400e"
-                                        : "#166534",
-                                }}
-                              >
-                                {item.priority}
-                              </span>
-
-                            </div>
+                            <span
+                              className="text-[10px] px-2 py-1 rounded-full font-bold shrink-0"
+                              style={{
+                                backgroundColor:
+                                  item.priority === "High"
+                                    ? "#fee2e2"
+                                    : item.priority === "Medium"
+                                      ? "#fef3c7"
+                                      : "#dcfce7",
+                                color:
+                                  item.priority === "High"
+                                    ? "#991b1b"
+                                    : item.priority === "Medium"
+                                      ? "#92400e"
+                                      : "#166534",
+                              }}
+                            >
+                              {item.priority}
+                            </span>
                           </div>
                         ))}
                         {isLoadingMore && (
@@ -1990,7 +1953,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                 </div>
 
                 {/* Plan Card */}
-                <Card className="rounded-[16px] border-2 border-[#3b82f6] overflow-hidden bg-white shadow-sm mt-6">
+                <Card className="rounded-[16px] border-2 border-white overflow-hidden bg-white shadow-sm mt-6">
                   <div className="bg-[#eff6ff] p-5 flex items-center justify-between border-b border-[#3b82f6]/10">
                     <div className="flex items-center gap-3">
                       <div className="bg-white p-1 rounded-full border border-[#3b82f6]/30">
@@ -2001,8 +1964,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </h3>
                     </div>
                     <Badge className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-3 py-1 rounded-[6px] text-[10px] font-black tracking-widest border-none shadow-sm">
-                      {dailyScore.planningScore}/
-                      {dailyScore.details.planning.maxPoints} PTS
+                      {dailyScore.planningScore}/25 PTS{" "}
                     </Badge>
                   </div>
 
@@ -2027,7 +1989,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 )}
                                 onClick={() => togglePlanningStar(item.id)}
                               />
-
                               <input
                                 type="text"
                                 value={item.text}
@@ -2037,7 +1998,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 placeholder="What's your strategic priority?"
                                 className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
                               />
-
                               <div className="flex items-center gap-2">
                                 <Calendar
                                   size={18}
@@ -2069,7 +2029,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                       </div>
                     )}
-
                     <Button
                       variant="outline"
                       className="w-full h-11 border-[#3b82f6]/30 text-[#3b82f6] font-bold text-sm bg-white hover:bg-[#eff6ff] rounded-[8px] flex items-center justify-center gap-2"
@@ -2104,7 +2063,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                       className="cursor-pointer [&_[role=slider]]:bg-black [&_[role=slider]]:border-black [&_[data-orientation=horizontal]]:h-1 [&_[data-orientation=horizontal]_span:first-child]:bg-black"
                     />
                   </div>
-
                   <div className="flex items-center gap-3 bg-gray-50 px-4 py-3 rounded-[10px] border border-gray-100 min-w-[150px] justify-center">
                     <Checkbox
                       id="absent"
@@ -2154,20 +2112,15 @@ const BusinessCompassDailyReport: React.FC = () => {
                   )}
                   <button
                     className={cn(
-                      // Base styles
                       "w-full h-[56px] font-black text-[18px] rounded-[14px] transition-all duration-200 ease-in-out border-none flex items-center justify-center gap-2",
-
-                      // Hover Effects (Scale up slightly, add bigger shadow, push down on click)
                       isSubmitting
                         ? "opacity-60 cursor-not-allowed"
                         : "cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.15)] active:translate-y-0 active:shadow-sm",
-
-                      // Background Colors with Hover states (! zaruri hai taaki koi aur CSS panga na kare)
                       currentReportId
-                        ? "!bg-[#2563eb] hover:!bg-[#1d4ed8]" // Blue to Darker Blue
-                        : "!bg-[#16a34a] hover:!bg-[#15803d]" // Green to Darker Green
+                        ? "!bg-[#2563eb] hover:!bg-[#1d4ed8]"
+                        : "!bg-[#16a34a] hover:!bg-[#15803d]"
                     )}
-                    style={{ color: "#ffffff" }} // Text ko hamesha white rakhne ke liye
+                    style={{ color: "#ffffff" }}
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                   >
@@ -2178,14 +2131,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                           className="animate-spin"
                           style={{ color: "#ffffff" }}
                         />
-                        <span
-                          style={{ color: "#ffffff", margin: 0, padding: 0 }}
-                        >
+                        <span style={{ color: "#ffffff" }}>
                           {currentReportId ? "Updating..." : "Submitting..."}
                         </span>
                       </>
                     ) : (
-                      <span style={{ color: "#ffffff", margin: 0, padding: 0 }}>
+                      <span style={{ color: "#ffffff" }}>
                         {currentReportId ? "Update" : "Submit"} Daily Report
                         (for {selectedDate} {selectedMonth.slice(0, 3)})
                       </span>
@@ -2195,11 +2146,12 @@ const BusinessCompassDailyReport: React.FC = () => {
               </div>
             </Card>
 
-            {!isAbsent && accomplishments.length === 0 && (
-              <p className="mt-4 text-xs text-red-500 text-center font-bold animate-in fade-in duration-500">
-                Please add at least one accomplishment before submitting
-              </p>
-            )}
+            {!isAbsent &&
+              accomplishments.filter((a) => a.completed).length === 0 && (
+                <p className="mt-4 text-xs text-red-500 text-center font-bold animate-in fade-in duration-500">
+                  Please complete at least one accomplishment before submitting
+                </p>
+              )}
 
             {/* Live Score Preview Section */}
             {!isAbsent && (
@@ -2227,24 +2179,24 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                       {[
                         {
-                          label: "KPI Achievement",
-                          score: `${dailyScore.kpiScore}/${dailyScore.details.kpi.maxPoints}`,
-                          color: "text-green-600",
-                        },
-                        {
                           label: "Accomplishments",
-                          score: `${dailyScore.accomplishmentsScore}/${dailyScore.details.accomplishments.maxPoints}`,
+                          score: `${dailyScore.accomplishmentsScore}/25`,
                           color: "text-purple-600",
                         },
                         {
-                          label: "Tasks & Issues",
-                          score: `${dailyScore.tasksIssuesScore}/${dailyScore.details.tasksIssues.maxPoints}`,
+                          label: "Tasks",
+                          score: `${dailyScore.tasksIssuesScore}/25`,
                           color: "text-[#ea580c]",
                         },
                         {
                           label: "Planning",
-                          score: `${dailyScore.planningScore}/${dailyScore.details.planning.maxPoints}`,
+                          score: `${dailyScore.planningScore}/25`,
                           color: "text-blue-600",
+                        },
+                        {
+                          label: "Timing",
+                          score: `${dailyScore.timingScore}/25`,
+                          color: "text-orange-600",
                         },
                       ].map((item, idx) => (
                         <div
@@ -2292,7 +2244,6 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                     {isDetailedScoreExpanded && (
                       <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                        {/* 1. KPI Achievement Detail */}
                         <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -2315,9 +2266,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       key={idx}
                                       className="flex items-center justify-between text-[11px] font-bold text-gray-500"
                                     >
-                                      <span className="flex items-center gap-2">
-                                        • {kpi.name}:
-                                      </span>
+                                      <span>• {kpi.name}:</span>
                                       <span className="text-gray-900">
                                         {kpi.achievement.toFixed(1)}% ={" "}
                                         {kpi.points.toFixed(2)} pts
@@ -2343,7 +2292,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* 2. Accomplishments Detail */}
                         <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -2359,9 +2307,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-purple-50">
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span className="flex items-center gap-2">
-                                • Completed items:
-                              </span>
+                              <span>• Completed items:</span>
                               <span className="text-gray-900">
                                 {
                                   dailyScore.details.accomplishments
@@ -2372,9 +2318,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span className="flex items-center gap-2">
-                                • Completion rate:
-                              </span>
+                              <span>• Completion rate:</span>
                               <span className="text-gray-900">
                                 {dailyScore.details.accomplishments.completionPercentage.toFixed(
                                   0
@@ -2392,7 +2336,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* 3. Tasks & Issues Detail */}
                         <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -2513,7 +2456,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* 4. Planning Detail */}
                         <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -2532,9 +2474,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-blue-50">
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span className="flex items-center gap-2">
-                                • Regular items:
-                              </span>
+                              <span>• Regular items:</span>
                               <span className="text-gray-900">
                                 {dailyScore.details.planning.regularItems} × 2
                                 pts ={" "}
@@ -2568,7 +2508,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* 5. Submission Timing Detail */}
                         <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -2584,26 +2523,20 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-orange-50">
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span className="flex items-center gap-2">
-                                • Submission Time:
-                              </span>
+                              <span>• Submission Time:</span>
                               <span className="text-gray-900 font-bold">
                                 {dailyScore.details.timing.submissionTime}
                               </span>
                             </div>
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span className="flex items-center gap-2">
-                                • Points Awarded:
-                              </span>
+                              <span>• Points Awarded:</span>
                               <span className="text-orange-600 font-bold">
                                 {dailyScore.timingScore} pts
                               </span>
                             </div>
                             <p className="text-[9px] text-gray-400 font-medium italic pt-2 border-t border-gray-100">
                               Note: Submission timing score is calculated based
-                              on when the report is actually submitted. The live
-                              preview shows 0 points as no submission time has
-                              been recorded yet.
+                              on when the report is actually submitted.
                             </p>
                           </div>
                         </div>
@@ -2628,7 +2561,6 @@ const BusinessCompassDailyReport: React.FC = () => {
             )}
 
             <div className="mt-8">
-              {/* Automation Info Banner */}
               <div
                 className={cn(
                   "bg-[#eff6ff] border border-blue-100 rounded-[14px] overflow-hidden transition-all duration-300 shadow-sm",
@@ -2666,69 +2598,95 @@ const BusinessCompassDailyReport: React.FC = () => {
                 {isScoreInfoExpanded && (
                   <div className="p-8 space-y-8 animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="grid grid-cols-1 gap-6">
-                      {/* 1. Daily KPI */}
-                      <div className="flex gap-4">
-                        <div className="bg-[#eff6ff] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-blue-100">
-                          <TrendingUp size={20} className="text-[#3b82f6]" />
-                        </div>
-                        <div className="space-y-3">
-                          <div>
-                            <h4 className="text-sm font-bold text-[#1e40af] tracking-tight">
-                              1. Daily KPI Achievement (Max 20 points)
-                            </h4>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5 italic">
+                      {[
+                        {
+                          icon: (
+                            <TrendingUp size={20} className="text-[#3b82f6]" />
+                          ),
+                          bg: "bg-[#eff6ff] border-blue-100",
+                          title: "1. Daily KPI Achievement (Max 20 points)",
+                          titleColor: "text-[#1e40af]",
+                          desc: (
+                            <>
                               Calculated as:{" "}
                               <span className="font-bold text-slate-700">
                                 Max Points × (Average Achievement % ÷ 100)
                               </span>
-                            </p>
+                            </>
+                          ),
+                          items: [
+                            "100% achievement: 20 points",
+                            "90% achievement: 18 points",
+                            "75% achievement: 15 points",
+                            "50% achievement: 10 points",
+                          ],
+                          note: "* If a KPI has target 0 but actual is positive, it's counted as 100% achievement.",
+                        },
+                        {
+                          icon: (
+                            <CheckCircle2
+                              size={20}
+                              className="text-[#10b981]"
+                            />
+                          ),
+                          bg: "bg-[#ecfdf5] border-green-100",
+                          title:
+                            "2. Daily Checklist Achievement (Max 10 points)",
+                          titleColor: "text-[#065f46]",
+                          desc: "Points awarded proportionally based on percentage of daily KRA items completed.",
+                        },
+                        {
+                          icon: (
+                            <ListTodo size={20} className="text-[#8b5cf6]" />
+                          ),
+                          bg: "bg-[#f5f3ff] border-purple-100",
+                          title: "3. Accomplishments (Max 10 points)",
+                          titleColor: "text-purple-900",
+                          desc: "Points awarded proportionally based on percentage of accomplishments marked as completed.",
+                        },
+                      ].map(
+                        (
+                          { icon, bg, title, titleColor, desc, items, note },
+                          i
+                        ) => (
+                          <div key={i} className="flex gap-4">
+                            <div
+                              className={cn(
+                                "h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border",
+                                bg
+                              )}
+                            >
+                              {icon}
+                            </div>
+                            <div className="space-y-1">
+                              <h4
+                                className={cn(
+                                  "text-sm font-bold tracking-tight",
+                                  titleColor
+                                )}
+                              >
+                                {title}
+                              </h4>
+                              <p className="text-xs text-slate-500 font-medium leading-relaxed italic">
+                                {desc}
+                              </p>
+                              {items && (
+                                <ul className="space-y-1.5 text-xs text-slate-600 font-medium list-disc pl-4">
+                                  {items.map((item, j) => (
+                                    <li key={j}>{item}</li>
+                                  ))}
+                                </ul>
+                              )}
+                              {note && (
+                                <p className="text-[11px] text-[#1e40af] font-bold italic opacity-70">
+                                  {note}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          <ul className="space-y-1.5 text-xs text-slate-600 font-medium list-disc pl-4">
-                            <li>100% achievement: 20 points</li>
-                            <li>90% achievement: 18 points</li>
-                            <li>75% achievement: 15 points</li>
-                            <li>50% achievement: 10 points</li>
-                          </ul>
-                          <p className="text-[11px] text-[#1e40af] font-bold italic opacity-70">
-                            * If a KPI has target 0 but actual is positive, it's
-                            counted as 100% achievement.
-                          </p>
-                        </div>
-                      </div>
+                        )
+                      )}
 
-                      {/* 2. Checklist */}
-                      <div className="flex gap-4">
-                        <div className="bg-[#ecfdf5] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-green-100">
-                          <CheckCircle2 size={20} className="text-[#10b981]" />
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="text-sm font-bold text-[#065f46] tracking-tight">
-                            2. Daily Checklist Achievement (Max 10 points)
-                          </h4>
-                          <p className="text-xs text-slate-500 font-medium leading-relaxed italic">
-                            Points awarded proportionally based on percentage of
-                            daily KRA items completed.
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* 3. Accomplishments */}
-                      <div className="flex gap-4">
-                        <div className="bg-[#f5f3ff] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-purple-100">
-                          <ListTodo size={20} className="text-[#8b5cf6]" />
-                        </div>
-                        <div className="space-y-1">
-                          <h4 className="text-sm font-bold text-purple-900 tracking-tight">
-                            3. Accomplishments (Max 10 points)
-                          </h4>
-                          <p className="text-xs text-slate-500 font-medium leading-relaxed italic">
-                            Points awarded proportionally based on percentage of
-                            accomplishments marked as completed.
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* 4. Tasks & Issues */}
                       <div className="flex gap-4">
                         <div className="bg-[#fff7ed] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-orange-100">
                           <CheckSquare size={20} className="text-[#ea580c]" />
@@ -2740,7 +2698,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           <ul className="space-y-1.5 text-xs text-slate-600 font-medium list-disc pl-4 leading-relaxed">
                             <li>
                               Task/issue closed on report day (within target
-                              date or no target):{" "}
+                              date):{" "}
                               <span className="text-green-600 font-bold">
                                 +5 points each
                               </span>
@@ -2765,17 +2723,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                             </li>
                           </ul>
-                          <p className="text-[11px] text-slate-400 font-medium italic leading-relaxed pt-1">
-                            Only tasks closed on the day of the report or new
-                            issues reported on that day are counted. For larger
-                            numbers of tasks/issues, the total positive score is
-                            capped at the maximum available points before
-                            penalties are applied.
-                          </p>
                         </div>
                       </div>
 
-                      {/* 5. Items Planned */}
                       <div className="flex gap-4">
                         <div className="bg-[#ecfeff] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-cyan-100">
                           <Calendar size={20} className="text-cyan-600" />
@@ -2804,13 +2754,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                             </li>
                           </ul>
-                          <p className="text-xs text-slate-400 font-medium italic">
-                            Planning ahead shows proactivity and organization.
-                          </p>
                         </div>
                       </div>
 
-                      {/* 6. Report Timing */}
                       <div className="flex gap-4">
                         <div className="bg-[#fffbeb] h-10 w-10 rounded-[10px] flex items-center justify-center shrink-0 border border-yellow-100">
                           <Clock size={20} className="text-yellow-600" />
@@ -2820,42 +2766,24 @@ const BusinessCompassDailyReport: React.FC = () => {
                             6. Report Timing (Max 20 points)
                           </h4>
                           <ul className="space-y-1.5 text-xs text-slate-600 font-medium list-disc pl-4">
-                            <li>
-                              Submitted by 7pm same day:{" "}
-                              <span className="text-slate-900 font-bold">
-                                20 points
-                              </span>
-                            </li>
-                            <li>
-                              Submitted by 11:59pm same day:{" "}
-                              <span className="text-slate-900 font-bold">
-                                15 points
-                              </span>
-                            </li>
-                            <li>
-                              Submitted 12am-7am next day:{" "}
-                              <span className="text-slate-900 font-bold">
-                                10 points
-                              </span>
-                            </li>
-                            <li>
-                              Submitted 7am-9am next day:{" "}
-                              <span className="text-slate-900 font-bold">
-                                5 points
-                              </span>
-                            </li>
-                            <li>
-                              Submitted after 9am next day:{" "}
-                              <span className="text-slate-900 font-bold">
-                                0 points
-                              </span>
-                            </li>
+                            {[
+                              "Submitted by 7pm same day: 20 points",
+                              "Submitted by 11:59pm same day: 15 points",
+                              "Submitted 12am-7am next day: 10 points",
+                              "Submitted 7am-9am next day: 5 points",
+                              "Submitted after 9am next day: 0 points",
+                            ].map((t, i) => (
+                              <li key={i}>
+                                <span className="text-slate-900 font-bold">
+                                  {t}
+                                </span>
+                              </li>
+                            ))}
                           </ul>
                         </div>
                       </div>
                     </div>
 
-                    {/* Dynamic Point Allocation Box */}
                     <div className="bg-[#eff6ff] border border-blue-100 rounded-[14px] p-6 space-y-3">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="bg-white p-1 rounded-md shadow-sm">
@@ -2911,7 +2839,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                       className="bg-white border border-gray-200 rounded-[12px] shadow-sm overflow-hidden transition-all"
                     >
                       <div className="p-6">
-                        {/* Header Row */}
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
                           <div>
                             <h2 className="text-xl font-medium text-[#1a1a1a]">
@@ -2929,9 +2856,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               By: Common Admin Id
                             </p>
                           </div>
-
                           <div className="flex items-start gap-4">
-                            {/* Badges */}
                             <div className="flex flex-col items-end gap-2">
                               <Badge className="bg-[#f59e0b] hover:bg-[#f59e0b] text-white px-2.5 py-1.5 rounded-[4px] border-none text-xs font-bold flex items-center justify-center gap-1.5 w-fit shadow-sm">
                                 <Star size={12} className="fill-white" />
@@ -2955,8 +2880,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 )}
                               </Badge>
                             </div>
-
-                            {/* Actions */}
                             <div className="flex flex-col gap-2">
                               <Button
                                 variant="outline"
@@ -2966,7 +2889,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   const date = new Date(report.start_date);
                                   const formattedDate =
                                     date.toLocaleDateString("en-CA");
-
                                   setStartDate(formattedDate);
                                   setSelectedDate(
                                     date.getDate().toString().padStart(2, "0")
@@ -2980,7 +2902,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     date.getFullYear().toString()
                                   );
                                   setCurrentReportId(report.id);
-
                                   if (
                                     report.report_data?.accomplishments?.items
                                   ) {
@@ -2991,13 +2912,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                           text: ach.title || "",
                                           completed: true,
                                           starred: false,
+                                          fromYesterday: false,
                                         })
                                       )
                                     );
                                   } else {
                                     setAccomplishments([]);
                                   }
-
                                   if (report.report_data?.tomorrow_plan) {
                                     setPlanningItems(
                                       report.report_data.tomorrow_plan.map(
@@ -3011,7 +2932,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   } else {
                                     setPlanningItems([]);
                                   }
-
                                   if (report.report_data?.past_kpis) {
                                     const entries: { [key: number]: string } =
                                       {};
@@ -3025,37 +2945,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   } else {
                                     setKpiEntries({});
                                   }
-
-                                  if (
-                                    report.report_data?.tasks_issues &&
-                                    report.report_data.tasks_issues.length > 0
-                                  ) {
-                                    const selectedTasks: {
-                                      [key: string]: boolean;
-                                    } = {};
-                                    report.report_data.tasks_issues.forEach(
-                                      (task: any) => {
-                                        const matchingItem =
-                                          mergedTasksIssues.find(
-                                            (item) => item.title === task.name
-                                          );
-                                        if (matchingItem) {
-                                          selectedTasks[matchingItem.id] = true;
-                                        }
-                                      }
-                                    );
-                                    setSelectedTasksIssues(selectedTasks);
-                                  } else {
-                                    setSelectedTasksIssues({});
-                                  }
-
                                   if (report.is_absent !== undefined)
                                     setIsAbsent(report.is_absent);
                                   if (report.description)
                                     setAbsenceReason(report.description);
                                   if (report.self_rating !== undefined)
                                     setSelfRating([report.self_rating]);
-
                                   setActiveTab("submit");
                                   window.scrollTo({
                                     top: 0,
@@ -3070,8 +2965,30 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 variant="outline"
                                 size="sm"
                                 className="h-8 px-4 text-red-600 border-gray-200 hover:bg-red-50 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
-                                onClick={() => {
-                                  // console.log("Delete report", report.id);
+                                onClick={async () => {
+                                  if (
+                                    !window.confirm(
+                                      "Are you sure you want to delete this report?"
+                                    )
+                                  )
+                                    return;
+                                  try {
+                                    const baseUrl =
+                                      getBaseUrl() ??
+                                      "https://fm-uat-api.lockated.com";
+                                    const token = getToken();
+                                    await axios.delete(
+                                      `${baseUrl.replace(/\/+$/, "")}/user_journals/${report.id}.json`,
+                                      {
+                                        headers: {
+                                          Authorization: `Bearer ${token}`,
+                                        },
+                                      }
+                                    );
+                                    fetchReportsList();
+                                  } catch (err) {
+                                    console.error("Delete failed:", err);
+                                  }
                                 }}
                               >
                                 <Trash2 size={14} className="text-red-500" />{" "}
@@ -3081,8 +2998,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* Score Breakdown container */}
-                        {/* Score Breakdown container */}
                         <div className="bg-[#f8fafc] border border-gray-200 rounded-[8px] p-4 mb-6">
                           <div className="flex items-center gap-2 mb-3">
                             <BarChart3 size={14} className="text-blue-500" />
@@ -3091,62 +3006,43 @@ const BusinessCompassDailyReport: React.FC = () => {
                             </span>
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {/* 1. Accomplishments */}
-                            <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-medium mb-1">
-                                Accomplishments
-                              </p>
-                              <p className="text-base font-bold text-[#c026d3]">
-                                {/* Naya key try karega, nahi mila toh purana 'tasks_completed', warna 0 */}
-                                {report.report_data?.sections
-                                  ?.accomplishments ??
-                                  report.report_data?.sections
-                                    ?.tasks_completed ??
-                                  0}
-                                /25
-                              </p>
-                            </div>
-
-                            {/* 2. Tasks & Issues */}
-                            <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-medium mb-1">
-                                Tasks & Issues
-                              </p>
-                              <p className="text-base font-bold text-[#ea580c]">
-                                {/* Naya key try karega, nahi mila toh purana 'attendance', warna 0 */}
-                                {report.report_data?.sections?.tasks_issues ??
-                                  report.report_data?.sections?.attendance ??
-                                  0}
-                                /25
-                              </p>
-                            </div>
-
-                            {/* 3. Planning */}
-                            <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-medium mb-1">
-                                Planning
-                              </p>
-                              <p className="text-base font-bold text-[#0d9488]">
-                                {/* Naya key try karega, nahi mila toh purana 'collaboration', warna 0 */}
-                                {report.report_data?.sections?.planning ??
-                                  report.report_data?.sections?.collaboration ??
-                                  0}
-                                /25
-                              </p>
-                            </div>
-
-                            {/* 4. Timing (Yahan pehle 0/25 hardcoded tha) */}
-                            <div className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm">
-                              <p className="text-[10px] text-gray-500 font-medium mb-1">
-                                Timing
-                              </p>
-                              <p className="text-base font-bold text-[#d97706]">
-                                {report.report_data?.sections?.timing ?? 0}/25
-                              </p>
-                            </div>
+                            {[
+                              {
+                                label: "Accomplishments",
+                                value: `${report.report_data?.sections?.accomplishments ?? report.report_data?.sections?.tasks_completed ?? 0}/25`,
+                                color: "text-[#c026d3]",
+                              },
+                              {
+                                label: "Tasks & Issues",
+                                value: `${report.report_data?.sections?.tasks_issues ?? report.report_data?.sections?.attendance ?? 0}/25`,
+                                color: "text-[#ea580c]",
+                              },
+                              {
+                                label: "Planning",
+                                value: `${report.report_data?.sections?.planning ?? report.report_data?.sections?.collaboration ?? 0}/25`,
+                                color: "text-[#0d9488]",
+                              },
+                              {
+                                label: "Timing",
+                                value: `${report.report_data?.sections?.timing ?? 0}/25`,
+                                color: "text-[#d97706]",
+                              },
+                            ].map(({ label, value, color }) => (
+                              <div
+                                key={label}
+                                className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm"
+                              >
+                                <p className="text-[10px] text-gray-500 font-medium mb-1">
+                                  {label}
+                                </p>
+                                <p className={cn("text-base font-bold", color)}>
+                                  {value}
+                                </p>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                        {/* KPIs Section */}
+
                         {report.report_data?.past_kpis &&
                           report.report_data.past_kpis.length > 0 && (
                             <div className="bg-[#fffbeb] border border-amber-200 rounded-[8px] p-4 mb-6">
@@ -3205,7 +3101,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                             </div>
                           )}
 
-                        {/* Tasks & Issues Section */}
                         {report.report_data?.tasks_issues &&
                           report.report_data.tasks_issues.length > 0 && (
                             <div className="bg-[#fef2f2] border border-red-200 rounded-[8px] p-4 mb-6">
@@ -3228,8 +3123,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                       <span className="text-red-600 font-bold mt-0.5">
                                         ✓
                                       </span>
+                                      {/* UPDATED: Fallback to item.title if item.name is missing */}
                                       <span className="text-sm text-gray-700">
-                                        {item.name}
+                                        {item.name ||
+                                          item.title ||
+                                          item.originalData?.title ||
+                                          item.originalData?.name ||
+                                          "Unnamed Item"}
                                       </span>
                                     </div>
                                   )
@@ -3238,9 +3138,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             </div>
                           )}
 
-                        {/* Bottom sections */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* Accomplishments */}
                           <div className="border border-green-200 rounded-[8px] overflow-hidden bg-[#f0fdf4]">
                             <div className="px-4 py-3 border-b border-green-200/50 flex items-center gap-2">
                               <CheckCircle2
@@ -3270,7 +3168,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   )}
                                 </ul>
                               ) : (
-                                <div className="bg-white border border-green-100 rounded-[6px] px-3 py-2 text-sm shadow-sm flex items-start gap-2">
+                                <div className="bg-white border border-green-100 rounded-[6px] px-3 py-2 text-sm shadow-sm">
                                   <p className="text-gray-400 italic">
                                     No accomplishments.
                                   </p>
@@ -3278,8 +3176,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                               )}
                             </div>
                           </div>
-
-                          {/* Tomorrow's Plan */}
                           <div className="border border-purple-200 rounded-[8px] overflow-hidden bg-[#faf5ff]">
                             <div className="px-4 py-3 border-b border-purple-200/50 flex items-center gap-2">
                               <Target size={16} className="text-purple-600" />
@@ -3305,7 +3201,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   )}
                                 </ul>
                               ) : (
-                                <div className="bg-white border border-purple-100 rounded-[6px] px-3 py-2 text-sm shadow-sm flex items-start gap-2">
+                                <div className="bg-white border border-purple-100 rounded-[6px] px-3 py-2 text-sm shadow-sm">
                                   <p className="text-gray-400 italic">
                                     No plan for tomorrow.
                                   </p>
@@ -3315,7 +3211,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        {/* API Response Attachments Section */}
                         {report.attachments &&
                           report.attachments.length > 0 && (
                             <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
@@ -3354,7 +3249,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               href={attachment.document_url}
                                               target="_blank"
                                               rel="noopener noreferrer"
-                                              className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2 group-hover:text-purple-700 transition-colors"
+                                              className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2"
                                             >
                                               {attachment.document_file_name}
                                             </a>
@@ -3375,13 +3270,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                                             </span>
                                           </div>
                                         </div>
-                                        <div className="flex items-center gap-2 shrink-0 ml-3">
-                                          <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
-                                            {attachment.active
-                                              ? "Active"
-                                              : "Inactive"}
-                                          </Badge>
-                                        </div>
+                                        <Badge className="bg-purple-100 text-purple-700 border-none px-2.5 py-0.5 text-[10px] font-bold rounded-[4px] whitespace-nowrap">
+                                          {attachment.active
+                                            ? "Active"
+                                            : "Inactive"}
+                                        </Badge>
                                       </div>
                                     );
                                   }
@@ -3423,13 +3316,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             display: "flex",
             flexDirection: "column",
           }}
-          sx={{
-            padding: "0 !important",
-            "& .MuiDialogContent-root": {
-              padding: "0 !important",
-              overflow: "auto",
-            },
-          }}
+          sx={{ padding: "0 !important" }}
         >
           <div className="sticky top-0 bg-white z-10">
             <h3 className="text-[14px] font-medium text-center mt-8">
@@ -3441,7 +3328,6 @@ const BusinessCompassDailyReport: React.FC = () => {
             />
             <hr className="border border-[#E95420] mt-4" />
           </div>
-
           <div className="flex-1 overflow-y-auto">
             <ProjectTaskCreateModal
               isEdit={false}
@@ -3492,7 +3378,6 @@ const BusinessCompassDailyReport: React.FC = () => {
               <X size={20} />
             </button>
           </div>
-
           {closureItem && (
             <div className="bg-blue-50 border border-blue-200 rounded-[10px] p-3">
               <p className="text-xs text-gray-600 font-medium mb-1">Closing:</p>
@@ -3504,7 +3389,6 @@ const BusinessCompassDailyReport: React.FC = () => {
               </p>
             </div>
           )}
-
           <div className="space-y-2">
             <label className="text-sm font-bold text-[#1a1a1a]">
               Closure Remarks (Optional)
@@ -3516,7 +3400,6 @@ const BusinessCompassDailyReport: React.FC = () => {
               className="w-full h-[120px] p-3 border border-[#e5e7eb] rounded-[10px] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 resize-none"
             />
           </div>
-
           <div className="space-y-2">
             <label className="text-sm font-bold text-[#1a1a1a]">
               Attach Files (Optional)
@@ -3540,7 +3423,7 @@ const BusinessCompassDailyReport: React.FC = () => {
               <Button
                 disabled={closureAttachments.length >= 5}
                 onClick={triggerClosureFileUpload}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold px-4 h-9 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-green-600 hover:bg-green-700 text-white font-bold px-4 h-9 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none disabled:opacity-50"
               >
                 <Upload size={14} />
                 File Upload
@@ -3579,7 +3462,6 @@ const BusinessCompassDailyReport: React.FC = () => {
               </div>
             )}
           </div>
-
           <div className="flex gap-3 pt-4 border-t border-gray-100">
             <Button
               variant="outline"
@@ -3594,7 +3476,7 @@ const BusinessCompassDailyReport: React.FC = () => {
               Cancel
             </Button>
             <Button
-              className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-[8px] flex items-center justify-center gap-2 shadow-md transition-all border-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 h-11 bg-green-600 hover:bg-green-700 text-white font-bold text-sm rounded-[8px] flex items-center justify-center gap-2 shadow-md border-none disabled:opacity-50"
               onClick={handleMarkItemClosed}
               disabled={isClosureSubmitting}
             >
@@ -3652,14 +3534,9 @@ const BusinessCompassDailyReport: React.FC = () => {
             px: 2,
             margin: "8px 8px 4px 8px",
             borderRadius: "10px",
-            backgroundColor: "transparent",
-            transition: "all 0.2s ease",
             "&:hover": {
               backgroundColor: "#f0f4ff",
               transform: "translateX(4px)",
-            },
-            "&:active": {
-              backgroundColor: "#e0e8ff",
             },
           }}
         >
@@ -3685,14 +3562,9 @@ const BusinessCompassDailyReport: React.FC = () => {
             px: 2,
             margin: "4px 8px 8px 8px",
             borderRadius: "10px",
-            backgroundColor: "transparent",
-            transition: "all 0.2s ease",
             "&:hover": {
               backgroundColor: "#fef2f2",
               transform: "translateX(4px)",
-            },
-            "&:active": {
-              backgroundColor: "#fee2e2",
             },
           }}
         >

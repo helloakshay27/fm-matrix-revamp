@@ -47,6 +47,7 @@ export const AddEventPage = () => {
   const [formData, setFormData] = useState({
     eventName: "",
     eventType: "",
+    payAt: "internal",
     amountPerPerson: "",
     fromDate: "",
     toDate: "",
@@ -58,6 +59,7 @@ export const AddEventPage = () => {
     rsvp: "yes",
     showOnHomeScreen: "no",
     eventDescription: "",
+    externalLink: "",
     approvalRequired: "no",
     shareWith: "all",
     shareWithCommunities: "no",
@@ -94,6 +96,8 @@ export const AddEventPage = () => {
     const savedEventDescription = localStorage.getItem('eventDescription');
     const savedShareWith = localStorage.getItem('shareWith');
     const savedSelectedTechParks = localStorage.getItem('selectedTechParks');
+    const savedPayAt = localStorage.getItem('payAt');
+    const savedExternalLink = localStorage.getItem('externalLink');
 
     // If any saved data exists, restore it
     if (savedEventName || savedEventDescription || savedFromDate) {
@@ -114,6 +118,8 @@ export const AddEventPage = () => {
         approvalRequired: savedApprovalRequired || prev.approvalRequired,
         eventDescription: savedEventDescription || prev.eventDescription,
         shareWith: savedShareWith || prev.shareWith,
+        payAt: savedPayAt || prev.payAt,
+        externalLink: savedExternalLink || prev.externalLink,
       }));
     }
 
@@ -144,6 +150,8 @@ export const AddEventPage = () => {
     localStorage.removeItem('eventDescription');
     localStorage.removeItem('shareWith');
     localStorage.removeItem('selectedTechParks');
+    localStorage.removeItem('payAt');
+    localStorage.removeItem('externalLink');
 
     // Check if returning from community selection
     const savedCommunities = localStorage.getItem('selectedCommunityIds');
@@ -234,6 +242,8 @@ export const AddEventPage = () => {
       localStorage.setItem('approvalRequired', formData.approvalRequired);
       localStorage.setItem('eventDescription', formData.eventDescription);
       localStorage.setItem('shareWith', formData.shareWith);
+      localStorage.setItem('payAt', formData.payAt);
+      localStorage.setItem('externalLink', formData.externalLink);
       localStorage.setItem('selectedTechParks', JSON.stringify(selectedTechParks));
       navigate('/pulse/community?mode=selection&from=add-event');
     }
@@ -334,6 +344,8 @@ export const AddEventPage = () => {
       formDataToSend.append('event[of_atype_id]', localStorage.getItem("selectedSiteId") || "");
       formDataToSend.append('event[share_with]', formData.shareWith);
       formDataToSend.append('event[is_paid]', formData.eventType);
+      formData.eventType === "1" && formDataToSend.append('event[pay_at]', formData.payAt);
+      formData.eventType === "1" && formData.payAt === "external" && formDataToSend.append('event[payment_link]', formData.externalLink);
 
       if (formData.shareWith === 'individual') {
         selectedTechParks.forEach(id => {
@@ -375,6 +387,8 @@ export const AddEventPage = () => {
       localStorage.removeItem('shareWith');
       localStorage.removeItem('selectedTechParks');
       localStorage.removeItem('selectedCommunityIds');
+      localStorage.removeItem('payAt');
+      localStorage.removeItem('externalLink');
 
       toast.success("Event created successfully");
       navigate(`/pulse/events`);
@@ -466,6 +480,33 @@ export const AddEventPage = () => {
                 </FormControl>
               </div>
 
+              {
+                formData.eventType === "1" && (
+                  <div className="flex flex-col gap-1.5">
+                    <FormControl fullWidth size="small">
+                      <InputLabel shrink>Pay at<span className="text-[#C72030]">*</span></InputLabel>
+                      <MuiSelect
+                        name="payAt"
+                        value={formData.payAt}
+                        onChange={(e) => handleSelectChange("payAt", e.target.value)}
+                        label="Pay at*"
+                        displayEmpty
+                        sx={{
+                          backgroundColor: '#FAFAFA',
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#C72030',
+                          },
+                        }}
+                      >
+                        <MenuItem value="" disabled>Select pay at...</MenuItem>
+                        <MenuItem value="internal">Internal</MenuItem>
+                        <MenuItem value="external">External</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                )
+              }
+
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Event Amount Per Person</>}
@@ -494,10 +535,7 @@ export const AddEventPage = () => {
                   }}
                 />
               </div>
-            </div>
 
-            {/* Row 2: From Date, To Date, Event Time */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>From Date<span className="text-[#C72030]">*</span></>}
@@ -569,10 +607,7 @@ export const AddEventPage = () => {
                   }}
                 />
               </div>
-            </div>
 
-            {/* Row 3: Event Location, Member Capacity, Per Member Limit */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
               <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Event Location<span className="text-[#C72030]">*</span></>}
@@ -624,7 +659,7 @@ export const AddEventPage = () => {
                 />
               </div>
 
-              <div className="flex flex-col gap-1.5">
+              {/* <div className="flex flex-col gap-1.5">
                 <TextField
                   label={<>Per Member Limit<span className="text-[#C72030]">*</span></>}
                   id="perMemberLimit"
@@ -651,7 +686,7 @@ export const AddEventPage = () => {
                     },
                   }}
                 />
-              </div>
+              </div> */}
             </div>
 
             {/* Radio Groups Row */}
@@ -799,8 +834,32 @@ export const AddEventPage = () => {
     "
                 />
               </div>
-
             </div>
+
+            {
+              formData.payAt === "external" && (
+                <TextField
+                  label={<>External Link<span className="text-[#C72030]">*</span></>}
+                  id="externalLink"
+                  name="externalLink"
+                  value={formData.externalLink}
+                  onChange={handleInputChange}
+                  placeholder="Enter external link..."
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: '#FAFAFA',
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#C72030',
+                      },
+                    },
+                    marginTop: 2,
+                  }}
+                />
+              )
+            }
           </div>
         </div>
 

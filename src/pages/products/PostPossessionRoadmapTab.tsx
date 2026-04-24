@@ -139,7 +139,7 @@ const postPossessionRoadmap = {
     {
       timeframe: "MEDIUM-TERM (6–18 MONTHS)",
       headline: "Build Long-Term Competitive Moat",
-      colorContext: "blue",
+      colorContext: "orange",
       items: [
         {
           whatItIs: "AI FM Copilot — Conversational FM Assistant",
@@ -224,14 +224,14 @@ const PostPossessionRoadmapTab: React.FC = () => {
         {postPossessionRoadmap.sections.map((section, idx) => {
           return (
             <div key={idx} className="space-y-4">
-              <div className="bg-[#2e4057] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
+              <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
                 {section.timeframe} — {section.headline}
               </div>
 
               <div className="overflow-hidden border border-[#D3D1C7] rounded-xl shadow-sm">
                 <table className="w-full border-collapse table-fixed text-[12px] leading-relaxed">
                   <thead>
-                    <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[10px] tracking-wider">
+                    <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px] tracking-wider">
                       <th className="border-r border-[#D3D1C7] px-4 py-3 text-left w-[22%]">Feature / Initiative</th>
                       <th className="border-r border-[#D3D1C7] px-4 py-3 text-left w-[33%]">Strategic Rationale (The 'Why')</th>
                       <th className="border-r border-[#D3D1C7] px-4 py-3 text-left w-[20%]">Unlocked Segment</th>
@@ -243,7 +243,7 @@ const PostPossessionRoadmapTab: React.FC = () => {
                   <tbody>
                     {section.items.map((item, i) => (
                       <tr key={i} className="align-top bg-white hover:bg-gray-50/50 transition-colors border-b border-gray-100 last:border-0">
-                        <td className="border border-gray-100 px-4 py-4 font-bold text-[#1f3864]">
+                        <td className="border border-gray-100 px-4 py-4 font-bold text-[#DA7756]">
                           {item.whatItIs}
                         </td>
                         <td className="border border-gray-100 px-4 py-4 text-gray-600 italic">
@@ -275,8 +275,8 @@ const PostPossessionRoadmapTab: React.FC = () => {
       </div>
 
       {/* Strategic Footer */}
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-4 shadow-sm border-l-4 border-l-[#1f3864]">
-        <h4 className="text-xs font-bold uppercase tracking-widest text-[#1f3864] mb-2">Roadmap Philosophy</h4>
+      <div className="bg-white border border-[#D3D1C7] rounded-xl p-4 shadow-sm border-l-4 border-l-[#DA7756]">
+        <h4 className="text-xs font-bold uppercase tracking-widest text-[#DA7756] mb-2">Roadmap Philosophy</h4>
         <p className="text-[11px] text-[#666] leading-relaxed italic">
           This roadmap focuses on removing technical blockers for high-margin international markets while building a deep
           AI-driven operational moat that point-solutions cannot replicate. Every initiative is tied to a specific
@@ -288,3 +288,4 @@ const PostPossessionRoadmapTab: React.FC = () => {
 };
 
 export default PostPossessionRoadmapTab;
+

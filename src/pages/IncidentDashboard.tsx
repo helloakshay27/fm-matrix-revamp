@@ -975,7 +975,7 @@ export const IncidentDashboard = () => {
     }
     try {
       await downloadFile(
-        `https://${baseUrl}/pms/incidents/export.xlsx`,
+        `https://${baseUrl}/pms/incidents/export.xlsx?access_token=${token}`,
         `incidents_${new Date().toISOString().split("T")[0]}.xlsx`
       );
     } catch {

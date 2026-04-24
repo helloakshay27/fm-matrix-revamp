@@ -5,7 +5,7 @@ import { roadmapLessee, roadmapLessor } from "../data";
 // Lockated Brand Colors
 const BRAND_COLORS = {
   primary: "#DA7756",
-  darkBg: "#1e293b",
+  darkBg: "#DA7756",
   background: "#F6F4EE",
   text: "#2C2C2C",
   textSecondary: "#5A5A5A",
@@ -27,7 +27,7 @@ const SectionTitle: React.FC<{ children: React.ReactNode }> = ({
 const PhaseHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div
     className="px-4 py-2 font-semibold text-white text-sm"
-    style={{ backgroundColor: "#1D4ED8" }}
+    style={{ backgroundColor: "#DA7756" }}
   >
     {children}
   </div>
@@ -39,8 +39,8 @@ const PhaseDescription: React.FC<{ children: React.ReactNode }> = ({
   <div
     className="px-4 py-2 text-sm italic"
     style={{
-      backgroundColor: "#EFF6FF",
-      color: "#1E40AF",
+      backgroundColor: "#F6F4EE",
+      color: "#5A5A5A",
       borderBottom: `1px solid ${BRAND_COLORS.cardBorder}`,
     }}
   >
@@ -275,7 +275,7 @@ export const RoadmapTab: React.FC = () => {
           <div
             className="px-4 py-2 text-xs font-semibold"
             style={{
-              backgroundColor: "#1D4ED8",
+              backgroundColor: "#DA7756",
               color: BRAND_COLORS.white,
             }}
           >

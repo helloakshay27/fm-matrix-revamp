@@ -38,7 +38,7 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
     ) ?? false;
   const hasCpInternalSheet =
     detailedUseCases?.internalTeamUseCases?.some(
-      (item) => item.relevantFeatures || item.frequency
+      (item) => item.relevantFeatures || item.frequency || item.process || item.features
     ) ?? false;
 
   return (
@@ -56,12 +56,15 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
                 {productData.name} - Use Cases
               </div>
               <div className="bg-[#F6F4EE] border border-[#C4B89D] px-4 py-2 text-[12px] text-gray-600 font-medium italic font-poppins text-center">
-                Part 1: Industry-level (10 industries ranked by referral and loyalty relevance) | Part 2: Internal team-level (developer teams that use this platform daily)
+                Part 1: Industry-level (10 industries ranked by referral and
+                loyalty relevance) | Part 2: Internal team-level (developer
+                teams that use this platform daily)
               </div>
 
               <div className="space-y-3">
                 <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
-                  Part 1 - Industry-Level Use Cases (Ranked by referral and loyalty relevance to the developer)
+                  Part 1 - Industry-Level Use Cases (Ranked by referral and
+                  loyalty relevance to the developer)
                 </div>
                 <div className="border border-[#C4B89D]/50 bg-white overflow-x-auto">
                   <table className="min-w-[1900px] w-full table-fixed border-collapse text-[10px] leading-[1.45] font-poppins">
@@ -146,7 +149,8 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
               {hasPostSalesInternalSheet && (
                 <div className="space-y-3">
                   <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
-                    Part 2 - Internal Team Use Cases (Developer's own teams that use Post Sales daily)
+                    Part 2 - Internal Team Use Cases (Developer's own teams that
+                    use Post Sales daily)
                   </div>
                   <div className="border border-[#C4B89D]/50 bg-white overflow-x-auto">
                     <table className="min-w-[1550px] w-full table-fixed border-collapse text-[10px] leading-[1.45] font-poppins">
@@ -490,27 +494,24 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
 
               <div className="space-y-3">
                 <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins rounded-t-xl">
-                  Part A - Industry Level Use Cases (Ranked: Most to Least
+                  Part 1 - Industry Level Use Cases (Ranked: Most to Least
                   Relevant)
                 </div>
                 <div className="border border-[#C4B89D]/50 bg-white">
                   <table className="w-full table-fixed border-collapse text-[12px] leading-[1.55] font-poppins">
                     <thead>
                       <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold uppercase">
-                        <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[18%]">
-                          Industry (Ranked)
-                        </th>
                         <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[20%]">
-                          Relevant Features & Teams
+                          Industry Segment
                         </th>
                         <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[25%]">
-                          How They Use It
+                          Specific Workflow
                         </th>
-                        <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[22%]">
-                          Ideal Company Profile
+                        <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[30%]">
+                          Exact Features Used (from Feature List)
                         </th>
-                        <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[15%]">
-                          Current Tool Used
+                        <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[25%]">
+                          Business Outcome Achieved
                         </th>
                       </tr>
                     </thead>
@@ -521,19 +522,16 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
                           className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
                         >
                           <td className="border border-[#E5E7EB] px-3 py-3 font-semibold text-gray-800 whitespace-pre-line break-words">
-                            {u.rank}. {u.industry}
+                            {u.industry?.match(/^\d+\./) ? u.industry : `${u.rank || i + 1}. ${u.industry}`}
+                          </td>
+                          <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                            {u.workflow}
                           </td>
                           <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {u.features}
                           </td>
                           <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                            {u.useCase}
-                          </td>
-                          <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                            {u.companyProfile || u.profile}
-                          </td>
-                          <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                            {u.currentTool}
+                            {u.outcome || u.businessOutcomeAchieved}
                           </td>
                         </tr>
                       ))}
@@ -544,54 +542,97 @@ const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
 
               {hasCpInternalSheet && (
                 <div className="space-y-3">
-                  <div className="bg-white text-gray-800 border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
-                    Part B - Internal Teams: How Each Team Uses{" "}
+                  <div className="bg-[#DA7756] text-white border border-[#C4B89D] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+                    Part 2 - Internal Teams: How Each Team Uses{" "}
                     {productData.name} in Daily Work
                   </div>
-                  <div className="border border-[#D3D1C7] bg-white">
+                  <div className="border border-[#C4B89D]/50 bg-white">
                     <table className="w-full table-fixed border-collapse text-[12px] leading-[1.55] font-poppins">
                       <thead>
-                        <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-semibold uppercase">
-                          <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[16%]">
-                            Team Name
-                          </th>
-                          <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[20%]">
-                            Relevant Features & Processes
-                          </th>
-                          <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[28%]">
-                            How They Use It Day-to-Day
-                          </th>
-                          <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[26%]">
-                            Primary Benefit to This Team
-                          </th>
-                          <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[10%]">
-                            Frequency of Use
-                          </th>
+                        <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold uppercase">
+                          {detailedUseCases?.internalTeamUseCases?.some((t) => t.frequency) ? (
+                            <>
+                              <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[16%]">
+                                Team Name
+                              </th>
+                              <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[20%]">
+                                Relevant Features & Processes
+                              </th>
+                              <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[28%]">
+                                How They Use It Day-to-Day
+                              </th>
+                              <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[26%]">
+                                Primary Benefit to This Team
+                              </th>
+                              <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[10%]">
+                                Frequency of Use
+                              </th>
+                            </>
+                          ) : (
+                            <>
+                              <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[18%]">
+                                Internal Team
+                              </th>
+                              <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[35%]">
+                                Primary Workflow
+                              </th>
+                              <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[22%]">
+                                Features Used
+                              </th>
+                              <th className="border border-[#E5E7EB] px-3 py-3 text-left w-[25%]">
+                                Value Delivered
+                              </th>
+                            </>
+                          )}
                         </tr>
                       </thead>
                       <tbody>
-                        {detailedUseCases?.internalTeamUseCases?.map((t, i) => (
-                          <tr
-                            key={i}
-                            className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
-                          >
-                            <td className="border border-[#E5E7EB] px-3 py-3 font-semibold text-gray-800 whitespace-pre-line  break-words">
-                              {t.team}
-                            </td>
-                            <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                              {t.relevantFeatures || t.features}
-                            </td>
-                            <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                              {t.howTheyUse || t.process}
-                            </td>
-                            <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                              {t.benefit}
-                            </td>
-                            <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                              {t.frequency}
-                            </td>
-                          </tr>
-                        ))}
+                        {detailedUseCases?.internalTeamUseCases?.map((t, i) => {
+                          const hasFreq = detailedUseCases?.internalTeamUseCases?.some(
+                            (item) => item.frequency
+                          );
+                          return (
+                            <tr
+                              key={i}
+                              className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}
+                            >
+                              {hasFreq ? (
+                                <>
+                                  <td className="border border-[#E5E7EB] px-3 py-3 font-semibold text-gray-800 whitespace-pre-line break-words">
+                                    {t.team}
+                                  </td>
+                                  <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                    {t.relevantFeatures || t.features}
+                                  </td>
+                                  <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                    {t.howTheyUse || t.process}
+                                  </td>
+                                  <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                    {t.benefit}
+                                  </td>
+                                  <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                    {t.frequency}
+                                  </td>
+                                </>
+                              ) : (
+                                <>
+                                  <td className="border border-[#E5E7EB] px-3 py-3 font-semibold text-gray-800 whitespace-pre-line break-words">
+                                    {t.team}
+                                  </td>
+                                  <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                    {t.process || t.howTheyUse}
+                                  </td>
+                                  <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                    {t.features || t.relevantFeatures}
+                                  </td>
+                                  <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                                    {t.benefit}
+                                  </td>
+                                </>
+                              )}
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>

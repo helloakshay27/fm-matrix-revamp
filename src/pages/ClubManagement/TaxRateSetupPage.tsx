@@ -87,11 +87,11 @@ interface TaxGroup {
 
 /** Tax type options for the dropdown */
 const RATE_TYPE_OPTIONS = [
-  { value: "CGST",  label: "CGST" },
-  { value: "SGST",  label: "SGST" },
-  { value: "IGST",  label: "IGST" },
+  { value: "CGST", label: "CGST" },
+  { value: "SGST", label: "SGST" },
+  { value: "IGST", label: "IGST" },
   { value: "UTGST", label: "UTGST" },
-  { value: "Cess",  label: "Cess" },
+  { value: "Cess", label: "Cess" },
 ];
 
 // ─────────────────────────── Helpers ─────────────────────────────────────────
@@ -176,6 +176,42 @@ const TaxRatesTable: React.FC = () => {
     return e;
   };
 
+
+  const validateGSTRules = () => {
+  const type = currentForm.rate_type;
+  const rateValue = parseFloat(currentForm.rate);
+
+  const sameRateTaxes = taxes.filter(t =>
+    Number(t.rate) === rateValue &&
+    (editingTax ? t.id !== editingTax.id : true) // exclude self in edit
+  );
+
+  const hasCGST = sameRateTaxes.some(t => t.rate_type === "CGST");
+  const hasSGST = sameRateTaxes.some(t => t.rate_type === "SGST");
+  const hasIGST = sameRateTaxes.some(t => t.rate_type === "IGST");
+
+  // // ❌ IGST rules
+  // if (type === "IGST" && (hasCGST || hasSGST)) {
+  //   toast.error("Cannot create IGST when CGST/SGST of same rate already exist");
+  //   return false;
+  // }
+
+  // if ((type === "CGST" || type === "SGST") && hasIGST) {
+  //   toast.error("Cannot create CGST/SGST when IGST of same rate already exists");
+  //   return false;
+  // }
+
+  // ⚠️ Pair warning (Zoho style)
+  if (type === "CGST" && !hasSGST) {
+    toast.warning("You should also create SGST with same rate");
+  }
+
+  if (type === "SGST" && !hasCGST) {
+    toast.warning("You should also create CGST with same rate");
+  }
+
+  return true;
+};
   // ── save (create or edit) ─────────────────────────────────────────────────
   const handleSave = async () => {
     const errs = validate(currentForm);
@@ -184,6 +220,11 @@ const TaxRatesTable: React.FC = () => {
     setFormBusy(true);
 
     const baseUrl = getBaseUrl();
+     // ✅ APPLY GST VALIDATION HERE (for both create + edit)
+  // if (!validateGSTRules()) {
+  //   setFormBusy(false);
+  //   return;
+  // }
 
     try {
       if (editingTax) {
@@ -255,10 +296,10 @@ const TaxRatesTable: React.FC = () => {
 
   // ── table columns & rows ─────────────────────────────────────────────────
   const columns: ColumnConfig[] = [
-    { key: "actions",   label: "Action",    sortable: false, hideable: false, draggable: false },
-    { key: "name",      label: "Tax Name",  sortable: true,  hideable: true,  draggable: true },
-    { key: "rate_type", label: "Tax Type",  sortable: true,  hideable: true,  draggable: true },
-    { key: "rate",      label: "Rate (%)",  sortable: true,  hideable: true,  draggable: true },
+    { key: "actions", label: "Action", sortable: false, hideable: false, draggable: false },
+    { key: "name", label: "Tax Name", sortable: true, hideable: true, draggable: true },
+    { key: "rate_type", label: "Tax Type", sortable: true, hideable: true, draggable: true },
+    { key: "rate", label: "Rate (%)", sortable: true, hideable: true, draggable: true },
   ];
 
   const paginated = taxes.slice((currentPage - 1) * perPage, currentPage * perPage);
@@ -271,9 +312,9 @@ const TaxRatesTable: React.FC = () => {
         </Button>
       </div>
     ),
-    name:      <span className="font-medium">{tax.name}</span>,
+    name: <span className="font-medium">{tax.name}</span>,
     rate_type: <span className="font-semibold text-[#C72030]">{tax.rate_type}</span>,
-    rate:      <span>{tax.rate}%</span>,
+    rate: <span>{tax.rate}%</span>,
   });
 
   return (
@@ -447,25 +488,25 @@ const TaxSetupTab: React.FC = () => (
 // ════════════════════════════════════════════════════════════════════════════
 const GroupTaxTab: React.FC = () => {
   // ── list state ───────────────────────────────────────────────────────────
-  const [groups, setGroups]           = useState<TaxGroup[]>([]);
+  const [groups, setGroups] = useState<TaxGroup[]>([]);
   const [loadingGroups, setLoadingGroups] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage]         = useState(10);
-  const [totalPages, setTotalPages]   = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
-    const lock_account_id = localStorage.getItem('lock_account_id');
+  const lock_account_id = localStorage.getItem('lock_account_id');
 
   // ── all available tax rates (for the form checkboxes) ───────────────────
-  const [allRates, setAllRates]       = useState<TaxRate[]>([]);
+  const [allRates, setAllRates] = useState<TaxRate[]>([]);
   const [loadingRates, setLoadingRates] = useState(false);
 
   // ── panel/form state ─────────────────────────────────────────────────────
-  const [panelOpen, setPanelOpen]     = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<TaxGroup | null>(null);
-  const [groupName, setGroupName]     = useState('');
+  const [groupName, setGroupName] = useState('');
   const [groupNameErr, setGroupNameErr] = useState('');
-  const [checkedIds, setCheckedIds]   = useState<Set<number>>(new Set());
-  const [saving, setSaving]           = useState(false);
+  const [checkedIds, setCheckedIds] = useState<Set<number>>(new Set());
+  const [saving, setSaving] = useState(false);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
   // ── fetch group list ─────────────────────────────────────────────────────
@@ -560,12 +601,59 @@ const GroupTaxTab: React.FC = () => {
     setCheckedIds(new Set());
   };
 
+
+  const validateGSTSelection = () => {
+    const selectedRates = allRates.filter((r) => checkedIds.has(r.id));
+
+    const cgst = selectedRates.filter(r => r.name?.toLowerCase().includes("cgst"));
+    const sgst = selectedRates.filter(r => r.name?.toLowerCase().includes("sgst"));
+    const igst = selectedRates.filter(r => r.name?.toLowerCase().includes("igst"));
+
+    // ❌ IGST with CGST/SGST not allowed
+    if (igst.length > 0 && (cgst.length > 0 || sgst.length > 0)) {
+      return "IGST cannot be selected with CGST or SGST.";
+    }
+
+    // ❌ Only CGST or only SGST not allowed
+    if ((cgst.length > 0 && sgst.length === 0) || (sgst.length > 0 && cgst.length === 0)) {
+      return "CGST and SGST must be selected together.";
+    }
+
+    // ❌ CGST & SGST rate mismatch
+    if (cgst.length > 0 && sgst.length > 0) {
+      const cgstRates = cgst.map(r => r.rate).sort();
+      const sgstRates = sgst.map(r => r.rate).sort();
+
+      if (cgstRates.length !== sgstRates.length ||
+        !cgstRates.every((rate, i) => rate === sgstRates[i])) {
+        return "CGST and SGST rates must be equal.";
+      }
+    }
+
+    return null;
+  };
+
   // ── save (create or edit) ─────────────────────────────────────────────────
   const handleSave = async () => {
     if (!groupName.trim()) { setGroupNameErr('Tax Group Name is required'); return; }
-    setGroupNameErr('');
+    // setGroupNameErr('');
+    // setSaving(true);
+    // const selectedIds = allRates.filter((r) => checkedIds.has(r.id)).map((r) => r.id);
+
+
+    const validationError = validateGSTSelection();
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+
+    setGroupNameErr("");
     setSaving(true);
-    const selectedIds = allRates.filter((r) => checkedIds.has(r.id)).map((r) => r.id);
+
+    const selectedIds = allRates
+      .filter((r) => checkedIds.has(r.id))
+      .map((r) => r.id);
+
     try {
       if (editingGroup) {
         await axios.patch(
@@ -593,9 +681,9 @@ const GroupTaxTab: React.FC = () => {
 
   // ── table columns & rows ──────────────────────────────────────────────────
   const columns: ColumnConfig[] = [
-    { key: 'actions',   label: 'Action',             sortable: false, hideable: false, draggable: false },
-    { key: 'name',      label: 'Tax Group Name',      sortable: true,  hideable: true,  draggable: true },
-    { key: 'tax_rates', label: 'Associated Tax Rates', sortable: false, hideable: true,  draggable: true },
+    { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
+    { key: 'name', label: 'Tax Group Name', sortable: true, hideable: true, draggable: true },
+    { key: 'tax_rates', label: 'Associated Tax Rates', sortable: false, hideable: true, draggable: true },
   ];
 
   const paginated = groups.slice((currentPage - 1) * perPage, currentPage * perPage);
@@ -890,7 +978,7 @@ export const AddTaxGroupPage: React.FC = () => {
   const onDragEnter = (idx: number) => { dragOver.current = idx; };
   const onDragEnd = () => {
     const from = dragItem.current;
-    const to   = dragOver.current;
+    const to = dragOver.current;
     if (from === null || to === null || from === to) return;
     const next = [...orderedRates];
     const [moved] = next.splice(from, 1);
@@ -900,11 +988,55 @@ export const AddTaxGroupPage: React.FC = () => {
     dragOver.current = null;
   };
 
+
+  const validateGSTSelection = () => {
+  const selectedRates = orderedRates.filter((r) => checkedIds.has(r.id));
+
+  const cgst = selectedRates.filter(r => r.name?.toLowerCase().includes("cgst"));
+  const sgst = selectedRates.filter(r => r.name?.toLowerCase().includes("sgst"));
+  const igst = selectedRates.filter(r => r.name?.toLowerCase().includes("igst"));
+
+  // ❌ IGST with CGST/SGST not allowed
+  if (igst.length > 0 && (cgst.length > 0 || sgst.length > 0)) {
+    return "IGST cannot be selected with CGST or SGST.";
+  }
+
+  // ❌ Only CGST or only SGST not allowed
+  if ((cgst.length > 0 && sgst.length === 0) || (sgst.length > 0 && cgst.length === 0)) {
+    return "CGST and SGST must be selected together.";
+  }
+
+  // ❌ CGST & SGST rate mismatch
+  if (cgst.length > 0 && sgst.length > 0) {
+    const cgstRates = cgst.map(r => r.rate).sort();
+    const sgstRates = sgst.map(r => r.rate).sort();
+
+    if (cgstRates.length !== sgstRates.length ||
+        !cgstRates.every((rate, i) => rate === sgstRates[i])) {
+      return "CGST and SGST rates must be equal.";
+    }
+  }
+
+  return null;
+};
   const handleSave = async () => {
     if (!groupName.trim()) { setGroupNameErr("Tax Group Name is required"); return; }
-    setGroupNameErr("");
-    setSaving(true);
-    const selectedIds = orderedRates.filter((r) => checkedIds.has(r.id)).map((r) => r.id);
+    // setGroupNameErr("");
+    // setSaving(true);
+    // const selectedIds = orderedRates.filter((r) => checkedIds.has(r.id)).map((r) => r.id);
+
+     const validationError = validateGSTSelection();
+  if (validationError) {
+    toast.error(validationError);
+    return;
+  }
+
+  setGroupNameErr("");
+  setSaving(true);
+
+  const selectedIds = orderedRates
+    .filter((r) => checkedIds.has(r.id))
+    .map((r) => r.id);
     try {
       await axios.post(
         `${getBaseUrl()}/lock_accounts/${lock_account_id}/create_tax_group.json`,

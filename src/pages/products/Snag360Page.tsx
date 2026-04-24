@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import * as tf from "@tensorflow/tfjs";
-import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import { useProductSecurity } from "./useProductSecurity";
 import {
   CameraPermissionPending,
   CameraPermissionDenied,
   ModelLoadingScreen,
   SecurityOverlays,
+  AlwaysMountedVideos,
 } from "./SecurityOverlays";
 import {
   ArrowLeft,
@@ -2753,7 +2752,9 @@ const Snag360FeaturesTab: React.FC = () => {
               <th className="border border-[#C4B89D]/50 p-3 text-center">
                 User Type
               </th>
-              <th className="border border-[#C4B89D]/50 p-3 text-center">USP</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">
+                USP
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -2842,7 +2843,9 @@ const Snag360MarketTab: React.FC = () => {
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Forecast
               </th>
-              <th className="border border-[#C4B89D]/50 p-2 text-center">CAGR</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
+                CAGR
+              </th>
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Primary Driver
               </th>
@@ -2889,7 +2892,9 @@ const Snag360MarketTab: React.FC = () => {
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
             <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
-              <th className="border border-[#C4B89D]/50 p-2 text-center">Rank</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
+                Rank
+              </th>
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Industry
               </th>
@@ -3052,7 +3057,9 @@ const Snag360PricingTab: React.FC = () => {
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Novade
               </th>
-              <th className="border border-[#C4B89D]/50 p-2 text-center">SnagR</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
+                SnagR
+              </th>
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 SafetyCulture
               </th>
@@ -3118,7 +3125,9 @@ const Snag360PricingTab: React.FC = () => {
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Tier / Product
               </th>
-              <th className="border border-[#C4B89D]/50 p-2 text-center">Model</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
+                Model
+              </th>
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 India Price
               </th>
@@ -3817,7 +3826,9 @@ const Snag360EnhancementsTab: React.FC = () => {
         <table className="w-full border-collapse text-[11px] font-poppins">
           <thead>
             <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold">
-              <th className="border border-[#C4B89D]/50 p-2 text-center">Rank</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
+                Rank
+              </th>
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Enhancement
               </th>
@@ -3978,13 +3989,28 @@ const Snag360Page: React.FC = () => {
 
   // Security checks
   if (security.cameraPermission === "pending") {
-    return <CameraPermissionPending />;
+    return (
+      <>
+        <AlwaysMountedVideos security={security} />
+        <CameraPermissionPending />
+      </>
+    );
   }
   if (security.cameraPermission === "denied") {
-    return <CameraPermissionDenied />;
+    return (
+      <>
+        <AlwaysMountedVideos security={security} />
+        <CameraPermissionDenied />
+      </>
+    );
   }
   if (security.modelLoading) {
-    return <ModelLoadingScreen />;
+    return (
+      <>
+        <AlwaysMountedVideos security={security} />
+        <ModelLoadingScreen />
+      </>
+    );
   }
 
   // Extract use cases data for custom component

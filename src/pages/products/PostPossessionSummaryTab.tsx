@@ -2,10 +2,10 @@ import React from 'react';
 
 const PostPossessionSummaryTab: React.FC = () => {
   // ── Style objects mapped 1:1 from HTML CSS classes ────────────────────────
-  const s0: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#1f3864', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 8px' };
-  const s1: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#2e4057', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 8px' };
-  const s2: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#ffffff', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '8px' };
-  const s3: React.CSSProperties = { borderBottom: '1px solid #cccccc', borderRight: '1px solid #cccccc', backgroundColor: '#f2f2f2', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '8px' };
+  const s0: React.CSSProperties = { borderBottom: '1px solid #C4B89D/50', borderRight: '1px solid #C4B89D/50', backgroundColor: '#DA7756', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 8px' };
+  const s1: React.CSSProperties = { borderBottom: '1px solid #C4B89D/50', borderRight: '1px solid #C4B89D/50', backgroundColor: '#DA7756', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 8px' };
+  const s2: React.CSSProperties = { borderBottom: '1px solid #C4B89D/50', borderRight: '1px solid #C4B89D/50', backgroundColor: '#ffffff', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '8px' };
+  const s3: React.CSSProperties = { borderBottom: '1px solid #C4B89D/50', borderRight: '1px solid #C4B89D/50', backgroundColor: '#F6F4EE', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '8px' };
 
   return (
     <div className="w-full overflow-x-auto font-sans">
@@ -164,3 +164,4 @@ const PostPossessionSummaryTab: React.FC = () => {
 };
 
 export default PostPossessionSummaryTab;
+

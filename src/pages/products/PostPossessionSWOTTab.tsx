@@ -271,7 +271,7 @@ const PostPossessionSWOTTab: React.FC = () => {
           <div className="overflow-hidden border border-[#D3D1C7] rounded-xl bg-white shadow-sm">
             <table className="w-full border-collapse text-[11px] leading-relaxed">
               <thead>
-                <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7]">
+                <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7]">
                   <th className="p-3 text-center w-[12%]">#</th>
                   <th className="p-3 text-left">Strength — Detail & Market Relevance</th>
                 </tr>
@@ -281,7 +281,7 @@ const PostPossessionSWOTTab: React.FC = () => {
                   <tr key={item.id} className="border-b border-[#D3D1C7] last:border-0 hover:bg-green-50/10">
                     <td className="p-3 text-center font-bold text-[#2e7d32] bg-green-50/20">{item.id}</td>
                     <td className="p-3 text-gray-700 font-medium">
-                      <span className="text-[#1f3864] font-bold block mb-0.5">{item.title}</span>
+                      <span className="text-[#DA7756] font-bold block mb-0.5">{item.title}</span>
                       {item.detail}
                     </td>
                   </tr>
@@ -300,7 +300,7 @@ const PostPossessionSWOTTab: React.FC = () => {
           <div className="overflow-hidden border border-[#D3D1C7] rounded-xl bg-white shadow-sm">
             <table className="w-full border-collapse text-[11px] leading-relaxed">
               <thead>
-                <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7]">
+                <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7]">
                   <th className="p-3 text-center w-[12%]">#</th>
                   <th className="p-3 text-left">Weakness — Detail & Market Relevance</th>
                 </tr>
@@ -310,7 +310,7 @@ const PostPossessionSWOTTab: React.FC = () => {
                   <tr key={item.id} className="border-b border-[#D3D1C7] last:border-0 hover:bg-red-50/10">
                     <td className="p-3 text-center font-bold text-[#c62828] bg-red-50/20">{item.id}</td>
                     <td className="p-3 text-gray-700 font-medium">
-                      <span className="text-[#1f3864] font-bold block mb-0.5">{item.title}</span>
+                      <span className="text-[#DA7756] font-bold block mb-0.5">{item.title}</span>
                       {item.detail}
                     </td>
                   </tr>
@@ -329,7 +329,7 @@ const PostPossessionSWOTTab: React.FC = () => {
           <div className="overflow-hidden border border-[#D3D1C7] rounded-xl bg-white shadow-sm">
             <table className="w-full border-collapse text-[11px] leading-relaxed">
               <thead>
-                <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7]">
+                <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7]">
                   <th className="p-3 text-center w-[12%]">#</th>
                   <th className="p-3 text-left">Opportunity — Detail & How to Exploit</th>
                 </tr>
@@ -339,7 +339,7 @@ const PostPossessionSWOTTab: React.FC = () => {
                   <tr key={item.id} className="border-b border-[#D3D1C7] last:border-0 hover:bg-blue-50/10">
                     <td className="p-3 text-center font-bold text-[#1565c0] bg-blue-50/20">{item.id}</td>
                     <td className="p-3 text-gray-700 font-medium">
-                      <span className="text-[#1f3864] font-bold block mb-0.5">{item.title}</span>
+                      <span className="text-[#DA7756] font-bold block mb-0.5">{item.title}</span>
                       {item.detail}
                     </td>
                   </tr>
@@ -358,7 +358,7 @@ const PostPossessionSWOTTab: React.FC = () => {
           <div className="overflow-hidden border border-[#D3D1C7] rounded-xl bg-white shadow-sm">
             <table className="w-full border-collapse text-[11px] leading-relaxed">
               <thead>
-                <tr className="bg-[#bdd7ee] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7]">
+                <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7]">
                   <th className="p-3 text-center w-[12%]">#</th>
                   <th className="p-3 text-left">Threat — Detail & Mitigation</th>
                 </tr>
@@ -368,7 +368,7 @@ const PostPossessionSWOTTab: React.FC = () => {
                   <tr key={item.id} className="border-b border-[#D3D1C7] last:border-0 hover:bg-orange-50/10">
                     <td className="p-3 text-center font-bold text-[#e65100] bg-orange-50/20">{item.id}</td>
                     <td className="p-3 text-gray-700 font-medium">
-                      <span className="text-[#1f3864] font-bold block mb-0.5">{item.title}</span>
+                      <span className="text-[#DA7756] font-bold block mb-0.5">{item.title}</span>
                       {item.detail}
                     </td>
                   </tr>
@@ -382,7 +382,7 @@ const PostPossessionSWOTTab: React.FC = () => {
       {/* Strategic Footer Card */}
       <div className="bg-white border-2 border-[#D3D1C7] rounded-2xl p-6 shadow-md mt-12">
         <div className="flex flex-col md:flex-row gap-6 items-center text-center md:text-left">
-          <div className="bg-[#1f3864] text-white p-4 rounded-xl font-bold text-center min-w-[140px]">
+          <div className="bg-[#DA7756] text-white p-4 rounded-xl font-bold text-center min-w-[140px]">
             <div className="text-[10px] uppercase tracking-widest opacity-80 mb-1">Strategic Moat</div>
             <div className="text-xl">DATA SOVEREIGNTY</div>
           </div>
@@ -398,3 +398,4 @@ const PostPossessionSWOTTab: React.FC = () => {
 };
 
 export default PostPossessionSWOTTab;
+

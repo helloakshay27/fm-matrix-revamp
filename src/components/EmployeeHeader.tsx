@@ -331,6 +331,9 @@ export const EmployeeHeader: React.FC = () => {
     if (notification.payload.ntype === "newtaskmanagement") {
       navigate(`/vas/tasks/${notification.payload.task_management_id}`);
     }
+    if (notification.payload.ntype === "newissue") {
+      navigate(`/vas/issues/${notification.payload.issue_id}`);
+    }
   };
 
   useEffect(() => {
