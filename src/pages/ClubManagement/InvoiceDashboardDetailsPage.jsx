@@ -46,8 +46,19 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 import { toast as sonnerToast } from "sonner";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
+import {
+    TextField,
+    FormControl,
+    Select as MuiSelect,
+    MenuItem,
+    Checkbox,
+    FormControlLabel,
+    RadioGroup,
+    Radio,
+    InputAdornment,
+} from "@mui/material";
 import axios from "axios";
+import { CloudUpload } from "@mui/icons-material";
 import {
     Accordion,
     AccordionItem,
@@ -66,6 +77,23 @@ export const InvoiceDashboardDetailsPage = () => {
     const [showApprovalLog, setShowApprovalLog] = useState(false);
     const [hasInvoiceApproval, setHasInvoiceApproval] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
+    const [paymentSubmitting, setPaymentSubmitting] = useState(false);
+    const [customerList, setCustomerList] = useState([]);
+    const [ledgerList, setLedgerList] = useState([]);
+    const [selectedCustomerId, setSelectedCustomerId] = useState("");
+    const [paymentDate, setPaymentDate] = useState(format(new Date(), "yyyy-MM-dd"));
+    const [paymentNumber, setPaymentNumber] = useState("");
+    const [amountReceived, setAmountReceived] = useState("");
+    const [bankCharges, setBankCharges] = useState("");
+    const [paymentMode, setPaymentMode] = useState("");
+    const [depositTo, setDepositTo] = useState("");
+    const [reference, setReference] = useState("");
+    const [taxDeducted, setTaxDeducted] = useState("no");
+    const [tdsAccount, setTdsAccount] = useState("Advance Tax");
+    const [notes, setNotes] = useState("");
+    const [sendThankYou, setSendThankYou] = useState(true);
+    const [paymentReceivedOn, setPaymentReceivedOn] = useState("");
+    const [attachments, setAttachments] = useState([]);
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -77,6 +105,19 @@ export const InvoiceDashboardDetailsPage = () => {
             fetchLockAccount();
         }
     }, [id, baseUrl, token]);
+
+    useEffect(() => {
+        if (!baseUrl || !token || !lock_account_id) return;
+        const headers = { Authorization: `Bearer ${token}` };
+        axios
+            .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, { headers })
+            .then((res) => setCustomerList(res.data?.data || res.data || []))
+            .catch(() => setCustomerList([]));
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_ledgers.json`, { headers })
+            .then((res) => setLedgerList(res.data?.data || res.data || []))
+            .catch(() => setLedgerList([]));
+    }, [baseUrl, token, lock_account_id]);
 
     const fetchLockAccount = async () => {
         try {
@@ -261,6 +302,132 @@ export const InvoiceDashboardDetailsPage = () => {
     const formatDate = (dateString) => {
         if (!dateString) return "N/A";
         return format(new Date(dateString), "dd/MM/yyyy");
+    };
+
+    const PAYMENT_MODES = [
+        "Bank Remittance",
+        "Bank Transfer",
+        "Cash",
+        "Cheque",
+        "Credit Card",
+        "UPI",
+    ];
+
+    const selectedCustomer = customerList.find((c) => c.id === selectedCustomerId);
+
+    useEffect(() => {
+        if (!invoiceData) return;
+        const customerId =
+            invoiceData.lock_account_customer_id ||
+            invoiceData.customer_id ||
+            invoiceData.payment_of_id ||
+            "";
+        setSelectedCustomerId(customerId);
+        setPaymentNumber(String(invoiceData.next_payment_number || invoiceData.id || ""));
+        const dueOrTotal =
+            Number(invoiceData.balance_due ?? invoiceData.total_amount ?? 0).toFixed(2);
+        setAmountReceived(dueOrTotal);
+        const defaultDate = format(new Date(), "yyyy-MM-dd");
+        setPaymentReceivedOn(defaultDate);
+    }, [invoiceData]);
+
+    const handleRecordPayment = async () => {
+        if (!selectedCustomerId) {
+            sonnerToast.error("Customer is not available for this invoice.");
+            return;
+        }
+        if (!amountReceived || Number(amountReceived) <= 0) {
+            sonnerToast.error("Amount Received should be greater than 0.");
+            return;
+        }
+        if (!depositTo) {
+            sonnerToast.error("Please select Deposit To.");
+            return;
+        }
+        if (taxDeducted === "yes" && !tdsAccount) {
+            sonnerToast.error("Please select TDS Tax Account.");
+            return;
+        }
+
+        setPaymentSubmitting(true);
+        try {
+            // Keep payload contract aligned with Payment Received create page.
+            const lp = {
+                payment_of: "LockAccountCustomer",
+                payment_of_id: Number(selectedCustomerId),
+                payment_made: false,
+                paid_amount: Number(amountReceived) || 0,
+                bank_charges: Number(bankCharges) || 0,
+                amount_withheld: 0,
+                payment_date: format(new Date(paymentDate), "dd/MM/yyyy"),
+                payment_mode: paymentMode,
+                order_number: reference,
+                deposit_to_ledger_id: Number(depositTo),
+                tax_deducted: taxDeducted === "yes",
+                tds_lock_account_ledger_id: taxDeducted === "yes" && tdsAccount ? tdsAccount : null,
+                notes,
+                payment_amount: Number(amountReceived) || 0,
+                excess_amount: 0,
+                status: "paid",
+                lock_bill_payments_attributes: [
+                    {
+                        resource_id: Number(id),
+                        resource_type: "LockAccountInvoice",
+                        amount: Number(amountReceived) || 0,
+                        // Same as create page row value (yyyy-MM-dd)
+                        payment_date: paymentReceivedOn || paymentDate,
+                    },
+                ],
+            };
+            const formData = new FormData();
+            formData.append("lock_payment[payment_of]", lp.payment_of);
+            formData.append("lock_payment[payment_of_id]", String(lp.payment_of_id));
+            formData.append("lock_payment[payment_made]", String(lp.payment_made));
+            formData.append("lock_payment[paid_amount]", String(lp.paid_amount));
+            formData.append("lock_payment[bank_charges]", String(lp.bank_charges));
+            formData.append("lock_payment[amount_withheld]", String(lp.amount_withheld));
+            formData.append("lock_payment[payment_date]", lp.payment_date);
+            formData.append("lock_payment[payment_mode]", lp.payment_mode || "");
+            formData.append("lock_payment[order_number]", lp.order_number || "");
+            formData.append("lock_payment[deposit_to_ledger_id]", String(lp.deposit_to_ledger_id));
+            formData.append("lock_payment[tax_deducted]", String(lp.tax_deducted));
+            formData.append(
+                "lock_payment[tds_lock_account_ledger_id]",
+                lp.tds_lock_account_ledger_id ?? ""
+            );
+            formData.append("lock_payment[notes]", lp.notes || "");
+            formData.append("lock_payment[payment_amount]", String(lp.payment_amount));
+            formData.append("lock_payment[excess_amount]", String(lp.excess_amount));
+            formData.append("lock_payment[status]", lp.status);
+            lp.lock_bill_payments_attributes.forEach((row, index) => {
+                formData.append(`lock_payment[lock_bill_payments_attributes][${index}][resource_id]`, String(row.resource_id));
+                formData.append(`lock_payment[lock_bill_payments_attributes][${index}][resource_type]`, row.resource_type);
+                formData.append(`lock_payment[lock_bill_payments_attributes][${index}][amount]`, String(row.amount));
+                formData.append(`lock_payment[lock_bill_payments_attributes][${index}][payment_date]`, row.payment_date);
+            });
+            attachments.forEach((file, index) => {
+                formData.append(
+                    `lock_payment[attachments_attributes][${index}][document]`,
+                    file,
+                    file.name
+                );
+                formData.append(
+                    `lock_payment[attachments_attributes][${index}][active]`,
+                    "true"
+                );
+            });
+            await axios.post(
+                `https://${baseUrl}/lock_payments.json?lock_account_id=${lock_account_id}`,
+                formData,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            sonnerToast.success("Payment recorded successfully.");
+            fetchInvoiceDetails();
+        } catch (error) {
+            sonnerToast.error("Failed to record payment.");
+        } finally {
+            setPaymentSubmitting(false);
+        }
     };
 
     if (loading) {
@@ -458,8 +625,9 @@ export const InvoiceDashboardDetailsPage = () => {
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+                    <TabsList className="grid grid-cols-5 w-full max-w-4xl">
                         <TabsTrigger value="invoice-details">Invoice Details</TabsTrigger>
+                        <TabsTrigger value="record-payment">Record Payment</TabsTrigger>
                         <TabsTrigger value="customer-info">Customer Info</TabsTrigger>
                         <TabsTrigger value="attachments">Attachments & Comms</TabsTrigger>
                         <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
@@ -772,6 +940,284 @@ export const InvoiceDashboardDetailsPage = () => {
                                         No journal entries available
                                     </p>
                                 )}
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="record-payment" className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <DollarSign className="h-5 w-5 text-primary" />
+                                    Payment for {invoiceData.invoice_number || "-"}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <p className="text-sm font-medium mb-2">
+                                            Customer Name<span className="text-red-500">*</span>
+                                        </p>
+                                        <FormControl fullWidth>
+                                            <MuiSelect value={selectedCustomerId} disabled sx={fieldStyles}>
+                                                {selectedCustomer && (
+                                                    <MenuItem value={selectedCustomer.id}>
+                                                        {[
+                                                            selectedCustomer.salutation,
+                                                            selectedCustomer.first_name,
+                                                            selectedCustomer.last_name,
+                                                        ]
+                                                            .filter(Boolean)
+                                                            .join(" ") || selectedCustomer.company_name}
+                                                    </MenuItem>
+                                                )}
+                                            </MuiSelect>
+                                        </FormControl>
+                                        {selectedCustomer?.pan && (
+                                            <p className="text-xs text-muted-foreground mt-2">
+                                                PAN: <span className="text-blue-600">{selectedCustomer.pan}</span>
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium mb-2">
+                                            Payment #<span className="text-red-500">*</span>
+                                        </p>
+                                        <TextField
+                                            fullWidth
+                                            value={paymentNumber}
+                                            disabled
+                                            sx={fieldStyles}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <p className="text-sm font-medium mb-2">
+                                            Amount Received (INR)<span className="text-red-500">*</span>
+                                        </p>
+                                        <TextField
+                                            fullWidth
+                                            type="number"
+                                            value={amountReceived}
+                                            onChange={(e) => setAmountReceived(e.target.value)}
+                                            sx={fieldStyles}
+                                            InputProps={{
+                                                startAdornment: <InputAdornment position="start">INR</InputAdornment>,
+                                            }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium mb-2">Bank Charges (if any)</p>
+                                        <TextField
+                                            fullWidth
+                                            type="number"
+                                            value={bankCharges}
+                                            onChange={(e) => setBankCharges(e.target.value)}
+                                            sx={fieldStyles}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <p className="text-sm font-medium">Tax deducted?</p>
+                                    <RadioGroup
+                                        row
+                                        value={taxDeducted}
+                                        onChange={(e) => setTaxDeducted(e.target.value)}
+                                    >
+                                        <FormControlLabel value="no" control={<Radio size="small" />} label="No Tax deducted" />
+                                        <FormControlLabel value="yes" control={<Radio size="small" />} label="Yes, TDS (Income Tax)" />
+                                    </RadioGroup>
+                                </div>
+
+                                {taxDeducted === "yes" && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <p className="text-sm font-medium mb-2">
+                                                TDS Tax Account<span className="text-red-500">*</span>
+                                            </p>
+                                            <FormControl fullWidth>
+                                                <MuiSelect
+                                                    value={tdsAccount}
+                                                    onChange={(e) => setTdsAccount(e.target.value)}
+                                                    sx={fieldStyles}
+                                                >
+                                                    <MenuItem value="Advance Tax">Advance Tax</MenuItem>
+                                                    <MenuItem value="Employee Advance">Employee Advance</MenuItem>
+                                                    <MenuItem value="Prepaid Expenses">Prepaid Expenses</MenuItem>
+                                                    <MenuItem value="TDS Receivable">TDS Receivable</MenuItem>
+                                                </MuiSelect>
+                                            </FormControl>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <p className="text-sm font-medium mb-2">Payment Date</p>
+                                        <TextField
+                                            fullWidth
+                                            type="date"
+                                            value={paymentDate}
+                                            onChange={(e) => setPaymentDate(e.target.value)}
+                                            sx={fieldStyles}
+                                        />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium mb-2">Payment Received On</p>
+                                        <TextField
+                                            fullWidth
+                                            type="date"
+                                            value={paymentReceivedOn}
+                                            onChange={(e) => setPaymentReceivedOn(e.target.value)}
+                                            sx={fieldStyles}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <p className="text-sm font-medium mb-2">Payment Mode</p>
+                                        <FormControl fullWidth>
+                                            <MuiSelect
+                                                value={paymentMode}
+                                                onChange={(e) => setPaymentMode(e.target.value)}
+                                                displayEmpty
+                                                sx={fieldStyles}
+                                                MenuProps={selectMenuProps}
+                                            >
+                                                <MenuItem value="" disabled>
+                                                    Select payment mode
+                                                </MenuItem>
+                                                {PAYMENT_MODES.map((mode) => (
+                                                    <MenuItem key={mode} value={mode}>
+                                                        {mode}
+                                                    </MenuItem>
+                                                ))}
+                                            </MuiSelect>
+                                        </FormControl>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <p className="text-sm font-medium mb-2">
+                                            Deposit To<span className="text-red-500">*</span>
+                                        </p>
+                                        <FormControl fullWidth>
+                                            <MuiSelect
+                                                value={depositTo}
+                                                onChange={(e) => setDepositTo(e.target.value)}
+                                                displayEmpty
+                                                sx={fieldStyles}
+                                                MenuProps={selectMenuProps}
+                                            >
+                                                <MenuItem value="" disabled>
+                                                    Select ledger
+                                                </MenuItem>
+                                                {ledgerList.map((ledger) => (
+                                                    <MenuItem key={ledger.id} value={String(ledger.id)}>
+                                                        {ledger.name}
+                                                    </MenuItem>
+                                                ))}
+                                            </MuiSelect>
+                                        </FormControl>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium mb-2">Reference#</p>
+                                        <TextField
+                                            fullWidth
+                                            value={reference}
+                                            onChange={(e) => setReference(e.target.value)}
+                                            sx={fieldStyles}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <p className="text-sm font-medium mb-2">Notes</p>
+                                        <TextField
+                                            fullWidth
+                                            multiline
+                                            rows={3}
+                                            value={notes}
+                                            onChange={(e) => setNotes(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <p className="text-sm font-medium">Attachments</p>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="gap-2"
+                                        onClick={() => document.getElementById("record-payment-attachments")?.click()}
+                                    >
+                                        <CloudUpload fontSize="small" />
+                                        Upload File
+                                    </Button>
+                                    <input
+                                        id="record-payment-attachments"
+                                        type="file"
+                                        multiple
+                                        className="hidden"
+                                        onChange={(e) => {
+                                            const files = e.target.files ? Array.from(e.target.files) : [];
+                                            setAttachments(files.slice(0, 5));
+                                        }}
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        You can upload a maximum of 5 files, 5MB each
+                                    </p>
+                                    {attachments.length > 0 && (
+                                        <div className="space-y-1">
+                                            {attachments.map((file, idx) => (
+                                                <p key={`${file.name}-${idx}`} className="text-sm text-muted-foreground">
+                                                    {file.name}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox
+                                                checked={sendThankYou}
+                                                onChange={(e) => setSendThankYou(e.target.checked)}
+                                                size="small"
+                                            />
+                                        }
+                                        label='Send a "Thank you" note for this payment'
+                                    />
+                                    {sendThankYou && selectedCustomer?.email && (
+                                        <div className="mt-2 inline-flex items-center gap-2 border rounded px-3 py-1 text-sm">
+                                            <Checkbox defaultChecked size="small" />
+                                            {selectedCustomer.email}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center justify-end gap-3 pt-2">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setActiveTab("invoice-details")}
+                                    >
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        onClick={handleRecordPayment}
+                                        disabled={paymentSubmitting}
+                                        className="bg-[#C72030] hover:bg-[#a81a28]"
+                                    >
+                                        {paymentSubmitting ? "Saving..." : "Save as Paid"}
+                                    </Button>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>
