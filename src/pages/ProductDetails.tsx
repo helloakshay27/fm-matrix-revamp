@@ -1,6 +1,12 @@
-import React, { useState, useEffect, useRef } from "react";
-import * as tf from "@tensorflow/tfjs";
-import * as cocoSsd from "@tensorflow-models/coco-ssd";
+import React, { useState } from "react";
+import { useProductSecurity } from "./products/useProductSecurity";
+import {
+  CameraPermissionPending,
+  CameraPermissionDenied,
+  ModelLoadingScreen,
+  SecurityOverlays,
+  AlwaysMountedVideos,
+} from "./products/SecurityOverlays";
 import {
   ArrowLeft,
   Monitor,
@@ -10,9 +16,6 @@ import {
   Globe,
   Smartphone,
   Presentation,
-  Camera,
-  ShieldAlert,
-  Lock,
   ChevronLeft,
   ChevronRight,
   Settings,
@@ -36,6 +39,7 @@ import {
   AlertTriangle,
   Lightbulb,
   XCircle,
+  Lock,
 } from "lucide-react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import {
@@ -180,167 +184,17 @@ interface ProductDetailsProps {
   productId?: string;
 }
 
-const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdProp }) => {
+const ProductDetails: React.FC<ProductDetailsProps> = ({
+  productId: productIdProp,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { productId: productIdFromParams } = useParams();
-  const productId = productIdProp || productIdFromParams || location.state?.productId || "1";
+  const productId =
+    productIdProp || productIdFromParams || location.state?.productId || "1";
 
-  const [cameraPermission, setCameraPermission] = useState<
-    "pending" | "granted" | "denied"
-  >("pending");
-  const [isBlurred, setIsBlurred] = useState(false);
-  const [showBlackout, setShowBlackout] = useState(false);
-  const [isDeviceDetected, setIsDeviceDetected] = useState(false);
-  const [model, setModel] = useState<cocoSsd.ObjectDetection | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  useEffect(() => {
-    const loadModel = async () => {
-      try {
-        await tf.ready();
-        const loadedModel = await cocoSsd.load();
-        setModel(loadedModel);
-      } catch (err) {
-        console.error("AI Model failed to load:", err);
-      }
-    };
-
-    const requestCamera = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-            facingMode: "user",
-          },
-        });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-        setCameraPermission("granted");
-        loadModel();
-      } catch (err) {
-        console.error("Camera access denied:", err);
-        setCameraPermission("denied");
-      }
-    };
-
-    requestCamera();
-
-    // AI Detection Loop
-    let detectionInterval: ReturnType<typeof setInterval> | undefined;
-    const currentVideo = videoRef.current;
-
-    if (model && cameraPermission === "granted") {
-      detectionInterval = setInterval(async () => {
-        if (currentVideo && currentVideo.readyState === 4) {
-          // Detect more objects with a lower confidence threshold for maximum safety
-          const predictions = await model.detect(currentVideo, 12, 0.15);
-
-          // 1. Check for person (must be clearly identified)
-          const personPresent = predictions.some(
-            (p) => p.class === "person" && p.score > 0.4
-          );
-
-          // 2. Identify forbidden objects (especially phones, but also any non-human objects)
-          // We lower the threshold for phones specifically to catch them even in shadows
-          const forbiddenLabels = [
-            "cell phone",
-            "camera",
-            "laptop",
-            "tv",
-            "remote",
-            "book",
-            "bottle",
-          ];
-          const deviceDetected = predictions.some(
-            (p) => forbiddenLabels.includes(p.class) && p.score > 0.18
-          );
-
-          // 3. General Anti-Object Rule: If anything else is detected near you, block it.
-          const anyOtherObject = predictions.some(
-            (p) => p.class !== "person" && p.score > 0.25
-          );
-
-          if (!personPresent || deviceDetected || anyOtherObject) {
-            setIsDeviceDetected(true);
-            setIsBlurred(true);
-            // Hide information aggressively
-            document.body.style.filter = "blur(100px)";
-            document.body.style.transition = "filter 0.1s ease-in-out";
-          } else {
-            setIsDeviceDetected(false);
-            document.body.style.filter = "none";
-          }
-        }
-      }, 10); // Faster checks
-    }
-
-    // Prevent Screenshots & Screen Recording deterrents
-    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
-    const handleCopy = (e: ClipboardEvent) => {
-      e.preventDefault();
-      alert("Unauthorized: Data copying is disabled for security.");
-    };
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (
-        e.key === "PrintScreen" ||
-        (e.key === "s" && e.metaKey && e.shiftKey) ||
-        (e.ctrlKey && e.shiftKey && (e.key === "S" || e.key === "s")) ||
-        e.keyCode === 44
-      ) {
-        setShowBlackout(true);
-        setIsBlurred(true);
-        navigator.clipboard
-          .writeText("SECURITY ALERT: Screenshot prohibited.")
-          .catch(() => { });
-
-        setTimeout(() => {
-          alert(
-            "Security Alert: Screen capture is strictly prohibited. This action has been logged."
-          );
-          setShowBlackout(false);
-        }, 100);
-
-        e.preventDefault();
-        return false;
-      }
-    };
-
-    const handleBlur = () => setIsBlurred(true);
-    const handleFocus = () => setIsBlurred(false);
-
-    window.addEventListener("blur", handleBlur);
-    window.addEventListener("focus", handleFocus);
-    document.addEventListener("contextmenu", handleContextMenu);
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("keyup", handleKeyDown);
-    document.addEventListener("copy", handleCopy as unknown as EventListener);
-    document.addEventListener("cut", handleCopy as unknown as EventListener);
-
-    return () => {
-      if (detectionInterval) clearInterval(detectionInterval);
-      window.removeEventListener("blur", handleBlur);
-      window.removeEventListener("focus", handleFocus);
-      document.removeEventListener("contextmenu", handleContextMenu);
-      document.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("keyup", handleKeyDown);
-      document.removeEventListener(
-        "copy",
-        handleCopy as unknown as EventListener
-      );
-      document.removeEventListener(
-        "cut",
-        handleCopy as unknown as EventListener
-      );
-      if (currentVideo?.srcObject) {
-        const stream = currentVideo.srcObject as MediaStream;
-        stream.getTracks().forEach((track) => track.stop());
-      }
-    };
-  }, [model, cameraPermission]);
+  const security = useProductSecurity();
+  const { cameraPermission, isBlurred } = security;
 
   const allProductsData: { [key: string]: ProductInfo } = {
     "1": {
@@ -2588,93 +2442,28 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
   const assets = productData.assets || [];
   const credentials = productData.credentials || [];
 
-  if (isDeviceDetected || cameraPermission === "denied") {
+  if (security.cameraPermission === "pending") {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-6">
-        <div className="max-w-md w-full bg-zinc-900 rounded-3xl shadow-[0_0_50px_rgba(239,68,68,0.2)] p-10 text-center border border-zinc-800">
-          <div className="w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-red-500/20">
-            <ShieldAlert className="w-12 h-12 text-red-500 animate-pulse" />
-          </div>
-          <h1 className="text-3xl font-black text-white mb-4 tracking-tighter uppercase">
-            Access Suspended
-          </h1>
-
-          <div className="space-y-4 mb-10 text-left">
-            <div className="bg-zinc-800/50 p-4 rounded-xl border border-zinc-700">
-              <p className="text-red-400 text-xs font-bold uppercase mb-2">
-                Security Violation Details:
-              </p>
-              <ul className="text-gray-400 text-xs space-y-2">
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500">•</span>
-                  <span>
-                    <strong>AI Status:</strong> Authorized Human (Face) not
-                    detected or obscured.
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-red-500">•</span>
-                  <span>
-                    <strong>Object Detection:</strong> Unauthorized items
-                    (Phone, Recording devices, or background objects) detected
-                    in view.
-                  </span>
-                </li>
-              </ul>
-            </div>
-            <p className="text-gray-500 text-xs leading-relaxed italic text-center">
-              Guideline: Ensure you are centered in frame with NO other objects
-              visible. Content is visible ONLY when your face is recognized
-              alone.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <button
-              onClick={() => {
-                setIsDeviceDetected(false);
-                setIsBlurred(false);
-                document.body.style.filter = "none";
-                // Re-trigger face check logic via state update or simple reload if preferred
-                window.location.reload();
-              }}
-              className="w-full bg-white text-black font-black py-4 rounded-2xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2 uppercase text-sm tracking-widest shadow-xl"
-            >
-              <Camera className="w-5 h-5" />
-              Re-Verify Face Only
-            </button>
-            <button
-              onClick={() => navigate("/products")}
-              className="w-full bg-zinc-800 text-gray-400 font-bold py-4 rounded-2xl hover:bg-zinc-700 transition-colors uppercase text-sm tracking-widest"
-            >
-              Exit Secure Zone
-            </button>
-          </div>
-          <div className="mt-10 pt-6 border-t border-zinc-800">
-            <div className="flex items-center justify-center gap-2 text-red-500/50 mb-3">
-              <Lock className="w-4 h-4" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em]">
-                Extreme Security Mode Active
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <>
+        <AlwaysMountedVideos security={security} />
+        <CameraPermissionPending />
+      </>
     );
   }
-
-  if (cameraPermission === "pending") {
+  if (security.cameraPermission === "denied") {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="animate-pulse flex flex-col items-center gap-4">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-            <Lock className="w-6 h-6 text-blue-500" />
-          </div>
-          <p className="text-sm font-medium text-gray-500 italic">
-            Initiating Secure Session...
-          </p>
-        </div>
-      </div>
+      <>
+        <AlwaysMountedVideos security={security} />
+        <CameraPermissionDenied />
+      </>
+    );
+  }
+  if (security.modelLoading) {
+    return (
+      <>
+        <AlwaysMountedVideos security={security} />
+        <ModelLoadingScreen />
+      </>
     );
   }
 
@@ -2690,14 +2479,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
         } as React.CSSProperties
       }
     >
-      {/* Security Monitoring Feed */}
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted
-        className="fixed top-4 right-4 w-32 h-24 rounded-lg border-2 border-green-500 shadow-2xl object-cover z-50 opacity-40 pointer-events-none grayscale"
-      />
+      <SecurityOverlays security={security} />
 
       {/* Forensic Watermark */}
       <div className="fixed inset-0 pointer-events-none z-40 opacity-[0.03] overflow-hidden flex flex-wrap gap-24 p-20 select-none">
@@ -2710,20 +2492,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
           </div>
         ))}
       </div>
-
-      {/* Extreme Blackout Overlay for PrtSc Tooling */}
-      {showBlackout && (
-        <div className="fixed inset-0 bg-black z-[9999] flex flex-col items-center justify-center text-white p-10 text-center">
-          <ShieldAlert className="w-20 h-20 text-red-500 mb-6 animate-bounce" />
-          <h1 className="text-4xl font-black mb-4">
-            SECURITY VIOLATION DETECTED
-          </h1>
-          <p className="text-xl">
-            Screen capture is strictly prohibited. This attempt has been logged
-            to the security server.
-          </p>
-        </div>
-      )}
       {/* Header */}
       <div className="relative mb-8 flex flex-col items-center bg-white">
         <div className="w-full max-w-7xl px-6 lg:px-10 mb-6">
@@ -3377,24 +3145,26 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                       (category, idx) => (
                         <div
                           key={idx}
-                          className={`p-5 rounded-lg border-2 ${category.type === "strength"
-                            ? "bg-green-50 border-green-200"
-                            : category.type === "weakness"
-                              ? "bg-red-50 border-red-200"
-                              : category.type === "opportunity"
-                                ? "bg-blue-50 border-blue-200"
-                                : "bg-yellow-50 border-yellow-200"
-                            }`}
+                          className={`p-5 rounded-lg border-2 ${
+                            category.type === "strength"
+                              ? "bg-green-50 border-green-200"
+                              : category.type === "weakness"
+                                ? "bg-red-50 border-red-200"
+                                : category.type === "opportunity"
+                                  ? "bg-blue-50 border-blue-200"
+                                  : "bg-yellow-50 border-yellow-200"
+                          }`}
                         >
                           <h4
-                            className={`font-bold mb-3 flex items-center gap-2 ${category.type === "strength"
-                              ? "text-green-700"
-                              : category.type === "weakness"
-                                ? "text-red-700"
-                                : category.type === "opportunity"
-                                  ? "text-blue-700"
-                                  : "text-yellow-700"
-                              }`}
+                            className={`font-bold mb-3 flex items-center gap-2 ${
+                              category.type === "strength"
+                                ? "text-green-700"
+                                : category.type === "weakness"
+                                  ? "text-red-700"
+                                  : category.type === "opportunity"
+                                    ? "text-blue-700"
+                                    : "text-yellow-700"
+                            }`}
                           >
                             {category.type === "strength" && (
                               <CheckCircle className="w-5 h-5" />
@@ -3419,14 +3189,15 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                                 className="flex items-start gap-2 text-sm text-gray-700"
                               >
                                 <span
-                                  className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${category.type === "strength"
-                                    ? "bg-green-500"
-                                    : category.type === "weakness"
-                                      ? "bg-red-500"
-                                      : category.type === "opportunity"
-                                        ? "bg-blue-500"
-                                        : "bg-yellow-500"
-                                    }`}
+                                  className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                                    category.type === "strength"
+                                      ? "bg-green-500"
+                                      : category.type === "weakness"
+                                        ? "bg-red-500"
+                                        : category.type === "opportunity"
+                                          ? "bg-blue-500"
+                                          : "bg-yellow-500"
+                                  }`}
                                 ></span>
                                 <span>{item}</span>
                               </li>
@@ -3460,12 +3231,13 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                           className="bg-white p-5 rounded-lg border flex gap-4"
                         >
                           <div
-                            className={`w-2 rounded-full flex-shrink-0 ${item.priority === "High"
-                              ? "bg-red-500"
-                              : item.priority === "Medium"
-                                ? "bg-yellow-500"
-                                : "bg-green-500"
-                              }`}
+                            className={`w-2 rounded-full flex-shrink-0 ${
+                              item.priority === "High"
+                                ? "bg-red-500"
+                                : item.priority === "Medium"
+                                  ? "bg-yellow-500"
+                                  : "bg-green-500"
+                            }`}
                           ></div>
                           <div className="flex-1">
                             <div className="flex justify-between items-start mb-2">
@@ -3474,12 +3246,13 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                               </h4>
                               <div className="flex items-center gap-2">
                                 <span
-                                  className={`px-2 py-0.5 text-xs rounded ${item.priority === "High"
-                                    ? "bg-red-100 text-red-700"
-                                    : item.priority === "Medium"
-                                      ? "bg-yellow-100 text-yellow-700"
-                                      : "bg-green-100 text-green-700"
-                                    }`}
+                                  className={`px-2 py-0.5 text-xs rounded ${
+                                    item.priority === "High"
+                                      ? "bg-red-100 text-red-700"
+                                      : item.priority === "Medium"
+                                        ? "bg-yellow-100 text-yellow-700"
+                                        : "bg-green-100 text-green-700"
+                                  }`}
                                 >
                                   {item.priority}
                                 </span>
@@ -3800,8 +3573,9 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
 
                         {/* Fallback when image is not available */}
                         <div
-                          className={`absolute inset-0 ${productData.ownerImage ? "hidden" : "flex"
-                            } flex-col items-center justify-center text-gray-400 text-sm`}
+                          className={`absolute inset-0 ${
+                            productData.ownerImage ? "hidden" : "flex"
+                          } flex-col items-center justify-center text-gray-400 text-sm`}
                         >
                           <User className="w-12 h-12 mb-2" />
                           <span>{productData.owner || "Product Owner"}</span>
@@ -3946,12 +3720,13 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                           {asset.icon}
                         </div>
                         <span
-                          className={`text-xs font-semibold underline cursor-pointer transition-colors ${!asset.url ||
+                          className={`text-xs font-semibold underline cursor-pointer transition-colors ${
+                            !asset.url ||
                             asset.url === "NA" ||
                             asset.url === "#"
-                            ? "text-gray-400 hover:text-gray-300 pointer-events-none"
-                            : "text-gray-700 hover:text-blue-600"
-                            }`}
+                              ? "text-gray-400 hover:text-gray-300 pointer-events-none"
+                              : "text-gray-700 hover:text-blue-600"
+                          }`}
                           onClick={() =>
                             asset.url &&
                             asset.url !== "NA" &&
@@ -3999,13 +3774,14 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
                           </h4>
                           <div className="text-[10px] text-gray-500 space-y-0.5">
                             <p
-                              className={`transition-colors ${!cred.url ||
+                              className={`transition-colors ${
+                                !cred.url ||
                                 cred.url === "NA" ||
                                 cred.url === "#" ||
                                 !cred.url.startsWith("http")
-                                ? "text-gray-400 hover:text-gray-300 cursor-default"
-                                : "cursor-pointer hover:text-blue-500 hover:underline text-gray-500"
-                                }`}
+                                  ? "text-gray-400 hover:text-gray-300 cursor-default"
+                                  : "cursor-pointer hover:text-blue-500 hover:underline text-gray-500"
+                              }`}
                               onClick={() =>
                                 cred.url &&
                                 cred.url.startsWith("http") &&
@@ -4110,5 +3886,3 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({ productId: productIdPro
 };
 
 export default ProductDetails;
-
-

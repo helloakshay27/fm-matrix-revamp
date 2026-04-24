@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { apiClient } from '@/utils/apiClient';
-import { API_CONFIG } from '@/config/apiConfig';
-import { getToken } from '@/utils/auth';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiClient } from "@/utils/apiClient";
+import { API_CONFIG } from "@/config/apiConfig";
+import { getToken } from "@/utils/auth";
 
 interface NextEscalation {
   minutes: number;
@@ -69,12 +69,14 @@ const AssignTicketsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  
+
   const [selectedTickets, setSelectedTickets] = useState<SelectedTicket[]>([]);
-  const [selectedUser, setSelectedUser] = useState<string>('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [selectedUser, setSelectedUser] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [complaintStatuses, setComplaintStatuses] = useState<ComplaintStatus[]>([]);
+  const [complaintStatuses, setComplaintStatuses] = useState<ComplaintStatus[]>(
+    []
+  );
   const [loadingStatuses, setLoadingStatuses] = useState(false);
   const [fmUsers, setFmUsers] = useState<FMUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -89,14 +91,16 @@ const AssignTicketsPage: React.FC = () => {
     const fetchComplaintStatuses = async () => {
       setLoadingStatuses(true);
       try {
-        const response = await apiClient.get('/pms/admin/complaint_statuses.json');
+        const response = await apiClient.get(
+          "/pms/admin/complaint_statuses.json"
+        );
         setComplaintStatuses(response.data || []);
       } catch (error) {
-        console.error('Error fetching complaint statuses:', error);
+        console.error("Error fetching complaint statuses:", error);
         toast({
           title: "Error",
           description: "Failed to load complaint statuses.",
-          variant: "destructive"
+          variant: "destructive",
         });
       } finally {
         setLoadingStatuses(false);
@@ -110,14 +114,16 @@ const AssignTicketsPage: React.FC = () => {
     const fetchFMUsers = async () => {
       setLoadingUsers(true);
       try {
-        const response = await apiClient.get('/pms/users/get_escalate_to_users.json');
+        const response = await apiClient.get(
+          "/pms/users/get_escalate_to_users.json"
+        );
         setFmUsers(response.data.users || []);
       } catch (error) {
-        console.error('Error fetching FM users:', error);
+        console.error("Error fetching FM users:", error);
         toast({
           title: "Error",
           description: "Failed to load users.",
-          variant: "destructive"
+          variant: "destructive",
         });
       } finally {
         setLoadingUsers(false);
@@ -128,30 +134,36 @@ const AssignTicketsPage: React.FC = () => {
   }, [toast]);
 
   const handleBack = () => {
-    navigate('/maintenance/ticket');
+    navigate("/maintenance/ticket");
   };
 
   // Helper function to format escalation time in D:H:M format
-  const formatEscalationTime = (escalation: NextEscalation | null | undefined) => {
-    if (!escalation || !escalation.minutes) return '-';
-    
+  const formatEscalationTime = (
+    escalation: NextEscalation | null | undefined
+  ) => {
+    if (!escalation || !escalation.minutes) return "-";
+
     const totalMinutes = escalation.minutes;
     const days = Math.floor(totalMinutes / (24 * 60));
     const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
     const minutes = totalMinutes % 60;
-    
-    return `${days}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+    return `${days}:${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   };
 
   // Helper function to format escalation minutes (TAT)
-  const formatEscalationMinutes = (escalation: NextEscalation | null | undefined) => {
-    if (!escalation || !escalation.minutes) return '-';
+  const formatEscalationMinutes = (
+    escalation: NextEscalation | null | undefined
+  ) => {
+    if (!escalation || !escalation.minutes) return "-";
     return escalation.minutes.toString();
   };
 
   // Helper function to format escalation level name
-  const formatEscalationLevel = (escalation: NextEscalation | null | undefined) => {
-    if (!escalation || !escalation.escalation_name) return '-';
+  const formatEscalationLevel = (
+    escalation: NextEscalation | null | undefined
+  ) => {
+    if (!escalation || !escalation.escalation_name) return "-";
     return escalation.escalation_name;
   };
 
@@ -160,42 +172,46 @@ const AssignTicketsPage: React.FC = () => {
       toast({
         title: "Validation Error",
         description: "Please select either a status or assign to a user.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     // Check if all selected tickets have category (only category validation)
-    const ticketsWithoutCategory = selectedTickets.filter(ticket => 
-      !ticket.category_type
+    const ticketsWithoutCategory = selectedTickets.filter(
+      (ticket) => !ticket.category_type
     );
 
     if (ticketsWithoutCategory.length > 0) {
-      const ticketNumbers = ticketsWithoutCategory.map(ticket => ticket.ticket_number).join(', ');
+      const ticketNumbers = ticketsWithoutCategory
+        .map((ticket) => ticket.ticket_number)
+        .join(", ");
       toast({
         title: "Validation Error",
         description: `The following tickets are missing category information and cannot be updated: ${ticketNumbers}. Please add category to these tickets before bulk updating.`,
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
 
     setIsSubmitting(true);
     try {
-      const complaint_ids = selectedTickets.map(t => t.id);
-      
+      const complaint_ids = selectedTickets.map((t) => t.id);
+
       // Get authentication token and base URL from API config
       const authToken = API_CONFIG.TOKEN || getToken();
       const baseUrl = API_CONFIG.BASE_URL;
 
       if (!baseUrl) {
-        throw new Error('Base URL is not configured. Please log in again.');
+        throw new Error("Base URL is not configured. Please log in again.");
       }
 
       if (!authToken) {
-        throw new Error('Authentication token is not available. Please log in again.');
+        throw new Error(
+          "Authentication token is not available. Please log in again."
+        );
       }
-      
+
       // Sequential API calls - first status update, then assignment
       let statusResult = null;
       let assignResult = null;
@@ -203,87 +219,95 @@ const AssignTicketsPage: React.FC = () => {
       // Step 1: Update status if selected
       if (selectedStatus) {
         const formData = new FormData();
-        complaint_ids.forEach(id => {
-          formData.append('complaint_ids[]', id.toString());
+        complaint_ids.forEach((id) => {
+          formData.append("complaint_ids[]", id.toString());
         });
-        formData.append('issue_status', selectedStatus);
+        formData.append("issue_status", selectedStatus);
 
         const statusUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.BULK_UPDATE_STATUS}`;
 
         const statusResponse = await fetch(statusUrl, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${authToken}`,
+            Authorization: `Bearer ${authToken}`,
           },
-          body: formData
+          body: formData,
         });
 
         if (!statusResponse.ok) {
           const errorText = await statusResponse.text();
-          console.error('❌ Status API error response:', errorText);
-          throw new Error(`Status Update Failed - HTTP ${statusResponse.status}: ${errorText}`);
+          console.error("❌ Status API error response:", errorText);
+          throw new Error(
+            `Status Update Failed - HTTP ${statusResponse.status}: ${errorText}`
+          );
         }
-        
+
         statusResult = await statusResponse.json();
       }
 
       // Step 2: Assign user if selected
       if (selectedUser) {
         const formData = new FormData();
-        complaint_ids.forEach(id => {
-          formData.append('complaint_ids[]', id.toString());
+        complaint_ids.forEach((id) => {
+          formData.append("complaint_ids[]", id.toString());
         });
-        formData.append('assigned_to_ids[]', selectedUser);
-        formData.append('comment', 'Assigned from bulk assignment');
+        formData.append("assigned_to_ids[]", selectedUser);
+        formData.append("comment", "Assigned from bulk assignment");
 
         const assignUrl = `${baseUrl}${API_CONFIG.ENDPOINTS.BULK_ASSIGN_TICKETS}`;
 
         const assignResponse = await fetch(assignUrl, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${authToken}`,
+            Authorization: `Bearer ${authToken}`,
           },
-          body: formData
+          body: formData,
         });
 
         if (!assignResponse.ok) {
           const errorText = await assignResponse.text();
-          console.error('❌ Assign API error response:', errorText);
-          throw new Error(`Assignment Failed - HTTP ${assignResponse.status}: ${errorText}`);
+          console.error("❌ Assign API error response:", errorText);
+          throw new Error(
+            `Assignment Failed - HTTP ${assignResponse.status}: ${errorText}`
+          );
         }
-        
+
         assignResult = await assignResponse.json();
       }
-      
+
       toast({
         title: "Success",
         description: `Successfully updated ${selectedTickets.length} ticket(s).`,
       });
-      
+
       navigate(-1);
     } catch (error) {
-      console.error('❌ Error updating tickets:', error);
-      
+      console.error("❌ Error updating tickets:", error);
+
       // Handle API validation errors
-      let errorMessage = 'Unknown error';
+      let errorMessage = "Unknown error";
       if (error instanceof Error) {
         errorMessage = error.message;
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
-      
+
       // Check if error is related to missing category/subcategory from API
-      if (errorMessage.toLowerCase().includes('category') || errorMessage.toLowerCase().includes('subcategory')) {
+      if (
+        errorMessage.toLowerCase().includes("category") ||
+        errorMessage.toLowerCase().includes("subcategory")
+      ) {
         toast({
           title: "Validation Error",
-          description: "Some tickets are missing required category information. Please ensure all tickets have proper category assigned.",
-          variant: "destructive"
+          description:
+            "Some tickets are missing required category information. Please ensure all tickets have proper category assigned.",
+          variant: "destructive",
         });
       } else {
         toast({
           title: "Error",
           description: `Failed to update tickets: ${errorMessage}`,
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     } finally {
@@ -304,7 +328,9 @@ const AssignTicketsPage: React.FC = () => {
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <h1 className="text-xl font-semibold text-gray-900">UPDATE ASSIGN TO</h1>
+          <h1 className="text-xl font-semibold text-gray-900">
+            UPDATE ASSIGN TO
+          </h1>
         </div>
 
         {/* Selected Tickets Table */}
@@ -387,34 +413,69 @@ const AssignTicketsPage: React.FC = () => {
                   </th>
                 </tr>
               </thead>
+
               <tbody className="bg-white divide-y divide-gray-200">
                 {selectedTickets.map((ticket) => (
                   <tr key={ticket.id}>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.ticket_number}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.heading}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.category_type || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.sub_category_type || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.posted_by || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.assigned_to || 'Unassigned'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.ticket_number}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.heading}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.category_type || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.sub_category_type || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.posted_by || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.assigned_to || "Unassigned"}
+                    </td>
                     <td className="px-4 py-3 w-32">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
                         {ticket.issue_status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.priority || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.site_name || '-'}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString() : '-'}
+                      {ticket.priority || "-"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.issue_type || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.complaint_mode || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.service_or_asset || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.asset_task_occurrence_id || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.proactive_reactive || '-'}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {ticket.review_tracking_date ? new Date(ticket.review_tracking_date).toLocaleDateString() : '-'}
+                      {ticket.site_name || "-"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.response_escalation || '-'}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.created_at
+                        ? new Date(ticket.created_at).toLocaleDateString()
+                        : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.issue_type || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.complaint_mode || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.service_or_asset || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.asset_task_occurrence_id || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.proactive_reactive || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.review_tracking_date
+                        ? new Date(
+                            ticket.review_tracking_date
+                          ).toLocaleDateString()
+                        : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {ticket.response_escalation || "-"}
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {formatEscalationMinutes(ticket.next_response_escalation)}
                     </td>
@@ -424,9 +485,13 @@ const AssignTicketsPage: React.FC = () => {
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {formatEscalationLevel(ticket.next_response_escalation)}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{ticket.resolution_escalation || '-'}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">
-                      {formatEscalationMinutes(ticket.next_resolution_escalation)}
+                      {ticket.resolution_escalation || "-"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900">
+                      {formatEscalationMinutes(
+                        ticket.next_resolution_escalation
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {formatEscalationTime(ticket.next_resolution_escalation)}
@@ -444,10 +509,12 @@ const AssignTicketsPage: React.FC = () => {
         {/* Assignment Form */}
         <div className="bg-white rounded-lg shadow-sm border p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-6">Update To</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Status</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Status
+              </label>
               <select
                 aria-label="Status"
                 value={selectedStatus}
@@ -456,21 +523,29 @@ const AssignTicketsPage: React.FC = () => {
                 disabled={loadingStatuses}
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                  backgroundPosition: 'right 8px center',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '16px'
+                  backgroundPosition: "right 8px center",
+                  backgroundRepeat: "no-repeat",
+                  backgroundSize: "16px",
                 }}
               >
-                <option value="" className="text-gray-500">Select Status</option>
+                <option value="" className="text-gray-500">
+                  Select Status
+                </option>
                 {complaintStatuses.map((status) => (
-                  <option key={status.id} value={status.id} className="text-gray-900 py-2">
+                  <option
+                    key={status.id}
+                    value={status.id}
+                    className="text-gray-900 py-2"
+                  >
                     {status.name}
                   </option>
                 ))}
               </select>
             </div>
             <div className="space-y-1">
-              <label className="block text-sm font-medium text-gray-700">Assigned To</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Assigned To
+              </label>
               <select
                 aria-label="Assigned To"
                 value={selectedUser}
@@ -479,14 +554,20 @@ const AssignTicketsPage: React.FC = () => {
                 disabled={loadingUsers}
                 style={{
                   backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
-                  backgroundPosition: 'right 8px center',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: '16px'
+                  backgroundPosition: "right 8px center",
+                  backgroundRepeat: "no-repeat",
+                  backgroundSize: "16px",
                 }}
               >
-                <option value="" className="text-gray-500">Select engineer</option>
+                <option value="" className="text-gray-500">
+                  Select engineer
+                </option>
                 {fmUsers.map((user) => (
-                  <option key={user.id} value={user.id} className="text-gray-900 py-2">
+                  <option
+                    key={user.id}
+                    value={user.id}
+                    className="text-gray-900 py-2"
+                  >
                     {user.full_name}
                   </option>
                 ))}
@@ -501,7 +582,7 @@ const AssignTicketsPage: React.FC = () => {
               className="bg-[#C72030] text-white hover:bg-[#C72030]/90 px-8 py-2"
               disabled={isSubmitting || (!selectedStatus && !selectedUser)}
             >
-              {isSubmitting ? 'SUBMITTING...' : 'SUBMIT'}
+              {isSubmitting ? "SUBMITTING..." : "SUBMIT"}
             </Button>
           </div>
         </div>

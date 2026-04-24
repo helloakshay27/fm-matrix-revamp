@@ -1,7 +1,14 @@
-import React, { useEffect } from 'react';
-import { FormControl, InputLabel, Select as MuiSelect, MenuItem, CircularProgress, FormHelperText } from '@mui/material';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '@/store/store';
+import React, { useEffect, useRef } from "react";
+import {
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  CircularProgress,
+  FormHelperText,
+} from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState, AppDispatch } from "@/store/store";
 import {
   fetchSites,
   fetchBuildings,
@@ -20,7 +27,7 @@ import {
   setSelectedGroup,
   setSelectedSubGroup,
   clearAllSelections,
-} from '@/store/slices/serviceLocationSlice';
+} from "@/store/slices/serviceLocationSlice";
 
 interface LocationSelectorProps {
   fieldStyles: any;
@@ -54,6 +61,16 @@ interface LocationSelectorProps {
     groupId?: string;
     subGroupId?: string;
   };
+  initialValues?: {
+    siteId?: number | null;
+    buildingId?: number | null;
+    wingId?: number | null;
+    areaId?: number | null;
+    floorId?: number | null;
+    roomId?: number | null;
+    groupId?: number | null;
+    subGroupId?: number | null;
+  };
 }
 
 export const LocationSelector: React.FC<LocationSelectorProps> = ({
@@ -71,14 +88,15 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     subGroupId: false,
   },
   helperTexts = {
-    siteId: '',
-    buildingId: '',
-    wingId: '',
-    areaId: '',
-    floorId: '',
-    groupId: '',
-    subGroupId: '',
-  }
+    siteId: "",
+    buildingId: "",
+    wingId: "",
+    areaId: "",
+    floorId: "",
+    groupId: "",
+    subGroupId: "",
+  },
+  initialValues,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const {
@@ -101,15 +119,46 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     loading,
   } = useSelector((state: RootState) => state.serviceLocation);
 
-  console.log(buildings)
+  const lastAppliedBuildingId = useRef<number | null>(null);
+
+  // Apply initialValues to Redux store (for edit mode pre-population)
+  useEffect(() => {
+    if (!initialValues?.buildingId) return;
+    if (initialValues.buildingId === lastAppliedBuildingId.current) return;
+    lastAppliedBuildingId.current = initialValues.buildingId;
+
+    if (initialValues.siteId) {
+      dispatch(setSelectedSite(initialValues.siteId));
+      dispatch(fetchBuildings(initialValues.siteId));
+    }
+    dispatch(setSelectedBuilding(initialValues.buildingId));
+    dispatch(fetchWings(initialValues.buildingId));
+    dispatch(fetchAreas(initialValues.buildingId));
+    dispatch(fetchFloors(initialValues.buildingId));
+    dispatch(fetchRooms(initialValues.buildingId));
+
+    if (initialValues.wingId) dispatch(setSelectedWing(initialValues.wingId));
+    if (initialValues.areaId) dispatch(setSelectedArea(initialValues.areaId));
+    if (initialValues.floorId)
+      dispatch(setSelectedFloor(initialValues.floorId));
+    if (initialValues.roomId) dispatch(setSelectedRoom(initialValues.roomId));
+    if (initialValues.groupId) {
+      dispatch(setSelectedGroup(initialValues.groupId));
+      dispatch(fetchSubGroups(initialValues.groupId));
+    }
+    if (initialValues.subGroupId)
+      dispatch(setSelectedSubGroup(initialValues.subGroupId));
+  }, [initialValues?.buildingId]);
 
   // Load sites and groups on component mount, and auto-select user's site
   useEffect(() => {
     dispatch(fetchSites());
     dispatch(fetchGroups());
 
-    // Auto-set site based on user's current site
-    const userSiteId = localStorage.getItem('selectedSiteId') || localStorage.getItem('siteId');
+    // Auto-set site based on user's current site (skip if initialValues will handle it)
+    if (initialValues?.siteId || initialValues?.buildingId) return;
+    const userSiteId =
+      localStorage.getItem("selectedSiteId") || localStorage.getItem("siteId");
     if (userSiteId && !selectedSiteId) {
       const siteId = Number(userSiteId);
       dispatch(setSelectedSite(siteId));
@@ -211,13 +260,16 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {/* Building */}
         <FormControl fullWidth variant="outlined" error={errors.buildingId}>
           <InputLabel id="building-select-label" shrink>
-            Building<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
+            Building
+            <span className="text-red-500" style={{ color: "#C72030" }}>
+              *
+            </span>
           </InputLabel>
           <MuiSelect
             labelId="building-select-label"
             label="Building"
             displayEmpty
-            value={selectedBuildingId || ''}
+            value={selectedBuildingId || ""}
             onChange={(e) => handleBuildingChange(Number(e.target.value))}
             sx={fieldStyles}
             disabled={loading.buildings}
@@ -225,13 +277,16 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             <MenuItem value="">
               <em>Select Building</em>
             </MenuItem>
-            {Array.isArray(buildings) && buildings.map((building) => (
-              <MenuItem key={building.id} value={building.id}>
-                {building.name}
-              </MenuItem>
-            ))}
+            {Array.isArray(buildings) &&
+              buildings.map((building) => (
+                <MenuItem key={building.id} value={building.id}>
+                  {building.name}
+                </MenuItem>
+              ))}
           </MuiSelect>
-          {errors.buildingId && <FormHelperText>{helperTexts.buildingId}</FormHelperText>}
+          {errors.buildingId && (
+            <FormHelperText>{helperTexts.buildingId}</FormHelperText>
+          )}
           {loading.buildings && (
             <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
               <CircularProgress size={16} />
@@ -248,7 +303,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             labelId="wing-select-label"
             label="Wing"
             displayEmpty
-            value={selectedWingId || ''}
+            value={selectedWingId || ""}
             onChange={(e) => handleWingChange(Number(e.target.value))}
             sx={fieldStyles}
             disabled={!selectedBuildingId || loading.wings}
@@ -256,13 +311,16 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             <MenuItem value="">
               <em>Select Wing</em>
             </MenuItem>
-            {Array.isArray(wings) && wings.map((wing) => (
-              <MenuItem key={wing.id} value={wing.id}>
-                {wing.name}
-              </MenuItem>
-            ))}
+            {Array.isArray(wings) &&
+              wings.map((wing) => (
+                <MenuItem key={wing.id} value={wing.id}>
+                  {wing.name}
+                </MenuItem>
+              ))}
           </MuiSelect>
-          {errors.wingId && <FormHelperText>{helperTexts.wingId}</FormHelperText>}
+          {errors.wingId && (
+            <FormHelperText>{helperTexts.wingId}</FormHelperText>
+          )}
           {loading.wings && (
             <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
               <CircularProgress size={16} />
@@ -279,7 +337,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             labelId="area-select-label"
             label="Area"
             displayEmpty
-            value={selectedAreaId || ''}
+            value={selectedAreaId || ""}
             onChange={(e) => handleAreaChange(Number(e.target.value))}
             sx={fieldStyles}
             disabled={!selectedBuildingId || loading.areas}
@@ -287,13 +345,16 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             <MenuItem value="">
               <em>Select Area</em>
             </MenuItem>
-            {Array.isArray(areas) && areas.map((area) => (
-              <MenuItem key={area.id} value={area.id}>
-                {area.name}
-              </MenuItem>
-            ))}
+            {Array.isArray(areas) &&
+              areas.map((area) => (
+                <MenuItem key={area.id} value={area.id}>
+                  {area.name}
+                </MenuItem>
+              ))}
           </MuiSelect>
-          {errors.areaId && <FormHelperText>{helperTexts.areaId}</FormHelperText>}
+          {errors.areaId && (
+            <FormHelperText>{helperTexts.areaId}</FormHelperText>
+          )}
           {loading.areas && (
             <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
               <CircularProgress size={16} />
@@ -310,7 +371,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             labelId="floor-select-label"
             label="Floor"
             displayEmpty
-            value={selectedFloorId || ''}
+            value={selectedFloorId || ""}
             onChange={(e) => handleFloorChange(Number(e.target.value))}
             sx={fieldStyles}
             disabled={!selectedBuildingId || loading.floors}
@@ -318,13 +379,16 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             <MenuItem value="">
               <em>Select Floor</em>
             </MenuItem>
-            {Array.isArray(floors) && floors.map((floor) => (
-              <MenuItem key={floor.id} value={floor.id}>
-                {floor.name}
-              </MenuItem>
-            ))}
+            {Array.isArray(floors) &&
+              floors.map((floor) => (
+                <MenuItem key={floor.id} value={floor.id}>
+                  {floor.name}
+                </MenuItem>
+              ))}
           </MuiSelect>
-          {errors.floorId && <FormHelperText>{helperTexts.floorId}</FormHelperText>}
+          {errors.floorId && (
+            <FormHelperText>{helperTexts.floorId}</FormHelperText>
+          )}
           {loading.floors && (
             <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
               <CircularProgress size={16} />
@@ -337,12 +401,14 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Room */}
         <FormControl fullWidth variant="outlined">
-          <InputLabel id="room-select-label" shrink>Room</InputLabel>
+          <InputLabel id="room-select-label" shrink>
+            Room
+          </InputLabel>
           <MuiSelect
             labelId="room-select-label"
             label="Room"
             displayEmpty
-            value={selectedRoomId || ''}
+            value={selectedRoomId || ""}
             onChange={(e) => handleRoomChange(Number(e.target.value))}
             sx={fieldStyles}
             disabled={!selectedBuildingId || loading.rooms}
@@ -350,11 +416,12 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             <MenuItem value="">
               <em>Select Room</em>
             </MenuItem>
-            {Array.isArray(rooms) && rooms.map((room) => (
-              <MenuItem key={room.id} value={room.id}>
-                {room.name}
-              </MenuItem>
-            ))}
+            {Array.isArray(rooms) &&
+              rooms.map((room) => (
+                <MenuItem key={room.id} value={room.id}>
+                  {room.name}
+                </MenuItem>
+              ))}
           </MuiSelect>
           {loading.rooms && (
             <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
@@ -365,12 +432,14 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
         {/* Group */}
         <FormControl fullWidth variant="outlined">
-          <InputLabel id="group-select-label" shrink>Group</InputLabel>
+          <InputLabel id="group-select-label" shrink>
+            Group
+          </InputLabel>
           <MuiSelect
             labelId="group-select-label"
             label="Group"
             displayEmpty
-            value={selectedGroupId || ''}
+            value={selectedGroupId || ""}
             onChange={(e) => handleGroupChange(Number(e.target.value))}
             sx={fieldStyles}
             disabled={loading.groups}
@@ -378,11 +447,12 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             <MenuItem value="">
               <em>Select Group</em>
             </MenuItem>
-            {Array.isArray(groups) && groups.map((group) => (
-              <MenuItem key={group.id} value={group.id}>
-                {group.name}
-              </MenuItem>
-            ))}
+            {Array.isArray(groups) &&
+              groups.map((group) => (
+                <MenuItem key={group.id} value={group.id}>
+                  {group.name}
+                </MenuItem>
+              ))}
           </MuiSelect>
           {loading.groups && (
             <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
@@ -393,12 +463,14 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
         {/* Sub-Group */}
         <FormControl fullWidth variant="outlined">
-          <InputLabel id="subgroup-select-label" shrink>Sub-Group</InputLabel>
+          <InputLabel id="subgroup-select-label" shrink>
+            Sub-Group
+          </InputLabel>
           <MuiSelect
             labelId="subgroup-select-label"
             label="Sub-Group"
             displayEmpty
-            value={selectedSubGroupId || ''}
+            value={selectedSubGroupId || ""}
             onChange={(e) => handleSubGroupChange(Number(e.target.value))}
             sx={fieldStyles}
             disabled={!selectedGroupId || loading.subGroups}
@@ -406,11 +478,12 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             <MenuItem value="">
               <em>Select Sub-Group</em>
             </MenuItem>
-            {Array.isArray(subGroups) && subGroups.map((subGroup) => (
-              <MenuItem key={subGroup.id} value={subGroup.id}>
-                {subGroup.name}
-              </MenuItem>
-            ))}
+            {Array.isArray(subGroups) &&
+              subGroups.map((subGroup) => (
+                <MenuItem key={subGroup.id} value={subGroup.id}>
+                  {subGroup.name}
+                </MenuItem>
+              ))}
           </MuiSelect>
           {loading.subGroups && (
             <div className="absolute right-8 top-1/2 transform -translate-y-1/2">

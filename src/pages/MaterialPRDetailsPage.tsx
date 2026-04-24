@@ -7,7 +7,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { redirect, useLocation, useNavigate, useParams } from "react-router-dom";
+import {
+  redirect,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import {
   Copy,
   Printer,
@@ -24,7 +29,7 @@ import {
   ScrollText,
   ClipboardList,
   Images,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { getMaterialPRById, fetchWBS } from "@/store/slices/materialPRSlice";
@@ -213,7 +218,7 @@ export const MaterialPRDetailsPage = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
-  const [isDeletionRequest, setIsDeletionRequest] = useState(false)
+  const [isDeletionRequest, setIsDeletionRequest] = useState(false);
   const [pr, setPR] = useState<MaterialPR>({} as MaterialPR);
   const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
@@ -222,8 +227,9 @@ export const MaterialPRDetailsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [showEditWbsModal, setShowEditWbsModal] = useState(false);
   const [wbsCodes, setWbsCodes] = useState([]);
-  const [openDeletionModal, setOpenDeletionModal] = useState(false)
-  const [printing, setPrinting] = useState(false)
+  const [openDeletionModal, setOpenDeletionModal] = useState(false);
+  const [printing, setPrinting] = useState(false);
+  const [testRunLoading, setTestRunLoading] = useState(false);
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
   }>({});
@@ -235,9 +241,9 @@ export const MaterialPRDetailsPage = () => {
 
   useEffect(() => {
     if (searchParams.get("type") === "delete-request") {
-      setIsDeletionRequest(true)
+      setIsDeletionRequest(true);
     }
-  }, [])
+  }, []);
 
   // Fetch PR data
   useEffect(() => {
@@ -261,8 +267,9 @@ export const MaterialPRDetailsPage = () => {
           editWbsCode: response.can_edit_wbs_codes,
         });
         // Set external API calls if available
-        if (response.external_api_calls && Array.isArray(response.external_api_calls)) {
-          setExternalApiCalls(response.external_api_calls);
+        if (response.api_calls && Array.isArray(response.api_calls)) {
+          setExternalApiCalls(response.api_calls);
+          console.log("API Calls set in state:", response.api_calls);
         }
         // Initialize updatedWbsCodes with current WBS codes
         const initialWbsCodes = response.pms_pr_inventories?.reduce(
@@ -287,7 +294,6 @@ export const MaterialPRDetailsPage = () => {
   // Fetch WBS codes
   useEffect(() => {
     const fetchData = async () => {
-
       if (!baseUrl || !token) {
         toast.error("Missing required configuration");
         return;
@@ -316,7 +322,6 @@ export const MaterialPRDetailsPage = () => {
 
   // Handle update WBS codes to backend
   const handleUpdateWbsCodes = useCallback(async () => {
-
     if (!baseUrl || !token || !id) {
       toast.error("Missing required configuration");
       return;
@@ -324,11 +329,13 @@ export const MaterialPRDetailsPage = () => {
 
     try {
       const updates = {
-        pms_po_inventory_updates: Object.entries(updatedWbsCodes).map(([itemKey, wbsCode]) => ({
-          id: itemKey,
-          wbs_code: wbsCode
-        }))
-      }
+        pms_po_inventory_updates: Object.entries(updatedWbsCodes).map(
+          ([itemKey, wbsCode]) => ({
+            id: itemKey,
+            wbs_code: wbsCode,
+          })
+        ),
+      };
 
       await axios.patch(
         `https://${baseUrl}/pms/purchase_orders/bulk_update_wbs_codes.json`,
@@ -350,16 +357,18 @@ export const MaterialPRDetailsPage = () => {
       level_id: Number(levelId),
       user_id: Number(userId),
       approve: true,
-      redirect: false
-    }
+      redirect: false,
+    };
     try {
-      await dispatch(approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })).unwrap();
+      await dispatch(
+        approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })
+      ).unwrap();
       toast.success("Deletion request approved successfully");
       navigate(-1);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   const handleRejectDeletionRequest = async () => {
     const payload = {
@@ -367,16 +376,18 @@ export const MaterialPRDetailsPage = () => {
       user_id: Number(userId),
       approve: false,
       redirect: false,
-      rejection_reason: rejectComment
-    }
+      rejection_reason: rejectComment,
+    };
     try {
-      await dispatch(approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })).unwrap();
+      await dispatch(
+        approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })
+      ).unwrap();
       toast.success("Deletion request rejected successfully");
       navigate(-1);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
   const handleApprove = async () => {
     if (isDeletionRequest) {
@@ -470,32 +481,55 @@ export const MaterialPRDetailsPage = () => {
       );
       toast.success(response.data.message);
     } catch (error: any) {
-      toast.error(error.message || "Failed to send to SAP");
+      toast.error(error.message || "Failed to w SAP");
     }
   }, [id]);
+
+  // Handle test run
+  const handleTestRun = useCallback(async () => {
+    if (!baseUrl || !token || !id) {
+      toast.error("Missing required configuration");
+      return;
+    }
+
+    try {
+      setTestRunLoading(true);
+      const response = await axios.get<{ message: string }>(
+        `https://${baseUrl}/pms/purchase_orders/test_run.json?id=${id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success(response.data.message || "test run completed successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to run test run");
+    } finally {
+      setTestRunLoading(false);
+    }
+  }, [id, baseUrl, token]);
 
   const handleDelete = async () => {
     const payload = {
       deletion_request: {
         resource_id: id,
         resource_type: "Pms::PurchaseOrder",
-        approve: false
-      }
-    }
+        approve: false,
+      },
+    };
     try {
       await axios.post(`https://${baseUrl}/deletion_requests.json`, payload, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-      toast.success("Deletion request raised successfully")
-      setOpenDeletionModal(false)
+      toast.success("Deletion request raised successfully");
+      setOpenDeletionModal(false);
     } catch (error) {
-      console.log(error)
-      toast.error(error.response.data.error)
+      console.log(error);
+      toast.error(error.response.data.error);
     }
-  }
+  };
 
   // Handle print
   const handlePrint = useCallback(async () => {
@@ -563,7 +597,6 @@ export const MaterialPRDetailsPage = () => {
       wbs_code: item.wbs_code ?? "-",
       general_storage: item.general_storage ?? "-",
       gl_account: item.gl_account ?? "-",
-
     })) ?? [];
 
   const renderCell = (item: any, columnKey: string) => {
@@ -595,19 +628,94 @@ export const MaterialPRDetailsPage = () => {
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
         <h1 className="text-2xl font-semibold">Material PR Details</h1>
         <div className="flex items-center gap-3">
-          {
-            !pr.active ? (
-              <>
+          {!pr.active ? (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 !bg-[#C72030] !text-white cursor-default"
+              >
+                Deleted
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrint}
+                disabled={printing}
+              >
+                {printing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Print
+                  </>
+                ) : (
+                  <>
+                    <Printer className="w-4 h-4 mr-2" />
+                    Print
+                  </>
+                )}
+              </Button>
+            </>
+          ) : (
+            <>
+              {!buttonCondition.showSap && (
                 <Button
                   size="sm"
                   variant="outline"
-                  className="border-gray-300 !bg-[#C72030] !text-white cursor-default"
+                  className="border-gray-300 bg-blue-600 text-white"
+                  onClick={handleTestRun}
+                  disabled={testRunLoading}
                 >
-                  Deleted
+                  {testRunLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Running...
+                    </>
+                  ) : (
+                    "Test run"
+                  )}
                 </Button>
-                <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
-                  {
-                    printing ? (
+              )}
+              {buttonCondition.showSap && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white"
+                  onClick={handleSendToSap}
+                >
+                  Push To SAP
+                </Button>
+              )}
+              {pr.all_level_approved === null && !shouldShowButtons && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300"
+                  onClick={() => navigate(`/finance/material-pr/edit/${id}`)}
+                >
+                  <Edit className="w-4 h-4 mr-1" />
+                  Edit
+                </Button>
+              )}
+              {!shouldShowButtons && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      navigate(`/finance/material-pr/add?clone=${id}`)
+                    }
+                  >
+                    <Copy className="w-4 h-4 mr-2" />
+                    Clone
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrint}
+                    disabled={printing}
+                  >
+                    {printing ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Print
@@ -617,94 +725,41 @@ export const MaterialPRDetailsPage = () => {
                         <Printer className="w-4 h-4 mr-2" />
                         Print
                       </>
-                    )
-                  }
-                </Button>
-              </>
-            ) : (
-              <>
-                {buttonCondition.showSap && (
+                    )}
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/finance/material-pr/feeds/${id}`)}
+              >
+                <Rss className="w-4 h-4 mr-2" />
+                Feeds
+              </Button>
+              {pr.all_level_approved && !shouldShowButtons && (
+                <div className="flex items-center gap-2">
                   <Button
                     size="sm"
                     variant="outline"
-                    className="border-gray-300 bg-purple-600 text-white"
-                    onClick={handleSendToSap}
+                    className="border-gray-300 btn-primary"
+                    onClick={() => setShowEditWbsModal(true)}
                   >
-                    Send To SAP Team
+                    Edit WBS Codes
                   </Button>
-                )}
-                {
-                  pr.all_level_approved === null && !shouldShowButtons && <Button
+
+                  <Button
                     size="sm"
                     variant="outline"
-                    className="border-gray-300"
-                    onClick={() => navigate(`/finance/material-pr/edit/${id}`)}
+                    className="border-gray-300 btn-primary"
+                    onClick={() => setOpenDeletionModal(true)}
                   >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Edit
+                    Raise Deletion Request
                   </Button>
-                }
-                {
-                  !shouldShowButtons && (
-                    <>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/finance/material-pr/add?clone=${id}`)}
-                      >
-                        <Copy className="w-4 h-4 mr-2" />
-                        Clone
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
-                        {
-                          printing ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Print
-                            </>
-                          ) : (
-                            <>
-                              <Printer className="w-4 h-4 mr-2" />
-                              Print
-                            </>
-                          )
-                        }
-                      </Button>
-                    </>
-                  )
-                }
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/finance/material-pr/feeds/${id}`)}
-                >
-                  <Rss className="w-4 h-4 mr-2" />
-                  Feeds
-                </Button>
-                {pr.all_level_approved && !shouldShowButtons && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-gray-300 btn-primary"
-                      onClick={() => setShowEditWbsModal(true)}
-                    >
-                      Edit WBS Codes
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-gray-300 btn-primary"
-                      onClick={() => setOpenDeletionModal(true)}
-                    >
-                      Raise Deletion Request
-                    </Button>
-                  </div>
-                )}
-              </>
-            )
-          }
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
@@ -755,7 +810,9 @@ export const MaterialPRDetailsPage = () => {
             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
               <Contact className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Contact Information</h3>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+              Contact Information
+            </h3>
           </div>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -810,7 +867,9 @@ export const MaterialPRDetailsPage = () => {
             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
               <ScrollText className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Material Purchase Request</h3>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+              Material Purchase Request
+            </h3>
           </div>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -822,7 +881,9 @@ export const MaterialPRDetailsPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Reference No.</span>
+                <span className="text-gray-500 min-w-[140px]">
+                  Reference No.
+                </span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {pr.reference_number ?? "-"}
@@ -845,7 +906,9 @@ export const MaterialPRDetailsPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">Plant Detail</span>
+                <span className="text-gray-500 min-w-[140px]">
+                  Plant Detail
+                </span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {pr.plant_detail?.plant_name ?? "-"}
@@ -891,7 +954,6 @@ export const MaterialPRDetailsPage = () => {
                   <span className="text-gray-500">-</span>
                 )}
               </div>
-
             </div>
           </CardContent>
         </Card>
@@ -901,7 +963,9 @@ export const MaterialPRDetailsPage = () => {
             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
               <ClipboardList className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Items Table</h3>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+              Items Table
+            </h3>
           </div>
           <CardContent>
             <EnhancedTable
@@ -937,7 +1001,9 @@ export const MaterialPRDetailsPage = () => {
             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
               <Images className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+              Attachments
+            </h3>
           </div>
           <CardContent>
             {Array.isArray(pr.attachments) && pr.attachments.length > 0 ? (
@@ -1038,7 +1104,9 @@ export const MaterialPRDetailsPage = () => {
             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
               <ScrollText className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+              Terms & Conditions
+            </h3>
           </div>
           <CardContent className="text-wrap break-words">
             <p className="text-muted-foreground">
@@ -1070,7 +1138,11 @@ export const MaterialPRDetailsPage = () => {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>{isDeletionRequest ? "Reject Deletion Request" : "Reject Purchase Order"}</DialogTitle>
+          <DialogTitle>
+            {isDeletionRequest
+              ? "Reject Deletion Request"
+              : "Reject Purchase Order"}
+          </DialogTitle>
           <DialogContent>
             <TextField
               autoFocus
@@ -1140,8 +1212,9 @@ export const MaterialPRDetailsPage = () => {
                       item.wbs_code
                     }
                     onChange={(e) => handleWbsCodeChange(e, item)}
-                    label={`WBS Code for ${item.inventory?.name || `Item ${item.id}`
-                      }`}
+                    label={`WBS Code for ${
+                      item.inventory?.name || `Item ${item.id}`
+                    }`}
                   >
                     <MenuItem value="">
                       <em>Select WBS Code</em>
@@ -1156,10 +1229,10 @@ export const MaterialPRDetailsPage = () => {
               ))}
               {(!pr.pms_pr_inventories ||
                 pr.pms_pr_inventories.length === 0) && (
-                  <p className="text-muted-foreground">
-                    No inventory items available
-                  </p>
-                )}
+                <p className="text-muted-foreground">
+                  No inventory items available
+                </p>
+              )}
             </div>
           </DialogContent>
           <DialogActions>
@@ -1184,22 +1257,27 @@ export const MaterialPRDetailsPage = () => {
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
-          <DialogTitle id="alert-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <DialogTitle
+            id="alert-dialog-title"
+            sx={{ display: "flex", alignItems: "center", gap: 1 }}
+          >
             <AlertTriangle size={24} color="#d32f2f" />
             Confirm Deletion Request
           </DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
-              Are you sure you want to raise a deletion request? This action will initiate the deletion process.
+              Are you sure you want to raise a deletion request? This action
+              will initiate the deletion process.
             </DialogContentText>
           </DialogContent>
           <DialogActions sx={{ p: 2, pt: 0 }}>
-            <Button onClick={() => setOpenDeletionModal(false)} variant="outline">
+            <Button
+              onClick={() => setOpenDeletionModal(false)}
+              variant="outline"
+            >
               Cancel
             </Button>
-            <Button onClick={handleDelete}>
-              Yes
-            </Button>
+            <Button onClick={handleDelete}>Yes</Button>
           </DialogActions>
         </Dialog>
 
@@ -1219,32 +1297,50 @@ export const MaterialPRDetailsPage = () => {
             </h3>
             <div className="space-y-4">
               {externalApiCalls.map((apiCall, index) => (
-                <div key={apiCall.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div
+                  key={apiCall.id || index}
+                  className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600 font-semibold">Provider</p>
-                      <p className="text-sm font-medium">{apiCall.api_provider || '-'}</p>
+                      <p className="text-sm text-gray-600 font-semibold">
+                        Provider
+                      </p>
+                      <p className="text-sm font-medium">
+                        {apiCall.api_provider || "-"}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
-                      <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                        {apiCall.response_status || '-'}
+                      <p className="text-sm text-gray-600 font-semibold">
+                        Response Status Code
+                      </p>
+                      <p
+                        className={`text-sm font-medium ${
+                          apiCall.response_status === 200
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }`}
+                      >
+                        {apiCall.response_status || "-"}
                       </p>
                     </div>
                     <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600 font-semibold">Message</p>
+                      <p className="text-sm text-gray-600 font-semibold">
+                        Message
+                      </p>
                       <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
-                        {apiCall.eval_status && apiCall.eval_status.trim()
-                          ? apiCall.eval_status
-                          : (apiCall.response_string ? JSON.stringify(JSON.parse(apiCall.response_string), null, 2) : '-')}
+                        {apiCall.message || "-"}
                       </p>
                     </div>
-                    <div className="md:col-span-2">
-                      <p className="text-xs text-gray-500">
-                        Created: {apiCall.created_at ? new Date(apiCall.created_at).toLocaleString() : '-'}
-                      </p>
-                    </div>
+
+                    {apiCall.created_at && (
+                      <div className="md:col-span-2">
+                        <p className="text-xs text-gray-500">
+                          Created:{" "}
+                          {new Date(apiCall.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1255,4 +1351,3 @@ export const MaterialPRDetailsPage = () => {
     </div>
   );
 };
-

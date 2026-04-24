@@ -36,7 +36,9 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
       // Only look for Employee-specific modules
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       ) {
         // Find first active function with a react_link
         const firstActiveFunction = module.lock_functions.find(
@@ -66,7 +68,9 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
       // Skip Employee Sidebar and Employee Projects Sidebar modules
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       ) {
         continue;
       }
