@@ -187,8 +187,6 @@ const Index = () => {
       navigate("/safety/m-safe/internal", { replace: true });
     } else if (isClubSite) {
       navigate("/club-management/membership", { replace: true });
-    } else if (isPulseSite) {
-      navigate("/maintenance/ticket", { replace: true });
     } else {
       navigate("/maintenance/asset", { replace: true });
     }

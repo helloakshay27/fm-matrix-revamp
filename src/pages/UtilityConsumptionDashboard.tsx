@@ -1,213 +1,184 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Plus, Edit, Eye, Filter, Download, Upload, X } from 'lucide-react';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { Plus, Edit, Eye, Filter, X, Loader2 } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { useToast } from '@/hooks/use-toast';
 
-// Mock data for utility calculations
-const utilityCalculationsData = [
-  {
-    id: '1',
-    clientName: 'SIFY TECHNOLOGIES LTD',
-    meterNo: 'MT001',
-    location: 'Building A - Floor 1',
-    readingType: 'DGKVAH',
-    adjustmentFactor: '1.0',
-    rateKWH: '28.78',
-    actualConsumption: '35.93',
-    totalConsumption: '35.93',
-    amount: '1033.95'
-  },
-  {
-    id: '2',
-    clientName: 'Tata Starbucks Private Limited',
-    meterNo: 'MT002',
-    location: 'Building B - Floor 2',
-    readingType: 'DGKVAH',
-    adjustmentFactor: '1.0',
-    rateKWH: '28.78',
-    actualConsumption: '321.27',
-    totalConsumption: '321.27',
-    amount: '9246.21'
-  },
-  {
-    id: '3',
-    clientName: 'Storybook Ventures',
-    meterNo: 'MT003',
-    location: 'Building C - Floor 1',
-    readingType: 'DGKVAH',
-    adjustmentFactor: '1.0',
-    rateKWH: '28.78',
-    actualConsumption: '155.23',
-    totalConsumption: '155.23',
-    amount: '4467.63'
-  },
-  {
-    id: '4',
-    clientName: 'CREST DIGITAL PRIVATE LIMITED',
-    meterNo: 'MT004',
-    location: 'Building A - Floor 3',
-    readingType: 'DGKVAH',
-    adjustmentFactor: '1.0',
-    rateKWH: '28.78',
-    actualConsumption: '786.67',
-    totalConsumption: '786.67',
-    amount: '22640.5'
-  },
-  {
-    id: '5',
-    clientName: 'Reliance Jio Infocomm Limited',
-    meterNo: 'MT005',
-    location: 'Building D - Floor 2',
-    readingType: 'DGKVAH',
-    adjustmentFactor: '1.0',
-    rateKWH: '28.78',
-    actualConsumption: '97.85',
-    totalConsumption: '97.85',
-    amount: '2816.01'
-  }
-];
+interface ConsumptionRecord {
+  id: number;
+  asset_id: number;
+  asset_msr_id: number;
+  entity_id: number;
+  from_date: string;
+  to_date: string;
+  consumption: number;
+  adjustment_factor: number;
+  total_consumption: number;
+  rate: number;
+  amount: number;
+  customer_name: string;
+  asset_name: string;
+  locations: string;
+}
 
-// Column configuration for enhanced table
 const columns: ColumnConfig[] = [
   { key: 'actions', label: 'Action', sortable: false, defaultVisible: true },
-  { key: 'clientName', label: 'Client Name', sortable: true, defaultVisible: true },
-  { key: 'meterNo', label: 'Meter No.', sortable: true, defaultVisible: true },
-  { key: 'location', label: 'Location', sortable: true, defaultVisible: true },
-  { key: 'readingType', label: 'Reading Type', sortable: true, defaultVisible: true },
-  { key: 'adjustmentFactor', label: 'Adjustment Factor', sortable: true, defaultVisible: true },
-  { key: 'rateKWH', label: 'Rate/KWH', sortable: true, defaultVisible: true },
-  { key: 'actualConsumption', label: 'Actual Consumption', sortable: true, defaultVisible: true },
-  { key: 'totalConsumption', label: 'Total Consumption', sortable: true, defaultVisible: true },
+  { key: 'customer_name', label: 'Client Name', sortable: true, defaultVisible: true },
+  { key: 'asset_name', label: 'Meter No.', sortable: true, defaultVisible: true },
+  { key: 'locations', label: 'Location', sortable: true, defaultVisible: true },
+  { key: 'from_date', label: 'From Date', sortable: true, defaultVisible: true },
+  { key: 'to_date', label: 'To Date', sortable: true, defaultVisible: true },
+  { key: 'adjustment_factor', label: 'Adjustment Factor', sortable: true, defaultVisible: true },
+  { key: 'rate', label: 'Rate/KWH', sortable: true, defaultVisible: true },
+  { key: 'consumption', label: 'Actual Consumption', sortable: true, defaultVisible: true },
+  { key: 'total_consumption', label: 'Total Consumption', sortable: true, defaultVisible: true },
   { key: 'amount', label: 'Amount', sortable: true, defaultVisible: true },
 ];
 
 const UtilityConsumptionDashboard = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    clientName: '',
-    meterNo: '',
-    readingType: ''
+  const [filters, setFilters] = useState({ clientName: '', meterNo: '' });
+  const [data, setData] = useState<ConsumptionRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 15;
+
+  const fetchData = useCallback(async (page: number = 1) => {
+    try {
+      setIsLoading(true);
+      const url = new URL(getFullUrl('/customer_monthly_consumptions.json'));
+      if (API_CONFIG.TOKEN) {
+        url.searchParams.append('access_token', API_CONFIG.TOKEN);
+      }
+      url.searchParams.append('page', page.toString());
+      url.searchParams.append('per_page', pageSize.toString());
+
+      const response = await fetch(url.toString(), getAuthenticatedFetchOptions());
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+      const json = await response.json();
+      setData(json.customer_monthly_consumptions || []);
+      if (json.pagination) {
+        setTotalPages(json.pagination.total_pages || 1);
+        setTotalCount(json.pagination.total_count || 0);
+        setCurrentPage(json.pagination.current_page || 1);
+      }
+    } catch (error) {
+      console.error('Error fetching consumption data:', error);
+      toast({ title: 'Error', description: 'Failed to fetch data', variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchData(1);
+  }, [fetchData]);
+
+  const filteredData = data.filter(item => {
+    const search = searchTerm.toLowerCase();
+    return (
+      item.customer_name?.toLowerCase().includes(search) ||
+      item.asset_name?.toLowerCase().includes(search) ||
+      item.locations?.toLowerCase().includes(search) ||
+      String(item.id).includes(search)
+    );
   });
 
-  const filteredData = utilityCalculationsData.filter(item =>
-    item.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.meterNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.id.includes(searchTerm)
-  );
-
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedItems(filteredData.map(item => item.id));
-    } else {
-      setSelectedItems([]);
-    }
+    setSelectedItems(checked ? filteredData.map(item => String(item.id)) : []);
   };
 
   const handleSelectItem = (itemId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedItems(prev => [...prev, itemId]);
-    } else {
-      setSelectedItems(prev => prev.filter(id => id !== itemId));
-    }
+    setSelectedItems(prev => checked ? [...prev, itemId] : prev.filter(id => id !== itemId));
   };
 
-  const handleEdit = (item: any) => {
+  const handleEdit = (item: ConsumptionRecord) => {
     console.log('Edit item:', item);
   };
 
-  const handleView = (item: any) => {
+  const handleView = (item: ConsumptionRecord) => {
     console.log('View item:', item);
   };
 
-  const handleGenerateNew = () => {
-    navigate('/utility/utility-consumption/generate-bill');
-  };
-
   const handleApplyFilters = () => {
-    // Apply the filters logic here
-    console.log('Applying filters:', filters);
     setIsFilterModalOpen(false);
+    fetchData(1);
   };
 
   const handleResetFilters = () => {
-    setFilters({
-      clientName: '',
-      meterNo: '',
-      readingType: ''
-    });
+    setFilters({ clientName: '', meterNo: '' });
   };
 
-  const renderCell = (item: any, columnKey: string) => {
+  const renderCell = (item: ConsumptionRecord, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
           <div className="flex items-center justify-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleEdit(item)}
-              className="h-8 w-8 p-0"
-            >
+            <Button variant="ghost" size="sm" onClick={() => handleEdit(item)} className="h-8 w-8 p-0">
               <Edit className="w-4 h-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleView(item)}
-              className="h-8 w-8 p-0"
-            >
+            <Button variant="ghost" size="sm" onClick={() => handleView(item)} className="h-8 w-8 p-0">
               <Eye className="w-4 h-4" />
             </Button>
           </div>
         );
-      case 'clientName':
-        return <span className="font-medium text-left">{item.clientName}</span>;
-      case 'meterNo':
-        return <span className="font-mono text-sm">{item.meterNo}</span>;
-      case 'location':
-        return item.location || '-';
-      case 'readingType':
-        return item.readingType || '-';
-      case 'adjustmentFactor':
-        return <span className="font-medium">{item.adjustmentFactor}</span>;
-      case 'rateKWH':
-        return <span className="font-medium">{item.rateKWH}</span>;
-      case 'actualConsumption':
-        return <span className="font-medium">{item.actualConsumption}</span>;
-      case 'totalConsumption':
-        return <span className="font-medium">{item.totalConsumption}</span>;
+      case 'customer_name':
+        return <span className="font-medium">{item.customer_name || '-'}</span>;
+      case 'asset_name':
+        return <span className="font-mono text-sm">{item.asset_name || '-'}</span>;
+      case 'locations':
+        return <span className="text-sm">{item.locations || '-'}</span>;
+      case 'from_date':
+        return <span>{item.from_date || '-'}</span>;
+      case 'to_date':
+        return <span>{item.to_date || '-'}</span>;
+      case 'adjustment_factor':
+        return <span className="font-medium">{item.adjustment_factor}</span>;
+      case 'rate':
+        return <span className="font-medium">₹{item.rate}</span>;
+      case 'consumption':
+        return <span className="font-medium">{item.consumption}</span>;
+      case 'total_consumption':
+        return <span className="font-medium">{item.total_consumption}</span>;
       case 'amount':
-        return <span className="font-medium text-green-600">{item.amount}</span>;
+        return <span className="font-medium text-green-600">₹{item.amount}</span>;
       default:
-        return item[columnKey] || '-';
+        return (item as any)[columnKey] ?? '-';
     }
   };
 
   return (
     <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
-      {/* Breadcrumb */}
-      <div className="text-sm text-gray-600">
-        Utility &gt; Calculations
-      </div>
+      <div className="text-sm text-gray-600">Utility &gt; Calculations</div>
 
-      {/* Page Title */}
-      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">Calculations</h1>
+      <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">
+        Calculations
+      </h1>
 
-      {/* Action Buttons */}
       <div className="flex flex-wrap gap-3">
         <Button
-          onClick={handleGenerateNew}
+          onClick={() => navigate('/utility/utility-consumption/generate-bill')}
           className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
         >
           <Plus className="w-4 h-4" />
@@ -222,32 +193,102 @@ const UtilityConsumptionDashboard = () => {
         </Button>
       </div>
 
-      {/* Search */}
+      <div>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+          </div>
+        ) : (
+          <>
+          <EnhancedTable
+            data={filteredData}
+            columns={columns}
+            renderCell={renderCell}
+            onSelectAll={handleSelectAll}
+            onSelectItem={handleSelectItem}
+            selectedItems={selectedItems}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            enableSearch={false}
+            enableExport={false}
+            hideColumnsButton={false}
+            pagination={false}
+            pageSize={pageSize}
+            emptyMessage="No calculation data found"
+            selectable={true}
+            storageKey="utility-consumption-table"
+          />
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-700">
+                Showing {Math.min((currentPage - 1) * pageSize + 1, totalCount)} to{' '}
+                {Math.min(currentPage * pageSize, totalCount)} of {totalCount} entries
+              </div>
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      className={`cursor-pointer ${currentPage === 1 ? 'pointer-events-none opacity-50' : ''}`}
+                      onClick={() => currentPage > 1 && fetchData(currentPage - 1)}
+                    />
+                  </PaginationItem>
 
+                  {currentPage > 3 && (
+                    <>
+                      <PaginationItem>
+                        <PaginationLink className="cursor-pointer" onClick={() => fetchData(1)} isActive={currentPage === 1}>
+                          1
+                        </PaginationLink>
+                      </PaginationItem>
+                      {currentPage > 4 && (
+                        <PaginationItem><PaginationEllipsis /></PaginationItem>
+                      )}
+                    </>
+                  )}
 
-      {/* Enhanced Data Table */}
-      <div >
-        <EnhancedTable
-          data={filteredData}
-          columns={columns}
-          renderCell={renderCell}
-          onSelectAll={handleSelectAll}
-          onSelectItem={handleSelectItem}
-          selectedItems={selectedItems}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          enableSearch={false}
-          enableExport={false}
-          hideColumnsButton={false}
-          pagination={true}
-          pageSize={15}
-          emptyMessage="No calculation data found"
-          selectable={true}
-          storageKey="utility-consumption-table"
-        />
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNumber = Math.max(1, currentPage - 2) + i;
+                    if (pageNumber > totalPages) return null;
+                    return (
+                      <PaginationItem key={pageNumber}>
+                        <PaginationLink
+                          className="cursor-pointer"
+                          onClick={() => fetchData(pageNumber)}
+                          isActive={currentPage === pageNumber}
+                        >
+                          {pageNumber}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  }).filter(Boolean)}
+
+                  {currentPage < totalPages - 2 && (
+                    <>
+                      {currentPage < totalPages - 3 && (
+                        <PaginationItem><PaginationEllipsis /></PaginationItem>
+                      )}
+                      <PaginationItem>
+                        <PaginationLink className="cursor-pointer" onClick={() => fetchData(totalPages)} isActive={currentPage === totalPages}>
+                          {totalPages}
+                        </PaginationLink>
+                      </PaginationItem>
+                    </>
+                  )}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      className={`cursor-pointer ${currentPage === totalPages ? 'pointer-events-none opacity-50' : ''}`}
+                      onClick={() => currentPage < totalPages && fetchData(currentPage + 1)}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+          </>
+        )}
       </div>
 
-      {/* Filter Modal */}
       <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
         <DialogContent className="sm:max-w-[600px] p-0 bg-white">
           <DialogHeader className="px-6 py-4 border-b">
@@ -265,7 +306,7 @@ const UtilityConsumptionDashboard = () => {
           </DialogHeader>
 
           <div className="px-6 py-6">
-            <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Client Name</label>
                 <Input
@@ -275,7 +316,6 @@ const UtilityConsumptionDashboard = () => {
                   className="h-10 rounded-md border-gray-300"
                 />
               </div>
-
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Meter No.</label>
                 <Input
@@ -284,20 +324,6 @@ const UtilityConsumptionDashboard = () => {
                   onChange={(e) => setFilters(prev => ({ ...prev, meterNo: e.target.value }))}
                   className="h-10 rounded-md border-gray-300"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Reading Type</label>
-                <Select value={filters.readingType} onValueChange={(value) => setFilters(prev => ({ ...prev, readingType: value }))}>
-                  <SelectTrigger className="h-10 rounded-md border-gray-300 bg-white">
-                    <SelectValue placeholder="Select Reading type" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border shadow-lg z-50">
-                    <SelectItem value="DGKVAH">DGKVAH</SelectItem>
-                    <SelectItem value="EBKVAH">EBKVAH</SelectItem>
-                    <SelectItem value="Water">Water</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 

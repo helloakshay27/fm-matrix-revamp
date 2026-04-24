@@ -25,8 +25,12 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
 
     useEffect(() => {
         const fetchAccountTypes = async () => {
+            if (!lock_account_id) {
+                setAccountTypes([]);
+                return;
+            }
             try {
-                const res = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_groups?format=flat`, {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
                     headers: {
                         Authorization: `Bearer ${token}`,
                     },
@@ -37,7 +41,7 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
             }
         };
         if (open) fetchAccountTypes();
-    }, [open, baseUrl, token]);
+    }, [open, baseUrl, token, lock_account_id]);
 
     // Helper to flatten tree for dropdown
     const flattenGroups = (groups, prefix = '') => {
@@ -121,6 +125,11 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
             return;
         }
         setIsSubmitting(true);
+        if (!lock_account_id) {
+            toast.error("Lock account not found");
+            setIsSubmitting(false);
+            return;
+        }
         const ledgerData = {
             lock_account_id: lock_account_id, // or get from context if dynamic
             name: formData.accountName || '',
@@ -136,7 +145,7 @@ const AddChartofAccountModal = ({ open, onOpenChange, editingAccessory = null })
         console.log('Submitting ledger data:', ledgerData);
         try {
             await axios.post(
-                `https://${baseUrl}/lock_accounts/1/lock_account_ledgers.json`,
+                `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_ledgers.json`,
                 { lock_account_ledger: ledgerData },
                 {
                     headers: {
