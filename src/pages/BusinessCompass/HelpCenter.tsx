@@ -30,13 +30,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 
+// Unified Brand Tokens (Matching Feedback Page)
+const BRAND = {
+  primary: "#DA7756",
+  secondary: "#BC6B4A",
+  background: "#f6f4ee",
+  panelBg: "#FFF9F6",
+  panelBorder: "rgba(218, 119, 86, 0.18)",
+} as const;
+
 type Tutorial = {
   id: string;
   title: string;
   duration: string;
   description: string;
-  thumbClass: string;
-  thumbLabel?: string;
+  youtubeId: string;
 };
 
 const VIDEO_TUTORIALS: Tutorial[] = [
@@ -46,9 +54,7 @@ const VIDEO_TUTORIALS: Tutorial[] = [
     duration: "6 min",
     description:
       "How to select what to prioritize using the Wheel of Life and Eisenhower Matrix.",
-    thumbClass:
-      "bg-gradient-to-br from-neutral-400 via-neutral-500 to-neutral-700",
-    thumbLabel: "Quadrant 3: DELEGATE",
+    youtubeId: "xfIyVLkbve4",
   },
   {
     id: "2",
@@ -56,56 +62,36 @@ const VIDEO_TUTORIALS: Tutorial[] = [
     duration: "6 min",
     description:
       "Priorities और Eisenhower Matrix का उपयोग करके सही फोकस चुनना सीखें।",
-    thumbClass:
-      "bg-gradient-to-br from-orange-300 via-orange-400 to-orange-600",
-    thumbLabel: "प्राथमिकताएँ",
+    youtubeId: "x4dhS0o6te0",
   },
 ];
 
 function TutorialVideoCard({ item }: { item: Tutorial }) {
   return (
-    <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm transition-shadow hover:shadow-md">
-      <div
-        className={cn(
-          "relative aspect-video w-full overflow-hidden",
-          item.thumbClass
-        )}
-      >
-        {item.thumbLabel && (
-          <div className="absolute inset-0 flex items-center justify-center p-4">
-            <span className="text-center text-sm font-bold uppercase tracking-wide text-white/90 drop-shadow-md sm:text-base">
-              {item.thumbLabel}
-            </span>
-          </div>
-        )}
-        <button
-          type="button"
-          className={cn(
-            "absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center",
-            "rounded-full bg-white/95 shadow-lg transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756]/40"
-          )}
-          aria-label={`Play ${item.title}`}
-        >
-          <Play
-            className="ml-0.5 h-7 w-7 fill-[#DA7756] text-[#DA7756]"
-            strokeWidth={0}
-          />
-        </button>
+    <Card className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:border-[#DA7756]/40">
+      <div className="relative aspect-video w-full overflow-hidden bg-neutral-900">
+        <iframe
+          src={`https://www.youtube.com/embed/${item.youtubeId}`}
+          title={item.title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          className="absolute inset-0 h-full w-full border-0"
+        />
       </div>
-      <div className="space-y-3 p-4 sm:p-5">
-        <h3 className="text-base font-bold leading-snug text-neutral-900 sm:text-lg">
+      <div className="space-y-3 p-5">
+        <h3 className="text-[17px] font-bold leading-snug text-neutral-900">
           {item.title}
         </h3>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-semibold text-sky-800">
+          <span className="rounded-md border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-700">
             Tutorial
           </span>
-          <span className="flex items-center gap-1 text-xs text-neutral-500">
+          <span className="flex items-center gap-1.5 text-[13px] font-medium text-neutral-500">
             <Clock className="h-3.5 w-3.5" strokeWidth={2} />
             {item.duration}
           </span>
         </div>
-        <p className="text-sm leading-relaxed text-neutral-600 line-clamp-2">
+        <p className="text-sm leading-relaxed text-neutral-600 line-clamp-2 mt-1">
           {item.description}
         </p>
       </div>
@@ -356,27 +342,32 @@ const FAQ_CATEGORIES: FaqCategory[] = [
 
 function GuideCard({ entry }: { entry: GuideEntry }) {
   return (
-    <Card className="rounded-xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-6 shadow-sm sm:p-8">
-      <h3 className="text-base font-bold text-neutral-900 sm:text-lg">
-        {entry.title}
-      </h3>
+    <Card className="rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white p-6 shadow-sm transition-shadow hover:shadow-md sm:p-8">
+      <h3 className="text-[17px] font-bold text-neutral-900">{entry.title}</h3>
 
       <div className="mt-6">
-        <p className="text-sm font-bold text-neutral-900">Tips</p>
-        <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-relaxed text-neutral-900">
+        <p className="text-sm font-bold uppercase tracking-wider text-neutral-500 mb-2">
+          Tips
+        </p>
+        <ul className="list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-neutral-700">
           {entry.tips.map((tip) => (
             <li key={tip}>{tip}</li>
           ))}
         </ul>
       </div>
 
-      <div className="mt-6">
-        <p className="text-sm font-bold text-neutral-900">Best Practices</p>
-        <ul className="mt-3 space-y-2.5">
+      <div className="mt-6 border-t border-neutral-100 pt-5">
+        <p className="text-sm font-bold uppercase tracking-wider text-neutral-500 mb-3">
+          Best Practices
+        </p>
+        <ul className="space-y-3">
           {entry.bestPractices.map((line) => (
-            <li key={line} className="flex gap-3 text-sm leading-relaxed text-neutral-900">
+            <li
+              key={line}
+              className="flex gap-3 text-[15px] leading-relaxed text-neutral-700"
+            >
               <CheckCircle2
-                className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600"
+                className="mt-0.5 h-5 w-5 shrink-0 text-[#10b981]"
                 strokeWidth={2}
                 aria-hidden
               />
@@ -400,30 +391,30 @@ function SuggestionsTabContent() {
   };
 
   return (
-    <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-6 shadow-sm sm:p-8">
+    <Card className="rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white p-6 shadow-sm sm:p-8">
       <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">
         Submit a Suggestion
       </h2>
-      <p className="mt-2 text-sm text-neutral-500 sm:text-[15px]">
+      <p className="mt-2 text-sm text-neutral-500">
         Help us improve by sharing your ideas and feedback
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+      <form onSubmit={handleSubmit} className="mt-8 space-y-6 max-w-3xl">
         <div className="space-y-2">
           <Label
             htmlFor="suggestion-category"
-            className="text-sm font-medium text-neutral-700"
+            className="text-sm font-bold text-neutral-800"
           >
-            Category
+            Category <span className="text-[#DA7756]">*</span>
           </Label>
           <Select value={category} onValueChange={setCategory}>
             <SelectTrigger
               id="suggestion-category"
-              className="h-11 rounded-lg border-neutral-200 bg-white"
+              className="h-12 w-full rounded-xl border border-neutral-200 bg-white px-4 text-sm font-medium text-neutral-900 shadow-sm outline-none focus:ring-2 focus:ring-[#DA7756]/20 hover:bg-neutral-50 transition-colors"
             >
               <SelectValue placeholder="Improvement" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-xl border border-neutral-200 shadow-md">
               <SelectItem value="improvement">Improvement</SelectItem>
               <SelectItem value="feature">Feature request</SelectItem>
               <SelectItem value="bug">Bug report</SelectItem>
@@ -435,29 +426,30 @@ function SuggestionsTabContent() {
         <div className="space-y-2">
           <Label
             htmlFor="suggestion-body"
-            className="text-sm font-medium text-neutral-700"
+            className="text-sm font-bold text-neutral-800"
           >
-            Your Suggestion
+            Your Suggestion <span className="text-[#DA7756]">*</span>
           </Label>
           <Textarea
             id="suggestion-body"
             value={suggestion}
             onChange={(e) => setSuggestion(e.target.value)}
             placeholder="Describe your suggestion in detail..."
-            className="min-h-[140px] resize-y rounded-lg border-neutral-200 bg-white text-sm text-neutral-900 placeholder:text-neutral-400"
+            className="min-h-[140px] resize-y rounded-xl border-neutral-200 bg-white p-4 text-sm shadow-sm focus:border-[#DA7756]/40 focus:ring-[#DA7756]/20 transition-all placeholder:text-neutral-400"
           />
         </div>
 
-        <button
-          type="submit"
-          className={cn(
-            "flex w-full items-center justify-center gap-2 rounded-xl bg-[#DA7756] py-3.5 text-sm font-semibold text-white",
-            "transition-colors hover:bg-[#DA7756]/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#DA7756] focus-visible:ring-offset-2"
-          )}
-        >
-          <Send className="h-4 w-4" strokeWidth={2} />
-          Submit Suggestion
-        </button>
+        <div className="pt-2">
+          <button
+            type="submit"
+            className={cn(
+              "inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-8 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#BC6B4A]"
+            )}
+          >
+            <Send className="h-4 w-4" strokeWidth={2} />
+            Submit Suggestion
+          </button>
+        </div>
       </form>
     </Card>
   );
@@ -467,66 +459,51 @@ const HelpCenter = () => {
   const [tab, setTab] = useState("tutorials");
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
+    <div
+      className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6"
+      style={{ fontFamily: "'Poppins', sans-serif" }}
+    >
+      <div className="mx-auto max-w-6xl space-y-6">
+        <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-5">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
             <HelpCircle className="h-7 w-7 text-white" strokeWidth={2} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+            <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
               Help Center
             </h1>
-            <p className="mt-1 text-sm text-neutral-500 sm:text-base">
+            <p className="mt-1 text-sm font-medium text-neutral-500">
               Guides, FAQs, and ways to help us improve
             </p>
           </div>
         </header>
 
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList
-            className={cn(
-              // Match pill tabs used in Feedback/KPI pages
-              "inline-flex h-12 w-fit max-w-full items-center justify-start gap-2 overflow-x-auto rounded-full border border-[#DA7756]/20",
-              "bg-[#f6f4ee] px-2 shadow-sm"
-            )}
-          >
+          <TabsList className="inline-flex h-auto p-1.5 w-full items-center justify-start gap-1 rounded-[16px] border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] shadow-sm sm:w-auto overflow-x-auto">
             <TabsTrigger
               value="tutorials"
-              className={cn(
-                "h-9 gap-2 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700",
-                "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
-              )}
+              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] flex items-center gap-2"
             >
               <Video className="h-4 w-4 shrink-0" />
               Tutorials
             </TabsTrigger>
             <TabsTrigger
               value="guide"
-              className={cn(
-                "h-9 gap-2 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700",
-                "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
-              )}
+              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] flex items-center gap-2"
             >
               <BookOpen className="h-4 w-4 shrink-0" />
               Guide
             </TabsTrigger>
             <TabsTrigger
               value="faq"
-              className={cn(
-                "h-9 gap-2 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700",
-                "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
-              )}
+              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] flex items-center gap-2"
             >
               <MessageSquare className="h-4 w-4 shrink-0" />
               FAQ
             </TabsTrigger>
             <TabsTrigger
               value="suggestions"
-              className={cn(
-                "h-9 gap-2 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700",
-                "data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
-              )}
+              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] flex items-center gap-2"
             >
               <Lightbulb className="h-4 w-4 shrink-0" />
               Suggestions
@@ -537,16 +514,16 @@ const HelpCenter = () => {
             value="tutorials"
             className="mt-6 focus-visible:outline-none"
           >
-            <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-5 shadow-sm sm:p-8">
+            <Card className="overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white shadow-sm p-5 sm:p-8">
               <div className="mb-6 sm:mb-8">
-                <h2 className="text-lg font-bold text-neutral-900 sm:text-xl">
+                <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">
                   Video Tutorials
                 </h2>
-                <p className="mt-1 text-sm text-neutral-500 sm:text-base">
+                <p className="mt-1 text-sm text-neutral-500">
                   Learn how to use Business Compass through video guides
                 </p>
               </div>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {VIDEO_TUTORIALS.map((item) => (
                   <TutorialVideoCard key={item.id} item={item} />
                 ))}
@@ -554,18 +531,23 @@ const HelpCenter = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="guide" className="mt-6 focus-visible:outline-none">
-            <div className="space-y-5">
-              <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 px-5 py-5 shadow-sm sm:px-6 sm:py-6">
-                <div className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-[#DA7756]" />
-                  <h2 className="text-lg font-bold text-neutral-900 sm:text-xl">
-                    Guides
-                  </h2>
+          <TabsContent
+            value="guide"
+            className="mt-6 focus-visible:outline-none"
+          >
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-[rgba(218,119,86,0.18)] bg-[#FFF9F6] px-5 py-5 shadow-sm sm:px-6 sm:py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-[#DA7756]" />
+                    <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">
+                      Guides
+                    </h2>
+                  </div>
+                  <p className="mt-1 text-sm text-neutral-500">
+                    Practical tips and best practices for Business Compass
+                  </p>
                 </div>
-                <p className="mt-1 text-sm text-neutral-500 sm:text-[15px]">
-                  Practical tips and best practices for Business Compass
-                </p>
               </div>
               {GUIDE_SECTIONS.map((entry) => (
                 <GuideCard key={entry.id} entry={entry} />
@@ -574,18 +556,18 @@ const HelpCenter = () => {
           </TabsContent>
 
           <TabsContent value="faq" className="mt-6 focus-visible:outline-none">
-            <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-5 shadow-sm sm:p-8 lg:p-10">
+            <Card className="overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white shadow-sm p-5 sm:p-8 lg:p-10">
               <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">
                 Frequently Asked Questions
               </h2>
-              <p className="mt-2 text-sm text-neutral-500 sm:text-base">
+              <p className="mt-2 text-sm text-neutral-500">
                 Find quick answers to common questions
               </p>
 
               <div className="mt-8 space-y-10 sm:mt-10 sm:space-y-12">
                 {FAQ_CATEGORIES.map((category) => (
                   <div key={category.id}>
-                    <h3 className="text-base font-bold text-neutral-900 sm:text-lg">
+                    <h3 className="text-base font-bold text-[#DA7756] sm:text-lg mb-2">
                       {category.title}
                     </h3>
                     <Accordion
@@ -597,17 +579,17 @@ const HelpCenter = () => {
                         <AccordionItem
                           key={`${category.id}-${index}`}
                           value={`${category.id}-${index}`}
-                          className="border-b border-neutral-200 last:border-b-0"
+                          className="border-b border-neutral-100 last:border-b-0"
                         >
                           <AccordionTrigger
                             className={cn(
-                              "py-4 text-left text-sm font-normal text-neutral-900 hover:no-underline sm:text-[15px]",
+                              "py-4 text-left text-[15px] font-bold text-neutral-800 hover:no-underline transition-colors hover:text-[#DA7756]",
                               "[&>svg]:shrink-0 [&>svg]:text-neutral-400"
                             )}
                           >
                             {item.question}
                           </AccordionTrigger>
-                          <AccordionContent className="pb-4 pt-0 text-sm leading-relaxed text-neutral-600">
+                          <AccordionContent className="pb-4 pt-1 text-[14.5px] leading-relaxed text-neutral-600">
                             {item.answer}
                           </AccordionContent>
                         </AccordionItem>

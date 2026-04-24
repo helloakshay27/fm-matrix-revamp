@@ -2246,7 +2246,65 @@ const KPI = () => {
           gap: 24,
         }}
       >
-        {/* ── PAGE HEADER — matches BusinessPlan header ── */}
+        {/* ── Header (icon/logo like FeedbackDashboard.tsx) ── */}
+        <header
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 14,
+            }}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 999,
+                border: "2px solid #DA7756",
+                background: "rgba(218,119,86,0.12)",
+                boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <BarChart3 size={24} color={T.primary} strokeWidth={2} aria-hidden />
+            </div>
+            <div>
+              <h1
+                style={{
+                  fontSize: 28,
+                  fontWeight: 900,
+                  letterSpacing: "-0.02em",
+                  color: "#111",
+                  margin: 0,
+                  lineHeight: 1.2,
+                }}
+              >
+                KPIs
+              </h1>
+              <p
+                style={{
+                  marginTop: 6,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: T.textMuted,
+                }}
+              >
+                Monitor and manage performance metrics
+              </p>
+            </div>
+          </div>
+        </header>
+
+        {/* ── Action Bar (tinted panel) ── */}
         <div
           style={{
             borderRadius: 20,
@@ -2265,28 +2323,14 @@ const KPI = () => {
           <div>
             <p
               style={{
-                fontSize: 10,
-                fontWeight: 800,
-                textTransform: "uppercase",
-                letterSpacing: "0.18em",
+                fontSize: 12,
+                fontWeight: 700,
                 color: T.textMuted,
-                marginBottom: 6,
-              }}
-            >
-              Monitor and manage performance metrics
-            </p>
-            <h1
-              style={{
-                fontSize: 28,
-                fontWeight: 900,
-                letterSpacing: "-0.02em",
-                color: "#111",
                 margin: 0,
-                lineHeight: 1.2,
               }}
             >
-              KPIs
-            </h1>
+              Quick actions
+            </p>
           </div>
 
           <div

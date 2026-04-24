@@ -478,8 +478,8 @@ const getDayStatus = (
   }
   if (isToday) {
     return {
-      color: "bg-[#F59E0B]",
-      ringColor: "ring-2 ring-offset-1 ring-[#F59E0B]",
+      color: "bg-[#DA7756]", // Yellow replaced with Coral
+      ringColor: "ring-2 ring-offset-1 ring-[#DA7756]", // Yellow replaced with Coral
       isToday,
     };
   }
@@ -698,11 +698,11 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
                     className={cn(
                       "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider transition-all",
                       isActive && isToday
-                        ? "bg-[#F59E0B] text-white ring-2 ring-offset-1 ring-[#F59E0B]"
+                        ? "bg-[#DA7756] text-white ring-2 ring-offset-1 ring-[#DA7756]" // Yellow replaced with Coral
                         : isActive
                           ? "bg-[#1A1A1A] text-white"
                           : isToday
-                            ? "bg-[#FCFAFA] border-2 border-[#F59E0B] text-[#F59E0B]"
+                            ? "bg-[#FCFAFA] border-2 border-[#DA7756] text-[#DA7756]" // Yellow replaced with Coral
                             : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
                     )}
                   >
@@ -810,7 +810,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
               Held
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-[#F59E0B]" />
+              <div className="w-2 h-2 rounded-full bg-[#DA7756]" /> {/* Yellow replaced with Coral */}
               Today
             </div>
             <div className="flex items-center gap-1.5">
@@ -962,7 +962,7 @@ const SettingsTab = () => {
 
   return (
     <div
-      className="space-y-6 pb-12 px-4 sm:px-8 min-h-screen pt-8"
+      className="space-y-6 pb-12   min-h-screen pt-8"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       <div className="space-y-6">

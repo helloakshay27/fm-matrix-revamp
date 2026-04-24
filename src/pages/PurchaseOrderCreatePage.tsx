@@ -34,7 +34,8 @@ import {
     AttachFile,
     ChevronRight,
     Search,
-    CheckCircle
+    CheckCircle,
+    EditOutlined
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import { toast } from 'sonner';
@@ -222,6 +223,35 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const [taxAmount2, setTaxAmount2] = useState(0);
     const [totalAmount2, setTotalAmount2] = useState(0);
     const [addresses, setAddresses] = useState([])
+    const [vendorDetails, setVendorDetails] = useState<any>(null);
+    const [vendorDetail, setVendorDetail] = useState<any>(null);
+    const [vendorDetailLoading, setVendorDetailLoading] = useState(false);
+    const [billingAddressBook, setBillingAddressBook] = useState<any[]>([]);
+    const [shippingAddressBook, setShippingAddressBook] = useState<any[]>([]);
+    const [selectedBillingAddressId, setSelectedBillingAddressId] = useState<any>(null);
+    const [selectedShippingAddressId, setSelectedShippingAddressId] = useState<any>(null);
+    const [addressListModalOpen, setAddressListModalOpen] = useState(false);
+    const [addressFormModalOpen, setAddressFormModalOpen] = useState(false);
+    const [activeAddressType, setActiveAddressType] = useState<'billing' | 'shipping'>('billing');
+    const [addressFormMode, setAddressFormMode] = useState<'new' | 'edit'>('new');
+    const [editingAddressId, setEditingAddressId] = useState<any>(null);
+    const [addressForm, setAddressForm] = useState<any>({
+        id: '', attention: '', address: '', address_line_two: '',
+        country: 'India', state: '', city: '', pin_code: '',
+        telephone_number: '', fax_number: '', mobile: ''
+    });
+    const [gstDetails, setGstDetails] = useState<any[]>([]);
+    const [selectedGstDetailId, setSelectedGstDetailId] = useState<any>(null);
+    const [gstPickerModalOpen, setGstPickerModalOpen] = useState(false);
+    const [gstManageModalOpen, setGstManageModalOpen] = useState(false);
+    const [gstModalOpen, setGstModalOpen] = useState(false);
+    const [gstTreatmentDraft, setGstTreatmentDraft] = useState('');
+    const [showNewGstForm, setShowNewGstForm] = useState(false);
+    const [editingGstDetailId, setEditingGstDetailId] = useState<any>(null);
+    const [newGstForm, setNewGstForm] = useState({
+        gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: ''
+    });
+    const [selectedAddressTaxInfoId, setSelectedAddressTaxInfoId] = useState('');
 
     // Notes & Attachments
     const [vendorNotes, setVendorNotes] = useState('');
@@ -441,6 +471,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             }
         };
 
+
         // Payment terms dropdown data
         const fetchPaymentTerms = async () => {
             try {
@@ -530,9 +561,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         const lock_account_id = localStorage.getItem('lock_account_id');
-        
+
         setLoadingTaxRates(true);
-        
+
         axios
             .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
                 headers: {
@@ -758,7 +789,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
                 // Try to extract address from response
                 let addressData = null;
-                
+
                 // Check for default_shipping_address first 
                 if (res.data?.default_shipping_address) {
                     addressData = res.data.default_shipping_address;
@@ -809,32 +840,32 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             const response = await axios.get(
                 `https://${baseUrl}/pms/suppliers/addresses.json?id=${vendorId}&access_token=${token}`
             );
-            
+
             const data = response.data;
             console.log('Vendor Addresses API Response:', data); // DEBUG LOG
-            
+
             const billingAddrs = data.billing_address || [];
             const shippingAddrs = data.shipping_address || [];
-            
+
             console.log('Billing Addresses:', billingAddrs, 'Shipping Addresses:', shippingAddrs); // DEBUG LOG
-            
+
             setBillingAddresses(billingAddrs);
             setShippingAddresses(shippingAddrs);
-            
+
             // Auto-select default address
             const defaultBillingAddr = billingAddrs.find(addr => addr.default_address === true);
             const defaultShippingAddr = shippingAddrs.find(addr => addr.default_address === true);
-            
+
             console.log('Default Billing:', defaultBillingAddr, 'Default Shipping:', defaultShippingAddr); // DEBUG LOG
-            
+
             const selectedBillingId = defaultBillingAddr?.id || billingAddrs[0]?.id || '';
             const selectedShippingId = defaultShippingAddr?.id || shippingAddrs[0]?.id || '';
-            
+
             console.log('Setting Addresses - Billing ID:', selectedBillingId, 'Shipping ID:', selectedShippingId); // DEBUG LOG
-            
+
             setBillingAddress(selectedBillingId);
             setShippingAddress(selectedShippingId);
-            
+
             // Set sourceOfSupply from the default billing address state
             if (defaultBillingAddr?.state) {
                 setSourceOfSupply(defaultBillingAddr.state);
@@ -850,6 +881,20 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             setShippingAddress('');
         } finally {
             setLoadingAddresses(false);
+        }
+    };
+    // Fetch vendor details for drawer
+    const handleVendorChange = async (vendorId: string) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get(
+                `https://${baseUrl}/pms/suppliers/${vendorId}.json?access_token=${token}`
+            );
+            setVendorDetails(res.data?.supplier || res.data);
+            setVendorDrawerOpen(true);
+        } catch (err) {
+            console.error('Error fetching vendor details:', err);
+            toast.error('Failed to load vendor details');
         }
     };
 
@@ -1336,8 +1381,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         const newErrors: Record<string, string> = {};
 
         if (!selectedVendor) newErrors.vendor = 'Vendor is required';
-        if (!billingAddress) newErrors.billingAddress = 'Billing address is required';
-        if (!shippingAddress) newErrors.shippingAddress = 'Shipping address is required';
+        if (!selectedBillingAddressId) newErrors.billingAddress = 'Billing address is required';
+        if (!selectedShippingAddressId) newErrors.shippingAddress = 'Shipping address is required';
         if (!purchaseOrderDate) newErrors.purchaseOrderDate = 'Purchase order date is required';
         if (!expectedDeliveryDate) newErrors.expectedDeliveryDate = 'Expected delivery date is required';
         if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
@@ -1382,7 +1427,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 };
             });
 
-           
+
             const selectedTaxObj = taxOptions.find(t => t.name === selectedTax);
 
             const totalGSTAmount = taxBreakdown.reduce(
@@ -1392,8 +1437,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             const payload = {
                 pms_purchase_order: {
                     pms_supplier_id: selectedVendor?.id,
-                    billing_address_id: billingAddress, // Assuming select value is ID
-                    shipping_address_id: shippingAddress, // Assuming select value is ID
+                    billing_address_id: selectedBillingAddressId,
+                    shipping_address_id: selectedShippingAddressId,
+                    gst_detail_id: selectedGstDetailId,
+                    gst_preference: vendorDetail?.gst_preference || '',
                     delivery_adress_type: deliveryAddressType,
                     delivery_address_id: deliveryAddressType === 'organization' ? organizationAddress?.id : deliveryCustomerAddress?.id,
                     reference_number: referenceNumber,
@@ -1411,7 +1458,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     adjustment: adjustment,
                     sub_total: subTotal,
                     tax_value: taxAmount, // This currently comes from item reduction? 
-                    
+
                     tax_percentage: selectedTaxObj?.rate || 0,
                     reverse_charge: reverseCharge,
                     source_of_supply: sourceOfSupply,
@@ -1454,7 +1501,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             const newItems = [...prev];
             let newItemTaxType = '';
             let newTaxGroupId = null;
-            
+
             // Set tax type and validate against available options
             if (selectedItem.tax_preference === 'non_taxable') {
                 newItemTaxType = 'non_taxable';
@@ -1477,7 +1524,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 newItemTaxType = 'non_gst_supply';
                 newTaxGroupId = null;
             }
-            
+
             newItems[index] = {
                 ...newItems[index],
                 id: selectedItem.id,
@@ -1496,6 +1543,237 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             }
             return newItems;
         });
+    };
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Constants and Helper Functions for Address and GST Management
+    // ─────────────────────────────────────────────────────────────────────────
+
+    const INDIAN_STATES = [
+        'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa',
+        'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala',
+        'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland',
+        'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura',
+        'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands',
+        'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi',
+        'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'
+    ];
+
+    const gstTreatmentOptions = [
+        { value: 'registered_regular', label: 'Registered Business - Regular' },
+        { value: 'registered_composition', label: 'Registered Business - Composition' },
+        { value: 'unregistered', label: 'Unregistered Business' },
+        { value: 'consumer', label: 'Consumer' },
+        { value: 'overseas', label: 'Overseas' },
+        { value: 'sez_unit', label: 'Special Economic Zone (SEZ) Unit' },
+    ];
+
+    const getGstTreatmentLabel = (value?: string) => {
+        if (!value) return '';
+        return gstTreatmentOptions.find(opt => opt.value === value)?.label || value;
+    };
+
+    const mapAddress = (address: any, fallbackType: 'billing' | 'shipping') => ({
+        id: address?.id ?? `${fallbackType}-${Date.now()}`,
+        attention: address?.attention || '',
+        address: address?.address || '',
+        address_line_two: address?.address_line_two || '',
+        country: address?.country || 'India',
+        state: address?.state || '',
+        city: address?.city || '',
+        pin_code: address?.pin_code || '',
+        telephone_number: address?.telephone_number || '',
+        fax_number: address?.fax_number || '',
+        mobile: address?.mobile || ''
+    });
+
+    const formatAddressText = (addr?: any): string => {
+        if (!addr) return '';
+        return [
+            addr.attention, addr.address, addr.address_line_two,
+            [addr.city, addr.state].filter(Boolean).join(', '),
+            addr.pin_code, addr.country
+        ].filter(Boolean).join(', ');
+    };
+
+    const selectedBillingAddress = billingAddressBook.find(
+        a => String(a.id) === String(selectedBillingAddressId)
+    ) || billingAddressBook[0] || null;
+
+    const selectedShippingAddress = shippingAddressBook.find(
+        a => String(a.id) === String(selectedShippingAddressId)
+    ) || shippingAddressBook[0] || null;
+
+    const selectedGstDetail = gstDetails.find(
+        g => String(g.id) === String(selectedGstDetailId)
+    ) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
+
+    const getAddressBookByType = (type: 'billing' | 'shipping') =>
+        type === 'billing' ? billingAddressBook : shippingAddressBook;
+
+    const fetchVendorDetail = async (vendorId: string) => {
+        const token = localStorage.getItem('token');
+        const baseUrl = localStorage.getItem('baseUrl');
+        setVendorDetailLoading(true);
+        try {
+            const res = await axios.get(
+                `https://${baseUrl}/pms/suppliers/${vendorId}.json?access_token=${token}`
+            );
+            const data = res.data?.supplier || res.data;
+            setVendorDetail(data);
+
+            const nextBilling = Array.isArray(data.billing_addresses) && data.billing_addresses.length
+                ? data.billing_addresses.map((a: any) => mapAddress(a, 'billing'))
+                : data.default_billing_address
+                    ? [mapAddress(data.default_billing_address, 'billing')]
+                    : [];
+
+            const nextShipping = Array.isArray(data.shipping_addresses) && data.shipping_addresses.length
+                ? data.shipping_addresses.map((a: any) => mapAddress(a, 'shipping'))
+                : data.default_shipping_address
+                    ? [mapAddress(data.default_shipping_address, 'shipping')]
+                    : [];
+
+            setBillingAddressBook(nextBilling);
+            setShippingAddressBook(nextShipping);
+
+            const defaultBilling = data.default_billing_address
+                ? mapAddress(data.default_billing_address, 'billing')
+                : nextBilling[0] || null;
+            const defaultShipping = data.default_shipping_address
+                ? mapAddress(data.default_shipping_address, 'shipping')
+                : nextShipping[0] || null;
+
+            setSelectedBillingAddressId(defaultBilling?.id ?? null);
+            setSelectedShippingAddressId(defaultShipping?.id ?? null);
+
+            const nextGst: any[] = Array.isArray(data.gst_details) ? data.gst_details : [];
+            setGstDetails(nextGst);
+            const primaryGst = nextGst.find(g => g.primary) || nextGst[0] || null;
+            setSelectedGstDetailId(primaryGst?.id ?? null);
+            if (primaryGst?.place_of_supply) {
+                setSourceOfSupply(primaryGst.place_of_supply);
+            }
+        } catch (err) {
+            console.error('Error fetching vendor detail:', err);
+            toast.error('Failed to load vendor details');
+        } finally {
+            setVendorDetailLoading(false);
+        }
+    };
+
+    const openAddressListModal = (type: 'billing' | 'shipping') => {
+        setActiveAddressType(type);
+        setAddressListModalOpen(true);
+    };
+
+    const openAddressFormModal = (mode: 'new' | 'edit', type: 'billing' | 'shipping', address?: any) => {
+        setActiveAddressType(type);
+        setAddressFormMode(mode);
+        if (mode === 'edit' && address) {
+            setEditingAddressId(address.id);
+            setAddressForm({ ...address });
+        } else {
+            setEditingAddressId(null);
+            setAddressForm({
+                id: `${type}-${Date.now()}`, attention: '', address: '',
+                address_line_two: '', country: 'India', state: '', city: '',
+                pin_code: '', telephone_number: '', fax_number: '', mobile: ''
+            });
+        }
+        setSelectedAddressTaxInfoId(selectedGstDetailId ? String(selectedGstDetailId) : '');
+        setAddressFormModalOpen(true);
+    };
+
+    const handleSaveAddressForm = async () => {
+        if (!selectedVendor?.id) return;
+        const token = localStorage.getItem('token');
+        const baseUrl = localStorage.getItem('baseUrl');
+        const targetId = editingAddressId ?? addressForm.id;
+        const payload = { ...addressForm, id: targetId };
+        const setBook = activeAddressType === 'billing' ? setBillingAddressBook : setShippingAddressBook;
+        const setSelectedId = activeAddressType === 'billing' ? setSelectedBillingAddressId : setSelectedShippingAddressId;
+
+        const addressAttr: any = {
+            attention: addressForm.attention || '',
+            address: addressForm.address || '',
+            address_type: activeAddressType,
+            address_line_two: addressForm.address_line_two || '',
+            country: addressForm.country || 'India',
+            state: addressForm.state || '',
+            city: addressForm.city || '',
+            pin_code: addressForm.pin_code || '',
+            telephone_number: addressForm.telephone_number || '',
+            fax_number: addressForm.fax_number || '',
+            mobile: addressForm.mobile || '',
+        };
+        if (addressFormMode === 'edit') addressAttr.id = Number(targetId) || targetId;
+
+        try {
+            await axios.put(
+                `https://${baseUrl}/pms/suppliers/${selectedVendor.id}.json?access_token=${token}`,
+                {
+                    pms_supplier: {
+                        [activeAddressType === 'billing'
+                            ? 'billing_addresses_attributes'
+                            : 'shipping_addresses_attributes']: [addressAttr]
+                    }
+                }
+            );
+            setBook(prev => addressFormMode === 'edit'
+                ? prev.map(item => String(item.id) === String(targetId) ? payload : item)
+                : [...prev, payload]
+            );
+            setSelectedId(targetId);
+            setAddressFormModalOpen(false);
+            setAddressListModalOpen(false);
+            toast.success('Address saved successfully');
+            fetchVendorDetail(selectedVendor.id);
+        } catch (err) {
+            toast.error('Failed to save address');
+        }
+    };
+
+    const handleGstinDropdownChange = (value: any) => {
+        setSelectedGstDetailId(value);
+        const selected = gstDetails.find(g => String(g.id) === String(value));
+        if (selected?.place_of_supply) setSourceOfSupply(selected.place_of_supply);
+        setGstPickerModalOpen(false);
+    };
+
+    const handleSaveAndSelectGst = async () => {
+        if (!selectedVendor?.id || !newGstForm.gstin || !newGstForm.place_of_supply) {
+            toast.error('GSTIN and Place of Supply are required');
+            return;
+        }
+        const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+        const normalized = newGstForm.gstin.toUpperCase().trim();
+        if (!gstinRegex.test(normalized)) {
+            toast.error('Invalid GSTIN format. e.g. 27AAAAA1234A1Z5');
+            return;
+        }
+        const token = localStorage.getItem('token');
+        const baseUrl = localStorage.getItem('baseUrl');
+        const gstAttr: any = {
+            ...(editingGstDetailId ? { id: Number(editingGstDetailId) || editingGstDetailId } : {}),
+            gstin: normalized,
+            place_of_supply: newGstForm.place_of_supply,
+            business_legal_name: newGstForm.business_legal_name || '',
+            business_trade_name: newGstForm.business_trade_name || ''
+        };
+        try {
+            await axios.put(
+                `https://${baseUrl}/pms/suppliers/${selectedVendor.id}.json?access_token=${token}`,
+                { pms_supplier: { gst_details_attributes: [gstAttr] } }
+            );
+            setShowNewGstForm(false);
+            setEditingGstDetailId(null);
+            setGstManageModalOpen(false);
+            toast.success('Tax information saved');
+            await fetchVendorDetail(selectedVendor.id);
+        } catch (err) {
+            toast.error('Failed to save tax information');
+        }
     };
 
     return (
@@ -1525,6 +1803,15 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                         onChange={(e) => {
                                             const vendor = vendors.find(c => c.id === e.target.value);
                                             setSelectedVendor(vendor || null);
+                                            setSelectedBillingAddressId(null);
+                                            setSelectedShippingAddressId(null);
+                                            setBillingAddressBook([]);
+                                            setShippingAddressBook([]);
+                                            setGstDetails([]);
+                                            setVendorDetail(null);
+                                            if (e.target.value) {
+                                                fetchVendorDetail(e.target.value);
+                                            }
                                         }}
                                         displayEmpty
                                         sx={fieldStyles}
@@ -1569,11 +1856,11 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             >
                                                 <MenuItem value="">Select Source of Supply</MenuItem>
                                                 {['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'].map((state) => (
-                                            <MenuItem key={state} value={state}>
-                                                {state}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
+                                                    <MenuItem key={state} value={state}>
+                                                        {state}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
                                         </FormControl>
                                     </div>
 
@@ -1591,18 +1878,27 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             >
                                                 <MenuItem value="">Select Destination of Supply</MenuItem>
                                                 {['Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli and Daman and Diu', 'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry'].map((state) => (
-                                            <MenuItem key={state} value={state}>
-                                                {state}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
+                                                    <MenuItem key={state} value={state}>
+                                                        {state}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
                                         </FormControl>
                                     </div>
                                 </div>
 
-                                <Button
+                                {/* <Button
                                     variant="outlined"
                                     onClick={() => setVendorDrawerOpen(true)}
+                                    endIcon={<ChevronRight />}
+                                    sx={{ textTransform: 'none' }}
+                                >
+                                    View Vendor Details
+                                </Button> */}
+
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => handleVendorChange(selectedVendor.id)}
                                     endIcon={<ChevronRight />}
                                     sx={{ textTransform: 'none' }}
                                 >
@@ -1616,212 +1912,180 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                 {/* Address Section */}
                 <Section title="Address Details" icon={<FileText className="w-5 h-5" />}>
                     <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormControl fullWidth variant="outlined">
-                                <InputLabel shrink>Billing Address*</InputLabel>
-                                <Select
-                                    label="Billing Address*"
-                                    value={billingAddress}
-                                    onChange={(e) => setBillingAddress(e.target.value)}
-                                    displayEmpty
-                                    disabled={loadingAddresses}
-                                    sx={fieldStyles}
-                                >
-                                    <MenuItem value="">
-                                        <em>
-                                            {loadingAddresses ? 'Loading addresses...' : 'Select...'}
-                                        </em>
-                                    </MenuItem>
-                                    {addressError && (
-                                        <MenuItem value="" disabled>
-                                            <em style={{ color: 'red' }}>Error: {addressError}</em>
-                                        </MenuItem>
-                                    )}
-                                    {billingAddresses.map((address) => (
-                                        <MenuItem key={address.id} value={address.id}>
-                                            {address.address}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-
-                            <FormControl fullWidth variant="outlined">
-                                <InputLabel shrink>Shipping Address*</InputLabel>
-                                <Select
-                                    label="Shipping Address*"
-                                    value={shippingAddress}
-                                    onChange={(e) => setShippingAddress(e.target.value)}
-                                    displayEmpty
-                                    disabled={loadingAddresses}
-                                    sx={fieldStyles}
-                                >
-                                    <MenuItem value="">
-                                        <em>
-                                            {loadingAddresses ? 'Loading addresses...' : 'Select...'}
-                                        </em>
-                                    </MenuItem>
-                                    {addressError && (
-                                        <MenuItem value="" disabled>
-                                            <em style={{ color: 'red' }}>Error: {addressError}</em>
-                                        </MenuItem>
-                                    )}
-                                    {shippingAddresses.map((address) => (
-                                        <MenuItem key={address.id} value={address.id}>
-                                            {address.address}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </div>
-
-                        <div className=''>
-                            <h6 className='text-sm font-medium mb-2'>Delivery Address</h6>
-                            <div className="flex items-center gap-4 mb-4">
-                                <RadioGroup
-                                    row
-                                    value={deliveryAddressType}
-                                    onChange={(e) => handleDeliveryTypeChange(e.target.value as 'organization' | 'customer')}
-                                >
-                                    <FormControlLabel value="organization" control={<Radio />} label="Organization" />
-                                    <FormControlLabel value="customer" control={<Radio />} label="Customer" />
-                                </RadioGroup>
+                        {vendorDetailLoading ? (
+                            <div className="flex justify-center py-4">
+                                <CircularProgress size={24} />
                             </div>
+                        ) : vendorDetail && selectedVendor ? (
+                            <>
+                                {/* Billing and Shipping Address */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pb-6 border-b border-gray-100">
+                                    <div>
+                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                            Billing Address*
+                                            <IconButton size="small" onClick={() => openAddressListModal('billing')}>
+                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                            </IconButton>
+                                        </div>
+                                        {selectedBillingAddress?.address ? (
+                                            <div className="text-sm text-gray-700 leading-relaxed">
+                                                {selectedBillingAddress.attention && <div className="font-medium">{selectedBillingAddress.attention}</div>}
+                                                <div>{selectedBillingAddress.address}</div>
+                                                {selectedBillingAddress.address_line_two && <div>{selectedBillingAddress.address_line_two}</div>}
+                                                <div>
+                                                    {[selectedBillingAddress.city, selectedBillingAddress.state].filter(Boolean).join(', ')}
+                                                    {selectedBillingAddress.pin_code ? ` - ${selectedBillingAddress.pin_code}` : ''}
+                                                </div>
+                                                {selectedBillingAddress.country && <div>{selectedBillingAddress.country}</div>}
+                                            </div>
+                                        ) : (
+                                            <button type="button" onClick={() => openAddressFormModal('new', 'billing')}
+                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100">
+                                                + New Address
+                                            </button>
+                                        )}
+                                        {errors.billingAddress && <p className="text-red-500 text-xs mt-1">{errors.billingAddress}</p>}
+                                    </div>
 
-                            {/* Organization Address Flow - No Dropdown */}
-                            {deliveryAddressType === 'organization' && (
-                                <div className="space-y-3">
-                                    {/* Loading state */}
-                                    {loadingOrgAddress && (
-                                        <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
-                                            <CircularProgress size={16} />
-                                            <span>Fetching organization address...</span>
+                                    <div>
+                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                            Shipping Address*
+                                            <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
+                                                <EditOutlined fontSize="small" className="text-blue-500" />
+                                            </IconButton>
+                                        </div>
+                                        {selectedShippingAddress?.address ? (
+                                            <div className="text-sm text-gray-700 leading-relaxed">
+                                                {selectedShippingAddress.attention && <div className="font-medium">{selectedShippingAddress.attention}</div>}
+                                                <div>{selectedShippingAddress.address}</div>
+                                                {selectedShippingAddress.address_line_two && <div>{selectedShippingAddress.address_line_two}</div>}
+                                                <div>
+                                                    {[selectedShippingAddress.city, selectedShippingAddress.state].filter(Boolean).join(', ')}
+                                                    {selectedShippingAddress.pin_code ? ` - ${selectedShippingAddress.pin_code}` : ''}
+                                                </div>
+                                                {selectedShippingAddress.country && <div>{selectedShippingAddress.country}</div>}
+                                            </div>
+                                        ) : (
+                                            <button type="button" onClick={() => openAddressFormModal('new', 'shipping')}
+                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100">
+                                                + New Address
+                                            </button>
+                                        )}
+                                        {errors.shippingAddress && <p className="text-red-500 text-xs mt-1">{errors.shippingAddress}</p>}
+                                    </div>
+                                </div>
+
+                                {/* GST Info Row */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">GST Treatment:</span>
+                                        <span className="text-gray-800">{getGstTreatmentLabel(vendorDetail?.gst_preference)}</span>
+                                        <IconButton size="small" onClick={() => {
+                                            setGstTreatmentDraft(vendorDetail?.gst_preference || '');
+                                            setGstModalOpen(true);
+                                        }}>
+                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                        </IconButton>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-gray-500">GSTIN:</span>
+                                        <span className="text-gray-800 font-medium">
+                                            {selectedGstDetail?.gstin || vendorDetail?.primary_gst_detail?.gstin || '—'}
+                                        </span>
+                                        <IconButton size="small" onClick={() => setGstPickerModalOpen(true)}>
+                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                        </IconButton>
+                                    </div>
+                                </div>
+
+                                {/* Delivery Address - keep existing radio group */}
+                                <div className="pt-4 border-t border-gray-100">
+                                    <h6 className="text-sm font-medium mb-2">Delivery Address</h6>
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <RadioGroup row value={deliveryAddressType}
+                                            onChange={(e) => handleDeliveryTypeChange(e.target.value as 'organization' | 'customer')}>
+                                            <FormControlLabel value="organization" control={<Radio />} label="Organization" />
+                                            <FormControlLabel value="customer" control={<Radio />} label="Customer" />
+                                        </RadioGroup>
+                                    </div>
+
+                                    {deliveryAddressType === 'organization' && (
+                                        <div className="space-y-3">
+                                            {loadingOrgAddress && (
+                                                <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                                                    <CircularProgress size={16} />
+                                                    <span>Fetching organization address...</span>
+                                                </div>
+                                            )}
+                                            {orgAddressError && !loadingOrgAddress && (
+                                                <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                                                    {orgAddressError}
+                                                </div>
+                                            )}
+                                            {organizationAddress && !loadingOrgAddress && (
+                                                <div className="bg-gray-50 border border-gray-200 rounded-md px-4 py-3 text-sm text-gray-700 space-y-1">
+                                                    {organizationAddress.attention && <p className="font-medium">{organizationAddress.attention}</p>}
+                                                    {organizationAddress.address && <p>{organizationAddress.address}</p>}
+                                                    {organizationAddress.address_line_two && <p>{organizationAddress.address_line_two}</p>}
+                                                    {(organizationAddress.city || organizationAddress.state || organizationAddress.pin_code) && (
+                                                        <p>{[organizationAddress.city, organizationAddress.state, organizationAddress.pin_code].filter(Boolean).join(', ')}</p>
+                                                    )}
+                                                    {organizationAddress.country && <p className="text-gray-500">{organizationAddress.country}</p>}
+                                                </div>
+                                            )}
+                                            {!loadingOrgAddress && !organizationAddress && !orgAddressError && (
+                                                <div className="text-sm text-gray-400 italic py-2">No address available for this organization.</div>
+                                            )}
                                         </div>
                                     )}
 
-                                    {/* Error state */}
-                                    {orgAddressError && !loadingOrgAddress && (
-                                        <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-                                            {orgAddressError}
-                                        </div>
-                                    )}
-
-                                    {/* Address display - shows address fields directly, NO dropdown */}
-                                    {organizationAddress && !loadingOrgAddress && (
-                                        <div className="bg-gray-50 border border-gray-200 rounded-md px-4 py-3 text-sm text-gray-700 space-y-1">
-                                            {organizationAddress.attention && (
-                                                <p className="font-medium text-gray-800">
-                                                    {organizationAddress.attention}
-                                                </p>
+                                    {deliveryAddressType === 'customer' && (
+                                        <div className="space-y-3">
+                                            <FormControl fullWidth variant="outlined">
+                                                <InputLabel shrink>Select Customer</InputLabel>
+                                                <Select label="Select Customer" value={selectedDeliveryCustomer?.id || ''}
+                                                    onChange={(e) => {
+                                                        const selected = deliveryCustomers.find(c => c.id === e.target.value);
+                                                        setSelectedDeliveryCustomer(selected || null);
+                                                    }}
+                                                    displayEmpty sx={fieldStyles}>
+                                                    <MenuItem value=""><em>Select Customer</em></MenuItem>
+                                                    {deliveryCustomers.map((customer: any) => (
+                                                        <MenuItem key={customer.id} value={customer.id}>{customer.name}</MenuItem>
+                                                    ))}
+                                                </Select>
+                                            </FormControl>
+                                            {loadingCustomerAddress && (
+                                                <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
+                                                    <CircularProgress size={16} />
+                                                    <span>Loading customer address...</span>
+                                                </div>
                                             )}
-                                            {organizationAddress.address && (
-                                                <p>{organizationAddress.address}</p>
+                                            {customerAddressError && !loadingCustomerAddress && (
+                                                <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-md px-3 py-2">
+                                                    {customerAddressError}
+                                                </div>
                                             )}
-                                            {organizationAddress.address_line_two && (
-                                                <p>{organizationAddress.address_line_two}</p>
+                                            {deliveryCustomerAddress && !loadingCustomerAddress && (
+                                                <div className="bg-gray-50 border border-gray-200 rounded-md px-4 py-3 text-sm text-gray-700 space-y-1">
+                                                    {deliveryCustomerAddress.attention && <p className="font-medium">{deliveryCustomerAddress.attention}</p>}
+                                                    {deliveryCustomerAddress.address && <p>{deliveryCustomerAddress.address}</p>}
+                                                    {deliveryCustomerAddress.address_line_two && <p>{deliveryCustomerAddress.address_line_two}</p>}
+                                                    {(deliveryCustomerAddress.city || deliveryCustomerAddress.state || deliveryCustomerAddress.pin_code) && (
+                                                        <p>{[deliveryCustomerAddress.city, deliveryCustomerAddress.state, deliveryCustomerAddress.pin_code].filter(Boolean).join(', ')}</p>
+                                                    )}
+                                                    {deliveryCustomerAddress.country && <p className="text-gray-500">{deliveryCustomerAddress.country}</p>}
+                                                </div>
                                             )}
-                                            {(organizationAddress.city || organizationAddress.state || organizationAddress.pin_code) && (
-                                                <p>
-                                                    {[
-                                                        organizationAddress.city,
-                                                        organizationAddress.state,
-                                                        organizationAddress.pin_code
-                                                    ].filter(Boolean).join(', ')}
-                                                </p>
-                                            )}
-                                            {organizationAddress.country && (
-                                                <p className="text-gray-500">{organizationAddress.country}</p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Empty state - only shown if fetch succeeded but no address */}
-                                    {!loadingOrgAddress && !organizationAddress && !orgAddressError && (
-                                        <div className="text-sm text-gray-400 italic py-2">
-                                            No address available for this organization.
                                         </div>
                                     )}
                                 </div>
-                            )}
-
-                            {/* Customer Address Flow */}
-                            {deliveryAddressType === 'customer' && (
-                                <div className="space-y-3">
-                                    <FormControl fullWidth variant="outlined">
-                                        <InputLabel shrink>Select Customer</InputLabel>
-                                        <Select
-                                            label="Select Customer"
-                                            value={selectedDeliveryCustomer?.id || ''}
-                                            onChange={(e) => {
-                                                const selected = deliveryCustomers.find(c => c.id === e.target.value);
-                                                setSelectedDeliveryCustomer(selected || null);
-                                            }}
-                                            displayEmpty
-                                            sx={fieldStyles}
-                                        >
-                                            <MenuItem value="">
-                                                <em>Select Customer</em>
-                                            </MenuItem>
-                                            {deliveryCustomers.map((customer: any) => (
-                                                <MenuItem key={customer.id} value={customer.id}>
-                                                    {customer.name}
-                                                </MenuItem>
-                                            ))}
-                                        </Select>
-                                    </FormControl>
-
-                                    {/* Loading state */}
-                                    {loadingCustomerAddress && (
-                                        <div className="flex items-center gap-2 text-sm text-gray-500 py-2">
-                                            <CircularProgress size={16} />
-                                            <span>Loading customer address...</span>
-                                        </div>
-                                    )}
-
-                                    {/* Error state */}
-                                    {customerAddressError && !loadingCustomerAddress && (
-                                        <div className="text-sm text-red-500 bg-red-50 border border-red-200 rounded-md px-3 py-2">
-                                            {customerAddressError}
-                                        </div>
-                                    )}
-
-                                    {/* Address display */}
-                                    {deliveryCustomerAddress && !loadingCustomerAddress && (
-                                        <div className="bg-gray-50 border border-gray-200 rounded-md px-4 py-3 text-sm text-gray-700 space-y-1">
-                                            {deliveryCustomerAddress.attention && (
-                                                <p className="font-medium text-gray-800">
-                                                    {deliveryCustomerAddress.attention}
-                                                </p>
-                                            )}
-                                            {deliveryCustomerAddress.address && (
-                                                <p>{deliveryCustomerAddress.address}</p>
-                                            )}
-                                            {deliveryCustomerAddress.address_line_two && (
-                                                <p>{deliveryCustomerAddress.address_line_two}</p>
-                                            )}
-                                            {(deliveryCustomerAddress.city || deliveryCustomerAddress.state || deliveryCustomerAddress.pin_code) && (
-                                                <p>
-                                                    {[
-                                                        deliveryCustomerAddress.city,
-                                                        deliveryCustomerAddress.state,
-                                                        deliveryCustomerAddress.pin_code
-                                                    ].filter(Boolean).join(', ')}
-                                                </p>
-                                            )}
-                                            {deliveryCustomerAddress.country && (
-                                                <p className="text-gray-500">{deliveryCustomerAddress.country}</p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* Empty state */}
-                                    {!loadingCustomerAddress && !deliveryCustomerAddress && !customerAddressError && selectedDeliveryCustomer && (
-                                        <div className="text-sm text-gray-400 italic py-2">
-                                            No address available for this customer.
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
+                            </>
+                        ) : (
+                            <div className="text-sm text-gray-400 italic py-4">
+                                Select a vendor to view and manage address details.
+                            </div>
+                        )}
                     </div>
                 </Section>
 
@@ -1951,51 +2215,51 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
                         {/* Reverse Charge */}
                         <div className="col-span-1 md:col-span-3 mt-2">
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                checked={reverseCharge}
-                                onChange={(e) => {
-                                  const checked = e.target.checked;
-                                  setReverseCharge(checked);
-                                  setItems(prev =>
-                                    prev.map(item => {
-                                      const base = item.quantity * item.rate;
-                                      const disc = item.discountType === 'percentage'
-                                        ? (base * item.discount) / 100
-                                        : item.discount;
-                                      const after = base - disc;
-                                      return {
-                                        ...item,
-                                        taxRate: checked ? 0 : item.taxRate,
-                                        tax_group_id: checked ? null : item.tax_group_id,
-                                        item_tax_type: checked ? '' : item.item_tax_type,
-                                        tax_exemption_id: checked ? null : item.tax_exemption_id,
-                                        amount: checked
-                                          ? after
-                                          : after + (after * item.taxRate) / 100,
-                                      };
-                                    })
-                                  );
-                                }}
-                                sx={{
-                                  color: 'primary.main',
-                                  '&.Mui-checked': { color: 'primary.main' },
-                                }}
-                              />
-                            }
-                            label={
-                              <span className="text-sm font-medium">
-                                This transaction is applicable for Reverse Charge
-                              </span>
-                            }
-                          />
-                          {reverseCharge && (
-                            <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mt-1 flex items-center gap-2">
-                              <span>ℹ️</span>
-                              Reverse Charge is applicable
-                            </p>
-                          )}
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        checked={reverseCharge}
+                                        onChange={(e) => {
+                                            const checked = e.target.checked;
+                                            setReverseCharge(checked);
+                                            setItems(prev =>
+                                                prev.map(item => {
+                                                    const base = item.quantity * item.rate;
+                                                    const disc = item.discountType === 'percentage'
+                                                        ? (base * item.discount) / 100
+                                                        : item.discount;
+                                                    const after = base - disc;
+                                                    return {
+                                                        ...item,
+                                                        taxRate: checked ? 0 : item.taxRate,
+                                                        tax_group_id: checked ? null : item.tax_group_id,
+                                                        item_tax_type: checked ? '' : item.item_tax_type,
+                                                        tax_exemption_id: checked ? null : item.tax_exemption_id,
+                                                        amount: checked
+                                                            ? after
+                                                            : after + (after * item.taxRate) / 100,
+                                                    };
+                                                })
+                                            );
+                                        }}
+                                        sx={{
+                                            color: 'primary.main',
+                                            '&.Mui-checked': { color: 'primary.main' },
+                                        }}
+                                    />
+                                }
+                                label={
+                                    <span className="text-sm font-medium">
+                                        This transaction is applicable for Reverse Charge
+                                    </span>
+                                }
+                            />
+                            {reverseCharge && (
+                                <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mt-1 flex items-center gap-2">
+                                    <span>ℹ️</span>
+                                    Reverse Charge is applicable
+                                </p>
+                            )}
                         </div>
                     </div>
                 </Section>
@@ -2036,9 +2300,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                             description: selected.description || '',
                                                             item_tax_type: selected.tax_preference === 'non_taxable' ? 'non_taxable'
                                                                 : selected.tax_preference === 'taxable' ? (isSameState ? 'tax_group' : 'tax_rate')
-                                                                : selected.tax_preference === 'out_of_scope' ? 'out_of_scope'
-                                                                : selected.tax_preference === 'non_gst_supply' ? 'non_gst_supply'
-                                                                : undefined,
+                                                                    : selected.tax_preference === 'out_of_scope' ? 'out_of_scope'
+                                                                        : selected.tax_preference === 'non_gst_supply' ? 'non_gst_supply'
+                                                                            : undefined,
                                                             tax_group_id: selected.tax_preference === 'taxable' ? (isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id) : null,
                                                             tax_exemption_id: selected.tax_preference === 'non_taxable' ? selected.tax_exemption_id : null,
                                                         });
@@ -2390,9 +2654,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                             </div> */}
 
                             <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
-    <span className="font-bold text-base text-gray-900">Total ( ₹ )</span>
-    <span className="font-bold text-gray-900 text-2xl">₹{Number(totalAmount2 || 0).toFixed(2)}</span>
-</div>
+                                <span className="font-bold text-base text-gray-900">Total ( ₹ )</span>
+                                <span className="font-bold text-gray-900 text-2xl">₹{Number(totalAmount2 || 0).toFixed(2)}</span>
+                            </div>
                         </div>
                     </div>
                 </Section>
@@ -2570,7 +2834,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
             </div>
 
             {/* Vendor Details Drawer */}
-            <Drawer
+            {/* <Drawer
                 anchor="right"
                 open={vendorDrawerOpen}
                 onClose={() => setVendorDrawerOpen(false)}
@@ -2702,6 +2966,155 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 </div>
                             )}
                         </div>
+                    </div>
+                )}
+            </Drawer> */}
+
+            <Drawer
+                anchor="right"
+                open={vendorDrawerOpen}
+                onClose={() => setVendorDrawerOpen(false)}
+                PaperProps={{ sx: { width: { xs: '100%', sm: 500 } } }}
+            >
+                {vendorDetails && (
+                    <div className="p-6 space-y-6">
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <span className="text-xl font-bold text-gray-700">
+                                        {vendorDetails.company_name?.charAt(0) || 'G'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <Typography variant="h6" className="font-bold">
+                                        {vendorDetails.company_name}
+                                    </Typography>
+                                    <Typography variant="body2" className="text-gray-600">
+                                        {vendorDetails.email}
+                                    </Typography>
+                                </div>
+                            </div>
+                            <IconButton onClick={() => setVendorDrawerOpen(false)}>
+                                <Close />
+                            </IconButton>
+                        </div>
+
+                        <Divider />
+
+                        {/* Financial Cards */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-orange-50 rounded-lg p-4 text-center">
+                                <Typography variant="h6" className="font-bold">
+                                    ₹{vendorDetails.financial_summary?.total_outstanding_amount_all || 0}
+                                </Typography>
+                                <Typography variant="body2">Outstanding Payables</Typography>
+                            </div>
+
+                            <div className="bg-green-50 rounded-lg p-4 text-center">
+                                <Typography variant="h6" className="font-bold">
+                                    ₹0
+                                </Typography>
+                                <Typography variant="body2">Unused Credits</Typography>
+                            </div>
+                        </div>
+
+                        {/* Contact Details */}
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <Typography variant="subtitle1" className="font-semibold mb-3">
+                                Contact Details
+                            </Typography>
+
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span>Currency</span>
+                                    <span>INR</span>
+                                </div>
+
+                                <div className="flex justify-between">
+                                    <span>Payment Terms</span>
+                                    <span>Due on Receipt</span>
+                                </div>
+
+                                <div className="flex justify-between">
+                                    <span>GST Treatment</span>
+                                    <span>{vendorDetails.gst_preference}</span>
+                                </div>
+
+                                <div className="flex justify-between">
+                                    <span>GSTIN</span>
+                                    <span>{vendorDetails.primary_gst_detail?.gstin || '-'}</span>
+                                </div>
+
+                                <div className="flex justify-between">
+                                    <span>PAN</span>
+                                    <span>{vendorDetails.pan_number || '-'}</span>
+                                </div>
+
+                                <div className="flex justify-between">
+                                    <span>Source of Supply</span>
+                                    <span>{vendorDetails.primary_gst_detail?.place_of_supply || '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Contact Persons */}
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <Typography variant="subtitle1" className="font-semibold mb-3">
+                                Contact Persons
+                            </Typography>
+
+                            {vendorDetails.contacts?.length ? (
+                                vendorDetails.contacts.map((c: any) => (
+                                    <div key={c.id} className="mb-3">
+                                        <Typography className="font-semibold">
+                                            {c.first_name} {c.last_name}
+                                        </Typography>
+                                        <Typography variant="body2">{c.email1}</Typography>
+                                        <Typography variant="body2">{c.mobile1 || '-'}</Typography>
+                                    </div>
+                                ))
+                            ) : (
+                                <Typography>No Contact Persons</Typography>
+                            )}
+                        </div>
+
+                        {/* Address */}
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <Typography variant="subtitle1" className="font-semibold mb-3">
+                                Address
+                            </Typography>
+
+                            {/* Billing */}
+                            <div className="mb-4">
+                                <Typography className="font-medium">Billing Address</Typography>
+                                {vendorDetails.default_billing_address ? (
+                                    <Typography variant="body2">
+                                        {vendorDetails.default_billing_address.address},{" "}
+                                        {vendorDetails.default_billing_address.city},{" "}
+                                        {vendorDetails.default_billing_address.state}
+                                    </Typography>
+                                ) : (
+                                    <Typography>No Billing Address</Typography>
+                                )}
+                            </div>
+
+                            {/* Shipping */}
+                            <div>
+                                <Typography className="font-medium">Shipping Address</Typography>
+                                {vendorDetails.default_shipping_address ? (
+                                    <Typography variant="body2">
+                                        {vendorDetails.default_shipping_address.address},{" "}
+                                        {vendorDetails.default_shipping_address.city},{" "}
+                                        {vendorDetails.default_shipping_address.state}
+                                    </Typography>
+                                ) : (
+                                    <Typography>No Shipping Address</Typography>
+                                )}
+                            </div>
+                        </div>
+
                     </div>
                 )}
             </Drawer>
@@ -2848,6 +3261,247 @@ export const PurchaseOrderCreatePage: React.FC = () => {
 
                 </DialogActions>
 
+            </Dialog>
+
+            {/* Address List Modal */}
+            <Dialog open={addressListModalOpen} onClose={() => setAddressListModalOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>{activeAddressType === 'billing' ? 'Billing Address' : 'Shipping Address'}</DialogTitle>
+                <DialogContent dividers>
+                    <div className="max-h-[420px] overflow-y-auto space-y-3">
+                        {getAddressBookByType(activeAddressType).map((addr) => (
+                            <div key={addr.id}
+                                className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
+                                    ? 'border-[#C72030] bg-red-50' : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                onClick={() => {
+                                    if (activeAddressType === 'billing') setSelectedBillingAddressId(addr.id);
+                                    else setSelectedShippingAddressId(addr.id);
+                                    setAddressListModalOpen(false);
+                                }}>
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="space-y-0.5 text-gray-700">
+                                        {addr.attention && <div className="font-semibold">{addr.attention}</div>}
+                                        {addr.address && <div>{addr.address}</div>}
+                                        {addr.address_line_two && <div>{addr.address_line_two}</div>}
+                                        <div>{[addr.city, addr.state].filter(Boolean).join(', ')}{addr.pin_code ? ` ${addr.pin_code}` : ''}</div>
+                                        {addr.country && <div>{addr.country}</div>}
+                                    </div>
+                                    <IconButton size="small" onClick={(e) => {
+                                        e.stopPropagation();
+                                        openAddressFormModal('edit', activeAddressType, addr);
+                                    }}>
+                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                    </IconButton>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </DialogContent>
+                <DialogActions sx={{ justifyContent: 'space-between', px: 3 }}>
+                    <button type="button" className="text-blue-600 text-sm font-medium"
+                        onClick={() => openAddressFormModal('new', activeAddressType)}>
+                        + New address
+                    </button>
+                    <Button onClick={() => setAddressListModalOpen(false)} variant="outlined" size="small"
+                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Address Form Modal */}
+            <Dialog open={addressFormModalOpen} onClose={() => setAddressFormModalOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Additional Address</DialogTitle>
+                <DialogContent dividers>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                        <TextField label="Attention" fullWidth value={addressForm.attention}
+                            onChange={(e) => setAddressForm((p: any) => ({ ...p, attention: e.target.value }))}
+                            sx={{ gridColumn: 'span 2' }} />
+                        <TextField label="Country/Region" select fullWidth value={addressForm.country}
+                            onChange={(e) => setAddressForm((p: any) => ({ ...p, country: e.target.value }))}
+                            sx={{ gridColumn: 'span 2' }}>
+                            <MenuItem value="India">India</MenuItem>
+                            <MenuItem value="United States">United States</MenuItem>
+                            <MenuItem value="United Kingdom">United Kingdom</MenuItem>
+                        </TextField>
+                        <TextField label="Tax Information" select fullWidth value={selectedAddressTaxInfoId}
+                            onChange={(e) => setSelectedAddressTaxInfoId(String(e.target.value))}
+                            sx={{ gridColumn: 'span 2' }}>
+                            <MenuItem value="">Select</MenuItem>
+                            {gstDetails.map(gst => (
+                                <MenuItem key={gst.id} value={String(gst.id)}>{gst.gstin} - {gst.place_of_supply}</MenuItem>
+                            ))}
+                        </TextField>
+                        <TextField label="Address" placeholder="Street 1" fullWidth value={addressForm.address}
+                            onChange={(e) => setAddressForm((p: any) => ({ ...p, address: e.target.value }))}
+                            sx={{ gridColumn: 'span 2' }} />
+                        <TextField placeholder="Street 2" fullWidth value={addressForm.address_line_two}
+                            onChange={(e) => setAddressForm((p: any) => ({ ...p, address_line_two: e.target.value }))}
+                            sx={{ gridColumn: 'span 2' }} />
+                        <TextField label="City" fullWidth value={addressForm.city}
+                            onChange={(e) => setAddressForm((p: any) => ({ ...p, city: e.target.value }))} />
+                        <TextField label="State" select fullWidth value={addressForm.state}
+                            onChange={(e) => setAddressForm((p: any) => ({ ...p, state: e.target.value }))}>
+                            <MenuItem value="">Select</MenuItem>
+                            {INDIAN_STATES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                        </TextField>
+                        <TextField label="Pin Code" fullWidth value={addressForm.pin_code}
+                            onChange={(e) => setAddressForm((p: any) => ({ ...p, pin_code: e.target.value }))} />
+                        <TextField label="Phone" fullWidth value={addressForm.telephone_number}
+                            onChange={(e) => setAddressForm((p: any) => ({ ...p, telephone_number: e.target.value }))} />
+                    </div>
+                </DialogContent>
+                <DialogActions sx={{ justifyContent: 'flex-start', px: 3, py: 2 }}>
+                    <Button variant="contained" onClick={handleSaveAddressForm}
+                        sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>Save</Button>
+                    <Button variant="outlined" onClick={() => setAddressFormModalOpen(false)}
+                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>Cancel</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* GST Picker Modal */}
+            <Dialog open={gstPickerModalOpen} onClose={() => setGstPickerModalOpen(false)} maxWidth="xs" fullWidth>
+                <DialogContent className="!p-0">
+                    <div className="max-h-[240px] overflow-y-auto">
+                        {gstDetails.length === 0 && (
+                            <div className="px-4 py-6 text-center text-sm text-gray-400">No GST details found</div>
+                        )}
+                        {gstDetails.map(gst => (
+                            <button key={gst.id} type="button"
+                                className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 text-sm ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''
+                                    }`}
+                                onClick={() => handleGstinDropdownChange(gst.id)}>
+                                {gst.gstin} - {gst.place_of_supply}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
+                        <button type="button" className="text-blue-600 text-sm flex items-center gap-1"
+                            onClick={() => { setGstPickerModalOpen(false); setShowNewGstForm(false); setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setGstManageModalOpen(true); }}>
+                            ⚙ Manage Tax Informations
+                        </button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* GST Treatment Modal */}
+            <Dialog open={gstModalOpen} onClose={() => setGstModalOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>Configure Tax Preferences</DialogTitle>
+                <DialogContent>
+                    <TextField label="GST Treatment" select fullWidth value={gstTreatmentDraft}
+                        onChange={(e) => setGstTreatmentDraft(e.target.value)} size="small" sx={{ mt: 1 }}>
+                        {gstTreatmentOptions.map(opt => (
+                            <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                        ))}
+                    </TextField>
+                </DialogContent>
+                <DialogActions>
+                    <Button variant="contained" onClick={() => {
+                        setVendorDetail((prev: any) => prev ? { ...prev, gst_preference: gstTreatmentDraft } : prev);
+                        setGstModalOpen(false);
+                    }} sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+                        Update
+                    </Button>
+                    <Button variant="outlined" onClick={() => setGstModalOpen(false)}
+                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                        Cancel
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* GST Manage Modal */}
+            <Dialog open={gstManageModalOpen} onClose={() => setGstManageModalOpen(false)} maxWidth="md" fullWidth>
+                <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    Manage Tax Informations
+                    <IconButton size="small" onClick={() => setGstManageModalOpen(false)}>
+                        <Close fontSize="small" />
+                    </IconButton>
+                </DialogTitle>
+                <DialogContent>
+                    <div className="space-y-4">
+                        <Button variant="contained" size="small"
+                            onClick={() => {
+                                setEditingGstDetailId(null);
+                                setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' });
+                                setShowNewGstForm(true);
+                            }}
+                            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+                            Add New Tax Information
+                        </Button>
+                        {showNewGstForm && (
+                            <div className="border border-gray-200 bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <TextField label="GSTIN*" fullWidth value={newGstForm.gstin} size="small"
+                                    onChange={(e) => setNewGstForm(p => ({ ...p, gstin: e.target.value.toUpperCase() }))}
+                                    error={!!newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)}
+                                    helperText={newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin) ? 'Invalid GSTIN. e.g. 27AAAAA1234A1Z5' : ''}
+                                    inputProps={{ maxLength: 15 }} />
+                                <TextField label="Place of Supply*" select fullWidth value={newGstForm.place_of_supply} size="small"
+                                    onChange={(e) => setNewGstForm(p => ({ ...p, place_of_supply: e.target.value }))}>
+                                    <MenuItem value="">Select</MenuItem>
+                                    {INDIAN_STATES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                                </TextField>
+                                <TextField label="Business Legal Name" fullWidth value={newGstForm.business_legal_name} size="small"
+                                    onChange={(e) => setNewGstForm(p => ({ ...p, business_legal_name: e.target.value }))} />
+                                <TextField label="Business Trade Name" fullWidth value={newGstForm.business_trade_name} size="small"
+                                    onChange={(e) => setNewGstForm(p => ({ ...p, business_trade_name: e.target.value }))} />
+                                <div className="md:col-span-2 flex gap-2">
+                                    <Button variant="contained" size="small" onClick={handleSaveAndSelectGst}
+                                        sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+                                        {editingGstDetailId ? 'Save' : 'Save and Select'}
+                                    </Button>
+                                    <Button variant="outlined" size="small"
+                                        onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }}
+                                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                                        Cancel
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                        <div className="border border-gray-200 rounded-md overflow-hidden">
+                            <div className="grid grid-cols-4 bg-gray-50 text-xs font-semibold text-gray-500 px-4 py-2">
+                                <div>GSTIN</div><div>PLACE OF SUPPLY</div><div>LEGAL NAME</div><div></div>
+                            </div>
+                            <div className="max-h-[280px] overflow-y-auto">
+                                {gstDetails.map(gst => (
+                                    <div key={gst.id}
+                                        className={`grid grid-cols-4 px-4 py-2 text-sm border-t border-gray-100 cursor-pointer hover:bg-gray-50 ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''
+                                            }`}
+                                        onClick={() => handleGstinDropdownChange(gst.id)}>
+                                        <div>
+                                            {gst.gstin}
+                                            {gst.primary && <div className="text-green-600 text-xs italic">(Primary)</div>}
+                                        </div>
+                                        <div>{gst.place_of_supply || '—'}</div>
+                                        <div>{gst.business_legal_name || '—'}</div>
+                                        <div className="flex justify-end gap-1">
+                                            {!gst.primary && (
+                                                <IconButton size="small" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setEditingGstDetailId(gst.id);
+                                                    setNewGstForm({
+                                                        gstin: gst.gstin,
+                                                        place_of_supply: gst.place_of_supply,
+                                                        business_legal_name: gst.business_legal_name || '',
+                                                        business_trade_name: gst.business_trade_name || ''
+                                                    });
+                                                    setShowNewGstForm(true);
+                                                }}>
+                                                    <EditOutlined fontSize="small" />
+                                                </IconButton>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </DialogContent>
+                <DialogActions sx={{ px: 3, pb: 3 }}>
+                    <Button variant="outlined" size="small" onClick={() => setGstManageModalOpen(false)}
+                        sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                        Close
+                    </Button>
+                </DialogActions>
             </Dialog>
 
             {/* Bulk Items Modal */}

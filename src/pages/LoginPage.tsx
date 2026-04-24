@@ -459,8 +459,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           navigate("/dashboard");
         } else if (isViSite) {
           navigate("/safety/m-safe/internal");
-        } else if (isPulseSite) {
-          navigate("/maintenance/ticket");
         } else {
           navigate(from, { replace: true });
         }
