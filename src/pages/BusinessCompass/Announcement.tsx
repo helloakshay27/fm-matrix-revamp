@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Clock,
-  ExternalLink,
   Info,
   Megaphone,
   Loader2,
@@ -9,7 +8,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import { getUser } from "@/utils/auth";
 import axios from "axios";
 
@@ -29,59 +27,71 @@ type AnnouncementItem = {
   dbId?: number;
 };
 
-
 function AnnouncementCard({ item }: { item: AnnouncementItem }) {
   return (
     <Card
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm",
-        "pl-1"
+        "relative overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:border-[#DA7756]/40",
+        "pl-1.5"
       )}
     >
-      <div className="absolute left-0 top-0 h-full w-1 bg-[#DA7756]" aria-hidden />
-      <div className="flex gap-4 px-5 py-5 pl-6 sm:px-6 sm:py-6">
+      {/* Left Accent Border */}
+      <div className="absolute left-0 top-0 h-full w-1.5 bg-[#DA7756]" aria-hidden />
+      
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 px-5 py-5 pl-5 sm:px-6 sm:py-6">
+        {/* Icon */}
         <div
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DA7756]/10 text-[#DA7756]"
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#FFF9F6] text-[#DA7756] border border-[rgba(218,119,86,0.18)]"
           aria-hidden
         >
-          <Info className="h-5 w-5 stroke-[2.5]" />
+          <Info className="h-6 w-6 stroke-[2]" />
         </div>
 
+        {/* Content */}
         <div className="min-w-0 flex-1 space-y-3">
+          {/* Badges & Date */}
           <div className="flex flex-wrap items-center gap-2 gap-y-2">
-            <span className="inline-flex items-center rounded-full bg-[#DA7756] px-2.5 py-0.5 text-xs font-semibold text-white">
+            <span className="inline-flex items-center rounded-md border border-[#DA7756]/20 bg-[#DA7756]/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#DA7756]">
               {item.typeLabel}
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-[#DA7756] px-2.5 py-0.5 text-xs font-semibold text-white">
-              <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white/25">
-                <span className="h-1.5 w-1.5 rounded-full bg-white" />
-              </span>
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-neutral-200 bg-neutral-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-neutral-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-neutral-400" />
               {item.categoryLabel}
             </span>
-            <span className="flex w-full items-center gap-1.5 text-xs text-neutral-400 sm:ml-1 sm:w-auto">
+            <span className="flex items-center gap-1.5 text-[12.5px] font-medium text-neutral-500 sm:ml-2">
               <Clock className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
               {item.dateLine}
             </span>
           </div>
 
-          <div className="space-y-2">
-            <h2 className="text-lg font-bold leading-snug text-neutral-900 sm:text-xl">
+          {/* Text Content */}
+          <div className="space-y-1.5">
+            <h2 className="text-[17px] font-bold leading-snug text-neutral-900 sm:text-lg">
               {item.title}
             </h2>
-            <p className="text-xs font-bold uppercase tracking-wide text-neutral-600 sm:text-sm">
-              {item.subtitle}
-            </p>
-            <p className="text-sm leading-relaxed text-neutral-600">
+            {item.subtitle && (
+              <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+                {item.subtitle}
+              </p>
+            )}
+            <p className="text-[14.5px] leading-relaxed text-neutral-700 mt-2">
               {item.body}
             </p>
-            <p className="text-xs font-semibold uppercase leading-relaxed tracking-wide text-neutral-500">
-              {item.slogan}
-            </p>
+            {item.slogan && (
+              <p className="text-[13px] font-semibold italic text-neutral-500 pt-1">
+                "{item.slogan}"
+              </p>
+            )}
           </div>
 
-          <p className="text-[11px] text-neutral-400">
-            Expires: {item.expires}
-          </p>
+          {/* Footer (Expires) */}
+          {item.expires && (
+            <div className="mt-4 pt-4 border-t border-neutral-100">
+              <p className="text-[12px] font-medium text-neutral-400">
+                Expires: {item.expires}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </Card>
@@ -187,47 +197,54 @@ const Announcement = () => {
   }, [companyId]);
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
+    <div 
+      className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6"
+      style={{ fontFamily: "'Poppins', sans-serif" }}
+    >
+      <div className="mx-auto max-w-6xl space-y-6 sm:space-y-8">
+        <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-5">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
             <Megaphone className="h-7 w-7 text-white" strokeWidth={2} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+            <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900 sm:text-3xl">
               Announcements
             </h1>
-            <p className="mt-1 max-w-2xl text-sm text-neutral-500 sm:text-base">
+            <p className="mt-1 text-sm font-medium text-neutral-500">
               All company announcements from the admin team
             </p>
           </div>
         </header>
 
         <section className="space-y-4">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-neutral-400">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-500 mb-4">
             Current
           </h2>
           
           {loading ? (
-            <div className="flex items-center justify-center py-12">
+            <div className="flex items-center justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-[#DA7756]" />
-              <span className="ml-2 text-neutral-600">Loading announcements...</span>
+              <span className="ml-3 text-sm font-semibold text-neutral-500">Loading announcements...</span>
             </div>
           ) : error ? (
-            <div className="flex items-center justify-center py-12">
-              <AlertCircle className="h-8 w-8 text-red-500" />
-              <span className="ml-2 text-neutral-600">{error}</span>
+            <div className="flex items-center justify-center py-12 rounded-2xl border border-red-200 bg-red-50">
+              <AlertCircle className="h-6 w-6 text-red-500" />
+              <span className="ml-2 text-sm font-semibold text-red-700">{error}</span>
             </div>
           ) : announcements.length === 0 ? (
-            <div className="flex items-center justify-center py-12">
-              <Megaphone className="h-12 w-12 text-neutral-300" />
-              <div className="ml-4 text-center">
-                <p className="text-neutral-600 font-medium">No active announcements</p>
-                <p className="text-neutral-400 text-sm mt-1">Check back later for updates</p>
+            <div className="flex flex-col items-center justify-center py-16 rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white text-center">
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-neutral-50">
+                <Megaphone className="h-8 w-8 text-neutral-300" />
               </div>
+              <h3 className="text-lg font-bold text-neutral-900 mt-4">
+                No active announcements
+              </h3>
+              <p className="mt-1 text-sm text-neutral-500">
+                Check back later for updates
+              </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:gap-5">
               {announcements.map((item) => (
                 <AnnouncementCard key={item.id} item={item} />
               ))}

@@ -20,9 +20,11 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  AreaChart,
+  Area,
 } from "recharts";
 import { cn } from "@/lib/utils";
-import { fetchAnalytics } from "./Shared";
+import { fetchAnalytics, getBaseUrl, getAuthHeaders } from "./Shared";
 
 // ── DATA NORMALIZATION ──
 const generateEmptyTrend = (days = 7) => {
@@ -90,19 +92,210 @@ const normalizeAnalytics = (raw) => {
   };
 };
 
+// ── CUSTOM SELECT (Matches other tabs) ──
+const CustomSelect = ({
+  value,
+  onChange,
+  options,
+  placeholder = "All",
+  disabled = false,
+}) => {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  const selected = options.find((o: any) => String(o.value) === String(value));
+
+  React.useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className="relative shrink-0"
+      style={{ fontFamily: "'Poppins', sans-serif" }}
+    >
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => !disabled && setOpen(!open)}
+        className={cn(
+          "flex items-center gap-2 bg-[#FCFAFA] border rounded-[16px] pl-5 pr-4 py-3 transition-all min-w-[160px]",
+          open
+            ? "border-[#EB4A4A] shadow-[0_0_0_3px_rgba(235,74,74,0.10)]"
+            : "border-[#F0EBE8] hover:border-[#EB4A4A]",
+          disabled && "opacity-60 cursor-not-allowed"
+        )}
+      >
+        <span className="flex-1 text-left text-sm font-semibold truncate">
+          {disabled ? (
+            <span className="text-[#8C8580]">Loading…</span>
+          ) : selected ? (
+            <span className="text-[#1A1A1A] font-bold">{selected.label}</span>
+          ) : (
+            <span className="text-[#8C8580]">{placeholder}</span>
+          )}
+        </span>
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 transition-transform duration-200 shrink-0",
+            open ? "rotate-180 text-[#EB4A4A]" : "text-[#8C8580]"
+          )}
+        />
+      </button>
+
+      {open && !disabled && (
+        <div
+          className="absolute top-full left-0 mt-1.5 z-[999] bg-white border border-[#F0EBE8] rounded-[20px] overflow-hidden min-w-full"
+          style={{
+            maxHeight: 240,
+            overflowY: "auto",
+            boxShadow:
+              "0 8px 24px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)",
+          }}
+        >
+          <div className="py-1.5">
+            {options.map((opt) => {
+              const isSelected = String(value) === String(opt.value);
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(String(opt.value));
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2.5 group",
+                    isSelected
+                      ? "bg-[#FFF5F5] text-[#D37E5F]"
+                      : "text-[#1A1A1A] hover:bg-[#FFF5F5] hover:text-[#D37E5F]"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "w-1.5 h-1.5 rounded-full shrink-0 transition-colors",
+                      isSelected
+                        ? "bg-[#D37E5F]"
+                        : "bg-transparent group-hover:bg-[#EB4A4A]/30"
+                    )}
+                  />
+                  <span className="truncate flex-1 font-semibold">
+                    {opt.label}
+                  </span>
+                  {isSelected && (
+                    <span className="ml-auto shrink-0">
+                      <svg
+                        className="w-3.5 h-3.5 text-[#EB4A4A]"
+                        viewBox="0 0 14 14"
+                        fill="none"
+                      >
+                        <path
+                          d="M2.5 7L5.5 10L11.5 4"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── API Fetcher for Meetings ──
+const fetchDynamicMeetings = async () => {
+  const baseUrl = localStorage.getItem("baseUrl") || "";
+  const res = await fetch(`https://${baseUrl}/daily_meeting_configs`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+  const raw = await res.text();
+  let json;
+  try {
+    json = JSON.parse(raw);
+  } catch {
+    json = [];
+  }
+
+  let list = [];
+  if (Array.isArray(json)) list = json;
+  else if (Array.isArray(json.data?.daily_meeting_configs))
+    list = json.data.daily_meeting_configs;
+  else if (Array.isArray(json.data?.meeting_configs))
+    list = json.data.meeting_configs;
+  else if (Array.isArray(json.data)) list = json.data;
+  else if (Array.isArray(json.daily_meeting_configs))
+    list = json.daily_meeting_configs;
+
+  return list.map((m) => ({
+    id: String(m.id),
+    label: m.name ?? m.title ?? m.label ?? `Meeting ${m.id}`,
+    is_default: m.is_default || m.isDefault || false, // 🛠 FIX: Extra flag
+  }));
+};
+
 // ── MAIN COMPONENT ──
 const AnalyticsTab = () => {
+  const [dynamicMeetings, setDynamicMeetings] = useState([]);
+  const [selectedMeetingId, setSelectedMeetingId] = useState("");
+  const [isFetchingMeetings, setIsFetchingMeetings] = useState(false);
   const [period, setPeriod] = useState("last_14_days");
+
   const [analytics, setAnalytics] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
 
+  // 1. Fetch Meetings List on Mount
   useEffect(() => {
+    const loadMeetingsDropdown = async () => {
+      setIsFetchingMeetings(true);
+      try {
+        const fetchedList = await fetchDynamicMeetings();
+        setDynamicMeetings(fetchedList);
+        if (fetchedList.length > 0) {
+          // 🛠 FIX: Look for default meeting, else select the first one
+          const defaultMeeting = fetchedList.find((m) => m.is_default);
+          if (defaultMeeting) {
+            setSelectedMeetingId(String(defaultMeeting.id));
+          } else {
+            setSelectedMeetingId(String(fetchedList[0].id));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load meetings", err);
+      } finally {
+        setIsFetchingMeetings(false);
+      }
+    };
+    loadMeetingsDropdown();
+  }, []);
+
+  // 2. Load Analytics Data
+  useEffect(() => {
+    // Only load if meeting is selected
+    if (!selectedMeetingId) return;
+
     const loadAnalytics = async () => {
       setIsLoading(true);
       setApiError(null);
       try {
-        const raw = await fetchAnalytics(period);
+        // You might need to update your fetchAnalytics function 
+        // in Shared.js to accept meetingId if it currently doesn't.
+        // Assuming fetchAnalytics takes (period, meetingId) here:
+        const raw = await fetchAnalytics(period, selectedMeetingId);
         setAnalytics(normalizeAnalytics(raw));
       } catch (err) {
         setApiError(err.message);
@@ -112,7 +305,7 @@ const AnalyticsTab = () => {
       }
     };
     loadAnalytics();
-  }, [period]);
+  }, [period, selectedMeetingId]);
 
   const a = analytics;
 
@@ -138,18 +331,32 @@ const AnalyticsTab = () => {
             </div>
           </div>
 
-          {/* Time Period Filter */}
-          <div className="relative shrink-0">
-            <select
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-              className="appearance-none border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] pl-5 pr-10 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] min-w-[180px] w-full cursor-pointer transition-colors"
-            >
-              <option value="last_7_days">Last 7 Days</option>
-              <option value="last_14_days">Last 14 Days</option>
-              <option value="last_30_days">Last 30 Days</option>
-            </select>
-            <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            {/* ── Meeting dropdown ── */}
+            <CustomSelect
+              value={selectedMeetingId}
+              onChange={(val) => setSelectedMeetingId(String(val))}
+              disabled={isFetchingMeetings}
+              placeholder="Select Meeting"
+              options={dynamicMeetings.map((m) => ({
+                value: String(m.id),
+                label: m.label,
+              }))}
+            />
+
+            {/* Time Period Filter */}
+            <div className="relative shrink-0">
+              <select
+                value={period}
+                onChange={(e) => setPeriod(e.target.value)}
+                className="appearance-none border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] pl-5 pr-10 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] min-w-[180px] w-full cursor-pointer transition-colors"
+              >
+                <option value="last_7_days">Last 7 Days</option>
+                <option value="last_14_days">Last 14 Days</option>
+                <option value="last_30_days">Last 30 Days</option>
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
+            </div>
           </div>
         </div>
       </div>
