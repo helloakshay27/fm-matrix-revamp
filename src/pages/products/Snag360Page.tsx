@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import * as tf from "@tensorflow/tfjs";
-import * as cocoSsd from "@tensorflow-models/coco-ssd";
 import { useProductSecurity } from "./useProductSecurity";
 import {
   CameraPermissionPending,
   CameraPermissionDenied,
   ModelLoadingScreen,
   SecurityOverlays,
+  AlwaysMountedVideos,
 } from "./SecurityOverlays";
 import {
   ArrowLeft,
@@ -3990,13 +3989,28 @@ const Snag360Page: React.FC = () => {
 
   // Security checks
   if (security.cameraPermission === "pending") {
-    return <CameraPermissionPending />;
+    return (
+      <>
+        <AlwaysMountedVideos security={security} />
+        <CameraPermissionPending />
+      </>
+    );
   }
   if (security.cameraPermission === "denied") {
-    return <CameraPermissionDenied />;
+    return (
+      <>
+        <AlwaysMountedVideos security={security} />
+        <CameraPermissionDenied />
+      </>
+    );
   }
   if (security.modelLoading) {
-    return <ModelLoadingScreen />;
+    return (
+      <>
+        <AlwaysMountedVideos security={security} />
+        <ModelLoadingScreen />
+      </>
+    );
   }
 
   // Extract use cases data for custom component

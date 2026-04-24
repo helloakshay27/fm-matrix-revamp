@@ -387,6 +387,8 @@ const AssignTicketsPage: React.FC = () => {
                   </th>
                 </tr>
               </thead>
+
+              
               <tbody className="bg-white divide-y divide-gray-200">
                 {selectedTickets.map((ticket) => (
                   <tr key={ticket.id}>
