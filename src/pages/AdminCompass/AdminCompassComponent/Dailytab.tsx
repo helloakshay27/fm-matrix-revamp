@@ -154,6 +154,7 @@ const fetchDynamicMeetings = async () => {
   return list.map((m: any) => ({
     id: String(m.id),
     name: m.name || `Meeting ${m.id}`,
+    is_default: m.is_default || m.isDefault || false, 
   }));
 };
 
@@ -264,7 +265,6 @@ const getItemStatus = (item: any): string => {
 };
 
 // ── Strip missed-members prefix from textarea value before saving ──
-// So only the actual discussion points typed by user go into key_discussion_points
 const stripMissedMembersPrefix = (text: string): string => {
   const missedHeaderMatch = text.match(
     /^Team Members Who Missed Report \(\d+\):\n(?:- .+\n)*\n?/
@@ -312,6 +312,21 @@ const DailyTab = () => {
 
   const navigate = useNavigate();
 
+  // ── Auto-populate submitted reports into selectedReports ──
+  useEffect(() => {
+    if (dailyData) {
+      const reports = dailyData.member_reports || dailyData.reports || [];
+      const submittedIds = reports
+        .filter((r: any) => r.status !== "pending")
+        .map((r: any) => r.journal_id || r.user_id);
+      
+      setSelectedReports((prev) => {
+        const combined = new Set([...prev, ...submittedIds]);
+        return Array.from(combined);
+      });
+    }
+  }, [dailyData]);
+
   // ── Load Dropdowns ──
   useEffect(() => {
     fetchDynamicMeetings()
@@ -319,7 +334,12 @@ const DailyTab = () => {
         setMeetingsList(list);
         setMeetingsLoaded(true);
         if (list?.length > 0) {
-          setSelectedMeetingId(list[0].id);
+          const defaultMeeting = list.find((m) => m.is_default);
+          if (defaultMeeting) {
+            setSelectedMeetingId(defaultMeeting.id);
+          } else {
+            setSelectedMeetingId(list[0].id);
+          }
         } else {
           setSelectedMeetingId(null);
         }
@@ -342,10 +362,21 @@ const DailyTab = () => {
         dateStr: activeDate,
       });
 
-      if (json.success) {
+      if (json.success || json.data) {
         setDailyData(json.data);
+        
         if (isArrowNav.current || calendarDateRow.length === 0) {
           setCalendarDateRow(json.data?.date_row || []);
+        } else {
+          const freshDateRow = json.data?.date_row || [];
+          setCalendarDateRow((prev) =>
+            prev.map((d) => {
+              const freshData = freshDateRow.find(
+                (fd: any) => fd.full_date === d.full_date
+              );
+              return freshData ? { ...d, status: freshData.status } : d;
+            })
+          );
         }
         isArrowNav.current = false;
 
@@ -359,33 +390,39 @@ const DailyTab = () => {
               r.user_id === headId &&
               r.status === "submitted" &&
               r.journal_id &&
-              Array.isArray(r.report_data?.meeting_notes)
+              r.report_data?.meeting_notes
           ) ||
           reports.find(
             (r: any) =>
               r.status === "submitted" &&
-              Array.isArray(r.report_data?.meeting_notes) &&
+              r.report_data?.meeting_notes &&
               r.journal_id
           ) ||
           reports.find((r: any) => r.status === "submitted" && r.journal_id) ||
           null;
 
-        setMeetingJournalId(meetingJournalReport?.journal_id ?? null);
+        setMeetingJournalId(
+          json.data?.meeting_journal_id || meetingJournalReport?.journal_id || null
+        );
 
         if (!skipNotesRestore) {
           const DEFAULT_DISCUSSION = "Key Discussion Points:\n";
 
           if (meetingJournalReport) {
-            // ── ALREADY SUBMITTED ──
-            // Show ONLY the saved discussion points — no missed members in textarea
-            const savedDiscussion: string =
-              meetingJournalReport?.report_data?.meeting_notes?.[0]
-                ?.key_discussion_points || DEFAULT_DISCUSSION;
+            let savedDiscussion = DEFAULT_DISCUSSION;
+            
+            const notesData = meetingJournalReport?.report_data?.meeting_notes;
+            if (notesData) {
+              if (Array.isArray(notesData)) {
+                 savedDiscussion = notesData[0]?.key_discussion_points || DEFAULT_DISCUSSION;
+              } else if (typeof notesData === "object") {
+                 savedDiscussion = notesData.key_discussion_points || DEFAULT_DISCUSSION;
+              }
+            }
+
             setMeetingNotes(savedDiscussion);
             setSavedMeetingNotes(savedDiscussion);
           } else {
-            // ── NOT YET SUBMITTED ──
-            // Prefill missed members + discussion heading inside textarea
             const allReports: any[] =
               json.data?.member_reports || json.data?.reports || [];
             const pureMissed = [
@@ -421,7 +458,6 @@ const DailyTab = () => {
     }
   };
 
-  // Reset calendar when meeting changes
   useEffect(() => {
     setCalendarDateRow([]);
   }, [selectedMeetingId]);
@@ -430,7 +466,6 @@ const DailyTab = () => {
     loadDailyData(false);
   }, [selectedMeetingId, activeDate]);
 
-  // ── GET Past Feedbacks ──
   const loadPastFeedbacks = async (targetUserId: string | number) => {
     setIsFetchingFeedbacks(true);
     try {
@@ -456,7 +491,6 @@ const DailyTab = () => {
     }
   };
 
-  // ── PUT /user_journals/:id ──
   const updateJournal = async (
     report: any,
     patch: { self_rating?: number; tomorrow_plan_item?: string }
@@ -489,18 +523,16 @@ const DailyTab = () => {
         : normalizeReportData({ ...rd, self_rating: rd.self_rating ?? 0 });
 
     const payload: any = {
-      user_journal: {
-        self_rating: patch.self_rating ?? sourceRd.self_rating,
-        status: "submitted",
-        report_data: {
-          accomplishments: sourceRd.accomplishments,
-          tasks_issues: sourceRd.tasks_issues,
-          big_win: sourceRd.big_win || null,
-          tomorrow_plan: patch.tomorrow_plan_item
-            ? [...sourceRd.tomorrow_plan, { title: patch.tomorrow_plan_item }]
-            : sourceRd.tomorrow_plan,
-          kpis: sourceRd.kpis,
-        },
+      self_rating: patch.self_rating ?? sourceRd.self_rating,
+      status: "submitted",
+      report_data: {
+        accomplishments: sourceRd.accomplishments,
+        tasks_issues: sourceRd.tasks_issues,
+        big_win: sourceRd.big_win || null,
+        tomorrow_plan: patch.tomorrow_plan_item
+          ? [...sourceRd.tomorrow_plan, { title: patch.tomorrow_plan_item }]
+          : sourceRd.tomorrow_plan,
+        kpis: sourceRd.kpis,
       },
     };
 
@@ -523,20 +555,14 @@ const DailyTab = () => {
 
   const changeDate = (days: number) => {
     isArrowNav.current = true;
-
-    // 1. Try to find the next/prev valid date within the currently loaded calendar row
     const currentIndex = calendarRow.findIndex(
       (d: any) => d.full_date === activeDate
     );
 
     if (currentIndex !== -1) {
       let nextIndex = currentIndex + days;
-
-      // Loop through the array in the direction of the arrow click
       while (nextIndex >= 0 && nextIndex < calendarRow.length) {
         const s = calendarRow[nextIndex].status;
-
-        // If the date is valid (not a holiday, non-meeting, or upcoming), set it and stop
         if (s !== "holiday" && s !== "non_meeting" && s !== "upcoming") {
           setActiveDate(calendarRow[nextIndex].full_date);
           return;
@@ -545,7 +571,6 @@ const DailyTab = () => {
       }
     }
 
-    // 2. Fallback: If we run out of bounds in the loaded array, just step 1 day mathematically
     const d = new Date(activeDate);
     d.setDate(d.getDate() + days);
     setActiveDate(d.toISOString().split("T")[0]);
@@ -556,7 +581,6 @@ const DailyTab = () => {
       p.includes(id) ? p.filter((r) => r !== id) : [...p, id]
     );
 
-  // ── Combined data builder ──
   const buildCombinedData = (allReports: any[]) => {
     const allAccomplishments: any[] = [];
     const allTasksIssues: any[] = [];
@@ -656,12 +680,7 @@ const DailyTab = () => {
     };
   };
 
-  // ── Meeting notes array builder ──
-  // meetingNotesText = raw textarea value
-  // For NOT-yet-submitted: strip the auto-prefilled missed-members block,
-  //   save missed members as array + clean discussion points separately
-  // For SUBMITTED (update): textarea only has discussion points, save as-is
-  const buildMeetingNotesArray = (
+  const buildMeetingNotesObject = (
     allReports: any[],
     allMissed: any[],
     meetingNotesText: string
@@ -673,69 +692,76 @@ const DailyTab = () => {
       if (!pureMissedNames.includes(m.name)) pureMissedNames.push(m.name);
     });
 
-    // Strip the auto-prefilled missed-members block from textarea value
-    // so only the actual discussion points written by user go into key_discussion_points
     const cleanDiscussion = stripMissedMembersPrefix(meetingNotesText).trim();
 
-    const meetingNotesArray: any[] = [];
-    const note1: any = {};
-    if (pureMissedNames.length > 0) {
-      note1[`Team Members Who Missed Report (${pureMissedNames.length})`] =
-        pureMissedNames;
-    }
-    note1["key_discussion_points"] = cleanDiscussion;
-    meetingNotesArray.push(note1);
-
-    allReports
+    const detailed_reports = allReports
       .filter((r: any) => r.status !== "pending" || !!r.daily_report)
-      .forEach((report: any) => {
+      .map((report: any) => {
         const hasDraft = !!report.daily_report;
         const isPending = report.status === "pending";
         const rd = report.report_data || {};
         const draftRaw = report.daily_report?.report_data || {};
 
-        const rawSource =
-          isPending && hasDraft
-            ? {
-                ...draftRaw,
-                accomplishments:
-                  draftRaw.accomplishments?.items ||
-                  (Array.isArray(draftRaw.accomplishments)
-                    ? draftRaw.accomplishments
-                    : []),
-                self_rating:
-                  draftRaw.details?.self_rating ??
-                  draftRaw.sections?.self_rating ??
-                  null,
-                is_absent:
-                  draftRaw.details?.is_absent ??
-                  draftRaw.sections?.is_absent ??
-                  false,
-              }
-            : rd;
+        const rawSource = isPending && hasDraft ? { ...draftRaw } : rd;
 
-        const source = normalizeReportData(rawSource);
+        let accRaw = [];
+        if (Array.isArray(rawSource.accomplishments)) accRaw = rawSource.accomplishments;
+        else if (Array.isArray(rawSource.accomplishments?.items)) accRaw = rawSource.accomplishments.items;
 
-        meetingNotesArray.push({
-          member: report.name,
-          email: report.email,
-          department: report.department || null,
-          status: isPending && hasDraft ? "submitted" : report.status,
-          journal_id: report.journal_id || report.daily_report?.id || null,
-          submitted_at:
-            report.submitted_at || report.daily_report?.submitted_at || null,
-          self_rating: source.self_rating,
-          is_absent: source.is_absent,
-          accomplishments: source.accomplishments,
-          tasks_issues: source.tasks_issues,
-          tomorrow_plan: source.tomorrow_plan,
-          big_win: source.big_win,
-          kpis: report.kpis || rd.kpis || null,
-          score: report.score ?? null,
-        });
+        const accomplishments = accRaw.map((a: any) => ({
+          text: a.title || a.text || "",
+          done: !!a.done || !!a.completed
+        }));
+
+        let tpRaw = [];
+        if (Array.isArray(rawSource.tomorrow_plan)) tpRaw = rawSource.tomorrow_plan;
+
+        const tomorrow_plan = tpRaw.map((p: any) =>
+          typeof p === "string" ? p : p.title || p.text || ""
+        );
+
+        const selfRatingVal =
+          rawSource.details?.self_rating ??
+          rawSource.sections?.self_rating ??
+          rawSource.self_rating ??
+          0;
+
+        const isAbsent =
+          rawSource.details?.is_absent ??
+          rawSource.sections?.is_absent ??
+          rawSource.is_absent ??
+          false;
+
+        return {
+          name: report.name || "Unknown",
+          attendance: isAbsent ? "Absent" : "Present",
+          self_rating: `${selfRatingVal}/10`,
+          kpis: Array.isArray(rawSource.kpis) ? rawSource.kpis : [],
+          accomplishments,
+          tomorrow_plan,
+        };
       });
 
-    return meetingNotesArray;
+    return {
+      missed_report_members: pureMissedNames,
+      key_discussion_points: cleanDiscussion,
+      detailed_reports,
+    };
+  };
+
+  const handleApiError = async (res: Response, fallbackMessage: string) => {
+    let errMsg = fallbackMessage;
+    try {
+      const data = await res.json();
+      errMsg = data.message || data.error || data.errors?.[0] || fallbackMessage;
+    } catch {
+      try {
+        errMsg = await res.text() || fallbackMessage;
+      } catch {
+        // Fallback
+      }
+    }
+    throw new Error(errMsg);
   };
 
   // ── Save Meeting (POST) — first time only ──
@@ -756,11 +782,34 @@ const DailyTab = () => {
         avgSelfRating,
         combinedKpis,
       } = buildCombinedData(allReports);
-      const meetingNotesArray = buildMeetingNotesArray(
+      
+      const meetingNotesObj = buildMeetingNotesObject(
         allReports,
         allMissed,
         meetingNotes
       );
+
+      const reportDataPayload = {
+        meeting_notes: meetingNotesObj,
+        accomplishments: allAccomplishments.map(a => ({ title: a.title || a.text || "" })),
+        tasks_issues: allTasksIssues.map(t => ({ title: t.title || t.text || "", status: t.status || "open" })),
+        big_win: combinedBigWin || null,
+        tomorrow_plan: allTomorrowPlan.map(p => ({ title: p.title || p.text || "" })),
+        kpis: {
+          score: `${combinedKpis.score}`,
+          tasks: `${combinedKpis.tasks}`,
+          issues: `${combinedKpis.issues}`,
+          planning: `${combinedKpis.planning}`,
+          timing: `${combinedKpis.timing}`,
+        },
+        summary: {
+          total_members: dailyData?.total_members || 0,
+          submitted_count: dailyData?.submitted || 0,
+          missed_count: dailyData?.missed || 0,
+          meeting_name: dailyData?.config?.name || "",
+          meeting_head: dailyData?.config?.meeting_head || null,
+        }
+      };
 
       const payload = {
         meeting_config_id: parseInt(selectedMeetingId, 10),
@@ -768,27 +817,7 @@ const DailyTab = () => {
         self_rating: avgSelfRating,
         is_absent: false,
         status: "submitted",
-        report_data: {
-          meeting_notes: meetingNotesArray,
-          accomplishments: allAccomplishments,
-          tasks_issues: allTasksIssues,
-          big_win: combinedBigWin || null,
-          tomorrow_plan: allTomorrowPlan,
-          kpis: {
-            score: `${combinedKpis.score}`,
-            tasks: `${combinedKpis.tasks}`,
-            issues: `${combinedKpis.issues}`,
-            planning: `${combinedKpis.planning}`,
-            timing: `${combinedKpis.timing}`,
-          },
-          summary: {
-            total_members: dailyData?.total_members || 0,
-            submitted_count: dailyData?.submitted || 0,
-            missed_count: dailyData?.missed || 0,
-            meeting_name: dailyData?.config?.name || "",
-            meeting_head: dailyData?.config?.meeting_head || null,
-          },
-        },
+        report_data: reportDataPayload
       };
 
       const res = await fetch(
@@ -799,11 +828,31 @@ const DailyTab = () => {
           body: JSON.stringify(payload),
         }
       );
-      if (!res.ok) throw new Error(`Failed: ${res.status}`);
+
+      const responseData = await res.json().catch(() => null);
+      if (!res.ok || (responseData && responseData.success === false)) {
+         const errorMsg = responseData?.message || responseData?.error || `HTTP ${res.status}`;
+         throw new Error(errorMsg);
+      }
+
       toast.success("Meeting saved successfully!");
-      loadDailyData(true);
-      // After save, reload fresh so textarea switches to discussion-points-only mode
-      loadDailyData(false);
+      
+      const newId = responseData?.data?.id || responseData?.id || responseData?.journal_id;
+      if (newId) {
+         setMeetingJournalId(newId);
+      }
+
+      setCalendarDateRow((prev) =>
+        prev.map((d) =>
+          d.full_date === activeDate ? { ...d, status: "submitted" } : d
+        )
+      );
+
+      const cleanDiscussion = stripMissedMembersPrefix(meetingNotes).trim();
+      setMeetingNotes(cleanDiscussion);
+      setSavedMeetingNotes(cleanDiscussion);
+
+      await loadDailyData(true); 
     } catch (err: any) {
       toast.error("Error saving meeting: " + err.message);
     } finally {
@@ -812,7 +861,6 @@ const DailyTab = () => {
   };
 
   // ── Update Notes Only (PATCH) — for already-submitted meetings ──
-  // Textarea only contains discussion points at this point (no missed prefix)
   const handleUpdateNotesOnly = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.");
@@ -822,7 +870,8 @@ const DailyTab = () => {
     try {
       const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
-      const meetingNotesArray = buildMeetingNotesArray(
+      
+      const meetingNotesObj = buildMeetingNotesObject(
         allReports,
         allMissed,
         meetingNotes
@@ -832,16 +881,14 @@ const DailyTab = () => {
         allReports.find(
           (r: any) =>
             r.journal_id === meetingJournalId &&
-            Array.isArray(r.report_data?.meeting_notes)
+            r.report_data?.meeting_notes
         )?.report_data || {};
 
       const payload = {
-        user_journal: {
-          report_data: {
-            ...existingRd,
-            meeting_notes: meetingNotesArray,
-          },
-        },
+        report_data: {
+          ...existingRd,
+          meeting_notes: meetingNotesObj,
+        }
       };
 
       const res = await fetch(
@@ -852,10 +899,16 @@ const DailyTab = () => {
           body: JSON.stringify(payload),
         }
       );
-      if (!res.ok) throw new Error(`Failed: ${res.status}`);
+
+      const responseData = await res.json().catch(() => null);
+      if (!res.ok || (responseData && responseData.success === false)) {
+         const errorMsg = responseData?.message || responseData?.error || `HTTP ${res.status}`;
+         throw new Error(errorMsg);
+      }
+
       toast.success("Meeting notes updated!");
       setSavedMeetingNotes(meetingNotes);
-      loadDailyData(true);
+      await loadDailyData(true);
     } catch (err: any) {
       toast.error("Error updating meeting notes: " + err.message);
     } finally {
@@ -883,38 +936,32 @@ const DailyTab = () => {
         avgSelfRating,
         combinedKpis,
       } = buildCombinedData(allReports);
-      const meetingNotesArray = buildMeetingNotesArray(
+      
+      const meetingNotesObj = buildMeetingNotesObject(
         allReports,
         allMissed,
         meetingNotes
       );
 
+      const reportDataPayload = {
+        meeting_notes: meetingNotesObj,
+        accomplishments: allAccomplishments.map(a => ({ title: a.title || a.text || "" })),
+        tasks_issues: allTasksIssues.map(t => ({ title: t.title || t.text || "", status: t.status || "open" })),
+        big_win: combinedBigWin || null,
+        tomorrow_plan: allTomorrowPlan.map(p => ({ title: p.title || p.text || "" })),
+        kpis: {
+          score: `${combinedKpis.score}`,
+          tasks: `${combinedKpis.tasks}`,
+          issues: `${combinedKpis.issues}`,
+          planning: `${combinedKpis.planning}`,
+          timing: `${combinedKpis.timing}`,
+        }
+      };
+
       const payload = {
-        user_journal: {
-          self_rating: avgSelfRating,
-          status: "submitted",
-          report_data: {
-            meeting_notes: meetingNotesArray,
-            accomplishments: allAccomplishments,
-            tasks_issues: allTasksIssues,
-            big_win: combinedBigWin || null,
-            tomorrow_plan: allTomorrowPlan,
-            kpis: {
-              score: `${combinedKpis.score}`,
-              tasks: `${combinedKpis.tasks}`,
-              issues: `${combinedKpis.issues}`,
-              planning: `${combinedKpis.planning}`,
-              timing: `${combinedKpis.timing}`,
-            },
-            summary: {
-              total_members: dailyData?.total_members || 0,
-              submitted_count: dailyData?.submitted || 0,
-              missed_count: dailyData?.missed || 0,
-              meeting_name: dailyData?.config?.name || "",
-              meeting_head: dailyData?.config?.meeting_head || null,
-            },
-          },
-        },
+        self_rating: avgSelfRating,
+        status: "submitted",
+        report_data: reportDataPayload
       };
 
       const res = await fetch(
@@ -925,10 +972,16 @@ const DailyTab = () => {
           body: JSON.stringify(payload),
         }
       );
-      if (!res.ok) throw new Error(`Failed: ${res.status}`);
+
+      const responseData = await res.json().catch(() => null);
+      if (!res.ok || (responseData && responseData.success === false)) {
+         const errorMsg = responseData?.message || responseData?.error || `HTTP ${res.status}`;
+         throw new Error(errorMsg);
+      }
+
       toast.success("Meeting updated successfully!");
       setSavedMeetingNotes(meetingNotes);
-      loadDailyData(true);
+      await loadDailyData(true);
     } catch (err: any) {
       toast.error("Error updating meeting: " + err.message);
     } finally {
@@ -947,8 +1000,9 @@ const DailyTab = () => {
   const activeDateStatus = calendarRow.find(
     (d: any) => d.full_date === activeDate
   )?.status;
+  
   const isActiveDateSubmitted =
-    activeDateStatus === "done" || activeDateStatus === "submitted";
+    !!meetingJournalId || activeDateStatus === "done" || activeDateStatus === "submitted";
 
   const notesChanged = meetingNotes.trim() !== savedMeetingNotes.trim();
 
@@ -971,8 +1025,12 @@ const DailyTab = () => {
         `${allIds.length} report${allIds.length !== 1 ? "s" : ""} selected`
       );
     } else {
-      setSelectedReports([]);
-      toast("Selection cleared", { icon: "✕" });
+      // 🛠 FIX: Do not clear submitted members on deselect all
+      const submittedIds = memberReports
+        .filter((r: any) => r.status !== "pending")
+        .map((r: any) => r.journal_id || r.user_id);
+      setSelectedReports(submittedIds);
+      toast("Selection cleared for pending members", { icon: "✕" });
     }
   };
 
@@ -1054,7 +1112,12 @@ const DailyTab = () => {
           >
             {calendarRow.map((dateItem: any) => {
               const isSelected = dateItem.full_date === activeDate;
-              const rawStatus = dateItem.status;
+              let rawStatus = dateItem.status;
+              
+              if (isSelected && meetingJournalId) {
+                rawStatus = "submitted";
+              }
+
               const isUpcoming = rawStatus === "upcoming";
 
               if (isUpcoming) {
@@ -1385,9 +1448,8 @@ const DailyTab = () => {
                   </div>
 
                   <div className="p-4">
-                    {/* ── Textarea label changes based on submit state ── */}
                     <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
-                      {isActiveDateSubmitted
+                      {meetingJournalId
                         ? "Discussion Points"
                         : "Meeting Notes"}
                     </p>
@@ -1396,7 +1458,7 @@ const DailyTab = () => {
                       onChange={(e) => setMeetingNotes(e.target.value)}
                       className="w-full border border-[rgba(218,119,86,0.18)] rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[rgba(218,119,86,0.22)] min-h-[160px] resize-y placeholder:text-neutral-400 text-neutral-700 bg-[#FFFAF8]"
                       placeholder={
-                        isActiveDateSubmitted
+                        meetingJournalId
                           ? "Edit discussion points..."
                           : "Team members who missed + discussion points will appear here..."
                       }
@@ -1419,7 +1481,6 @@ const DailyTab = () => {
                       </span>
                     </label>
 
-                    {/* ── Smart button logic ── */}
                     {isActiveDateSubmitted ? (
                       <div className="flex items-center gap-2">
                         {!notesChanged && (
@@ -1537,11 +1598,14 @@ const DailyTab = () => {
                             onClick={() => canExpand && toggleExpand(rId)}
                           >
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              {/* 🛠 FIX: Make checkbox permanently checked and disabled if submitted */}
                               <input
                                 type="checkbox"
-                                checked={selectedReports.includes(rId)}
+                                checked={!isPending || selectedReports.includes(rId)}
+                                disabled={!isPending}
                                 onChange={(e) => {
                                   e.stopPropagation();
+                                  if (!isPending) return;
                                   setSelectedReports((prev) =>
                                     e.target.checked
                                       ? [...prev, rId]
@@ -1549,7 +1613,10 @@ const DailyTab = () => {
                                   );
                                 }}
                                 onClick={(e) => e.stopPropagation()}
-                                className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
+                                className={cn(
+                                  "w-4 h-4 rounded border-gray-300 accent-[#CE7A5A]",
+                                  !isPending ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                                )}
                               />
                               <h3 className="font-bold text-[#1A1A1A] text-[15px]">
                                 {report.name}
@@ -1922,7 +1989,7 @@ const DailyTab = () => {
                                               );
                                               setQuickActionOpenId(null);
                                               setQuickActionText("");
-                                              loadDailyData(true);
+                                              await loadDailyData(false);
                                             }
                                           }
                                           if (e.key === "Escape") {
@@ -1947,7 +2014,7 @@ const DailyTab = () => {
                                               );
                                               setQuickActionOpenId(null);
                                               setQuickActionText("");
-                                              loadDailyData(true);
+                                              await loadDailyData(false);
                                             }
                                           }
                                         }}
@@ -2075,7 +2142,7 @@ const DailyTab = () => {
                                                 setFeedbackOpenId(null);
                                                 setFeedbackRating(0);
                                                 setFeedbackMessage("");
-                                                loadDailyData(true);
+                                                await loadDailyData(false);
                                               } catch (err: any) {
                                                 toast.error(
                                                   "Error adding feedback: " +
@@ -2239,9 +2306,9 @@ const DailyTab = () => {
                   className="max-w-full mx-0"
                   prefillData={null}
                   opportunityId={null}
-                  onSuccess={() => {
+                  onSuccess={async () => {
                     setIsTaskModalOpen(false);
-                    loadDailyData(true);
+                    await loadDailyData(false);
                   }}
                   isConversion={false}
                 />

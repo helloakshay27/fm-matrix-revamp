@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────
 // ReportsTab.jsx — Unified Modern Theme
 // ─────────────────────────────────────────────
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   FileSpreadsheet,
   BarChart2,
@@ -33,8 +33,7 @@ import {
 import { cn } from "@/lib/utils";
 import { periodOptions, getAuthHeaders } from "./Shared";
 
-const BASE_URL = localStorage.getItem('baseUrl') || '';
-
+const BASE_URL = localStorage.getItem("baseUrl") || "";
 
 // ── DATA NORMALIZATION & FALLBACKS ──
 const generateEmptyTrendForReport = (endDateStr, days = 7) => {
@@ -60,7 +59,7 @@ const normalizeReport = (raw) => {
   const validKpiTrend =
     Array.isArray(data.kpi_trend) && data.kpi_trend.length > 0;
   const endDate = data.period?.to;
-  
+
   return {
     period: data.period || { from: "", to: "" },
     config: data.config || {},
@@ -68,17 +67,20 @@ const normalizeReport = (raw) => {
     attendanceRate: data.attendance_rate ?? 0,
     avgSelfRating: data.avg_self_rating ?? 0,
     unresolvedTasks: data.unresolved_tasks ?? 0,
-    
+
     // Yahan API ke "count" ko "attendance" par map kiya hai chart ke liye
     activityTrend: validActivityTrend
-      ? data.activity_trend.map(d => ({ date: d.date, attendance: d.count || 0 }))
+      ? data.activity_trend.map((d) => ({
+          date: d.date,
+          attendance: d.count || 0,
+        }))
       : generateEmptyTrendForReport(endDate, 7),
-      
+
     // Yahan API ke "avg_score" ko "kpi" par map kiya hai chart ke liye
     kpiTrend: validKpiTrend
-      ? data.kpi_trend.map(d => ({ date: d.date, kpi: d.avg_score || 0 }))
+      ? data.kpi_trend.map((d) => ({ date: d.date, kpi: d.avg_score || 0 }))
       : generateEmptyTrendForReport(endDate, 7),
-      
+
     memberStats: Array.isArray(data.member_stats) ? data.member_stats : [],
     _raw: raw,
   };
@@ -94,7 +96,7 @@ const CustomSelect = ({
 }) => {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef(null);
-  const selected = options.find((o) => o.value === value);
+  const selected = options.find((o) => String(o.value) === String(value));
 
   React.useEffect(() => {
     const handler = (e) => {
@@ -151,13 +153,13 @@ const CustomSelect = ({
         >
           <div className="py-1.5">
             {options.map((opt) => {
-              const isSelected = value === opt.value;
+              const isSelected = String(value) === String(opt.value);
               return (
                 <button
                   key={opt.value}
                   type="button"
                   onClick={() => {
-                    onChange(opt.value);
+                    onChange(String(opt.value));
                     setOpen(false);
                   }}
                   className={cn(
@@ -209,13 +211,10 @@ const CustomSelect = ({
 
 // 1. Fetch Dynamic Meetings Dropdown
 const fetchDynamicMeetings = async () => {
-  const res = await fetch(
-    `https://${BASE_URL}/daily_meeting_configs`,
-    {
-      method: "GET",
-      headers: getAuthHeaders(),
-    }
-  );
+  const res = await fetch(`https://${BASE_URL}/daily_meeting_configs`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
   const raw = await res.text();
   let json;
@@ -238,6 +237,7 @@ const fetchDynamicMeetings = async () => {
   return list.map((m) => ({
     id: String(m.id),
     label: m.name ?? m.title ?? m.label ?? `Meeting ${m.id}`,
+    is_default: m.is_default || m.isDefault || false, // 🛠 FIX: Extra flag
   }));
 };
 
@@ -269,9 +269,7 @@ const fetchDynamicReport = async ({ meetingId, period }) => {
 
 // 3. Fetch Single Date Status from Daily API
 const fetchDailyMeetingStatusForCalendar = async (dateStr, meetingId) => {
-  const url = new URL(
-    `https://${BASE_URL}/user_journals/daily_meeting`
-  );
+  const url = new URL(`https://${BASE_URL}/user_journals/daily_meeting`);
   url.searchParams.append("date", dateStr);
 
   if (meetingId) {
@@ -327,7 +325,13 @@ const ReportsTab = () => {
         const fetchedList = await fetchDynamicMeetings();
         setDynamicMeetings(fetchedList);
         if (fetchedList.length > 0) {
-          setSelectedMeetingId(fetchedList[0].id);
+          // 🛠 FIX: Look for default meeting, else select the first one
+          const defaultMeeting = fetchedList.find((m) => m.is_default);
+          if (defaultMeeting) {
+            setSelectedMeetingId(String(defaultMeeting.id));
+          } else {
+            setSelectedMeetingId(String(fetchedList[0].id));
+          }
         }
       } catch (err) {
         console.error("Failed to load meetings", err);
@@ -339,7 +343,8 @@ const ReportsTab = () => {
   }, []);
 
   // 2. Fetch Main Report
-  const loadReport = async () => {
+  const loadReport = useCallback(async () => {
+    if (!selectedMeetingId) return;
     setIsLoading(true);
     setApiError(null);
     try {
@@ -354,10 +359,11 @@ const ReportsTab = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedMeetingId, selectedPeriod]);
 
   // 3. Fetch Exactly Last 7 Days Calendar Status
-  const loadCalendarWeek = async () => {
+  const loadCalendarWeek = useCallback(async () => {
+    if (!selectedMeetingId) return;
     setIsCalendarLoading(true);
     try {
       const baseDate = new Date();
@@ -405,21 +411,17 @@ const ReportsTab = () => {
     } finally {
       setIsCalendarLoading(false);
     }
-  };
+  }, [weekOffset, selectedMeetingId]);
 
   // Re-fetch report when dropdowns change
   useEffect(() => {
-    if (selectedMeetingId) {
-      loadReport();
-    }
-  }, [selectedMeetingId, selectedPeriod]);
+    loadReport();
+  }, [loadReport]);
 
   // Re-fetch calendar when offset or meeting changes
   useEffect(() => {
-    if (selectedMeetingId) {
-      loadCalendarWeek();
-    }
-  }, [weekOffset, selectedMeetingId]);
+    loadCalendarWeek();
+  }, [loadCalendarWeek]);
 
   const r = report;
   const weekLabel =
@@ -448,14 +450,14 @@ const ReportsTab = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
-            {/* ── Meeting dropdown — now uses CustomSelect ── */}
+            {/* ── Meeting dropdown — uses CustomSelect ── */}
             <CustomSelect
               value={selectedMeetingId}
-              onChange={setSelectedMeetingId}
+              onChange={(val) => setSelectedMeetingId(String(val))}
               disabled={isFetchingMeetings}
               placeholder="Select Meeting"
               options={dynamicMeetings.map((m) => ({
-                value: m.id,
+                value: String(m.id),
                 label: m.label,
               }))}
             />
@@ -567,16 +569,19 @@ const ReportsTab = () => {
 
           {/* Issue & KPI Sub Metrics Row Skeleton */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-pulse">
-             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white rounded-[20px] p-5 border border-[#F0EBE8] flex gap-4 items-center">
-                 <div className="w-12 h-12 rounded-[14px] bg-[#F0EBE8] shrink-0"></div>
-                 <div className="flex-1">
-                    <div className="w-20 h-3 bg-[#F0EBE8] rounded mb-2"></div>
-                    <div className="w-16 h-5 bg-[#F0EBE8] rounded mb-2"></div>
-                    <div className="w-24 h-3 bg-[#F0EBE8] rounded"></div>
-                 </div>
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-white rounded-[20px] p-5 border border-[#F0EBE8] flex gap-4 items-center"
+              >
+                <div className="w-12 h-12 rounded-[14px] bg-[#F0EBE8] shrink-0"></div>
+                <div className="flex-1">
+                  <div className="w-20 h-3 bg-[#F0EBE8] rounded mb-2"></div>
+                  <div className="w-16 h-5 bg-[#F0EBE8] rounded mb-2"></div>
+                  <div className="w-24 h-3 bg-[#F0EBE8] rounded"></div>
+                </div>
               </div>
-             ))}
+            ))}
           </div>
         </div>
       )}
