@@ -306,6 +306,10 @@ export const AddEventPage = () => {
       toast.error("Event Location is required");
       return false;
     }
+    if (formData.payAt === "external" && !formData.externalLink) {
+      toast.error("External Link is required");
+      return false;
+    }
     if (!formData.memberCapacity) {
       toast.error("Member Capacity is required");
       return false;
