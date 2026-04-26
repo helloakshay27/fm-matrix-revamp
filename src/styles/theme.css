@@ -1,0 +1,3644 @@
+/* ===========================================
+   LOCKATED BRAND THEME SYSTEM
+   Global theming - Edit ONLY this file for color changes
+   Last Updated: April 2026
+   =========================================== */
+
+/* ===========================================
+   CSS CUSTOM PROPERTIES (DESIGN TOKENS)
+   =========================================== */
+
+:root {
+  /* =====================
+     PRIMARY COLORS
+     ===================== */
+  --color-primary: #da7756;
+  --color-primary-rgb: 218, 119, 86;
+  --color-primary-hover: rgba(218, 119, 86, 0.85);
+  --color-primary-light: rgba(218, 119, 86, 0.15);
+  --color-primary-selected: rgba(218, 119, 86, 0.08);
+
+  /* Background & Text */
+  --color-bg: #f6f4ee;
+  --color-bg-rgb: 246, 244, 238;
+  --color-text: #2c2c2c;
+  --color-text-rgb: 44, 44, 44;
+  --color-text-light: #888780;
+
+  /* =====================
+     SECONDARY COLORS
+     ===================== */
+  /* Green Olive */
+  --color-secondary-green: #798c5e;
+  --color-secondary-green-rgb: 121, 140, 94;
+  --color-secondary-green-light: rgba(121, 140, 94, 0.15);
+  --color-secondary-green-bg: rgba(121, 140, 94, 0.3);
+
+  /* Purple/Lavender */
+  --color-secondary-purple: #cecbf6;
+  --color-secondary-purple-rgb: 206, 203, 246;
+  --color-secondary-purple-light: rgba(206, 203, 246, 0.3);
+  --color-secondary-purple-bg: rgba(206, 203, 246, 0.3);
+
+  /* Teal/Mint */
+  --color-secondary-teal: #9ec8ba;
+  --color-secondary-teal-rgb: 158, 200, 186;
+  --color-secondary-teal-light: rgba(158, 200, 186, 0.3);
+  --color-secondary-teal-bg: rgba(158, 200, 186, 0.3);
+
+  /* =====================
+     TERTIARY / SEMANTIC COLORS
+     ===================== */
+  --color-info: #6b9bcc;
+  --color-info-rgb: 107, 155, 204;
+  --color-disabled: #d3d1c7;
+  --color-muted: #d3d1c7;
+  --color-tags: #cecbf6;
+  --color-danger: #e49191;
+  --color-danger-light: #f8dada;
+  --color-warning: #edc488;
+  --color-warning-light: #f8e4c7;
+  --color-growth: rgba(16, 140, 114, 0.3);
+  --color-growth-solid: #108c72;
+
+  /* =====================
+     STATUS COLORS
+     ===================== */
+  --color-success: #89f7e7;
+  --color-success-solid: #798c5e;
+  --color-success-bg: rgba(121, 140, 94, 0.15);
+  --color-error: #e7848e;
+  --color-error-bg: rgba(231, 132, 142, 0.15);
+  --color-exception: #aab9c5;
+
+  /* =====================
+     SURFACE & BORDER COLORS
+     ===================== */
+  --color-card-border: #c4b89d;
+  --color-card-bg: #f6f4ee;
+  --color-card-white: #ffffff;
+  --color-border-subtle: #d5dbdb;
+  --color-divider: #e5e5e5;
+
+  /* Sidebar */
+  --color-sidebar: #c4b89d;
+  --color-sidebar-hover: rgba(196, 184, 157, 0.5);
+
+  /* =====================
+     GRADIENT TOKENS
+     ===================== */
+  --gradient-highlight: radial-gradient(circle, #f6f4ee 0%, #2c2c2c 100%);
+  --gradient-primary: linear-gradient(135deg, #da7756 0%, #c4b89d 100%);
+  --gradient-card: linear-gradient(180deg, #ffffff 0%, #f6f4ee 100%);
+
+  /* =====================
+     SHADOW TOKENS
+     ===================== */
+  --shadow-sm: 0px 1px 2px 0px rgba(44, 44, 44, 0.06);
+  --shadow-md: 0px 4px 8px 0px rgba(44, 44, 44, 0.1);
+  --shadow-lg: 0px 4px 16px 0px rgba(44, 44, 44, 0.12);
+  --shadow-xl: 0px 8px 24px 0px rgba(44, 44, 44, 0.15);
+  --shadow-card: 0px 2px 8px rgba(196, 184, 157, 0.15);
+
+  /* =====================
+     TYPOGRAPHY
+     ===================== */
+  --font-family:
+    "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-mono: "Fira Code", "Consolas", monospace;
+
+  /* Font Weights */
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Desktop Font Sizes */
+  --font-size-h1: 26px;
+  --font-size-h2: 24px;
+  --font-size-body-1: 20px;
+  --font-size-body-2: 18px;
+  --font-size-body-3: 16px;
+  --font-size-body-4: 14px;
+  --font-size-body-5: 12px;
+  --font-size-caption: 10px;
+
+  /* Line Heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* =====================
+     SPACING
+     ===================== */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+
+  /* =====================
+     BORDER RADIUS
+     ===================== */
+  --radius-none: 0px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* =====================
+     TRANSITIONS
+     ===================== */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+
+  /* =====================
+     Z-INDEX SCALE
+     ===================== */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+}
+
+/* ===========================================
+   TABLET TYPOGRAPHY (768px - 1023px)
+   =========================================== */
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --font-size-h1: 24px;
+    --font-size-h2: 20px;
+    --font-size-body-1: 18px;
+    --font-size-body-2: 18px;
+    --font-size-body-3: 16px;
+    --font-size-body-4: 16px;
+    --font-size-body-5: 14px;
+    --font-size-caption: 12px;
+  }
+}
+
+/* ===========================================
+   MOBILE TYPOGRAPHY (< 768px)
+   =========================================== */
+@media (max-width: 767px) {
+  :root {
+    --font-size-h1: 16px;
+    --font-size-h2: 14px;
+    --font-size-body-1: 12px;
+    --font-size-body-2: 12px;
+    --font-size-body-3: 12px;
+    --font-size-body-4: 10px;
+    --font-size-body-5: 10px;
+    --font-size-caption: 10px;
+  }
+}
+
+/* ===========================================
+   DARK MODE SUPPORT (Future)
+   =========================================== */
+.dark,
+[data-theme="dark"] {
+  --color-bg: #1a1a1a;
+  --color-bg-rgb: 26, 26, 26;
+  --color-text: #f6f4ee;
+  --color-text-rgb: 246, 244, 238;
+  --color-text-light: #a0a0a0;
+  --color-card-bg: #2c2c2c;
+  --color-card-white: #363636;
+  --color-border-subtle: #404040;
+  --color-divider: #404040;
+}
+
+/* ===========================================
+   GLOBAL ELEMENT OVERRIDES
+   =========================================== */
+
+/* HTML & Body */
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-family) !important;
+  background-color: var(--color-bg) !important;
+  color: var(--color-text) !important;
+  line-height: var(--line-height-normal);
+  margin: 0;
+  padding: 0;
+}
+
+/* ===========================================
+   TYPOGRAPHY OVERRIDES
+   =========================================== */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family);
+  line-height: var(--line-height-tight);
+  margin: 0;
+}
+
+p,
+span,
+div,
+label {
+  font-family: var(--font-family);
+}
+
+/* ===========================================
+   LINK COLOR OVERRIDES
+   Only override links with #C72030
+   =========================================== */
+
+a[class*="text-[#C72030]"],
+a.text-\[\#C72030\] {
+  color: var(--color-primary) !important;
+}
+
+a[class*="text-[#C72030]"]:hover,
+a.text-\[\#C72030\]:hover {
+  color: var(--color-primary-hover) !important;
+}
+
+/* ===========================================
+   HEADER NAVIGATION - HOVER TO BLACK
+   =========================================== */
+
+/* Header dropdown triggers - hover text should be BLACK or brand, not red */
+header .hover\:text-\[\#C72030\]:hover,
+header [class*="hover:text-[#C72030]"]:hover,
+.fixed.top-0 .hover\:text-\[\#C72030\]:hover,
+.fixed.top-0 [class*="hover:text-[#C72030]"]:hover {
+  color: var(--color-primary) !important;
+}
+
+/* Header buttons and dropdowns text - use dark text */
+header [class*="text-[#1a1a1a]"],
+header .text-\[\#1a1a1a\],
+.fixed.top-0 [class*="text-[#1a1a1a]"],
+.fixed.top-0 .text-\[\#1a1a1a\] {
+  color: var(--color-text) !important;
+}
+
+/* Header dropdown menu items - selected state use brand color */
+header [class*="DropdownMenuItem"][class*="text-[#C72030]"],
+header [class*="DropdownMenuItem"].text-\[\#C72030\],
+.fixed.top-0 [class*="DropdownMenuItem"][class*="text-[#C72030]"] {
+  color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   BUTTON COLOR OVERRIDES
+   Only override buttons with #C72030
+   =========================================== */
+
+/* Override common bg-primary classes to use CSS variable */
+.bg-primary {
+  background-color: var(--color-primary) !important;
+}
+
+.bg-primary:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+/* ===========================================
+   CARD OVERRIDES - Only brand-specific classes
+   =========================================== */
+
+/* Card with brand background */
+.card-brand,
+.bg-card-brand {
+  background-color: var(--color-card-bg) !important;
+}
+
+/* ===========================================
+   FORM ELEMENT FOCUS OVERRIDES
+   Only override focus states for text inputs (not checkboxes/radios)
+   =========================================== */
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+textarea:focus,
+select:focus {
+  border-color: var(--color-primary) !important;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary-selected) !important;
+}
+
+/* ===========================================
+   STATUS COLOR UTILITY OVERRIDES
+   Only override specific status classes
+   =========================================== */
+
+/* Success Colors - only for specific utility classes */
+.text-brand-success {
+  color: var(--color-success-solid) !important;
+}
+
+.bg-brand-success {
+  background-color: var(--color-success-solid) !important;
+}
+
+/* Warning Colors */
+.text-brand-warning {
+  color: var(--color-warning) !important;
+}
+
+.bg-brand-warning {
+  background-color: var(--color-warning) !important;
+}
+
+/* Error/Danger Colors */
+.text-brand-error {
+  color: var(--color-error) !important;
+}
+
+.bg-brand-error {
+  background-color: var(--color-error) !important;
+}
+
+/* Info Colors */
+.text-brand-info {
+  color: var(--color-info) !important;
+}
+
+.bg-brand-info {
+  background-color: var(--color-info) !important;
+}
+
+/* ===========================================
+   BORDER PRIMARY OVERRIDE
+   =========================================== */
+
+.border-primary {
+  border-color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   BACKGROUND BRAND CLASSES
+   =========================================== */
+
+.bg-brand-bg {
+  background-color: var(--color-bg) !important;
+}
+
+.bg-brand-card {
+  background-color: var(--color-card-bg) !important;
+}
+
+/* ===========================================
+   MUI COMPONENT COLOR OVERRIDES
+   =========================================== */
+
+/* MUI Buttons */
+[class*="MuiButton-containedPrimary"] {
+  background-color: var(--color-primary) !important;
+}
+
+[class*="MuiButton-containedPrimary"]:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+[class*="MuiButton-outlinedPrimary"] {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+[class*="MuiButton-textPrimary"] {
+  color: var(--color-primary) !important;
+}
+
+/* MUI Checkboxes & Radio */
+[class*="MuiCheckbox-colorPrimary"].Mui-checked,
+[class*="MuiRadio-colorPrimary"].Mui-checked {
+  color: var(--color-primary) !important;
+}
+
+/* MUI Radio with any checked state - override inline sx styles */
+.MuiRadio-root.Mui-checked,
+[class*="MuiRadio-root"].Mui-checked {
+  color: var(--color-primary) !important;
+}
+
+/* MUI Radio SVG icon */
+.MuiRadio-root svg,
+[class*="MuiRadio-root"] svg {
+  color: inherit !important;
+}
+
+/* MUI Checkbox with any checked state */
+.MuiCheckbox-root.Mui-checked,
+[class*="MuiCheckbox-root"].Mui-checked {
+  color: var(--color-primary) !important;
+}
+
+/* MUI Switches */
+[class*="MuiSwitch-colorPrimary"].Mui-checked + [class*="MuiSwitch-track"] {
+  background-color: var(--color-primary) !important;
+}
+
+/* MUI Tabs */
+[class*="MuiTab-root"].Mui-selected {
+  color: var(--color-primary) !important;
+}
+
+[class*="MuiTabs-indicator"] {
+  background-color: var(--color-primary) !important;
+}
+
+/* MUI Text Fields Focus */
+[class*="MuiOutlinedInput-root"].Mui-focused
+  [class*="MuiOutlinedInput-notchedOutline"] {
+  border-color: var(--color-primary) !important;
+}
+
+[class*="MuiInputLabel-root"].Mui-focused {
+  color: var(--color-primary) !important;
+}
+
+/* MUI Chips */
+[class*="MuiChip-colorPrimary"] {
+  background-color: var(--color-primary) !important;
+}
+
+[class*="MuiChip-outlinedPrimary"] {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   SHADCN/RADIX COMPONENT COLOR OVERRIDES
+   Only override colors for components with #C72030
+   =========================================== */
+
+/* Radix Switch - only override if it has #C72030 class */
+[data-state="checked"][class*="bg-[#C72030]"],
+[data-state="checked"].bg-\[\#C72030\] {
+  background-color: var(--color-primary) !important;
+}
+
+/* Radix Checkbox - only override checked state with #C72030 class */
+[data-state="checked"][class*="bg-[#C72030]"],
+[data-state="checked"].bg-\[\#C72030\],
+[data-state="checked"][class*="border-[#C72030]"],
+[data-state="checked"].border-\[\#C72030\] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* Radix Radio - only override if it has #C72030 class */
+[role="radio"][class*="text-[#C72030]"],
+[role="radio"].text-\[\#C72030\] {
+  color: var(--color-primary) !important;
+}
+
+[role="radio"][class*="border-[#C72030]"],
+[role="radio"].border-\[\#C72030\] {
+  border-color: var(--color-primary) !important;
+}
+
+/* Radio circle fill - only for #C72030 */
+[role="radio"] svg[class*="fill-[#C72030]"],
+[role="radio"] svg[class*="text-[#C72030]"] {
+  fill: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+/* Radix Select */
+[data-radix-popper-content-wrapper] {
+  z-index: var(--z-popover) !important;
+}
+
+/* ===========================================
+   CHART COLOR OVERRIDES
+   =========================================== */
+
+/* Recharts, Chart.js, and other charting libs */
+.recharts-default-legend,
+.recharts-legend-item-text {
+  font-family: var(--font-family) !important;
+  color: var(--color-text) !important;
+}
+
+/* ===========================================
+   SCROLLBAR STYLING
+   =========================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-card-border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-light);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-card-border) var(--color-bg);
+}
+
+/* ===========================================
+   SELECTION STYLING
+   =========================================== */
+
+::selection {
+  background-color: var(--color-primary-light);
+  color: var(--color-text);
+}
+
+::-moz-selection {
+  background-color: var(--color-primary-light);
+  color: var(--color-text);
+}
+
+/* ===========================================
+   BRAND FOCUS STYLES
+   Only for brand-specific elements
+   =========================================== */
+
+.focus-brand:focus-visible {
+  outline: 2px solid var(--color-primary) !important;
+  outline-offset: 2px;
+}
+
+/* ===========================================
+   TYPOGRAPHY UTILITY CLASSES
+   =========================================== */
+
+.heading-1 {
+  font-size: var(--font-size-h1) !important;
+  font-weight: var(--font-weight-semibold) !important;
+  line-height: var(--line-height-tight) !important;
+}
+
+.heading-2 {
+  font-size: var(--font-size-h2) !important;
+  font-weight: var(--font-weight-semibold) !important;
+  line-height: var(--line-height-tight) !important;
+}
+
+.body-1 {
+  font-size: var(--font-size-body-1) !important;
+  line-height: var(--line-height-normal) !important;
+}
+
+.body-2 {
+  font-size: var(--font-size-body-2) !important;
+  line-height: var(--line-height-normal) !important;
+}
+
+.body-3 {
+  font-size: var(--font-size-body-3) !important;
+  line-height: var(--line-height-normal) !important;
+}
+
+.body-4 {
+  font-size: var(--font-size-body-4) !important;
+  line-height: var(--line-height-normal) !important;
+}
+
+.body-5 {
+  font-size: var(--font-size-body-5) !important;
+  line-height: var(--line-height-normal) !important;
+}
+
+.caption {
+  font-size: var(--font-size-caption) !important;
+  line-height: var(--line-height-normal) !important;
+}
+
+/* Font Weight Utilities */
+.font-regular {
+  font-weight: var(--font-weight-regular) !important;
+}
+.font-medium {
+  font-weight: var(--font-weight-medium) !important;
+}
+.font-semibold {
+  font-weight: var(--font-weight-semibold) !important;
+}
+.font-bold {
+  font-weight: var(--font-weight-bold) !important;
+}
+
+/* ===========================================
+   COLOR UTILITY CLASSES
+   =========================================== */
+
+/* Brand Colors */
+.text-brand-primary {
+  color: var(--color-primary) !important;
+}
+.text-brand-secondary {
+  color: var(--color-secondary-green) !important;
+}
+.text-brand-text {
+  color: var(--color-text) !important;
+}
+.text-brand-muted {
+  color: var(--color-text-light) !important;
+}
+
+.bg-brand-primary {
+  background-color: var(--color-primary) !important;
+}
+.bg-brand-bg {
+  background-color: var(--color-bg) !important;
+}
+.bg-brand-card {
+  background-color: var(--color-card-bg) !important;
+}
+
+.border-brand-primary {
+  border-color: var(--color-primary) !important;
+}
+.border-brand-subtle {
+  border-color: var(--color-border-subtle) !important;
+}
+.border-brand-card {
+  border-color: var(--color-card-border) !important;
+}
+
+/* Status Colors */
+.text-brand-success {
+  color: var(--color-success-solid) !important;
+}
+.text-brand-warning {
+  color: var(--color-warning) !important;
+}
+.text-brand-error {
+  color: var(--color-error) !important;
+}
+.text-brand-info {
+  color: var(--color-info) !important;
+}
+
+.bg-brand-success {
+  background-color: var(--color-success-bg) !important;
+}
+.bg-brand-warning {
+  background-color: var(--color-warning-light) !important;
+}
+.bg-brand-error {
+  background-color: var(--color-error-bg) !important;
+}
+.bg-brand-info {
+  background-color: rgba(107, 155, 204, 0.15) !important;
+}
+
+/* ===========================================
+   ANIMATION UTILITIES
+   =========================================== */
+
+.transition-brand {
+  transition: all var(--transition-normal);
+}
+
+.transition-brand-fast {
+  transition: all var(--transition-fast);
+}
+
+/* ===========================================
+   SHADOW UTILITIES
+   =========================================== */
+
+.shadow-brand-sm {
+  box-shadow: var(--shadow-sm) !important;
+}
+.shadow-brand-md {
+  box-shadow: var(--shadow-md) !important;
+}
+.shadow-brand-lg {
+  box-shadow: var(--shadow-lg) !important;
+}
+.shadow-brand-xl {
+  box-shadow: var(--shadow-xl) !important;
+}
+.shadow-brand-card {
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* ===========================================
+   OVERRIDE LEGACY RED COLORS (#C72030)
+   Replace old brand red with new primary #DA7756
+   =========================================== */
+
+/* Tailwind arbitrary value classes - text colors */
+.text-\[\#C72030\],
+.text-\[\#c72030\],
+[class*="text-[#C72030]"],
+[class*="text-[#c72030]"] {
+  color: var(--color-primary) !important;
+}
+
+/* Tailwind arbitrary value classes - background colors
+   Use ONLY exact escaped class selectors (NOT substring [class*]) to avoid
+   false-positive matches on hover:bg-[#C72030]/10 and border-[#C72030]. */
+.bg-\[\#C72030\],
+.bg-\[\#c72030\] {
+  background-color: var(--color-primary) !important;
+}
+
+/* Tailwind arbitrary value classes - border colors */
+.border-\[\#C72030\],
+.border-\[\#c72030\],
+[class*="border-[#C72030]"],
+[class*="border-[#c72030]"] {
+  border-color: var(--color-primary) !important;
+}
+
+/* Hover states for legacy red */
+.hover\:bg-\[\#C72030\]:hover,
+.hover\:bg-\[\#c72030\]:hover,
+.hover\:bg-\[\#A01020\]:hover,
+[class*="hover:bg-[#C72030]"]:hover,
+[class*="hover:bg-[#A01020]"]:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+/* Hover bg with opacity - rgba version */
+[class*="hover:bg-[#C72030]/10"]:hover,
+.hover\:bg-\[\#C72030\]\/10:hover {
+  background-color: rgba(218, 119, 86, 0.1) !important;
+}
+
+.hover\:text-\[\#C72030\]:hover,
+.hover\:text-\[\#c72030\]:hover,
+[class*="hover:text-[#C72030]"]:hover {
+  color: var(--color-primary) !important;
+}
+
+/* Focus ring states */
+.focus\:ring-\[\#C72030\]:focus,
+[class*="focus:ring-[#C72030]"]:focus {
+  --tw-ring-color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   STAT CARD GLOBAL OVERRIDES
+   Match Figma design exactly
+   =========================================== */
+
+/* Stat card icon container - rounded with tan/beige background */
+.bg-\[\#C4B89D54\],
+[class*="bg-[#C4B89D54]"] {
+  background-color: rgba(196, 184, 157, 0.33) !important;
+  border-radius: 8px !important;
+}
+
+/* Stat card icon colors - use brand primary (coral) */
+.w-6.h-6.text-\[\#C72030\],
+[class*="text-[#C72030]"].w-6.h-6,
+[class*="text-[#C72030]"].w-4.h-4,
+.text-\[\#C72030\] svg,
+svg.text-\[\#C72030\],
+[class*="text-[#C72030]"] {
+  color: var(--color-primary) !important;
+}
+
+/* Icon text (currency symbol) */
+.text-\[18px\].text-\[\#C72030\],
+span.text-\[\#C72030\],
+.font-bold.text-\[\#C72030\] {
+  color: var(--color-primary) !important;
+}
+
+/* Stat card text colors */
+.text-\[\#1A1A1A\],
+[class*="text-[#1A1A1A]"] {
+  color: var(--color-text) !important;
+}
+
+/* Stat card background */
+.bg-\[\#F6F4EE\],
+[class*="bg-[#F6F4EE]"] {
+  background-color: var(--color-card-bg) !important;
+}
+
+/* ===========================================
+   TAB COMPONENT OVERRIDES
+   =========================================== */
+
+/* Active tab state - text color */
+.data-\[state\=active\]\:text-\[\#C72030\][data-state="active"],
+[data-state="active"][class*="text-[#C72030]"],
+[data-state="active"].text-\[\#C72030\],
+[data-state="active"][class*="data-[state=active]:text-[#C72030]"] {
+  color: var(--color-primary) !important;
+}
+
+/* Active tab background - #EDEAE3 (matches Figma) */
+.data-\[state\=active\]\:bg-\[\#EDEAE3\][data-state="active"],
+[data-state="active"][class*="bg-[#EDEAE3]"],
+[data-state="active"].bg-\[\#EDEAE3\],
+[data-state="active"][class*="data-[state=active]:bg-[#EDEAE3]"] {
+  background-color: #edeae3 !important;
+}
+
+/* Tab border bottom active state */
+[data-state="active"][class*="border-[#C72030]"],
+[data-state="active"].border-\[\#C72030\],
+[data-state="active"][class*="data-[state=active]:border-[#C72030]"] {
+  border-color: var(--color-primary) !important;
+}
+
+/* Inactive tab styling */
+[data-state="inactive"][class*="data-[state=inactive]:bg-white"],
+.data-\[state\=inactive\]\:bg-white[data-state="inactive"] {
+  background-color: white !important;
+  color: var(--color-text) !important;
+}
+
+/* ===========================================
+   BUTTON GLOBAL OVERRIDES
+   =========================================== */
+
+/* Primary action buttons with coral background
+   Exclude elements that only carry hover:bg-[#C72030] to avoid
+   giving the EnhancedTable filter button a permanent solid fill. */
+button.bg-\[\#C72030\],
+[type="button"].bg-\[\#C72030\],
+[type="submit"].bg-\[\#C72030\],
+a.bg-\[\#C72030\],
+.btn.bg-\[\#C72030\] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: white !important;
+}
+
+/* Icons inside coral background buttons should be white */
+button.bg-\[\#C72030\] svg,
+button.bg-\[\#C72030\] .lucide {
+  color: white !important;
+  stroke: white !important;
+}
+
+button.bg-\[\#C72030\]:hover,
+[type="button"].bg-\[\#C72030\]:hover,
+[type="submit"].bg-\[\#C72030\]:hover,
+button.bg-\[\#C72030\]:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+/* Outline/text buttons with coral text */
+button.text-\[\#C72030\],
+a.text-\[\#C72030\],
+.btn.text-\[\#C72030\],
+button[class*="text-[#C72030]"],
+button[class*="border-[#C72030]"] {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* Icons inside outline buttons should be coral */
+button[class*="text-[#C72030]"] svg,
+button[class*="border-[#C72030]"] svg,
+button.text-\[\#C72030\] svg {
+  color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   FILTER CHIP & BADGE OVERRIDES
+   =========================================== */
+
+.focus\:ring-\[\#C72030\],
+[class*="focus:ring-[#C72030]"] {
+  --tw-ring-color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   NAVIGATION & SIDEBAR OVERRIDES
+   =========================================== */
+
+/* Active sidebar item */
+nav [class*="text-[#C72030]"],
+.sidebar [class*="text-[#C72030]"],
+[class*="sidebar"] [class*="text-[#C72030]"] {
+  color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   TABLE COMPONENT OVERRIDES  
+   =========================================== */
+
+/* Table header */
+thead th,
+.table-header,
+[class*="TableHead"] {
+  background-color: var(--color-bg) !important;
+  color: var(--color-text) !important;
+  font-weight: var(--font-weight-semibold) !important;
+  font-size: var(--font-size-body-4) !important;
+}
+
+/* Table cells */
+tbody td,
+.table-cell,
+[class*="TableCell"] {
+  font-size: var(--font-size-body-4) !important;
+  color: var(--color-text) !important;
+}
+
+/* ===========================================
+   TYPOGRAPHY GLOBAL OVERRIDES
+   =========================================== */
+
+/* Large stats/numbers in cards */
+.text-2xl.font-semibold,
+.text-3xl.font-semibold,
+.text-4xl.font-semibold {
+  font-family: var(--font-family) !important;
+  color: var(--color-text) !important;
+}
+
+/* Card labels */
+.text-sm.font-medium {
+  font-family: var(--font-family) !important;
+}
+
+/* ===========================================
+   LUCIDE ICON COLOR OVERRIDES
+   Only override icons with #C72030 color
+   =========================================== */
+
+/* Icons with #C72030 text class */
+svg[class*="text-[#C72030]"],
+svg.text-\[\#C72030\],
+.lucide[class*="text-[#C72030]"],
+.lucide.text-\[\#C72030\] {
+  color: var(--color-primary) !important;
+}
+
+/* SVG stroke color overrides for #C72030 */
+svg[class*="stroke-[#C72030]"],
+svg.stroke-\[\#C72030\],
+.lucide[class*="stroke-[#C72030]"],
+.lucide.stroke-\[\#C72030\] {
+  stroke: var(--color-primary) !important;
+}
+
+/* Group data-state active stroke overrides for tabs */
+[data-state="active"] svg[class*="stroke-[#C72030]"],
+[data-state="active"] svg.stroke-\[\#C72030\],
+.group[data-state="active"]
+  svg[class*="group-data-[state=active]:stroke-[#C72030]"],
+svg.group-data-\[state\=active\]\:stroke-\[\#C72030\] {
+  stroke: var(--color-primary) !important;
+}
+
+/* SVGs with hardcoded #C72030 fill or stroke attributes */
+svg[fill="#C72030"],
+svg[fill="#c72030"],
+svg[stroke="#C72030"],
+svg[stroke="#c72030"],
+path[fill="#C72030"],
+path[fill="#c72030"],
+path[stroke="#C72030"],
+path[stroke="#c72030"] {
+  fill: var(--color-primary) !important;
+  stroke: var(--color-primary) !important;
+}
+
+/* ===========================================
+   INLINE STYLE OVERRIDES (CSS Attribute Selectors)
+   These catch components with inline styles
+   =========================================== */
+
+/* Override inline color styles */
+[style*="color: #C72030"],
+[style*="color:#C72030"],
+[style*="color: #c72030"],
+[style*="color:#c72030"],
+[style*="color: rgb(199, 32, 48)"],
+[style*="color:rgb(199, 32, 48)"] {
+  color: var(--color-primary) !important;
+}
+
+/* Override inline background-color styles */
+[style*="background-color: #C72030"],
+[style*="background-color:#C72030"],
+[style*="background-color: #c72030"],
+[style*="background-color:#c72030"],
+[style*="background: #C72030"],
+[style*="background:#C72030"],
+[style*="background: #c72030"],
+[style*="background:#c72030"] {
+  background-color: var(--color-primary) !important;
+}
+
+/* Override inline border-color styles */
+[style*="border-color: #C72030"],
+[style*="border-color:#C72030"],
+[style*="border-color: #c72030"],
+[style*="border-color:#c72030"],
+[style*="border: 1px solid #C72030"],
+[style*="border:1px solid #C72030"] {
+  border-color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   TIMELINE OVERRIDES
+   =========================================== */
+
+.timeline-icon,
+.year-change .timeline-icon,
+.timeline {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.timeline {
+  border-left-color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   FIGMA CARD STYLES
+   =========================================== */
+
+.figma-card-icon {
+  color: var(--color-primary) !important;
+}
+
+.location-stepper-line {
+  background: rgba(218, 119, 86, 0.68) !important;
+}
+
+.location-step-dot {
+  background: var(--color-primary) !important;
+}
+
+/* ===========================================
+   DATA STATE ATTRIBUTE OVERRIDES
+   For Radix/Shadcn components
+   =========================================== */
+
+[data-state="active"][class*="#C72030"],
+[data-state="checked"][class*="#C72030"],
+[data-state="selected"][class*="#C72030"] {
+  color: var(--color-primary) !important;
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   STAT CARD COLOR OVERRIDES
+   Only override #C72030 and #C4B89D colors
+   =========================================== */
+
+/* Stat Card Icon Container with tan background */
+.bg-\[\#C4B89D54\],
+[class*="bg-[#C4B89D54]"] {
+  background-color: rgba(196, 184, 157, 0.33) !important;
+}
+
+/* ===========================================
+   TAB COLOR OVERRIDES
+   Only override colors for tabs with #C72030
+   =========================================== */
+
+/* Active tab with #C72030 text */
+[role="tab"][data-state="active"][class*="text-[#C72030]"],
+[role="tab"][data-state="active"].text-\[\#C72030\] {
+  color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   ACTION BUTTON COLOR OVERRIDES
+   Only override buttons with #C72030
+   =========================================== */
+
+/* Buttons with #C72030 background */
+button.bg-\[\#C72030\],
+a.bg-\[\#C72030\] {
+  background-color: var(--color-primary) !important;
+}
+
+button.bg-\[\#C72030\]:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+/* Buttons with #C72030 text/border */
+button.text-\[\#C72030\],
+button[class*="text-[#C72030]"],
+button.border-\[\#C72030\],
+button[class*="border-[#C72030]"] {
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   TABLE COLOR OVERRIDES
+   Only override colors, not sizing/padding
+   =========================================== */
+
+/* Table header background - use brand bg */
+thead th.bg-brand-bg,
+.table-header.bg-brand-bg {
+  background-color: var(--color-bg) !important;
+}
+
+/* Table row hover - brand color */
+tbody tr.hover-brand:hover {
+  background-color: var(--color-primary-selected) !important;
+}
+
+/* ===========================================
+   STATUS BADGE/DROPDOWN STYLING
+   =========================================== */
+
+/* Status Dropdown in Table - only color overrides */
+.status-in-use,
+[class*="status"][class*="bg-[#C72030]"] {
+  background-color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   PRINT STYLES
+   =========================================== */
+
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  a {
+    color: var(--color-primary) !important;
+    text-decoration: underline !important;
+  }
+}
+
+/* ===========================================
+   GLOBAL COLOR OVERRIDES FOR #C72030
+   Only override color values, not layout/sizing
+   =========================================== */
+
+/* ===== CHECKBOX COLOR OVERRIDES ===== */
+/* Unchecked checkbox - white background with gray border */
+button[role="checkbox"][data-state="unchecked"] {
+  background-color: white !important;
+  border-color: #d1d5db !important;
+}
+
+/* Only override Radix/Shadcn checkboxes with #C72030 classes when checked */
+[data-state="checked"][class*="bg-[#C72030]"],
+[data-state="checked"].bg-\[\#C72030\],
+button[data-state="checked"][class*="data-[state=checked]:bg-[#C72030]"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+/* Ensure checkbox checkmark icon is WHITE for visibility */
+[data-state="checked"][class*="bg-[#C72030]"] svg,
+[data-state="checked"].bg-\[\#C72030\] svg,
+button[data-state="checked"][class*="data-[state=checked]:bg-[#C72030]"] svg,
+button[data-state="checked"][class*="data-[state=checked]:bg-[#C72030]"]
+  .lucide-check {
+  color: white !important;
+  stroke: white !important;
+}
+
+/* Checkbox hover states with #C72030 */
+[class*="hover:border-[#C72030]"]:hover,
+.hover\:border-\[\#C72030\]:hover {
+  border-color: var(--color-primary) !important;
+}
+
+/* Native HTML checkbox accent color override */
+input[type="checkbox"][class*="accent-[#C72030]"],
+input[type="checkbox"].accent-\[\#C72030\],
+input[type="checkbox"][class*="text-[#C72030]"] {
+  accent-color: var(--color-primary) !important;
+}
+
+/* Radix Checkbox specific - ensure proper appearance */
+button[role="checkbox"][data-state="checked"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+button[role="checkbox"][data-state="checked"] svg {
+  color: white !important;
+}
+
+/* Ensure CheckboxPrimitive.Indicator content is white */
+button[role="checkbox"][data-state="checked"] span,
+button[role="checkbox"][data-state="checked"] .lucide,
+button[role="checkbox"][data-state="checked"] [data-radix-checkbox-indicator] {
+  color: white !important;
+}
+
+/* Fix text-current inheritance for checkbox indicator */
+button[role="checkbox"][data-state="checked"] .text-current {
+  color: white !important;
+}
+
+/* ===== RADIO BUTTON COLOR OVERRIDES ===== */
+/* Only override radios with #C72030 classes */
+[role="radio"][class*="text-[#C72030]"],
+[role="radio"].text-\[\#C72030\] {
+  color: var(--color-primary) !important;
+}
+
+[data-state="checked"][class*="border-[#C72030]"][role="radio"],
+[data-state="checked"].border-\[\#C72030\][role="radio"] {
+  border-color: var(--color-primary) !important;
+}
+
+/* Radio circle fill - only #C72030 */
+[role="radio"] svg[class*="fill-[#C72030]"],
+[role="radio"] svg[class*="text-[#C72030]"] {
+  fill: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+/* ===== SWITCH/TOGGLE COLOR OVERRIDES ===== */
+/* Only override switches with #C72030 */
+[data-state="checked"][class*="bg-[#C72030]"] {
+  background-color: var(--color-primary) !important;
+}
+
+/* ===== TAB COLOR OVERRIDES ===== */
+/* Only override tabs with #C72030 */
+[role="tab"][data-state="active"][class*="text-[#C72030]"],
+[role="tab"][data-state="active"].text-\[\#C72030\] {
+  color: var(--color-primary) !important;
+}
+
+/* Asset List / Analytics tab active state - matches Figma */
+[role="tab"][data-state="active"][class*="data-[state=active]:text-[#C72030]"] {
+  color: var(--color-primary) !important;
+  background-color: #edeae3 !important;
+}
+
+/* Inactive tab styling */
+[role="tab"][data-state="inactive"][class*="data-[state=inactive]:bg-white"] {
+  background-color: white !important;
+  color: var(--color-text) !important;
+}
+
+/* Tab icons - inherit parent color */
+[role="tab"] svg {
+  color: currentColor !important;
+}
+
+/* ===== TYPOGRAPHY - Text Rendering Only ===== */
+/* Improve text rendering without forcing font-family everywhere */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ===== INPUT/SEARCH FIELD FOCUS OVERRIDES ===== */
+/* Only override focus colors for text inputs, not checkboxes/radios */
+input[type="text"]:focus,
+input[type="search"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+textarea:focus {
+  border-color: var(--color-primary) !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px var(--color-primary-selected) !important;
+}
+
+/* ===== SELECT/DROPDOWN FOCUS OVERRIDES ===== */
+select:focus,
+[role="combobox"]:focus {
+  border-color: var(--color-primary) !important;
+  outline: none !important;
+}
+
+/* ===== SIDEBAR COLOR OVERRIDES ===== */
+/* Only override #C72030 colors in sidebar */
+nav a[class*="text-[#C72030]"],
+nav a.text-\[\#C72030\],
+.sidebar a[class*="text-[#C72030]"] {
+  color: var(--color-primary) !important;
+}
+
+[class*="sidebar"] [class*="bg-[#C72030]"],
+[class*="sidebar"] .bg-\[\#C72030\],
+nav [class*="bg-[#C72030]"] {
+  background-color: var(--color-primary) !important;
+}
+
+/* ===== HEADER NAV COLOR OVERRIDES ===== */
+header a[class*="text-[#C72030]"] {
+  color: var(--color-primary) !important;
+}
+
+/* ===== PAGINATION COLOR OVERRIDES ===== */
+[class*="pagination"] button[class*="bg-[#C72030]"] {
+  background-color: var(--color-primary) !important;
+}
+
+/* ===== LOADING/SPINNER COLOR OVERRIDES ===== */
+.animate-spin[class*="text-[#C72030]"],
+[class*="loader"][class*="text-[#C72030]"] {
+  color: var(--color-primary) !important;
+}
+
+/* ===== MODAL/DIALOG BUTTON COLOR OVERRIDES ===== */
+[role="dialog"] button.bg-\[\#C72030\],
+[role="alertdialog"] button.bg-\[\#C72030\] {
+  background-color: var(--color-primary) !important;
+}
+
+/* ===== BADGE/CHIP COLOR OVERRIDES ===== */
+[class*="badge"][class*="bg-[#C72030]"],
+[class*="chip"][class*="bg-[#C72030]"] {
+  background-color: var(--color-primary) !important;
+}
+
+/* ===== FOCUS RING COLOR OVERRIDES ===== */
+[class*="ring-[#C72030]"],
+[class*="focus:ring-[#C72030]"]:focus {
+  --tw-ring-color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   ANALYTICS & DASHBOARD COLOR UTILITIES
+   Brand-aligned colors for charts/analytics
+   =========================================== */
+
+/* Growth indicator colors */
+.text-growth,
+.text-brand-growth {
+  color: var(--color-growth-solid) !important;
+}
+
+.bg-growth,
+.bg-brand-growth {
+  background-color: var(--color-growth) !important;
+}
+
+/* Tag colors */
+.bg-tag,
+.bg-brand-tag {
+  background-color: var(--color-tags) !important;
+}
+
+/* Status indicator utilities */
+.status-success {
+  background-color: var(--color-success-bg) !important;
+  color: var(--color-success-solid) !important;
+}
+
+.status-warning {
+  background-color: var(--color-warning-light) !important;
+  color: var(--color-warning) !important;
+}
+
+.status-error {
+  background-color: var(--color-error-bg) !important;
+  color: var(--color-error) !important;
+}
+
+.status-exception {
+  background-color: rgba(170, 185, 197, 0.15) !important;
+  color: var(--color-exception) !important;
+}
+
+/* Analytics card styling */
+.analytics-card {
+  background-color: var(--color-card-bg) !important;
+  border-color: var(--color-card-border) !important;
+}
+
+/* Subtle dividers */
+.divider-subtle {
+  border-color: var(--color-border-subtle) !important;
+}
+
+/* Disabled state */
+.state-disabled {
+  color: var(--color-disabled) !important;
+  background-color: rgba(211, 209, 199, 0.15) !important;
+}
+
+/* ===========================================
+   DASHBOARD & CHART COLOR SYSTEM
+   Based on Lockated Brand Guidelines
+   Reference: Images 4 & 5 - Token Usage & Analytics
+   =========================================== */
+
+/* ===== CHART COLOR PALETTE VARIABLES ===== */
+:root {
+  /* Secondary Chart Colors */
+  --chart-green-olive: #798c5e;
+  --chart-green-olive-hover: rgba(121, 140, 94, 0.85);
+  --chart-purple: #cecbf6;
+  --chart-purple-hover: rgba(206, 203, 246, 0.7);
+  --chart-teal: #9ec8ba;
+  --chart-teal-hover: rgba(158, 200, 186, 0.7);
+
+  /* Tertiary/Semantic Chart Colors */
+  --chart-info: #6b9bcc;
+  --chart-disabled: #d3d1c7;
+  --chart-tags: #cecbf6;
+  --chart-danger: #e49191;
+  --chart-warning: #edc488;
+  --chart-growth: rgba(16, 140, 114, 0.3);
+  --chart-growth-solid: #108c72;
+
+  /* Surface Colors */
+  --chart-border: #c4b89d;
+  --chart-card-bg: #f6f4ee;
+  --chart-divider: #d5dbdb;
+}
+
+/* ===== RECHARTS / SVG CHART COLOR OVERRIDES ===== */
+
+/* Green (Success/Achieved) - #798C5E */
+[fill="#798C5E"],
+path[fill="#798C5E"],
+rect[fill="#798C5E"],
+circle[fill="#798C5E"] {
+  fill: var(--chart-green-olive) !important;
+}
+
+/* Purple/Lavender - #CECBF6 */
+[fill="#CECBF6"],
+[fill="#cecbf6"],
+path[fill="#CECBF6"],
+path[fill="#cecbf6"],
+rect[fill="#CECBF6"],
+rect[fill="#cecbf6"],
+circle[fill="#CECBF6"],
+circle[fill="#cecbf6"] {
+  fill: var(--chart-purple) !important;
+}
+
+/* Teal/Mint - #9EC8BA */
+[fill="#9EC8BA"],
+[fill="#9ec8ba"],
+path[fill="#9EC8BA"],
+path[fill="#9ec8ba"],
+rect[fill="#9EC8BA"],
+rect[fill="#9ec8ba"],
+circle[fill="#9EC8BA"],
+circle[fill="#9ec8ba"] {
+  fill: var(--chart-teal) !important;
+}
+
+/* Info Blue - #6B9BCC */
+[fill="#6B9BCC"],
+[fill="#6b9bcc"],
+path[fill="#6B9BCC"],
+path[fill="#6b9bcc"],
+rect[fill="#6B9BCC"],
+rect[fill="#6b9bcc"],
+circle[fill="#6B9BCC"],
+circle[fill="#6b9bcc"] {
+  fill: var(--chart-info) !important;
+}
+
+/* Disabled/Muted Gray - #D3D1C7 */
+[fill="#D3D1C7"],
+[fill="#d3d1c7"],
+path[fill="#D3D1C7"],
+path[fill="#d3d1c7"],
+rect[fill="#D3D1C7"],
+rect[fill="#d3d1c7"],
+circle[fill="#D3D1C7"],
+circle[fill="#d3d1c7"] {
+  fill: var(--chart-disabled) !important;
+}
+
+/* Danger/Error - #E49191 */
+[fill="#E49191"],
+[fill="#e49191"],
+path[fill="#E49191"],
+path[fill="#e49191"],
+rect[fill="#E49191"],
+rect[fill="#e49191"],
+circle[fill="#E49191"],
+circle[fill="#e49191"] {
+  fill: var(--chart-danger) !important;
+}
+
+/* Warning - #EDC488 */
+[fill="#EDC488"],
+[fill="#edc488"],
+path[fill="#EDC488"],
+path[fill="#edc488"],
+rect[fill="#EDC488"],
+rect[fill="#edc488"],
+circle[fill="#EDC488"],
+circle[fill="#edc488"] {
+  fill: var(--chart-warning) !important;
+}
+
+/* Growth - #108C72 */
+[fill="#108C72"],
+[fill="#108c72"],
+path[fill="#108C72"],
+path[fill="#108c72"],
+rect[fill="#108C72"],
+rect[fill="#108c72"],
+circle[fill="#108C72"],
+circle[fill="#108c72"] {
+  fill: var(--chart-growth-solid) !important;
+}
+
+/* Card Border Color - #C4B89D */
+[fill="#C4B89D"],
+[fill="#c4b89d"],
+[fill="#C4B99D"],
+[fill="#c4b99d"],
+path[fill="#C4B89D"],
+path[fill="#c4b89d"],
+rect[fill="#C4B89D"],
+rect[fill="#c4b89d"] {
+  fill: var(--chart-border) !important;
+}
+
+/* Subtle Border/Divider - #D5DBDB */
+[fill="#D5DBDB"],
+[fill="#d5dbdb"],
+path[fill="#D5DBDB"],
+path[fill="#d5dbdb"],
+rect[fill="#D5DBDB"],
+rect[fill="#d5dbdb"] {
+  fill: var(--chart-divider) !important;
+}
+
+/* ===== MAP COMMON TAILWIND/LEGACY COLORS TO BRAND ===== */
+
+/* Green-500 (#22C55E) → Brand Olive Green (#798C5E) */
+[fill="#22C55E"],
+[fill="#22c55e"],
+path[fill="#22C55E"],
+path[fill="#22c55e"],
+rect[fill="#22C55E"],
+rect[fill="#22c55e"] {
+  fill: var(--chart-green-olive) !important;
+}
+
+/* Emerald-500 (#10b981) → Brand Growth (#108C72) */
+[fill="#10b981"],
+[fill="#10B981"],
+path[fill="#10b981"],
+path[fill="#10B981"],
+rect[fill="#10b981"],
+rect[fill="#10B981"] {
+  fill: var(--chart-growth-solid) !important;
+}
+
+/* Red-500 (#EF4444) → Brand Danger (#E49191) */
+[fill="#EF4444"],
+[fill="#ef4444"],
+path[fill="#EF4444"],
+path[fill="#ef4444"],
+rect[fill="#EF4444"],
+rect[fill="#ef4444"] {
+  fill: var(--chart-danger) !important;
+}
+
+/* Amber-500 (#F59E0B) → Brand Warning (#EDC488) */
+[fill="#F59E0B"],
+[fill="#f59e0b"],
+path[fill="#F59E0B"],
+path[fill="#f59e0b"],
+rect[fill="#F59E0B"],
+rect[fill="#f59e0b"] {
+  fill: var(--chart-warning) !important;
+}
+
+/* Gray (#A5A5A5) → Brand Disabled (#D3D1C7) */
+[fill="#A5A5A5"],
+[fill="#a5a5a5"],
+path[fill="#A5A5A5"],
+path[fill="#a5a5a5"],
+rect[fill="#A5A5A5"],
+rect[fill="#a5a5a5"] {
+  fill: var(--chart-disabled) !important;
+}
+
+/* Existing dashboard colors - keep as brand aligned */
+[fill="#c6b692"],
+path[fill="#c6b692"],
+rect[fill="#c6b692"] {
+  fill: #c6b692 !important;
+}
+
+[fill="#d8dcdd"],
+path[fill="#d8dcdd"],
+rect[fill="#d8dcdd"] {
+  fill: var(--chart-divider) !important;
+}
+
+[fill="#DAD6CA"],
+[fill="#dad6ca"],
+path[fill="#DAD6CA"],
+path[fill="#dad6ca"],
+rect[fill="#DAD6CA"],
+rect[fill="#dad6ca"] {
+  fill: #dad6ca !important;
+}
+
+/* ===== TEXT COLOR OVERRIDES FOR CHARTS ===== */
+
+/* Green text */
+.text-\[\#22C55E\],
+[class*="text-[#22C55E]"],
+.text-green-500,
+[class*="text-green-500"] {
+  color: var(--chart-green-olive) !important;
+}
+
+/* Emerald text */
+.text-\[\#10b981\],
+.text-\[\#10B981\],
+[class*="text-[#10b981]"],
+[class*="text-[#10B981]"],
+.text-emerald-500,
+[class*="text-emerald-500"] {
+  color: var(--chart-growth-solid) !important;
+}
+
+/* Red text */
+.text-\[\#EF4444\],
+[class*="text-[#EF4444]"],
+.text-red-500,
+[class*="text-red-500"] {
+  color: var(--chart-danger) !important;
+}
+
+/* Amber text */
+.text-\[\#F59E0B\],
+[class*="text-[#F59E0B]"],
+.text-amber-500,
+.text-yellow-500,
+[class*="text-amber-500"],
+[class*="text-yellow-500"] {
+  color: var(--chart-warning) !important;
+}
+
+/* ===== BACKGROUND COLOR OVERRIDES ===== */
+
+/* Green backgrounds */
+.bg-\[\#22C55E\],
+[class*="bg-[#22C55E]"],
+.bg-green-500,
+[class*="bg-green-500"] {
+  background-color: var(--chart-green-olive) !important;
+}
+
+/* Emerald backgrounds */
+.bg-\[\#10b981\],
+.bg-\[\#10B981\],
+[class*="bg-[#10b981]"],
+[class*="bg-[#10B981]"],
+.bg-emerald-500,
+[class*="bg-emerald-500"] {
+  background-color: var(--chart-growth-solid) !important;
+}
+
+/* Red backgrounds */
+.bg-\[\#EF4444\],
+[class*="bg-[#EF4444]"],
+.bg-red-500,
+[class*="bg-red-500"] {
+  background-color: var(--chart-danger) !important;
+}
+
+/* Amber backgrounds */
+.bg-\[\#F59E0B\],
+[class*="bg-[#F59E0B]"],
+.bg-amber-500,
+.bg-yellow-500,
+[class*="bg-amber-500"],
+[class*="bg-yellow-500"] {
+  background-color: var(--chart-warning) !important;
+}
+
+/* ===== INLINE STYLE OVERRIDES FOR DYNAMIC CHARTS ===== */
+
+/* Green RGB values */
+[style*="color: rgb(34, 197, 94)"],
+[style*="color:rgb(34, 197, 94)"],
+[style*="background-color: rgb(34, 197, 94)"],
+[style*="background:rgb(34, 197, 94)"] {
+  color: var(--chart-green-olive) !important;
+}
+
+/* Red RGB values */
+[style*="color: rgb(239, 68, 68)"],
+[style*="color:rgb(239, 68, 68)"],
+[style*="background-color: rgb(239, 68, 68)"],
+[style*="background:rgb(239, 68, 68)"] {
+  color: var(--chart-danger) !important;
+}
+
+/* Amber RGB values */
+[style*="color: rgb(245, 158, 11)"],
+[style*="color:rgb(245, 158, 11)"],
+[style*="background-color: rgb(245, 158, 11)"],
+[style*="background:rgb(245, 158, 11)"] {
+  color: var(--chart-warning) !important;
+}
+
+/* ===== RECHARTS SPECIFIC OVERRIDES ===== */
+
+.recharts-bar-rectangle[fill="#22C55E"],
+.recharts-bar-rectangle[fill="#22c55e"] {
+  fill: var(--chart-green-olive) !important;
+}
+
+.recharts-bar-rectangle[fill="#EF4444"],
+.recharts-bar-rectangle[fill="#ef4444"] {
+  fill: var(--chart-danger) !important;
+}
+
+.recharts-bar-rectangle[fill="#F59E0B"],
+.recharts-bar-rectangle[fill="#f59e0b"] {
+  fill: var(--chart-warning) !important;
+}
+
+.recharts-bar-rectangle[fill="#10b981"],
+.recharts-bar-rectangle[fill="#10B981"] {
+  fill: var(--chart-growth-solid) !important;
+}
+
+/* Recharts pie/cell overrides */
+.recharts-pie-sector[fill="#22C55E"],
+.recharts-cell[fill="#22C55E"] {
+  fill: var(--chart-green-olive) !important;
+}
+
+.recharts-pie-sector[fill="#EF4444"],
+.recharts-cell[fill="#EF4444"] {
+  fill: var(--chart-danger) !important;
+}
+
+.recharts-pie-sector[fill="#F59E0B"],
+.recharts-cell[fill="#F59E0B"] {
+  fill: var(--chart-warning) !important;
+}
+
+/* Recharts legend and tooltip */
+.recharts-legend-item-text,
+.recharts-tooltip-label,
+.recharts-tooltip-item {
+  font-family: var(--font-family) !important;
+  color: var(--color-text) !important;
+}
+
+/* ===== CHART UTILITY CLASSES ===== */
+
+/* Brand chart colors */
+.chart-primary {
+  fill: var(--color-primary) !important;
+}
+.chart-green {
+  fill: var(--chart-green-olive) !important;
+}
+.chart-purple {
+  fill: var(--chart-purple) !important;
+}
+.chart-teal {
+  fill: var(--chart-teal) !important;
+}
+.chart-info {
+  fill: var(--chart-info) !important;
+}
+.chart-warning {
+  fill: var(--chart-warning) !important;
+}
+.chart-danger {
+  fill: var(--chart-danger) !important;
+}
+.chart-growth {
+  fill: var(--chart-growth-solid) !important;
+}
+.chart-disabled {
+  fill: var(--chart-disabled) !important;
+}
+
+/* Text variants */
+.text-chart-green {
+  color: var(--chart-green-olive) !important;
+}
+.text-chart-purple {
+  color: var(--chart-purple) !important;
+}
+.text-chart-teal {
+  color: var(--chart-teal) !important;
+}
+.text-chart-info {
+  color: var(--chart-info) !important;
+}
+.text-chart-warning {
+  color: var(--chart-warning) !important;
+}
+.text-chart-danger {
+  color: var(--chart-danger) !important;
+}
+.text-chart-growth {
+  color: var(--chart-growth-solid) !important;
+}
+
+/* Background variants */
+.bg-chart-green {
+  background-color: var(--chart-green-olive) !important;
+}
+.bg-chart-purple {
+  background-color: var(--chart-purple) !important;
+}
+.bg-chart-teal {
+  background-color: var(--chart-teal) !important;
+}
+.bg-chart-info {
+  background-color: var(--chart-info) !important;
+}
+.bg-chart-warning {
+  background-color: var(--chart-warning) !important;
+}
+.bg-chart-danger {
+  background-color: var(--chart-danger) !important;
+}
+.bg-chart-growth {
+  background-color: var(--chart-growth) !important;
+}
+
+/* ===========================================
+   LEGACY CHART COLORS → BRAND PALETTE MAPPING
+   Override hardcoded colors in chart components
+   =========================================== */
+
+/* ===== LEGACY BROWN/BEIGE TONES → BRAND SECONDARY ===== */
+
+/* #8B7355 (Dark Brown - proactiveOpen, twoWheeler) → Brand Green Olive */
+[fill="#8B7355"],
+[fill="#8b7355"],
+path[fill="#8B7355"],
+path[fill="#8b7355"],
+rect[fill="#8B7355"],
+rect[fill="#8b7355"],
+circle[fill="#8B7355"],
+circle[fill="#8b7355"] {
+  fill: var(--color-secondary-green) !important;
+}
+
+.recharts-bar-rectangle[fill="#8B7355"],
+.recharts-bar-rectangle[fill="#8b7355"],
+.recharts-pie-sector[fill="#8B7355"],
+.recharts-cell[fill="#8B7355"] {
+  fill: var(--color-secondary-green) !important;
+}
+
+/* #C4B99D (Primary Beige - proactiveClosed, fourWheeler, primary) → Brand Teal */
+[fill="#C4B99D"],
+[fill="#c4b99d"],
+path[fill="#C4B99D"],
+path[fill="#c4b99d"],
+rect[fill="#C4B99D"],
+rect[fill="#c4b99d"],
+circle[fill="#C4B99D"],
+circle[fill="#c4b99d"] {
+  fill: var(--color-secondary-teal) !important;
+}
+
+.recharts-bar-rectangle[fill="#C4B99D"],
+.recharts-bar-rectangle[fill="#c4b99d"],
+.recharts-pie-sector[fill="#C4B99D"],
+.recharts-cell[fill="#C4B99D"] {
+  fill: var(--color-secondary-teal) !important;
+}
+
+/* #B8AFA0 (Medium shade - reactiveOpen) → Brand Purple */
+[fill="#B8AFA0"],
+[fill="#b8afa0"],
+path[fill="#B8AFA0"],
+path[fill="#b8afa0"],
+rect[fill="#B8AFA0"],
+rect[fill="#b8afa0"],
+circle[fill="#B8AFA0"],
+circle[fill="#b8afa0"] {
+  fill: var(--color-secondary-purple) !important;
+}
+
+.recharts-bar-rectangle[fill="#B8AFA0"],
+.recharts-bar-rectangle[fill="#b8afa0"],
+.recharts-pie-sector[fill="#B8AFA0"],
+.recharts-cell[fill="#B8AFA0"] {
+  fill: var(--color-secondary-purple) !important;
+}
+
+/* #DAD6CA (Secondary beige - reactiveClosed, secondary) → Brand Info */
+[fill="#DAD6CA"],
+[fill="#dad6ca"],
+path[fill="#DAD6CA"],
+path[fill="#dad6ca"],
+rect[fill="#DAD6CA"],
+rect[fill="#dad6ca"],
+circle[fill="#DAD6CA"],
+circle[fill="#dad6ca"] {
+  fill: var(--color-info) !important;
+}
+
+.recharts-bar-rectangle[fill="#DAD6CA"],
+.recharts-bar-rectangle[fill="#dad6ca"],
+.recharts-pie-sector[fill="#DAD6CA"],
+.recharts-cell[fill="#DAD6CA"] {
+  fill: var(--color-info) !important;
+}
+
+/* #D5DBDB (Tertiary - subtle borders) → Brand Disabled/Muted */
+[fill="#D5DBDB"],
+[fill="#d5dbdb"],
+path[fill="#D5DBDB"],
+path[fill="#d5dbdb"],
+rect[fill="#D5DBDB"],
+rect[fill="#d5dbdb"],
+circle[fill="#D5DBDB"],
+circle[fill="#d5dbdb"] {
+  fill: var(--color-disabled) !important;
+}
+
+.recharts-bar-rectangle[fill="#D5DBDB"],
+.recharts-bar-rectangle[fill="#d5dbdb"],
+.recharts-pie-sector[fill="#D5DBDB"],
+.recharts-cell[fill="#D5DBDB"] {
+  fill: var(--color-disabled) !important;
+}
+
+/* #DDD4C4 (Primary Light) → Brand Green Light (15%) */
+[fill="#DDD4C4"],
+[fill="#ddd4c4"],
+path[fill="#DDD4C4"],
+path[fill="#ddd4c4"],
+rect[fill="#DDD4C4"],
+rect[fill="#ddd4c4"],
+circle[fill="#DDD4C4"],
+circle[fill="#ddd4c4"] {
+  fill: var(--color-secondary-green-light) !important;
+}
+
+.recharts-bar-rectangle[fill="#DDD4C4"],
+.recharts-bar-rectangle[fill="#ddd4c4"],
+.recharts-pie-sector[fill="#DDD4C4"],
+.recharts-cell[fill="#DDD4C4"] {
+  fill: var(--color-secondary-green-light) !important;
+}
+
+/* #E8E5DD (Secondary Light) → Brand Teal Light (30%) */
+[fill="#E8E5DD"],
+[fill="#e8e5dd"],
+path[fill="#E8E5DD"],
+path[fill="#e8e5dd"],
+rect[fill="#E8E5DD"],
+rect[fill="#e8e5dd"],
+circle[fill="#E8E5DD"],
+circle[fill="#e8e5dd"] {
+  fill: var(--color-secondary-teal-light) !important;
+}
+
+.recharts-bar-rectangle[fill="#E8E5DD"],
+.recharts-bar-rectangle[fill="#e8e5dd"],
+.recharts-pie-sector[fill="#E8E5DD"],
+.recharts-cell[fill="#E8E5DD"] {
+  fill: var(--color-secondary-teal-light) !important;
+}
+
+/* #E5E9E9 (Tertiary Light) → Brand Purple Light (30%) */
+[fill="#E5E9E9"],
+[fill="#e5e9e9"],
+path[fill="#E5E9E9"],
+path[fill="#e5e9e9"],
+rect[fill="#E5E9E9"],
+rect[fill="#e5e9e9"],
+circle[fill="#E5E9E9"],
+circle[fill="#e5e9e9"] {
+  fill: var(--color-secondary-purple-light) !important;
+}
+
+.recharts-bar-rectangle[fill="#E5E9E9"],
+.recharts-bar-rectangle[fill="#e5e9e9"],
+.recharts-pie-sector[fill="#E5E9E9"],
+.recharts-cell[fill="#E5E9E9"] {
+  fill: var(--color-secondary-purple-light) !important;
+}
+
+/* ===== TEXT COLOR OVERRIDES FOR LEGACY COLORS ===== */
+
+.text-\[\#8B7355\],
+[class*="text-[#8B7355]"],
+[class*="text-[#8b7355]"] {
+  color: var(--color-secondary-green) !important;
+}
+
+.text-\[\#C4B99D\],
+[class*="text-[#C4B99D]"],
+[class*="text-[#c4b99d]"] {
+  color: var(--color-secondary-teal) !important;
+}
+
+.text-\[\#B8AFA0\],
+[class*="text-[#B8AFA0]"],
+[class*="text-[#b8afa0]"] {
+  color: var(--color-secondary-purple) !important;
+}
+
+.text-\[\#DAD6CA\],
+[class*="text-[#DAD6CA]"],
+[class*="text-[#dad6ca]"] {
+  color: var(--color-info) !important;
+}
+
+.text-\[\#D5DBDB\],
+[class*="text-[#D5DBDB]"],
+[class*="text-[#d5dbdb]"] {
+  color: var(--color-disabled) !important;
+}
+
+/* ===== BACKGROUND COLOR OVERRIDES FOR LEGACY COLORS ===== */
+
+.bg-\[\#8B7355\],
+[class*="bg-[#8B7355]"],
+[class*="bg-[#8b7355]"] {
+  background-color: var(--color-secondary-green) !important;
+}
+
+.bg-\[\#C4B99D\] {
+  background-color: var(--color-secondary-teal) !important;
+}
+
+.bg-\[\#B8AFA0\] {
+  background-color: var(--color-secondary-purple) !important;
+}
+
+.bg-\[\#DAD6CA\] {
+  background-color: var(--color-info) !important;
+}
+
+.bg-\[\#D5DBDB\] {
+  background-color: var(--color-disabled) !important;
+}
+
+.bg-\[\#DDD4C4\] {
+  background-color: var(--color-secondary-green-light) !important;
+}
+
+.bg-\[\#E8E5DD\],
+[class*="bg-[#E8E5DD]"],
+[class*="bg-[#e8e5dd]"] {
+  background-color: var(--color-secondary-teal-light) !important;
+}
+
+.bg-\[\#E5E9E9\],
+[class*="bg-[#E5E9E9]"],
+[class*="bg-[#e5e9e9]"] {
+  background-color: var(--color-secondary-purple-light) !important;
+}
+
+/* ===== BORDER COLOR OVERRIDES FOR LEGACY COLORS ===== */
+
+.border-\[\#C4B99D\],
+[class*="border-[#C4B99D]"],
+[class*="border-[#c4b99d]"] {
+  border-color: var(--color-card-border) !important;
+}
+
+.border-\[\#D5DBDB\],
+[class*="border-[#D5DBDB]"],
+[class*="border-[#d5dbdb]"] {
+  border-color: var(--color-border-subtle) !important;
+}
+
+/* ===========================================
+   UNIFIED ANALYTICS COLOR SYSTEM
+   6 Brand Colors for Charts, Graphs, Tables, Cards
+   =========================================== */
+
+:root {
+  /* 6 Unified Chart Colors — updated per design guide April 2026 */
+  --analytics-color-1: #6b9bcc; /* Info Blue          */
+  --analytics-color-2: #d3d1c6; /* Warm Light Grey    */
+  --analytics-color-3: #f4c37e; /* Amber/Yellow       */
+  --analytics-color-4: #e9704d; /* Orange-Red         */
+  --analytics-color-5: #f28c8f; /* Salmon Pink        */
+  --analytics-color-6: #d4dbdb; /* Cool Grey          */
+
+  /* Light variants for backgrounds */
+  --analytics-color-1-light: rgba(107, 155, 204, 0.15);
+  --analytics-color-2-light: rgba(211, 209, 198, 0.25);
+  --analytics-color-3-light: rgba(244, 195, 126, 0.15);
+  --analytics-color-4-light: rgba(233, 112, 77, 0.12);
+  --analytics-color-5-light: rgba(242, 140, 143, 0.15);
+  --analytics-color-6-light: rgba(212, 219, 219, 0.15);
+}
+
+/* ===========================================
+   ANALYTICS HEADINGS & CARD TITLES
+   Use BLACK (#2C2C2C) for headings - per design guidelines
+   =========================================== */
+
+/* Card title with primary color → BLACK */
+/* Target specific card title elements, not all text-primary */
+[class*="CardHeader"] [class*="text-[#DA7756]"],
+[class*="CardHeader"] [class*="text-[#da7756]"],
+[class*="CardHeader"] .text-\[\#DA7756\],
+[class*="CardHeader"] .text-primary,
+[class*="Card"] h1[class*="text-[#DA7756]"],
+[class*="Card"] h2[class*="text-[#DA7756]"],
+[class*="Card"] h3[class*="text-[#DA7756]"],
+h1.text-\[\#DA7756\],
+h2.text-\[\#DA7756\],
+h3.text-\[\#DA7756\],
+h4.text-\[\#DA7756\] {
+  color: var(--color-text) !important;
+}
+
+/* CRITICAL: CardTitle with #C72030 → BLACK (Asset Analytics, etc.) */
+[class*="CardTitle"][class*="text-[#C72030]"],
+[class*="CardTitle"].text-\[\#C72030\],
+.CardTitle.text-\[\#C72030\],
+[class*="CardHeader"] [class*="text-[#C72030]"],
+[class*="CardHeader"] .text-\[\#C72030\],
+[class*="CardHeader"] [class*="CardTitle"][class*="text-[#C72030]"] {
+  color: var(--color-text) !important;
+}
+
+/* CardTitle inline style color:#C72030 override */
+[class*="CardTitle"][style*="color: #C72030"],
+[class*="CardTitle"][style*="color:#C72030"],
+[class*="CardTitle"][style*="color: rgb(199, 32, 48)"] {
+  color: var(--color-text) !important;
+}
+
+/* HIGHEST SPECIFICITY: Force CardTitle BLACK regardless of any inline styles */
+/* This uses !important with attribute selectors for maximum override */
+.w-full [class*="CardTitle"],
+.border [class*="CardTitle"],
+.shadow-sm [class*="CardTitle"],
+.bg-white [class*="CardTitle"],
+[class*="Card"].w-full [class*="CardTitle"],
+[class*="Card"].border [class*="CardTitle"],
+[class*="Card"][class*="shadow"] [class*="CardTitle"] {
+  color: var(--color-text) !important;
+}
+
+/* Text color class overrides for card titles - ensure black text */
+[class*="CardTitle"].text-xl,
+[class*="CardTitle"].text-lg,
+[class*="CardTitle"].text-base,
+[class*="CardTitle"].font-bold,
+[class*="CardTitle"].font-semibold {
+  color: var(--color-text) !important;
+}
+
+/* Specific analytics card title selectors - HIGH SPECIFICITY */
+[class*="CardHeader"] [class*="CardTitle"],
+[class*="CardHeader"] h1,
+[class*="CardHeader"] h2,
+[class*="CardHeader"] h3,
+[class*="CardHeader"] h4,
+[class*="CardHeader"] .font-bold,
+[class*="CardHeader"] .font-semibold {
+  color: var(--color-text) !important;
+}
+
+/* Card titles in analytics pages - BLACK */
+.CardTitle,
+[class*="CardTitle"],
+.card-title,
+[class*="card-title"] {
+  color: var(--color-text) !important;
+}
+
+/* Analytics section headings - BLACK */
+h1[class*="text-[#1A1A1A]"],
+h2[class*="text-[#1A1A1A]"],
+h3[class*="text-[#1A1A1A]"],
+h4[class*="text-[#1A1A1A]"],
+.text-\[\#1A1A1A\] {
+  color: var(--color-text) !important;
+}
+
+/* Dashboard card headers - BLACK */
+[class*="CardHeader"] h1,
+[class*="CardHeader"] h2,
+[class*="CardHeader"] h3,
+[class*="CardHeader"] .font-bold,
+[class*="CardHeader"] .font-semibold,
+[class*="CardHeader"] [class*="CardTitle"] {
+  color: var(--color-text) !important;
+}
+
+/* Chart card titles - BLACK */
+.recharts-wrapper + div h1,
+.recharts-wrapper + div h2,
+.recharts-wrapper + div h3 {
+  color: var(--color-text) !important;
+}
+
+/* Analytics page main headings - BLACK */
+[class*="Dashboard"] h1,
+[class*="Dashboard"] h2.text-lg,
+[class*="Dashboard"] h3.text-lg,
+[class*="Analytics"] h1,
+[class*="Analytics"] h2.text-lg {
+  color: var(--color-text) !important;
+}
+
+/* Specific card title classes - BLACK */
+.text-lg.font-bold.text-\[\#1A1A1A\],
+.text-lg.font-semibold.text-\[\#1A1A1A\],
+.text-lg.font-bold,
+.text-base.font-bold,
+.text-base.font-semibold {
+  color: var(--color-text) !important;
+}
+
+/* Chart section titles - BLACK */
+.font-bold.text-gray-800,
+.font-semibold.text-gray-800,
+.font-bold.text-gray-900,
+.font-semibold.text-gray-900 {
+  color: var(--color-text) !important;
+}
+
+/* Response TAT, Resolution TAT, etc. chart titles - BLACK */
+[class*="Card"] h1,
+[class*="Card"] h2,
+[class*="Card"] h3,
+[class*="Card"] h4 {
+  color: var(--color-text) !important;
+}
+
+/* ===========================================
+   CHART LABELS & LEGEND STYLING
+   =========================================== */
+
+/* Recharts axis labels - muted gray */
+.recharts-text,
+.recharts-cartesian-axis-tick-value {
+  fill: var(--color-text-light) !important;
+  font-size: 12px !important;
+}
+
+/* Recharts legend text - dark text */
+.recharts-legend-item-text {
+  color: var(--color-text) !important;
+  font-size: 13px !important;
+}
+
+/* Chart subheadings like "Response TAT", "Resolution TAT" - BLACK */
+.text-center.font-semibold,
+.text-center.font-bold {
+  color: var(--color-text) !important;
+}
+
+/* Table headers - BLACK text on brand background */
+table th,
+thead th,
+[class*="table"] th {
+  color: var(--color-text) !important;
+  background-color: var(--color-bg) !important;
+  font-weight: 600 !important;
+}
+
+/* Table cell text - BLACK */
+table td,
+tbody td,
+[class*="table"] td {
+  color: var(--color-text) !important;
+}
+
+/* Priority labels in aging matrix (P1, P2, P3, P4) */
+table td:first-child,
+tbody td:first-child {
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+}
+
+/* ===========================================
+   REMOVE RED COLORS - REPLACE WITH PRIMARY
+   Scoped to exclude semantic UI components:
+   Eisenhower Matrix, Priority panels, status
+   indicators, and data-preserve-colors zones.
+   =========================================== */
+
+/* Red text colors → Primary (excluding semantic contexts) */
+:not([data-semantic-colors]) > .text-red-500:not(.keep-red),
+:not([data-semantic-colors]) > .text-red-600:not(.keep-red),
+:not([data-semantic-colors]) > .text-red-700:not(.keep-red),
+.text-\[\#bf213e\],
+.text-\[\#BF213E\],
+.text-\[\#C72030\],
+.text-\[\#c72030\],
+[class*="text-[#bf213e]"],
+[class*="text-[#BF213E]"],
+[class*="text-[#C72030]"],
+[class*="text-[#c72030]"] {
+  color: var(--color-primary) !important;
+}
+
+/* Red background colors → Primary (excluding semantic contexts) */
+:not([data-semantic-colors]) > .bg-red-500:not(.keep-red),
+:not([data-semantic-colors]) > .bg-red-600:not(.keep-red),
+:not([data-semantic-colors]) > .bg-red-700:not(.keep-red),
+.bg-\[\#bf213e\],
+.bg-\[\#BF213E\],
+[class*="bg-[#bf213e]"],
+[class*="bg-[#BF213E]"] {
+  background-color: var(--color-primary) !important;
+}
+
+/* Red border colors → Primary (excluding semantic contexts) */
+:not([data-semantic-colors]) > .border-red-500:not(.keep-red),
+:not([data-semantic-colors]) > .border-red-600:not(.keep-red),
+.border-\[\#bf213e\],
+[class*="border-[#bf213e]"] {
+  border-color: var(--color-primary) !important;
+}
+
+/* -------------------------------------------------------
+   PRESERVE semantic red/green/yellow in Eisenhower Matrix
+   and Priority todo panels (data-semantic-colors zones)
+   ------------------------------------------------------- */
+[data-semantic-colors] .text-red-500,
+[data-semantic-colors] .text-red-600,
+[data-semantic-colors] .text-red-700,
+[data-semantic-colors] [class*="text-red-"],
+[data-semantic-colors] .bg-red-50,
+[data-semantic-colors] .bg-red-100,
+[data-semantic-colors] .bg-red-500,
+[data-semantic-colors] [class*="bg-red-"],
+[data-semantic-colors] .border-red-200,
+[data-semantic-colors] .border-red-300,
+[data-semantic-colors] .border-red-500,
+[data-semantic-colors] [class*="border-red-"],
+[data-semantic-colors] [class*="border-l-red-"] {
+  /* Intentionally not overriding - semantic red preserved */
+  color: revert;
+  background-color: revert;
+  border-color: revert;
+}
+
+/* Analytics toggle button active state - use primary light bg */
+button.bg-\[\#f2eee9\].text-\[\#bf213e\],
+[class*="bg-[#f2eee9]"][class*="text-[#bf213e]"] {
+  background-color: var(--color-primary-light) !important;
+  color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   BEIGE/TAN/BROWN COLORS → BRAND 6-COLOR PALETTE
+   Override all legacy beige tones to unified brand colors
+   =========================================== */
+
+/* Override beige/tan colors commonly used in charts */
+/* #C4B99D, #c6b692, #B8AFA0, #DDD4C4, #bfaf8f - map to brand colors */
+
+/* Tan/Brown tones → Green Olive (Color 1) */
+[fill="#bfaf8f"],
+[fill="#BFAF8F"],
+path[fill="#bfaf8f"],
+rect[fill="#bfaf8f"],
+circle[fill="#bfaf8f"],
+.recharts-bar-rectangle[fill="#bfaf8f"],
+.recharts-pie-sector[fill="#bfaf8f"],
+.recharts-cell[fill="#bfaf8f"] {
+  fill: var(--analytics-color-1) !important;
+}
+
+/* Warmer tan → Teal (Color 2) */
+[fill="#c6b692"],
+[fill="#C6B692"],
+path[fill="#c6b692"],
+rect[fill="#c6b692"],
+circle[fill="#c6b692"],
+.recharts-bar-rectangle[fill="#c6b692"],
+.recharts-pie-sector[fill="#c6b692"],
+.recharts-cell[fill="#c6b692"] {
+  fill: var(--analytics-color-2) !important;
+}
+
+/* Medium beige → Info Blue (Color 4) */
+[fill="#d8dcdd"],
+[fill="#D8DCDD"],
+path[fill="#d8dcdd"],
+rect[fill="#d8dcdd"],
+circle[fill="#d8dcdd"],
+.recharts-bar-rectangle[fill="#d8dcdd"],
+.recharts-pie-sector[fill="#d8dcdd"],
+.recharts-cell[fill="#d8dcdd"] {
+  fill: var(--analytics-color-4) !important;
+}
+
+/* Light beige/cream → Purple (Color 3) */
+[fill="#DDD4C4"],
+[fill="#ddd4c4"],
+path[fill="#DDD4C4"],
+rect[fill="#DDD4C4"],
+circle[fill="#DDD4C4"],
+.recharts-bar-rectangle[fill="#DDD4C4"],
+.recharts-pie-sector[fill="#DDD4C4"],
+.recharts-cell[fill="#DDD4C4"] {
+  fill: var(--analytics-color-3) !important;
+}
+
+/* ===========================================
+   UNIFIED 6-COLOR CHART FILL OVERRIDES
+   Map all legacy colors to 6 brand colors
+   =========================================== */
+
+/* Color 1: Green Olive (#798C5E) - For "Achieved", "Success", "Open" */
+[fill="#798C5E"],
+[fill="#798c5e"],
+[fill="#8B7355"],
+[fill="#8b7355"],
+path[fill="#798C5E"],
+path[fill="#8B7355"],
+rect[fill="#798C5E"],
+rect[fill="#8B7355"],
+.recharts-bar-rectangle[fill="#798C5E"],
+.recharts-bar-rectangle[fill="#8B7355"],
+.recharts-pie-sector[fill="#798C5E"],
+.recharts-cell[fill="#798C5E"],
+.recharts-cell[fill="#8B7355"] {
+  fill: var(--analytics-color-1) !important;
+}
+
+/* Color 2: Teal (#9EC8BA) - For "In Progress", "Active" */
+[fill="#9EC8BA"],
+[fill="#9ec8ba"],
+[fill="#C4B99D"],
+[fill="#c4b99d"],
+path[fill="#9EC8BA"],
+path[fill="#C4B99D"],
+rect[fill="#9EC8BA"],
+rect[fill="#C4B99D"],
+.recharts-bar-rectangle[fill="#9EC8BA"],
+.recharts-bar-rectangle[fill="#C4B99D"],
+.recharts-pie-sector[fill="#9EC8BA"],
+.recharts-cell[fill="#9EC8BA"],
+.recharts-cell[fill="#C4B99D"] {
+  fill: var(--analytics-color-2) !important;
+}
+
+/* Color 3: Purple (#CECBF6) - For "Breached", "Pending" */
+[fill="#CECBF6"],
+[fill="#cecbf6"],
+[fill="#B8AFA0"],
+[fill="#b8afa0"],
+path[fill="#CECBF6"],
+path[fill="#B8AFA0"],
+rect[fill="#CECBF6"],
+rect[fill="#B8AFA0"],
+.recharts-bar-rectangle[fill="#CECBF6"],
+.recharts-bar-rectangle[fill="#B8AFA0"],
+.recharts-pie-sector[fill="#CECBF6"],
+.recharts-cell[fill="#CECBF6"],
+.recharts-cell[fill="#B8AFA0"] {
+  fill: var(--analytics-color-3) !important;
+}
+
+/* Color 4: Info Blue (#6B9BCC) - For "Info", "Scheduled" */
+[fill="#6B9BCC"],
+[fill="#6b9bcc"],
+[fill="#DAD6CA"],
+[fill="#dad6ca"],
+path[fill="#6B9BCC"],
+path[fill="#DAD6CA"],
+rect[fill="#6B9BCC"],
+rect[fill="#DAD6CA"],
+.recharts-bar-rectangle[fill="#6B9BCC"],
+.recharts-bar-rectangle[fill="#DAD6CA"],
+.recharts-pie-sector[fill="#6B9BCC"],
+.recharts-cell[fill="#6B9BCC"],
+.recharts-cell[fill="#DAD6CA"] {
+  fill: var(--analytics-color-4) !important;
+}
+
+/* Color 5: Warning/Amber (#EDC488) - For "Warning", "Overdue" */
+[fill="#EDC488"],
+[fill="#edc488"],
+[fill="#F59E0B"],
+[fill="#f59e0b"],
+path[fill="#EDC488"],
+path[fill="#F59E0B"],
+rect[fill="#EDC488"],
+rect[fill="#F59E0B"],
+.recharts-bar-rectangle[fill="#EDC488"],
+.recharts-bar-rectangle[fill="#F59E0B"],
+.recharts-pie-sector[fill="#EDC488"],
+.recharts-cell[fill="#EDC488"],
+.recharts-cell[fill="#F59E0B"] {
+  fill: var(--analytics-color-5) !important;
+}
+
+/* Color 6: Muted Gray (#D3D1C7) - For "Closed", "Inactive", "Disposed" */
+[fill="#D3D1C7"],
+[fill="#d3d1c7"],
+[fill="#D5DBDB"],
+[fill="#d5dbdb"],
+[fill="#A5A5A5"],
+[fill="#a5a5a5"],
+[fill="#E8E5DD"],
+[fill="#e8e5dd"],
+path[fill="#D3D1C7"],
+path[fill="#D5DBDB"],
+path[fill="#A5A5A5"],
+path[fill="#E8E5DD"],
+rect[fill="#D3D1C7"],
+rect[fill="#D5DBDB"],
+rect[fill="#A5A5A5"],
+rect[fill="#E8E5DD"],
+.recharts-bar-rectangle[fill="#D3D1C7"],
+.recharts-bar-rectangle[fill="#D5DBDB"],
+.recharts-bar-rectangle[fill="#A5A5A5"],
+.recharts-pie-sector[fill="#D3D1C7"],
+.recharts-cell[fill="#D3D1C7"],
+.recharts-cell[fill="#D5DBDB"],
+.recharts-cell[fill="#A5A5A5"] {
+  fill: var(--analytics-color-6) !important;
+}
+
+/* ===========================================
+   RECHARTS SPECIFIC UNIFIED COLORS
+   =========================================== */
+
+/* Recharts bar colors - unified palette */
+.recharts-bar-rectangle {
+  transition: fill 0.2s ease;
+}
+
+/* Recharts legend colors - use brand text */
+.recharts-legend-item-text {
+  color: var(--color-text) !important;
+  font-size: 14px !important;
+}
+
+/* Recharts tooltip styling */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: var(--color-card-white) !important;
+  border: 1px solid var(--color-card-border) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.recharts-tooltip-label {
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+}
+
+.recharts-tooltip-item {
+  color: var(--color-text) !important;
+}
+
+/* Recharts axis labels */
+.recharts-cartesian-axis-tick-value {
+  fill: var(--color-text-light) !important;
+  font-size: 12px !important;
+}
+
+/* Recharts grid lines */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--color-border-subtle) !important;
+}
+
+/* ===========================================
+   ANALYTICS TABLE STYLING
+   =========================================== */
+
+/* Table headers in analytics */
+table th,
+[class*="table"] th,
+thead th {
+  background-color: var(--color-bg) !important;
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+}
+
+/* Table cells */
+table td,
+[class*="table"] td,
+tbody td {
+  color: var(--color-text) !important;
+}
+
+/* Table row hover */
+table tbody tr:hover,
+[class*="table"] tbody tr:hover {
+  background-color: var(--color-primary-selected) !important;
+}
+
+/* ===========================================
+   ANALYTICS CARD STYLING
+   =========================================== */
+
+/* Stats cards in analytics */
+[class*="Card"][class*="bg-white"],
+.analytics-card,
+.stat-card {
+  background-color: var(--color-card-white) !important;
+  border: 1px solid var(--color-card-border) !important;
+  border-radius: 12px !important;
+}
+
+/* Card hover effect */
+[class*="Card"]:hover {
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* ===========================================
+   UNIFIED ANALYTICS UTILITY CLASSES
+   =========================================== */
+
+/* 6-color fill utilities */
+.analytics-fill-1 {
+  fill: var(--analytics-color-1) !important;
+}
+.analytics-fill-2 {
+  fill: var(--analytics-color-2) !important;
+}
+.analytics-fill-3 {
+  fill: var(--analytics-color-3) !important;
+}
+.analytics-fill-4 {
+  fill: var(--analytics-color-4) !important;
+}
+.analytics-fill-5 {
+  fill: var(--analytics-color-5) !important;
+}
+.analytics-fill-6 {
+  fill: var(--analytics-color-6) !important;
+}
+
+/* 6-color background utilities */
+.analytics-bg-1 {
+  background-color: var(--analytics-color-1) !important;
+}
+.analytics-bg-2 {
+  background-color: var(--analytics-color-2) !important;
+}
+.analytics-bg-3 {
+  background-color: var(--analytics-color-3) !important;
+}
+.analytics-bg-4 {
+  background-color: var(--analytics-color-4) !important;
+}
+.analytics-bg-5 {
+  background-color: var(--analytics-color-5) !important;
+}
+.analytics-bg-6 {
+  background-color: var(--analytics-color-6) !important;
+}
+
+/* 6-color text utilities */
+.analytics-text-1 {
+  color: var(--analytics-color-1) !important;
+}
+.analytics-text-2 {
+  color: var(--analytics-color-2) !important;
+}
+.analytics-text-3 {
+  color: var(--analytics-color-3) !important;
+}
+.analytics-text-4 {
+  color: var(--analytics-color-4) !important;
+}
+.analytics-text-5 {
+  color: var(--analytics-color-5) !important;
+}
+.analytics-text-6 {
+  color: var(--analytics-color-6) !important;
+}
+
+/* Light background utilities */
+.analytics-bg-1-light {
+  background-color: var(--analytics-color-1-light) !important;
+}
+.analytics-bg-2-light {
+  background-color: var(--analytics-color-2-light) !important;
+}
+.analytics-bg-3-light {
+  background-color: var(--analytics-color-3-light) !important;
+}
+.analytics-bg-4-light {
+  background-color: var(--analytics-color-4-light) !important;
+}
+.analytics-bg-5-light {
+  background-color: var(--analytics-color-5-light) !important;
+}
+.analytics-bg-6-light {
+  background-color: var(--analytics-color-6-light) !important;
+}
+
+/* Analytics heading - BLACK for card titles */
+.analytics-heading {
+  color: var(--color-text) !important;
+  font-weight: 700 !important;
+}
+
+/* Analytics subheading - BLACK */
+.analytics-subheading {
+  color: var(--color-text) !important;
+  font-weight: 600 !important;
+}
+
+/* Analytics muted text */
+.analytics-muted {
+  color: var(--color-text-light) !important;
+}
+/* ===========================================
+   CHART LEGEND COLOR MAPPING
+   Achieved = Green Olive, Breached = Teal
+   =========================================== */
+
+/* Legend item symbol colors - force unified palette */
+.recharts-legend-item:nth-child(1) .recharts-surface,
+.recharts-legend-item:nth-child(1) svg {
+  fill: var(--analytics-color-1) !important;
+  color: var(--analytics-color-1) !important;
+}
+
+.recharts-legend-item:nth-child(2) .recharts-surface,
+.recharts-legend-item:nth-child(2) svg {
+  fill: var(--analytics-color-2) !important;
+  color: var(--analytics-color-2) !important;
+}
+
+.recharts-legend-item:nth-child(3) .recharts-surface,
+.recharts-legend-item:nth-child(3) svg {
+  fill: var(--analytics-color-3) !important;
+  color: var(--analytics-color-3) !important;
+}
+
+.recharts-legend-item:nth-child(4) .recharts-surface,
+.recharts-legend-item:nth-child(4) svg {
+  fill: var(--analytics-color-4) !important;
+  color: var(--analytics-color-4) !important;
+}
+
+.recharts-legend-item:nth-child(5) .recharts-surface,
+.recharts-legend-item:nth-child(5) svg {
+  fill: var(--analytics-color-5) !important;
+  color: var(--analytics-color-5) !important;
+}
+
+.recharts-legend-item:nth-child(6) .recharts-surface,
+.recharts-legend-item:nth-child(6) svg {
+  fill: var(--analytics-color-6) !important;
+  color: var(--analytics-color-6) !important;
+}
+
+/* ===========================================
+   FAILED TO LOAD / ERROR STATES
+   =========================================== */
+
+/* Error/Failed state containers */
+.error-message,
+.error-state,
+[class*="error-message"],
+[class*="failed-to-load"],
+.text-destructive,
+[class*="text-destructive"] {
+  color: var(--color-danger) !important;
+}
+
+/* Failed to load card styling */
+[class*="Card"]:has(.text-destructive),
+[class*="Card"]:has(.error-message),
+.card-error {
+  border-color: var(--color-danger-light) !important;
+  background-color: var(--color-card-white) !important;
+}
+
+/* Error icon styling */
+.error-state svg,
+[class*="error"] svg,
+.text-destructive svg {
+  color: var(--color-danger) !important;
+}
+
+/* No data available message styling */
+.no-data-message,
+[class*="no-data"],
+.text-muted-foreground:has(+ .text-muted-foreground),
+[class*="text-gray-500"]:contains("No data"),
+.text-gray-500:empty-state {
+  color: var(--color-text-light) !important;
+  font-style: italic;
+}
+
+/* Empty state containers */
+.empty-state,
+[class*="empty-state"],
+.flex.items-center.justify-center.h-64,
+.flex.items-center.justify-center.h-48 {
+  background-color: var(--color-bg) !important;
+  border-radius: 8px !important;
+}
+
+/* ===========================================
+   GLOBAL CARD TITLE OVERRIDE (ALL CONTEXTS)
+   Ensure ALL CardTitle with any color class → BLACK
+   =========================================== */
+
+/* Force all CardTitle elements to BLACK regardless of inline styles */
+[class*="CardTitle"],
+.CardTitle,
+[data-slot="card-title"],
+.card-title {
+  color: var(--color-text) !important;
+}
+
+/* Override any CardTitle with text color classes */
+[class*="CardTitle"][class*="text-"],
+[class*="CardTitle"].text-xl,
+[class*="CardTitle"].text-lg,
+[class*="CardTitle"].text-base {
+  color: var(--color-text) !important;
+}
+
+/* Specific override for text-[#C72030] on any heading in Card context */
+[class*="Card"] .text-\[\#C72030\],
+[class*="Card"] [class*="text-[#C72030]"],
+[class*="Card"] h1.text-xl,
+[class*="Card"] h2.text-lg,
+[class*="Card"] h3.text-base {
+  color: var(--color-text) !important;
+}
+
+/* ===========================================
+   GLOBAL CTA CONSISTENCY LAYER
+   (No component-level edits required)
+   =========================================== */
+
+/* Primary CTA buttons using legacy red shades */
+button.bg-\[\#C62828\],
+button.bg-\[\#c62828\],
+button.bg-\[\#C72030\],
+button.bg-\[\#c72030\],
+button[class*="bg-[#C62828]"],
+button[class*="bg-[#c62828]"],
+button[class*="bg-[#C72030]"],
+button[class*="bg-[#c72030]"],
+input[type="submit"].bg-\[\#C62828\],
+input[type="submit"].bg-\[\#C72030\],
+input[type="submit"][class*="bg-[#C62828]"],
+input[type="submit"][class*="bg-[#C72030]"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #fff !important;
+}
+
+button.hover\:bg-\[\#b71c1c\]:hover,
+button.hover\:bg-\[\#B71C1C\]:hover,
+button.hover\:bg-\[\#A01020\]:hover,
+button.hover\:bg-\[\#a01020\]:hover,
+button.hover\:bg-\[\#C72030\]\/90:hover,
+button.hover\:bg-\[\#c72030\]\/90:hover,
+button[class*="hover:bg-[#b71c1c]"]:hover,
+button[class*="hover:bg-[#B71C1C]"]:hover,
+button[class*="hover:bg-[#A01020]"]:hover,
+button[class*="hover:bg-[#C72030]/90"]:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+/* Secondary CTA (Cancel / Reset style in modals and drawers) */
+button.border-\[\#C62828\],
+button.border-\[\#c62828\],
+button.border-\[\#C72030\],
+button.border-\[\#c72030\],
+button[class*="border-[#C62828]"],
+button[class*="border-[#c62828]"],
+button[class*="border-[#C72030]"],
+button[class*="border-[#c72030]"] {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+button.hover\:bg-red-50:hover,
+button[class*="hover:bg-red-50"]:hover,
+button.hover\:bg-\[\#C72030\]\/10:hover,
+button[class*="hover:bg-[#C72030]/10"]:hover {
+  background-color: var(--color-primary-light) !important;
+}
+
+/* Generic submit consistency (kept scoped to semantic submit controls) */
+form button[type="submit"],
+form input[type="submit"] {
+  border-color: var(--color-primary);
+}
+
+form button[type="submit"]:hover,
+form input[type="submit"]:hover {
+  filter: brightness(0.98);
+}
+
+/* Logout consistency without forcing destructive treatment */
+button[class*="logout"],
+a[class*="logout"],
+[class*="DropdownMenuItem"][class*="logout"],
+[class*="dropdown"][class*="logout"] {
+  color: var(--color-primary) !important;
+}
+
+button[class*="logout"]:hover,
+a[class*="logout"]:hover {
+  background-color: var(--color-primary-light) !important;
+}
+
+/* List/Kanban toggle and action-column icon consistency */
+button[class*="text-[#C72030]"],
+button .text-\[\#C72030\],
+button .text-\[\#c72030\] {
+  color: var(--color-primary) !important;
+}
+
+/* Eye/View icon in last action column */
+button[title*="View"] svg,
+button[title*="view"] svg,
+svg.lucide-eye {
+  color: var(--color-text) !important;
+}
+
+button[title*="View"]:hover svg,
+button[title*="view"]:hover svg {
+  color: var(--color-primary) !important;
+}
+
+/* ===========================================
+   ENHANCED TABLE — Toolbar action buttons: Filter · Columns · Export
+   =========================================== */
+
+/* Filter button: border-[#C72030] text-[#C72030] (targeted by class AND title) */
+button.border-\[\#C72030\],
+button[class*="border-[#C72030]"],
+button.text-\[\#C72030\],
+button[class*="text-[#C72030]"],
+button[title="Filter"] {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+/* Filter hover */
+button[class*="hover:bg-[#C72030]/10"]:hover,
+button[title="Filter"]:hover {
+  background-color: rgba(218, 119, 86, 0.1) !important;
+}
+
+/* Columns visibility & Export / Download buttons — uniform brand styling */
+button[title="Columns"],
+button[title="Export"],
+button[title="Exporting..."] {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+button[title="Columns"]:hover,
+button[title="Export"]:hover {
+  background-color: rgba(218, 119, 86, 0.1) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+/* Icons inside these toolbar buttons inherit the brand color */
+button[title="Filter"] svg,
+button[title="Columns"] svg,
+button[title="Export"] svg {
+  color: var(--color-primary) !important;
+  stroke: var(--color-primary) !important;
+}
+
+/* Add-row cancel X button: text-red-600 hover:text-red-700
+   (non-destructive context — override to neutral/primary) */
+button.text-red-600:not([aria-label*="delete"]):not([aria-label*="Delete"]):not(
+    [aria-label*="remove"]
+  ),
+button[class*="text-red-600"]:not([aria-label*="delete"]):not(
+    [aria-label*="remove"]
+  ) {
+  color: var(--color-text-light, #666) !important;
+}
+button.hover\:text-red-700:not([aria-label*="delete"]):not(
+    [aria-label*="remove"]
+  ):hover,
+button[class*="hover:text-red-700"]:not([aria-label*="delete"]):not(
+    [aria-label*="remove"]
+  ):hover {
+  color: var(--color-text, #333) !important;
+}
+
+/* ColumnVisibilityMenu checkmark icon: text-red-500 → primary */
+[class*="data-[state=checked]"]:not([aria-label*="delete"])
+  [class*="text-red-500"],
+[data-state="checked"] svg.text-red-500,
+[data-state="checked"] [class*="text-red-500"],
+.\\[\\&\\>\\*\\]\\:data-\\[state\\="checked\\"]\\:text-red-500[data-state="checked"]
+  > * {
+  color: var(--color-primary) !important;
+}
+
+/* IssueFilterModal Apply (bg-[#C62828]) and Reset (border-[#C62828]) buttons
+   — attribute substring selectors are the most reliable for arbitrary values */
+[class*="bg-[#C62828]"],
+[class*="bg-[#c62828]"],
+[class*="bg-[#C72030]"],
+[class*="bg-[#c72030]"] {
+  background-color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #ffffff !important;
+}
+
+[class*="hover:bg-[#b71c1c]"]:hover,
+[class*="hover:bg-[#B71C1C]"]:hover {
+  background-color: var(--color-primary-hover) !important;
+}
+
+[class*="border-[#C62828]"],
+[class*="border-[#c62828]"] {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+[class*="text-[#C62828]"],
+[class*="text-[#c62828]"] {
+  color: var(--color-primary) !important;
+}
+
+/* IssueFilterModal calendar/search icon: text-red-400 → muted brand */
+.absolute.text-red-400,
+[class*="text-red-400"] {
+  color: var(--color-primary-light, rgba(218, 119, 86, 0.6)) !important;
+}
+
+/* Dashboard survey chart: hardcoded #C72030 array colour handled by JS patcher,
+   but also cover the recharts cell fill via SVG fill attribute */
+.recharts-cell[fill="#C72030"],
+.recharts-cell[fill="#c72030"],
+.recharts-cell[fill="#C62828"],
+.recharts-cell[fill="#c62828"] {
+  fill: var(--color-primary) !important;
+}
+
+/* Closed status badge (bg-red-500) — context: issues/status chips */
+/* Only override non-destructive status badges — "Closed" uses red-500 */
+.status-badge.bg-red-500,
+[class*="StatusBadge"].bg-red-500,
+[class*="status-badge"].bg-red-500 {
+  background-color: #9e9e9e !important; /* neutral grey for "Closed" */
+}
+
+/* ============================================================
+   LOGIN PAGE — brand color overrides (#C72030 → #DA7756)
+   ============================================================ */
+
+/* Step indicator circles */
+.bg-\[\#C72030\] {
+  background-color: #da7756 !important;
+}
+
+/* Hover border on org cards */
+.hover\:border-\[\#C72030\]:hover {
+  border-color: #da7756 !important;
+}
+
+/* Org card icon background tint */
+.bg-\[\#C72030\].bg-opacity-10 {
+  background-color: rgba(218, 119, 86, 0.1) !important;
+}
+
+/* Org card Building2 icon + any text-[#C72030] not already overridden */
+.text-\[\#C72030\] {
+  color: #da7756 !important;
+}
+
+/* Inline style: border-color / color on email input focus */
+[style*='borderColor: "#C72030"'],
+[style*="borderColor:#C72030"],
+[style*='color: "#C72030"'],
+[style*="color:#C72030"] {
+  border-color: #da7756 !important;
+  color: #da7756 !important;
+}
+
+/* Primary action buttons on login page */
+button.bg-\[\#C72030\],
+button[class*="bg-[#C72030]"] {
+  background-color: #da7756 !important;
+}
+button.hover\:bg-\[\#a81c29\]:hover,
+button[class*="hover:bg-[#a81c29]"]:hover {
+  background-color: #c45f40 !important;
+}
+button.hover\:text-\[\#a81c29\]:hover,
+button[class*="hover:text-[#a81c29]"]:hover {
+  color: #c45f40 !important;
+}
+
+/* ============================================================
+   BUSINESS COMPASS DAILY REPORT — Tab bar redesign
+   ============================================================ */
+
+/* Replace filled brand-colored pill with clean white/border style */
+.business-compass-tabs [role="tablist"],
+[data-daily-report-tabs] [role="tablist"] {
+  background-color: #f8f9fa !important;
+  border: 1.5px solid #e5e7eb !important;
+  box-shadow: none !important;
+}
+
+[data-daily-report-tabs] [role="tab"][data-state="active"] {
+  background-color: #da7756 !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(218, 119, 86, 0.25) !important;
+}
+
+[data-daily-report-tabs] [role="tab"][data-state="inactive"] {
+  background-color: transparent !important;
+  color: #6b7280 !important;
+}
+
+/* ============================================================
+   GLOBAL: ALL #C72030 / #C62828 → #DA7756 via CSS attribute selectors
+   Covers: inline style="color:#C72030", style="background-color:#C72030" etc.
+   ============================================================ */
+
+/* Inline style: color */
+[style*="color: #C72030"],
+[style*="color:#C72030"],
+[style*="color: '#C72030'"],
+[style*='color: "#C72030"'],
+[style*="color: #C62828"],
+[style*="color:#C62828"] {
+  color: #da7756 !important;
+}
+
+/* Inline style: background-color */
+[style*="background-color: #C72030"],
+[style*="background-color:#C72030"],
+[style*="background-color: #C62828"],
+[style*="background-color:#C62828"],
+[style*="backgroundColor: '#C72030'"],
+[style*='backgroundColor: "#C72030"'] {
+  background-color: #da7756 !important;
+}
+
+/* Inline style: border-color */
+[style*="border-color: #C72030"],
+[style*="border-color:#C72030"],
+[style*="borderColor: '#C72030'"],
+[style*='borderColor: "#C72030"'],
+[style*="borderColor:#C72030"] {
+  border-color: #da7756 !important;
+}
+
+/* ============================================================
+   UI COMPONENTS — checkbox, radio, calendar, pagination, heading
+   ============================================================ */
+
+/* Checkbox checked state */
+[data-state="checked"].data-\[state\=checked\]\:bg-\[\#C72030\],
+[class*="checkbox"][data-state="checked"],
+input[type="checkbox"]:checked,
+.peer[data-state="checked"] {
+  background-color: #da7756 !important;
+  border-color: #da7756 !important;
+}
+
+/* Radio group checked */
+[data-state="checked"].data-\[state\=checked\]\:border-\[\#C72030\],
+.border-\[\#C72030\],
+[class*="border-[#C72030]"] {
+  border-color: #da7756 !important;
+}
+
+/* accentColor inline style for native checkboxes */
+[style*="accentColor: '#C72030'"],
+[style*='accentColor: "#C72030"'],
+[style*="accentColor:#C72030"],
+[style*="accent-color: #C72030"],
+[style*="accent-color:#C72030"] {
+  accent-color: #da7756 !important;
+}
+
+/* Calendar selected day */
+.rdp-day_selected,
+[class*="day_selected"],
+.bg-\[\#C72030\].text-white.rounded-full,
+[class*="bg-[#C72030]"].rounded-full {
+  background-color: #da7756 !important;
+  color: #ffffff !important;
+}
+
+/* Calendar today border */
+.border-\[\#C72030\].rounded-full,
+[class*="border-[#C72030]"].rounded-full {
+  border-color: #da7756 !important;
+  color: #da7756 !important;
+}
+
+/* Pagination active page */
+.bg-\[\#C72030\].text-white.font-semibold,
+[class*="bg-[#C72030]"].text-white {
+  background-color: #da7756 !important;
+}
+
+/* heading.tsx primary variant */
+.text-\[\#C72030\]:not([data-semantic-colors] *) {
+  color: #da7756 !important;
+}
+
+/* ============================================================
+   MAINTENANCE TICKET ADD PAGE — buttons, icons, inputs
+   ============================================================ */
+
+/* Submit button bg-red-600 */
+button.bg-red-600,
+button[class*="bg-red-600"] {
+  background-color: #da7756 !important;
+  border-color: #da7756 !important;
+}
+button.bg-red-600:hover,
+button[class*="bg-red-600"]:hover,
+button.hover\:bg-red-700:hover,
+button[class*="hover:bg-red-700"]:hover {
+  background-color: #c45f40 !important;
+}
+
+/* SVG fill="C72030" — handled by JS patcher; add CSS fallback for path elements */
+path[fill="#C72030"],
+path[fill="#C62828"],
+circle[fill="#C72030"],
+rect[fill="#C72030"] {
+  fill: #da7756 !important;
+}
+
+/* SVG color attribute (Lucide icons passed color prop) */
+svg[color="#C72030"] *,
+[color="#C72030"] {
+  color: #da7756 !important;
+}
+
+/* ============================================================
+   EMPLOYEE HEADER / TOP NAVIGATION
+   ============================================================ */
+
+/* Active state: bg-white text-[#C72030] → brand */
+.bg-white.text-\[\#C72030\] {
+  color: #da7756 !important;
+}
+
+/* Notification dot bg-[#C72030] */
+.bg-\[\#C72030\].rounded-full,
+[class*="bg-[#C72030]"].rounded-full {
+  background-color: #da7756 !important;
+}
+
+/* Avatar circle bg-[#C72030] */
+.w-8.h-8.bg-\[\#C72030\].rounded-full,
+.w-10.h-10.bg-\[\#C72030\].rounded-full,
+[class*="bg-[#C72030]"][class*="rounded-full"] {
+  background-color: #da7756 !important;
+}
+
+/* Hover bg-[#C72030] on list items */
+.hover\:bg-\[\#C72030\]:hover,
+[class*="hover:bg-[#C72030]"]:hover {
+  background-color: #da7756 !important;
+  border-color: #da7756 !important;
+}
+
+/* hover:border-[#C72030] */
+.hover\:border-\[\#C72030\]:hover,
+[class*="hover:border-[#C72030]"]:hover {
+  border-color: #da7756 !important;
+}
+
+/* hover:text-[#A01020] */
+.hover\:text-\[\#A01020\]:hover,
+[class*="hover:text-[#A01020]"]:hover {
+  color: #c45f40 !important;
+}
+
+/* ============================================================
+   DASHBOARD ANALYTICS — Recharts bar/pie fill="#C72030"
+   ============================================================ */
+
+/* Recharts bar fill override (also covered by JS patcher) */
+.recharts-bar-rectangle path[fill="#C72030"],
+.recharts-bar-rectangle path[fill="#C62828"],
+.recharts-rectangle[fill="#C72030"],
+.recharts-rectangle[fill="#C62828"] {
+  fill: #da7756 !important;
+}
+
+/* Recharts legend icon */
+.recharts-legend-icon[fill="#C72030"],
+svg .recharts-symbols [fill="#C72030"] {
+  fill: #da7756 !important;
+}
+
+/* ===========================================
+   NUCLEAR OVERRIDE — EnhancedTable toolbar buttons
+   Placed at END of file for highest source-order priority.
+   Ensures filter / columns / export are always outline-style
+   (white bg, brand border+text) regardless of any earlier rules.
+   =========================================== */
+
+/* Also cover missing uppercase BF213E border from button.tsx outline variant */
+[class*="border-[#BF213E]"],
+[class*="!border-[#BF213E]"] {
+  border-color: var(--color-primary) !important;
+}
+
+/* Force toolbar buttons to white background + brand border/text */
+button[title="Filter"],
+button[title="Columns"],
+button[title="Export"] {
+  background-color: #ffffff !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+button[title="Filter"]:hover,
+button[title="Columns"]:hover,
+button[title="Export"]:hover {
+  background-color: rgba(218, 119, 86, 0.08) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+button[title="Filter"] svg,
+button[title="Filter"] .lucide,
+button[title="Columns"] svg,
+button[title="Columns"] .lucide,
+button[title="Export"] svg,
+button[title="Export"] .lucide {
+  color: var(--color-primary) !important;
+  stroke: var(--color-primary) !important;
+}
+
+/* ===========================================
+   DESIGN GUIDE — Additional old analytics colors → new 6-color palette
+   April 2026: covers every "use X instead of Y" entry from the design spec
+   =========================================== */
+
+/* --- Data & Analytics old colors --- */
+
+/* #907250 → Color 1 (#6B9BCC) */
+[fill="#907250"],
+[fill="#907250" i],
+path[fill="#907250"],
+rect[fill="#907250"],
+circle[fill="#907250"],
+.recharts-bar-rectangle[fill="#907250"],
+.recharts-cell[fill="#907250"] {
+  fill: var(--analytics-color-1) !important;
+}
+[style*="background-color:#907250"],
+[style*="background-color: #907250"],
+[style*="color:#907250"],
+[style*="color: #907250"] {
+  background-color: var(--analytics-color-1) !important;
+  color: var(--analytics-color-1) !important;
+}
+
+/* #BBB09E, #C6BA9A → Color 2 (#D3D1C6) */
+[fill="#BBB09E"],
+[fill="#bbb09e"],
+path[fill="#BBB09E"],
+rect[fill="#BBB09E"],
+circle[fill="#BBB09E"],
+.recharts-bar-rectangle[fill="#BBB09E"],
+.recharts-cell[fill="#BBB09E"],
+[fill="#C6BA9A"],
+[fill="#c6ba9a"],
+path[fill="#C6BA9A"],
+rect[fill="#C6BA9A"],
+circle[fill="#C6BA9A"],
+.recharts-bar-rectangle[fill="#C6BA9A"],
+.recharts-cell[fill="#C6BA9A"],
+[fill="#C4B89D"],
+[fill="#c4b89d"],
+path[fill="#C4B89D"],
+rect[fill="#C4B89D"],
+circle[fill="#C4B89D"],
+.recharts-bar-rectangle[fill="#C4B89D"],
+.recharts-cell[fill="#C4B89D"],
+[fill="#C4AE9D"],
+[fill="#c4ae9d"],
+path[fill="#C4AE9D"],
+rect[fill="#C4AE9D"],
+circle[fill="#C4AE9D"],
+.recharts-bar-rectangle[fill="#C4AE9D"],
+.recharts-cell[fill="#C4AE9D"],
+[fill="#C4B8A8"],
+[fill="#c4b8a8"],
+path[fill="#C4B8A8"],
+rect[fill="#C4B8A8"],
+[fill="#C5AE94"],
+[fill="#c5ae94"],
+path[fill="#C5AE94"],
+rect[fill="#C5AE94"],
+[fill="#DAD8CF"],
+[fill="#dad8cf"],
+path[fill="#DAD8CF"],
+rect[fill="#DAD8CF"],
+[fill="#DBC2A9"],
+[fill="#dbc2a9"],
+path[fill="#DBC2A9"],
+rect[fill="#DBC2A9"],
+circle[fill="#DBC2A9"],
+[fill="#C6B692"],
+[fill="#c6b692"],
+path[fill="#C6B692"],
+rect[fill="#C6B692"],
+circle[fill="#C6B692"],
+.recharts-bar-rectangle[fill="#C6B692"],
+.recharts-cell[fill="#C6B692"] {
+  fill: var(--analytics-color-2) !important;
+}
+/* Exact direct-class overrides only — hover:bg variants must NOT be matched */
+.bg-\[\#C4B89D\],
+.bg-\[\#c4b89d\],
+.bg-\[\#C6B692\],
+.bg-\[\#c6b692\],
+.bg-\[\#DBC2A9\],
+.bg-\[\#dbc2a9\] {
+  background-color: var(--analytics-color-2) !important;
+}
+
+/* #DCD6C9, #DAD6C9, #E5E0D3 → Color 3 (#F4C37E) */
+[fill="#DCD6C9"],
+[fill="#dcd6c9"],
+path[fill="#DCD6C9"],
+rect[fill="#DCD6C9"],
+circle[fill="#DCD6C9"],
+.recharts-bar-rectangle[fill="#DCD6C9"],
+.recharts-cell[fill="#DCD6C9"],
+[fill="#DAD6C9"],
+[fill="#dad6c9"],
+path[fill="#DAD6C9"],
+rect[fill="#DAD6C9"],
+circle[fill="#DAD6C9"],
+.recharts-bar-rectangle[fill="#DAD6C9"],
+.recharts-cell[fill="#DAD6C9"],
+[fill="#E5E0D3"],
+[fill="#e5e0d3"],
+path[fill="#E5E0D3"],
+rect[fill="#E5E0D3"],
+circle[fill="#E5E0D3"],
+.recharts-bar-rectangle[fill="#E5E0D3"],
+.recharts-cell[fill="#E5E0D3"] {
+  fill: var(--analytics-color-3) !important;
+}
+
+/* #A2A8AA, #D4DBDB, #D8DCDD, #B8AFA0 → Color 4 (#E9704D) */
+[fill="#A2A8AA"],
+[fill="#a2a8aa"],
+path[fill="#A2A8AA"],
+rect[fill="#A2A8AA"],
+circle[fill="#A2A8AA"],
+.recharts-bar-rectangle[fill="#A2A8AA"],
+.recharts-cell[fill="#A2A8AA"],
+[fill="#D4DBDB"],
+[fill="#d4dbdb"],
+path[fill="#D4DBDB"],
+rect[fill="#D4DBDB"],
+circle[fill="#D4DBDB"],
+.recharts-bar-rectangle[fill="#D4DBDB"],
+.recharts-cell[fill="#D4DBDB"],
+[fill="#D8DCDD"],
+[fill="#d8dcdd"],
+path[fill="#D8DCDD"],
+rect[fill="#D8DCDD"],
+circle[fill="#D8DCDD"],
+.recharts-bar-rectangle[fill="#D8DCDD"],
+.recharts-cell[fill="#D8DCDD"] {
+  fill: var(--analytics-color-4) !important;
+}
+
+/* #CAAD9B, #A89078 → Color 5 (#F28C8F) */
+[fill="#CAAD9B"],
+[fill="#caad9b"],
+path[fill="#CAAD9B"],
+rect[fill="#CAAD9B"],
+circle[fill="#CAAD9B"],
+.recharts-bar-rectangle[fill="#CAAD9B"],
+.recharts-cell[fill="#CAAD9B"],
+[fill="#A89078"],
+[fill="#a89078"],
+path[fill="#A89078"],
+rect[fill="#A89078"],
+circle[fill="#A89078"],
+.recharts-bar-rectangle[fill="#A89078"],
+.recharts-cell[fill="#A89078"],
+[fill="#AF8260"],
+[fill="#af8260"],
+path[fill="#AF8260"],
+rect[fill="#AF8260"],
+circle[fill="#AF8260"],
+.recharts-bar-rectangle[fill="#AF8260"],
+.recharts-cell[fill="#AF8260"] {
+  fill: var(--analytics-color-5) !important;
+}
+
+/* --- Card & Border old colors (background/border overrides) --- */
+
+/* #FBF6EE → #F6F4EE (brand bg) */
+[style*="background-color:#FBF6EE"],
+[style*="background-color: #FBF6EE"],
+[style*="background:#FBF6EE"],
+[style*="background: #FBF6EE"] {
+  background-color: #f6f4ee !important;
+}
+.bg-\[\#FBF6EE\] {
+  background-color: #f6f4ee !important;
+}
+
+/* #E6DDCD → #F6F4EE (brand bg) */
+[style*="background-color:#E6DDCD"],
+[style*="background-color: #E6DDCD"],
+[style*="background:#E6DDCD"],
+[style*="background: #E6DDCD"] {
+  background-color: #f6f4ee !important;
+}
+.bg-\[\#E6DDCD\] {
+  background-color: #f6f4ee !important;
+}
+.border-\[\#E6DDCD\],
+[class*="border-[#E6DDCD]"] {
+  border-color: var(--analytics-color-1) !important;
+}
+[fill="#E6DDCD"],
+[fill="#e6ddcd"],
+path[fill="#E6DDCD"],
+rect[fill="#E6DDCD"] {
+  fill: var(--analytics-color-1) !important;
+}
+
+/* #D4FDE7 → #DFEEEB (mint green bg) */
+[style*="background-color:#D4FDE7"],
+[style*="background-color: #D4FDE7"],
+[style*="background:#D4FDE7"] {
+  background-color: #dfeeeb !important;
+}
+.bg-\[\#D4FDE7\] {
+  background-color: #dfeeeb !important;
+}
+
+/* #FFF9BC → #F0EFFD (lavender bg) */
+[style*="background-color:#FFF9BC"],
+[style*="background-color: #FFF9BC"],
+[style*="background:#FFF9BC"] {
+  background-color: #f0effd !important;
+}
+.bg-\[\#FFF9BC\] {
+  background-color: #f0effd !important;
+}
+
+/* #F0E4D7 → #D4DBDB (cool grey) */
+[style*="background-color:#F0E4D7"],
+[style*="background-color: #F0E4D7"],
+[style*="background:#F0E4D7"] {
+  background-color: #d4dbdb !important;
+}
+.bg-\[\#F0E4D7\] {
+  background-color: #d4dbdb !important;
+}
+
+/* ===========================================
+   SIDEBAR PROTECTION — never override hover/active bg colors
+   The Sidebar uses hover:bg-[#DBC2A9] and bg-[#f0e8dc] for active state.
+   These must NOT be touched by the analytics palette overrides above.
+   =========================================== */
+.hover\:bg-\[\#DBC2A9\]:hover {
+  background-color: rgba(219, 194, 169, 0.6) !important;
+}
+.bg-\[\#f0e8dc\] {
+  background-color: #f0e8dc !important;
+}

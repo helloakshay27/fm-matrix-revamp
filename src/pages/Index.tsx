@@ -56,7 +56,9 @@ const Index = () => {
       // Skip Employee Sidebar and Employee Projects Sidebar modules
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       ) {
         continue;
       }

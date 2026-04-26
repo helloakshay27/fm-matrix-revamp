@@ -48,6 +48,12 @@ const columns: ColumnConfig[] = [
         label: 'Status',
         sortable: true,
         draggable: true
+    },
+    {
+        key: 'payment_status',
+        label: 'Payment Status',
+        sortable: true,
+        draggable: true
     }
 ];
 
@@ -117,6 +123,22 @@ const EventApprovedList = () => {
 
         if (columnKey === 'status') {
             return item.status.charAt(0).toUpperCase() + item.status.slice(1);
+        }
+
+        if (columnKey === 'payment_status') {
+            const status = item.payment_status?.toLowerCase();
+
+            const statusStyles = {
+                success: "bg-green-100 text-green-700",
+                pending: "bg-yellow-100 text-yellow-700",
+                failed: "bg-red-100 text-red-700",
+            };
+
+            return (
+                <span className={`px-2 py-1 rounded text-sm font-medium ${statusStyles[status] || "bg-gray-100 text-gray-700"}`}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                </span>
+            );
         }
 
         return item[columnKey] || "-";
