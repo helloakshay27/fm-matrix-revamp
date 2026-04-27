@@ -2950,8 +2950,8 @@ export const EditIncidentDetailsPage = () => {
       // Show success message
       toast.success('Incident updated successfully!');
 
-      // Navigate back to the details page
-      navigate(`${basePath}/incident/${id}`);
+      // Navigate to the new details page
+      navigate(`${basePath}/incident/new-details/${id}`);
     } catch (err) {
       setError('Failed to update incident details');
       console.error('Error updating incident:', err);
