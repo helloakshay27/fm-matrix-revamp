@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, Clock, Settings, CheckCircle, AlertTriangle, XCircle, Trash2, Eye, ClipboardList } from 'lucide-react';
 import {
@@ -23,6 +23,15 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from '@/components/ui/pagination';
+
+// Debounce utility
+const debounce = (func: (...args: any[]) => void, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
 
 interface AuditRecord {
   id: number;
@@ -107,9 +116,11 @@ export const AssetAuditDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterParams>({});
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
 
   // Fetch data from API
-  const fetchAudits = async (page: number = 1, filters: FilterParams = {}, statusFilter: string = '') => {
+  const fetchAudits = async (page: number = 1, filters: FilterParams = {}, statusFilter: string = '', search: string = '') => {
     try {
       setLoading(true);
       const baseUrl = localStorage.getItem('baseUrl') || '';
@@ -118,6 +129,11 @@ export const AssetAuditDashboard = () => {
       // Build query parameters
       const queryParams = new URLSearchParams();
       queryParams.append('page', String(page));
+
+      // Add search parameter using q[name_cont] for audit name search
+      if (search && search.trim()) {
+        queryParams.append('q[name_cont]', search.trim());
+      }
 
       // Add status filter if provided
       if (statusFilter) {
@@ -200,8 +216,8 @@ export const AssetAuditDashboard = () => {
   };
 
   useEffect(() => {
-    fetchAudits(currentPage, appliedFilters, selectedStatusFilter);
-  }, [currentPage, appliedFilters, selectedStatusFilter]);
+    fetchAudits(currentPage, appliedFilters, selectedStatusFilter, debouncedSearch);
+  }, [currentPage, appliedFilters, selectedStatusFilter, searchQuery, debouncedSearch]);
 
   const handleStatusUpdate = async (newStatus: string, auditId: number) => {
     // Store previous status for rollback
@@ -278,6 +294,32 @@ export const AssetAuditDashboard = () => {
     setCurrentPage(1); // Reset to first page when applying filters
   };
 
+  // const debouncedFetchData = useCallback(
+  //   debounce((query: string) => {
+  //     fetchAudits(1, appliedFilters, selectedStatusFilter, query);
+  //   }, 500),
+  //   [appliedFilters, selectedStatusFilter]
+  // );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // const handleSearchChange = (query: string) => {
+  //   setSearchQuery(query);
+  //   setPagination((prev) => ({ ...prev, current_page: 1 })); // Reset to first page on search
+  //   setCurrentPage(1);
+  //   debouncedFetchData(query);
+  // };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
   const handleCardClick = (status: string) => {
     // If clicking the same status, clear the filter
     if (selectedStatusFilter === status) {
@@ -644,7 +686,7 @@ export const AssetAuditDashboard = () => {
     try {
       setPagination((prev) => ({ ...prev, current_page: page }));
       setCurrentPage(page);
-      await fetchAudits(page, appliedFilters, selectedStatusFilter);
+      await fetchAudits(page, appliedFilters, selectedStatusFilter, searchQuery);
     } catch (error) {
       console.error('Error changing page:', error);
       toast.error('Failed to load page data. Please try again.');
@@ -891,8 +933,7 @@ export const AssetAuditDashboard = () => {
               columns={columns}
               renderCell={renderCell}
               storageKey="asset-audit-dashboard-table"
-              emptyMessage="No audit records found"
-              searchPlaceholder="Search audits..."
+              emptyMessage={searchQuery ? "No audits found matching your search" : "No audit records found"}
               enableExport={true}
               exportFileName="audit-records"
               onExport={handleExport}
@@ -900,6 +941,10 @@ export const AssetAuditDashboard = () => {
               showBulkActions={true}
               pagination={false}
               onFilterClick={handleFilterClick}
+              searchTerm={searchQuery}
+              onSearchChange={handleSearchChange}
+              enableSearch={true}
+              searchPlaceholder="Search by audit name..."
               leftActions={
                 <Button
                   onClick={handleAddClick}
