@@ -325,35 +325,50 @@ body {
     --card: 0 0% 100%;
     --card-foreground: 0 0% 17%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 354 73% 45%;
-    /* #C72030 */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 0, 0%, 10%, 0.5;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --popover-foreground: 0 0% 17%;
+    --primary: 17 64% 60%;
+    /* #DA7756 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 85 20% 46%;
+    /* #798C5E */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 43 17% 83%;
+    /* #D3D1C7 */
+    --muted-foreground: 0 0% 53%;
+    --accent: 17 64% 60% / 0.08;
+    --accent-foreground: 0 0% 17%;
+    --destructive: 0 58% 72%;
+    /* #E7848E */
+    --destructive-foreground: 0 0% 100%;
+    --border: 40 20% 73%;
+    /* #C4B89D */
+    --input: 180 7% 86%;
+    /* #D5DBDB */
+    --ring: 17 64% 60%;
+    /* #DA7756 */
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Chart colors - Brand aligned */
+    --chart-1: 17 64% 60%;
+    /* Primary - DA7756 */
+    --chart-2: 85 20% 46%;
+    /* Secondary Green - 798C5E */
+    --chart-3: 248 80% 88%;
+    /* Purple - CECBF6 */
+    --chart-4: 160 36% 70%;
+    /* Teal - 9EC8BA */
+    --chart-5: 38 77% 73%;
+    /* Warning - EDC488 */
+
+    /* Sidebar - Brand aligned */
+    --sidebar-background: 40 20% 73%;
+    /* #C4B89D */
+    --sidebar-foreground: 0 0% 17%;
+    --sidebar-primary: 17 64% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 17 64% 60% / 0.08;
+    --sidebar-accent-foreground: 0 0% 17%;
+    --sidebar-border: 40 20% 73%;
+    --sidebar-ring: 17 64% 60%;
 
     /* Analytics theme colors - Brand aligned */
     --analytics-primary: 17 64% 60%;
@@ -1542,3 +1557,7 @@ button.text-blue-600 {
 .quill-content .ql-ui {
   display: none;
 }
+
+
+
+
