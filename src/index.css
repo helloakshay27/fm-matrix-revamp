@@ -1537,6 +1537,7 @@ button.text-blue-600 {
   list-style-type: decimal;
 }
 
+
 /* Hide Quill UI helper span */
 .quill-content .ql-ui {
   display: none;
