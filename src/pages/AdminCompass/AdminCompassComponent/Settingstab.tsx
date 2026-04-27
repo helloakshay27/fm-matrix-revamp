@@ -42,7 +42,7 @@ const MeetingConfigModal = ({
   const [form, setForm] = useState({
     name: existingConfig?.name ?? "",
     meeting_time:
-      existingConfig?.meetingTime ?? existingConfig?.meeting_time ?? "",
+      existingConfig?.meetingTime ?? existingConfig?.meeting_time ?? "00:00", // 🟢 Updated to "00:00"
     meeting_days: existingConfig?.meetingDays ??
       existingConfig?.meeting_days ?? ["Mon", "Tue", "Wed", "Thu", "Fri"],
     meeting_head_id: existingConfig?.meetingHead?.id
@@ -423,7 +423,7 @@ const DeleteConfirmModal = ({ configName, onConfirm, onCancel, isDeleting }) =>
 // ─────────────────────────────────────────────────────────
 
 /** Maps our 2-char display keys to JS Date.getDay() (0=Sun..6=Sat) */
-const DAY_TO_JS_IDX: Record<string, number> = {
+const DAY_TO_JS_IDX = {
   Su: 0,
   Mo: 1,
   Tu: 2,
@@ -434,8 +434,8 @@ const DAY_TO_JS_IDX: Record<string, number> = {
 };
 
 /** Normalise any API day format to 2-char display key */
-const normalizeDayKey = (d: string): string => {
-  const map: Record<string, string> = {
+const normalizeDayKey = (d) => {
+  const map = {
     Sun: "Su",
     Mon: "Mo",
     Tue: "Tu",
@@ -461,14 +461,14 @@ const normalizeDayKey = (d: string): string => {
   return map[d] ?? d;
 };
 
-const WEEK_DISPLAY_KEYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
+const WEEK_DISPLAY_KEYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 /** Returns dot colour + whether the column is today */
 const getDayStatus = (
-  displayKey: string,
-  activeDayKeys: Set<string>,
-  todayJsIdx: number
-): { color: string; ringColor: string; isToday: boolean } => {
+  displayKey,
+  activeDayKeys,
+  todayJsIdx
+) => {
   const dayIdx = DAY_TO_JS_IDX[displayKey];
   const isScheduled = activeDayKeys.has(displayKey);
   const isToday = dayIdx === todayJsIdx;
@@ -493,7 +493,7 @@ const getDayStatus = (
 //  getNextMeeting — calculates next upcoming meeting slot
 //  across ALL configs dynamically
 // ─────────────────────────────────────────────────────────
-const getNextMeeting = (configs: any[]): string | null => {
+const getNextMeeting = (configs) => {
   if (!configs.length) return null;
 
   const today = new Date();
@@ -502,20 +502,14 @@ const getNextMeeting = (configs: any[]): string | null => {
 
   const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-  let earliest: {
-    daysAhead: number;
-    meetingMinutes: number;
-    label: string;
-    time: string;
-    name: string;
-  } | null = null;
+  let earliest = null;
 
   configs.forEach((c) => {
-    const days: string[] = (c.meetingDays || c.meeting_days || []).map(
+    const days = (c.meetingDays || c.meeting_days || []).map(
       normalizeDayKey
     );
 
-    const timeStr: string = c.meetingTime || c.meeting_time || "";
+    const timeStr = c.meetingTime || c.meeting_time || "";
     if (!timeStr) return;
 
     const [h, m] = timeStr.split(":").map(Number);
@@ -553,7 +547,7 @@ const getNextMeeting = (configs: any[]): string | null => {
   if (!earliest) return null;
 
   // Format time to 12-hr for readability e.g. "09:00" → "9:00 AM"
-  const e = earliest as { label: string; time: string; meetingMinutes: number; name: string };
+  const e = earliest;
   const totalMin = e.meetingMinutes;
   const hh = Math.floor(totalMin / 60);
   const mm = totalMin % 60;
@@ -688,7 +682,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
 
           {/* Day pills */}
           <div className="flex gap-1.5 flex-wrap">
-            {(["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const).map(
+            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map(
               (day) => {
                 const isActive = activeDayKeys.has(day);
                 const isToday = DAY_TO_JS_IDX[day] === todayJsIdx;

@@ -171,17 +171,29 @@ const compileMeetingNotes = (historyData: any): string => {
 
         const rawSource = isPending && hasDraft ? { ...draftRaw } : rd;
 
+        const cleanName = (report.name || "").trim();
+
         let accRaw = [];
         if (Array.isArray(rawSource.accomplishments)) accRaw = rawSource.accomplishments;
         else if (Array.isArray(rawSource.accomplishments?.items)) accRaw = rawSource.accomplishments.items;
+        accRaw = accRaw.filter((item: any) => !item.member || String(item.member).trim() === cleanName);
 
         let tpRaw = [];
         if (Array.isArray(rawSource.tomorrow_plan)) tpRaw = rawSource.tomorrow_plan;
+        tpRaw = tpRaw.filter((item: any) => !item.member || String(item.member).trim() === cleanName);
 
         let tasksRaw = [];
         if (Array.isArray(rawSource.tasks_issues)) tasksRaw = rawSource.tasks_issues;
+        tasksRaw = tasksRaw.filter((item: any) => !item.member || String(item.member).trim() === cleanName);
 
-        const selfRatingVal = rawSource.details?.self_rating ?? rawSource.sections?.self_rating ?? rawSource.self_rating ?? null;
+        const selfRatingVal = rawSource.details?.self_rating 
+          ?? rawSource.sections?.self_rating 
+          ?? rawSource.self_rating 
+          ?? draftRaw.details?.self_rating 
+          ?? draftRaw.sections?.self_rating 
+          ?? draftRaw.self_rating 
+          ?? null;
+
         const isAbsent = rawSource.details?.is_absent ?? rawSource.sections?.is_absent ?? rawSource.is_absent ?? false;
         const kpis = Array.isArray(rawSource.kpis) ? rawSource.kpis : (rawSource.kpis || report.kpis || {});
 

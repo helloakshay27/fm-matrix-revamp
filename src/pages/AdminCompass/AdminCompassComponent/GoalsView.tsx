@@ -12,7 +12,13 @@ const C = {
 };
 
 // ── Base URL + Auth ──
-const BASE_URL = localStorage.getItem("baseUrl") || "";
+const BASE_URL = (() => {
+  const raw = (localStorage.getItem("baseUrl") || "").replace(/\/$/, "");
+  if (!raw) return "";
+  return raw.startsWith("http://") || raw.startsWith("https://")
+    ? raw
+    : `https://${raw}`;
+})();
 
 const getAuthHeaders = (): Record<string, string> => {
   const token = localStorage.getItem("token") || "";
@@ -111,7 +117,7 @@ const formatPeriod = (p: string): string => {
     "This Quarter": "this_quarter",
     "This Year": "this_year",
     "3-5 Years": "three_to_five_years",
-    BHAG: "BHAG",
+    BHAG: "bhag",
   };
   return map[p] ?? p.toLowerCase().replace(/ /g, "_");
 };
@@ -167,21 +173,24 @@ const mapApiGoal = (k: any): Goal => ({
 });
 
 // ── API helpers ──
-const fetchGoalsFromApi = async (page: number = 1, perPage: number = 20): Promise<{ goals: Goal[], totalPages: number }> => {
-  const res = await fetch(`https://${BASE_URL}/goals?page=${page}&per_page=${perPage}`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
+const fetchGoalsFromApi = async (
+  page: number = 1,
+  perPage: number = 20
+): Promise<{ goals: Goal[]; totalPages: number }> => {
+  const res = await fetch(
+    `${BASE_URL}/goals?q[goal_category_eq]=operational&page=${page}&per_page=${perPage}`,
+    { method: "GET", headers: getAuthHeaders() }
+  );
   const raw = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0, 200)}`);
-  
+
   let json: any;
   try {
     json = JSON.parse(raw);
   } catch {
     json = {};
   }
-  
+
   const list: any[] = Array.isArray(json)
     ? json
     : Array.isArray(json.goals)
@@ -194,7 +203,8 @@ const fetchGoalsFromApi = async (page: number = 1, perPage: number = 20): Promis
 
   let totalPages = 1;
   if (json.meta?.total_pages) totalPages = json.meta.total_pages;
-  else if (json.pagination?.total_pages) totalPages = json.pagination.total_pages;
+  else if (json.pagination?.total_pages)
+    totalPages = json.pagination.total_pages;
   else if (json.total_pages) totalPages = json.total_pages;
   else if (json.data?.total_pages) totalPages = json.data.total_pages;
 
@@ -207,8 +217,8 @@ const fetchUsersFromApi = async (): Promise<UserRecord[]> => {
     localStorage.getItem("organization_id") ||
     "";
   const url = orgId
-    ? `https://${BASE_URL}/api/users?organization_id=${orgId}`
-    : `https://${BASE_URL}/api/users`;
+    ? `${BASE_URL}/api/users?organization_id=${orgId}`
+    : `${BASE_URL}/api/users`;
   try {
     const res = await fetch(url, { method: "GET", headers: getAuthHeaders() });
     if (!res.ok) return [];
@@ -222,6 +232,7 @@ const fetchUsersFromApi = async (): Promise<UserRecord[]> => {
 const createGoalInApi = async (form: GoalFormState): Promise<Goal> => {
   const payload = {
     goal: {
+      goal_category: "operational",
       title: form.title.trim(),
       description: form.description.trim() || undefined,
       target_value: Number(form.target),
@@ -234,7 +245,7 @@ const createGoalInApi = async (form: GoalFormState): Promise<Goal> => {
       update_remarks: form.update_remarks.trim() || undefined,
     },
   };
-  const res = await fetch(`https://${BASE_URL}/goals`, {
+  const res = await fetch(`${BASE_URL}/goals`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -258,6 +269,7 @@ const updateGoalInApi = async (
 ): Promise<void> => {
   const payload = {
     goal: {
+      goal_category: "operational",
       title: form.title.trim(),
       description: form.description.trim() || undefined,
       target_value: Number(form.target),
@@ -270,7 +282,7 @@ const updateGoalInApi = async (
       update_remarks: form.update_remarks.trim() || undefined,
     },
   };
-  const res = await fetch(`https://${BASE_URL}/goals/${id}`, {
+  const res = await fetch(`${BASE_URL}/goals/${id}`, {
     method: "PUT",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
@@ -284,7 +296,7 @@ const patchGoalProgressInApi = async (
   id: number,
   current_value: number
 ): Promise<void> => {
-  const res = await fetch(`https://${BASE_URL}/goals/${id}`, {
+  const res = await fetch(`${BASE_URL}/goals/${id}`, {
     method: "PATCH",
     headers: getAuthHeaders(),
     body: JSON.stringify({ goal: { current_value } }),
@@ -299,19 +311,21 @@ const patchGoalStatusInApi = async (
   id: number,
   status: string
 ): Promise<void> => {
-  const res = await fetch(`https://${BASE_URL}/goals/${id}`, {
+  const res = await fetch(`${BASE_URL}/goals/${id}`, {
     method: "PATCH",
     headers: getAuthHeaders(),
     body: JSON.stringify({ goal: { status: formatStatus(status) } }),
   });
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(`PATCH status error ${res.status}: ${t || res.statusText}`);
+    throw new Error(
+      `PATCH status error ${res.status}: ${t || res.statusText}`
+    );
   }
 };
 
 const deleteGoalFromApi = async (id: number): Promise<void> => {
-  const res = await fetch(`https://${BASE_URL}/goals/${id}`, {
+  const res = await fetch(`${BASE_URL}/goals/${id}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
   });
@@ -319,20 +333,6 @@ const deleteGoalFromApi = async (id: number): Promise<void> => {
     const t = await res.text();
     throw new Error(`DELETE error ${res.status}: ${t || res.statusText}`);
   }
-};
-
-// ── Pagination Helper ──
-const getPaginationRange = (current: number, total: number) => {
-  if (total <= 5) {
-    return Array.from({ length: total }, (_, i) => i + 1);
-  }
-  if (current <= 3) {
-    return [1, 2, 3, "...", total];
-  }
-  if (current >= total - 2) {
-    return [1, "...", total - 2, total - 1, total];
-  }
-  return [1, "...", current, "...", total];
 };
 
 // ── Icons ──
@@ -470,12 +470,6 @@ const FileSearchIcon = () => (
       strokeWidth={1.5}
       d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
     />
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.5}
-      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-    />
   </svg>
 );
 const LoaderIcon = () => (
@@ -504,16 +498,34 @@ const LoaderIcon = () => (
     />
   </svg>
 );
-
 const ChevronLeftIcon = () => (
-  <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+  <svg
+    style={{ width: 14, height: 14 }}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2.5}
+      d="M15 19l-7-7 7-7"
+    />
   </svg>
 );
-
 const ChevronRightIcon = () => (
-  <svg style={{ width: 14, height: 14 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+  <svg
+    style={{ width: 14, height: 14 }}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2.5}
+      d="M9 5l7 7-7 7"
+    />
   </svg>
 );
 
@@ -606,49 +618,21 @@ const Styles = () => (
       display: flex; align-items: center; justify-content: center;
       font-size: 10px; font-weight: 700; flex-shrink: 0;
     }
-    
-    /* ── Pagination Buttons ── */
     .gv-pagination {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin-top: 24px;
-      padding: 16px;
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px; margin-top: 24px; padding: 16px;
     }
     .gv-page-item {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 32px;
-      height: 32px;
-      padding: 0 8px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #374151;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      display: flex; align-items: center; justify-content: center;
+      min-width: 32px; height: 32px; padding: 0 8px;
+      border-radius: 6px; font-size: 13px; font-weight: 600;
+      color: #374151; background: transparent; border: none;
+      cursor: pointer; transition: all 0.2s ease;
     }
-    .gv-page-item:hover:not(:disabled):not(.dots) {
-      background: #f0ebe8;
-      color: #1a1a1a;
-    }
-    .gv-page-item.active {
-      background: ${C.primary};
-      color: #fff;
-    }
-    .gv-page-item:disabled {
-      color: #a3a3a3;
-      cursor: not-allowed;
-    }
-    .gv-page-item.dots {
-      cursor: default;
-      background: transparent;
-      color: #737373;
-    }
+    .gv-page-item:hover:not(:disabled):not(.dots) { background: #f0ebe8; color: #1a1a1a; }
+    .gv-page-item.active { background: ${C.primary}; color: #fff; }
+    .gv-page-item:disabled { color: #a3a3a3; cursor: not-allowed; }
+    .gv-page-item.dots { cursor: default; background: transparent; color: #737373; }
   `}</style>
 );
 
@@ -737,7 +721,6 @@ const UserDropdown = ({
         style={{ paddingRight: 36 }}
         autoComplete="off"
       />
-      {/* Chevron */}
       <div
         style={{
           position: "absolute",
@@ -817,9 +800,7 @@ const PERIOD_CONFIG: Record<string, { bg: string; text: string }> = {
   "3-5 Years": { bg: "#f97316", text: "#fff" },
   BHAG: { bg: "#7c3aed", text: "#fff" },
 };
-const OWNER_CONFIG: Record<string, { bg: string; text: string }> = {
-  Unassigned: { bg: "transparent", text: "#a3a3a3" },
-};
+
 const COLUMNS = [
   {
     key: "not_started",
@@ -854,6 +835,7 @@ const COLUMNS = [
     cntText: "#991b1b",
   },
 ];
+
 const PERIODS = [
   "All Periods",
   "This Quarter",
@@ -883,8 +865,10 @@ const getProgress = (g: { current: number; target: number }) => {
   if (!t) return 0;
   return Math.min(100, Math.round((Number(g.current) / t) * 100));
 };
+
 const getPeriodStyle = (p: string) =>
   PERIOD_CONFIG[p] || { bg: "#737373", text: "#fff" };
+
 const getBarColor = (period: string) =>
   period === "This Quarter"
     ? C.primary
@@ -894,7 +878,7 @@ const getBarColor = (period: string) =>
         ? "#f97316"
         : "#7c3aed";
 
-// ── Goal Card ──
+// ── Goal Card (Kanban) ──
 const GoalCard = ({
   goal,
   onEdit,
@@ -1113,11 +1097,9 @@ export const GoalsView = () => {
   const [search, setSearch] = useState("");
   const [filterPeriod, setFilterPeriod] = useState("All Periods");
   const [filterOwner, setFilterOwner] = useState("All Owners");
-  const [activeModal, setActiveModal] = useState<"create" | "edit" | null>(
-    null
-  );
-  
-  // Pagination State
+  const [activeModal, setActiveModal] = useState<"create" | "edit" | null>(null);
+
+  // Pagination (list view only)
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const perPage = 20;
@@ -1128,25 +1110,26 @@ export const GoalsView = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
-  const progressTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>(
-    {}
-  );
+  const progressTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
   const dragId = useRef<number | null>(null);
 
-  const loadGoals = useCallback(async (page: number = 1) => {
-    setIsFetching(true);
-    setFetchError(null);
-    try {
-      const data = await fetchGoalsFromApi(page, perPage);
-      setGoals(data.goals);
-      setTotalPages(data.totalPages);
-      setCurrentPage(page);
-    } catch (err: any) {
-      setFetchError(err.message || "Failed to load goals.");
-    } finally {
-      setIsFetching(false);
-    }
-  }, [perPage]);
+  const loadGoals = useCallback(
+    async (page: number = 1) => {
+      setIsFetching(true);
+      setFetchError(null);
+      try {
+        const data = await fetchGoalsFromApi(page, perPage);
+        setGoals(data.goals);
+        setTotalPages(data.totalPages);
+        setCurrentPage(page);
+      } catch (err: any) {
+        setFetchError(err.message || "Failed to load goals.");
+      } finally {
+        setIsFetching(false);
+      }
+    },
+    [perPage]
+  );
 
   useEffect(() => {
     loadGoals(1);
@@ -1162,7 +1145,7 @@ export const GoalsView = () => {
     setSaveError(null);
   };
 
-  // ── Dynamic owner filter from actual goals ──
+  // ── Owner filter options from actual goals ──
   const ownerNames = Array.from(new Set(goals.map((g) => g.owner)));
   const ownerFilterOptions = ["All Owners", ...ownerNames];
 
@@ -1183,6 +1166,7 @@ export const GoalsView = () => {
     setSaveError(null);
     setActiveModal("create");
   };
+
   const openEdit = (goal: Goal) => {
     setForm({
       title: goal.title,
@@ -1280,6 +1264,7 @@ export const GoalsView = () => {
       setDragOverCol(null);
     },
   };
+
   const handleDragOver = (e: React.DragEvent, colKey: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
@@ -1335,16 +1320,10 @@ export const GoalsView = () => {
     },
   ];
 
-  const getPageNumbers = (current: number, total: number) => {
-    if (total <= 5) {
-      return Array.from({ length: total }, (_, i) => i + 1);
-    }
-    if (current <= 3) {
-      return [1, 2, 3, "...", total];
-    }
-    if (current >= total - 2) {
-      return [1, "...", total - 2, total - 1, total];
-    }
+  const getPageNumbers = (current: number, total: number): (number | string)[] => {
+    if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
+    if (current <= 3) return [1, 2, 3, "...", total];
+    if (current >= total - 2) return [1, "...", total - 2, total - 1, total];
     return [1, "...", current, "...", total];
   };
 
@@ -1381,9 +1360,7 @@ export const GoalsView = () => {
             boxShadow: "0 2px 8px rgba(218,119,86,0.3)",
             flexShrink: 0,
           }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = C.primaryHov)
-          }
+          onMouseEnter={(e) => (e.currentTarget.style.background = C.primaryHov)}
           onMouseLeave={(e) => (e.currentTarget.style.background = C.primary)}
         >
           <PlusIcon /> Add New Goal
@@ -1609,7 +1586,7 @@ export const GoalsView = () => {
           </select>
         </div>
 
-        {/* ── KANBAN ── */}
+        {/* ── KANBAN VIEW (no pagination) ── */}
         {view === "kanban" &&
           (isFetching ? (
             <div
@@ -1694,11 +1671,7 @@ export const GoalsView = () => {
                           }}
                         >
                           <p
-                            style={{
-                              fontSize: 12,
-                              color: "#a3a3a3",
-                              margin: 0,
-                            }}
+                            style={{ fontSize: 12, color: "#a3a3a3", margin: 0 }}
                           >
                             Drop goals here
                           </p>
@@ -1724,7 +1697,7 @@ export const GoalsView = () => {
             </div>
           ))}
 
-        {/* ── LIST VIEW ── */}
+        {/* ── LIST VIEW (with pagination) ── */}
         {view === "list" &&
           (isFetching ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1737,340 +1710,334 @@ export const GoalsView = () => {
               ))}
             </div>
           ) : (
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: 14,
-                border: "1px solid #f0ebe8",
-                overflow: "hidden",
-                boxShadow: "0 1px 4px rgba(218,119,86,0.08)",
-              }}
-            >
-              {filtered.length === 0 ? (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "64px 16px",
-                    textAlign: "center",
-                  }}
-                >
+            <>
+              <div
+                style={{
+                  background: "#fff",
+                  borderRadius: 14,
+                  border: "1px solid #f0ebe8",
+                  overflow: "hidden",
+                  boxShadow: "0 1px 4px rgba(218,119,86,0.08)",
+                }}
+              >
+                {filtered.length === 0 ? (
                   <div
                     style={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: "50%",
-                      background: "#f5f0ee",
                       display: "flex",
+                      flexDirection: "column",
                       alignItems: "center",
                       justifyContent: "center",
-                      marginBottom: 16,
+                      padding: "64px 16px",
+                      textAlign: "center",
                     }}
                   >
-                    <FileSearchIcon />
-                  </div>
-                  <h3
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 700,
-                      color: "#171717",
-                      margin: "0 0 6px",
-                    }}
-                  >
-                    No goals found
-                  </h3>
-                  <p
-                    style={{
-                      fontSize: 13,
-                      color: "#737373",
-                      margin: "0 0 16px",
-                    }}
-                  >
-                    Try adjusting your filters or add a new goal.
-                  </p>
-                  <button
-                    onClick={openCreate}
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: C.primary,
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                    }}
-                  >
-                    Add New Goal +
-                  </button>
-                </div>
-              ) : (
-                <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    fontSize: 13,
-                  }}
-                >
-                  <thead>
-                    <tr
+                    <div
                       style={{
-                        borderBottom: "1px solid #f0ebe8",
-                        background: C.primaryBg,
+                        width: 64,
+                        height: 64,
+                        borderRadius: "50%",
+                        background: "#f5f0ee",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginBottom: 16,
                       }}
                     >
-                      {[
-                        "Goal",
-                        "Period",
-                        "Owner",
-                        "Progress",
-                        "Status",
-                        "",
-                      ].map((h, i) => (
-                        <th
-                          key={i}
-                          style={{
-                            textAlign: "left",
-                            padding: "12px 16px",
-                            fontSize: 11,
-                            fontWeight: 700,
-                            color: "#737373",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.05em",
-                          }}
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filtered.map((goal) => {
-                      const pct = getProgress(goal);
-                      const pStyle = getPeriodStyle(goal.period);
-                      const bar = getBarColor(goal.period);
-                      const listSlidBg = `linear-gradient(to right, ${bar} ${pct}%, #e5e5e5 ${pct}%)`;
-                      return (
-                        <tr
-                          key={goal.id}
-                          style={{
-                            borderBottom: "1px solid #faf7f5",
-                            opacity: deletingId === goal.id ? 0.4 : 1,
-                          }}
-                          onMouseEnter={(e) =>
-                            (e.currentTarget.style.background = C.primaryBg)
-                          }
-                          onMouseLeave={(e) =>
-                            (e.currentTarget.style.background = "transparent")
-                          }
-                        >
-                          <td
-                            style={{
-                              padding: "12px 16px",
-                              fontWeight: 600,
-                              color: "#171717",
-                              maxWidth: 200,
-                            }}
-                          >
-                            <p
+                      <FileSearchIcon />
+                    </div>
+                    <h3
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 700,
+                        color: "#171717",
+                        margin: "0 0 6px",
+                      }}
+                    >
+                      No goals found
+                    </h3>
+                    <p
+                      style={{
+                        fontSize: 13,
+                        color: "#737373",
+                        margin: "0 0 16px",
+                      }}
+                    >
+                      Try adjusting your filters or add a new goal.
+                    </p>
+                    <button
+                      onClick={openCreate}
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: C.primary,
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                      }}
+                    >
+                      Add New Goal +
+                    </button>
+                  </div>
+                ) : (
+                  <table
+                    style={{
+                      width: "100%",
+                      borderCollapse: "collapse",
+                      fontSize: 13,
+                    }}
+                  >
+                    <thead>
+                      <tr
+                        style={{
+                          borderBottom: "1px solid #f0ebe8",
+                          background: C.primaryBg,
+                        }}
+                      >
+                        {["Goal", "Period", "Owner", "Progress", "Status", ""].map(
+                          (h, i) => (
+                            <th
+                              key={i}
                               style={{
-                                margin: 0,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
+                                textAlign: "left",
+                                padding: "12px 16px",
+                                fontSize: 11,
+                                fontWeight: 700,
+                                color: "#737373",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.05em",
+                              }}
+                            >
+                              {h}
+                            </th>
+                          )
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filtered.map((goal) => {
+                        const pct = getProgress(goal);
+                        const pStyle = getPeriodStyle(goal.period);
+                        const bar = getBarColor(goal.period);
+                        const listSlidBg = `linear-gradient(to right, ${bar} ${pct}%, #e5e5e5 ${pct}%)`;
+                        return (
+                          <tr
+                            key={goal.id}
+                            style={{
+                              borderBottom: "1px solid #faf7f5",
+                              opacity: deletingId === goal.id ? 0.4 : 1,
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.background = C.primaryBg)
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.background = "transparent")
+                            }
+                          >
+                            <td
+                              style={{
+                                padding: "12px 16px",
+                                fontWeight: 600,
+                                color: "#171717",
+                                maxWidth: 200,
+                              }}
+                            >
+                              <p
+                                style={{
+                                  margin: 0,
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {goal.title}
+                              </p>
+                            </td>
+                            <td
+                              style={{
+                                padding: "12px 16px",
                                 whiteSpace: "nowrap",
                               }}
                             >
-                              {goal.title}
-                            </p>
-                          </td>
-                          <td
-                            style={{
-                              padding: "12px 16px",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            <span
-                              style={{
-                                background: pStyle.bg,
-                                color: pStyle.text,
-                                fontSize: 11,
-                                fontWeight: 700,
-                                padding: "3px 8px",
-                                borderRadius: 6,
-                              }}
-                            >
-                              {goal.period}
-                            </span>
-                          </td>
-                          <td
-                            style={{
-                              padding: "12px 16px",
-                              color: "#525252",
-                              whiteSpace: "nowrap",
-                              fontSize: 12,
-                            }}
-                          >
-                            {goal.owner}
-                          </td>
-                          <td style={{ padding: "12px 16px", minWidth: 160 }}>
-                            <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 8,
-                              }}
-                            >
-                              <input
-                                type="range"
-                                min={0}
-                                max={Number(goal.target) || 100}
-                                step={1}
-                                value={Number(goal.current)}
-                                onChange={(e) =>
-                                  handleProgressChange(
-                                    goal.id,
-                                    Number(e.target.value)
-                                  )
-                                }
-                                className="gv-card-slider"
-                                style={{ background: listSlidBg, flex: 1 }}
-                              />
                               <span
                                 style={{
+                                  background: pStyle.bg,
+                                  color: pStyle.text,
                                   fontSize: 11,
                                   fontWeight: 700,
-                                  color: bar,
-                                  minWidth: 30,
-                                  textAlign: "right",
+                                  padding: "3px 8px",
+                                  borderRadius: 6,
                                 }}
                               >
-                                {pct}%
+                                {goal.period}
                               </span>
-                            </div>
-                          </td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <select
-                              value={goal.status}
-                              onChange={(e) =>
-                                handleStatusChange(goal.id, e.target.value)
-                              }
+                            </td>
+                            <td
                               style={{
-                                fontSize: 11,
-                                border: "1px solid #e5e5e5",
-                                borderRadius: 8,
-                                padding: "4px 8px",
-                                background: "#fff",
-                                cursor: "pointer",
-                                outline: "none",
+                                padding: "12px 16px",
+                                color: "#525252",
+                                whiteSpace: "nowrap",
+                                fontSize: 12,
                               }}
                             >
-                              {STATUSES_LIST.map((s) => (
-                                <option key={s} value={s}>
-                                  {STATUS_DISPLAY[s]}
-                                </option>
-                              ))}
-                            </select>
-                          </td>
-                          <td style={{ padding: "12px 16px" }}>
-                            <div style={{ display: "flex", gap: 4 }}>
-                              <button
-                                onClick={() => openEdit(goal)}
+                              {goal.owner}
+                            </td>
+                            <td style={{ padding: "12px 16px", minWidth: 160 }}>
+                              <div
                                 style={{
-                                  padding: "5px 7px",
-                                  borderRadius: 8,
-                                  border: "none",
-                                  background: "transparent",
-                                  cursor: "pointer",
-                                  color: "#a3a3a3",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background =
-                                    C.primaryBg;
-                                  e.currentTarget.style.color = C.primary;
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background =
-                                    "transparent";
-                                  e.currentTarget.style.color = "#a3a3a3";
-                                }}
-                              >
-                                <EditIcon />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(goal.id)}
-                                disabled={deletingId === goal.id}
-                                style={{
-                                  padding: "5px 7px",
-                                  borderRadius: 8,
-                                  border: "none",
-                                  background: "transparent",
-                                  cursor:
-                                    deletingId === goal.id
-                                      ? "not-allowed"
-                                      : "pointer",
-                                  color: "#a3a3a3",
                                   display: "flex",
                                   alignItems: "center",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = "#fff5f5";
-                                  e.currentTarget.style.color = "#dc2626";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background =
-                                    "transparent";
-                                  e.currentTarget.style.color = "#a3a3a3";
+                                  gap: 8,
                                 }}
                               >
-                                {deletingId === goal.id ? (
-                                  <LoaderIcon />
-                                ) : (
-                                  <TrashIcon />
-                                )}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                                <input
+                                  type="range"
+                                  min={0}
+                                  max={Number(goal.target) || 100}
+                                  step={1}
+                                  value={Number(goal.current)}
+                                  onChange={(e) =>
+                                    handleProgressChange(
+                                      goal.id,
+                                      Number(e.target.value)
+                                    )
+                                  }
+                                  className="gv-card-slider"
+                                  style={{ background: listSlidBg, flex: 1 }}
+                                />
+                                <span
+                                  style={{
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    color: bar,
+                                    minWidth: 30,
+                                    textAlign: "right",
+                                  }}
+                                >
+                                  {pct}%
+                                </span>
+                              </div>
+                            </td>
+                            <td style={{ padding: "12px 16px" }}>
+                              <select
+                                value={goal.status}
+                                onChange={(e) =>
+                                  handleStatusChange(goal.id, e.target.value)
+                                }
+                                style={{
+                                  fontSize: 11,
+                                  border: "1px solid #e5e5e5",
+                                  borderRadius: 8,
+                                  padding: "4px 8px",
+                                  background: "#fff",
+                                  cursor: "pointer",
+                                  outline: "none",
+                                }}
+                              >
+                                {STATUSES_LIST.map((s) => (
+                                  <option key={s} value={s}>
+                                    {STATUS_DISPLAY[s]}
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td style={{ padding: "12px 16px" }}>
+                              <div style={{ display: "flex", gap: 4 }}>
+                                <button
+                                  onClick={() => openEdit(goal)}
+                                  style={{
+                                    padding: "5px 7px",
+                                    borderRadius: 8,
+                                    border: "none",
+                                    background: "transparent",
+                                    cursor: "pointer",
+                                    color: "#a3a3a3",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = C.primaryBg;
+                                    e.currentTarget.style.color = C.primary;
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = "transparent";
+                                    e.currentTarget.style.color = "#a3a3a3";
+                                  }}
+                                >
+                                  <EditIcon />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(goal.id)}
+                                  disabled={deletingId === goal.id}
+                                  style={{
+                                    padding: "5px 7px",
+                                    borderRadius: 8,
+                                    border: "none",
+                                    background: "transparent",
+                                    cursor:
+                                      deletingId === goal.id
+                                        ? "not-allowed"
+                                        : "pointer",
+                                    color: "#a3a3a3",
+                                    display: "flex",
+                                    alignItems: "center",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = "#fff5f5";
+                                    e.currentTarget.style.color = "#dc2626";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = "transparent";
+                                    e.currentTarget.style.color = "#a3a3a3";
+                                  }}
+                                >
+                                  {deletingId === goal.id ? (
+                                    <LoaderIcon />
+                                  ) : (
+                                    <TrashIcon />
+                                  )}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              {/* ── PAGINATION — List view only ── */}
+              {totalPages > 1 && (
+                <div className="gv-pagination">
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => loadGoals(currentPage - 1)}
+                    className="gv-page-item"
+                  >
+                    <ChevronLeftIcon />
+                  </button>
+                  {pageNumbers.map((num, idx) => (
+                    <button
+                      key={idx}
+                      className={`gv-page-item ${num === currentPage ? "active" : ""} ${num === "..." ? "dots" : ""}`}
+                      disabled={num === "..."}
+                      onClick={() => {
+                        if (num !== "...") loadGoals(Number(num));
+                      }}
+                    >
+                      {num}
+                    </button>
+                  ))}
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={() => loadGoals(currentPage + 1)}
+                    className="gv-page-item"
+                  >
+                    <ChevronRightIcon />
+                  </button>
+                </div>
               )}
-            </div>
+            </>
           ))}
-
-        {/* ── PAGINATION ── */}
-        {totalPages > 1 && (
-          <div className="gv-pagination">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => loadGoals(currentPage - 1)}
-              className="gv-page-item"
-            >
-              <ChevronLeftIcon />
-            </button>
-            
-            {pageNumbers.map((num, idx) => (
-              <button
-                key={idx}
-                className={`gv-page-item ${num === currentPage ? "active" : ""} ${num === "..." ? "dots" : ""}`}
-                disabled={num === "..."}
-                onClick={() => { if (num !== "...") loadGoals(Number(num)); }}
-              >
-                {num}
-              </button>
-            ))}
-
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => loadGoals(currentPage + 1)}
-              className="gv-page-item"
-            >
-              <ChevronRightIcon />
-            </button>
-          </div>
-        )}
       </div>
 
       {/* ══ Create / Edit Modal ══ */}
@@ -2131,7 +2098,9 @@ export const GoalsView = () => {
                 gap: 16,
               }}
             >
-              {saveError && <div className="gv-error-banner">{saveError}</div>}
+              {saveError && (
+                <div className="gv-error-banner">{saveError}</div>
+              )}
 
               {/* Title */}
               <div>
@@ -2240,7 +2209,7 @@ export const GoalsView = () => {
                 </div>
               </div>
 
-              {/* Owner Dropdown + Target Date */}
+              {/* Owner + Target Date */}
               <div
                 style={{
                   display: "grid",
@@ -2395,7 +2364,11 @@ export const GoalsView = () => {
                   }}
                 >
                   <label
-                    style={{ fontSize: 13, fontWeight: 600, color: "#525252" }}
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#525252",
+                    }}
                   >
                     Current Value / Progress
                   </label>
