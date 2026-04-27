@@ -60,7 +60,7 @@ const columns: ColumnConfig[] = [
     }
 ];
 
-const EventPendingList = () => {
+const EventRejectedList = () => {
     const { id: eventId } = useParams();
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
@@ -90,7 +90,7 @@ const EventPendingList = () => {
     const fetchRegisteredUsers = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/admin/events/${eventId}/registered_users.json?q[status_eq]=pending`, {
+            const response = await axios.get(`https://${baseUrl}/pms/admin/events/${eventId}/registered_users.json?q[status_eq]=rejected`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -223,7 +223,7 @@ const EventPendingList = () => {
                 {
                     data.length > 0 && (
                         <div className="flex gap-4">
-                            <Button
+                            {/* <Button
                                 variant="outline"
                                 className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-8 h-10 disabled:opacity-50"
                                 onClick={() => handleStatusUpdate('rejected')}
@@ -231,7 +231,7 @@ const EventPendingList = () => {
                             >
                                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                 Deny
-                            </Button>
+                            </Button> */}
                             <Button
                                 className="!bg-[#00A651] !hover:bg-[#008C44] !text-black px-8 h-10 disabled:opacity-50"
                                 onClick={() => handleStatusUpdate('approved')}
@@ -268,4 +268,4 @@ const EventPendingList = () => {
     );
 };
 
-export default EventPendingList;
+export default EventRejectedList;

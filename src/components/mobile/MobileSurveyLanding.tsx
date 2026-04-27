@@ -53,6 +53,7 @@ interface SurveyMapping {
   status?: string;
   message?: string;
   location?: string;
+  company_logo_url?: string | null;
   snag_checklist: {
     id: number;
     name: string;
@@ -1876,7 +1877,13 @@ export const MobileSurveyLanding: React.FC = () => {
           </div>
           <div className="flex justify-end">
             <div className="w-40 h-16 sm:w-32 sm:h-20 flex items-center justify-center overflow-hidden">
-              {window.location.origin === "https://oig.gophygital.work" ? (
+              {surveyData?.company_logo_url ? (
+                <img
+                  src={surveyData.company_logo_url}
+                  alt="Company Logo"
+                  className="w-full h-full object-contain"
+                />
+              ) : window.location.origin === "https://oig.gophygital.work" ? (
                 <img
                   src="/Without bkg.svg"
                   alt="OIG Logo"
@@ -1906,7 +1913,6 @@ export const MobileSurveyLanding: React.FC = () => {
                   alt="gophygital Logo"
                   className="w-full h-full object-contain"
                 />
-
               )}
             </div>
           </div>

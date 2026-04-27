@@ -17,9 +17,9 @@ const C = {
   primaryHov: "#c9673f",
   primaryBg: "#fdf9f7",
   primaryTint: "rgba(218,119,86,0.06)",
-  primaryBord: "#e8e3de",
+  primaryBord: "#F6F4EE",
   primaryBordStrong: "#d4cdc6",
-  pageBg: "#f6f4ee",
+  pageBg: "#ffffff",   // 👈 यहाँ #f6f4ee से #ffffff किया
   cardBg: "#ffffff",
   tealBg: "#9EC8BA",
   textMain: "#1a1a1a",
@@ -415,10 +415,11 @@ const InfoIcon = () => (
     />
   </svg>
 );
-const EyeIcon = () => (
+// Accept color prop, otherwise default to C.primary
+const EyeIcon = ({ color }: { color?: string }) => (
   <svg
     className="w-4 h-4"
-    style={{ color: C.primary }}
+    style={{ color: color || C.primary }}
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -2250,7 +2251,7 @@ const BusinessPlanAndGoles = () => {
   return (
     <div
       className="bp-wrap min-h-screen px-4 md:px-8 w-full mx-auto space-y-6"
-      style={{ background: C.pageBg, color: C.textMain, fontFamily: C.font }}
+      style={{ background:"white", color: C.textMain, fontFamily: C.font }}
     >
       <ThemeStyle />
 
@@ -2258,7 +2259,7 @@ const BusinessPlanAndGoles = () => {
       <div
         className="overflow-hidden rounded-2xl border shadow-sm p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
         style={{
-          background: "rgba(218,119,86,0.10)",
+          background: C.primaryBord,
           borderColor: C.primaryBord,
         }}
       >
@@ -2271,7 +2272,7 @@ const BusinessPlanAndGoles = () => {
           </p>
           <h1
             className="text-2xl font-black tracking-tight"
-            style={{ color: "#111" }}
+            style={{ color : "DA7756" }}
           >
             Business Plan
           </h1>
@@ -2311,16 +2312,17 @@ const BusinessPlanAndGoles = () => {
 
       {/* ══ STRATEGIC PLAN ══ */}
       {activeMainTab === "strategic" && (
-        <div className="space-y-6">
+        <div className="space-y-6 "         
+>
           {/* Our Business Plan header */}
           <div
             className="rounded-[8px] p-5 flex items-center justify-between relative"
-            style={{ background: C.tealBg }}
+            style={{ background: C.primaryBord }}
           >
             <div className="flex items-center gap-3">
-              <div className="bg-white/30 p-2 rounded-full">
-                <EyeIcon />
-              </div>
+              <div className="p-2 rounded-full" style={{ background: C.primary }}>
+  <EyeIcon color="white" />
+</div>
               <span className="text-[12px] font-black tracking-[0.15em] text-[#070707] uppercase">
                 Our Business Plan
               </span>
@@ -2649,8 +2651,8 @@ const BusinessPlanAndGoles = () => {
           )}
 
           {/* ── 3 Cards ── */}
-          <div className="rounded-[8px] p-6" style={{ background: C.tealBg }}>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-black mb-5">
+{/* ── 3 Cards ── */}
+<div className="rounded-[8px] p-6" style={{ background: C.primaryBord }}>            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-black mb-5">
               Strategic Essentials
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

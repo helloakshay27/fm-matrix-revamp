@@ -236,19 +236,19 @@ const IssuesListPage = ({
     return savedOrder
       ? JSON.parse(savedOrder)
       : [
-          "id",
-          "project_name",
-          "milestone_name",
-          "task_name",
-          "sub_task_name",
-          "title",
-          "issue_type",
-          "priority",
-          "status",
-          "assigned_to",
-          "start_date",
-          "due_date",
-        ];
+        "id",
+        "project_name",
+        "milestone_name",
+        "task_name",
+        "sub_task_name",
+        "title",
+        "issue_type",
+        "priority",
+        "status",
+        "assigned_to",
+        "start_date",
+        "due_date",
+      ];
   });
 
   // Kanban/List view state
@@ -398,7 +398,7 @@ const IssuesListPage = ({
   const getProjects = useCallback(async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/project_managements.json`,
+        `https://${baseUrl}/project_managements/projects_for_dropdown.json`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -406,8 +406,7 @@ const IssuesListPage = ({
         }
       );
       const projectsList =
-        response.data?.project_managements ||
-        response.data?.data?.project_managements ||
+        response.data ||
         [];
       setProjects(projectsList);
     } catch (error) {
@@ -1238,7 +1237,7 @@ const IssuesListPage = ({
                 }
                 className={
                   pagination.current_page === pagination.total_pages ||
-                  isFetching
+                    isFetching
                     ? "pointer-events-none opacity-50"
                     : "cursor-pointer"
                 }

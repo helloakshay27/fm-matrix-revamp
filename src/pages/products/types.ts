@@ -236,6 +236,7 @@ export interface ProductData {
       competitorSummary?: string;
     };
     detailedPricing?: {
+      isClubPricing?: boolean;
       isSnagPricing?: boolean;
       pricingMatrixSubtitle?: string;
       pricingFeatureRows?: {
@@ -357,6 +358,27 @@ export interface ProductData {
         outcome: string;
         feature: string;
       }[];
+      clubFeatureComparison?: {
+        feature: string;
+        lockated: string;
+        shawman: string;
+        mindbody: string;
+        glofox: string;
+        omnify: string;
+      }[];
+      clubPricingLandscapeRows?: {
+        competitor: string;
+        entryPrice: string;
+        midPrice: string;
+        enterprisePrice: string;
+        model: string;
+        segment: string;
+      }[];
+      clubPositioning?: {
+        dimension: string;
+        statement: string;
+      }[];
+      priceCompetitiveness?: string;
       valuePropositions?: {
         currentProp: string;
         segment: string;
@@ -366,6 +388,7 @@ export interface ProductData {
         prop?: string;
         outcome?: string;
         feature?: string;
+        objection?: string;
         rank?: string;
         communicatesToday?: string;
         proofPoint?: string;

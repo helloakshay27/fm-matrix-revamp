@@ -395,8 +395,13 @@ const BusinessCompassProfile = () => {
   const [removeProfileImage, setRemoveProfileImage] = useState(false);
 
   // ─── Document state ─────────────────────────────────────────────────────────
-  const [documents, setDocuments] = useState<DocumentEntry[]>([]);
-  const [docTitle, setDocTitle] = useState("");
+const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
+  const savedDocs = localStorage.getItem("bc-profile-documents");
+  if (savedDocs) {
+    return JSON.parse(savedDocs);
+  }
+  return [];
+});  const [docTitle, setDocTitle] = useState("");
   const [docFile, setDocFile] = useState<File | null>(null);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
 
@@ -443,6 +448,17 @@ const BusinessCompassProfile = () => {
 
     fetchProfileDetails();
   }, []);
+
+  // Sync documents to localStorage whenever they change
+useEffect(() => {
+  const docsToSave = documents.map((doc) => ({
+    id: doc.id,
+    title: doc.title,
+    url: doc.url,
+    file: null, // File object JSON mein save nahi ho sakta, isliye isko null bhejenge
+  }));
+  localStorage.setItem("bc-profile-documents", JSON.stringify(docsToSave));
+}, [documents]);
 
   const triggerProfileUpload = () => {
     if (!isEditing || isSaving) return;

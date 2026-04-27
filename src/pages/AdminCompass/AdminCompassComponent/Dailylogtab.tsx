@@ -196,6 +196,7 @@ const fetchMeetingsAPI = async () => {
   return list.map((m) => ({
     id: String(m.id),
     label: m.name ?? m.title ?? m.label ?? `Meeting ${m.id}`,
+    is_default: m.is_default || m.isDefault || false, // 🛠 FIX: Extract is_default flag
   }));
 };
 
@@ -859,8 +860,7 @@ const ReportDetailModal = ({ log, onClose }) => {
                                   }
                                   className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
                                 >
-                                  View All{" "}
-                                  <ChevronRight className="w-3 h-3" />
+                                  View All <ChevronRight className="w-3 h-3" />
                                 </button>
                               </div>
 
@@ -962,7 +962,10 @@ const ReportDetailModal = ({ log, onClose }) => {
                   className="max-w-full mx-0"
                   prefillData={null}
                   opportunityId={null}
-                  onSuccess={() => setIsTaskModalOpen(false)}
+                  onSuccess={async () => {
+                    setIsTaskModalOpen(false);
+                    await loadDailyData(false);
+                  }}
                   isConversion={false}
                 />
               </div>
@@ -1024,7 +1027,15 @@ const DailyLogTab = () => {
     try {
       const data = await fetchMeetingsAPI();
       setMeetings(data);
-      if (data.length > 0) setSelectedMeetingFilter(data[0].id);
+      if (data.length > 0) {
+        // 🛠 FIX: Extract default meeting
+        const defaultMeeting = data.find((m) => m.is_default);
+        if (defaultMeeting) {
+          setSelectedMeetingFilter(defaultMeeting.id);
+        } else {
+          setSelectedMeetingFilter(data[0].id);
+        }
+      }
     } catch (err) {
       console.error(err);
     } finally {

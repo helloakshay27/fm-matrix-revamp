@@ -53,7 +53,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-// ── Design Tokens (matches BusinessPlanAndGoles) ──
+// ── Design Tokens ──
 const C = {
   primary: "#DA7756",
   primaryHov: "#c9673f",
@@ -63,7 +63,6 @@ const C = {
   primaryBordStrong: "#d4cdc6",
   pageBg: "#f6f4ee",
   cardBg: "#ffffff",
-  tealBg: "#9EC8BA",
   textMain: "#1a1a1a",
   textMuted: "#6b7280",
   borderLgt: "#ebebeb",
@@ -71,13 +70,14 @@ const C = {
 };
 
 // ─────────────────────────────────────────────
-// THEME STYLES (matches BusinessPlanAndGoles)
+// THEME STYLES
 // ─────────────────────────────────────────────
 const ThemeStyle = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
-.sop-wrap * { font-family: 'Poppins', sans-serif !important; }
-.sop-modal-box, .sop-modal-box * { font-family: 'Poppins', sans-serif !important; }    .sop-modal-portal {
+    .sop-wrap * { font-family: 'Poppins', sans-serif !important; }
+    .sop-modal-box, .sop-modal-box * { font-family: 'Poppins', sans-serif !important; }
+    .sop-modal-portal {
       position: fixed; inset: 0; z-index: 99999;
       display: flex; align-items: center; justify-content: center;
       padding: 16px;
@@ -151,11 +151,16 @@ const ThemeStyle = () => (
       overflow: hidden;
     }
     .drag-over-col { border: 2px dashed #DA7756 !important; opacity: 0.6; }
+    .kpi-list-scroll { max-height: 200px; overflow-y: auto; }
+    .kpi-list-scroll::-webkit-scrollbar { width: 4px; }
+    .kpi-list-scroll::-webkit-scrollbar-track { background: transparent; }
+    .kpi-list-scroll::-webkit-scrollbar-thumb { background: #C4B89D; border-radius: 10px; }
+    .kpi-list-scroll::-webkit-scrollbar-thumb:hover { background: #DA7756; }
   `}</style>
 );
 
 // ─────────────────────────────────────────────
-// SHARED BUTTONS (matches BusinessPlanAndGoles)
+// SHARED BUTTONS
 // ─────────────────────────────────────────────
 const BtnPrimary = ({
   children,
@@ -241,36 +246,59 @@ const LoaderIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
 );
 
 // ─────────────────────────────────────────────
-// API CONFIG
+// TYPES & UTILS
 // ─────────────────────────────────────────────
-const BASE_URL = () => localStorage.getItem("baseUrl") || "";
-const getToken = () => localStorage.getItem("token") || "";
+type SopTab = "my" | "all";
+type ColumnKey = "toStart" | "broken" | "running";
 
-const getUserId = () => {
-  try {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    return String(user?.id || "");
-  } catch {
-    return "";
-  }
+type KpiItem = {
+  kpi_id: number;
+  kpi_name: string;
+  kpi_category: string;
+  kpi_frequency: string;
+  position: number;
 };
 
-const apiHeaders = () => ({
-  Accept: "application/json",
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${getToken()}`,
-});
+type KpiOption = {
+  id: number;
+  name: string;
+  category: string;
+  frequency: string;
+};
+
+type SopCardData = {
+  id: string;
+  title: string;
+  department: string;
+  departmentId?: number | null;
+  priority: "low" | "medium" | "high";
+  healthPercent: number;
+  description?: string;
+  docUrl?: string;
+  assigneeId?: number | null;
+  assigneeName?: string | null;
+  status?: string;
+  kpis?: KpiItem[];
+  createdById?: number | null;
+  _raw?: any;
+};
+
+function coerceHealthPercent(n: unknown): number {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(100, v));
+}
 
 const STATUS_TO_COL: Record<string, ColumnKey> = {
   "To Start": "toStart",
-  to_start: "toStart",
+  to_start: "toStart",       // ✅ already exists — good
   "to start": "toStart",
+  toStart: "toStart",        // ✅ add this
   Broken: "broken",
   broken: "broken",
   Running: "running",
   running: "running",
 };
-
 const COL_TO_STATUS: Record<ColumnKey, string> = {
   toStart: "To Start",
   broken: "Broken",
@@ -286,24 +314,77 @@ const PRIORITY_MAP: Record<string, SopCardData["priority"]> = {
   high: "high",
 };
 
+function buildColumnsFromList(
+  list: SopCardData[]
+): Record<ColumnKey, SopCardData[]> {
+  const cols: Record<ColumnKey, SopCardData[]> = {
+    toStart: [],
+    broken: [],
+    running: [],
+  };
+  for (const item of list) {
+    const col = STATUS_TO_COL[item.status ?? ""] ?? "broken";
+    cols[col].push(item);
+  }
+  return cols;
+}
+
+function findColumnForCard(
+  cols: Record<ColumnKey, SopCardData[]>,
+  cardId: string
+): ColumnKey | null {
+  for (const k of Object.keys(cols) as ColumnKey[]) {
+    if (cols[k].some((c) => c.id === cardId)) return k;
+  }
+  return null;
+}
+
+function parseCardId(id: string | number): string | null {
+  const s = String(id);
+  if (!s.startsWith("sop-card-")) return null;
+  return s.slice("sop-card-".length);
+}
+
+// ─────────────────────────────────────────────
+// API CONFIG
+// ─────────────────────────────────────────────
+const BASE_URL = () => localStorage.getItem("baseUrl") || "";
+const getToken = () => localStorage.getItem("token") || "";
+
+const getUserId = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const id = user?.id ?? user?.user_id ?? user?.userId ?? "";
+    if (id) return String(id);
+    return localStorage.getItem("user_id") || localStorage.getItem("userId") || "";
+  } catch {
+    return "";
+  }
+};
+
+const apiHeaders = () => ({
+  Accept: "application/json",
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${getToken()}`,
+});
+
 const normalizeSopFromAPI = (raw: any): SopCardData => ({
   id: String(raw.id ?? Math.random()),
   title: raw.system_name ?? raw.title ?? "Untitled",
-  department: raw.department ?? raw.department_name ?? raw.dept ?? "General",
+  department: raw.department_name ?? raw.department ?? raw.dept ?? "General",  // ✅ department_name first
   departmentId: raw.department_id ?? null,
   priority: PRIORITY_MAP[raw.priority] ?? "medium",
-  healthPercent: coerceHealthPercent(
-    raw.health_score ?? raw.healthPercent ?? 0
-  ),
+  healthPercent: coerceHealthPercent(raw.health_score ?? raw.healthPercent ?? 0),
   description: raw.description ?? undefined,
   docUrl: raw.documentation_url ?? raw.doc_url ?? raw.docUrl ?? undefined,
   assigneeId: raw.assignee_id ?? raw.assigned_to_id ?? null,
   assigneeName: raw.assignee_name ?? raw.assigned_to ?? null,
-  status: raw.status ?? "Broken",
+  status: raw.status ?? "broken",
   kpis: Array.isArray(raw.kpis) ? raw.kpis : [],
   createdById: raw.created_by_id ?? null,
   _raw: raw,
 });
+
 
 const fetchAllSops = async (): Promise<SopCardData[]> => {
   const res = await fetch(`https://${BASE_URL()}/system_sops`, {
@@ -313,7 +394,9 @@ const fetchAllSops = async (): Promise<SopCardData[]> => {
   const json = await res.json();
   const arr = Array.isArray(json)
     ? json
-    : (json.data ?? json.system_sops ?? []);
+    : Array.isArray(json.data)
+      ? json.data                        // ✅ your API returns { data: [...] }
+      : (json.system_sops ?? []);
   return arr.map(normalizeSopFromAPI);
 };
 
@@ -326,11 +409,18 @@ const fetchMySops = async (): Promise<SopCardData[]> => {
   const json = await res.json();
   const arr = Array.isArray(json)
     ? json
-    : (json.data ?? json.system_sops ?? []);
+    : Array.isArray(json.data)
+      ? json.data                        // ✅ same fix
+      : (json.system_sops ?? []);
   return arr
-    .filter((sop: any) => String(sop.assignee_id) === String(userId))
+    .filter((sop: any) => {
+      const assigneeId = sop.assignee_id ?? sop.assigned_to_id ?? sop.assignee?.id;
+      return String(assigneeId) === String(userId);
+    })
     .map(normalizeSopFromAPI);
 };
+
+
 
 const fetchUsersData = async (): Promise<
   { value: string; label: string }[]
@@ -378,6 +468,31 @@ const fetchDepartmentsData = async (): Promise<
     }));
   } catch (err) {
     console.error("Error fetching departments:", err);
+    return [];
+  }
+};
+const fetchKpisData = async (): Promise<KpiOption[]> => {
+  try {
+    const res = await fetch(`https://${BASE_URL()}/kpis`, {
+      headers: apiHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to fetch KPIs");
+    const json = await res.json();
+    const arr = Array.isArray(json)
+      ? json
+      : Array.isArray(json.data)
+        ? json.data
+        : Array.isArray(json.data?.kpis)
+          ? json.data.kpis               // ✅ handles { data: { kpis: [...] } }
+          : (json.kpis ?? []);
+    return arr.map((k: any) => ({
+      id: k.id,
+      name: k.name ?? k.kpi_name ?? `KPI ${k.id}`,
+      category: k.category ?? k.kpi_category ?? "",
+      frequency: k.frequency ?? k.kpi_frequency ?? "monthly",
+    }));
+  } catch (err) {
+    console.error("Error fetching KPIs:", err);
     return [];
   }
 };
@@ -430,74 +545,6 @@ const deleteSop = async (id: string) => {
 };
 
 // ─────────────────────────────────────────────
-// TYPES & UTILS
-// ─────────────────────────────────────────────
-type SopTab = "my" | "all";
-type ColumnKey = "toStart" | "broken" | "running";
-
-type KpiItem = {
-  kpi_id: number;
-  kpi_name: string;
-  kpi_category: string;
-  kpi_frequency: string;
-  position: number;
-};
-
-type SopCardData = {
-  id: string;
-  title: string;
-  department: string;
-  departmentId?: number | null;
-  priority: "low" | "medium" | "high";
-  healthPercent: number;
-  description?: string;
-  docUrl?: string;
-  assigneeId?: number | null;
-  assigneeName?: string | null;
-  status?: string;
-  kpis?: KpiItem[];
-  createdById?: number | null;
-  _raw?: any;
-};
-
-function coerceHealthPercent(n: unknown): number {
-  const v = Number(n);
-  if (!Number.isFinite(v)) return 0;
-  return Math.max(0, Math.min(100, v));
-}
-
-function buildColumnsFromList(
-  list: SopCardData[]
-): Record<ColumnKey, SopCardData[]> {
-  const cols: Record<ColumnKey, SopCardData[]> = {
-    toStart: [],
-    broken: [],
-    running: [],
-  };
-  for (const item of list) {
-    const col = STATUS_TO_COL[item.status ?? ""] ?? "broken";
-    cols[col].push(item);
-  }
-  return cols;
-}
-
-function findColumnForCard(
-  cols: Record<ColumnKey, SopCardData[]>,
-  cardId: string
-): ColumnKey | null {
-  for (const k of Object.keys(cols) as ColumnKey[]) {
-    if (cols[k].some((c) => c.id === cardId)) return k;
-  }
-  return null;
-}
-
-function parseCardId(id: string | number): string | null {
-  const s = String(id);
-  if (!s.startsWith("sop-card-")) return null;
-  return s.slice("sop-card-".length);
-}
-
-// ─────────────────────────────────────────────
 // LABEL FIELD WRAPPER
 // ─────────────────────────────────────────────
 const FieldBox = ({
@@ -524,7 +571,7 @@ const FieldBox = ({
 );
 
 // ─────────────────────────────────────────────
-// MODAL (matches BusinessPlanAndGoles portal style)
+// MODAL
 // ─────────────────────────────────────────────
 const Modal = ({
   children,
@@ -553,7 +600,7 @@ const Modal = ({
 };
 
 // ─────────────────────────────────────────────
-// SEARCHABLE SELECT (ported from BhagSection)
+// SEARCHABLE SELECT
 // ─────────────────────────────────────────────
 const SearchableSelect = ({
   value,
@@ -608,11 +655,12 @@ const SearchableSelect = ({
             position: "absolute",
             right: 12,
             top: "50%",
-            transform: "translateY(-50%)",
+            transform: open
+              ? "translateY(-50%) rotate(180deg)"
+              : "translateY(-50%)",
             color: "#9ca3af",
             pointerEvents: "none",
             transition: "transform .2s",
-            ...(open ? { transform: "translateY(-50%) rotate(180deg)" } : {}),
           }}
         >
           <svg
@@ -649,7 +697,6 @@ const SearchableSelect = ({
             fontFamily: C.font,
           }}
         >
-          {/* Clear option */}
           {value && (
             <div
               onClick={() => {
@@ -700,7 +747,8 @@ const SearchableSelect = ({
                   fontSize: 13,
                   fontWeight: 600,
                   color: o.value === value ? C.primary : C.textMain,
-                  background: o.value === value ? C.primaryTint : "transparent",
+                  background:
+                    o.value === value ? C.primaryTint : "transparent",
                   cursor: "pointer",
                   borderBottom: `1px solid ${C.borderLgt}`,
                   display: "flex",
@@ -743,7 +791,7 @@ const SearchableSelect = ({
 };
 
 // ─────────────────────────────────────────────
-// SOP FORM DIALOG (restyled)
+// SOP FORM MODAL
 // ─────────────────────────────────────────────
 function SopFormModal({
   open,
@@ -753,6 +801,7 @@ function SopFormModal({
   onSave,
   users,
   departments,
+  kpiOptions,
 }: {
   open: boolean;
   onClose: () => void;
@@ -761,6 +810,7 @@ function SopFormModal({
   onSave: (data: any, column: ColumnKey) => Promise<void>;
   users: { value: string; label: string }[];
   departments: { value: string; label: string; id: number }[];
+  kpiOptions: KpiOption[];
 }) {
   const [systemName, setSystemName] = useState("");
   const [description, setDescription] = useState("");
@@ -770,7 +820,7 @@ function SopFormModal({
   const [assignUser, setAssignUser] = useState("");
   const [healthScore, setHealthScore] = useState(0);
   const [docUrl, setDocUrl] = useState("");
-  const [kpiInvoice, setKpiInvoice] = useState(false);
+  const [selectedKpiIds, setSelectedKpiIds] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -786,7 +836,7 @@ function SopFormModal({
         setAssignUser(String(initialData.assigneeId ?? ""));
         setHealthScore(initialData.healthPercent);
         setDocUrl(initialData.docUrl ?? "");
-        setKpiInvoice((initialData.kpis ?? []).some((k) => k.kpi_id === 10));
+        setSelectedKpiIds((initialData.kpis ?? []).map((k) => k.kpi_id));
       } else {
         setSystemName("");
         setDescription("");
@@ -796,12 +846,18 @@ function SopFormModal({
         setAssignUser("");
         setHealthScore(0);
         setDocUrl("");
-        setKpiInvoice(false);
+        setSelectedKpiIds([]);
       }
     }
   }, [open, isEdit, initialData]);
 
   if (!open) return null;
+
+  const toggleKpi = (id: number) => {
+    setSelectedKpiIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   const handleSubmit = async () => {
     if (!systemName.trim()) return toast.error("Please enter a system name");
@@ -810,17 +866,17 @@ function SopFormModal({
     setIsSaving(true);
     try {
       const selectedDept = departments.find((d) => d.value === department);
-      const kpis = kpiInvoice
-        ? [
-            {
-              kpi_id: 10,
-              kpi_name: "Invoices Raised",
-              kpi_category: "Accounts",
-              kpi_frequency: "monthly",
-              position: 1,
-            },
-          ]
-        : [];
+      const builtKpis = selectedKpiIds.map((id, i) => {
+        const k = kpiOptions.find((x) => x.id === id);
+        return {
+          kpi_id: id,
+          kpi_name: k?.name ?? `KPI ${id}`,
+          kpi_category: k?.category ?? "",
+          kpi_frequency: k?.frequency ?? "monthly",
+          position: i + 1,
+        };
+      });
+
       const payload = {
         system_name: systemName.trim(),
         description: description.trim() || undefined,
@@ -830,7 +886,7 @@ function SopFormModal({
         assignee_id: parseInt(assignUser, 10),
         health_score: healthScore,
         documentation_url: docUrl.trim() || undefined,
-        kpis: isEdit ? initialData?.kpis : kpis,
+        kpis: isEdit ? initialData?.kpis : builtKpis,
       };
       await onSave(payload, statusColumn);
     } finally {
@@ -839,21 +895,9 @@ function SopFormModal({
   };
 
   const statusOptions = [
-    {
-      value: "toStart",
-      label: "To Start",
-      icon: <Clock className="w-4 h-4" style={{ color: "#0284c7" }} />,
-    },
-    {
-      value: "broken",
-      label: "Broken",
-      icon: <XCircle className="w-4 h-4" style={{ color: "#dc2626" }} />,
-    },
-    {
-      value: "running",
-      label: "Running",
-      icon: <CheckCircle2 className="w-4 h-4" style={{ color: "#16a34a" }} />,
-    },
+    { value: "toStart", label: "To Start" },
+    { value: "broken", label: "Broken" },
+    { value: "running", label: "Running" },
   ];
 
   const priorityOptions = [
@@ -895,6 +939,7 @@ function SopFormModal({
 
         {/* Body */}
         <div className="p-6 flex-1 overflow-y-auto bp-scroll space-y-4">
+          {/* System Name */}
           <FieldBox label="System Name" required>
             <input
               className="bp-input"
@@ -904,6 +949,7 @@ function SopFormModal({
             />
           </FieldBox>
 
+          {/* Description */}
           <FieldBox label="Description">
             <textarea
               className="bp-input resize-y"
@@ -914,6 +960,7 @@ function SopFormModal({
             />
           </FieldBox>
 
+          {/* Department + Status */}
           <div className="grid grid-cols-2 gap-4">
             <FieldBox label="Department" required>
               <SearchableSelect
@@ -941,6 +988,7 @@ function SopFormModal({
             </FieldBox>
           </div>
 
+          {/* Priority */}
           <FieldBox label="Priority">
             <div className="flex gap-2 mt-1">
               {priorityOptions.map((p) => (
@@ -952,8 +1000,10 @@ function SopFormModal({
                   }
                   className="flex-1 py-2 rounded-xl text-[12px] font-black border transition-all"
                   style={{
-                    borderColor: priority === p.value ? C.primary : C.borderLgt,
-                    background: priority === p.value ? C.primaryTint : "#fff",
+                    borderColor:
+                      priority === p.value ? C.primary : C.borderLgt,
+                    background:
+                      priority === p.value ? C.primaryTint : "#fff",
                     color: priority === p.value ? C.primary : C.textMuted,
                     boxShadow:
                       priority === p.value
@@ -971,6 +1021,7 @@ function SopFormModal({
             </div>
           </FieldBox>
 
+          {/* Assign User */}
           <FieldBox label="Assign to User" required>
             <SearchableSelect
               value={assignUser}
@@ -980,6 +1031,7 @@ function SopFormModal({
             />
           </FieldBox>
 
+          {/* Health Score */}
           <FieldBox label={`Health Score — ${healthScore}%`}>
             <input
               type="range"
@@ -997,6 +1049,7 @@ function SopFormModal({
             />
           </FieldBox>
 
+          {/* Documentation URL */}
           <FieldBox label="Documentation URL">
             <input
               type="url"
@@ -1007,35 +1060,92 @@ function SopFormModal({
             />
           </FieldBox>
 
+          {/* Link KPIs — dynamic list from API */}
           {!isEdit && (
             <FieldBox label="Link KPIs">
-              <div
-                className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
-                style={{
-                  borderColor: kpiInvoice ? C.primary : C.borderLgt,
-                  background: kpiInvoice ? C.primaryTint : "#fff",
-                }}
-                onClick={() => setKpiInvoice(!kpiInvoice)}
-              >
-                <input
-                  type="checkbox"
-                  checked={kpiInvoice}
-                  onChange={(e) => setKpiInvoice(e.target.checked)}
-                  className="w-4 h-4 accent-[#DA7756] cursor-pointer"
-                />
-                <span
-                  className="text-[13px] font-black"
-                  style={{ color: C.textMain }}
+              {kpiOptions.length === 0 ? (
+                <p
+                  className="text-[12px] font-semibold py-2"
+                  style={{ color: C.textMuted }}
                 >
-                  Invoices Raised
-                </span>
-                <span
-                  className="ml-auto px-2 py-0.5 rounded-md text-[11px] font-black"
-                  style={{ background: "#f3f4f6", color: C.textMuted }}
+                  No KPIs available
+                </p>
+              ) : (
+                <div className="kpi-list-scroll flex flex-col gap-2">
+                  {kpiOptions.map((k) => {
+                    const checked = selectedKpiIds.includes(k.id);
+                    return (
+                      <div
+                        key={k.id}
+                        onClick={() => toggleKpi(k.id)}
+                        className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
+                        style={{
+                          borderColor: checked ? C.primary : C.borderLgt,
+                          background: checked ? C.primaryTint : "#fff",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!checked)
+                            e.currentTarget.style.background = "#fafafa";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = checked
+                            ? C.primaryTint
+                            : "#fff";
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleKpi(k.id)}
+                          className="w-4 h-4 accent-[#DA7756] cursor-pointer shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <span
+                          className="text-[13px] font-black flex-1 min-w-0 truncate"
+                          style={{ color: C.textMain }}
+                        >
+                          {k.name}
+                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {k.category && (
+                            <span
+                              className="px-2 py-0.5 rounded-md text-[11px] font-black"
+                              style={{
+                                background: "#f3f4f6",
+                                color: C.textMuted,
+                              }}
+                            >
+                              {k.category}
+                            </span>
+                          )}
+                          {k.frequency && (
+                            <span
+                              className="px-2 py-0.5 rounded-md text-[11px] font-black capitalize"
+                              style={{
+                                background: checked
+                                  ? "rgba(218,119,86,0.12)"
+                                  : "#f3f4f6",
+                                color: checked ? C.primary : C.textMuted,
+                              }}
+                            >
+                              {k.frequency}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {selectedKpiIds.length > 0 && (
+                <p
+                  className="mt-2 text-[11px] font-black"
+                  style={{ color: C.primary }}
                 >
-                  Invoices
-                </span>
-              </div>
+                  {selectedKpiIds.length} KPI
+                  {selectedKpiIds.length > 1 ? "s" : ""} selected
+                </p>
+              )}
             </FieldBox>
           )}
         </div>
@@ -1056,7 +1166,9 @@ function SopFormModal({
             onMouseEnter={(e) => {
               if (!isSaving) e.currentTarget.style.background = "#000";
             }}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#1a1a1a")}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background = "#1a1a1a")
+            }
           >
             {isSaving && <LoaderIcon />}
             {isSaving ? "Saving..." : isEdit ? "Update SOP" : "Create SOP"}
@@ -1192,7 +1304,9 @@ function SopKanbanCard({
           onMouseEnter={(e) =>
             (e.currentTarget.style.background = C.primaryHov)
           }
-          onMouseLeave={(e) => (e.currentTarget.style.background = C.primary)}
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.background = C.primary)
+          }
         >
           <Pencil className="w-3.5 h-3.5" /> Edit
         </button>
@@ -1343,21 +1457,25 @@ const SystemAndSOP = () => {
     column: ColumnKey;
   } | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+
   const [users, setUsers] = useState<{ value: string; label: string }[]>([]);
   const [departments, setDepartments] = useState<
     { value: string; label: string; id: number }[]
   >([]);
+  const [kpiOptions, setKpiOptions] = useState<KpiOption[]>([]);
 
   useEffect(() => {
     fetchUsersData().then(setUsers);
     fetchDepartmentsData().then(setDepartments);
+    fetchKpisData().then(setKpiOptions);
   }, []);
 
   const loadSops = useCallback(async () => {
     setIsLoading(true);
     setApiError(null);
     try {
-      const list = sopTab === "my" ? await fetchMySops() : await fetchAllSops();
+      const list =
+        sopTab === "my" ? await fetchMySops() : await fetchAllSops();
       setColumns(buildColumnsFromList(list));
     } catch (err: any) {
       setApiError(err.message);
@@ -1384,13 +1502,16 @@ const SystemAndSOP = () => {
           s.title.toLowerCase().includes(q) ||
           s.department.toLowerCase().includes(q) ||
           s.priority.toLowerCase().includes(q);
-        const matchesDept = filterDept === "all" || s.department === filterDept;
+        const matchesDept =
+          filterDept === "all" || s.department === filterDept;
         const matchesAssignee =
-          filterAssignee === "all" || String(s.assigneeId) === filterAssignee;
+          filterAssignee === "all" ||
+          String(s.assigneeId) === filterAssignee;
         const matchesPriority =
           filterPriority === "all" || s.priority === filterPriority;
         const colKey = STATUS_TO_COL[s.status ?? ""] ?? "broken";
-        const matchesStatus = filterStatus === "all" || colKey === filterStatus;
+        const matchesStatus =
+          filterStatus === "all" || colKey === filterStatus;
         return (
           matchesSearch &&
           matchesDept &&
@@ -1491,7 +1612,9 @@ const SystemAndSOP = () => {
       if (sourceCol !== targetCol)
         patchSopStatus(activeCardId, COL_TO_STATUS[targetCol])
           .then(() => toast.success(`Moved to ${COL_TO_STATUS[targetCol]}`))
-          .catch((e) => toast.error(`Status update failed: ${e.message}`));
+          .catch((e) =>
+            toast.error(`Status update failed: ${e.message}`)
+          );
       if (sourceCol === targetCol) {
         const list = fromList;
         let idx = insertBeforeId
@@ -1598,7 +1721,7 @@ const SystemAndSOP = () => {
 
   const Shimmer = ({ w = "100%", h = 16 }: { w?: string; h?: number }) => (
     <div
-      className="animate-pulse rounded-xl"
+      className="rounded-xl animate-pulse"
       style={{ width: w, height: h, background: "#e5e1d8" }}
     />
   );
@@ -1622,6 +1745,7 @@ const SystemAndSOP = () => {
         onSave={handleEditSave}
         users={users}
         departments={departments}
+        kpiOptions={kpiOptions}
       />
       <SopFormModal
         open={addOpen}
@@ -1630,6 +1754,7 @@ const SystemAndSOP = () => {
         onSave={handleAddCreate}
         users={users}
         departments={departments}
+        kpiOptions={kpiOptions}
       />
 
       {/* ── Page Header ── */}
@@ -1673,7 +1798,7 @@ const SystemAndSOP = () => {
         </div>
       </div>
 
-      {/* ── Tab Bar (matches BusinessPlanAndGoles) ── */}
+      {/* ── Tab Bar ── */}
       <div
         className="flex w-fit rounded-2xl p-1 gap-1 overflow-x-auto"
         style={{ background: C.primary }}
@@ -1685,8 +1810,10 @@ const SystemAndSOP = () => {
             className="py-2 px-5 rounded-xl text-sm font-bold transition-all duration-150 whitespace-nowrap"
             style={{
               background: sopTab === t ? "#fff" : "transparent",
-              color: sopTab === t ? C.primary : "rgba(255,255,255,0.85)",
-              boxShadow: sopTab === t ? "0 1px 4px rgba(0,0,0,0.10)" : "none",
+              color:
+                sopTab === t ? C.primary : "rgba(255,255,255,0.85)",
+              boxShadow:
+                sopTab === t ? "0 1px 4px rgba(0,0,0,0.10)" : "none",
             }}
           >
             {t === "my" ? "My SOPs" : "All SOPs"}
@@ -1698,21 +1825,28 @@ const SystemAndSOP = () => {
       {bannerVisible && (
         <div
           className="flex items-center gap-3 rounded-2xl border px-5 py-3 shadow-sm"
-          style={{ background: C.tealBg, borderColor: "rgba(0,0,0,0.08)" }}
+          style={{ background: C.primaryTint, borderColor: C.primaryBord }}
         >
           <div
             className="flex w-9 h-9 shrink-0 items-center justify-center rounded-xl"
-            style={{ background: "rgba(255,255,255,0.30)" }}
+            style={{ background: "rgba(218,119,86,0.14)" }}
           >
-            <Lightbulb className="w-5 h-5 text-white" strokeWidth={2} />
+            <Lightbulb
+              className="w-5 h-5"
+              style={{ color: C.primary }}
+              strokeWidth={2}
+            />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-black" style={{ color: "#070707" }}>
+            <p
+              className="text-[13px] font-black"
+              style={{ color: C.textMain }}
+            >
               Creating Systems &amp; SOPs
             </p>
             <p
               className="text-[11px] font-semibold"
-              style={{ color: "rgba(0,0,0,0.55)" }}
+              style={{ color: C.textMuted }}
             >
               Click to view tips for building effective SOPs
             </p>
@@ -1720,12 +1854,12 @@ const SystemAndSOP = () => {
           <div className="flex shrink-0 items-center gap-1">
             <button
               className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
-              style={{ background: "rgba(255,255,255,0.20)", color: "#fff" }}
+              style={{ background: "rgba(218,119,86,0.12)", color: C.primary }}
               onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
+                (e.currentTarget.style.background = "rgba(218,119,86,0.18)")
               }
               onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
+                (e.currentTarget.style.background = "rgba(218,119,86,0.12)")
               }
             >
               <ChevronRight className="w-4 h-4" />
@@ -1733,12 +1867,12 @@ const SystemAndSOP = () => {
             <button
               onClick={() => setBannerVisible(false)}
               className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
-              style={{ background: "rgba(255,255,255,0.20)", color: "#fff" }}
+              style={{ background: "rgba(218,119,86,0.12)", color: C.primary }}
               onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "rgba(255,255,255,0.38)")
+                (e.currentTarget.style.background = "rgba(218,119,86,0.18)")
               }
               onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "rgba(255,255,255,0.20)")
+                (e.currentTarget.style.background = "rgba(218,119,86,0.12)")
               }
             >
               <X className="w-4 h-4" />
@@ -1769,7 +1903,10 @@ const SystemAndSOP = () => {
               setter: setFilterDept,
               opts: [
                 { value: "all", label: "All Departments" },
-                ...departments.map((d) => ({ value: d.value, label: d.label })),
+                ...departments.map((d) => ({
+                  value: d.value,
+                  label: d.label,
+                })),
               ],
             },
             {
@@ -1870,8 +2007,12 @@ const SystemAndSOP = () => {
               }}
               className="text-[11px] font-black underline underline-offset-2 transition-colors"
               style={{ color: C.textMuted }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = C.primary)}
-              onMouseLeave={(e) => (e.currentTarget.style.color = C.textMuted)}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.color = C.primary)
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.color = C.textMuted)
+              }
             >
               Clear All
             </button>
@@ -1913,7 +2054,7 @@ const SystemAndSOP = () => {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="rounded-2xl border p-5 space-y-3 animate-pulse"
+              className="rounded-2xl border p-5 space-y-3"
               style={{ borderColor: C.primaryBord, background: C.cardBg }}
             >
               <Shimmer w="50%" h={18} />
@@ -2016,7 +2157,9 @@ const SystemAndSOP = () => {
                               onDuplicateClick={() =>
                                 handleDuplicateCard(item, col.key)
                               }
-                              onDeleteClick={() => handleDeleteCard(item.id)}
+                              onDeleteClick={() =>
+                                handleDeleteCard(item.id)
+                              }
                             />
                           ))}
                         </div>
@@ -2032,7 +2175,9 @@ const SystemAndSOP = () => {
             {activeItem && activeColumn ? (
               <div
                 className="w-[min(100vw-2rem,320px)] cursor-grabbing opacity-95"
-                style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.20))" }}
+                style={{
+                  filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.20))",
+                }}
               >
                 <SopKanbanCard
                   item={activeItem}
@@ -2060,9 +2205,16 @@ const SystemAndSOP = () => {
           >
             <FileText
               className="w-14 h-14 mb-4"
-              style={{ color: C.primary, opacity: 0.35, strokeWidth: 1.25 }}
+              style={{
+                color: C.primary,
+                opacity: 0.35,
+                strokeWidth: 1.25,
+              }}
             />
-            <p className="text-[17px] font-black" style={{ color: C.textMain }}>
+            <p
+              className="text-[17px] font-black"
+              style={{ color: C.textMain }}
+            >
               No systems found
             </p>
             <p

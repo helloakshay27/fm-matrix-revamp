@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem, CircularProgress, FormHelperText } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store/store';
@@ -54,6 +54,16 @@ interface LocationSelectorProps {
     groupId?: string;
     subGroupId?: string;
   };
+  initialValues?: {
+    siteId?: number | null;
+    buildingId?: number | null;
+    wingId?: number | null;
+    areaId?: number | null;
+    floorId?: number | null;
+    roomId?: number | null;
+    groupId?: number | null;
+    subGroupId?: number | null;
+  };
 }
 
 export const LocationSelector: React.FC<LocationSelectorProps> = ({
@@ -78,7 +88,8 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     floorId: '',
     groupId: '',
     subGroupId: '',
-  }
+  },
+  initialValues,
 }) => {
   const dispatch = useDispatch<AppDispatch>();
   const {
@@ -101,14 +112,42 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
     loading,
   } = useSelector((state: RootState) => state.serviceLocation);
 
-  console.log(buildings)
+  const lastAppliedBuildingId = useRef<number | null>(null);
+
+  // Apply initialValues to Redux store (for edit mode pre-population)
+  useEffect(() => {
+    if (!initialValues?.buildingId) return;
+    if (initialValues.buildingId === lastAppliedBuildingId.current) return;
+    lastAppliedBuildingId.current = initialValues.buildingId;
+
+    if (initialValues.siteId) {
+      dispatch(setSelectedSite(initialValues.siteId));
+      dispatch(fetchBuildings(initialValues.siteId));
+    }
+    dispatch(setSelectedBuilding(initialValues.buildingId));
+    dispatch(fetchWings(initialValues.buildingId));
+    dispatch(fetchAreas(initialValues.buildingId));
+    dispatch(fetchFloors(initialValues.buildingId));
+    dispatch(fetchRooms(initialValues.buildingId));
+
+    if (initialValues.wingId) dispatch(setSelectedWing(initialValues.wingId));
+    if (initialValues.areaId) dispatch(setSelectedArea(initialValues.areaId));
+    if (initialValues.floorId) dispatch(setSelectedFloor(initialValues.floorId));
+    if (initialValues.roomId) dispatch(setSelectedRoom(initialValues.roomId));
+    if (initialValues.groupId) {
+      dispatch(setSelectedGroup(initialValues.groupId));
+      dispatch(fetchSubGroups(initialValues.groupId));
+    }
+    if (initialValues.subGroupId) dispatch(setSelectedSubGroup(initialValues.subGroupId));
+  }, [initialValues?.buildingId]);
 
   // Load sites and groups on component mount, and auto-select user's site
   useEffect(() => {
     dispatch(fetchSites());
     dispatch(fetchGroups());
 
-    // Auto-set site based on user's current site
+    // Auto-set site based on user's current site (skip if initialValues will handle it)
+    if (initialValues?.siteId || initialValues?.buildingId) return;
     const userSiteId = localStorage.getItem('selectedSiteId') || localStorage.getItem('siteId');
     if (userSiteId && !selectedSiteId) {
       const siteId = Number(userSiteId);

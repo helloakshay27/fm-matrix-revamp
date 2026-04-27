@@ -434,6 +434,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           return;
         }
 
+        if (isPulseSite) {
+          navigate("/", { replace: true });
+          return;
+        }
+
         // PRIORITY 3: Company ID-based routing for specific companies
         if (
           response.company_id === 300 ||
@@ -459,8 +464,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           navigate("/dashboard");
         } else if (isViSite) {
           navigate("/safety/m-safe/internal");
-        } else if (isPulseSite) {
-          navigate("/maintenance/ticket");
         } else {
           navigate(from, { replace: true });
         }

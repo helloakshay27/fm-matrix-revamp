@@ -56,7 +56,9 @@ const Index = () => {
       // Skip Employee Sidebar and Employee Projects Sidebar modules
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       ) {
         continue;
       }
@@ -187,8 +189,6 @@ const Index = () => {
       navigate("/safety/m-safe/internal", { replace: true });
     } else if (isClubSite) {
       navigate("/club-management/membership", { replace: true });
-    } else if (isPulseSite) {
-      navigate("/maintenance/ticket", { replace: true });
     } else {
       navigate("/maintenance/asset", { replace: true });
     }

@@ -7,12 +7,12 @@ const C = {
   primary: "#DA7756",
   primaryHov: "#c9673f",
   primaryBg: "#fdf9f7",
-  primaryTint: "rgba(218,119,86,0.06)",
+  primaryTint: "#F6F4EE",
   primaryBord: "#e8e3de",
   primaryBordStrong: "#d4cdc6",
   pageBg: "#f6f4ee",
   cardBg: "#ffffff",
-  tealBg: "#9EC8BA",
+  tealBg: "#f6f4ee",
   textMain: "#1a1a1a",
   textMuted: "#6b7280",
   borderLgt: "#ebebeb",
@@ -361,7 +361,7 @@ const ThemeStyle = () => (
 // ── Icons ──
 const TrendIcon = () => (
   <svg
-    style={{ width: 17, height: 17, color: "#1a1a1a" }}
+    style={{ width: 17, height: 17, color: C.primary }}
     fill="none"
     viewBox="0 0 24 24"
     stroke="currentColor"
@@ -939,7 +939,6 @@ export const CriticalNumbers = () => {
               width: 36,
               height: 36,
               borderRadius: 10,
-              background: "rgba(255,255,255,0.30)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

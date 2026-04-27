@@ -33,7 +33,8 @@ import {
     CloudUpload,
     AttachFile,
     PersonAdd,
-    ChevronRight
+    ChevronRight,
+    EditOutlined
 } from '@mui/icons-material';
 import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
@@ -57,14 +58,28 @@ const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.
 interface Customer {
     id: string;
     name: string;
+    company_name?: string;
     email: string;
     currency: string;
     billingAddress: string;
     shippingAddress: string;
+    address?: string;
+    address2?: string;
+    state?: string;
     customerType: string;
     paymentTerms: string;
+    payment_terms?: string;
     portalStatus: string;
     language: string;
+    gst_preference?: string;
+    gst_treatment?: string;
+    gstin?: string;
+    mobile1?: string;
+    mobile2?: string;
+    billing_address?: CustomerAddress;
+    shipping_address?: CustomerAddress;
+    default_billing_address?: CustomerAddress;
+    default_shipping_address?: CustomerAddress;
     outstandingReceivables: number;
     unusedCredits: number;
     contactPersons: ContactPerson[];
@@ -121,6 +136,22 @@ interface Item {
 interface ExternalUser {
     name: string;
     email: string;
+}
+
+interface CustomerAddress {
+    id: string | number;
+    attention?: string;
+    address: string;
+    address_line_two?: string;
+    country?: string;
+    state?: string;
+    city?: string;
+    pin_code?: string;
+    telephone_number?: string;
+    fax_number?: string;
+    mobile?: string;
+    address_type?: 'billing' | 'shipping' | string;
+    default_address?: boolean;
 }
 
 export const VendorCreditsAdd: React.FC = () => {
@@ -227,9 +258,37 @@ export const VendorCreditsAdd: React.FC = () => {
     const [selectedContactPersons, setSelectedContactPersons] = useState<number[]>([]);
 
     // Address
+    const emptyAddressForm: CustomerAddress = {
+        id: '',
+        attention: '',
+        address: '',
+        address_line_two: '',
+        country: 'India',
+        state: '',
+        city: '',
+        pin_code: '',
+        telephone_number: '',
+        fax_number: '',
+        mobile: '',
+        address_type: 'billing',
+        default_address: false
+    };
     const [billingAddress, setBillingAddress] = useState('');
     const [shippingAddress, setShippingAddress] = useState('');
     const [sameAsBilling, setSameAsBilling] = useState(false);
+    const [billingAddressBook, setBillingAddressBook] = useState<CustomerAddress[]>([]);
+    const [shippingAddressBook, setShippingAddressBook] = useState<CustomerAddress[]>([]);
+    const [selectedBillingAddressId, setSelectedBillingAddressId] = useState<number | string | null>(null);
+    const [selectedShippingAddressId, setSelectedShippingAddressId] = useState<number | string | null>(null);
+    const [addressListModalOpen, setAddressListModalOpen] = useState(false);
+    const [addressFormModalOpen, setAddressFormModalOpen] = useState(false);
+    const [activeAddressType, setActiveAddressType] = useState<'billing' | 'shipping'>('billing');
+    const [addressFormMode, setAddressFormMode] = useState<'new' | 'edit'>('new');
+    const [editingAddressId, setEditingAddressId] = useState<number | string | null>(null);
+    const [addressForm, setAddressForm] = useState<CustomerAddress>(emptyAddressForm);
+    const [gstModalOpen, setGstModalOpen] = useState(false);
+    const [gstTreatmentDraft, setGstTreatmentDraft] = useState('');
+    const [gstinDraft, setGstinDraft] = useState('');
 
     // Sales Order Details
     const [salesOrderNumber, setSalesOrderNumber] = useState('');
@@ -264,6 +323,89 @@ export const VendorCreditsAdd: React.FC = () => {
     const [sourceOfSupply, setSourceOfSupply] = useState("");
     const [destinationOfSupply, setDestinationOfSupply] = useState("");
     const [orgState, setOrgState] = useState("");
+    const gstTreatmentOptions = [
+        { value: 'registered_regular', label: 'Registered Business - Regular' },
+        { value: 'registered_composition', label: 'Registered Business - Composition' },
+        { value: 'unregistered', label: 'Unregistered Business' },
+        { value: 'consumer', label: 'Consumer' },
+        { value: 'overseas', label: 'Overseas' },
+        { value: 'sez_unit', label: 'Special Economic Zone (SEZ) Unit' },
+        { value: 'deemed_export', label: 'Deemed Export' },
+        { value: 'tax_deductor', label: 'Tax Deductor' },
+        { value: 'sez_developer', label: 'SEZ Developer' },
+        { value: 'isd', label: 'Input Service Distributor (ISD)' }
+    ];
+    const getGstTreatmentLabel = (value?: string) =>
+        gstTreatmentOptions.find(opt => opt.value === value)?.label || value || '—';
+    const mapAddress = (address: any, fallbackType: 'billing' | 'shipping'): CustomerAddress => ({
+        id: address?.id ?? `${fallbackType}-${Date.now()}`,
+        attention: address?.attention || address?.contact_person || '',
+        address: address?.address || '',
+        address_line_two: address?.address_line_two || '',
+        country: address?.country || 'India',
+        state: address?.state || '',
+        city: address?.city || '',
+        pin_code: address?.pin_code || '',
+        telephone_number: address?.telephone_number || '',
+        fax_number: address?.fax_number || '',
+        mobile: address?.mobile || '',
+        address_type: address?.address_type || fallbackType,
+        default_address: !!address?.default_address
+    });
+    const formatAddressText = (addr?: CustomerAddress | null): string => {
+        if (!addr) return '';
+        return [
+            addr.attention,
+            addr.address,
+            addr.address_line_two,
+            [addr.city, addr.state].filter(Boolean).join(', '),
+            addr.pin_code ? `PIN: ${addr.pin_code}` : '',
+            addr.country,
+            addr.telephone_number ? `Phone: ${addr.telephone_number}` : '',
+            addr.mobile ? `Mobile: ${addr.mobile}` : '',
+            addr.fax_number ? `Fax: ${addr.fax_number}` : '',
+        ].filter(Boolean).join('\n');
+    };
+    const formatInlineAddress = (addr?: CustomerAddress | null) => {
+        if (!addr?.address) return '—';
+        return [
+            addr.address,
+            addr.address_line_two,
+            [addr.city, addr.state].filter(Boolean).join(', '),
+            addr.pin_code,
+            addr.country,
+        ].filter(Boolean).join(', ');
+    };
+    const getAddressBookByType = (type: 'billing' | 'shipping') =>
+        type === 'billing' ? billingAddressBook : shippingAddressBook;
+    const selectedBillingAddress =
+        billingAddressBook.find(a => String(a.id) === String(selectedBillingAddressId)) ||
+        billingAddressBook[0] ||
+        null;
+    const selectedShippingAddress =
+        shippingAddressBook.find(a => String(a.id) === String(selectedShippingAddressId)) ||
+        shippingAddressBook[0] ||
+        null;
+    const openAddressListModal = (type: 'billing' | 'shipping') => {
+        setActiveAddressType(type);
+        setAddressListModalOpen(true);
+    };
+    const openAddressFormModal = (
+        mode: 'new' | 'edit',
+        type: 'billing' | 'shipping',
+        address?: CustomerAddress | null
+    ) => {
+        setActiveAddressType(type);
+        setAddressFormMode(mode);
+        setEditingAddressId(address?.id ?? null);
+        setAddressForm(
+            address
+                ? { ...emptyAddressForm, ...address, address_type: type }
+                : { ...emptyAddressForm, id: `${type}-${Date.now()}`, address_type: type }
+        );
+        setAddressListModalOpen(false);
+        setAddressFormModalOpen(true);
+    };
 
     // Fetch organisation state on mount
     useEffect(() => {
@@ -480,6 +622,97 @@ export const VendorCreditsAdd: React.FC = () => {
                 setLoadingCustomers(false);
             });
     }, []);
+    const fetchSupplierDetails = async (supplierId: string) => {
+        const supplierBaseUrl = localStorage.getItem('baseUrl');
+        const supplierToken = localStorage.getItem('token');
+        if (!supplierId || !supplierBaseUrl) return;
+        try {
+            const res = await axios.get(`https://${supplierBaseUrl}/pms/suppliers/${supplierId}.json`, {
+                headers: {
+                    Authorization: supplierToken ? `Bearer ${supplierToken}` : undefined,
+                    'Content-Type': 'application/json'
+                }
+            });
+            const detail = res.data || {};
+            setSelectedCustomer(prev => prev ? {
+                ...prev,
+                name: detail.company_name || prev.name,
+                company_name: detail.company_name || prev.company_name,
+                email: detail.email || prev.email || '',
+                currency: detail.currency || prev.currency || 'INR',
+                paymentTerms: detail.payment_terms || prev.paymentTerms || '',
+                payment_terms: detail.payment_terms || prev.payment_terms || '',
+                gst_preference: detail.gst_preference || prev.gst_preference || '',
+                gst_treatment: detail.gst_preference || detail.gst_treatment || prev.gst_treatment || '',
+                gstin: detail.primary_gst_detail?.gstin || detail.gstin_number || prev.gstin || '',
+                mobile1: detail.mobile1 || prev.mobile1 || '',
+                mobile2: detail.mobile2 || prev.mobile2 || '',
+                state: detail.state || prev.state || '',
+                address: detail.address || prev.address || '',
+                address2: detail.address2 || prev.address2 || '',
+                billing_address: detail.default_billing_address
+                    ? mapAddress(detail.default_billing_address, 'billing')
+                    : (detail.billing_address ? mapAddress(detail.billing_address, 'billing') : prev.billing_address),
+                shipping_address: detail.default_shipping_address
+                    ? mapAddress(detail.default_shipping_address, 'shipping')
+                    : (detail.shipping_address ? mapAddress(detail.shipping_address, 'shipping') : prev.shipping_address),
+                default_billing_address: detail.default_billing_address
+                    ? mapAddress(detail.default_billing_address, 'billing')
+                    : prev.default_billing_address,
+                default_shipping_address: detail.default_shipping_address
+                    ? mapAddress(detail.default_shipping_address, 'shipping')
+                    : prev.default_shipping_address,
+            } : prev);
+            if (detail.payment_terms) setPaymentTerms(detail.payment_terms);
+        } catch (error) {
+            console.error('Error fetching supplier details:', error);
+        }
+    };
+    const fetchSupplierAddresses = async (supplierId: string, preserveCurrentText = false) => {
+        const supplierBaseUrl = localStorage.getItem('baseUrl');
+        const supplierToken = localStorage.getItem('token');
+        if (!supplierId || !supplierBaseUrl) return;
+        try {
+            const res = await axios.get(
+                `https://${supplierBaseUrl}/pms/suppliers/addresses.json?id=${supplierId}&access_token=${supplierToken}`
+            );
+            const nextBilling = Array.isArray(res.data?.billing_address)
+                ? res.data.billing_address.map((a: any) => mapAddress(a, 'billing'))
+                : [];
+            const nextShipping = Array.isArray(res.data?.shipping_address)
+                ? res.data.shipping_address.map((a: any) => mapAddress(a, 'shipping'))
+                : [];
+            setBillingAddressBook(nextBilling);
+            setShippingAddressBook(nextShipping);
+
+            const finalBilling =
+                nextBilling.find(a => String(a.id) === String(selectedBillingAddressId)) ||
+                nextBilling.find(a => a.default_address) ||
+                nextBilling[0] ||
+                null;
+            const finalShipping =
+                nextShipping.find(a => String(a.id) === String(selectedShippingAddressId)) ||
+                nextShipping.find(a => a.default_address) ||
+                nextShipping[0] ||
+                null;
+
+            setSelectedBillingAddressId(finalBilling?.id ?? null);
+            setSelectedShippingAddressId(finalShipping?.id ?? null);
+
+            if (!preserveCurrentText || !billingAddress) {
+                setBillingAddress(formatAddressText(finalBilling));
+            }
+            if (!preserveCurrentText || !shippingAddress) {
+                setShippingAddress(formatAddressText(finalShipping));
+            }
+            if (finalBilling?.state) setSourceOfSupply(finalBilling.state);
+            if (finalShipping?.state) setDestinationOfSupply(finalShipping.state);
+        } catch (error) {
+            console.error('Error fetching supplier addresses:', error);
+            setBillingAddressBook([]);
+            setShippingAddressBook([]);
+        }
+    };
 
 
     // Account groups and ledgers for sales/purchase account dropdowns
@@ -512,16 +745,22 @@ export const VendorCreditsAdd: React.FC = () => {
         setTermsAndConditions('');
     }, []);
 
-    // When customer is selected
+    // When vendor is selected
     useEffect(() => {
         if (selectedCustomer) {
-            // setBillingAddress(selectedCustomer.billingAddress);
-            // setShippingAddress(selectedCustomer.shippingAddress);
-            setBillingAddress(selectedCustomer.address);
-            setShippingAddress(selectedCustomer.address2);
-            setPaymentTerms(selectedCustomer.paymentTerms);
+            fetchSupplierDetails(selectedCustomer.id);
+            fetchSupplierAddresses(selectedCustomer.id, Boolean(billingAddress || shippingAddress));
+            setPaymentTerms(selectedCustomer.paymentTerms || selectedCustomer.payment_terms || '');
+        } else {
+            setBillingAddressBook([]);
+            setShippingAddressBook([]);
+            setSelectedBillingAddressId(null);
+            setSelectedShippingAddressId(null);
+            setBillingAddress('');
+            setShippingAddress('');
         }
-    }, [selectedCustomer]);
+        // eslint-disable-next-line
+    }, [selectedCustomer?.id]);
 
     // Same as billing address
     useEffect(() => {
@@ -529,6 +768,96 @@ export const VendorCreditsAdd: React.FC = () => {
             setShippingAddress(billingAddress);
         }
     }, [sameAsBilling, billingAddress]);
+    useEffect(() => {
+        if (selectedBillingAddress) {
+            setBillingAddress(formatAddressText(selectedBillingAddress));
+            if (selectedBillingAddress.state) setSourceOfSupply(selectedBillingAddress.state);
+        }
+        // eslint-disable-next-line
+    }, [selectedBillingAddressId, billingAddressBook.length]);
+    useEffect(() => {
+        if (!sameAsBilling && selectedShippingAddress) {
+            setShippingAddress(formatAddressText(selectedShippingAddress));
+            if (selectedShippingAddress.state) setDestinationOfSupply(selectedShippingAddress.state);
+        }
+        // eslint-disable-next-line
+    }, [selectedShippingAddressId, shippingAddressBook.length, sameAsBilling]);
+    const handleSaveAddressForm = async () => {
+        if (!selectedCustomer?.id) {
+            toast.error('Please select a vendor first');
+            return;
+        }
+        const supplierBaseUrl = localStorage.getItem('baseUrl');
+        const supplierToken = localStorage.getItem('token');
+        const formData = new FormData();
+        formData.append('pms_supplier[addresses_attributes][0][address]', addressForm.address || '');
+        formData.append('pms_supplier[addresses_attributes][0][address_type]', activeAddressType);
+        formData.append('pms_supplier[addresses_attributes][0][country]', addressForm.country || 'India');
+        formData.append('pms_supplier[addresses_attributes][0][state]', addressForm.state || '');
+        formData.append('pms_supplier[addresses_attributes][0][city]', addressForm.city || '');
+        formData.append('pms_supplier[addresses_attributes][0][pin_code]', addressForm.pin_code || '');
+        formData.append('pms_supplier[addresses_attributes][0][address_line_two]', addressForm.address_line_two || '');
+        formData.append('pms_supplier[addresses_attributes][0][attention]', addressForm.attention || '');
+        formData.append('pms_supplier[addresses_attributes][0][telephone_number]', addressForm.telephone_number || '');
+        formData.append('pms_supplier[addresses_attributes][0][fax_number]', addressForm.fax_number || '');
+        formData.append('pms_supplier[addresses_attributes][0][mobile]', addressForm.mobile || '');
+        formData.append('pms_supplier[addresses_attributes][0][default_address]', addressForm.default_address ? 'true' : 'false');
+        if (addressFormMode === 'edit' && editingAddressId && !String(editingAddressId).startsWith(`${activeAddressType}-`)) {
+            formData.append('pms_supplier[addresses_attributes][0][id]', String(editingAddressId));
+        }
+        try {
+            await fetch(`https://${supplierBaseUrl}/pms/suppliers/${selectedCustomer.id}.json`, {
+                method: 'PATCH',
+                headers: {
+                    Authorization: supplierToken ? `Bearer ${supplierToken}` : undefined
+                },
+                body: formData
+            });
+            await fetchSupplierAddresses(selectedCustomer.id, false);
+            await fetchSupplierDetails(selectedCustomer.id);
+            setAddressFormModalOpen(false);
+            toast.success(`Supplier ${activeAddressType} address saved`);
+        } catch (error) {
+            console.error('Error saving supplier address:', error);
+            toast.error(`Failed to save ${activeAddressType} address`);
+        }
+    };
+    const openGstModal = () => {
+        setGstTreatmentDraft(selectedCustomer?.gst_preference || selectedCustomer?.gst_treatment || '');
+        setGstinDraft(selectedCustomer?.gstin || '');
+        setGstModalOpen(true);
+    };
+    const handleUpdateGstConfig = async () => {
+        if (!selectedCustomer?.id) {
+            toast.error('Please select a vendor first');
+            return;
+        }
+        const supplierBaseUrl = localStorage.getItem('baseUrl');
+        const supplierToken = localStorage.getItem('token');
+        const formData = new FormData();
+        formData.append('pms_supplier[gst_preference]', gstTreatmentDraft || '');
+        formData.append('pms_supplier[primary_gst_detail_attributes][gst_preference]', gstTreatmentDraft || '');
+        formData.append('pms_supplier[primary_gst_detail_attributes][gstin]', gstinDraft || '');
+        formData.append('pms_supplier[primary_gst_detail_attributes][place_of_supply]', sourceOfSupply || '');
+        try {
+            await fetch(`https://${supplierBaseUrl}/pms/suppliers/${selectedCustomer.id}.json`, {
+                method: 'PATCH',
+                headers: { Authorization: supplierToken ? `Bearer ${supplierToken}` : undefined },
+                body: formData
+            });
+            setSelectedCustomer(prev => prev ? {
+                ...prev,
+                gst_preference: gstTreatmentDraft,
+                gst_treatment: gstTreatmentDraft,
+                gstin: gstinDraft
+            } : prev);
+            setGstModalOpen(false);
+            toast.success('GST details updated');
+        } catch (error) {
+            console.error('Error updating supplier GST:', error);
+            toast.error('Failed to update GST details');
+        }
+    };
 
     // Calculate item amount
     const calculateItemAmount = (item: Item): number => {
@@ -1134,21 +1463,21 @@ export const VendorCreditsAdd: React.FC = () => {
                                         value={selectedCustomer?.id || ''}
                                         onChange={(e) => {
                                             const customer = customers.find(c => c.id === e.target.value);
+                                            setSelectedBillingAddressId(null);
+                                            setSelectedShippingAddressId(null);
+                                            setBillingAddress('');
+                                            setShippingAddress('');
                                             setSelectedCustomer(customer || null);
-                                            // if (customer) {
-                                            //     const vendorState = customer.state || '';
-                                            //     if (vendorState) setSourceOfSupply(vendorState);
-                                            // }
                                         }}
                                         displayEmpty
                                         sx={fieldStyles}
                                     >
-                                        <MenuItem value="" disabled>Select a customer</MenuItem>
+                                        <MenuItem value="" disabled>Select a vendor</MenuItem>
 
                                         {customers.map((customer) => (
                                             <MenuItem key={customer.id} value={customer.id}>
                                                 {customer?.company_name}
-                                            </MenuItem>
+                                            </MenuItem> 
                                         ))}
                                     </Select>
                                 </FormControl>
@@ -1170,16 +1499,15 @@ export const VendorCreditsAdd: React.FC = () => {
 
                         </div>
 
-                        {/* {selectedCustomer && (
+                        {selectedCustomer && (
                             <Button
-                                variant="outlined"
+                                variant="outline"
                                 onClick={() => setCustomerDrawerOpen(true)}
-                                endIcon={<ChevronRight />}
-                                sx={{ textTransform: 'none' }}
+                                className="w-fit"
                             >
-                                View Customer Details
+                                View Vendor Details <ChevronRight className="w-4 h-4 ml-1" />
                             </Button>
-                        )} */}
+                        )}
 
                         {selectedCustomer && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1234,6 +1562,77 @@ export const VendorCreditsAdd: React.FC = () => {
 
                             </div>
                         )}
+
+                        {selectedCustomer && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-100 pt-6">
+                                <div>
+                                    <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                        Billing Address
+                                        <IconButton size="small" onClick={() => openAddressListModal('billing')}>
+                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                        </IconButton>
+                                    </div>
+                                    {selectedBillingAddress?.address ? (
+                                        <div className="text-sm text-gray-700 leading-relaxed">
+                                            <div className="font-medium">{selectedBillingAddress.address}</div>
+                                            {selectedBillingAddress.address_line_two && <div>{selectedBillingAddress.address_line_two}</div>}
+                                            <div>
+                                                {[selectedBillingAddress.city, selectedBillingAddress.state].filter(Boolean).join(", ")}
+                                                {selectedBillingAddress.pin_code ? ` - ${selectedBillingAddress.pin_code}` : ""}
+                                            </div>
+                                            {selectedBillingAddress.country && <div>{selectedBillingAddress.country}</div>}
+                                        </div>
+                                    ) : (
+                                        <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                            New Address
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
+                                        Shipping Address
+                                        <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
+                                            <EditOutlined fontSize="small" className="text-blue-500" />
+                                        </IconButton>
+                                    </div>
+                                    {selectedShippingAddress?.address ? (
+                                        <div className="text-sm text-gray-700 leading-relaxed">
+                                            <div className="font-medium">{selectedShippingAddress.address}</div>
+                                            {selectedShippingAddress.address_line_two && <div>{selectedShippingAddress.address_line_two}</div>}
+                                            <div>
+                                                {[selectedShippingAddress.city, selectedShippingAddress.state].filter(Boolean).join(", ")}
+                                                {selectedShippingAddress.pin_code ? ` - ${selectedShippingAddress.pin_code}` : ""}
+                                            </div>
+                                            {selectedShippingAddress.country && <div>{selectedShippingAddress.country}</div>}
+                                        </div>
+                                    ) : (
+                                        <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
+                                            New Address
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {selectedCustomer && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-500">GST Treatment:</span>
+                                    <span className="text-gray-800">{getGstTreatmentLabel(selectedCustomer.gst_preference || selectedCustomer.gst_treatment)}</span>
+                                    <IconButton size="small" onClick={openGstModal}>
+                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                    </IconButton>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-500">GSTIN:</span>
+                                    <span className="text-gray-800 font-medium">{selectedCustomer.gstin || "—"}</span>
+                                    <IconButton size="small" onClick={openGstModal}>
+                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                    </IconButton>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </Section>
 
@@ -1241,83 +1640,70 @@ export const VendorCreditsAdd: React.FC = () => {
                 <Section title="Address Details" icon={<FileText className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Billing Address
-                            </label>
-                            <TextField
-                                fullWidth
-                                multiline
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-sm font-medium">
+                                    Billing Address
+                                </label>
+                                {selectedCustomer && (
+                                    <IconButton size="small" onClick={() => openAddressListModal('billing')}>
+                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                    </IconButton>
+                                )}
+                            </div>
+                            <textarea
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
                                 rows={4}
-                                value={selectedCustomer?.billing_address?.address
-                                    ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
-                                    : billingAddress}
-                                onChange={(e) => setBillingAddress(e.target.value)}
-                                placeholder="Enter billing address"
-                                disabled={!!selectedCustomer?.billing_address?.address}
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                        display: "flex",
-                                    },
-                                    "& .MuiInputBase-input[aria-hidden='true']": {
-                                        flex: 0,
-                                        width: 0,
-                                        height: 0,
-                                        padding: "0 !important",
-                                        margin: 0,
-                                        display: "none",
-                                    },
-                                    "& .MuiInputBase-input": {
-                                        resize: "none !important",
-                                    },
+                                maxLength={500}
+                                value={billingAddress}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setBillingAddress(e.target.value);
                                 }}
+                                placeholder="Enter billing address"
                             />
+                            <p className="text-xs text-gray-400 text-right mt-1">{billingAddress.length}/500</p>
+                            {selectedCustomer && !selectedBillingAddress && (
+                                <button
+                                    type="button"
+                                    onClick={() => openAddressFormModal('new', 'billing')}
+                                    className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
+                                >
+                                    New Address
+                                </button>
+                            )}
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Shipping Address
-                            </label>
-                            <TextField
-                                fullWidth
-                                multiline
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-sm font-medium">
+                                    Shipping Address
+                                </label>
+                                {selectedCustomer && (
+                                    <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
+                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                    </IconButton>
+                                )}
+                            </div>
+                            <textarea
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
-                                value={selectedCustomer?.shipping_address?.address
-                                    ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
-                                    : shippingAddress}
-                                onChange={(e) => setShippingAddress(e.target.value)}
-                                placeholder="Enter shipping address"
-                                disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
-                                sx={{
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                        display: "flex",
-                                    },
-                                    "& .MuiInputBase-input[aria-hidden='true']": {
-                                        flex: 0,
-                                        width: 0,
-                                        height: 0,
-                                        padding: "0 !important",
-                                        margin: 0,
-                                        display: "none",
-                                    },
-                                    "& .MuiInputBase-input": {
-                                        resize: "none !important",
-                                    },
+                                maxLength={500}
+                                value={shippingAddress}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setShippingAddress(e.target.value);
                                 }}
+                                placeholder="Enter shipping address"
+                                disabled={sameAsBilling}
                             />
-                            {/* <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={sameAsBilling}
-                                        onChange={(e) => setSameAsBilling(e.target.checked)}
-                                    />
-                                }
-                                label="Same as Billing Address"
-                                className="mt-2"
-                            /> */}
+                            <p className="text-xs text-gray-400 text-right mt-1">{shippingAddress.length}/500</p>
+                            {selectedCustomer && !selectedShippingAddress && (
+                                <button
+                                    type="button"
+                                    onClick={() => openAddressFormModal('new', 'shipping')}
+                                    className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block mt-2"
+                                >
+                                    New Address
+                                </button>
+                            )}
                         </div>
                     </div>
                 </Section>
@@ -2160,7 +2546,160 @@ export const VendorCreditsAdd: React.FC = () => {
                 </Button>
             </div>
 
-            {/* Customer Details Drawer */}
+            <Dialog open={addressListModalOpen} onClose={() => setAddressListModalOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>{activeAddressType === 'billing' ? 'Billing Address' : 'Shipping Address'}</DialogTitle>
+                <DialogContent dividers>
+                    <div className="max-h-[420px] overflow-y-auto space-y-3">
+                        {getAddressBookByType(activeAddressType).map((addr) => (
+                            <div
+                                key={addr.id}
+                                className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
+                                    ? 'border-[#C72030] bg-red-50'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                onClick={() => {
+                                    if (activeAddressType === 'billing') setSelectedBillingAddressId(addr.id);
+                                    else setSelectedShippingAddressId(addr.id);
+                                    setAddressListModalOpen(false);
+                                }}
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="space-y-0.5 text-gray-700">
+                                        {addr.attention && <div className="font-semibold">{addr.attention}</div>}
+                                        {addr.address && <div>{addr.address}</div>}
+                                        {addr.address_line_two && <div>{addr.address_line_two}</div>}
+                                        <div>{[addr.city, addr.state].filter(Boolean).join(', ')}{addr.pin_code ? ` ${addr.pin_code}` : ''}</div>
+                                        {addr.country && <div>{addr.country}</div>}
+                                    </div>
+                                    <IconButton
+                                        size="small"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            openAddressFormModal('edit', activeAddressType, addr);
+                                        }}
+                                    >
+                                        <EditOutlined fontSize="small" className="text-blue-500" />
+                                    </IconButton>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </DialogContent>
+                <DialogActions className="!justify-between !px-4">
+                    <button
+                        type="button"
+                        className="text-[#1d4ed8] text-sm font-medium"
+                        onClick={() => openAddressFormModal('new', activeAddressType)}
+                    >
+                        + New address
+                    </button>
+                    <Button variant="outline" onClick={() => setAddressListModalOpen(false)}>Close</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={addressFormModalOpen} onClose={() => setAddressFormModalOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Additional Address</DialogTitle>
+                <DialogContent dividers>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                        <TextField
+                            label="Attention"
+                            fullWidth
+                            value={addressForm.attention}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, attention: e.target.value }))}
+                            className="md:col-span-2"
+                        />
+                        <TextField
+                            label="Country/Region"
+                            fullWidth
+                            value={addressForm.country}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, country: e.target.value }))}
+                            className="md:col-span-2"
+                        />
+                        <TextField
+                            label="Address"
+                            placeholder="Street 1"
+                            fullWidth
+                            value={addressForm.address}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, address: e.target.value }))}
+                            className="md:col-span-2"
+                        />
+                        <TextField
+                            placeholder="Street 2"
+                            fullWidth
+                            value={addressForm.address_line_two}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, address_line_two: e.target.value }))}
+                            className="md:col-span-2"
+                        />
+                        <TextField
+                            label="City"
+                            fullWidth
+                            value={addressForm.city}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, city: e.target.value }))}
+                            className="md:col-span-2"
+                        />
+                        <TextField
+                            label="State"
+                            fullWidth
+                            value={addressForm.state}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, state: e.target.value }))}
+                        />
+                        <TextField
+                            label="Pin Code"
+                            fullWidth
+                            value={addressForm.pin_code}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, pin_code: e.target.value }))}
+                        />
+                        <TextField
+                            label="Phone"
+                            fullWidth
+                            value={addressForm.telephone_number}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, telephone_number: e.target.value }))}
+                            InputProps={{ startAdornment: <InputAdornment position="start">+91</InputAdornment> }}
+                        />
+                        <TextField
+                            label="Fax Number"
+                            fullWidth
+                            value={addressForm.fax_number}
+                            onChange={(e) => setAddressForm(prev => ({ ...prev, fax_number: e.target.value }))}
+                        />
+                    </div>
+                </DialogContent>
+                <DialogActions>
+                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={handleSaveAddressForm}>Save</Button>
+                    <Button variant="outline" onClick={() => setAddressFormModalOpen(false)}>Cancel</Button>
+                </DialogActions>
+            </Dialog>
+
+            <Dialog open={gstModalOpen} onClose={() => setGstModalOpen(false)} maxWidth="xs" fullWidth>
+                <DialogTitle>Configure Tax Preferences</DialogTitle>
+                <DialogContent className="!pt-2">
+                    <div className="space-y-3">
+                        <TextField
+                            label="GST Treatment"
+                            select
+                            fullWidth
+                            value={gstTreatmentDraft}
+                            onChange={(e) => setGstTreatmentDraft(e.target.value)}
+                        >
+                            {gstTreatmentOptions.map((opt) => (
+                                <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                            ))}
+                        </TextField>
+                        <TextField
+                            label="GSTIN"
+                            fullWidth
+                            value={gstinDraft}
+                            onChange={(e) => setGstinDraft(e.target.value.toUpperCase())}
+                        />
+                    </div>
+                </DialogContent>
+                <DialogActions>
+                    <Button className="bg-[#C72030] hover:bg-[#A01020] text-white" onClick={handleUpdateGstConfig}>Update</Button>
+                    <Button variant="outline" onClick={() => setGstModalOpen(false)}>Cancel</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Vendor Details Drawer */}
             <Drawer
                 anchor="right"
                 open={customerDrawerOpen}
@@ -2173,15 +2712,15 @@ export const VendorCreditsAdd: React.FC = () => {
                             <div className="flex items-center gap-3">
                                 <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
                                     <span className="text-xl font-bold text-blue-600">
-                                        {/* {selectedCustomer.contacts.charAt(0)} */}
+                                        {(selectedCustomer.company_name || selectedCustomer.name || 'V').charAt(0).toUpperCase()}
                                     </span>
                                 </div>
                                 <div>
                                     <Typography variant="h6" className="font-bold">
-                                        {selectedCustomer.name}
+                                        {selectedCustomer.company_name || selectedCustomer.name}
                                     </Typography>
                                     <Typography variant="body2" className="text-gray-600">
-                                        {selectedCustomer.email}
+                                        {selectedCustomer.email || '—'}
                                     </Typography>
                                 </div>
                             </div>
@@ -2195,48 +2734,40 @@ export const VendorCreditsAdd: React.FC = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-orange-50 rounded-lg p-4 text-center">
                                 <Typography variant="h6" className="font-bold">
-                                    {/* ₹{typeof selectedCustomer.outstandingReceivables === 'number' ? selectedCustomer.outstandingReceivables.toLocaleString() : '0'} */}
+                                    ₹0.00
                                 </Typography>
                                 <Typography variant="body2" className="text-gray-600">
-                                    Outstanding Receivables
+                                    Outstanding Payables
                                 </Typography>
                             </div>
                             <div className="bg-green-50 rounded-lg p-4 text-center">
                                 <Typography variant="h6" className="font-bold">
-                                    {/* ₹{selectedCustomer.unusedCredits.toLocaleString()} */}
+                                    ₹0.00
                                 </Typography>
                                 <Typography variant="body2" className="text-gray-600">
-                                    Unused Credits
+                                    Advance Balance
                                 </Typography>
                             </div>
                         </div>
 
-                        <div>
-                            <Typography variant="subtitle1" className="font-semibold mb-3">
-                                Contact Details
-                            </Typography>
-                            <div className="space-y-2">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Customer Type</span>
-                                    <span className="font-semibold">{selectedCustomer.customerType}</span>
+                        <div className="border border-gray-200 rounded-lg p-4">
+                            <div className="font-semibold text-gray-700 mb-3 text-sm">Vendor Details</div>
+                            {[
+                                ['Vendor Name', selectedCustomer.company_name || selectedCustomer.name || '—'],
+                                ['Email', selectedCustomer.email || '—'],
+                                ['Mobile', selectedCustomer.mobile1 || selectedCustomer.mobile2 || '—'],
+                                ['Currency', selectedCustomer.currency || 'INR'],
+                                ['Payment Terms', selectedCustomer.payment_terms || selectedCustomer.paymentTerms || '—'],
+                                ['GST Treatment', getGstTreatmentLabel(selectedCustomer.gst_preference || selectedCustomer.gst_treatment)],
+                                ['GSTIN', selectedCustomer.gstin || '—'],
+                                ['Billing Address', formatInlineAddress(selectedCustomer.default_billing_address || selectedCustomer.billing_address)],
+                                ['Shipping Address', formatInlineAddress(selectedCustomer.default_shipping_address || selectedCustomer.shipping_address)],
+                            ].map(([label, value]) => (
+                                <div key={label} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0 gap-4">
+                                    <span className="text-xs text-[#C72030] w-36 shrink-0">{label}</span>
+                                    <span className="text-xs text-gray-700 text-right">{value}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Currency</span>
-                                    <span className="font-semibold">{selectedCustomer.currency}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Payment Terms</span>
-                                    <span className="font-semibold">{selectedCustomer.paymentTerms}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Portal Status</span>
-                                    <span className="font-semibold">{selectedCustomer.portalStatus}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Customer Language</span>
-                                    <span className="font-semibold">{selectedCustomer.language}</span>
-                                </div>
-                            </div>
+                            ))}
                         </div>
 
                         <Divider />
