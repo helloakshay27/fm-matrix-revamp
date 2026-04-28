@@ -82,33 +82,90 @@ const sliderBg = (pct) =>
 
 // ── Icons ──
 const EditIcon = () => (
-  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+  <svg
+    width="15"
+    height="15"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+    />
   </svg>
 );
 const TrashIcon = () => (
-  <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  <svg
+    width="15"
+    height="15"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+    />
   </svg>
 );
 const LoaderIcon = ({ size = 16 }) => (
-  <svg width={size} height={size}
+  <svg
+    width={size}
+    height={size}
     style={{ animation: "spin 0.8s linear infinite", display: "inline-block" }}
-    fill="none" viewBox="0 0 24 24">
-    <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
-    <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <circle
+      style={{ opacity: 0.25 }}
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth={4}
+    />
+    <path
+      style={{ opacity: 0.75 }}
+      fill="currentColor"
+      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+    />
   </svg>
 );
 const CloseIcon = () => (
-  <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  <svg
+    width="18"
+    height="18"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M6 18L18 6M6 6l12 12"
+    />
   </svg>
 );
 const CheckIcon = () => (
-  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+  <svg
+    width="14"
+    height="14"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2.5}
+      d="M5 13l4 4L19 7"
+    />
   </svg>
 );
 
@@ -220,38 +277,121 @@ const UserSelect = ({
         className="bh-fld"
         placeholder={placeholder}
         value={open ? search : displayValue}
-        onClick={() => { setOpen(true); setSearch(""); }}
-        onChange={(e) => { setSearch(e.target.value); setOpen(true); }}
+        onClick={() => {
+          setOpen(true);
+          setSearch("");
+        }}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setOpen(true);
+        }}
         style={{ paddingRight: "32px", width: "100%" }}
       />
-      <div style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", pointerEvents: "none" }}>
-        <svg xmlns="http://www.w3.org/2000/svg" style={{ width: "16px", height: "16px" }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+      <div
+        style={{
+          position: "absolute",
+          right: "12px",
+          top: "50%",
+          transform: "translateY(-50%)",
+          color: "#9ca3af",
+          pointerEvents: "none",
+        }}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          style={{ width: "16px", height: "16px" }}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </div>
       {open && (
-        <div style={{ position: "absolute", bottom: "100%", left: 0, right: 0, marginBottom: "4px", backgroundColor: "#fff", border: `1px solid ${C.borderLgt}`, borderRadius: "12px", boxShadow: "0 -10px 20px rgba(0,0,0,0.08)", maxHeight: "192px", overflowY: "auto", overflowX: "hidden", fontFamily: C.font }}>
+        <div
+          style={{
+            position: "absolute",
+            bottom: "100%",
+            left: 0,
+            right: 0,
+            marginBottom: "4px",
+            backgroundColor: "#fff",
+            border: `1px solid ${C.borderLgt}`,
+            borderRadius: "12px",
+            boxShadow: "0 -10px 20px rgba(0,0,0,0.08)",
+            maxHeight: "192px",
+            overflowY: "auto",
+            overflowX: "hidden",
+            fontFamily: C.font,
+          }}
+        >
           {value && (
             <div
-              style={{ padding: "10px", fontSize: "13px", cursor: "pointer", borderBottom: `1px solid ${C.borderLgt}`, color: "#ef4444", fontWeight: 600 }}
-              onClick={() => { onChange(""); setOpen(false); setSearch(""); }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#fef2f2")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+              style={{
+                padding: "10px",
+                fontSize: "13px",
+                cursor: "pointer",
+                borderBottom: `1px solid ${C.borderLgt}`,
+                color: "#ef4444",
+                fontWeight: 600,
+              }}
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+                setSearch("");
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#fef2f2")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
             >
               Clear Selection
             </div>
           )}
           {filteredUsers.length === 0 ? (
-            <div style={{ padding: "12px", fontSize: "14px", color: C.textMuted, textAlign: "center" }}>No users found</div>
+            <div
+              style={{
+                padding: "12px",
+                fontSize: "14px",
+                color: C.textMuted,
+                textAlign: "center",
+              }}
+            >
+              No users found
+            </div>
           ) : (
             filteredUsers.map((u) => {
-              const name = u.full_name || `${u.firstname || ""} ${u.lastname || ""}`.trim();
+              const name =
+                u.full_name ||
+                `${u.firstname || ""} ${u.lastname || ""}`.trim();
               return (
-                <div key={u.id}
-                  style={{ padding: "10px", cursor: "pointer", fontSize: "13px", borderBottom: `1px solid ${C.borderLgt}`, color: C.textMain }}
-                  onClick={() => { onChange(u.id); setOpen(false); setSearch(""); }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f9fafb")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+                <div
+                  key={u.id}
+                  style={{
+                    padding: "10px",
+                    cursor: "pointer",
+                    fontSize: "13px",
+                    borderBottom: `1px solid ${C.borderLgt}`,
+                    color: C.textMain,
+                  }}
+                  onClick={() => {
+                    onChange(u.id);
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#f9fafb")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "transparent")
+                  }
                 >
                   {name}
                 </div>
@@ -268,10 +408,17 @@ const UserSelect = ({
 const Modal = ({ children, onClose }) => {
   useEffect(() => {
     document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+    };
   }, []);
   return ReactDOM.createPortal(
-    <div className="bh-modal-portal" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      className="bh-modal-portal"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       {children}
     </div>,
     document.body
@@ -282,9 +429,23 @@ const Modal = ({ children, onClose }) => {
 const SkeletonCards = () => (
   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
     {[1, 2, 3, 4].map((n) => (
-      <div key={n} style={{ background: "#f9fafb", borderRadius: 16, padding: 16, border: "1px solid #f3f4f6" }}>
-        <div className="bh-skel" style={{ height: 14, width: "70%", marginBottom: 12 }} />
-        <div className="bh-skel" style={{ height: 5, width: "100%", marginTop: 16 }} />
+      <div
+        key={n}
+        style={{
+          background: "#f9fafb",
+          borderRadius: 16,
+          padding: 16,
+          border: "1px solid #f3f4f6",
+        }}
+      >
+        <div
+          className="bh-skel"
+          style={{ height: 14, width: "70%", marginBottom: 12 }}
+        />
+        <div
+          className="bh-skel"
+          style={{ height: 5, width: "100%", marginTop: 16 }}
+        />
       </div>
     ))}
   </div>
@@ -301,7 +462,11 @@ export const BhagSection = () => {
   const [editingGoalId, setEditingGoalId] = useState(null);
 
   const [isInfoHovered, setIsInfoHovered] = useState(false);
-  const [infoPos, setInfoPos] = useState({ top: 0, left: 0, transform: "translateX(-50%)" });
+  const [infoPos, setInfoPos] = useState({
+    top: 0,
+    left: 0,
+    transform: "translateX(-50%)",
+  });
   const infoBtnRef = useRef(null);
 
   const [bhagStatement, setBhagStatement] = useState("");
@@ -326,14 +491,20 @@ export const BhagSection = () => {
   const fetchBhagStatement = useCallback(async () => {
     try {
       const res = await fetch(
-        apiUrl("/extra_fields?q[group_name_in][]=business_plan_bhag&include_grouped=true"),
+        apiUrl(
+          "/extra_fields?q[group_name_in][]=business_plan_bhag&include_grouped=true"
+        ),
         { method: "GET", headers: authHeaders() }
       );
       if (!res.ok) return;
       const json = await res.json();
       const record = json?.grouped_data?.business_plan_bhag;
       if (!record) return;
-      const stmt = Array.isArray(record.values) ? record.values[0] || "" : typeof record.values === "string" ? record.values : "";
+      const stmt = Array.isArray(record.values)
+        ? record.values[0] || ""
+        : typeof record.values === "string"
+          ? record.values
+          : "";
       if (stmt) setBhagStatement(stmt);
       if (record.video_url) setBhagVideoUrl(record.video_url);
       if (record.target_date) setBhagTargetDate(record.target_date);
@@ -418,7 +589,8 @@ export const BhagSection = () => {
         },
       };
       if (tempGoal?.ownerId) payload.goal.owner_id = Number(tempGoal.ownerId);
-      if (tempVideoUrl.trim()) payload.extra_field.video_url = tempVideoUrl.trim();
+      if (tempVideoUrl.trim())
+        payload.extra_field.video_url = tempVideoUrl.trim();
       if (apiDate) payload.extra_field.target_date = apiDate;
       const res = await fetch(apiUrl("/extra_fields/bulk_upsert"), {
         method: "POST",
@@ -467,13 +639,25 @@ export const BhagSection = () => {
     };
     try {
       const res = editingGoalId
-        ? await fetch(apiUrl(`/goals/${editingGoalId}`), { method: "PUT", headers: authHeaders(), body: JSON.stringify(payload) })
-        : await fetch(apiUrl("/goals"), { method: "POST", headers: authHeaders(), body: JSON.stringify(payload) });
+        ? await fetch(apiUrl(`/goals/${editingGoalId}`), {
+            method: "PUT",
+            headers: authHeaders(),
+            body: JSON.stringify(payload),
+          })
+        : await fetch(apiUrl("/goals"), {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify(payload),
+          });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       closeModal();
       clearCachedGoals();
       fetchGoals();
-      toast.success(editingGoalId ? "Goal updated successfully!" : "Goal created successfully!");
+      toast.success(
+        editingGoalId
+          ? "Goal updated successfully!"
+          : "Goal created successfully!"
+      );
     } catch (err) {
       setSaveError(err.message || "Error saving goal.");
       toast.error(err.message || "Error saving goal.");
@@ -484,12 +668,16 @@ export const BhagSection = () => {
 
   const handleCardSlider = async (id, val) => {
     const c = clamp(val);
-    setInitiatives((prev) => prev.map((i) => (i.id === id ? { ...i, progress: c } : i)));
+    setInitiatives((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, progress: c } : i))
+    );
     try {
       const res = await fetch(apiUrl(`/goals/${id}`), {
         method: "PATCH",
         headers: authHeaders(),
-        body: JSON.stringify({ goal: { progress_percentage: c, current_value: c } }),
+        body: JSON.stringify({
+          goal: { progress_percentage: c, current_value: c },
+        }),
       });
       if (!res.ok) {
         clearCachedGoals();
@@ -504,7 +692,10 @@ export const BhagSection = () => {
   const deleteGoal = async (id) => {
     if (!window.confirm("Delete this initiative?")) return;
     try {
-      const res = await fetch(apiUrl(`/goals/${id}`), { method: "DELETE", headers: authHeaders() });
+      const res = await fetch(apiUrl(`/goals/${id}`), {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       clearCachedGoals();
       fetchGoals();
@@ -539,7 +730,18 @@ export const BhagSection = () => {
   };
 
   const addInitiative = () => {
-    setTempGoal({ title: "", progress: 0, description: "", targetValue: "1", currentValue: "0", unit: "days", period: "BHAG", status: "On Track", ownerId: "", updateRemarks: "" });
+    setTempGoal({
+      title: "",
+      progress: 0,
+      description: "",
+      targetValue: "1",
+      currentValue: "0",
+      unit: "days",
+      period: "BHAG",
+      status: "On Track",
+      ownerId: "",
+      updateRemarks: "",
+    });
     setTempGoalDate("");
     setEditingGoalId(null);
     setSaveError(null);
@@ -607,51 +809,91 @@ export const BhagSection = () => {
                 onMouseLeave={() => setIsInfoHovered(false)}
                 style={{ cursor: "help", display: "inline-flex" }}
               >
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#1a1a1a" style={{ opacity: 0.5 }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  width="13"
+                  height="13"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="#1a1a1a"
+                  style={{ opacity: 0.5 }}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               </span>
             </div>
 
-            {isInfoHovered && ReactDOM.createPortal(
-              <div
-                style={{
-                  position: "absolute",
-                  top: infoPos.top,
-                  left: infoPos.left,
-                  transform: infoPos.transform,
-                  zIndex: 99999,
-                  background: "#0B1221",
-                  color: "#ffffff",
-                  borderRadius: 10,
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-                  padding: "18px 24px",
-                  width: 380,
-                  textAlign: "center",
-                  fontFamily: "'Poppins', sans-serif",
-                  pointerEvents: "none",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                }}
-              >
-                <h4 style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 800 }}>
-                  Long Term - BHAG (Big Hairy Audacious Goal)
-                </h4>
-                <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#ffffff" }}>
-                  A bold 10-15 year goal that defines your ultimate long-term vision. It should seem almost impossible but inspire your entire team, being clear, compelling, and easy to communicate.
-                </p>
-                <p style={{ margin: "0 0 10px 0", fontSize: 11, fontStyle: "italic", color: "#cbd5e1" }}>
-                  From Scaling Up: "A true BHAG is clear and compelling, serves as a unifying focal point, and has a clear finish line."
-                </p>
-                <div style={{ fontSize: 11, color: "#cbd5e1" }}>
-                  <div style={{ fontWeight: 600, marginBottom: 2 }}>Indian Business Example:</div>
-                  <div style={{ fontStyle: "italic" }}>
-                    "Become India's most trusted regional pharma distributor serving 10,000 retailers across 5 states by 2035"
+            {isInfoHovered &&
+              ReactDOM.createPortal(
+                <div
+                  style={{
+                    position: "absolute",
+                    top: infoPos.top,
+                    left: infoPos.left,
+                    transform: infoPos.transform,
+                    zIndex: 99999,
+                    background: "#0B1221",
+                    color: "#ffffff",
+                    borderRadius: 10,
+                    boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                    padding: "18px 24px",
+                    width: 380,
+                    textAlign: "center",
+                    fontFamily: "'Poppins', sans-serif",
+                    pointerEvents: "none",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  <h4
+                    style={{
+                      margin: "0 0 10px 0",
+                      fontSize: 13,
+                      fontWeight: 800,
+                    }}
+                  >
+                    Long Term - BHAG (Big Hairy Audacious Goal)
+                  </h4>
+                  <p
+                    style={{
+                      margin: "0 0 10px 0",
+                      fontSize: 12,
+                      lineHeight: 1.5,
+                      color: "#ffffff",
+                    }}
+                  >
+                    A bold 10-15 year goal that defines your ultimate long-term
+                    vision. It should seem almost impossible but inspire your
+                    entire team, being clear, compelling, and easy to
+                    communicate.
+                  </p>
+                  <p
+                    style={{
+                      margin: "0 0 10px 0",
+                      fontSize: 11,
+                      fontStyle: "italic",
+                      color: "#cbd5e1",
+                    }}
+                  >
+                    From Scaling Up: "A true BHAG is clear and compelling,
+                    serves as a unifying focal point, and has a clear finish
+                    line."
+                  </p>
+                  <div style={{ fontSize: 11, color: "#cbd5e1" }}>
+                    <div style={{ fontWeight: 600, marginBottom: 2 }}>
+                      Indian Business Example:
+                    </div>
+                    <div style={{ fontStyle: "italic" }}>
+                      "Become India's most trusted regional pharma distributor
+                      serving 10,000 retailers across 5 states by 2035"
+                    </div>
                   </div>
-                </div>
-              </div>,
-              document.body
-            )}
+                </div>,
+                document.body
+              )}
           </div>
 
           <button
@@ -677,9 +919,23 @@ export const BhagSection = () => {
 
         {/* ── Video (edge-to-edge) ── */}
         {!isFetching && ytId && (
-          <div style={{ width: "100%", position: "relative", paddingTop: "56.25%", background: "#000" }}>
+          <div
+            style={{
+              width: "100%",
+              position: "relative",
+              paddingTop: "56.25%",
+              background: "#000",
+            }}
+          >
             <iframe
-              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                border: 0,
+              }}
               src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`}
               title="BHAG Vision Video"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -743,8 +999,18 @@ export const BhagSection = () => {
             >
               <span>⚠ {fetchError}</span>
               <button
-                onClick={() => { fetchBhagStatement(); fetchGoals(); }}
-                style={{ fontSize: 12, textDecoration: "underline", background: "none", border: "none", cursor: "pointer", color: "#991b1b" }}
+                onClick={() => {
+                  fetchBhagStatement();
+                  fetchGoals();
+                }}
+                style={{
+                  fontSize: 12,
+                  textDecoration: "underline",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#991b1b",
+                }}
               >
                 Retry
               </button>
@@ -771,20 +1037,59 @@ export const BhagSection = () => {
           {isFetching ? (
             <SkeletonCards />
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: 12,
+              }}
+            >
               {initiatives.length === 0 && !fetchError && (
-                <p style={{ gridColumn: "1/-1", fontSize: 13, color: C.textMuted, fontStyle: "italic", margin: "4px 0" }}>
+                <p
+                  style={{
+                    gridColumn: "1/-1",
+                    fontSize: 13,
+                    color: C.textMuted,
+                    fontStyle: "italic",
+                    margin: "4px 0",
+                  }}
+                >
                   No initiatives found. Add one below.
                 </p>
               )}
               {initiatives.map((ini) => {
-                const ownerObj = usersList.find((u) => String(u.id) === String(ini.ownerId));
-                const displayOwner = ini.ownerName || (ownerObj ? (ownerObj.full_name || `${ownerObj.firstname || ""} ${ownerObj.lastname || ""}`).trim() : "");
+                const ownerObj = usersList.find(
+                  (u) => String(u.id) === String(ini.ownerId)
+                );
+                const displayOwner =
+                  ini.ownerName ||
+                  (ownerObj
+                    ? (
+                        ownerObj.full_name ||
+                        `${ownerObj.firstname || ""} ${ownerObj.lastname || ""}`
+                      ).trim()
+                    : "");
 
                 return (
                   <div key={ini.id} className="bh-card">
-                    <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8, marginBottom: 14 }}>
-                      <div style={{ display: "flex", alignItems: "flex-start", gap: 10, flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        justifyContent: "space-between",
+                        gap: 8,
+                        marginBottom: 14,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: 10,
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
                         <div
                           style={{
                             width: 13,
@@ -796,8 +1101,21 @@ export const BhagSection = () => {
                             marginTop: 3,
                           }}
                         />
-                        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: C.textMain, lineHeight: 1.45 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 6,
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: 14,
+                              fontWeight: 700,
+                              color: C.textMain,
+                              lineHeight: 1.45,
+                            }}
+                          >
                             {ini.title}
                           </span>
                           <div
@@ -817,12 +1135,44 @@ export const BhagSection = () => {
                             BHAG
                           </div>
                           {(displayOwner || ini.targetDate) && (
-                            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 600, color: C.textMuted, marginTop: 2 }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 6,
+                                fontSize: 11,
+                                fontWeight: 600,
+                                color: C.textMuted,
+                                marginTop: 2,
+                              }}
+                            >
                               {displayOwner && <span>• {displayOwner}</span>}
                               {ini.targetDate && (
-                                <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#7e9cff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                                <span
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: 4,
+                                  }}
+                                >
+                                  <svg
+                                    width="12"
+                                    height="12"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="#7e9cff"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  >
+                                    <rect
+                                      x="3"
+                                      y="4"
+                                      width="18"
+                                      height="18"
+                                      rx="2"
+                                      ry="2"
+                                    />
                                     <line x1="16" y1="2" x2="16" y2="6" />
                                     <line x1="8" y1="2" x2="8" y2="6" />
                                     <line x1="3" y1="10" x2="21" y2="10" />
@@ -835,19 +1185,46 @@ export const BhagSection = () => {
                         </div>
                       </div>
                       <div className="bh-card-actions">
-                        <button className="edit" onClick={() => openGoalModal(ini)} title="Edit"><EditIcon /></button>
-                        <button className="del" onClick={() => deleteGoal(ini.id)} title="Delete"><TrashIcon /></button>
+                        <button
+                          className="edit"
+                          onClick={() => openGoalModal(ini)}
+                          title="Edit"
+                        >
+                          <EditIcon />
+                        </button>
+                        <button
+                          className="del"
+                          onClick={() => deleteGoal(ini.id)}
+                          title="Delete"
+                        >
+                          <TrashIcon />
+                        </button>
                       </div>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <div
+                      style={{ display: "flex", alignItems: "center", gap: 10 }}
+                    >
                       <input
-                        type="range" min="0" max="100" step="1"
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="1"
                         value={ini.progress}
-                        onChange={(e) => handleCardSlider(ini.id, e.target.value)}
+                        onChange={(e) =>
+                          handleCardSlider(ini.id, e.target.value)
+                        }
                         className="bh-slider-card"
                         style={{ background: sliderBg(ini.progress) }}
                       />
-                      <span style={{ fontSize: 12, fontWeight: 700, color: C.textMuted, minWidth: 34, textAlign: "right" }}>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          fontWeight: 700,
+                          color: C.textMuted,
+                          minWidth: 34,
+                          textAlign: "right",
+                        }}
+                      >
                         {ini.progress}%
                       </span>
                     </div>
@@ -857,7 +1234,13 @@ export const BhagSection = () => {
             </div>
           )}
 
-          <div style={{ marginTop: 18, display: "flex", justifyContent: "flex-end" }}>
+          <div
+            style={{
+              marginTop: 18,
+              display: "flex",
+              justifyContent: "flex-end",
+            }}
+          >
             <button
               onClick={addInitiative}
               style={{
@@ -871,8 +1254,12 @@ export const BhagSection = () => {
                 cursor: "pointer",
                 transition: "background .15s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#fef6f4")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#fef6f4")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "#ffffff")
+              }
             >
               + Add New Initiative
             </button>
@@ -888,32 +1275,65 @@ export const BhagSection = () => {
                   <div className="bh-modal-dot" />
                   <h2 className="bh-modal-title">Edit BHAG</h2>
                 </div>
-                <button className="bh-close-btn" onClick={closeModal}><CloseIcon /></button>
+                <button className="bh-close-btn" onClick={closeModal}>
+                  <CloseIcon />
+                </button>
               </div>
               <div className="bh-modal-body">
                 {saveError && <div className="bh-error">{saveError}</div>}
                 <FieldGroup>
-                  <label className="bh-label">BHAG Statement <span style={{ color: C.primary }}>*</span></label>
+                  <label className="bh-label">
+                    BHAG Statement <span style={{ color: C.primary }}>*</span>
+                  </label>
                   <textarea
                     value={tempStatement}
                     onChange={(e) => setTempStatement(e.target.value)}
                     placeholder="e.g. Become the leading property management solution in India by 2030"
                     className="bh-fld"
-                    style={{ minHeight: 88, resize: "vertical", fontWeight: 600 }}
+                    style={{
+                      minHeight: 88,
+                      resize: "vertical",
+                      fontWeight: 600,
+                    }}
                   />
                 </FieldGroup>
                 <FieldGroup>
-                  <label className="bh-label">Video URL <span className="bh-label-sub">(Optional)</span></label>
-                  <input type="url" value={tempVideoUrl} onChange={(e) => setTempVideoUrl(e.target.value)} placeholder="https://youtube.com/watch?v=…" className="bh-fld" />
+                  <label className="bh-label">
+                    Video URL <span className="bh-label-sub">(Optional)</span>
+                  </label>
+                  <input
+                    type="url"
+                    value={tempVideoUrl}
+                    onChange={(e) => setTempVideoUrl(e.target.value)}
+                    placeholder="Paste YouTube Video URL..."
+                    className="bh-fld"
+                  />
                 </FieldGroup>
                 <FieldGroup>
-                  <label className="bh-label">Target Date <span className="bh-label-sub">(Optional)</span></label>
-                  <input type="date" value={tempTargetDate} onChange={(e) => setTempTargetDate(e.target.value)} className="bh-fld" />
+                  <label className="bh-label">
+                    Target Date <span className="bh-label-sub">(Optional)</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={tempTargetDate}
+                    onChange={(e) => setTempTargetDate(e.target.value)}
+                    className="bh-fld"
+                  />
                 </FieldGroup>
               </div>
               <div className="bh-modal-ft">
-                <button className="bh-btn-cancel" onClick={closeModal} disabled={isSaving}>Cancel</button>
-                <button className="bh-btn-save" onClick={saveBhagStatement} disabled={isSaving}>
+                <button
+                  className="bh-btn-cancel"
+                  onClick={closeModal}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="bh-btn-save"
+                  onClick={saveBhagStatement}
+                  disabled={isSaving}
+                >
                   {isSaving ? <LoaderIcon /> : <CheckIcon />}
                   {isSaving ? "Saving…" : "Save Vision"}
                 </button>
@@ -928,47 +1348,124 @@ export const BhagSection = () => {
             <div className="bh-goal-modal-box">
               <div className="bh-goal-modal-hd">
                 <div>
-                  <h2 style={{ margin: 0, fontSize: 19, fontWeight: 800, color: C.textMain }}>
-                    {editingGoalId ? "Edit Initiative" : "Create New Initiative"}
+                  <h2
+                    style={{
+                      margin: 0,
+                      fontSize: 19,
+                      fontWeight: 800,
+                      color: C.textMain,
+                    }}
+                  >
+                    {editingGoalId
+                      ? "Edit Initiative"
+                      : "Create New Initiative"}
                   </h2>
-                  <p style={{ margin: "5px 0 0", fontSize: 13, color: C.textMuted }}>
+                  <p
+                    style={{
+                      margin: "5px 0 0",
+                      fontSize: 13,
+                      color: C.textMuted,
+                    }}
+                  >
                     Set a measurable target that contributes to your BHAG
                   </p>
                 </div>
-                <button className="bh-close-btn" onClick={closeModal} style={{ marginTop: 2 }}><CloseIcon /></button>
+                <button
+                  className="bh-close-btn"
+                  onClick={closeModal}
+                  style={{ marginTop: 2 }}
+                >
+                  <CloseIcon />
+                </button>
               </div>
               <div className="bh-goal-modal-body">
                 {saveError && <div className="bh-error">{saveError}</div>}
                 <FieldGroup>
-                  <label className="bh-label">Initiative Title <span style={{ color: C.primary }}>*</span></label>
-                  <input type="text" value={tempGoal.title} placeholder="e.g. Hire B2B Enterprise Sales Head"
-                    onChange={(e) => setTempGoal({ ...tempGoal, title: e.target.value })} className="bh-fld" />
+                  <label className="bh-label">
+                    Initiative Title <span style={{ color: C.primary }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={tempGoal.title}
+                    placeholder="e.g. Hire B2B Enterprise Sales Head"
+                    onChange={(e) =>
+                      setTempGoal({ ...tempGoal, title: e.target.value })
+                    }
+                    className="bh-fld"
+                  />
                 </FieldGroup>
                 <FieldGroup>
                   <label className="bh-label">Description</label>
-                  <textarea placeholder="Add detailed description…" value={tempGoal.description || ""}
-                    onChange={(e) => setTempGoal({ ...tempGoal, description: e.target.value })}
-                    className="bh-fld" style={{ minHeight: 76, resize: "vertical" }} />
+                  <textarea
+                    placeholder="Add detailed description…"
+                    value={tempGoal.description || ""}
+                    onChange={(e) =>
+                      setTempGoal({ ...tempGoal, description: e.target.value })
+                    }
+                    className="bh-fld"
+                    style={{ minHeight: 76, resize: "vertical" }}
+                  />
                 </FieldGroup>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 14,
+                  }}
+                >
                   <FieldGroup>
                     <label className="bh-label">Target Value</label>
-                    <input type="number" step="any" value={tempGoal.targetValue || ""} placeholder="e.g. 100"
-                      onChange={(e) => setTempGoal({ ...tempGoal, targetValue: e.target.value })} className="bh-fld" />
+                    <input
+                      type="number"
+                      step="any"
+                      value={tempGoal.targetValue || ""}
+                      placeholder="e.g. 100"
+                      onChange={(e) =>
+                        setTempGoal({
+                          ...tempGoal,
+                          targetValue: e.target.value,
+                        })
+                      }
+                      className="bh-fld"
+                    />
                   </FieldGroup>
                   <FieldGroup>
                     <label className="bh-label">Target Date</label>
-                    <input type="date" value={tempGoalDate} onChange={(e) => setTempGoalDate(e.target.value)} className="bh-fld" />
+                    <input
+                      type="date"
+                      value={tempGoalDate}
+                      onChange={(e) => setTempGoalDate(e.target.value)}
+                      className="bh-fld"
+                    />
                   </FieldGroup>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr 1fr",
+                    gap: 14,
+                  }}
+                >
                   <FieldGroup>
                     <label className="bh-label">Owner</label>
-                    <UserSelect value={tempGoal.ownerId} onChange={(id) => setTempGoal({ ...tempGoal, ownerId: id })} users={usersList} placeholder="Search owner..." />
+                    <UserSelect
+                      value={tempGoal.ownerId}
+                      onChange={(id) =>
+                        setTempGoal({ ...tempGoal, ownerId: id })
+                      }
+                      users={usersList}
+                      placeholder="Search owner..."
+                    />
                   </FieldGroup>
                   <FieldGroup>
                     <label className="bh-label">Unit</label>
-                    <select value={tempGoal.unit || ""} onChange={(e) => setTempGoal({ ...tempGoal, unit: e.target.value })} className="bh-select">
+                    <select
+                      value={tempGoal.unit || ""}
+                      onChange={(e) =>
+                        setTempGoal({ ...tempGoal, unit: e.target.value })
+                      }
+                      className="bh-select"
+                    >
                       <option value="">Select unit</option>
                       <option value="%">%</option>
                       <option value="days">Days</option>
@@ -978,7 +1475,13 @@ export const BhagSection = () => {
                   </FieldGroup>
                   <FieldGroup>
                     <label className="bh-label">Status</label>
-                    <select value={tempGoal.status || "not_started"} onChange={(e) => setTempGoal({ ...tempGoal, status: e.target.value })} className="bh-select">
+                    <select
+                      value={tempGoal.status || "not_started"}
+                      onChange={(e) =>
+                        setTempGoal({ ...tempGoal, status: e.target.value })
+                      }
+                      className="bh-select"
+                    >
                       <option>Not Started</option>
                       <option>On Track</option>
                       <option>Behind</option>
@@ -988,32 +1491,92 @@ export const BhagSection = () => {
                 </div>
                 {editingGoalId && (
                   <div className="bh-prog-box">
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                      <label style={{ fontSize: 13, fontWeight: 700, color: C.textMain }}>Current Progress</label>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <input type="number" min="0" max="100" step="1" value={tempGoal.progress}
-                          onChange={(e) => handleProgressChange(e.target.value)} className="bh-prog-num" />
-                        <span style={{ fontSize: 13, fontWeight: 700, color: C.textMuted }}>%</span>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 12,
+                      }}
+                    >
+                      <label
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: C.textMain,
+                        }}
+                      >
+                        Current Progress
+                      </label>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
+                      >
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="1"
+                          value={tempGoal.progress}
+                          onChange={(e) => handleProgressChange(e.target.value)}
+                          className="bh-prog-num"
+                        />
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            color: C.textMuted,
+                          }}
+                        >
+                          %
+                        </span>
                       </div>
                     </div>
-                    <input type="range" min="0" max="100" step="1" value={tempGoal.progress}
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={tempGoal.progress}
                       onChange={(e) => handleProgressChange(e.target.value)}
-                      className="bh-slider-modal" style={{ background: sliderBg(tempGoal.progress) }} />
+                      className="bh-slider-modal"
+                      style={{ background: sliderBg(tempGoal.progress) }}
+                    />
                   </div>
                 )}
                 {editingGoalId && (
                   <FieldGroup>
                     <label className="bh-label">Update Remarks</label>
-                    <textarea placeholder="Add notes about progress…" value={tempGoal.updateRemarks || ""}
-                      onChange={(e) => setTempGoal({ ...tempGoal, updateRemarks: e.target.value })}
-                      className="bh-fld" style={{ minHeight: 60, resize: "vertical" }} />
+                    <textarea
+                      placeholder="Add notes about progress…"
+                      value={tempGoal.updateRemarks || ""}
+                      onChange={(e) =>
+                        setTempGoal({
+                          ...tempGoal,
+                          updateRemarks: e.target.value,
+                        })
+                      }
+                      className="bh-fld"
+                      style={{ minHeight: 60, resize: "vertical" }}
+                    />
                   </FieldGroup>
                 )}
               </div>
               <div className="bh-goal-modal-ft">
-                <button onClick={saveGoalDetails} disabled={isSaving} className="bh-btn-full">
+                <button
+                  onClick={saveGoalDetails}
+                  disabled={isSaving}
+                  className="bh-btn-full"
+                >
                   {isSaving && <LoaderIcon />}
-                  {isSaving ? "Saving…" : editingGoalId ? "Save Changes" : "Create Initiative"}
+                  {isSaving
+                    ? "Saving…"
+                    : editingGoalId
+                      ? "Save Changes"
+                      : "Create Initiative"}
                 </button>
               </div>
             </div>

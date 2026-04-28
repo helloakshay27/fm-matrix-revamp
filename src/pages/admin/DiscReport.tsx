@@ -89,6 +89,7 @@ type DiscProfileData = {
   style_code: string;
   profile_name: string;
   score_string: string;
+  scores: Record<DiscLetter, number>;
   date: string;
   email?: string;
 };
@@ -109,7 +110,7 @@ type DiscProfileRow = {
   name: string;
   email: string;
   department: string;
-  discScore: string;
+  scores: Record<DiscLetter, number>;
   style: string;
   styleTone: RowTone;
   profileName: string;
@@ -121,6 +122,7 @@ type DiscProfileRow = {
 type DiscProfileResult = {
   counts: Record<DiscLetter, number>;
   scores: Record<DiscLetter, number>;
+  totalAnswers: number;
   primary: DiscLetter;
   secondary: DiscLetter;
   patternName: string;
@@ -529,35 +531,45 @@ const DIGIT_COLORS = [
 
 // ─── Helpers & Small Components ──────────────────────────────────────────────
 
-function DiscScoreDigits({ score }: { score: string }) {
-  const digits = score.replace(/\D/g, "").slice(0, 4).padStart(4, "0");
+function DiscScoreDigits({ scores }: { scores: Record<DiscLetter, number> }) {
+  const d = scores?.D ?? 0;
+  const i = scores?.I ?? 0;
+  const s = scores?.S ?? 0;
+  const c = scores?.C ?? 0;
+
   return (
-    <span className="inline-flex font-mono text-sm font-semibold tabular-nums">
-      {digits.split("").map((d, i) => (
-        <span key={i} className={DIGIT_COLORS[i] ?? "text-neutral-800"}>
-          {d}
-        </span>
-      ))}
+    <span className="inline-flex font-mono text-sm font-semibold tabular-nums gap-1">
+      <span className={DIGIT_COLORS[0]}>{d}</span>
+      <span className="text-neutral-300">-</span>
+      <span className={DIGIT_COLORS[1]}>{i}</span>
+      <span className="text-neutral-300">-</span>
+      <span className={DIGIT_COLORS[2]}>{s}</span>
+      <span className="text-neutral-300">-</span>
+      <span className={DIGIT_COLORS[3]}>{c}</span>
     </span>
   );
 }
 
-function scoreToPercent(score: number): number {
-  return Math.round((score / 7) * 100);
+function scoreToPercent(score: number, totalAnswers: number = 15): number {
+  if (!totalAnswers || totalAnswers === 0) return 0;
+  return Math.round((score / totalAnswers) * 100);
 }
 
 function DiscDonut({
   score,
+  totalAnswers = 15,
   color,
   label,
 }: {
   score: number;
+  totalAnswers?: number;
   color: string;
   label: string;
 }) {
   const r = 38;
   const c = 2 * Math.PI * r;
-  const pct = Math.min(100, Math.max(0, (score / 7) * 100));
+  const safeTotal = totalAnswers || 1;
+  const pct = Math.min(100, Math.max(0, (score / safeTotal) * 100));
   const dash = (pct / 100) * c;
   return (
     <div className="flex flex-col items-center gap-3">
@@ -808,11 +820,13 @@ function DiscProfileReport({
                         "h-full rounded-full transition-all duration-500",
                         s.fill
                       )}
-                      style={{ width: `${scoreToPercent(sc)}%` }}
+                      style={{
+                        width: `${scoreToPercent(sc, result.totalAnswers)}%`,
+                      }}
                     />
                   </div>
                   <p className="text-center text-xs font-semibold text-neutral-500">
-                    {scoreToPercent(sc)}%
+                    {scoreToPercent(sc, result.totalAnswers)}%
                   </p>
                 </div>
               </div>
@@ -870,7 +884,7 @@ function DiscProfileReport({
               DISC Score Distribution
             </h3>
             <p className="text-xs text-neutral-400">
-              Behavioural dimension scores (out of 7)
+              Behavioural dimension scores (out of {result.totalAnswers || 15})
             </p>
           </div>
         </div>
@@ -879,6 +893,7 @@ function DiscProfileReport({
             <DiscDonut
               key={L}
               score={result.scores[L]}
+              totalAnswers={result.totalAnswers}
               color={DISC_STYLE[L].chart}
               label={DISC_STYLE[L].label}
             />
@@ -921,8 +936,7 @@ function DiscProfileReport({
                   tickLine={false}
                 />
                 <YAxis
-                  domain={[1, 7]}
-                  ticks={[1, 2, 3, 4, 5, 6, 7]}
+                  domain={[0, result.totalAnswers || 15]}
                   axisLine={false}
                   tickLine={false}
                   tick={{ fontSize: 12, fill: "#6b7280" }}
@@ -1163,11 +1177,12 @@ function DetailedProfileModal({
   row: DiscProfileRow;
   onClose: () => void;
 }) {
-  const digits = (row.discScore || "0000").replace(/\D/g, "").padStart(4, "0");
-  const d = Number(digits[0]) || 0;
-  const i = Number(digits[1]) || 0;
-  const s = Number(digits[2]) || 0;
-  const c = Number(digits[3]) || 0;
+  const d = row.scores?.D || 0;
+  const i = row.scores?.I || 0;
+  const s = row.scores?.S || 0;
+  const c = row.scores?.C || 0;
+  const computedTotal = d + i + s + c;
+  const totalAnswers = computedTotal || 15;
 
   const parts = row.style.split("/");
   const primary = (parts[0] || "D") as DiscLetter;
@@ -1176,6 +1191,7 @@ function DetailedProfileModal({
   const profileResult: DiscProfileResult = {
     counts: { D: d, I: i, S: s, C: c },
     scores: { D: d, I: i, S: s, C: c },
+    totalAnswers,
     primary,
     secondary,
     patternName: row.profileName,
@@ -2066,7 +2082,7 @@ const DiscReport = () => {
         name: p.name || "",
         email: p.email || "",
         department: p.department || "N/A",
-        discScore: p.score_string || "",
+        scores: p.scores || { D: 0, I: 0, S: 0, C: 0 },
         style: p.style_code || "",
         styleTone: toneData.tone,
         profileName: p.profile_name || "",
@@ -2109,7 +2125,7 @@ const DiscReport = () => {
           cmp = a.department.localeCompare(b.department);
           break;
         case "score":
-          cmp = Number(a.discScore) - Number(b.discScore);
+          cmp = Number(a.scores?.D || 0) - Number(b.scores?.D || 0); // basic sorting fallback
           break;
         case "style":
           cmp = a.style.localeCompare(b.style);
@@ -2651,7 +2667,7 @@ const DiscReport = () => {
                             {row.department}
                           </td>
                           <td className="px-3 py-3">
-                            <DiscScoreDigits score={row.discScore} />
+                            <DiscScoreDigits scores={row.scores} />
                           </td>
                           <td
                             className={cn(
@@ -2807,7 +2823,7 @@ const DiscReport = () => {
                                   {row.name}
                                 </td>
                                 <td className="px-3 py-3">
-                                  <DiscScoreDigits score={row.discScore} />
+                                  <DiscScoreDigits scores={row.scores} />
                                 </td>
                                 <td
                                   className={cn(

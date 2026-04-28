@@ -47,6 +47,7 @@ const compileMeetingNotes = (historyData: any): string => {
   if (!historyData) return "";
   const memberReports: any[] = historyData.member_reports || [];
   const meetingHeadUid = historyData.config?.meeting_head?.id;
+
   const headMemberReport =
     memberReports.find(
       (r: any) => r.user_id === meetingHeadUid && r.status === "submitted"
@@ -58,23 +59,14 @@ const compileMeetingNotes = (historyData: any): string => {
 
   const meetingNotesData = headMemberReport?.report_data?.meeting_notes || {};
   let rawDiscussionPoints = "";
-  let missedMembers: any[] = [];
-  let detailedReports: any[] = [];
+
+  // Get missed members directly from root data structure
+  let missedMembers: any[] = historyData.missed_members || [];
 
   if (Array.isArray(meetingNotesData)) {
     rawDiscussionPoints = meetingNotesData[0]?.key_discussion_points || "";
-    missedMembers = meetingNotesData[0]?.missed_report_members || [];
-    detailedReports = meetingNotesData[0]?.detailed_reports || [];
-    if (!missedMembers.length) {
-      const dynamicKey = Object.keys(meetingNotesData[0] || {}).find((k) =>
-        k.startsWith("Team Members Who Missed")
-      );
-      if (dynamicKey) missedMembers = meetingNotesData[0][dynamicKey] || [];
-    }
   } else {
     rawDiscussionPoints = meetingNotesData.key_discussion_points || "";
-    missedMembers = meetingNotesData.missed_report_members || [];
-    detailedReports = meetingNotesData.detailed_reports || [];
   }
 
   const keyDiscussionPoints = cleanDiscussionPoints(rawDiscussionPoints);
@@ -100,164 +92,125 @@ const compileMeetingNotes = (historyData: any): string => {
 
   let detailedText = "";
 
-  if (Array.isArray(detailedReports) && detailedReports.length > 0) {
-    detailedReports.forEach((dr: any) => {
-      detailedText += `${dr.name}\n`;
-      detailedText += `**Attendance:** ${dr.attendance === "Absent" ? "✗ Absent" : "✓ Present"}\n`;
-      if (dr.self_rating)
-        detailedText += `**Self Rating:** ${dr.self_rating}\n`;
-      if (Array.isArray(dr.kpis) && dr.kpis.length > 0) {
+  // Always generate directly from member_reports to capture dynamic user data
+  const submittedReports = memberReports.filter(
+    (r: any) => r.status !== "pending" || !!r.daily_report || !!r.report_data
+  );
+
+  submittedReports.forEach((report: any) => {
+    // Check both submitted report_data and drafted daily_report.report_data
+    const rawSource =
+      report.report_data || report.daily_report?.report_data || {};
+
+    let accRaw: any[] = [];
+    if (Array.isArray(rawSource.accomplishments))
+      accRaw = rawSource.accomplishments;
+    else if (Array.isArray(rawSource.accomplishments?.items))
+      accRaw = rawSource.accomplishments.items;
+
+    let tpRaw: any[] = [];
+    if (Array.isArray(rawSource.tomorrow_plan)) tpRaw = rawSource.tomorrow_plan;
+
+    let tasksRaw: any[] = [];
+    if (Array.isArray(rawSource.tasks_issues))
+      tasksRaw = rawSource.tasks_issues;
+
+    const selfRatingVal =
+      rawSource.details?.self_rating ??
+      rawSource.sections?.self_rating ??
+      rawSource.self_rating ??
+      null;
+
+    const isAbsent =
+      rawSource.details?.is_absent ??
+      rawSource.sections?.is_absent ??
+      rawSource.is_absent ??
+      false;
+
+    // Check past_kpis (common in drafts) and kpis
+    const kpis = rawSource.past_kpis || rawSource.kpis || report.kpis || [];
+
+    detailedText += `**${(report.name || "Unknown Member").trim()}**\n`;
+    detailedText += `**Attendance:** ${isAbsent ? "✗ Absent" : "✓ Present"}\n`;
+
+    if (selfRatingVal !== null && selfRatingVal !== undefined) {
+      detailedText += `**Self Rating:** ${selfRatingVal}/10\n`;
+    }
+
+    // Map KPIs correctly
+    if (Array.isArray(kpis) && kpis.length > 0) {
+      detailedText += `**KPIs:**\n`;
+      kpis.forEach((k: any) => {
+        const kpiName = k.name || k.notes || "KPI";
+        const actual = k.actual ?? k.actual_value ?? 0;
+        const target = k.target ?? k.target_value ?? 0;
+        detailedText += `- ${kpiName}: ${actual}/${target} ${k.unit ?? ""}\n`;
+      });
+    } else if (kpis && !Array.isArray(kpis) && typeof kpis === "object") {
+      const kpiEntries = Object.entries(kpis).filter(
+        ([, v]) => v !== null && v !== undefined && v !== "" && v !== "0"
+      );
+      if (kpiEntries.length > 0) {
         detailedText += `**KPIs:**\n`;
-        dr.kpis.forEach((k: any) => {
-          if (k.name)
-            detailedText += `${k.name}: ${k.actual ?? 0}/${k.target ?? 0} ${k.unit ?? ""}\n`;
+        kpiEntries.forEach(([k, v]) => {
+          detailedText += `- ${k}: ${v}\n`;
         });
       }
-      if (Array.isArray(dr.accomplishments) && dr.accomplishments.length > 0) {
-        detailedText += `**Accomplishments:**\n`;
-        dr.accomplishments.forEach((a: any) => {
-          const t = a.text || a.title || "";
-          detailedText += `${a.done ? "✓" : "○"} ${t.trim()}\n`;
-        });
-      }
-      if (Array.isArray(dr.tasks_issues) && dr.tasks_issues.length > 0) {
-        detailedText += `**Tasks & Issues:**\n`;
-        dr.tasks_issues.forEach((t: any) => {
-          const title = t.text || t.title || t.name || "";
-          detailedText += `[${t.status || "open"}] ${title.trim()}\n`;
-        });
-      }
-      if (Array.isArray(dr.tomorrow_plan) && dr.tomorrow_plan.length > 0) {
-        detailedText += `**Tomorrow's Plan:**\n`;
-        dr.tomorrow_plan.forEach((tp: any) => {
-          const t = typeof tp === "string" ? tp : tp.title || tp.text || "";
-          detailedText += `- ${t.trim()}\n`;
-        });
-      }
-      detailedText += `\n---\n\n`;
-    });
-  } else {
-    const submittedReports = memberReports.filter(
-      (r: any) => r.status !== "pending" || !!r.daily_report
-    );
-    submittedReports.forEach((report: any) => {
-      const isPending = report.status === "pending";
-      const hasDraft = !!report.daily_report;
-      const rd = report.report_data || {};
-      const draftRaw = report.daily_report?.report_data || {};
-      const rawSource = isPending && hasDraft ? { ...draftRaw } : rd;
-      const cleanName = (report.name || "").trim();
+    }
 
-      let accRaw: any[] = [];
-      if (Array.isArray(rawSource.accomplishments))
-        accRaw = rawSource.accomplishments;
-      else if (Array.isArray(rawSource.accomplishments?.items))
-        accRaw = rawSource.accomplishments.items;
-      accRaw = accRaw.filter(
-        (item: any) => !item.member || String(item.member).trim() === cleanName
-      );
+    if (accRaw.length > 0) {
+      detailedText += `**Accomplishments:**\n`;
+      accRaw.forEach((item: any) => {
+        const title =
+          item.title ||
+          item.name ||
+          item.text ||
+          (typeof item === "string" ? item : "");
+        const isDone =
+          item.status === "done" ||
+          item.status === "completed" ||
+          item.completed === true ||
+          item.done === true ||
+          item.star === true;
+        if (title) detailedText += `${isDone ? "✓" : "○"} ${title.trim()}\n`;
+      });
+    }
 
-      let tpRaw: any[] = [];
-      if (Array.isArray(rawSource.tomorrow_plan))
-        tpRaw = rawSource.tomorrow_plan;
-      tpRaw = tpRaw.filter(
-        (item: any) => !item.member || String(item.member).trim() === cleanName
-      );
+    if (tasksRaw.length > 0) {
+      detailedText += `**Tasks & Issues:**\n`;
+      tasksRaw.forEach((item: any) => {
+        const title =
+          item.name ||
+          item.title ||
+          item.text ||
+          (typeof item === "string" ? item : "");
+        if (title)
+          detailedText += `[${item.status || "open"}] ${title.trim()}\n`;
+      });
+    }
 
-      let tasksRaw: any[] = [];
-      if (Array.isArray(rawSource.tasks_issues))
-        tasksRaw = rawSource.tasks_issues;
-      tasksRaw = tasksRaw.filter(
-        (item: any) => !item.member || String(item.member).trim() === cleanName
-      );
+    if (rawSource.big_win)
+      detailedText += `**Big Win:** ${rawSource.big_win}\n`;
 
-      const selfRatingVal =
-        rawSource.details?.self_rating ??
-        rawSource.sections?.self_rating ??
-        rawSource.self_rating ??
-        draftRaw.details?.self_rating ??
-        draftRaw.sections?.self_rating ??
-        draftRaw.self_rating ??
-        null;
-      const isAbsent =
-        rawSource.details?.is_absent ??
-        rawSource.sections?.is_absent ??
-        rawSource.is_absent ??
-        false;
-      const kpis = Array.isArray(rawSource.kpis)
-        ? rawSource.kpis
-        : rawSource.kpis || report.kpis || {};
+    if (tpRaw.length > 0) {
+      detailedText += `**Tomorrow's Plan:**\n`;
+      tpRaw.forEach((item: any) => {
+        const title =
+          item.title ||
+          item.name ||
+          item.text ||
+          (typeof item === "string" ? item : "");
+        if (title) detailedText += `- ${title.trim()}\n`;
+      });
+    }
 
-      detailedText += `${report.name}\n`;
-      detailedText += `**Attendance:** ${isAbsent ? "✗ Absent" : "✓ Present"}\n`;
-      if (selfRatingVal !== null && selfRatingVal !== undefined)
-        detailedText += `**Self Rating:** ${selfRatingVal}/10\n`;
+    detailedText += `\n---\n\n`;
+  });
 
-      if (Array.isArray(kpis) && kpis.length > 0) {
-        detailedText += `**KPIs:**\n`;
-        kpis.forEach((k: any) => {
-          detailedText += `${k.name}: ${k.actual ?? 0}/${k.target ?? 0} ${k.unit ?? ""}\n`;
-        });
-      } else if (!Array.isArray(kpis)) {
-        const kpiEntries = Object.entries(kpis).filter(
-          ([, v]) => v !== null && v !== undefined && v !== "" && v !== "0"
-        );
-        if (kpiEntries.length > 0) {
-          detailedText += `**KPIs:**\n`;
-          kpiEntries.forEach(([k, v]) => {
-            detailedText += `${k}: ${v}\n`;
-          });
-        }
-      }
-
-      if (accRaw.length > 0) {
-        detailedText += `**Accomplishments:**\n`;
-        accRaw.forEach((item: any) => {
-          const title =
-            item.title ||
-            item.name ||
-            item.text ||
-            (typeof item === "string" ? item : "");
-          const isDone =
-            item.status === "done" ||
-            item.status === "completed" ||
-            item.completed === true ||
-            item.done === true;
-          detailedText += `${isDone ? "✓" : "○"} ${title.trim() || "—"}\n`;
-        });
-      }
-
-      if (tasksRaw.length > 0) {
-        detailedText += `**Tasks & Issues:**\n`;
-        tasksRaw.forEach((item: any) => {
-          const title =
-            item.name ||
-            item.title ||
-            item.text ||
-            (typeof item === "string" ? item : "");
-          if (title) detailedText += `[${item.status || "open"}] ${title}\n`;
-        });
-      }
-
-      if (rawSource.big_win)
-        detailedText += `**Big Win:** ${rawSource.big_win}\n`;
-
-      if (tpRaw.length > 0) {
-        detailedText += `**Tomorrow's Plan:**\n`;
-        tpRaw.forEach((item: any) => {
-          const title =
-            item.title ||
-            item.name ||
-            item.text ||
-            (typeof item === "string" ? item : "");
-          if (title) detailedText += `- ${title}\n`;
-        });
-      }
-      detailedText += `\n---\n\n`;
-    });
+  if (detailedText) {
+    text += `\n---\n\nDETAILED REPORTS\n\n` + detailedText;
   }
 
-  if (detailedText) text += `\n---\n\nDETAILED REPORTS\n\n` + detailedText;
   return text.trim();
 };
 

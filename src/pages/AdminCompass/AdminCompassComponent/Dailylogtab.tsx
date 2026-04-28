@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────
-// DailyLogTab.jsx — Unified Modern Theme
+// DailyLogTab.jsx — Uses Daily Meeting API
 // ─────────────────────────────────────────────
 import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
@@ -26,22 +26,16 @@ import {
   Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchDailyLogsFromAPI, getBaseUrl, getAuthHeaders } from "./Shared";
+import { getBaseUrl, getAuthHeaders } from "./Shared";
 import { toast } from "sonner";
 import ProjectTaskCreateModal from "../../../components/ProjectTaskCreateModal";
 import AddIssueModal from "../../../components/AddIssueModal";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 // ─────────────────────────────────────────────
-// MUI z-index override wrapper
-// Forces MUI Dialog/Modal above ReportDetailModal (z-[9990])
+// MUI z-index override
 // ─────────────────────────────────────────────
-const muiHighZTheme = createTheme({
-  zIndex: {
-    modal: 10001,
-    drawer: 10001,
-  },
-});
+const muiHighZTheme = createTheme({ zIndex: { modal: 10001, drawer: 10001 } });
 const MuiZIndexFix = ({ children }) => (
   <ThemeProvider theme={muiHighZTheme}>{children}</ThemeProvider>
 );
@@ -168,18 +162,33 @@ const CustomSelect = ({
 };
 
 // ─────────────────────────────────────────────
-// Meetings & Departments API
+// API — Daily Meeting (replaces fetchDailyLogsFromAPI)
+// ─────────────────────────────────────────────
+const fetchDailyMeetingData = async ({ meetingId, dateStr }) => {
+  const url = new URL(`${getBaseUrl()}/user_journals/daily_meeting`);
+  url.searchParams.append("date", dateStr);
+  if (meetingId && meetingId !== "all")
+    url.searchParams.append("meeting_id", meetingId);
+  const res = await fetch(url.toString(), {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return await res.json();
+};
+
+// ─────────────────────────────────────────────
+// API — Meetings dropdown
 // ─────────────────────────────────────────────
 const fetchMeetingsAPI = async () => {
   const res = await fetch(`${getBaseUrl()}/daily_meeting_configs`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
-  const raw = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   let json;
   try {
-    json = JSON.parse(raw);
+    json = await res.json();
   } catch {
     json = [];
   }
@@ -202,16 +211,18 @@ const fetchMeetingsAPI = async () => {
   }));
 };
 
+// ─────────────────────────────────────────────
+// API — Departments dropdown
+// ─────────────────────────────────────────────
 const fetchDepartmentsAPI = async () => {
   const res = await fetch(`${getBaseUrl()}/pms/departments.json`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
-  const raw = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   let json;
   try {
-    json = JSON.parse(raw);
+    json = await res.json();
   } catch {
     json = [];
   }
@@ -261,6 +272,9 @@ const scoreColor = (s, status) => {
   return s >= 50 ? "bg-[#2ECC71] text-white" : "bg-[#EB4A4A] text-white";
 };
 
+// ─────────────────────────────────────────────
+// Normalize report_data (same as DailyTab)
+// ─────────────────────────────────────────────
 const normalizeReportData = (rd) => {
   if (!rd || typeof rd !== "object") {
     return {
@@ -290,6 +304,48 @@ const normalizeReportData = (rd) => {
   };
 };
 
+// Resolve the "true" raw source for a report (same as DailyTab)
+const resolveRawSource = (report) => {
+  const rd = report.report_data || {};
+  const draftRaw = report.daily_report?.report_data || {};
+  const hasDraft = !!report.daily_report;
+  const hasReportData = rd && Object.keys(rd).length > 0;
+
+  if (!hasReportData && hasDraft) {
+    return {
+      ...draftRaw,
+      accomplishments:
+        draftRaw.accomplishments?.items ||
+        (Array.isArray(draftRaw.accomplishments)
+          ? draftRaw.accomplishments
+          : []),
+      self_rating:
+        draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? null,
+      total_score: draftRaw.total_score ?? null,
+      is_absent:
+        draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent ?? null,
+    };
+  }
+
+  if (report.status === "pending" && hasDraft) {
+    return {
+      ...draftRaw,
+      accomplishments:
+        draftRaw.accomplishments?.items ||
+        (Array.isArray(draftRaw.accomplishments)
+          ? draftRaw.accomplishments
+          : []),
+      self_rating:
+        draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? null,
+      total_score: draftRaw.total_score ?? null,
+      is_absent:
+        draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent ?? null,
+    };
+  }
+
+  return rd;
+};
+
 const getItemTitle = (item) => {
   if (!item) return "";
   if (typeof item === "string") return item;
@@ -310,17 +366,14 @@ const DAY_MAP = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const checkIsNonWorkingDay = (dateStr, meetingDays) => {
   if (!dateStr || !Array.isArray(meetingDays) || meetingDays.length === 0)
     return false;
-
   const [y, m, d] = dateStr.split("-").map(Number);
   const dateObj = new Date(y, m - 1, d);
   if (isNaN(dateObj)) return false;
-
-  const dayName = DAY_MAP[dateObj.getDay()];
-  return !meetingDays.includes(dayName);
+  return !meetingDays.includes(DAY_MAP[dateObj.getDay()]);
 };
 
 // ─────────────────────────────────────────────
-// FormattedHighlights Component
+// FormattedHighlights
 // ─────────────────────────────────────────────
 const FormattedHighlights = ({ text, isPending }) => {
   if (isPending) {
@@ -342,49 +395,36 @@ const FormattedHighlights = ({ text, isPending }) => {
     );
   }
 
-  const matchFull = text.match(
-    /(\d+)\s*accomplishments?,\s*(\d+)\s*challenges?/i
-  );
-  if (matchFull) {
-    return (
-      <span className="text-[13px] text-[#1A1A1A]">
-        <span className="font-bold">{matchFull[1]}</span> accomplishments,{" "}
-        <span className="font-bold">{matchFull[2]}</span> challenges
-      </span>
-    );
-  }
-
   return <span className="text-[13px] text-[#1A1A1A]">{text}</span>;
 };
 
 // ─────────────────────────────────────────────
-// NEW Report Detail Modal
+// Report Detail Modal
+// Uses /user_journals/:id.json — same as before
 // ─────────────────────────────────────────────
 const ReportDetailModal = ({ log, onClose }) => {
   const [details, setDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // action modals
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
 
-  // quick-action (Add to Plan)
   const [quickActionOpen, setQuickActionOpen] = useState(false);
   const [quickActionText, setQuickActionText] = useState("");
 
-  // feedback state
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [fetchedFeedbacks, setFetchedFeedbacks] = useState([]);
   const [isFetchingFeedbacks, setIsFetchingFeedbacks] = useState(false);
 
-  const isPendingLog = log.status === "pending";
-  const hasValidId = log.id && !String(log.id).startsWith("user-");
+  // log.id is journal_id (or daily_report.id as fallback) from the meeting report
+  const hasValidId =
+    log.id && !String(log.id).startsWith("user-") && log.id !== "null";
 
   const refetchDetails = useCallback(
     async (silent = false) => {
-      if (isPendingLog || !hasValidId) {
+      if (!hasValidId) {
         setIsLoading(false);
         return;
       }
@@ -402,58 +442,44 @@ const ReportDetailModal = ({ log, onClose }) => {
         if (!silent) setIsLoading(false);
       }
     },
-    [log.id, isPendingLog, hasValidId]
+    [log.id, hasValidId]
   );
 
   useEffect(() => {
     refetchDetails(false);
   }, [refetchDetails]);
 
-  // Data Normalization Logic (Identical to DailyTab)
+  // ── Data normalization (identical to DailyTab logic) ──
   const isPending = details?.status === "pending" || log.status === "pending";
   const hasDraft = !!details?.daily_report;
   const draftRaw = details?.daily_report?.report_data || {};
   const rd = details?.report_data || {};
 
-  const rawDisplayRd =
-    isPending && hasDraft
-      ? {
-          ...draftRaw,
-          accomplishments:
-            draftRaw.accomplishments?.items ||
-            (Array.isArray(draftRaw.accomplishments)
-              ? draftRaw.accomplishments
-              : []),
-          self_rating:
-            draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating,
-          total_score: draftRaw.total_score,
-          is_absent:
-            draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent,
-        }
-      : rd;
+  const rawDisplayRd = resolveRawSource(
+    details ||
+      log._raw || { report_data: rd, daily_report: details?.daily_report }
+  );
 
   const displayRd = normalizeReportData(rawDisplayRd);
 
   const cleanName = (log.user || "").trim();
 
-  let filteredAccomplishments =
-    displayRd.accomplishments.length === 0 &&
-    log.highlights &&
-    !isPending &&
-    !hasDraft
-      ? [{ title: log.highlights }]
-      : displayRd.accomplishments;
-
-  filteredAccomplishments = filteredAccomplishments.filter(
-    (item) => !item.member || String(item.member).trim() === cleanName
+  const filteredAccomplishments = displayRd.accomplishments.filter(
+    (item) =>
+      !item.member ||
+      String(item.member).trim().toLowerCase() === cleanName.toLowerCase()
   );
 
   const filteredTasksIssues = displayRd.tasks_issues.filter(
-    (item) => !item.member || String(item.member).trim() === cleanName
+    (item) =>
+      !item.member ||
+      String(item.member).trim().toLowerCase() === cleanName.toLowerCase()
   );
 
   const filteredTomorrowPlan = displayRd.tomorrow_plan.filter(
-    (item) => !item.member || String(item.member).trim() === cleanName
+    (item) =>
+      !item.member ||
+      String(item.member).trim().toLowerCase() === cleanName.toLowerCase()
   );
 
   const sd = draftRaw?.score_details || rd?.score_details || {};
@@ -461,98 +487,115 @@ const ReportDetailModal = ({ log, onClose }) => {
   const kpiAchieved =
     sd.kpi?.points ?? details?.kpis?.score ?? details?.score ?? 0;
   const kpiMax = sd.kpi?.maxPoints ?? 20;
-  const kpiStr = `${kpiAchieved}/${kpiMax}`;
 
   const tasksAchieved = sd.tasksIssues?.points ?? details?.kpis?.tasks ?? 0;
-  const tasksMax = sd.tasksIssues?.maxPoints ?? 20;
-  const tasksStr = `${tasksAchieved}/${tasksMax}`;
+  const tasksMax = sd.tasksIssues?.maxPoints ?? 25;
 
   const issuesAchieved = details?.kpis?.issues ?? 0;
-  const issuesMax = sd.tasksIssues?.maxPoints ?? 20;
-  const issuesStr = `${issuesAchieved}/${issuesMax}`;
 
   const planAchieved = sd.planning?.points ?? details?.kpis?.planning ?? 0;
-  const planMax = sd.planning?.maxPoints ?? 20;
-  const planStr = `${planAchieved}/${planMax}`;
+  const planMax = sd.planning?.maxPoints ?? 25;
 
   const timeAchieved = sd.timing?.points ?? details?.kpis?.timing ?? 0;
-  const timeMax = sd.timing?.maxPoints ?? 20;
-  const timeStr = `${timeAchieved}/${timeMax}`;
+  const timeMax = sd.timing?.maxPoints ?? 25;
 
   const totalScoreStr = Math.round(
-    details?.score ?? rawDisplayRd?.total_score ?? 0
+    details?.score ?? rawDisplayRd?.total_score ?? log.score ?? 0
   );
 
-  // Update Journal Logic
+  const selfRating =
+    rawDisplayRd?.self_rating ??
+    draftRaw?.details?.self_rating ??
+    draftRaw?.sections?.self_rating ??
+    null;
+
+  // ── Update Journal (same as DailyTab's updateJournal) ──
   const updateJournal = async (patch) => {
     if (!hasValidId) {
       toast.error("Journal ID not found.");
       return false;
     }
 
-    const sourceRd =
-      isPending && hasDraft
-        ? normalizeReportData({
-            ...draftRaw,
-            self_rating:
-              draftRaw.details?.self_rating ??
-              draftRaw.sections?.self_rating ??
-              0,
-          })
-        : normalizeReportData({ ...rd, self_rating: rd.self_rating ?? 0 });
+    const rawSource = resolveRawSource(
+      details || { report_data: rd, daily_report: details?.daily_report }
+    );
 
-    const payload = {
-      self_rating: patch.self_rating ?? sourceRd.self_rating,
-      status: "submitted",
-      report_data: {
-        accomplishments: sourceRd.accomplishments,
-        tasks_issues: sourceRd.tasks_issues,
-        big_win: sourceRd.big_win || null,
-        tomorrow_plan: patch.tomorrow_plan_item
-          ? [
-              ...sourceRd.tomorrow_plan,
-              { title: patch.tomorrow_plan_item, member: log.user },
-            ]
-          : sourceRd.tomorrow_plan,
-        kpis: rd.kpis || details?.kpis || {},
-      },
-    };
-
-    try {
-      const res = await fetch(`${getBaseUrl()}/user_journals/${log.id}.json`, {
-        method: "PUT",
-        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return true;
-    } catch (err) {
-      toast.error("Error updating journal: " + err.message);
-      return false;
+    if (patch.tomorrow_plan_item) {
+      const existingPlan = Array.isArray(rawSource.tomorrow_plan)
+        ? rawSource.tomorrow_plan
+        : [];
+      const updatedPlan = [
+        ...existingPlan,
+        { title: patch.tomorrow_plan_item.trim() },
+      ];
+      try {
+        const res = await fetch(
+          `${getBaseUrl()}/user_journals/${log.id}.json`,
+          {
+            method: "PATCH",
+            headers: {
+              ...getAuthHeaders(),
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              report_data: { ...rawSource, tomorrow_plan: updatedPlan },
+            }),
+          }
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return true;
+      } catch (err) {
+        toast.error("Error updating plan: " + err.message);
+        return false;
+      }
     }
+
+    if (patch.self_rating !== undefined) {
+      try {
+        const res = await fetch(
+          `${getBaseUrl()}/user_journals/${log.id}.json`,
+          {
+            method: "PATCH",
+            headers: {
+              ...getAuthHeaders(),
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              self_rating: patch.self_rating,
+              report_data: { ...rawSource, self_rating: patch.self_rating },
+            }),
+          }
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return true;
+      } catch (err) {
+        toast.error("Error updating rating: " + err.message);
+        return false;
+      }
+    }
+
+    return false;
   };
+
+  // ── Feedback ──
   const loadPastFeedbacks = async () => {
     setIsFetchingFeedbacks(true);
     try {
       const loggedInUserId = localStorage.getItem("userId") || "";
+      const targetUserId = log._raw?.user_id || log.userId || "";
       const res = await fetch(
-        `${getBaseUrl()}/ratings?resource_type=User&resource_id=${
-          log._raw?.user_id || log.userId || ""
-        }&rating_from_id=${loggedInUserId}`,
+        `${getBaseUrl()}/ratings?resource_type=User&resource_id=${targetUserId}&rating_from_id=${loggedInUserId}`,
         { method: "GET", headers: getAuthHeaders() }
       );
       if (res.ok) {
         const data = await res.json();
-        let feedbackList = Array.isArray(data)
+        const rawList = Array.isArray(data)
           ? data
           : data.data || data.ratings || [];
-
-        // 🟢 NAYA LOGIC: Sort by date descending (latest top pe aayega)
-        feedbackList.sort(
+        const sorted = [...rawList].sort(
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
         );
-
-        setFetchedFeedbacks(feedbackList);
+        setFetchedFeedbacks(sorted);
       }
     } catch (error) {
       console.error("Failed to fetch feedbacks:", error);
@@ -560,6 +603,7 @@ const ReportDetailModal = ({ log, onClose }) => {
       setIsFetchingFeedbacks(false);
     }
   };
+
   const handleSubmitFeedback = async () => {
     if (feedbackRating === 0) {
       toast.error("Please select a star rating!");
@@ -587,6 +631,7 @@ const ReportDetailModal = ({ log, onClose }) => {
       setFeedbackOpen(false);
       setFeedbackRating(0);
       setFeedbackMessage("");
+      loadPastFeedbacks();
     } catch (err) {
       toast.error("Error adding feedback: " + err.message);
     }
@@ -599,17 +644,15 @@ const ReportDetailModal = ({ log, onClose }) => {
           className="fixed inset-0 z-[9990] flex items-center justify-center p-4 sm:p-6"
           style={{ fontFamily: "'Poppins', sans-serif" }}
         >
-          {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
           />
 
-          {/* Modal */}
           <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[1000px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
             {/* Header */}
             <div className="px-6 py-4 border-b border-[#F0EBE8] flex items-center justify-between bg-white shrink-0">
-              <h2 className="text-xl font-bold text-[#1A1A1A] flex items-center gap-2">
+              <h2 className="text-xl font-bold text-[#1A1A1A]">
                 Daily Report Details
               </h2>
               <button
@@ -621,7 +664,7 @@ const ReportDetailModal = ({ log, onClose }) => {
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto p-0">
+            <div className="flex-1 overflow-y-auto">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center h-60 space-y-4">
                   <RefreshCw className="w-8 h-8 text-[#CE7A5A] animate-spin" />
@@ -630,13 +673,19 @@ const ReportDetailModal = ({ log, onClose }) => {
                   </p>
                 </div>
               ) : (
-                <div className="flex flex-col h-full">
-                  {/* Top Profile Section */}
+                <div className="flex flex-col">
+                  {/* Profile section */}
                   <div className="p-6 bg-white border-b border-[#F0EBE8]">
                     <div className="flex items-start gap-4">
-                      {/* Avatar / Score Circle */}
-                      <div className="flex items-center justify-center w-14 h-14 rounded-full border-[2px] border-[#CE7A5A] text-[#CE7A5A] font-black text-xl shrink-0 bg-white">
-                        {totalScoreStr}
+                      <div className="flex flex-col items-center gap-1 shrink-0">
+                        <div className="flex items-center justify-center w-14 h-14 rounded-full border-[2px] border-[#CE7A5A] text-[#CE7A5A] font-black text-xl bg-white">
+                          {totalScoreStr}
+                        </div>
+                        {selfRating != null && (
+                          <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-1.5 py-0.5 whitespace-nowrap">
+                            ⭐ {selfRating}/10
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex-1 min-w-0">
@@ -655,69 +704,60 @@ const ReportDetailModal = ({ log, onClose }) => {
                               {log.dept}
                             </span>
                           )}
-                          {isPending && !hasDraft ? (
-                            <span className="text-xs font-bold text-white bg-red-500 px-2.5 py-0.5 rounded-full shrink-0">
-                              PENDING
-                            </span>
-                          ) : (
-                            <span className="text-xs font-bold text-green-700 bg-green-100 border border-green-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 shrink-0">
-                              <CheckCircle2 className="w-3.5 h-3.5" /> Submitted
-                            </span>
-                          )}
+                          <span className="text-xs font-bold text-green-700 bg-green-100 border border-green-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Submitted
+                          </span>
                         </div>
 
                         <div className="text-xs font-semibold text-gray-500 mb-3 truncate">
                           {log.email}
-                          {details?.submitted_at && (
+                          {log._raw?.submitted_at && (
                             <span className="ml-2">
-                              • {formatDateTime(details.submitted_at)}
+                              • {formatDateTime(log._raw.submitted_at)}
                             </span>
                           )}
                         </div>
 
-                        {/* KPIs Row Pills */}
-                        {(!isPending || hasDraft) && (
-                          <div className="flex flex-wrap items-center gap-2 mt-1">
-                            <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                              KPI: {kpiStr}
-                            </span>
-                            <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                              Tasks: {tasksStr}
-                            </span>
-                            <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                              Issues: {issuesStr}
-                            </span>
-                            <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                              Planning: {planStr}
-                            </span>
-                            <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                              Timing: {timeStr}
-                            </span>
-                          </div>
-                        )}
+                        {/* KPI Pills */}
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                            KPI: {kpiAchieved}/{kpiMax}
+                          </span>
+                          <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                            Tasks: {tasksAchieved}/{tasksMax}
+                          </span>
+                          <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                            Issues: {issuesAchieved}
+                          </span>
+                          <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                            Planning: {planAchieved}/{planMax}
+                          </span>
+                          <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                            Timing: {timeAchieved}/{timeMax}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="p-6 space-y-6 bg-[#FFFAF8] flex-1">
-                    {/* Status Highlights */}
+                    {/* Status highlights */}
                     <div className="flex flex-wrap gap-3">
-                      {displayRd.self_rating != null && (
+                      {selfRating != null && (
                         <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5 shadow-sm">
                           <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                           <span className="text-sm font-bold text-yellow-800">
-                            Self Rating: {displayRd.self_rating}/10
+                            Self Rating: {selfRating}/10
                           </span>
                         </div>
                       )}
-                      {rawDisplayRd?.total_score !== undefined &&
-                        rawDisplayRd?.total_score !== null && (
-                          <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5 shadow-sm">
-                            <span className="text-sm font-bold text-purple-800">
-                              Total Score: {rawDisplayRd.total_score}
-                            </span>
-                          </div>
-                        )}
+                      {rawDisplayRd?.total_score != null && (
+                        <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5 shadow-sm">
+                          <span className="text-sm font-bold text-purple-800">
+                            Total Score: {rawDisplayRd.total_score}
+                          </span>
+                        </div>
+                      )}
                       {displayRd.is_absent !== null &&
                         displayRd.is_absent !== undefined && (
                           <div
@@ -757,7 +797,7 @@ const ReportDetailModal = ({ log, onClose }) => {
                       </div>
                     )}
 
-                    {/* 3-Column Layout */}
+                    {/* 3-Column: Accomplishments | Tasks & Issues | Tomorrow's Plan */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                       {/* Accomplishments */}
                       <div className="bg-white border border-[#F0E8E3] rounded-xl p-5 shadow-sm">
@@ -865,52 +905,50 @@ const ReportDetailModal = ({ log, onClose }) => {
                     </div>
 
                     {/* Action Buttons */}
-                    {(!isPending || hasDraft) && (
-                      <div className="flex flex-wrap gap-3 pt-2">
-                        <button
-                          onClick={() => setIsTaskModalOpen(true)}
-                          className="flex items-center gap-2 px-5 py-2 text-blue-600 bg-white border border-blue-200 rounded-full text-sm font-bold shadow-sm hover:bg-blue-50 transition-colors"
-                        >
-                          <Plus className="w-4 h-4" /> Add Task
-                        </button>
-                        <button
-                          onClick={() => setIsIssueModalOpen(true)}
-                          className="flex items-center gap-2 px-5 py-2 text-red-600 bg-white border border-red-200 rounded-full text-sm font-bold shadow-sm hover:bg-red-50 transition-colors"
-                        >
-                          <Plus className="w-4 h-4" /> Stuck Issue
-                        </button>
-                        <button
-                          onClick={() => {
-                            setQuickActionOpen(!quickActionOpen);
-                            setQuickActionText("");
-                          }}
-                          className="flex items-center gap-2 px-5 py-2 text-orange-600 bg-white border border-orange-200 rounded-full text-sm font-bold shadow-sm hover:bg-orange-50 transition-colors"
-                        >
-                          <Plus className="w-4 h-4" /> Add to Plan
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (feedbackOpen) {
-                              setFeedbackOpen(false);
-                            } else {
-                              setFeedbackOpen(true);
-                              setFeedbackRating(0);
-                              setFeedbackMessage("");
-                              loadPastFeedbacks();
-                            }
-                          }}
-                          className="flex items-center gap-2 px-5 py-2 text-white bg-purple-600 border border-purple-700 rounded-full text-sm font-bold shadow-sm hover:bg-purple-700 transition-colors"
-                        >
-                          <MessageSquare className="w-4 h-4" /> Feedback
-                        </button>
-                      </div>
-                    )}
+                    <div className="flex flex-wrap gap-3 pt-2">
+                      <button
+                        onClick={() => setIsTaskModalOpen(true)}
+                        className="flex items-center gap-2 px-5 py-2 text-blue-600 bg-white border border-blue-200 rounded-full text-sm font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" /> Add Task
+                      </button>
+                      <button
+                        onClick={() => setIsIssueModalOpen(true)}
+                        className="flex items-center gap-2 px-5 py-2 text-red-600 bg-white border border-red-200 rounded-full text-sm font-bold shadow-sm hover:bg-red-50 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" /> Stuck Issue
+                      </button>
+                      <button
+                        onClick={() => {
+                          setQuickActionOpen(!quickActionOpen);
+                          setQuickActionText("");
+                        }}
+                        className="flex items-center gap-2 px-5 py-2 text-orange-600 bg-white border border-orange-200 rounded-full text-sm font-bold shadow-sm hover:bg-orange-50 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" /> Add to Plan
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (feedbackOpen) {
+                            setFeedbackOpen(false);
+                          } else {
+                            setFeedbackOpen(true);
+                            setFeedbackRating(0);
+                            setFeedbackMessage("");
+                            loadPastFeedbacks();
+                          }
+                        }}
+                        className="flex items-center gap-2 px-5 py-2 text-white bg-purple-600 border border-purple-700 rounded-full text-sm font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                      >
+                        <MessageSquare className="w-4 h-4" /> Feedback
+                      </button>
+                    </div>
 
-                    {/* Quick Action Block (Add to Plan) */}
+                    {/* Quick Add to Plan */}
                     {quickActionOpen && (
-                      <div className="bg-white border border-orange-100 rounded-2xl p-5 shadow-sm mt-4">
+                      <div className="bg-white border border-orange-100 rounded-2xl p-5 shadow-sm">
                         <p className="text-xs font-black text-orange-800 uppercase tracking-widest mb-3 flex items-center gap-2">
-                          <Plus className="w-4 h-4" /> Quick Actions
+                          <Plus className="w-4 h-4" /> Add to Tomorrow's Plan
                         </p>
                         <div className="flex items-center gap-3">
                           <input
@@ -971,16 +1009,16 @@ const ReportDetailModal = ({ log, onClose }) => {
 
                     {/* Feedback Block */}
                     {feedbackOpen && (
-                      <div className="bg-white border border-purple-100 rounded-2xl p-6 shadow-sm mt-4">
+                      <div className="bg-white border border-purple-100 rounded-2xl p-6 shadow-sm">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                          {/* Add New Feedback */}
+                          {/* Left: Add new feedback */}
                           <div>
                             <p className="text-xs font-black text-purple-800 uppercase tracking-widest mb-4 flex items-center gap-2">
                               <MessageSquare className="w-4 h-4" /> Provide
                               Feedback
                             </p>
                             <p className="text-sm font-bold text-neutral-800 mb-2">
-                              Rating (1-5 stars)
+                              Rating (1–5 stars)
                             </p>
                             <div className="flex items-center gap-1.5 mb-5">
                               {[1, 2, 3, 4, 5].map((star) => (
@@ -1046,8 +1084,8 @@ const ReportDetailModal = ({ log, onClose }) => {
                             </div>
                           </div>
 
-                          {/* Recent Feedbacks */}
-                          <div className="bg-[#FAF7F5] rounded-xl p-6 border border-[#EAE3DF] h-full flex flex-col">
+                          {/* Right: Recent feedbacks */}
+                          <div className="bg-[#FAF7F5] rounded-xl p-6 border border-[#EAE3DF] flex flex-col">
                             <div className="flex items-center justify-between mb-5">
                               <p className="text-xs font-black text-neutral-500 uppercase tracking-widest">
                                 Recent Feedbacks
@@ -1078,7 +1116,7 @@ const ReportDetailModal = ({ log, onClose }) => {
                               <div className="space-y-4 overflow-y-auto pr-2 flex-1">
                                 {fetchedFeedbacks.slice(0, 3).map((fb, idx) => (
                                   <div
-                                    key={idx}
+                                    key={fb.id ?? idx}
                                     className="bg-white p-4 rounded-xl shadow-sm border border-gray-100"
                                   >
                                     <div className="flex items-center gap-1 mb-2">
@@ -1097,7 +1135,11 @@ const ReportDetailModal = ({ log, onClose }) => {
                                         <span className="text-[10px] text-gray-400 ml-auto font-bold">
                                           {new Date(
                                             fb.created_at
-                                          ).toLocaleDateString()}
+                                          ).toLocaleDateString("en-IN", {
+                                            day: "numeric",
+                                            month: "short",
+                                            year: "2-digit",
+                                          })}
                                         </span>
                                       )}
                                     </div>
@@ -1129,7 +1171,7 @@ const ReportDetailModal = ({ log, onClose }) => {
             </div>
           </div>
 
-          {/* Action Modals */}
+          {/* Add Task slide-over */}
           {isTaskModalOpen && (
             <MuiZIndexFix>
               <div className="fixed inset-0 z-[10000] flex justify-end">
@@ -1188,7 +1230,7 @@ const ReportDetailModal = ({ log, onClose }) => {
 };
 
 // ─────────────────────────────────────────────
-// DailyLogTab — main component
+// DailyLogTab — Main Component
 // ─────────────────────────────────────────────
 const DailyLogTab = () => {
   const [selectedDate, setSelectedDate] = useState(
@@ -1205,44 +1247,9 @@ const DailyLogTab = () => {
 
   const [departments, setDepartments] = useState([]);
   const [isFetchingDepts, setIsFetchingDepts] = useState(false);
-  const loadDepartments = useCallback(async () => {
-    setIsFetchingDepts(true);
-    try {
-      setDepartments(await fetchDepartmentsAPI());
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsFetchingDepts(false);
-    }
-  }, []);
-  useEffect(() => {
-    loadDepartments();
-  }, [loadDepartments]);
 
   const [meetings, setMeetings] = useState([]);
   const [isFetchingMeetings, setIsFetchingMeetings] = useState(false);
-  const loadMeetings = useCallback(async () => {
-    setIsFetchingMeetings(true);
-    try {
-      const data = await fetchMeetingsAPI();
-      setMeetings(data);
-      if (data.length > 0) {
-        const defaultMeeting = data.find((m) => m.is_default);
-        if (defaultMeeting) {
-          setSelectedMeetingFilter(defaultMeeting.id);
-        } else {
-          setSelectedMeetingFilter(data[0].id);
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsFetchingMeetings(false);
-    }
-  }, []);
-  useEffect(() => {
-    loadMeetings();
-  }, [loadMeetings]);
 
   const [apiLogs, setApiLogs] = useState([]);
   const [groupedApiLogs, setGroupedApiLogs] = useState({});
@@ -1254,52 +1261,115 @@ const DailyLogTab = () => {
 
   const [selectedReport, setSelectedReport] = useState(null);
 
-  // NOTE: For main screen Add Task button if implemented.
-  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
-
+  // ── Debounce search ──
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchQuery), 500);
     return () => clearTimeout(t);
   }, [searchQuery]);
 
+  // ── Load departments ──
+  const loadDepartments = useCallback(async () => {
+    setIsFetchingDepts(true);
+    try {
+      setDepartments(await fetchDepartmentsAPI());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsFetchingDepts(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDepartments();
+  }, [loadDepartments]);
+
+  // ── Load meetings ──
+  const loadMeetings = useCallback(async () => {
+    setIsFetchingMeetings(true);
+    try {
+      const data = await fetchMeetingsAPI();
+      setMeetings(data);
+      if (data.length > 0) {
+        const defaultMeeting = data.find((m) => m.is_default);
+        setSelectedMeetingFilter(
+          defaultMeeting ? defaultMeeting.id : data[0].id
+        );
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsFetchingMeetings(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadMeetings();
+  }, [loadMeetings]);
+
+  // ── Load data from daily_meeting API ──
   const loadData = useCallback(async () => {
     if (!selectedMeetingFilter) return;
     setIsLoading(true);
     setApiError(null);
+
     try {
-      const response = await fetchDailyLogsFromAPI({
+      const json = await fetchDailyMeetingData({
         meetingId: selectedMeetingFilter,
         dateStr: selectedDate,
-        isGrouped: false,
-        departmentId: selectedDeptId,
-        search: debouncedSearch,
       });
 
-      const configDays =
-        response?.config?.meeting_days ??
-        response?.data?.config?.meeting_days ??
-        [];
+      const data = json.data || json;
+
+      // Non-working day detection
+      const configDays = data?.config?.meeting_days ?? [];
       setMeetingDays(configDays);
       setIsNonWorkingDay(checkIsNonWorkingDay(selectedDate, configDays));
 
-      let logsArray = Array.isArray(response)
-        ? response
-        : Array.isArray(response?.reports)
-          ? response.reports
-          : Array.isArray(response?.data?.reports)
-            ? response.data.reports
-            : [];
-
-      logsArray = logsArray.filter(
-        (log) => log.status && log.status.toLowerCase().trim() === "submitted"
+      // Show anyone who has submitted OR has a draft — exclude only pure pending (no draft at all)
+      const allReports = data?.member_reports || data?.reports || [];
+      const submittedReports = allReports.filter(
+        (r) => r.status !== "pending" || !!r.daily_report
       );
 
+      // Map to table row format
+      let logsArray = submittedReports.map((report) => {
+        const rawRd = resolveRawSource(report);
+        const rd = normalizeReportData(rawRd);
+
+        // Build highlights summary from accomplishments count
+        const highlights =
+          rd.accomplishments.length > 0 || rd.tasks_issues.length > 0
+            ? `Acc: ${rd.accomplishments.length} | Chal: ${rd.tasks_issues.length}`
+            : "";
+
+        return {
+          // journal_id is null for draft-only members; fall back to daily_report.id
+          id: report.journal_id || report.daily_report?.id || report.id,
+          user: report.name || "",
+          email: report.email || "",
+          score: Math.round(report.score ?? rawRd?.total_score ?? 0),
+          dept: report.department || "",
+          highlights,
+          submittedAt: report.submitted_at
+            ? formatDateTime(report.submitted_at)
+            : "—",
+          status: report.status,
+          date: selectedDate,
+          userId: report.user_id,
+          _raw: report,
+        };
+      });
+
+      // Dept filter
       if (selectedDeptId) {
         logsArray = logsArray.filter(
-          (log) => String(log._raw?.department_id) === String(selectedDeptId)
+          (log) =>
+            String(log._raw?.department_id) === String(selectedDeptId) ||
+            log.dept === selectedDeptId
         );
       }
 
+      // Search filter
       if (debouncedSearch) {
         const q = debouncedSearch.toLowerCase();
         logsArray = logsArray.filter(
@@ -1325,7 +1395,7 @@ const DailyLogTab = () => {
       }
 
       setMetaSubmitted(logsArray.length);
-      setMetaExpected(response?.total ?? response?.data?.total ?? 0);
+      setMetaExpected(data?.total_members ?? 0);
     } catch (err) {
       setApiError(err.message);
       setApiLogs([]);
@@ -1333,7 +1403,7 @@ const DailyLogTab = () => {
       setMetaSubmitted(0);
       setMetaExpected(0);
       setIsNonWorkingDay(false);
-      toast.error(`Failed to load logs: ${err.message}`);
+      toast.error(`Failed to load reports: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -1361,11 +1431,9 @@ const DailyLogTab = () => {
     return `${d.toLocaleDateString("en-US", { month: "short" })} ${d.getDate()} (${d.toLocaleDateString("en-US", { weekday: "short" })})`;
   })();
 
-  const filterLogs = (arr) => (Array.isArray(arr) ? arr : []);
-  const flatFiltered = filterLogs(apiLogs);
+  const flatFiltered = Array.isArray(apiLogs) ? apiLogs : [];
   const sortedDepts = Object.keys(groupedApiLogs).sort();
 
-  // ── TH Component with reduced horizontal padding ──
   const TH = ({ children, center }) => (
     <th
       className={cn(
@@ -1378,20 +1446,8 @@ const DailyLogTab = () => {
   );
 
   const renderRow = (log) => {
-    const isPending = log.status === "pending";
-    const sub = log.submittedAt || "Not Submitted";
-    let subLine1 = sub;
-    let subLine2 = "";
+    const sub = log.submittedAt || "—";
 
-    if (sub !== "Not Submitted") {
-      const subParts = sub.match(/^(.+?),?\s*(\d{4})\s*(.*)$/);
-      if (subParts) {
-        subLine1 = `${subParts[1]}, ${subParts[2]}`;
-        subLine2 = subParts[3];
-      }
-    }
-
-    // ── Apply reduced horizontal padding on table cells ──
     return (
       <tr
         key={log.id}
@@ -1415,20 +1471,19 @@ const DailyLogTab = () => {
               scoreColor(log.score, log.status)
             )}
           >
-            {isPending ? "-" : log.score}
+            {log.score}
           </span>
         </td>
         <td className="px-3 py-4 sm:px-4">
           <span className="inline-block px-3.5 py-1.5 rounded-[8px] border border-[#F0EBE8] bg-[#FCFAFA] text-[10px] font-black text-[#8C8580] uppercase tracking-wider">
-            {log.dept}
+            {log.dept || "—"}
           </span>
         </td>
         <td className="px-3 py-4 sm:px-4 max-w-[180px] lg:max-w-[220px] whitespace-normal break-words leading-snug">
-          <FormattedHighlights text={log.highlights} isPending={isPending} />
+          <FormattedHighlights text={log.highlights} isPending={false} />
         </td>
         <td className="px-3 py-4 sm:px-4 text-xs font-semibold text-[#8C8580] min-w-[110px]">
-          <div>{subLine1}</div>
-          {subLine2 && <div className="mt-0.5 opacity-80">{subLine2}</div>}
+          {sub}
         </td>
         <td className="px-3 py-4 sm:px-4 text-center">
           <button
@@ -1459,30 +1514,9 @@ const DailyLogTab = () => {
               <h1 className="text-[24px] font-black text-[#1A1A1A] tracking-tight">
                 Daily Report Log for {titleDate}
               </h1>
-
               <div className="flex items-center gap-4 mt-1.5 text-[12px] font-bold text-[#8C8580] uppercase tracking-widest flex-wrap">
                 {isNonWorkingDay ? (
                   <span className="flex items-center gap-1.5 px-3 py-1 rounded-[8px] bg-amber-50 border border-amber-200 text-amber-700 normal-case tracking-normal text-[11px] font-bold">
-                    <svg
-                      className="w-3.5 h-3.5 shrink-0"
-                      viewBox="0 0 16 16"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <circle
-                        cx="8"
-                        cy="8"
-                        r="3"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                      />
-                      <path
-                        d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M11.89 4.11l-1.06 1.06M4.16 11.84l-1.06 1.06"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
                     Non-working day — no reports expected
                   </span>
                 ) : (
@@ -1495,7 +1529,7 @@ const DailyLogTab = () => {
                     </span>
                     {metaExpected > 0 && (
                       <span className="flex items-center gap-2">
-                        Expected
+                        Total Members
                         <span className="px-2 py-0.5 rounded-[6px] bg-[#EB4A4A] text-white">
                           {metaExpected}
                         </span>
@@ -1538,7 +1572,7 @@ const DailyLogTab = () => {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580]" />
             <input
               type="text"
-              placeholder="Search by user, email..."
+              placeholder="Search by name, email, department..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-11 pr-10 py-3.5 text-sm font-bold border border-[#F0EBE8] bg-[#FCFAFA] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#EB4A4A]/20 focus:border-[#EB4A4A] text-[#1A1A1A] placeholder:text-[#8C8580] transition-colors"
@@ -1584,7 +1618,7 @@ const DailyLogTab = () => {
                 : "bg-white border-[#F0EBE8] text-[#8C8580] hover:bg-gray-50 hover:text-[#1A1A1A]"
             )}
           >
-            <Layers className="w-4 h-4" /> Group by Departments
+            <Layers className="w-4 h-4" /> Group by Dept
           </button>
 
           <button
@@ -1605,36 +1639,15 @@ const DailyLogTab = () => {
       {apiError && (
         <div className="bg-[#EB4A4A]/10 text-[#EB4A4A] text-sm font-bold p-5 rounded-[20px] flex items-center gap-3 mb-6">
           <AlertTriangle className="w-5 h-5 shrink-0" />
-          {apiError.includes("No Auth Token")
-            ? "No auth token. Please set it via bootstrapAuthToken() first."
-            : `API Error: ${apiError}`}
+          API Error: {apiError}
         </div>
       )}
 
-      {/* Non-working day banner above table */}
+      {/* Non-working day banner */}
       {isNonWorkingDay && !isLoading && (
         <div className="bg-amber-50 border border-amber-200 rounded-[20px] p-5 mb-6 flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0">
-            <svg
-              className="w-5 h-5 text-amber-600"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="10"
-                cy="10"
-                r="3.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.22 4.22l1.06 1.06M14.72 14.72l1.06 1.06M14.72 5.28l-1.06 1.06M5.28 14.72l-1.06 1.06"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
+            <AlertTriangle className="w-5 h-5 text-amber-600" />
           </div>
           <div>
             <p className="text-sm font-black text-amber-800">Non-working day</p>
@@ -1663,42 +1676,21 @@ const DailyLogTab = () => {
             </thead>
             <tbody>
               {isLoading ? (
-                <>
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <tr
-                      key={`skeleton-${i}`}
-                      className="border-b border-[#F0EBE8] bg-white"
-                    >
-                      <td className="px-3 py-4 sm:px-4">
-                        <div className="w-20 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
+                [1, 2, 3, 4, 5].map((i) => (
+                  <tr
+                    key={`skeleton-${i}`}
+                    className="border-b border-[#F0EBE8] bg-white"
+                  >
+                    {[140, 160, 40, 90, 180, 100, 36].map((w, j) => (
+                      <td key={j} className="px-3 py-4 sm:px-4">
+                        <div
+                          className="bg-[#F0EBE8] rounded-full animate-pulse"
+                          style={{ width: w, height: 16 }}
+                        />
                       </td>
-                      <td className="px-3 py-4 sm:px-4">
-                        <div className="space-y-2">
-                          <div className="w-24 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
-                          <div className="w-32 h-3 bg-[#F0EBE8] rounded-full animate-pulse" />
-                        </div>
-                      </td>
-                      <td className="px-3 py-4 sm:px-4">
-                        <div className="w-10 h-6 bg-[#F0EBE8] rounded-[8px] animate-pulse" />
-                      </td>
-                      <td className="px-3 py-4 sm:px-4">
-                        <div className="w-20 h-6 bg-[#F0EBE8] rounded-[8px] animate-pulse" />
-                      </td>
-                      <td className="px-3 py-4 sm:px-4">
-                        <div className="w-48 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
-                      </td>
-                      <td className="px-3 py-4 sm:px-4">
-                        <div className="space-y-2">
-                          <div className="w-24 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
-                          <div className="w-16 h-3 bg-[#F0EBE8] rounded-full animate-pulse" />
-                        </div>
-                      </td>
-                      <td className="px-3 py-4 sm:px-4 text-center">
-                        <div className="w-9 h-9 bg-[#F0EBE8] rounded-[12px] mx-auto animate-pulse" />
-                      </td>
-                    </tr>
-                  ))}
-                </>
+                    ))}
+                  </tr>
+                ))
               ) : !isGrouped && flatFiltered.length === 0 ? (
                 <tr>
                   <td
@@ -1707,7 +1699,7 @@ const DailyLogTab = () => {
                   >
                     {isNonWorkingDay
                       ? "This is a non-working day — no reports are expected."
-                      : "No reports found for the selected date and filters."}
+                      : "No submitted reports found for the selected date and filters."}
                   </td>
                 </tr>
               ) : isGrouped && sortedDepts.length === 0 ? (
@@ -1718,14 +1710,14 @@ const DailyLogTab = () => {
                   >
                     {isNonWorkingDay
                       ? "This is a non-working day — no reports are expected."
-                      : "No reports found for the selected date and filters."}
+                      : "No submitted reports found for the selected date and filters."}
                   </td>
                 </tr>
               ) : !isGrouped ? (
                 flatFiltered.map(renderRow)
               ) : (
                 sortedDepts.map((dept) => {
-                  const deptLogs = filterLogs(groupedApiLogs[dept]);
+                  const deptLogs = groupedApiLogs[dept] || [];
                   if (deptLogs.length === 0) return null;
                   return (
                     <React.Fragment key={dept}>
@@ -1749,51 +1741,12 @@ const DailyLogTab = () => {
         </div>
       </div>
 
+      {/* Detail Modal */}
       {selectedReport && (
         <ReportDetailModal
           log={selectedReport}
           onClose={() => setSelectedReport(null)}
         />
-      )}
-
-      {/* Add Task Modal for main screen (if triggered externally) */}
-      {isTaskModalOpen && (
-        <MuiZIndexFix>
-          <div className="fixed inset-0 z-[10000] flex justify-end">
-            <div
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-              onClick={() => setIsTaskModalOpen(false)}
-            />
-            <div
-              className="relative flex flex-col bg-white shadow-2xl h-full border-l border-gray-200"
-              style={{ width: "min(760px, 95vw)" }}
-            >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0 bg-gray-50">
-                <h2 className="text-lg font-bold text-gray-900">Add Task</h2>
-                <button
-                  onClick={() => setIsTaskModalOpen(false)}
-                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 transition-colors text-gray-500"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto p-4">
-                <ProjectTaskCreateModal
-                  isEdit={false}
-                  onCloseModal={() => setIsTaskModalOpen(false)}
-                  className="max-w-full mx-0"
-                  prefillData={null}
-                  opportunityId={null}
-                  onSuccess={async () => {
-                    setIsTaskModalOpen(false);
-                    loadData(false);
-                  }}
-                  isConversion={false}
-                />
-              </div>
-            </div>
-          </div>
-        </MuiZIndexFix>
       )}
     </div>
   );
