@@ -251,6 +251,7 @@ const muiTheme = createTheme({
 
 const TABS = [
     { key: "other", label: "Other Details" },
+    { key: "opening-balance", label: "Opening Balance" },
     { key: "address", label: "Address" },
     { key: "contact", label: "Contact Persons" },
     { key: "custom", label: "Custom Fields" },
@@ -780,15 +781,6 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
             </TextField>
 
 
-            <TextField
-                label="Opening Balance"
-                name="opening_balance"
-                value={form.opening_balance}
-                onChange={handleChange}
-                fullWidth
-                placeholder="Enter opening balance"
-            />
-
             {/* Payment Terms dropdown with search and configure */}
             <FormControl fullWidth>
                 <InputLabel>Payment Terms</InputLabel>
@@ -954,6 +946,47 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
             {/* <div className="col-span-2 text-xs text-gray-500 mt-2">
                     Customer Owner: Assign a user as the customer owner to provide access only to the data of this customer. <a href="#" className="text-blue-600">Learn More</a>
                 </div> */}
+        </div>
+    );
+};
+
+const OpeningBalanceTab = ({ form, handleChange }) => {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <TextField
+                label="Bill No"
+                name="opening_balance_bill_no"
+                value={form.opening_balance_bill_no || ""}
+                onChange={handleChange}
+                fullWidth
+                placeholder="Enter bill no"
+            />
+            <TextField
+                label="Bill Date"
+                name="opening_balance_bill_date"
+                type="date"
+                value={form.opening_balance_bill_date || ""}
+                onChange={handleChange}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+                label="Due Date"
+                name="opening_balance_due_date"
+                type="date"
+                value={form.opening_balance_due_date || ""}
+                onChange={handleChange}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+                label="Amount"
+                name="opening_balance"
+                value={form.opening_balance}
+                onChange={handleChange}
+                fullWidth
+                placeholder="Enter amount"
+            />
         </div>
     );
 };
@@ -1224,6 +1257,9 @@ const CustomersAdd = () => {
         currency: "INR",
         pan: "",
         opening_balance: "",
+        opening_balance_bill_no: "",
+        opening_balance_bill_date: "",
+        opening_balance_due_date: "",
         enable_portal: false,
         remarks: "",
 
@@ -1515,6 +1551,9 @@ const CustomersAdd = () => {
                 language_code: 'en',
                 currency_code: 'INR',
                 opening_balance: form.opening_balance || 0,
+                opening_balance_bill_no: form.opening_balance_bill_no || null,
+                opening_balance_bill_date: form.opening_balance_bill_date || null,
+                opening_balance_due_date: form.opening_balance_due_date || null,
                 payment_term_id,
                 enable_portal: form.enable_portal || false,
                 lock_account_ledger_id: form.lock_account_ledger_id || null,
@@ -1781,6 +1820,10 @@ const CustomersAdd = () => {
                             handleChange={handleChange}
                             setForm={setForm}
                         />
+                    )}
+
+                    {activeTab === "opening-balance" && (
+                        <OpeningBalanceTab form={form} handleChange={handleChange} />
                     )}
 
                     {activeTab === "address" && (
