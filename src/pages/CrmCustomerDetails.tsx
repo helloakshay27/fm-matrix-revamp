@@ -20,6 +20,7 @@ interface Customer {
     organization_code: string;
     customer_code: string;
     ext_customer_code: string;
+    enable_sites?: string;
 }
 
 interface Lease {
@@ -194,7 +195,11 @@ export const CrmCustomerDetails = () => {
                             <span className="text-sm">:</span>
                             <span className="text-sm text-gray-900">{customer?.company_code || '-'}</span>
                         </div>
-                      
+                        <div className="flex items-center gap-4">
+                            <label className="w-32 text-sm font-medium text-gray-700">Enable Sites</label>
+                            <span className="text-sm">:</span>
+                            <span className="text-sm text-gray-900">{customer?.enable_sites || '-'}</span>
+                        </div>
                     </div>
 
                     <div className="space-y-4">
