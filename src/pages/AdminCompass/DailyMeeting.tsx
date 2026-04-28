@@ -32,6 +32,15 @@ const DailyMeeting = () => {
   const [activeTab, setActiveTab] = useState("Daily");
   const [selectedDateId, setSelectedDateId] = useState(7);
 
+  const [historyInitialDate, setHistoryInitialDate] = useState<
+    string | undefined
+  >();
+
+  const handleMeetingSaved = (date: string) => {
+    setHistoryInitialDate(date);
+    setActiveTab("History"); // apna tab key yahan use karo
+  };
+
   return (
     <div
       className="w-full min-h-screen p-6"
@@ -92,13 +101,12 @@ const DailyMeeting = () => {
           style={{ fontFamily: "'Poppins', sans-serif" }}
         >
           {activeTab === "Daily" && (
-            <DailyTab
-              selectedDateId={selectedDateId}
-              setSelectedDateId={setSelectedDateId}
-            />
+            <DailyTab onMeetingSaved={handleMeetingSaved} />
           )}
           {activeTab === "Daily Log" && <DailyLogTab />}
-          {activeTab === "History" && <HistoryTab />}
+          {activeTab === "History" && (
+            <HistoryTab initialDate={historyInitialDate} />
+          )}
           {activeTab === "Reports" && <ReportsTab />}
           {activeTab === "Analytics" && <AnalyticsTab />}
           {activeTab === "Settings" && <SettingsTab />}

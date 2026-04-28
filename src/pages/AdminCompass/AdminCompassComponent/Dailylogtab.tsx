@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────
-// DailyLogTab.jsx — Unified Modern Theme with Sonner Toasts
+// DailyLogTab.jsx — Unified Modern Theme
 // ─────────────────────────────────────────────
 import React, { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
@@ -22,6 +22,8 @@ import {
   Circle,
   Loader2,
   Trophy,
+  Crown,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { fetchDailyLogsFromAPI, getBaseUrl, getAuthHeaders } from "./Shared";
@@ -32,7 +34,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 // ─────────────────────────────────────────────
 // MUI z-index override wrapper
-// Forces MUI Dialog/Modal above ReportDetailModal (z-9990)
+// Forces MUI Dialog/Modal above ReportDetailModal (z-[9990])
 // ─────────────────────────────────────────────
 const muiHighZTheme = createTheme({
   zIndex: {
@@ -77,7 +79,7 @@ const CustomSelect = ({
         disabled={disabled}
         onClick={() => !disabled && setOpen(!open)}
         className={cn(
-          "flex items-center gap-2 bg-[#FCFAFA] border rounded-[16px] pl-5 pr-4 py-3.5 transition-all min-w-[160px]",
+          "flex items-center gap-2 bg-[#FCFAFA] border rounded-[16px] pl-4 pr-3 py-3 sm:pl-5 sm:pr-4 sm:py-3.5 transition-all min-w-[140px] sm:min-w-[160px]",
           open
             ? "border-[#EB4A4A] shadow-[0_0_0_3px_rgba(235,74,74,0.10)]"
             : "border-[#F0EBE8] hover:border-[#EB4A4A]",
@@ -196,7 +198,7 @@ const fetchMeetingsAPI = async () => {
   return list.map((m) => ({
     id: String(m.id),
     label: m.name ?? m.title ?? m.label ?? `Meeting ${m.id}`,
-    is_default: m.is_default || m.isDefault || false, // 🛠 FIX: Extract is_default flag
+    is_default: m.is_default || m.isDefault || false,
   }));
 };
 
@@ -236,6 +238,23 @@ const fmt = (dateStr) => {
   });
 };
 
+const formatDateTime = (isoStr) => {
+  if (!isoStr) return null;
+  try {
+    return new Date(isoStr).toLocaleString("en-IN", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return null;
+  }
+};
+
 const scoreColor = (s, status) => {
   if (status === "pending")
     return "bg-gray-100 text-gray-500 border border-gray-200";
@@ -250,6 +269,8 @@ const normalizeReportData = (rd) => {
       tomorrow_plan: [],
       big_win: null,
       self_rating: null,
+      total_score: null,
+      is_absent: null,
     };
   }
   let accomplishments = [];
@@ -264,6 +285,8 @@ const normalizeReportData = (rd) => {
     tomorrow_plan: Array.isArray(rd.tomorrow_plan) ? rd.tomorrow_plan : [],
     big_win: rd.big_win ?? null,
     self_rating: rd.self_rating ?? null,
+    total_score: rd.total_score ?? null,
+    is_absent: rd.is_absent ?? null,
   };
 };
 
@@ -274,22 +297,24 @@ const getItemTitle = (item) => {
   return String(item);
 };
 
+const getItemStatus = (item) => {
+  if (!item || typeof item !== "object") return "open";
+  return item.status || "open";
+};
+
 // ─────────────────────────────────────────────
-// ✅ Non-working day detection
-// Uses meeting_days from API config e.g. ["Mon","Tue","Wed","Thu","Fri"]
+// Non-working day detection
 // ─────────────────────────────────────────────
 const DAY_MAP = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const checkIsNonWorkingDay = (dateStr, meetingDays) => {
-  // Agar API ne days nahi bheje, toh working day hi manega (false)
   if (!dateStr || !Array.isArray(meetingDays) || meetingDays.length === 0)
     return false;
-  
-  // Date split karke parse krr, taaki timezone browser ko shift na kare
+
   const [y, m, d] = dateStr.split("-").map(Number);
   const dateObj = new Date(y, m - 1, d);
   if (isNaN(dateObj)) return false;
-  
+
   const dayName = DAY_MAP[dateObj.getDay()];
   return !meetingDays.includes(dayName);
 };
@@ -310,7 +335,7 @@ const FormattedHighlights = ({ text, isPending }) => {
   const matchAccChal = text.match(/Acc:\s*(\d+)\s*\|\s*Chal:\s*(\d+)/i);
   if (matchAccChal) {
     return (
-      <span className="text-sm text-[#1A1A1A]">
+      <span className="text-[13px] text-[#1A1A1A]">
         <span className="font-bold">{matchAccChal[1]}</span> accomplishments,{" "}
         <span className="font-bold">{matchAccChal[2]}</span> challenges
       </span>
@@ -322,45 +347,44 @@ const FormattedHighlights = ({ text, isPending }) => {
   );
   if (matchFull) {
     return (
-      <span className="text-sm text-[#1A1A1A]">
+      <span className="text-[13px] text-[#1A1A1A]">
         <span className="font-bold">{matchFull[1]}</span> accomplishments,{" "}
         <span className="font-bold">{matchFull[2]}</span> challenges
       </span>
     );
   }
 
-  return <span className="text-sm text-[#1A1A1A]">{text}</span>;
+  return <span className="text-[13px] text-[#1A1A1A]">{text}</span>;
 };
 
 // ─────────────────────────────────────────────
-// Report Detail Modal
+// NEW Report Detail Modal
 // ─────────────────────────────────────────────
 const ReportDetailModal = ({ log, onClose }) => {
   const [details, setDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ── action modals
+  // action modals
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isIssueModalOpen, setIsIssueModalOpen] = useState(false);
 
-  // ── quick-action (Add to Plan)
+  // quick-action (Add to Plan)
   const [quickActionOpen, setQuickActionOpen] = useState(false);
   const [quickActionText, setQuickActionText] = useState("");
 
-  // ── feedback state
+  // feedback state
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [fetchedFeedbacks, setFetchedFeedbacks] = useState([]);
   const [isFetchingFeedbacks, setIsFetchingFeedbacks] = useState(false);
 
-  const isPending = log.status === "pending";
+  const isPendingLog = log.status === "pending";
   const hasValidId = log.id && !String(log.id).startsWith("user-");
 
-  // ── Fetch journal details
   const refetchDetails = useCallback(
     async (silent = false) => {
-      if (isPending || !hasValidId) {
+      if (isPendingLog || !hasValidId) {
         setIsLoading(false);
         return;
       }
@@ -378,52 +402,128 @@ const ReportDetailModal = ({ log, onClose }) => {
         if (!silent) setIsLoading(false);
       }
     },
-    [log.id, isPending, hasValidId]
+    [log.id, isPendingLog, hasValidId]
   );
 
   useEffect(() => {
     refetchDetails(false);
   }, [refetchDetails]);
 
-  const reportData = details?.report_data || {};
-  const normalized = normalizeReportData(reportData);
+  // Data Normalization Logic (Identical to DailyTab)
+  const isPending = details?.status === "pending" || log.status === "pending";
+  const hasDraft = !!details?.daily_report;
+  const draftRaw = details?.daily_report?.report_data || {};
+  const rd = details?.report_data || {};
 
-  const fallbackAccomplishments =
-    normalized.accomplishments.length === 0 && log.highlights && !isPending
+  const rawDisplayRd =
+    isPending && hasDraft
+      ? {
+          ...draftRaw,
+          accomplishments:
+            draftRaw.accomplishments?.items ||
+            (Array.isArray(draftRaw.accomplishments)
+              ? draftRaw.accomplishments
+              : []),
+          self_rating:
+            draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating,
+          total_score: draftRaw.total_score,
+          is_absent:
+            draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent,
+        }
+      : rd;
+
+  const displayRd = normalizeReportData(rawDisplayRd);
+
+  const cleanName = (log.user || "").trim();
+
+  let filteredAccomplishments =
+    displayRd.accomplishments.length === 0 &&
+    log.highlights &&
+    !isPending &&
+    !hasDraft
       ? [{ title: log.highlights }]
-      : normalized.accomplishments;
+      : displayRd.accomplishments;
 
-  // ── updateJournal
+  filteredAccomplishments = filteredAccomplishments.filter(
+    (item) => !item.member || String(item.member).trim() === cleanName
+  );
+
+  const filteredTasksIssues = displayRd.tasks_issues.filter(
+    (item) => !item.member || String(item.member).trim() === cleanName
+  );
+
+  const filteredTomorrowPlan = displayRd.tomorrow_plan.filter(
+    (item) => !item.member || String(item.member).trim() === cleanName
+  );
+
+  const sd = draftRaw?.score_details || rd?.score_details || {};
+
+  const kpiAchieved =
+    sd.kpi?.points ?? details?.kpis?.score ?? details?.score ?? 0;
+  const kpiMax = sd.kpi?.maxPoints ?? 20;
+  const kpiStr = `${kpiAchieved}/${kpiMax}`;
+
+  const tasksAchieved = sd.tasksIssues?.points ?? details?.kpis?.tasks ?? 0;
+  const tasksMax = sd.tasksIssues?.maxPoints ?? 20;
+  const tasksStr = `${tasksAchieved}/${tasksMax}`;
+
+  const issuesAchieved = details?.kpis?.issues ?? 0;
+  const issuesMax = sd.tasksIssues?.maxPoints ?? 20;
+  const issuesStr = `${issuesAchieved}/${issuesMax}`;
+
+  const planAchieved = sd.planning?.points ?? details?.kpis?.planning ?? 0;
+  const planMax = sd.planning?.maxPoints ?? 20;
+  const planStr = `${planAchieved}/${planMax}`;
+
+  const timeAchieved = sd.timing?.points ?? details?.kpis?.timing ?? 0;
+  const timeMax = sd.timing?.maxPoints ?? 20;
+  const timeStr = `${timeAchieved}/${timeMax}`;
+
+  const totalScoreStr = Math.round(
+    details?.score ?? rawDisplayRd?.total_score ?? 0
+  );
+
+  // Update Journal Logic
   const updateJournal = async (patch) => {
     if (!hasValidId) {
       toast.error("Journal ID not found.");
       return false;
     }
-    const source = normalizeReportData(reportData);
+
+    const sourceRd =
+      isPending && hasDraft
+        ? normalizeReportData({
+            ...draftRaw,
+            self_rating:
+              draftRaw.details?.self_rating ??
+              draftRaw.sections?.self_rating ??
+              0,
+          })
+        : normalizeReportData({ ...rd, self_rating: rd.self_rating ?? 0 });
+
     const payload = {
-      user_journal: {
-        self_rating: source.self_rating ?? 0,
-        status: "submitted",
-        report_data: {
-          accomplishments: source.accomplishments,
-          tasks_issues: source.tasks_issues,
-          big_win: source.big_win || null,
-          tomorrow_plan: patch.tomorrow_plan_item
-            ? [...source.tomorrow_plan, { title: patch.tomorrow_plan_item }]
-            : source.tomorrow_plan,
-          kpis: reportData.kpis || {},
-        },
+      self_rating: patch.self_rating ?? sourceRd.self_rating,
+      status: "submitted",
+      report_data: {
+        accomplishments: sourceRd.accomplishments,
+        tasks_issues: sourceRd.tasks_issues,
+        big_win: sourceRd.big_win || null,
+        tomorrow_plan: patch.tomorrow_plan_item
+          ? [
+              ...sourceRd.tomorrow_plan,
+              { title: patch.tomorrow_plan_item, member: log.user },
+            ]
+          : sourceRd.tomorrow_plan,
+        kpis: rd.kpis || details?.kpis || {},
       },
     };
+
     try {
-      const res = await fetch(
-        `${getBaseUrl()}/user_journals/${log.id}.json`,
-        {
-          method: "PUT",
-          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch(`${getBaseUrl()}/user_journals/${log.id}.json`, {
+        method: "PUT",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return true;
     } catch (err) {
@@ -431,8 +531,6 @@ const ReportDetailModal = ({ log, onClose }) => {
       return false;
     }
   };
-
-  // ── GET past feedbacks
   const loadPastFeedbacks = async () => {
     setIsFetchingFeedbacks(true);
     try {
@@ -445,9 +543,16 @@ const ReportDetailModal = ({ log, onClose }) => {
       );
       if (res.ok) {
         const data = await res.json();
-        setFetchedFeedbacks(
-          Array.isArray(data) ? data : data.data || data.ratings || []
+        let feedbackList = Array.isArray(data)
+          ? data
+          : data.data || data.ratings || [];
+
+        // 🟢 NAYA LOGIC: Sort by date descending (latest top pe aayega)
+        feedbackList.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
         );
+
+        setFetchedFeedbacks(feedbackList);
       }
     } catch (error) {
       console.error("Failed to fetch feedbacks:", error);
@@ -455,8 +560,6 @@ const ReportDetailModal = ({ log, onClose }) => {
       setIsFetchingFeedbacks(false);
     }
   };
-
-  // ── Submit feedback
   const handleSubmitFeedback = async () => {
     if (feedbackRating === 0) {
       toast.error("Please select a star rating!");
@@ -491,7 +594,6 @@ const ReportDetailModal = ({ log, onClose }) => {
 
   return (
     <>
-      {/* ── Main Detail Modal ── */}
       {createPortal(
         <div
           className="fixed inset-0 z-[9990] flex items-center justify-center p-4 sm:p-6"
@@ -504,22 +606,12 @@ const ReportDetailModal = ({ log, onClose }) => {
           />
 
           {/* Modal */}
-          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[1100px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
+          <div className="relative z-10 bg-[#FFFDFB] w-full max-w-[1000px] max-h-[90vh] shadow-2xl flex flex-col rounded-[20px] overflow-hidden border border-[#F0EBE8]">
             {/* Header */}
             <div className="px-6 py-4 border-b border-[#F0EBE8] flex items-center justify-between bg-white shrink-0">
-              <div>
-                <h2 className="text-xl font-bold text-[#1A1A1A] flex items-center gap-2">
-                  Daily Report Details
-                  {isPending && (
-                    <span className="text-[10px] bg-red-50 text-red-500 border border-red-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                      Pending
-                    </span>
-                  )}
-                </h2>
-                <p className="text-xs font-semibold text-[#8C8580] mt-1">
-                  {log.user} ({log.dept}) • {log.date && fmt(log.date)}
-                </p>
-              </div>
+              <h2 className="text-xl font-bold text-[#1A1A1A] flex items-center gap-2">
+                Daily Report Details
+              </h2>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:bg-gray-100 hover:text-[#EB4A4A] p-2 rounded-[12px] transition-colors"
@@ -529,162 +621,272 @@ const ReportDetailModal = ({ log, onClose }) => {
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="flex-1 overflow-y-auto p-0">
               {isLoading ? (
-                <div className="flex flex-col items-center justify-center h-40 space-y-4">
-                  <RefreshCw className="w-8 h-8 text-[#EB4A4A] animate-spin" />
+                <div className="flex flex-col items-center justify-center h-60 space-y-4">
+                  <RefreshCw className="w-8 h-8 text-[#CE7A5A] animate-spin" />
                   <p className="text-sm font-bold text-[#8C8580]">
-                    Fetching journal details...
+                    Fetching report details...
                   </p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {/* Big Win */}
-                  {normalized.big_win && (
-                    <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex items-start gap-3">
-                      <Trophy className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                      <div>
-                        <div className="text-[10px] font-extrabold text-amber-600 uppercase tracking-widest mb-1">
-                          Big Win 🏆
+                <div className="flex flex-col h-full">
+                  {/* Top Profile Section */}
+                  <div className="p-6 bg-white border-b border-[#F0EBE8]">
+                    <div className="flex items-start gap-4">
+                      {/* Avatar / Score Circle */}
+                      <div className="flex items-center justify-center w-14 h-14 rounded-full border-[2px] border-[#CE7A5A] text-[#CE7A5A] font-black text-xl shrink-0 bg-white">
+                        {totalScoreStr}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <h3 className="font-black text-[#1A1A1A] text-lg truncate">
+                            {log.user}
+                          </h3>
+                          {(log.user?.includes("HOD") ||
+                            log.user?.includes("TL")) && (
+                            <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
+                              <Crown className="w-3 h-3 fill-orange-400" /> HOD
+                            </span>
+                          )}
+                          {log.dept && (
+                            <span className="border border-blue-200 bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-0.5 rounded-full shrink-0">
+                              {log.dept}
+                            </span>
+                          )}
+                          {isPending && !hasDraft ? (
+                            <span className="text-xs font-bold text-white bg-red-500 px-2.5 py-0.5 rounded-full shrink-0">
+                              PENDING
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-green-700 bg-green-100 border border-green-200 px-2.5 py-0.5 rounded-full flex items-center gap-1 shrink-0">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Submitted
+                            </span>
+                          )}
                         </div>
-                        <p className="text-sm font-semibold text-amber-900">
-                          {normalized.big_win}
-                        </p>
-                      </div>
-                    </div>
-                  )}
 
-                  {/* 3-column grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
-                    {/* Column 1: Tasks & Issues */}
-                    <div className="bg-white rounded-[16px] border border-[#F0EBE8] flex flex-col overflow-hidden shadow-sm">
-                      <div className="bg-[#FFF5F5] px-4 py-3 border-b border-[#F05252]/20 flex items-center gap-2 shrink-0">
-                        <AlertTriangle className="w-4 h-4 text-[#F05252]" />
-                        <h3 className="font-bold text-[#F05252] text-sm">
-                          Tasks & Issues
-                        </h3>
-                      </div>
-                      <div className="p-5 flex-1">
-                        {normalized.tasks_issues.length === 0 ? (
-                          <p className="text-sm font-medium text-[#8C8580] italic">
-                            No tasks or issues
-                          </p>
-                        ) : (
-                          <ul className="space-y-3">
-                            {normalized.tasks_issues.map((item, i) => (
-                              <li
-                                key={i}
-                                className="flex items-start gap-2 text-xs text-neutral-700"
-                              >
-                                <span
-                                  className={cn(
-                                    "shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5",
-                                    (item.status || "open") === "open"
-                                      ? "bg-red-100 text-red-600"
-                                      : (item.status || "open") === "closed"
-                                      ? "bg-green-100 text-green-600"
-                                      : "bg-gray-100 text-gray-500"
-                                  )}
-                                >
-                                  {item.status || "open"}
-                                </span>
-                                <span className="leading-relaxed">
-                                  {getItemTitle(item)}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    </div>
+                        <div className="text-xs font-semibold text-gray-500 mb-3 truncate">
+                          {log.email}
+                          {details?.submitted_at && (
+                            <span className="ml-2">
+                              • {formatDateTime(details.submitted_at)}
+                            </span>
+                          )}
+                        </div>
 
-                    {/* Column 2: Accomplishments */}
-                    <div className="bg-white rounded-[16px] border border-[#F0EBE8] flex flex-col overflow-hidden shadow-sm">
-                      <div className="bg-[#F0FDF4] px-4 py-3 border-b border-[#2ECC71]/20 flex items-center gap-2 shrink-0">
-                        <CheckCircle2 className="w-4 h-4 text-[#2ECC71]" />
-                        <h3 className="font-bold text-[#2ECC71] text-sm">
-                          Accomplishments
-                        </h3>
-                      </div>
-                      <div className="p-5 flex-1">
-                        {fallbackAccomplishments.length === 0 ? (
-                          <p className="text-sm font-medium text-[#8C8580] italic">
-                            No accomplishments
-                          </p>
-                        ) : (
-                          <ul className="space-y-3">
-                            {fallbackAccomplishments.map((item, i) => (
-                              <li
-                                key={i}
-                                className="flex items-start gap-2 text-xs text-neutral-700"
-                              >
-                                <div className="w-1.5 h-1.5 rounded-full bg-green-400 mt-1.5 shrink-0" />
-                                <span className="leading-relaxed">
-                                  {getItemTitle(item)}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Column 3: Tomorrow's Plan */}
-                    <div className="bg-white rounded-[16px] border border-[#F0EBE8] flex flex-col overflow-hidden shadow-sm">
-                      <div className="bg-[#FEFCE8] px-4 py-3 border-b border-[#F4D35E]/40 flex items-center gap-2 shrink-0">
-                        <Circle className="w-4 h-4 text-blue-500" />
-                        <h3 className="font-bold text-blue-600 text-sm">
-                          Tomorrow's Plan
-                        </h3>
-                      </div>
-                      <div className="p-5 flex-1">
-                        {normalized.tomorrow_plan.length === 0 ? (
-                          <p className="text-sm font-medium text-[#8C8580] italic">
-                            No plan recorded
-                          </p>
-                        ) : (
-                          <ul className="space-y-3">
-                            {normalized.tomorrow_plan.map((item, i) => (
-                              <li
-                                key={i}
-                                className="flex items-start gap-2 text-xs text-neutral-700"
-                              >
-                                <Circle className="w-3 h-3 text-blue-300 mt-0.5 shrink-0" />
-                                <span className="leading-relaxed">
-                                  {getItemTitle(item)}
-                                </span>
-                              </li>
-                            ))}
-                          </ul>
+                        {/* KPIs Row Pills */}
+                        {(!isPending || hasDraft) && (
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                              KPI: {kpiStr}
+                            </span>
+                            <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                              Tasks: {tasksStr}
+                            </span>
+                            <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                              Issues: {issuesStr}
+                            </span>
+                            <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                              Planning: {planStr}
+                            </span>
+                            <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
+                              Timing: {timeStr}
+                            </span>
+                          </div>
                         )}
                       </div>
                     </div>
                   </div>
 
-                  {/* ── Quick Action Buttons ── */}
-                  {!isPending && hasValidId && !isLoading && (
-                    <div className="space-y-4">
-                      <div className="flex flex-wrap gap-2 pt-1">
+                  <div className="p-6 space-y-6 bg-[#FFFAF8] flex-1">
+                    {/* Status Highlights */}
+                    <div className="flex flex-wrap gap-3">
+                      {displayRd.self_rating != null && (
+                        <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5 shadow-sm">
+                          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                          <span className="text-sm font-bold text-yellow-800">
+                            Self Rating: {displayRd.self_rating}/10
+                          </span>
+                        </div>
+                      )}
+                      {rawDisplayRd?.total_score !== undefined &&
+                        rawDisplayRd?.total_score !== null && (
+                          <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5 shadow-sm">
+                            <span className="text-sm font-bold text-purple-800">
+                              Total Score: {rawDisplayRd.total_score}
+                            </span>
+                          </div>
+                        )}
+                      {displayRd.is_absent !== null &&
+                        displayRd.is_absent !== undefined && (
+                          <div
+                            className={cn(
+                              "flex items-center gap-2 rounded-xl px-4 py-2.5 border shadow-sm",
+                              displayRd.is_absent
+                                ? "bg-red-50 border-red-100"
+                                : "bg-green-50 border-green-100"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "text-sm font-bold",
+                                displayRd.is_absent
+                                  ? "text-red-700"
+                                  : "text-green-700"
+                              )}
+                            >
+                              {displayRd.is_absent ? "Absent" : "Present"}
+                            </span>
+                          </div>
+                        )}
+                    </div>
+
+                    {/* Big Win */}
+                    {displayRd.big_win && (
+                      <div className="bg-amber-50 border border-amber-100 rounded-xl px-5 py-4 flex items-start gap-3 shadow-sm">
+                        <Trophy className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                        <div>
+                          <div className="text-[11px] font-extrabold text-amber-600 uppercase tracking-widest mb-1.5">
+                            Big Win 🏆
+                          </div>
+                          <p className="text-sm font-semibold text-amber-900 leading-relaxed">
+                            {displayRd.big_win}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 3-Column Layout */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+                      {/* Accomplishments */}
+                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-5 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                          <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                            <CheckCircle2 className="w-4 h-4 text-green-600" />
+                          </div>
+                          <h4 className="text-sm font-extrabold text-neutral-800 uppercase tracking-wider">
+                            Accomplishments
+                          </h4>
+                        </div>
+                        {filteredAccomplishments.length === 0 ? (
+                          <p className="text-sm text-neutral-400 italic font-medium">
+                            None recorded.
+                          </p>
+                        ) : (
+                          <ul className="space-y-3">
+                            {filteredAccomplishments.map((item, i) => (
+                              <li
+                                key={i}
+                                className="flex items-start gap-2.5 text-sm font-medium text-neutral-700"
+                              >
+                                <div className="w-2 h-2 rounded-full bg-green-400 mt-1.5 shrink-0" />
+                                <span className="leading-relaxed">
+                                  {getItemTitle(item)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      {/* Tasks & Issues */}
+                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-5 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                          <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
+                            <AlertTriangle className="w-4 h-4 text-orange-600" />
+                          </div>
+                          <h4 className="text-sm font-extrabold text-neutral-800 uppercase tracking-wider">
+                            Tasks & Issues
+                          </h4>
+                        </div>
+                        {filteredTasksIssues.length === 0 ? (
+                          <p className="text-sm text-neutral-400 italic font-medium">
+                            None recorded.
+                          </p>
+                        ) : (
+                          <ul className="space-y-3">
+                            {filteredTasksIssues.map((item, i) => (
+                              <li
+                                key={i}
+                                className="flex items-start gap-2.5 text-sm font-medium text-neutral-700"
+                              >
+                                <span
+                                  className={cn(
+                                    "shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5",
+                                    getItemStatus(item) === "open"
+                                      ? "bg-red-100 text-red-600"
+                                      : getItemStatus(item) === "closed"
+                                        ? "bg-green-100 text-green-600"
+                                        : "bg-gray-100 text-gray-500"
+                                  )}
+                                >
+                                  {getItemStatus(item)}
+                                </span>
+                                <span className="leading-relaxed">
+                                  {getItemTitle(item)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+
+                      {/* Tomorrow's Plan */}
+                      <div className="bg-white border border-[#F0E8E3] rounded-xl p-5 shadow-sm">
+                        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
+                          <div className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                            <Calendar className="w-4 h-4 text-blue-600" />
+                          </div>
+                          <h4 className="text-sm font-extrabold text-neutral-800 uppercase tracking-wider">
+                            Tomorrow's Plan
+                          </h4>
+                        </div>
+                        {filteredTomorrowPlan.length === 0 ? (
+                          <p className="text-sm text-neutral-400 italic font-medium">
+                            None recorded.
+                          </p>
+                        ) : (
+                          <ul className="space-y-3">
+                            {filteredTomorrowPlan.map((item, i) => (
+                              <li
+                                key={i}
+                                className="flex items-start gap-2.5 text-sm font-medium text-neutral-700"
+                              >
+                                <Circle className="w-3 h-3 text-blue-400 mt-1 shrink-0" />
+                                <span className="leading-relaxed">
+                                  {getItemTitle(item)}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    {(!isPending || hasDraft) && (
+                      <div className="flex flex-wrap gap-3 pt-2">
                         <button
                           onClick={() => setIsTaskModalOpen(true)}
-                          className="flex items-center gap-1.5 px-4 py-1.5 text-blue-600 bg-white border border-blue-200 rounded-full text-xs font-bold shadow-sm hover:bg-blue-50 transition-colors"
+                          className="flex items-center gap-2 px-5 py-2 text-blue-600 bg-white border border-blue-200 rounded-full text-sm font-bold shadow-sm hover:bg-blue-50 transition-colors"
                         >
-                          <Plus className="w-3.5 h-3.5" /> Add Task
+                          <Plus className="w-4 h-4" /> Add Task
                         </button>
                         <button
                           onClick={() => setIsIssueModalOpen(true)}
-                          className="flex items-center gap-1.5 px-4 py-1.5 text-red-600 bg-white border border-red-200 rounded-full text-xs font-bold shadow-sm hover:bg-red-50 transition-colors"
+                          className="flex items-center gap-2 px-5 py-2 text-red-600 bg-white border border-red-200 rounded-full text-sm font-bold shadow-sm hover:bg-red-50 transition-colors"
                         >
-                          <Plus className="w-3.5 h-3.5" /> Stuck Issue
+                          <Plus className="w-4 h-4" /> Stuck Issue
                         </button>
                         <button
                           onClick={() => {
                             setQuickActionOpen(!quickActionOpen);
                             setQuickActionText("");
                           }}
-                          className="flex items-center gap-1.5 px-4 py-1.5 text-orange-600 bg-white border border-orange-200 rounded-full text-xs font-bold shadow-sm hover:bg-orange-50 transition-colors"
+                          className="flex items-center gap-2 px-5 py-2 text-orange-600 bg-white border border-orange-200 rounded-full text-sm font-bold shadow-sm hover:bg-orange-50 transition-colors"
                         >
-                          <Plus className="w-3.5 h-3.5" /> Add to Plan
+                          <Plus className="w-4 h-4" /> Add to Plan
                         </button>
                         <button
                           onClick={() => {
@@ -697,291 +899,289 @@ const ReportDetailModal = ({ log, onClose }) => {
                               loadPastFeedbacks();
                             }
                           }}
-                          className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-purple-600 border border-purple-700 rounded-full text-xs font-bold shadow-sm hover:bg-purple-700 transition-colors"
+                          className="flex items-center gap-2 px-5 py-2 text-white bg-purple-600 border border-purple-700 rounded-full text-sm font-bold shadow-sm hover:bg-purple-700 transition-colors"
                         >
-                          <MessageSquare className="w-3.5 h-3.5" /> Feedback
+                          <MessageSquare className="w-4 h-4" /> Feedback
                         </button>
                       </div>
+                    )}
 
-                      {/* ── Add to Plan inline input ── */}
-                      {quickActionOpen && (
-                        <div className="border-t border-[#EAE3DF] pt-4">
-                          <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-3">
-                            Quick Actions
-                          </p>
-                          <div className="flex items-center gap-3">
-                            <input
-                              autoFocus
-                              type="text"
-                              value={quickActionText}
-                              onChange={(e) =>
-                                setQuickActionText(e.target.value)
-                              }
-                              placeholder="Add to tomorrow's plan..."
-                              className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-orange-200 placeholder:text-neutral-400"
-                              onKeyDown={async (e) => {
-                                if (
-                                  e.key === "Enter" &&
-                                  quickActionText.trim()
-                                ) {
-                                  const ok = await updateJournal({
-                                    tomorrow_plan_item: quickActionText.trim(),
-                                  });
-                                  if (ok) {
-                                    toast.success("Added to tomorrow's plan!");
-                                    setQuickActionOpen(false);
-                                    setQuickActionText("");
-                                    refetchDetails(true);
-                                  }
-                                }
-                                if (e.key === "Escape") {
+                    {/* Quick Action Block (Add to Plan) */}
+                    {quickActionOpen && (
+                      <div className="bg-white border border-orange-100 rounded-2xl p-5 shadow-sm mt-4">
+                        <p className="text-xs font-black text-orange-800 uppercase tracking-widest mb-3 flex items-center gap-2">
+                          <Plus className="w-4 h-4" /> Quick Actions
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <input
+                            autoFocus
+                            type="text"
+                            value={quickActionText}
+                            onChange={(e) => setQuickActionText(e.target.value)}
+                            placeholder="Add item to tomorrow's plan..."
+                            className="flex-1 border border-gray-300 rounded-full px-5 py-2.5 text-sm font-medium text-neutral-800 focus:outline-none focus:ring-2 focus:ring-orange-200 placeholder:text-neutral-400"
+                            onKeyDown={async (e) => {
+                              if (e.key === "Enter" && quickActionText.trim()) {
+                                const ok = await updateJournal({
+                                  tomorrow_plan_item: quickActionText.trim(),
+                                });
+                                if (ok) {
+                                  toast.success("Added to tomorrow's plan!");
                                   setQuickActionOpen(false);
                                   setQuickActionText("");
+                                  refetchDetails(true);
                                 }
-                              }}
-                            />
-                            <button
-                              onClick={async () => {
-                                if (quickActionText.trim()) {
-                                  const ok = await updateJournal({
-                                    tomorrow_plan_item: quickActionText.trim(),
-                                  });
-                                  if (ok) {
-                                    toast.success("Added to tomorrow's plan!");
-                                    setQuickActionOpen(false);
-                                    setQuickActionText("");
-                                    refetchDetails(true);
-                                  }
-                                }
-                              }}
-                              className="px-5 py-2 rounded-full text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm"
-                            >
-                              Add
-                            </button>
-                            <button
-                              onClick={() => {
+                              }
+                              if (e.key === "Escape") {
                                 setQuickActionOpen(false);
                                 setQuickActionText("");
-                              }}
-                              className="px-5 py-2 rounded-full text-xs font-bold text-neutral-600 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
-                            >
-                              Cancel
-                            </button>
-                          </div>
+                              }
+                            }}
+                          />
+                          <button
+                            onClick={async () => {
+                              if (quickActionText.trim()) {
+                                const ok = await updateJournal({
+                                  tomorrow_plan_item: quickActionText.trim(),
+                                });
+                                if (ok) {
+                                  toast.success("Added to tomorrow's plan!");
+                                  setQuickActionOpen(false);
+                                  setQuickActionText("");
+                                  refetchDetails(true);
+                                }
+                              }
+                            }}
+                            className="px-6 py-2.5 rounded-full text-sm font-bold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-sm"
+                          >
+                            Add
+                          </button>
+                          <button
+                            onClick={() => {
+                              setQuickActionOpen(false);
+                              setQuickActionText("");
+                            }}
+                            className="px-6 py-2.5 rounded-full text-sm font-bold text-neutral-600 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                          >
+                            Cancel
+                          </button>
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {/* ── 2-Column Feedback Block ── */}
-                      {feedbackOpen && (
-                        <div className="border-t border-[#EAE3DF] pt-5 mt-2">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            {/* COLUMN 1: Add New Feedback */}
-                            <div>
-                              <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-4">
-                                Provide Feedback
-                              </p>
-                              <p className="text-sm font-bold text-neutral-800 mb-2">
-                                Rating (1-5 stars)
-                              </p>
-                              <div className="flex items-center gap-1 mb-4">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <button
-                                    key={star}
-                                    type="button"
-                                    onClick={() => setFeedbackRating(star)}
-                                    className="transition-transform hover:scale-110"
+                    {/* Feedback Block */}
+                    {feedbackOpen && (
+                      <div className="bg-white border border-purple-100 rounded-2xl p-6 shadow-sm mt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                          {/* Add New Feedback */}
+                          <div>
+                            <p className="text-xs font-black text-purple-800 uppercase tracking-widest mb-4 flex items-center gap-2">
+                              <MessageSquare className="w-4 h-4" /> Provide
+                              Feedback
+                            </p>
+                            <p className="text-sm font-bold text-neutral-800 mb-2">
+                              Rating (1-5 stars)
+                            </p>
+                            <div className="flex items-center gap-1.5 mb-5">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                  key={star}
+                                  type="button"
+                                  onClick={() => setFeedbackRating(star)}
+                                  className="transition-transform hover:scale-110 focus:outline-none"
+                                >
+                                  <svg
+                                    className="w-10 h-10"
+                                    viewBox="0 0 24 24"
+                                    fill={
+                                      star <= feedbackRating
+                                        ? "#F59E0B"
+                                        : "none"
+                                    }
+                                    stroke={
+                                      star <= feedbackRating
+                                        ? "#F59E0B"
+                                        : "#D1D5DB"
+                                    }
+                                    strokeWidth="1.5"
                                   >
-                                    <svg
-                                      className="w-8 h-8"
-                                      viewBox="0 0 24 24"
-                                      fill={
-                                        star <= feedbackRating
-                                          ? "#F59E0B"
-                                          : "none"
-                                      }
-                                      stroke={
-                                        star <= feedbackRating
-                                          ? "#F59E0B"
-                                          : "#D1D5DB"
-                                      }
-                                      strokeWidth="1.5"
-                                    >
-                                      <path
-                                        strokeLinejoin="round"
-                                        d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
-                                      />
-                                    </svg>
-                                  </button>
+                                    <path
+                                      strokeLinejoin="round"
+                                      d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.562.562 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                                    />
+                                  </svg>
+                                </button>
+                              ))}
+                            </div>
+                            <p className="text-sm font-bold text-neutral-800 mb-2">
+                              Feedback Message
+                            </p>
+                            <textarea
+                              autoFocus
+                              value={feedbackMessage}
+                              onChange={(e) =>
+                                setFeedbackMessage(e.target.value)
+                              }
+                              placeholder="Enter constructive feedback..."
+                              rows={4}
+                              className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-medium text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
+                            />
+                            <div className="flex items-center gap-3 mt-5">
+                              <button
+                                onClick={handleSubmitFeedback}
+                                className="px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
+                              >
+                                Submit Feedback
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setFeedbackOpen(false);
+                                  setFeedbackRating(0);
+                                  setFeedbackMessage("");
+                                }}
+                                className="px-6 py-2.5 rounded-xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Recent Feedbacks */}
+                          <div className="bg-[#FAF7F5] rounded-xl p-6 border border-[#EAE3DF] h-full flex flex-col">
+                            <div className="flex items-center justify-between mb-5">
+                              <p className="text-xs font-black text-neutral-500 uppercase tracking-widest">
+                                Recent Feedbacks
+                              </p>
+                              <button
+                                onClick={() =>
+                                  (window.location.href =
+                                    "/admin-compass/feedback-dashboard")
+                                }
+                                className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
+                              >
+                                View All <ChevronRight className="w-3 h-3" />
+                              </button>
+                            </div>
+
+                            {isFetchingFeedbacks ? (
+                              <div className="flex justify-center items-center h-full py-10">
+                                <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+                              </div>
+                            ) : fetchedFeedbacks.length === 0 ? (
+                              <div className="flex flex-col items-center justify-center h-full py-10 text-neutral-400">
+                                <MessageSquare className="w-10 h-10 opacity-20 mb-3" />
+                                <span className="text-sm font-medium italic">
+                                  No past feedback found.
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="space-y-4 overflow-y-auto pr-2 flex-1">
+                                {fetchedFeedbacks.slice(0, 3).map((fb, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="bg-white p-4 rounded-xl shadow-sm border border-gray-100"
+                                  >
+                                    <div className="flex items-center gap-1 mb-2">
+                                      {[1, 2, 3, 4, 5].map((star) => (
+                                        <Star
+                                          key={star}
+                                          className={cn(
+                                            "w-3.5 h-3.5",
+                                            star <= fb.score
+                                              ? "text-yellow-400 fill-yellow-400"
+                                              : "text-gray-200"
+                                          )}
+                                        />
+                                      ))}
+                                      {fb.created_at && (
+                                        <span className="text-[10px] text-gray-400 ml-auto font-bold">
+                                          {new Date(
+                                            fb.created_at
+                                          ).toLocaleDateString()}
+                                        </span>
+                                      )}
+                                    </div>
+                                    {fb.reviews ? (
+                                      <p className="text-sm text-neutral-700 font-medium leading-relaxed">
+                                        {fb.reviews}
+                                      </p>
+                                    ) : (
+                                      <p className="text-sm text-neutral-400 italic">
+                                        No review provided.
+                                      </p>
+                                    )}
+                                    {fb.reviewer && (
+                                      <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
+                                        — {fb.reviewer.trim()}
+                                      </p>
+                                    )}
+                                  </div>
                                 ))}
                               </div>
-                              <p className="text-sm font-bold text-neutral-800 mb-2">
-                                Feedback Message
-                              </p>
-                              <textarea
-                                autoFocus
-                                value={feedbackMessage}
-                                onChange={(e) =>
-                                  setFeedbackMessage(e.target.value)
-                                }
-                                placeholder="Enter constructive feedback..."
-                                rows={3}
-                                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
-                              />
-                              <div className="flex items-center gap-3 mt-4">
-                                <button
-                                  onClick={handleSubmitFeedback}
-                                  className="px-6 py-2 rounded-2xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 transition-colors shadow-sm"
-                                >
-                                  Submit Feedback
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setFeedbackOpen(false);
-                                    setFeedbackRating(0);
-                                    setFeedbackMessage("");
-                                  }}
-                                  className="px-6 py-2 rounded-2xl text-sm font-bold text-neutral-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors shadow-sm"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-
-                            {/* COLUMN 2: Recent Feedbacks */}
-                            <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
-                              <div className="flex items-center justify-between mb-4">
-                                <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
-                                  Recent Feedbacks
-                                </p>
-                                <button
-                                  onClick={() =>
-                                    (window.location.href =
-                                      "/admin-compass/feedback-dashboard")
-                                  }
-                                  className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
-                                >
-                                  View All <ChevronRight className="w-3 h-3" />
-                                </button>
-                              </div>
-
-                              {isFetchingFeedbacks ? (
-                                <div className="flex justify-center items-center h-full py-6">
-                                  <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
-                                </div>
-                              ) : fetchedFeedbacks.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full py-6 text-neutral-400">
-                                  <MessageSquare className="w-8 h-8 opacity-20 mb-2" />
-                                  <span className="text-xs font-medium italic">
-                                    No past feedback found.
-                                  </span>
-                                </div>
-                              ) : (
-                                <div className="space-y-3 overflow-y-auto pr-1 flex-1">
-                                  {fetchedFeedbacks
-                                    .slice(0, 3)
-                                    .map((fb, idx) => (
-                                      <div
-                                        key={idx}
-                                        className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
-                                      >
-                                        <div className="flex items-center gap-1 mb-1.5">
-                                          {[1, 2, 3, 4, 5].map((star) => (
-                                            <Star
-                                              key={star}
-                                              className={cn(
-                                                "w-3 h-3",
-                                                star <= fb.score
-                                                  ? "text-yellow-400 fill-yellow-400"
-                                                  : "text-gray-200"
-                                              )}
-                                            />
-                                          ))}
-                                          {fb.created_at && (
-                                            <span className="text-[9px] text-gray-400 ml-auto font-medium">
-                                              {new Date(
-                                                fb.created_at
-                                              ).toLocaleDateString()}
-                                            </span>
-                                          )}
-                                        </div>
-                                        {fb.reviews ? (
-                                          <p className="text-xs text-neutral-700 leading-relaxed">
-                                            {fb.reviews}
-                                          </p>
-                                        ) : (
-                                          <p className="text-xs text-neutral-400 italic">
-                                            No review provided.
-                                          </p>
-                                        )}
-                                      </div>
-                                    ))}
-                                </div>
-                              )}
-                            </div>
+                            )}
                           </div>
                         </div>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
           </div>
+
+          {/* Action Modals */}
+          {isTaskModalOpen && (
+            <MuiZIndexFix>
+              <div className="fixed inset-0 z-[10000] flex justify-end">
+                <div
+                  className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                  onClick={() => setIsTaskModalOpen(false)}
+                />
+                <div
+                  className="relative flex flex-col bg-white shadow-2xl h-full border-l border-gray-200"
+                  style={{ width: "min(760px, 95vw)" }}
+                >
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0 bg-gray-50">
+                    <h2 className="text-lg font-bold text-gray-900">
+                      Add Task
+                    </h2>
+                    <button
+                      onClick={() => setIsTaskModalOpen(false)}
+                      className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 transition-colors text-gray-500"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4">
+                    <ProjectTaskCreateModal
+                      isEdit={false}
+                      onCloseModal={() => setIsTaskModalOpen(false)}
+                      className="max-w-full mx-0"
+                      prefillData={null}
+                      opportunityId={null}
+                      onSuccess={async () => {
+                        setIsTaskModalOpen(false);
+                        refetchDetails(true);
+                      }}
+                      isConversion={false}
+                    />
+                  </div>
+                </div>
+              </div>
+            </MuiZIndexFix>
+          )}
+
+          {isIssueModalOpen && (
+            <MuiZIndexFix>
+              <AddIssueModal
+                openDialog={isIssueModalOpen}
+                handleCloseDialog={() => setIsIssueModalOpen(false)}
+                preSelectedProjectId={undefined}
+              />
+            </MuiZIndexFix>
+          )}
         </div>,
         document.body
-      )}
-
-      {/* ── Add Task Modal ── */}
-      {isTaskModalOpen &&
-        createPortal(
-          <div className="fixed inset-0 z-[10000] flex">
-            <div
-              className="flex-1 bg-black/40 backdrop-blur-sm"
-              onClick={() => setIsTaskModalOpen(false)}
-            />
-            <div
-              className="relative flex flex-col bg-white shadow-2xl"
-              style={{ width: "min(760px, 95vw)" }}
-            >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-200 shrink-0">
-                <h2 className="text-base font-bold text-neutral-900">
-                  Add Tasks
-                </h2>
-                <button
-                  onClick={() => setIsTaskModalOpen(false)}
-                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100 transition-colors text-neutral-500"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="h-[3px] bg-[#C72030] w-full shrink-0" />
-              <div className="flex-1 overflow-y-auto">
-                <ProjectTaskCreateModal
-                  isEdit={false}
-                  onCloseModal={() => setIsTaskModalOpen(false)}
-                  className="max-w-full mx-0"
-                  prefillData={null}
-                  opportunityId={null}
-                  onSuccess={async () => {
-                    setIsTaskModalOpen(false);
-                    await loadDailyData(false);
-                  }}
-                  isConversion={false}
-                />
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
-
-      {isIssueModalOpen && (
-        <MuiZIndexFix>
-          <AddIssueModal
-            openDialog={isIssueModalOpen}
-            handleCloseDialog={() => setIsIssueModalOpen(false)}
-            preSelectedProjectId={undefined}
-          />
-        </MuiZIndexFix>
       )}
     </>
   );
@@ -1000,7 +1200,6 @@ const DailyLogTab = () => {
   const [selectedMeetingFilter, setSelectedMeetingFilter] = useState("");
   const [isGrouped, setIsGrouped] = useState(false);
 
-  // ✅ Non-working day state
   const [isNonWorkingDay, setIsNonWorkingDay] = useState(false);
   const [meetingDays, setMeetingDays] = useState([]);
 
@@ -1028,7 +1227,6 @@ const DailyLogTab = () => {
       const data = await fetchMeetingsAPI();
       setMeetings(data);
       if (data.length > 0) {
-        // 🛠 FIX: Extract default meeting
         const defaultMeeting = data.find((m) => m.is_default);
         if (defaultMeeting) {
           setSelectedMeetingFilter(defaultMeeting.id);
@@ -1056,6 +1254,9 @@ const DailyLogTab = () => {
 
   const [selectedReport, setSelectedReport] = useState(null);
 
+  // NOTE: For main screen Add Task button if implemented.
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchQuery), 500);
     return () => clearTimeout(t);
@@ -1074,8 +1275,6 @@ const DailyLogTab = () => {
         search: debouncedSearch,
       });
 
-      // ✅ Extract meeting_days from config and detect non-working day
-      // API response shape: { success, data: { config: { meeting_days: [...] }, total, reports: [...] } }
       const configDays =
         response?.config?.meeting_days ??
         response?.data?.config?.meeting_days ??
@@ -1083,14 +1282,13 @@ const DailyLogTab = () => {
       setMeetingDays(configDays);
       setIsNonWorkingDay(checkIsNonWorkingDay(selectedDate, configDays));
 
-      // ✅ Extract reports array from nested data shape
       let logsArray = Array.isArray(response)
         ? response
         : Array.isArray(response?.reports)
-        ? response.reports
-        : Array.isArray(response?.data?.reports)
-        ? response.data.reports
-        : [];
+          ? response.reports
+          : Array.isArray(response?.data?.reports)
+            ? response.data.reports
+            : [];
 
       logsArray = logsArray.filter(
         (log) => log.status && log.status.toLowerCase().trim() === "submitted"
@@ -1127,10 +1325,7 @@ const DailyLogTab = () => {
       }
 
       setMetaSubmitted(logsArray.length);
-      // ✅ total from API: response.total or response.data.total
-      setMetaExpected(
-        response?.total ?? response?.data?.total ?? 0
-      );
+      setMetaExpected(response?.total ?? response?.data?.total ?? 0);
     } catch (err) {
       setApiError(err.message);
       setApiLogs([]);
@@ -1170,10 +1365,11 @@ const DailyLogTab = () => {
   const flatFiltered = filterLogs(apiLogs);
   const sortedDepts = Object.keys(groupedApiLogs).sort();
 
+  // ── TH Component with reduced horizontal padding ──
   const TH = ({ children, center }) => (
     <th
       className={cn(
-        "px-6 py-4 text-[11px] font-black uppercase tracking-widest text-[#8C8580] whitespace-nowrap border-b border-[#F0EBE8]",
+        "px-3 py-4 sm:px-4 text-[11px] font-black uppercase tracking-widest text-[#8C8580] whitespace-nowrap border-b border-[#F0EBE8]",
         center ? "text-center" : "text-left"
       )}
     >
@@ -1195,21 +1391,24 @@ const DailyLogTab = () => {
       }
     }
 
+    // ── Apply reduced horizontal padding on table cells ──
     return (
       <tr
         key={log.id}
         className="border-b border-[#F0EBE8] hover:bg-[#FCFAFA] transition-colors bg-white"
       >
-        <td className="px-6 py-4 text-sm font-semibold text-[#8C8580] whitespace-nowrap">
+        <td className="px-3 py-4 sm:px-4 text-sm font-semibold text-[#8C8580] whitespace-nowrap">
           {fmt(log.date)}
         </td>
-        <td className="px-6 py-4">
-          <div className="text-sm font-black text-[#1A1A1A]">{log.user}</div>
-          <div className="text-xs font-semibold text-[#8C8580] mt-0.5">
+        <td className="px-3 py-4 sm:px-4 max-w-[140px] sm:max-w-[180px]">
+          <div className="text-sm font-black text-[#1A1A1A] truncate">
+            {log.user}
+          </div>
+          <div className="text-xs font-semibold text-[#8C8580] mt-0.5 truncate">
             {log.email}
           </div>
         </td>
-        <td className="px-6 py-4">
+        <td className="px-3 py-4 sm:px-4">
           <span
             className={cn(
               "flex flex-col justify-center items-center font-semibold p-2 rounded-xl",
@@ -1219,19 +1418,19 @@ const DailyLogTab = () => {
             {isPending ? "-" : log.score}
           </span>
         </td>
-        <td className="px-6 py-4">
+        <td className="px-3 py-4 sm:px-4">
           <span className="inline-block px-3.5 py-1.5 rounded-[8px] border border-[#F0EBE8] bg-[#FCFAFA] text-[10px] font-black text-[#8C8580] uppercase tracking-wider">
             {log.dept}
           </span>
         </td>
-        <td className="px-6 py-4 max-w-[300px] whitespace-normal break-words">
+        <td className="px-3 py-4 sm:px-4 max-w-[180px] lg:max-w-[220px] whitespace-normal break-words leading-snug">
           <FormattedHighlights text={log.highlights} isPending={isPending} />
         </td>
-        <td className="px-6 py-4 text-xs font-semibold text-[#8C8580] whitespace-nowrap">
+        <td className="px-3 py-4 sm:px-4 text-xs font-semibold text-[#8C8580] min-w-[110px]">
           <div>{subLine1}</div>
           {subLine2 && <div className="mt-0.5 opacity-80">{subLine2}</div>}
         </td>
-        <td className="px-6 py-4 text-center">
+        <td className="px-3 py-4 sm:px-4 text-center">
           <button
             onClick={() => setSelectedReport(log)}
             className="inline-flex items-center justify-center w-9 h-9 rounded-[12px] border border-[#F0EBE8] text-[#8C8580] hover:bg-[#1A1A1A] hover:text-white hover:border-[#1A1A1A] transition-all"
@@ -1261,12 +1460,9 @@ const DailyLogTab = () => {
                 Daily Report Log for {titleDate}
               </h1>
 
-              {/* ✅ Submitted / Expected / Non-working day — mutually exclusive */}
               <div className="flex items-center gap-4 mt-1.5 text-[12px] font-bold text-[#8C8580] uppercase tracking-widest flex-wrap">
                 {isNonWorkingDay ? (
-                  // ✅ Non-working day: hide Expected, show amber badge
                   <span className="flex items-center gap-1.5 px-3 py-1 rounded-[8px] bg-amber-50 border border-amber-200 text-amber-700 normal-case tracking-normal text-[11px] font-bold">
-                    {/* Sun icon */}
                     <svg
                       className="w-3.5 h-3.5 shrink-0"
                       viewBox="0 0 16 16"
@@ -1415,7 +1611,7 @@ const DailyLogTab = () => {
         </div>
       )}
 
-      {/* ✅ Non-working day banner above table */}
+      {/* Non-working day banner above table */}
       {isNonWorkingDay && !isLoading && (
         <div className="bg-amber-50 border border-amber-200 rounded-[20px] p-5 mb-6 flex items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center shrink-0">
@@ -1441,9 +1637,7 @@ const DailyLogTab = () => {
             </svg>
           </div>
           <div>
-            <p className="text-sm font-black text-amber-800">
-              Non-working day
-            </p>
+            <p className="text-sm font-black text-amber-800">Non-working day</p>
             <p className="text-xs font-semibold text-amber-600 mt-0.5">
               {titleDate} is not a scheduled meeting day. This meeting runs on{" "}
               {meetingDays.join(", ")} — no reports are expected today.
@@ -1475,32 +1669,32 @@ const DailyLogTab = () => {
                       key={`skeleton-${i}`}
                       className="border-b border-[#F0EBE8] bg-white"
                     >
-                      <td className="px-6 py-4">
-                        <div className="w-20 h-4 bg-[#F0EBE8] rounded-full" />
+                      <td className="px-3 py-4 sm:px-4">
+                        <div className="w-20 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-4 sm:px-4">
                         <div className="space-y-2">
-                          <div className="w-24 h-4 bg-[#F0EBE8] rounded-full" />
-                          <div className="w-32 h-3 bg-[#F0EBE8] rounded-full" />
+                          <div className="w-24 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
+                          <div className="w-32 h-3 bg-[#F0EBE8] rounded-full animate-pulse" />
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="w-10 h-6 bg-[#F0EBE8] rounded-[8px]" />
+                      <td className="px-3 py-4 sm:px-4">
+                        <div className="w-10 h-6 bg-[#F0EBE8] rounded-[8px] animate-pulse" />
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="w-20 h-6 bg-[#F0EBE8] rounded-[8px]" />
+                      <td className="px-3 py-4 sm:px-4">
+                        <div className="w-20 h-6 bg-[#F0EBE8] rounded-[8px] animate-pulse" />
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="w-48 h-4 bg-[#F0EBE8] rounded-full" />
+                      <td className="px-3 py-4 sm:px-4">
+                        <div className="w-48 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-3 py-4 sm:px-4">
                         <div className="space-y-2">
-                          <div className="w-24 h-4 bg-[#F0EBE8] rounded-full" />
-                          <div className="w-16 h-3 bg-[#F0EBE8] rounded-full" />
+                          <div className="w-24 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
+                          <div className="w-16 h-3 bg-[#F0EBE8] rounded-full animate-pulse" />
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="w-9 h-9 bg-[#F0EBE8] rounded-[12px] mx-auto" />
+                      <td className="px-3 py-4 sm:px-4 text-center">
+                        <div className="w-9 h-9 bg-[#F0EBE8] rounded-[12px] mx-auto animate-pulse" />
                       </td>
                     </tr>
                   ))}
@@ -1536,7 +1730,7 @@ const DailyLogTab = () => {
                   return (
                     <React.Fragment key={dept}>
                       <tr className="bg-[#FCFAFA] border-b border-[#F0EBE8]">
-                        <td colSpan={7} className="px-6 py-4">
+                        <td colSpan={7} className="px-3 py-4 sm:px-4">
                           <span className="text-sm font-black text-[#1A1A1A] uppercase tracking-wider">
                             {dept}
                           </span>
@@ -1560,6 +1754,46 @@ const DailyLogTab = () => {
           log={selectedReport}
           onClose={() => setSelectedReport(null)}
         />
+      )}
+
+      {/* Add Task Modal for main screen (if triggered externally) */}
+      {isTaskModalOpen && (
+        <MuiZIndexFix>
+          <div className="fixed inset-0 z-[10000] flex justify-end">
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+              onClick={() => setIsTaskModalOpen(false)}
+            />
+            <div
+              className="relative flex flex-col bg-white shadow-2xl h-full border-l border-gray-200"
+              style={{ width: "min(760px, 95vw)" }}
+            >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0 bg-gray-50">
+                <h2 className="text-lg font-bold text-gray-900">Add Task</h2>
+                <button
+                  onClick={() => setIsTaskModalOpen(false)}
+                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 transition-colors text-gray-500"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                <ProjectTaskCreateModal
+                  isEdit={false}
+                  onCloseModal={() => setIsTaskModalOpen(false)}
+                  className="max-w-full mx-0"
+                  prefillData={null}
+                  opportunityId={null}
+                  onSuccess={async () => {
+                    setIsTaskModalOpen(false);
+                    loadData(false);
+                  }}
+                  isConversion={false}
+                />
+              </div>
+            </div>
+          </div>
+        </MuiZIndexFix>
       )}
     </div>
   );

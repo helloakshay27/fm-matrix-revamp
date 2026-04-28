@@ -2,6 +2,11 @@ import { Goal } from "lucide-react";
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
 import { toast } from "sonner";
+import {
+  fetchCachedGoals,
+  fetchCachedUsers,
+  clearCachedGoals,
+} from "./goalsCache";
 
 // ── Design Tokens ──
 const C = {
@@ -19,7 +24,7 @@ const C = {
 };
 
 // ── API Helpers ──
-const apiUrl = (path: string): string => {
+const apiUrl = (path) => {
   let base = (localStorage.getItem("baseUrl") || "").replace(/\/$/, "");
   if (!base) return path;
   if (!base.startsWith("http://") && !base.startsWith("https://"))
@@ -27,7 +32,7 @@ const apiUrl = (path: string): string => {
   return `${base}${path}`;
 };
 
-const authHeaders = (): Record<string, string> => {
+const authHeaders = () => {
   const token = localStorage.getItem("token") || "";
   const bearer = token
     ? token.startsWith("Bearer ")
@@ -41,7 +46,7 @@ const authHeaders = (): Record<string, string> => {
 };
 
 // ── YouTube ID extractor ──
-const extractYouTubeId = (url: string) => {
+const extractYouTubeId = (url) => {
   if (!url) return null;
   const m = url.match(
     /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
@@ -50,7 +55,7 @@ const extractYouTubeId = (url: string) => {
 };
 
 // ── Date Helpers ──
-const toApiDate = (s: string): string => {
+const toApiDate = (s) => {
   if (!s) return "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
   const p = s.split("-");
@@ -58,7 +63,7 @@ const toApiDate = (s: string): string => {
   return s;
 };
 
-const toDisplayDate = (s: string): string => {
+const toDisplayDate = (s) => {
   if (!s) return "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
     const [y, m, d] = s.split("-");
@@ -67,12 +72,12 @@ const toDisplayDate = (s: string): string => {
   return s;
 };
 
-const clamp = (val: any): number => {
+const clamp = (val) => {
   const n = Math.round(Number(val));
   return isNaN(n) ? 0 : Math.min(100, Math.max(0, n));
 };
 
-const sliderBg = (pct: number) =>
+const sliderBg = (pct) =>
   `linear-gradient(to right, ${C.primary} ${pct}%, #e5e7eb ${pct}%)`;
 
 // ── Icons ──
@@ -88,7 +93,7 @@ const TrashIcon = () => (
       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
   </svg>
 );
-const LoaderIcon = ({ size = 16 }: { size?: number }) => (
+const LoaderIcon = ({ size = 16 }) => (
   <svg width={size} height={size}
     style={{ animation: "spin 0.8s linear infinite", display: "inline-block" }}
     fill="none" viewBox="0 0 24 24">
@@ -181,14 +186,14 @@ const UserSelect = ({
   onChange,
   users,
   placeholder = "Search owner...",
-}: any) => {
+}) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef(null);
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
         setOpen(false);
       }
     };
@@ -196,13 +201,13 @@ const UserSelect = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selectedUser = users.find((u: any) => u.id === value);
+  const selectedUser = users.find((u) => u.id === value);
   const displayValue = selectedUser
     ? selectedUser.full_name ||
       `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
     : "";
 
-  const filteredUsers = users.filter((u: any) => {
+  const filteredUsers = users.filter((u) => {
     const name =
       u.full_name || `${u.firstname || ""} ${u.lastname || ""}`.trim();
     return name.toLowerCase().includes(search.toLowerCase());
@@ -239,7 +244,7 @@ const UserSelect = ({
           {filteredUsers.length === 0 ? (
             <div style={{ padding: "12px", fontSize: "14px", color: C.textMuted, textAlign: "center" }}>No users found</div>
           ) : (
-            filteredUsers.map((u: any) => {
+            filteredUsers.map((u) => {
               const name = u.full_name || `${u.firstname || ""} ${u.lastname || ""}`.trim();
               return (
                 <div key={u.id}
@@ -259,25 +264,8 @@ const UserSelect = ({
   );
 };
 
-// ── Types ──
-interface Initiative {
-  id?: number;
-  title: string;
-  progress: number;
-  description?: string;
-  targetValue?: string;
-  currentValue?: string;
-  unit?: string;
-  period?: string;
-  targetDate?: string;
-  ownerName?: string;
-  ownerId?: string | number;
-  status?: string;
-  updateRemarks?: string;
-}
-
 // ── Modal Portal ──
-const Modal = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => {
+const Modal = ({ children, onClose }) => {
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => { document.body.style.overflow = ""; };
@@ -303,37 +291,37 @@ const SkeletonCards = () => (
 );
 
 // ── Field wrapper ──
-const FieldGroup = ({ children }: { children: React.ReactNode }) => (
-  <div style={{ display: "flex", flexDirection: "column" as const }}>{children}</div>
+const FieldGroup = ({ children }) => (
+  <div style={{ display: "flex", flexDirection: "column" }}>{children}</div>
 );
 
 // ══════════════════════════════════════════════════
 export const BhagSection = () => {
-  const [activeModal, setActiveModal] = useState<string | null>(null);
-  const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
+  const [activeModal, setActiveModal] = useState(null);
+  const [editingGoalId, setEditingGoalId] = useState(null);
 
   const [isInfoHovered, setIsInfoHovered] = useState(false);
   const [infoPos, setInfoPos] = useState({ top: 0, left: 0, transform: "translateX(-50%)" });
-  const infoBtnRef = useRef<HTMLSpanElement>(null);
+  const infoBtnRef = useRef(null);
 
   const [bhagStatement, setBhagStatement] = useState("");
   const [bhagVideoUrl, setBhagVideoUrl] = useState("");
   const [bhagTargetDate, setBhagTargetDate] = useState("");
 
-  const [initiatives, setInitiatives] = useState<Initiative[]>([]);
-  const [usersList, setUsersList] = useState<any[]>([]);
+  const [initiatives, setInitiatives] = useState([]);
+  const [usersList, setUsersList] = useState([]);
   const [isFetching, setIsFetching] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [fetchError, setFetchError] = useState(null);
 
   const [tempStatement, setTempStatement] = useState("");
   const [tempVideoUrl, setTempVideoUrl] = useState("");
   const [tempTargetDate, setTempTargetDate] = useState("");
 
-  const [tempGoal, setTempGoal] = useState<Initiative | null>(null);
+  const [tempGoal, setTempGoal] = useState(null);
   const [tempGoalDate, setTempGoalDate] = useState("");
 
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState(null);
 
   const fetchBhagStatement = useCallback(async () => {
     try {
@@ -358,16 +346,13 @@ export const BhagSection = () => {
     setIsFetching(true);
     setFetchError(null);
     try {
-      const res = await fetch(apiUrl("/goals"), { method: "GET", headers: authHeaders() });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
-      const records: any[] = Array.isArray(json) ? json : json.goals || json.data || [];
-      const bhagGoals = records.filter((g: any) => {
+      const records = await fetchCachedGoals();
+      const bhagGoals = records.filter((g) => {
         const p = (g.period || "").toUpperCase();
         return p === "BHAG" || p.includes("BHAG");
       });
       setInitiatives(
-        bhagGoals.map((g: any, idx: number) => ({
+        bhagGoals.map((g, idx) => ({
           id: g.id ?? idx + 1,
           title: g.title || g.name || "Untitled",
           progress: clamp(g.progress_percentage ?? g.progress ?? 0),
@@ -383,7 +368,7 @@ export const BhagSection = () => {
           updateRemarks: g.update_remarks || "",
         }))
       );
-    } catch (err: any) {
+    } catch (err) {
       setFetchError(err.message || "Failed to load BHAG data");
     } finally {
       setIsFetching(false);
@@ -391,12 +376,8 @@ export const BhagSection = () => {
   }, []);
 
   const fetchUsers = useCallback(async () => {
-    const orgId = localStorage.getItem("org_id") || localStorage.getItem("organization_id") || "";
-    if (!orgId) return;
     try {
-      const res = await fetch(apiUrl(`/api/users?organization_id=${orgId}`), { method: "GET", headers: authHeaders() });
-      if (!res.ok) return;
-      const data = await res.json();
+      const data = await fetchCachedUsers();
       setUsersList(Array.isArray(data) ? data : data.users || data.data || []);
     } catch (err) {
       console.error("[BhagSection] fetchUsers:", err);
@@ -419,7 +400,7 @@ export const BhagSection = () => {
     setSaveError(null);
     try {
       const apiDate = tempTargetDate ? toApiDate(tempTargetDate) : "";
-      const payload: any = {
+      const payload = {
         goal: {
           title: tempGoal?.title?.trim() || "",
           description: tempGoal?.description || "",
@@ -449,9 +430,10 @@ export const BhagSection = () => {
       setBhagVideoUrl(tempVideoUrl.trim());
       setBhagTargetDate(apiDate);
       closeModal();
+      clearCachedGoals();
       fetchGoals();
       toast.success("BHAG Statement saved successfully!");
-    } catch (err: any) {
+    } catch (err) {
       setSaveError(err.message || "Failed to save BHAG statement.");
       toast.error(err.message || "Failed to save BHAG statement.");
     } finally {
@@ -489,9 +471,10 @@ export const BhagSection = () => {
         : await fetch(apiUrl("/goals"), { method: "POST", headers: authHeaders(), body: JSON.stringify(payload) });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       closeModal();
+      clearCachedGoals();
       fetchGoals();
       toast.success(editingGoalId ? "Goal updated successfully!" : "Goal created successfully!");
-    } catch (err: any) {
+    } catch (err) {
       setSaveError(err.message || "Error saving goal.");
       toast.error(err.message || "Error saving goal.");
     } finally {
@@ -499,7 +482,7 @@ export const BhagSection = () => {
     }
   };
 
-  const handleCardSlider = async (id: number, val: string) => {
+  const handleCardSlider = async (id, val) => {
     const c = clamp(val);
     setInitiatives((prev) => prev.map((i) => (i.id === id ? { ...i, progress: c } : i)));
     try {
@@ -508,20 +491,25 @@ export const BhagSection = () => {
         headers: authHeaders(),
         body: JSON.stringify({ goal: { progress_percentage: c, current_value: c } }),
       });
-      if (!res.ok) fetchGoals();
+      if (!res.ok) {
+        clearCachedGoals();
+        fetchGoals();
+      }
     } catch {
+      clearCachedGoals();
       fetchGoals();
     }
   };
 
-  const deleteGoal = async (id: number) => {
+  const deleteGoal = async (id) => {
     if (!window.confirm("Delete this initiative?")) return;
     try {
       const res = await fetch(apiUrl(`/goals/${id}`), { method: "DELETE", headers: authHeaders() });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      clearCachedGoals();
       fetchGoals();
       toast.success("Initiative deleted successfully!");
-    } catch (err: any) {
+    } catch (err) {
       toast.error("Failed to delete: " + err.message);
     }
   };
@@ -542,7 +530,7 @@ export const BhagSection = () => {
     setActiveModal("bhag_statement");
   };
 
-  const openGoalModal = (goal: Initiative) => {
+  const openGoalModal = (goal) => {
     setTempGoal({ ...goal });
     setTempGoalDate(goal.targetDate || "");
     setEditingGoalId(goal.id ?? null);
@@ -558,9 +546,9 @@ export const BhagSection = () => {
     setActiveModal("goal_details");
   };
 
-  const handleProgressChange = (val: string) => {
+  const handleProgressChange = (val) => {
     const c = clamp(val);
-    setTempGoal((prev: any) => ({ ...prev, progress: c, currentValue: String(c) }));
+    setTempGoal((prev) => ({ ...prev, progress: c, currentValue: String(c) }));
   };
 
   const ytId = extractYouTubeId(bhagVideoUrl);
@@ -578,28 +566,15 @@ export const BhagSection = () => {
           boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
         }}
       >
-        {/* ── Video (edge-to-edge) ── */}
-        {!isFetching && ytId && (
-          <div style={{ width: "100%", position: "relative", paddingTop: "56.25%", background: "#000" }}>
-            <iframe
-              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
-              src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`}
-              title="BHAG Vision Video"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        )}
-
-        {/* ── Header bar ── */}
+        {/* ── Top Header bar (Heading & Edit Button) ── */}
         <div
           style={{
-            borderBottom: "1px solid rgba(229,231,235,0.4)",
+            borderBottom: ytId ? "none" : "1px solid rgba(229,231,235,0.4)",
             background: "rgba(255,255,255,0.6)",
             color: C.textMain,
             padding: "16px 20px",
             display: "flex",
-            alignItems: "flex-start",
+            alignItems: "center",
             justifyContent: "space-between",
             gap: 16,
           }}
@@ -611,7 +586,6 @@ export const BhagSection = () => {
                 fontWeight: 800,
                 textTransform: "uppercase",
                 letterSpacing: "0.15em",
-                marginBottom: 7,
                 color: C.textMuted,
                 display: "flex",
                 alignItems: "center",
@@ -631,9 +605,9 @@ export const BhagSection = () => {
                   setIsInfoHovered(true);
                 }}
                 onMouseLeave={() => setIsInfoHovered(false)}
-                style={{ cursor: "help", display: "inline-flex", opacity: 0.7 }}
+                style={{ cursor: "help", display: "inline-flex" }}
               >
-                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="#1a1a1a" style={{ opacity: 0.5 }}>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -648,28 +622,28 @@ export const BhagSection = () => {
                   left: infoPos.left,
                   transform: infoPos.transform,
                   zIndex: 99999,
-                  background: "#ffffff",
-                  color: "#1a1a1a",
-                  borderRadius: 12,
-                  boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
-                  padding: "16px",
-                  width: 320,
+                  background: "#0B1221",
+                  color: "#ffffff",
+                  borderRadius: 10,
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+                  padding: "18px 24px",
+                  width: 380,
                   textAlign: "center",
                   fontFamily: "'Poppins', sans-serif",
                   pointerEvents: "none",
-                  border: "1px solid rgba(218,119,86,0.2)",
+                  border: "1px solid rgba(255,255,255,0.08)",
                 }}
               >
                 <h4 style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 800 }}>
                   Long Term - BHAG (Big Hairy Audacious Goal)
                 </h4>
-                <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#4b5563" }}>
+                <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#ffffff" }}>
                   A bold 10-15 year goal that defines your ultimate long-term vision. It should seem almost impossible but inspire your entire team, being clear, compelling, and easy to communicate.
                 </p>
-                <p style={{ margin: "0 0 10px 0", fontSize: 11, fontStyle: "italic", color: "#6b7280" }}>
+                <p style={{ margin: "0 0 10px 0", fontSize: 11, fontStyle: "italic", color: "#cbd5e1" }}>
                   From Scaling Up: "A true BHAG is clear and compelling, serves as a unifying focal point, and has a clear finish line."
                 </p>
-                <div style={{ fontSize: 11, color: "#4b5563" }}>
+                <div style={{ fontSize: 11, color: "#cbd5e1" }}>
                   <div style={{ fontWeight: 600, marginBottom: 2 }}>Indian Business Example:</div>
                   <div style={{ fontStyle: "italic" }}>
                     "Become India's most trusted regional pharma distributor serving 10,000 retailers across 5 states by 2035"
@@ -677,37 +651,6 @@ export const BhagSection = () => {
                 </div>
               </div>,
               document.body
-            )}
-
-            <h2
-              style={{
-                fontSize: 17,
-                fontWeight: 700,
-                lineHeight: 1.45,
-                color: C.primary,
-                margin: 0,
-              }}
-            >
-              {isFetching
-                ? "Loading…"
-                : bhagStatement || "No BHAG statement yet — click ✏️ to add one."}
-            </h2>
-            {!isFetching && bhagTargetDate && (
-              <span
-                style={{
-                  display: "inline-block",
-                  marginTop: 10,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  padding: "4px 12px",
-                  borderRadius: 20,
-                  background: "#f9fafb",
-                  border: "1px solid #e5e7eb",
-                  color: C.textMuted,
-                }}
-              >
-                Target: {toDisplayDate(bhagTargetDate)}
-              </span>
             )}
           </div>
 
@@ -730,6 +673,53 @@ export const BhagSection = () => {
           >
             <EditIcon />
           </button>
+        </div>
+
+        {/* ── Video (edge-to-edge) ── */}
+        {!isFetching && ytId && (
+          <div style={{ width: "100%", position: "relative", paddingTop: "56.25%", background: "#000" }}>
+            <iframe
+              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: 0 }}
+              src={`https://www.youtube.com/embed/${ytId}?rel=0&modestbranding=1`}
+              title="BHAG Vision Video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        )}
+
+        {/* ── BHAG Statement & Target Date ── */}
+        <div style={{ padding: "20px 20px 0", background: "#ffffff" }}>
+          <h2
+            style={{
+              fontSize: 17,
+              fontWeight: 700,
+              lineHeight: 1.45,
+              color: C.primary,
+              margin: 0,
+            }}
+          >
+            {isFetching
+              ? "Loading…"
+              : bhagStatement || "No BHAG statement yet — click ✏️ to add one."}
+          </h2>
+          {!isFetching && bhagTargetDate && (
+            <span
+              style={{
+                display: "inline-block",
+                marginTop: 10,
+                fontSize: 11,
+                fontWeight: 600,
+                padding: "4px 12px",
+                borderRadius: 20,
+                background: "#f9fafb",
+                border: "1px solid #e5e7eb",
+                color: C.textMuted,
+              }}
+            >
+              Target: {toDisplayDate(bhagTargetDate)}
+            </span>
+          )}
         </div>
 
         {/* ── Initiatives body ── */}
@@ -846,14 +836,14 @@ export const BhagSection = () => {
                       </div>
                       <div className="bh-card-actions">
                         <button className="edit" onClick={() => openGoalModal(ini)} title="Edit"><EditIcon /></button>
-                        <button className="del" onClick={() => deleteGoal(ini.id as number)} title="Delete"><TrashIcon /></button>
+                        <button className="del" onClick={() => deleteGoal(ini.id)} title="Delete"><TrashIcon /></button>
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <input
                         type="range" min="0" max="100" step="1"
                         value={ini.progress}
-                        onChange={(e) => handleCardSlider(ini.id as number, e.target.value)}
+                        onChange={(e) => handleCardSlider(ini.id, e.target.value)}
                         className="bh-slider-card"
                         style={{ background: sliderBg(ini.progress) }}
                       />
@@ -974,7 +964,7 @@ export const BhagSection = () => {
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14 }}>
                   <FieldGroup>
                     <label className="bh-label">Owner</label>
-                    <UserSelect value={tempGoal.ownerId} onChange={(id: any) => setTempGoal({ ...tempGoal, ownerId: id })} users={usersList} placeholder="Search owner..." />
+                    <UserSelect value={tempGoal.ownerId} onChange={(id) => setTempGoal({ ...tempGoal, ownerId: id })} users={usersList} placeholder="Search owner..." />
                   </FieldGroup>
                   <FieldGroup>
                     <label className="bh-label">Unit</label>
