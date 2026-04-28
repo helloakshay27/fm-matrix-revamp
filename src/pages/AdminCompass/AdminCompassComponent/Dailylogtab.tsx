@@ -310,11 +310,11 @@ const DAY_MAP = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const checkIsNonWorkingDay = (dateStr, meetingDays) => {
   if (!dateStr || !Array.isArray(meetingDays) || meetingDays.length === 0)
     return false;
-  
+
   const [y, m, d] = dateStr.split("-").map(Number);
   const dateObj = new Date(y, m - 1, d);
   if (isNaN(dateObj)) return false;
-  
+
   const dayName = DAY_MAP[dateObj.getDay()];
   return !meetingDays.includes(dayName);
 };
@@ -437,7 +437,10 @@ const ReportDetailModal = ({ log, onClose }) => {
   const cleanName = (log.user || "").trim();
 
   let filteredAccomplishments =
-    displayRd.accomplishments.length === 0 && log.highlights && !isPending && !hasDraft
+    displayRd.accomplishments.length === 0 &&
+    log.highlights &&
+    !isPending &&
+    !hasDraft
       ? [{ title: log.highlights }]
       : displayRd.accomplishments;
 
@@ -455,7 +458,8 @@ const ReportDetailModal = ({ log, onClose }) => {
 
   const sd = draftRaw?.score_details || rd?.score_details || {};
 
-  const kpiAchieved = sd.kpi?.points ?? details?.kpis?.score ?? details?.score ?? 0;
+  const kpiAchieved =
+    sd.kpi?.points ?? details?.kpis?.score ?? details?.score ?? 0;
   const kpiMax = sd.kpi?.maxPoints ?? 20;
   const kpiStr = `${kpiAchieved}/${kpiMax}`;
 
@@ -475,7 +479,9 @@ const ReportDetailModal = ({ log, onClose }) => {
   const timeMax = sd.timing?.maxPoints ?? 20;
   const timeStr = `${timeAchieved}/${timeMax}`;
 
-  const totalScoreStr = Math.round(details?.score ?? rawDisplayRd?.total_score ?? 0);
+  const totalScoreStr = Math.round(
+    details?.score ?? rawDisplayRd?.total_score ?? 0
+  );
 
   // Update Journal Logic
   const updateJournal = async (patch) => {
@@ -483,10 +489,17 @@ const ReportDetailModal = ({ log, onClose }) => {
       toast.error("Journal ID not found.");
       return false;
     }
-    
-    const sourceRd = isPending && hasDraft 
-      ? normalizeReportData({...draftRaw, self_rating: draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? 0}) 
-      : normalizeReportData({...rd, self_rating: rd.self_rating ?? 0});
+
+    const sourceRd =
+      isPending && hasDraft
+        ? normalizeReportData({
+            ...draftRaw,
+            self_rating:
+              draftRaw.details?.self_rating ??
+              draftRaw.sections?.self_rating ??
+              0,
+          })
+        : normalizeReportData({ ...rd, self_rating: rd.self_rating ?? 0 });
 
     const payload = {
       self_rating: patch.self_rating ?? sourceRd.self_rating,
@@ -496,21 +509,21 @@ const ReportDetailModal = ({ log, onClose }) => {
         tasks_issues: sourceRd.tasks_issues,
         big_win: sourceRd.big_win || null,
         tomorrow_plan: patch.tomorrow_plan_item
-          ? [...sourceRd.tomorrow_plan, { title: patch.tomorrow_plan_item, member: log.user }]
+          ? [
+              ...sourceRd.tomorrow_plan,
+              { title: patch.tomorrow_plan_item, member: log.user },
+            ]
           : sourceRd.tomorrow_plan,
         kpis: rd.kpis || details?.kpis || {},
       },
     };
 
     try {
-      const res = await fetch(
-        `${getBaseUrl()}/user_journals/${log.id}.json`,
-        {
-          method: "PUT",
-          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch(`${getBaseUrl()}/user_journals/${log.id}.json`, {
+        method: "PUT",
+        headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return true;
     } catch (err) {
@@ -518,7 +531,7 @@ const ReportDetailModal = ({ log, onClose }) => {
       return false;
     }
   };
-const loadPastFeedbacks = async () => {
+  const loadPastFeedbacks = async () => {
     setIsFetchingFeedbacks(true);
     try {
       const loggedInUserId = localStorage.getItem("userId") || "";
@@ -533,10 +546,12 @@ const loadPastFeedbacks = async () => {
         let feedbackList = Array.isArray(data)
           ? data
           : data.data || data.ratings || [];
-        
+
         // 🟢 NAYA LOGIC: Sort by date descending (latest top pe aayega)
-        feedbackList.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        
+        feedbackList.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
+
         setFetchedFeedbacks(feedbackList);
       }
     } catch (error) {
@@ -616,7 +631,6 @@ const loadPastFeedbacks = async () => {
                 </div>
               ) : (
                 <div className="flex flex-col h-full">
-                  
                   {/* Top Profile Section */}
                   <div className="p-6 bg-white border-b border-[#F0EBE8]">
                     <div className="flex items-start gap-4">
@@ -630,7 +644,8 @@ const loadPastFeedbacks = async () => {
                           <h3 className="font-black text-[#1A1A1A] text-lg truncate">
                             {log.user}
                           </h3>
-                          {(log.user?.includes("HOD") || log.user?.includes("TL")) && (
+                          {(log.user?.includes("HOD") ||
+                            log.user?.includes("TL")) && (
                             <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-xs font-bold px-2 py-0.5 rounded-full shrink-0">
                               <Crown className="w-3 h-3 fill-orange-400" /> HOD
                             </span>
@@ -650,7 +665,7 @@ const loadPastFeedbacks = async () => {
                             </span>
                           )}
                         </div>
-                        
+
                         <div className="text-xs font-semibold text-gray-500 mb-3 truncate">
                           {log.email}
                           {details?.submitted_at && (
@@ -695,20 +710,36 @@ const loadPastFeedbacks = async () => {
                           </span>
                         </div>
                       )}
-                      {rawDisplayRd?.total_score !== undefined && rawDisplayRd?.total_score !== null && (
-                        <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5 shadow-sm">
-                          <span className="text-sm font-bold text-purple-800">
-                            Total Score: {rawDisplayRd.total_score}
-                          </span>
-                        </div>
-                      )}
-                      {displayRd.is_absent !== null && displayRd.is_absent !== undefined && (
-                        <div className={cn("flex items-center gap-2 rounded-xl px-4 py-2.5 border shadow-sm", displayRd.is_absent ? "bg-red-50 border-red-100" : "bg-green-50 border-green-100")}>
-                          <span className={cn("text-sm font-bold", displayRd.is_absent ? "text-red-700" : "text-green-700")}>
-                            {displayRd.is_absent ? "Absent" : "Present"}
-                          </span>
-                        </div>
-                      )}
+                      {rawDisplayRd?.total_score !== undefined &&
+                        rawDisplayRd?.total_score !== null && (
+                          <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5 shadow-sm">
+                            <span className="text-sm font-bold text-purple-800">
+                              Total Score: {rawDisplayRd.total_score}
+                            </span>
+                          </div>
+                        )}
+                      {displayRd.is_absent !== null &&
+                        displayRd.is_absent !== undefined && (
+                          <div
+                            className={cn(
+                              "flex items-center gap-2 rounded-xl px-4 py-2.5 border shadow-sm",
+                              displayRd.is_absent
+                                ? "bg-red-50 border-red-100"
+                                : "bg-green-50 border-green-100"
+                            )}
+                          >
+                            <span
+                              className={cn(
+                                "text-sm font-bold",
+                                displayRd.is_absent
+                                  ? "text-red-700"
+                                  : "text-green-700"
+                              )}
+                            >
+                              {displayRd.is_absent ? "Absent" : "Present"}
+                            </span>
+                          </div>
+                        )}
                     </div>
 
                     {/* Big Win */}
@@ -739,13 +770,20 @@ const loadPastFeedbacks = async () => {
                           </h4>
                         </div>
                         {filteredAccomplishments.length === 0 ? (
-                          <p className="text-sm text-neutral-400 italic font-medium">None recorded.</p>
+                          <p className="text-sm text-neutral-400 italic font-medium">
+                            None recorded.
+                          </p>
                         ) : (
                           <ul className="space-y-3">
                             {filteredAccomplishments.map((item, i) => (
-                              <li key={i} className="flex items-start gap-2.5 text-sm font-medium text-neutral-700">
+                              <li
+                                key={i}
+                                className="flex items-start gap-2.5 text-sm font-medium text-neutral-700"
+                              >
                                 <div className="w-2 h-2 rounded-full bg-green-400 mt-1.5 shrink-0" />
-                                <span className="leading-relaxed">{getItemTitle(item)}</span>
+                                <span className="leading-relaxed">
+                                  {getItemTitle(item)}
+                                </span>
                               </li>
                             ))}
                           </ul>
@@ -763,20 +801,31 @@ const loadPastFeedbacks = async () => {
                           </h4>
                         </div>
                         {filteredTasksIssues.length === 0 ? (
-                          <p className="text-sm text-neutral-400 italic font-medium">None recorded.</p>
+                          <p className="text-sm text-neutral-400 italic font-medium">
+                            None recorded.
+                          </p>
                         ) : (
                           <ul className="space-y-3">
                             {filteredTasksIssues.map((item, i) => (
-                              <li key={i} className="flex items-start gap-2.5 text-sm font-medium text-neutral-700">
+                              <li
+                                key={i}
+                                className="flex items-start gap-2.5 text-sm font-medium text-neutral-700"
+                              >
                                 <span
                                   className={cn(
                                     "shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5",
-                                    getItemStatus(item) === "open" ? "bg-red-100 text-red-600" : getItemStatus(item) === "closed" ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-500"
+                                    getItemStatus(item) === "open"
+                                      ? "bg-red-100 text-red-600"
+                                      : getItemStatus(item) === "closed"
+                                        ? "bg-green-100 text-green-600"
+                                        : "bg-gray-100 text-gray-500"
                                   )}
                                 >
                                   {getItemStatus(item)}
                                 </span>
-                                <span className="leading-relaxed">{getItemTitle(item)}</span>
+                                <span className="leading-relaxed">
+                                  {getItemTitle(item)}
+                                </span>
                               </li>
                             ))}
                           </ul>
@@ -794,13 +843,20 @@ const loadPastFeedbacks = async () => {
                           </h4>
                         </div>
                         {filteredTomorrowPlan.length === 0 ? (
-                          <p className="text-sm text-neutral-400 italic font-medium">None recorded.</p>
+                          <p className="text-sm text-neutral-400 italic font-medium">
+                            None recorded.
+                          </p>
                         ) : (
                           <ul className="space-y-3">
                             {filteredTomorrowPlan.map((item, i) => (
-                              <li key={i} className="flex items-start gap-2.5 text-sm font-medium text-neutral-700">
+                              <li
+                                key={i}
+                                className="flex items-start gap-2.5 text-sm font-medium text-neutral-700"
+                              >
                                 <Circle className="w-3 h-3 text-blue-400 mt-1 shrink-0" />
-                                <span className="leading-relaxed">{getItemTitle(item)}</span>
+                                <span className="leading-relaxed">
+                                  {getItemTitle(item)}
+                                </span>
                               </li>
                             ))}
                           </ul>
@@ -866,7 +922,9 @@ const loadPastFeedbacks = async () => {
                             className="flex-1 border border-gray-300 rounded-full px-5 py-2.5 text-sm font-medium text-neutral-800 focus:outline-none focus:ring-2 focus:ring-orange-200 placeholder:text-neutral-400"
                             onKeyDown={async (e) => {
                               if (e.key === "Enter" && quickActionText.trim()) {
-                                const ok = await updateJournal({ tomorrow_plan_item: quickActionText.trim() });
+                                const ok = await updateJournal({
+                                  tomorrow_plan_item: quickActionText.trim(),
+                                });
                                 if (ok) {
                                   toast.success("Added to tomorrow's plan!");
                                   setQuickActionOpen(false);
@@ -883,7 +941,9 @@ const loadPastFeedbacks = async () => {
                           <button
                             onClick={async () => {
                               if (quickActionText.trim()) {
-                                const ok = await updateJournal({ tomorrow_plan_item: quickActionText.trim() });
+                                const ok = await updateJournal({
+                                  tomorrow_plan_item: quickActionText.trim(),
+                                });
                                 if (ok) {
                                   toast.success("Added to tomorrow's plan!");
                                   setQuickActionOpen(false);
@@ -916,9 +976,12 @@ const loadPastFeedbacks = async () => {
                           {/* Add New Feedback */}
                           <div>
                             <p className="text-xs font-black text-purple-800 uppercase tracking-widest mb-4 flex items-center gap-2">
-                              <MessageSquare className="w-4 h-4" /> Provide Feedback
+                              <MessageSquare className="w-4 h-4" /> Provide
+                              Feedback
                             </p>
-                            <p className="text-sm font-bold text-neutral-800 mb-2">Rating (1-5 stars)</p>
+                            <p className="text-sm font-bold text-neutral-800 mb-2">
+                              Rating (1-5 stars)
+                            </p>
                             <div className="flex items-center gap-1.5 mb-5">
                               {[1, 2, 3, 4, 5].map((star) => (
                                 <button
@@ -930,8 +993,16 @@ const loadPastFeedbacks = async () => {
                                   <svg
                                     className="w-10 h-10"
                                     viewBox="0 0 24 24"
-                                    fill={star <= feedbackRating ? "#F59E0B" : "none"}
-                                    stroke={star <= feedbackRating ? "#F59E0B" : "#D1D5DB"}
+                                    fill={
+                                      star <= feedbackRating
+                                        ? "#F59E0B"
+                                        : "none"
+                                    }
+                                    stroke={
+                                      star <= feedbackRating
+                                        ? "#F59E0B"
+                                        : "#D1D5DB"
+                                    }
                                     strokeWidth="1.5"
                                   >
                                     <path
@@ -942,11 +1013,15 @@ const loadPastFeedbacks = async () => {
                                 </button>
                               ))}
                             </div>
-                            <p className="text-sm font-bold text-neutral-800 mb-2">Feedback Message</p>
+                            <p className="text-sm font-bold text-neutral-800 mb-2">
+                              Feedback Message
+                            </p>
                             <textarea
                               autoFocus
                               value={feedbackMessage}
-                              onChange={(e) => setFeedbackMessage(e.target.value)}
+                              onChange={(e) =>
+                                setFeedbackMessage(e.target.value)
+                              }
                               placeholder="Enter constructive feedback..."
                               rows={4}
                               className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-medium text-neutral-800 focus:outline-none focus:ring-2 focus:ring-purple-200 placeholder:text-neutral-400 resize-y"
@@ -978,7 +1053,10 @@ const loadPastFeedbacks = async () => {
                                 Recent Feedbacks
                               </p>
                               <button
-                                onClick={() => (window.location.href = "/admin-compass/feedback-dashboard")}
+                                onClick={() =>
+                                  (window.location.href =
+                                    "/admin-compass/feedback-dashboard")
+                                }
                                 className="text-xs font-bold text-purple-600 hover:underline flex items-center gap-1"
                               >
                                 View All <ChevronRight className="w-3 h-3" />
@@ -992,29 +1070,50 @@ const loadPastFeedbacks = async () => {
                             ) : fetchedFeedbacks.length === 0 ? (
                               <div className="flex flex-col items-center justify-center h-full py-10 text-neutral-400">
                                 <MessageSquare className="w-10 h-10 opacity-20 mb-3" />
-                                <span className="text-sm font-medium italic">No past feedback found.</span>
+                                <span className="text-sm font-medium italic">
+                                  No past feedback found.
+                                </span>
                               </div>
                             ) : (
                               <div className="space-y-4 overflow-y-auto pr-2 flex-1">
                                 {fetchedFeedbacks.slice(0, 3).map((fb, idx) => (
-                                  <div key={idx} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                  <div
+                                    key={idx}
+                                    className="bg-white p-4 rounded-xl shadow-sm border border-gray-100"
+                                  >
                                     <div className="flex items-center gap-1 mb-2">
                                       {[1, 2, 3, 4, 5].map((star) => (
                                         <Star
                                           key={star}
-                                          className={cn("w-3.5 h-3.5", star <= fb.score ? "text-yellow-400 fill-yellow-400" : "text-gray-200")}
+                                          className={cn(
+                                            "w-3.5 h-3.5",
+                                            star <= fb.score
+                                              ? "text-yellow-400 fill-yellow-400"
+                                              : "text-gray-200"
+                                          )}
                                         />
                                       ))}
                                       {fb.created_at && (
                                         <span className="text-[10px] text-gray-400 ml-auto font-bold">
-                                          {new Date(fb.created_at).toLocaleDateString()}
+                                          {new Date(
+                                            fb.created_at
+                                          ).toLocaleDateString()}
                                         </span>
                                       )}
                                     </div>
                                     {fb.reviews ? (
-                                      <p className="text-sm text-neutral-700 font-medium leading-relaxed">{fb.reviews}</p>
+                                      <p className="text-sm text-neutral-700 font-medium leading-relaxed">
+                                        {fb.reviews}
+                                      </p>
                                     ) : (
-                                      <p className="text-sm text-neutral-400 italic">No review provided.</p>
+                                      <p className="text-sm text-neutral-400 italic">
+                                        No review provided.
+                                      </p>
+                                    )}
+                                    {fb.reviewer && (
+                                      <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
+                                        — {fb.reviewer.trim()}
+                                      </p>
                                     )}
                                   </div>
                                 ))}
@@ -1024,7 +1123,6 @@ const loadPastFeedbacks = async () => {
                         </div>
                       </div>
                     )}
-
                   </div>
                 </div>
               )}
@@ -1044,7 +1142,9 @@ const loadPastFeedbacks = async () => {
                   style={{ width: "min(760px, 95vw)" }}
                 >
                   <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0 bg-gray-50">
-                    <h2 className="text-lg font-bold text-gray-900">Add Task</h2>
+                    <h2 className="text-lg font-bold text-gray-900">
+                      Add Task
+                    </h2>
                     <button
                       onClick={() => setIsTaskModalOpen(false)}
                       className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-200 transition-colors text-gray-500"
@@ -1153,8 +1253,8 @@ const DailyLogTab = () => {
   const [metaExpected, setMetaExpected] = useState(0);
 
   const [selectedReport, setSelectedReport] = useState(null);
-  
-  // NOTE: For main screen Add Task button if implemented. 
+
+  // NOTE: For main screen Add Task button if implemented.
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
   useEffect(() => {
@@ -1185,10 +1285,10 @@ const DailyLogTab = () => {
       let logsArray = Array.isArray(response)
         ? response
         : Array.isArray(response?.reports)
-        ? response.reports
-        : Array.isArray(response?.data?.reports)
-        ? response.data.reports
-        : [];
+          ? response.reports
+          : Array.isArray(response?.data?.reports)
+            ? response.data.reports
+            : [];
 
       logsArray = logsArray.filter(
         (log) => log.status && log.status.toLowerCase().trim() === "submitted"
@@ -1237,7 +1337,13 @@ const DailyLogTab = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedDate, selectedMeetingFilter, isGrouped, selectedDeptId, debouncedSearch]);
+  }, [
+    selectedDate,
+    selectedMeetingFilter,
+    isGrouped,
+    selectedDeptId,
+    debouncedSearch,
+  ]);
 
   useEffect(() => {
     loadData();
@@ -1295,7 +1401,9 @@ const DailyLogTab = () => {
           {fmt(log.date)}
         </td>
         <td className="px-3 py-4 sm:px-4 max-w-[140px] sm:max-w-[180px]">
-          <div className="text-sm font-black text-[#1A1A1A] truncate">{log.user}</div>
+          <div className="text-sm font-black text-[#1A1A1A] truncate">
+            {log.user}
+          </div>
           <div className="text-xs font-semibold text-[#8C8580] mt-0.5 truncate">
             {log.email}
           </div>
@@ -1513,7 +1621,13 @@ const DailyLogTab = () => {
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <circle cx="10" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.5" />
+              <circle
+                cx="10"
+                cy="10"
+                r="3.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
               <path
                 d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.22 4.22l1.06 1.06M14.72 14.72l1.06 1.06M14.72 5.28l-1.06 1.06M5.28 14.72l-1.06 1.06"
                 stroke="currentColor"
@@ -1525,7 +1639,8 @@ const DailyLogTab = () => {
           <div>
             <p className="text-sm font-black text-amber-800">Non-working day</p>
             <p className="text-xs font-semibold text-amber-600 mt-0.5">
-              {titleDate} is not a scheduled meeting day. This meeting runs on {meetingDays.join(", ")} — no reports are expected today.
+              {titleDate} is not a scheduled meeting day. This meeting runs on{" "}
+              {meetingDays.join(", ")} — no reports are expected today.
             </p>
           </div>
         </div>
@@ -1550,7 +1665,10 @@ const DailyLogTab = () => {
               {isLoading ? (
                 <>
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <tr key={`skeleton-${i}`} className="border-b border-[#F0EBE8] bg-white">
+                    <tr
+                      key={`skeleton-${i}`}
+                      className="border-b border-[#F0EBE8] bg-white"
+                    >
                       <td className="px-3 py-4 sm:px-4">
                         <div className="w-20 h-4 bg-[#F0EBE8] rounded-full animate-pulse" />
                       </td>
@@ -1583,7 +1701,10 @@ const DailyLogTab = () => {
                 </>
               ) : !isGrouped && flatFiltered.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-20 text-sm font-bold text-[#8C8580]">
+                  <td
+                    colSpan={7}
+                    className="text-center py-20 text-sm font-bold text-[#8C8580]"
+                  >
                     {isNonWorkingDay
                       ? "This is a non-working day — no reports are expected."
                       : "No reports found for the selected date and filters."}
@@ -1591,7 +1712,10 @@ const DailyLogTab = () => {
                 </tr>
               ) : isGrouped && sortedDepts.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-20 text-sm font-bold text-[#8C8580]">
+                  <td
+                    colSpan={7}
+                    className="text-center py-20 text-sm font-bold text-[#8C8580]"
+                  >
                     {isNonWorkingDay
                       ? "This is a non-working day — no reports are expected."
                       : "No reports found for the selected date and filters."}
@@ -1671,7 +1795,6 @@ const DailyLogTab = () => {
           </div>
         </MuiZIndexFix>
       )}
-
     </div>
   );
 };

@@ -71,25 +71,33 @@ const BtnPrimary = ({
   </button>
 );
 
-// ── Custom Themed Select ──
-const CustomSelect = ({
+// ── Custom Searchable Select ──
+const SearchableSelect = ({
   value,
   onChange,
   options,
   placeholder = "All",
 }: any) => {
   const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
   const ref = React.useRef<HTMLDivElement>(null);
+
   const selected = options.find((o: any) => String(o.value) === String(value));
+  const displayValue = selected?.label || placeholder;
 
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const filteredOptions = options.filter((o: any) =>
+    (o.label || "").toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div
@@ -97,44 +105,58 @@ const CustomSelect = ({
       className="relative"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm hover:border-[#CE7A5A]/60 transition-all min-w-[140px]"
-      >
-        <span className="flex-1 text-left text-sm font-medium text-neutral-700 truncate">
-          {selected?.label || placeholder}
-        </span>
+      <div className="relative flex items-center min-w-[160px]">
+        <input
+          type="text"
+          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 pr-8 text-sm font-medium text-neutral-700 shadow-sm focus:outline-none focus:border-[#CE7A5A]/60 hover:border-[#CE7A5A]/60 transition-all cursor-pointer placeholder:text-neutral-700"
+          placeholder={placeholder}
+          value={open ? search : displayValue}
+          onClick={() => {
+            setOpen(true);
+            setSearch("");
+          }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setOpen(true);
+          }}
+        />
         <ChevronDown
           className={cn(
-            "w-4 h-4 text-neutral-400 transition-transform",
+            "absolute right-3 w-4 h-4 text-neutral-400 transition-transform pointer-events-none",
             open && "rotate-180"
           )}
         />
-      </button>
+      </div>
       {open && (
         <div
           className="absolute top-full left-0 mt-1 z-[999] bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden min-w-full"
           style={{ maxHeight: 220, overflowY: "auto" }}
         >
-          {options.map((opt: any) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => {
-                onChange(opt.value);
-                setOpen(false);
-              }}
-              className={cn(
-                "w-full text-left px-4 py-2.5 text-sm font-medium transition-colors",
-                String(value) === String(opt.value)
-                  ? "bg-[#FFF3EE] text-[#CE7A5A] font-semibold"
-                  : "text-neutral-700 hover:bg-[#FFF3EE] hover:text-[#CE7A5A]"
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
+          {filteredOptions.length === 0 ? (
+            <div className="px-4 py-2.5 text-sm font-medium text-neutral-500 text-center">
+              No results found
+            </div>
+          ) : (
+            filteredOptions.map((opt: any) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                  setSearch("");
+                }}
+                className={cn(
+                  "w-full text-left px-4 py-2.5 text-sm font-medium transition-colors truncate",
+                  String(value) === String(opt.value)
+                    ? "bg-[#FFF3EE] text-[#CE7A5A] font-semibold"
+                    : "text-neutral-700 hover:bg-[#FFF3EE] hover:text-[#CE7A5A]"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))
+          )}
         </div>
       )}
     </div>
@@ -219,7 +241,6 @@ const pushUnique = (arr: any[], item: any, keyFields: string[]) => {
 };
 
 // ── Normalize report_data ──
-// Always returns a safe, flat object regardless of API shape
 const normalizeReportData = (rd: any) => {
   if (!rd || typeof rd !== "object") {
     return {
@@ -278,15 +299,12 @@ const stripMissedMembersPrefix = (text: string): string => {
 };
 
 // ── Resolve the "true" raw source for a report ──
-// Handles: submitted with report_data, submitted without report_data (use daily_report),
-// pending with draft, pending without draft
 const resolveRawSource = (report: any) => {
   const rd = report.report_data || {};
   const draftRaw = report.daily_report?.report_data || {};
   const hasDraft = !!report.daily_report;
   const hasReportData = rd && Object.keys(rd).length > 0;
 
-  // If report_data is missing/empty but daily_report exists → use daily_report
   if (!hasReportData && hasDraft) {
     return {
       ...draftRaw,
@@ -296,16 +314,13 @@ const resolveRawSource = (report: any) => {
           ? draftRaw.accomplishments
           : []),
       self_rating:
-        draftRaw.details?.self_rating ??
-        draftRaw.sections?.self_rating ??
-        null,
+        draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? null,
       total_score: draftRaw.total_score ?? null,
       is_absent:
         draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent ?? null,
     };
   }
 
-  // Pending + has draft → use draft
   if (report.status === "pending" && hasDraft) {
     return {
       ...draftRaw,
@@ -315,9 +330,7 @@ const resolveRawSource = (report: any) => {
           ? draftRaw.accomplishments
           : []),
       self_rating:
-        draftRaw.details?.self_rating ??
-        draftRaw.sections?.self_rating ??
-        null,
+        draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? null,
       total_score: draftRaw.total_score ?? null,
       is_absent:
         draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent ?? null,
@@ -328,7 +341,11 @@ const resolveRawSource = (report: any) => {
 };
 
 // -────────────────────────────────────────────
-const DailyTab = () => {
+const DailyTab = ({
+  onMeetingSaved,
+}: {
+  onMeetingSaved?: (date: string) => void;
+}) => {
   const [activeDate, setActiveDate] = useState(
     () => new Date().toISOString().split("T")[0]
   );
@@ -465,8 +482,7 @@ const DailyTab = () => {
           if (meetingJournalReport) {
             let savedDiscussion = DEFAULT_DISCUSSION;
 
-            const notesData =
-              meetingJournalReport?.report_data?.meeting_notes;
+            const notesData = meetingJournalReport?.report_data?.meeting_notes;
             if (notesData) {
               if (Array.isArray(notesData)) {
                 savedDiscussion =
@@ -515,15 +531,15 @@ const DailyTab = () => {
     }
   };
 
-useEffect(() => {
-  setCalendarDateRow([]);
-  setMeetingJournalId(null); // reset on meeting change
-}, [selectedMeetingId]);
+  useEffect(() => {
+    setCalendarDateRow([]);
+    setMeetingJournalId(null);
+  }, [selectedMeetingId]);
 
-useEffect(() => {
-  setMeetingJournalId(null); // reset on date change so calendar doesn't flash green
-  loadDailyData(false);
-}, [selectedMeetingId, activeDate]);
+  useEffect(() => {
+    setMeetingJournalId(null);
+    loadDailyData(false);
+  }, [selectedMeetingId, activeDate]);
 
   const loadPastFeedbacks = async (targetUserId: string | number) => {
     setIsFetchingFeedbacks(true);
@@ -536,10 +552,15 @@ useEffect(() => {
       });
       if (res.ok) {
         const data = await res.json();
-        const feedbackList = Array.isArray(data)
+        const rawList = Array.isArray(data)
           ? data
           : data.data || data.ratings || [];
-        setFetchedFeedbacks(feedbackList);
+        // ── Sort newest first by created_at ──
+        const sorted = [...rawList].sort(
+          (a: any, b: any) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        setFetchedFeedbacks(sorted);
       } else {
         console.error(`HTTP Error: ${res.status}`);
       }
@@ -551,7 +572,6 @@ useEffect(() => {
   };
 
   // ── updateJournal ──
-  // PATCH-based: only sends what changed, never wipes existing data
   const updateJournal = async (
     report: any,
     patch: { self_rating?: number; tomorrow_plan_item?: string }
@@ -564,9 +584,7 @@ useEffect(() => {
 
     const rawSource = resolveRawSource(report);
 
-    // ── Adding to tomorrow's plan ──
     if (patch.tomorrow_plan_item) {
-      // Get the existing plan from the resolved source
       const existingPlan: any[] = Array.isArray(rawSource.tomorrow_plan)
         ? rawSource.tomorrow_plan
         : [];
@@ -601,7 +619,6 @@ useEffect(() => {
       }
     }
 
-    // ── Updating self_rating only ──
     if (patch.self_rating !== undefined) {
       try {
         const res = await fetch(
@@ -703,8 +720,7 @@ useEffect(() => {
 
         if (source.big_win)
           combinedBigWin +=
-            (combinedBigWin ? " | " : "") +
-            `${report.name}: ${source.big_win}`;
+            (combinedBigWin ? " | " : "") + `${report.name}: ${source.big_win}`;
         if (source.self_rating) {
           combinedSelfRating += Number(source.self_rating) || 0;
           ratingCount++;
@@ -804,7 +820,7 @@ useEffect(() => {
     };
   };
 
-  // ── Save Meeting (POST) — first time only ──
+  // ── Save Meeting (POST) ──
   const handleSaveMeeting = async () => {
     if (selectedMeetingId === "all" || !selectedMeetingId) {
       toast.error("Please select a specific meeting.");
@@ -879,18 +895,15 @@ useEffect(() => {
       const responseData = await res.json().catch(() => null);
       if (!res.ok || (responseData && responseData.success === false)) {
         const errorMsg =
-          responseData?.message ||
-          responseData?.error ||
-          `HTTP ${res.status}`;
+          responseData?.message || responseData?.error || `HTTP ${res.status}`;
         throw new Error(errorMsg);
       }
 
       toast.success("Meeting saved successfully!");
+      if (onMeetingSaved) onMeetingSaved(activeDate);
 
       const newId =
-        responseData?.data?.id ||
-        responseData?.id ||
-        responseData?.journal_id;
+        responseData?.data?.id || responseData?.id || responseData?.journal_id;
       if (newId) {
         setMeetingJournalId(newId);
       }
@@ -913,7 +926,7 @@ useEffect(() => {
     }
   };
 
-  // ── Update Notes Only (PATCH) — for already-submitted meetings ──
+  // ── Update Notes Only (PATCH) ──
   const handleUpdateNotesOnly = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.");
@@ -933,8 +946,7 @@ useEffect(() => {
       const existingRd =
         allReports.find(
           (r: any) =>
-            r.journal_id === meetingJournalId &&
-            r.report_data?.meeting_notes
+            r.journal_id === meetingJournalId && r.report_data?.meeting_notes
         )?.report_data || {};
 
       const payload = {
@@ -956,9 +968,7 @@ useEffect(() => {
       const responseData = await res.json().catch(() => null);
       if (!res.ok || (responseData && responseData.success === false)) {
         const errorMsg =
-          responseData?.message ||
-          responseData?.error ||
-          `HTTP ${res.status}`;
+          responseData?.message || responseData?.error || `HTTP ${res.status}`;
         throw new Error(errorMsg);
       }
 
@@ -1039,9 +1049,7 @@ useEffect(() => {
       const responseData = await res.json().catch(() => null);
       if (!res.ok || (responseData && responseData.success === false)) {
         const errorMsg =
-          responseData?.message ||
-          responseData?.error ||
-          `HTTP ${res.status}`;
+          responseData?.message || responseData?.error || `HTTP ${res.status}`;
         throw new Error(errorMsg);
       }
 
@@ -1344,7 +1352,7 @@ useEffect(() => {
               </span>
             </div>
           ) : (
-            <CustomSelect
+            <SearchableSelect
               value={selectedMeetingId || ""}
               onChange={setSelectedMeetingId}
               placeholder="Loading Meetings..."
@@ -1362,7 +1370,7 @@ useEffect(() => {
               <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
                 Member
               </span>
-              <CustomSelect
+              <SearchableSelect
                 value={selectedMember}
                 onChange={setSelectedMember}
                 placeholder="All Members"
@@ -1504,8 +1512,7 @@ useEffect(() => {
                 <div className="bg-white border border-[rgba(218,119,86,0.18)] rounded-2xl overflow-hidden shadow-sm mb-6">
                   <div className="flex items-center justify-between p-3 border-b border-[rgba(218,119,86,0.1)] bg-[#FFFAF8]">
                     <div className="flex items-center gap-2 font-semibold text-neutral-800 text-sm">
-                      <Users className="w-4 h-4 text-[#CE7A5A]" /> Meeting
-                      Notes
+                      <Users className="w-4 h-4 text-[#CE7A5A]" /> Meeting Notes
                     </div>
                     <BtnIcon
                       onClick={() => loadDailyData(false)}
@@ -1517,9 +1524,7 @@ useEffect(() => {
 
                   <div className="p-4">
                     <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
-                      {meetingJournalId
-                        ? "Discussion Points"
-                        : "Meeting Notes"}
+                      {meetingJournalId ? "Discussion Points" : "Meeting Notes"}
                     </p>
                     <textarea
                       value={meetingNotes}
@@ -1601,14 +1606,11 @@ useEffect(() => {
                       const isExpanded = expandedReports.includes(rId);
                       const isPending = report.status === "pending";
                       const hasDraft = !!report.daily_report;
-                      const draftRaw =
-                        report.daily_report?.report_data || {};
+                      const draftRaw = report.daily_report?.report_data || {};
 
-                      // ── Unified raw source (fixes Atharv-type missing report_data) ──
                       const rawDisplayRd = resolveRawSource(report);
                       const displayRd = normalizeReportData(rawDisplayRd);
 
-                      // ── Filter each list to only show THIS user's items ──
                       const normalizedReportName = (report.name || "")
                         .trim()
                         .toLowerCase();
@@ -1628,15 +1630,13 @@ useEffect(() => {
                             normalizedReportName
                       );
 
-                      const userTomorrowPlan =
-                        displayRd.tomorrow_plan.filter(
-                          (item: any) =>
-                            !item.member ||
-                            String(item.member).trim().toLowerCase() ===
-                              normalizedReportName
-                        );
+                      const userTomorrowPlan = displayRd.tomorrow_plan.filter(
+                        (item: any) =>
+                          !item.member ||
+                          String(item.member).trim().toLowerCase() ===
+                            normalizedReportName
+                      );
 
-                      // ── Score details — prefer draftRaw.score_details ──
                       const sd =
                         draftRaw?.score_details ||
                         report.report_data?.score_details ||
@@ -1680,7 +1680,6 @@ useEffect(() => {
                       const timeMax = sd.timing?.maxPoints ?? 25;
                       const timeStr = `${timeAchieved}/${timeMax}`;
 
-                      // ── Self rating (show inline next to score) ──
                       const selfRating =
                         rawDisplayRd?.self_rating ??
                         draftRaw?.details?.self_rating ??
@@ -1716,7 +1715,6 @@ useEffect(() => {
                             )}
                             onClick={() => canExpand && toggleExpand(rId)}
                           >
-                            {/* Avatar & Checkbox Container */}
                             <div className="flex items-start gap-3 pt-1">
                               <input
                                 type="checkbox"
@@ -1739,12 +1737,10 @@ useEffect(() => {
                                     : "cursor-pointer"
                                 )}
                               />
-                              {/* Score badge */}
                               <div className="flex flex-col items-center gap-1">
                                 <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
                                   {totalScoreStr}
                                 </div>
-                                {/* Self rating below score badge */}
                                 {selfRating != null && (
                                   <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-1.5 py-0.5 whitespace-nowrap">
                                     ⭐ {selfRating}/10
@@ -1753,7 +1749,6 @@ useEffect(() => {
                               </div>
                             </div>
 
-                            {/* Details Container */}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-4">
                                 <div className="min-w-0">
@@ -1785,14 +1780,12 @@ useEffect(() => {
                                     {report.email}
                                     {report.submitted_at && (
                                       <span className="ml-1">
-                                        •{" "}
-                                        {formatDateTime(report.submitted_at)}
+                                        • {formatDateTime(report.submitted_at)}
                                       </span>
                                     )}
                                   </div>
                                 </div>
 
-                                {/* Expand Chevron */}
                                 {canExpand && (
                                   <button className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform">
                                     <ChevronDown
@@ -1805,7 +1798,6 @@ useEffect(() => {
                                 )}
                               </div>
 
-                              {/* KPIs Row Pills */}
                               {(!isPending || hasDraft) && (
                                 <div className="flex flex-wrap items-center gap-2 mb-1">
                                   <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
@@ -1826,14 +1818,12 @@ useEffect(() => {
                                 </div>
                               )}
 
-                              {/* Sub text */}
                               {canExpand && (
                                 <p className="text-[10px] text-gray-400 italic mb-2 mt-1">
                                   Click to view tasks, accomplishments & plan
                                 </p>
                               )}
 
-                              {/* Calendar Mini-Row */}
                               {(!isPending || hasDraft) &&
                                 dateRow.length > 0 && (
                                   <div className="flex items-center gap-2 mt-2">
@@ -1851,14 +1841,13 @@ useEffect(() => {
                                             key={i}
                                             className={cn(
                                               "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
-                                              s === "done" ||
-                                                s === "submitted"
+                                              s === "done" || s === "submitted"
                                                 ? "bg-[#10B981] text-white border-[#10B981]"
                                                 : s === "missed"
-                                                ? "bg-[#EF4444] text-white border-[#EF4444]"
-                                                : s === "holiday"
-                                                ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
-                                                : "bg-gray-100 text-gray-400 border-gray-200"
+                                                  ? "bg-[#EF4444] text-white border-[#EF4444]"
+                                                  : s === "holiday"
+                                                    ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
+                                                    : "bg-gray-100 text-gray-400 border-gray-200"
                                             )}
                                           >
                                             <span className="text-[8px] opacity-90 leading-none mb-0.5">
@@ -1994,13 +1983,12 @@ useEffect(() => {
                                               <span
                                                 className={cn(
                                                   "shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5",
-                                                  getItemStatus(item) ===
-                                                    "open"
+                                                  getItemStatus(item) === "open"
                                                     ? "bg-red-100 text-red-600"
                                                     : getItemStatus(item) ===
-                                                      "closed"
-                                                    ? "bg-green-100 text-green-600"
-                                                    : "bg-gray-100 text-gray-500"
+                                                        "closed"
+                                                      ? "bg-green-100 text-green-600"
+                                                      : "bg-gray-100 text-gray-500"
                                                 )}
                                               >
                                                 {getItemStatus(item)}
@@ -2303,7 +2291,7 @@ useEffect(() => {
                                         </div>
                                       </div>
 
-                                      {/* COLUMN 2: Recent Feedbacks */}
+                                      {/* COLUMN 2: Recent Feedbacks — sorted newest first */}
                                       <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
                                         <div className="flex items-center justify-between mb-4">
                                           <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
@@ -2331,11 +2319,12 @@ useEffect(() => {
                                           </div>
                                         ) : (
                                           <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+                                            {/* Already sorted newest-first in loadPastFeedbacks */}
                                             {fetchedFeedbacks
                                               .slice(0, 3)
                                               .map((fb: any, idx: number) => (
                                                 <div
-                                                  key={idx}
+                                                  key={fb.id ?? idx}
                                                   className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
                                                 >
                                                   <div className="flex items-center gap-1 mb-1.5">
@@ -2353,10 +2342,17 @@ useEffect(() => {
                                                       )
                                                     )}
                                                     {fb.created_at && (
-                                                      <span className="text-[9px] text-gray-400 ml-auto font-medium">
+                                                      <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">
                                                         {new Date(
                                                           fb.created_at
-                                                        ).toLocaleDateString()}
+                                                        ).toLocaleDateString(
+                                                          "en-IN",
+                                                          {
+                                                            day: "numeric",
+                                                            month: "short",
+                                                            year: "2-digit",
+                                                          }
+                                                        )}
                                                       </span>
                                                     )}
                                                   </div>
@@ -2367,6 +2363,11 @@ useEffect(() => {
                                                   ) : (
                                                     <p className="text-xs text-neutral-400 italic">
                                                       No review provided.
+                                                    </p>
+                                                  )}
+                                                  {fb.reviewer && (
+                                                    <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
+                                                      — {fb.reviewer.trim()}
                                                     </p>
                                                   )}
                                                 </div>
@@ -2459,25 +2460,6 @@ useEffect(() => {
         handleCloseDialog={() => setIsIssueModalOpen(false)}
         preSelectedProjectId={undefined}
       />
-
-      <style>{`
-        select option { font-family: 'Poppins', sans-serif; padding: 8px 12px; font-size: 13px; color: #374151; background: #ffffff; }
-        select option:checked, select option:hover { background: #FFF3EE; color: #CE7A5A; }
-        select:focus { outline: none; }
-        .calendar-row::-webkit-scrollbar { display: none; }
-        
-        @keyframes shimmer {
-          0% { background-position: -1000px 0; }
-          100% { background-position: 1000px 0; }
-        }
-        
-        .skeleton {
-          background: #F0EBE8;
-          background-image: linear-gradient(to right, #F0EBE8 4%, #FAF8F7 25%, #F0EBE8 36%);
-          background-size: 1000px 100%;
-          animation: shimmer 2s infinite linear;
-        }
-      `}</style>
     </div>
   );
 };
