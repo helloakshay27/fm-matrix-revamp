@@ -225,17 +225,17 @@ const EventPendingList = () => {
                         <div className="flex gap-4">
                             <Button
                                 variant="outline"
-                                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-8 h-10 disabled:opacity-50"
+                                className="border-[#C72030] !text-black hover:bg-[#C72030] hover:!text-white px-8 h-10 disabled:opacity-50"
                                 onClick={() => handleStatusUpdate('rejected')}
-                                disabled={selectedItems.length === 0 || isUpdating || eventData.total_registed_count === eventData.capacity}
+                                disabled={selectedItems.length === 0 || isUpdating}
                             >
                                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                 Deny
                             </Button>
                             <Button
-                                className="!bg-[#00A651] !hover:bg-[#008C44] !text-black px-8 h-10 disabled:opacity-50"
+                                className="!bg-[#00A651] !hover:bg-[#008C44] !text-[#000] px-8 h-10 disabled:opacity-50"
                                 onClick={() => handleStatusUpdate('approved')}
-                                disabled={selectedItems.length === 0 || isUpdating || eventData.total_registed_count === eventData.capacity}
+                                disabled={selectedItems.length === 0 || isUpdating}
                             >
                                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                 Approve

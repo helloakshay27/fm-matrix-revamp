@@ -71,25 +71,33 @@ const BtnPrimary = ({
   </button>
 );
 
-// ── Custom Themed Select ──
-const CustomSelect = ({
+// ── Custom Searchable Select ──
+const SearchableSelect = ({
   value,
   onChange,
   options,
   placeholder = "All",
 }: any) => {
   const [open, setOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
   const ref = React.useRef<HTMLDivElement>(null);
+
   const selected = options.find((o: any) => String(o.value) === String(value));
+  const displayValue = selected?.label || placeholder;
 
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node))
+      if (ref.current && !ref.current.contains(e.target as Node)) {
         setOpen(false);
+      }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const filteredOptions = options.filter((o: any) =>
+    (o.label || "").toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div
@@ -97,44 +105,58 @@ const CustomSelect = ({
       className="relative"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm hover:border-[#CE7A5A]/60 transition-all min-w-[140px]"
-      >
-        <span className="flex-1 text-left text-sm font-medium text-neutral-700 truncate">
-          {selected?.label || placeholder}
-        </span>
+      <div className="relative flex items-center min-w-[160px]">
+        <input
+          type="text"
+          className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 pr-8 text-sm font-medium text-neutral-700 shadow-sm focus:outline-none focus:border-[#CE7A5A]/60 hover:border-[#CE7A5A]/60 transition-all cursor-pointer placeholder:text-neutral-700"
+          placeholder={placeholder}
+          value={open ? search : displayValue}
+          onClick={() => {
+            setOpen(true);
+            setSearch("");
+          }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setOpen(true);
+          }}
+        />
         <ChevronDown
           className={cn(
-            "w-4 h-4 text-neutral-400 transition-transform",
+            "absolute right-3 w-4 h-4 text-neutral-400 transition-transform pointer-events-none",
             open && "rotate-180"
           )}
         />
-      </button>
+      </div>
       {open && (
         <div
           className="absolute top-full left-0 mt-1 z-[999] bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden min-w-full"
           style={{ maxHeight: 220, overflowY: "auto" }}
         >
-          {options.map((opt: any) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => {
-                onChange(opt.value);
-                setOpen(false);
-              }}
-              className={cn(
-                "w-full text-left px-4 py-2.5 text-sm font-medium transition-colors",
-                String(value) === String(opt.value)
-                  ? "bg-[#FFF3EE] text-[#CE7A5A] font-semibold"
-                  : "text-neutral-700 hover:bg-[#FFF3EE] hover:text-[#CE7A5A]"
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
+          {filteredOptions.length === 0 ? (
+            <div className="px-4 py-2.5 text-sm font-medium text-neutral-500 text-center">
+              No results found
+            </div>
+          ) : (
+            filteredOptions.map((opt: any) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setOpen(false);
+                  setSearch("");
+                }}
+                className={cn(
+                  "w-full text-left px-4 py-2.5 text-sm font-medium transition-colors truncate",
+                  String(value) === String(opt.value)
+                    ? "bg-[#FFF3EE] text-[#CE7A5A] font-semibold"
+                    : "text-neutral-700 hover:bg-[#FFF3EE] hover:text-[#CE7A5A]"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))
+          )}
         </div>
       )}
     </div>
@@ -154,7 +176,7 @@ const fetchDynamicMeetings = async () => {
   return list.map((m: any) => ({
     id: String(m.id),
     name: m.name || `Meeting ${m.id}`,
-    is_default: m.is_default || m.isDefault || false, 
+    is_default: m.is_default || m.isDefault || false,
   }));
 };
 
@@ -255,7 +277,8 @@ const normalizeReportData = (rd: any) => {
 const getItemTitle = (item: any): string => {
   if (!item) return "";
   if (typeof item === "string") return item;
-  if (typeof item === "object") return String(item.title || item.name || "");
+  if (typeof item === "object")
+    return String(item.title || item.name || item.text || "");
   return String(item);
 };
 
@@ -275,8 +298,54 @@ const stripMissedMembersPrefix = (text: string): string => {
   return text;
 };
 
-// ─────────────────────────────────────────────
-const DailyTab = () => {
+// ── Resolve the "true" raw source for a report ──
+const resolveRawSource = (report: any) => {
+  const rd = report.report_data || {};
+  const draftRaw = report.daily_report?.report_data || {};
+  const hasDraft = !!report.daily_report;
+  const hasReportData = rd && Object.keys(rd).length > 0;
+
+  if (!hasReportData && hasDraft) {
+    return {
+      ...draftRaw,
+      accomplishments:
+        draftRaw.accomplishments?.items ||
+        (Array.isArray(draftRaw.accomplishments)
+          ? draftRaw.accomplishments
+          : []),
+      self_rating:
+        draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? null,
+      total_score: draftRaw.total_score ?? null,
+      is_absent:
+        draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent ?? null,
+    };
+  }
+
+  if (report.status === "pending" && hasDraft) {
+    return {
+      ...draftRaw,
+      accomplishments:
+        draftRaw.accomplishments?.items ||
+        (Array.isArray(draftRaw.accomplishments)
+          ? draftRaw.accomplishments
+          : []),
+      self_rating:
+        draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? null,
+      total_score: draftRaw.total_score ?? null,
+      is_absent:
+        draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent ?? null,
+    };
+  }
+
+  return rd;
+};
+
+// -────────────────────────────────────────────
+const DailyTab = ({
+  onMeetingSaved,
+}: {
+  onMeetingSaved?: (date: string) => void;
+}) => {
   const [activeDate, setActiveDate] = useState(
     () => new Date().toISOString().split("T")[0]
   );
@@ -319,7 +388,7 @@ const DailyTab = () => {
       const submittedIds = reports
         .filter((r: any) => r.status !== "pending")
         .map((r: any) => r.journal_id || r.user_id);
-      
+
       setSelectedReports((prev) => {
         const combined = new Set([...prev, ...submittedIds]);
         return Array.from(combined);
@@ -364,7 +433,7 @@ const DailyTab = () => {
 
       if (json.success || json.data) {
         setDailyData(json.data);
-        
+
         if (isArrowNav.current || calendarDateRow.length === 0) {
           setCalendarDateRow(json.data?.date_row || []);
         } else {
@@ -402,7 +471,9 @@ const DailyTab = () => {
           null;
 
         setMeetingJournalId(
-          json.data?.meeting_journal_id || meetingJournalReport?.journal_id || null
+          json.data?.meeting_journal_id ||
+            meetingJournalReport?.journal_id ||
+            null
         );
 
         if (!skipNotesRestore) {
@@ -410,13 +481,15 @@ const DailyTab = () => {
 
           if (meetingJournalReport) {
             let savedDiscussion = DEFAULT_DISCUSSION;
-            
+
             const notesData = meetingJournalReport?.report_data?.meeting_notes;
             if (notesData) {
               if (Array.isArray(notesData)) {
-                 savedDiscussion = notesData[0]?.key_discussion_points || DEFAULT_DISCUSSION;
+                savedDiscussion =
+                  notesData[0]?.key_discussion_points || DEFAULT_DISCUSSION;
               } else if (typeof notesData === "object") {
-                 savedDiscussion = notesData.key_discussion_points || DEFAULT_DISCUSSION;
+                savedDiscussion =
+                  notesData.key_discussion_points || DEFAULT_DISCUSSION;
               }
             }
 
@@ -460,9 +533,11 @@ const DailyTab = () => {
 
   useEffect(() => {
     setCalendarDateRow([]);
+    setMeetingJournalId(null);
   }, [selectedMeetingId]);
 
   useEffect(() => {
+    setMeetingJournalId(null);
     loadDailyData(false);
   }, [selectedMeetingId, activeDate]);
 
@@ -477,10 +552,15 @@ const DailyTab = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        const feedbackList = Array.isArray(data)
+        const rawList = Array.isArray(data)
           ? data
           : data.data || data.ratings || [];
-        setFetchedFeedbacks(feedbackList);
+        // ── Sort newest first by created_at ──
+        const sorted = [...rawList].sort(
+          (a: any, b: any) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        setFetchedFeedbacks(sorted);
       } else {
         console.error(`HTTP Error: ${res.status}`);
       }
@@ -491,6 +571,7 @@ const DailyTab = () => {
     }
   };
 
+  // ── updateJournal ──
   const updateJournal = async (
     report: any,
     patch: { self_rating?: number; tomorrow_plan_item?: string }
@@ -501,56 +582,71 @@ const DailyTab = () => {
       return false;
     }
 
-    const isPending = report.status === "pending";
-    const hasDraft = !!report.daily_report;
-    const rd = report.report_data || {};
-    const draftRaw = report.daily_report?.report_data || {};
+    const rawSource = resolveRawSource(report);
 
-    const sourceRd =
-      isPending && hasDraft
-        ? normalizeReportData({
-            ...draftRaw,
-            accomplishments:
-              draftRaw.accomplishments?.items ||
-              (Array.isArray(draftRaw.accomplishments)
-                ? draftRaw.accomplishments
-                : []),
-            self_rating:
-              draftRaw.details?.self_rating ??
-              draftRaw.sections?.self_rating ??
-              0,
-          })
-        : normalizeReportData({ ...rd, self_rating: rd.self_rating ?? 0 });
+    if (patch.tomorrow_plan_item) {
+      const existingPlan: any[] = Array.isArray(rawSource.tomorrow_plan)
+        ? rawSource.tomorrow_plan
+        : [];
 
-    const payload: any = {
-      self_rating: patch.self_rating ?? sourceRd.self_rating,
-      status: "submitted",
-      report_data: {
-        accomplishments: sourceRd.accomplishments,
-        tasks_issues: sourceRd.tasks_issues,
-        big_win: sourceRd.big_win || null,
-        tomorrow_plan: patch.tomorrow_plan_item
-          ? [...sourceRd.tomorrow_plan, { title: patch.tomorrow_plan_item }]
-          : sourceRd.tomorrow_plan,
-        kpis: sourceRd.kpis,
-      },
-    };
+      const updatedPlan = [
+        ...existingPlan,
+        { title: patch.tomorrow_plan_item.trim() },
+      ];
 
-    try {
-      const res = await fetch(
-        `${getBaseUrl()}/user_journals/${journalId}.json`,
-        {
-          method: "PUT",
-          headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return true;
-    } catch (err: any) {
-      toast.error("Error updating journal: " + err.message);
-      return false;
+      try {
+        const res = await fetch(
+          `${getBaseUrl()}/user_journals/${journalId}.json`,
+          {
+            method: "PATCH",
+            headers: {
+              ...getAuthHeaders(),
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              report_data: {
+                ...rawSource,
+                tomorrow_plan: updatedPlan,
+              },
+            }),
+          }
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return true;
+      } catch (err: any) {
+        toast.error("Error updating plan: " + err.message);
+        return false;
+      }
     }
+
+    if (patch.self_rating !== undefined) {
+      try {
+        const res = await fetch(
+          `${getBaseUrl()}/user_journals/${journalId}.json`,
+          {
+            method: "PATCH",
+            headers: {
+              ...getAuthHeaders(),
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              self_rating: patch.self_rating,
+              report_data: {
+                ...rawSource,
+                self_rating: patch.self_rating,
+              },
+            }),
+          }
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return true;
+      } catch (err: any) {
+        toast.error("Error updating rating: " + err.message);
+        return false;
+      }
+    }
+
+    return false;
   };
 
   const changeDate = (days: number) => {
@@ -599,32 +695,9 @@ const DailyTab = () => {
     allReports
       .filter((r: any) => r.status !== "pending" || !!r.daily_report)
       .forEach((report: any) => {
-        const hasDraft = !!report.daily_report;
-        const isPending = report.status === "pending";
-        const rd = report.report_data || {};
-        const draftRaw = report.daily_report?.report_data || {};
-
-        const rawSource =
-          isPending && hasDraft
-            ? {
-                ...draftRaw,
-                accomplishments:
-                  draftRaw.accomplishments?.items ||
-                  (Array.isArray(draftRaw.accomplishments)
-                    ? draftRaw.accomplishments
-                    : []),
-                self_rating:
-                  draftRaw.details?.self_rating ??
-                  draftRaw.sections?.self_rating ??
-                  0,
-                is_absent:
-                  draftRaw.details?.is_absent ??
-                  draftRaw.sections?.is_absent ??
-                  false,
-              }
-            : rd;
-
+        const rawSource = resolveRawSource(report);
         const source = normalizeReportData(rawSource);
+        const draftRaw = report.daily_report?.report_data || {};
 
         source.accomplishments.forEach((a: any) =>
           pushUnique(allAccomplishments, { ...a, member: report.name }, [
@@ -653,8 +726,8 @@ const DailyTab = () => {
           ratingCount++;
         }
 
-        const kpis = report.kpis || rd.kpis || {};
-        const sections = draftRaw.sections || rd.sections || {};
+        const kpis = report.kpis || rawSource.kpis || {};
+        const sections = draftRaw.sections || rawSource.sections || {};
 
         const t = parseInt(sections.tasks_issues ?? kpis.tasks) || 0;
         const i = parseInt(kpis.issues) || 0;
@@ -697,24 +770,22 @@ const DailyTab = () => {
     const detailed_reports = allReports
       .filter((r: any) => r.status !== "pending" || !!r.daily_report)
       .map((report: any) => {
-        const hasDraft = !!report.daily_report;
-        const isPending = report.status === "pending";
-        const rd = report.report_data || {};
-        const draftRaw = report.daily_report?.report_data || {};
+        const rawSource = resolveRawSource(report);
 
-        const rawSource = isPending && hasDraft ? { ...draftRaw } : rd;
-
-        let accRaw = [];
-        if (Array.isArray(rawSource.accomplishments)) accRaw = rawSource.accomplishments;
-        else if (Array.isArray(rawSource.accomplishments?.items)) accRaw = rawSource.accomplishments.items;
+        let accRaw: any[] = [];
+        if (Array.isArray(rawSource.accomplishments))
+          accRaw = rawSource.accomplishments;
+        else if (Array.isArray(rawSource.accomplishments?.items))
+          accRaw = rawSource.accomplishments.items;
 
         const accomplishments = accRaw.map((a: any) => ({
           text: a.title || a.text || "",
-          done: !!a.done || !!a.completed
+          done: !!a.done || !!a.completed,
         }));
 
-        let tpRaw = [];
-        if (Array.isArray(rawSource.tomorrow_plan)) tpRaw = rawSource.tomorrow_plan;
+        let tpRaw: any[] = [];
+        if (Array.isArray(rawSource.tomorrow_plan))
+          tpRaw = rawSource.tomorrow_plan;
 
         const tomorrow_plan = tpRaw.map((p: any) =>
           typeof p === "string" ? p : p.title || p.text || ""
@@ -749,22 +820,7 @@ const DailyTab = () => {
     };
   };
 
-  const handleApiError = async (res: Response, fallbackMessage: string) => {
-    let errMsg = fallbackMessage;
-    try {
-      const data = await res.json();
-      errMsg = data.message || data.error || data.errors?.[0] || fallbackMessage;
-    } catch {
-      try {
-        errMsg = await res.text() || fallbackMessage;
-      } catch {
-        // Fallback
-      }
-    }
-    throw new Error(errMsg);
-  };
-
-  // ── Save Meeting (POST) — first time only ──
+  // ── Save Meeting (POST) ──
   const handleSaveMeeting = async () => {
     if (selectedMeetingId === "all" || !selectedMeetingId) {
       toast.error("Please select a specific meeting.");
@@ -782,7 +838,7 @@ const DailyTab = () => {
         avgSelfRating,
         combinedKpis,
       } = buildCombinedData(allReports);
-      
+
       const meetingNotesObj = buildMeetingNotesObject(
         allReports,
         allMissed,
@@ -791,10 +847,17 @@ const DailyTab = () => {
 
       const reportDataPayload = {
         meeting_notes: meetingNotesObj,
-        accomplishments: allAccomplishments.map(a => ({ title: a.title || a.text || "" })),
-        tasks_issues: allTasksIssues.map(t => ({ title: t.title || t.text || "", status: t.status || "open" })),
+        accomplishments: allAccomplishments.map((a) => ({
+          title: a.title || a.text || "",
+        })),
+        tasks_issues: allTasksIssues.map((t) => ({
+          title: t.title || t.text || "",
+          status: t.status || "open",
+        })),
         big_win: combinedBigWin || null,
-        tomorrow_plan: allTomorrowPlan.map(p => ({ title: p.title || p.text || "" })),
+        tomorrow_plan: allTomorrowPlan.map((p) => ({
+          title: p.title || p.text || "",
+        })),
         kpis: {
           score: `${combinedKpis.score}`,
           tasks: `${combinedKpis.tasks}`,
@@ -808,7 +871,7 @@ const DailyTab = () => {
           missed_count: dailyData?.missed || 0,
           meeting_name: dailyData?.config?.name || "",
           meeting_head: dailyData?.config?.meeting_head || null,
-        }
+        },
       };
 
       const payload = {
@@ -817,7 +880,7 @@ const DailyTab = () => {
         self_rating: avgSelfRating,
         is_absent: false,
         status: "submitted",
-        report_data: reportDataPayload
+        report_data: reportDataPayload,
       };
 
       const res = await fetch(
@@ -831,15 +894,18 @@ const DailyTab = () => {
 
       const responseData = await res.json().catch(() => null);
       if (!res.ok || (responseData && responseData.success === false)) {
-         const errorMsg = responseData?.message || responseData?.error || `HTTP ${res.status}`;
-         throw new Error(errorMsg);
+        const errorMsg =
+          responseData?.message || responseData?.error || `HTTP ${res.status}`;
+        throw new Error(errorMsg);
       }
 
       toast.success("Meeting saved successfully!");
-      
-      const newId = responseData?.data?.id || responseData?.id || responseData?.journal_id;
+      if (onMeetingSaved) onMeetingSaved(activeDate);
+
+      const newId =
+        responseData?.data?.id || responseData?.id || responseData?.journal_id;
       if (newId) {
-         setMeetingJournalId(newId);
+        setMeetingJournalId(newId);
       }
 
       setCalendarDateRow((prev) =>
@@ -852,7 +918,7 @@ const DailyTab = () => {
       setMeetingNotes(cleanDiscussion);
       setSavedMeetingNotes(cleanDiscussion);
 
-      await loadDailyData(true); 
+      await loadDailyData(true);
     } catch (err: any) {
       toast.error("Error saving meeting: " + err.message);
     } finally {
@@ -860,7 +926,7 @@ const DailyTab = () => {
     }
   };
 
-  // ── Update Notes Only (PATCH) — for already-submitted meetings ──
+  // ── Update Notes Only (PATCH) ──
   const handleUpdateNotesOnly = async () => {
     if (!meetingJournalId) {
       toast.error("No saved meeting found to update.");
@@ -870,7 +936,7 @@ const DailyTab = () => {
     try {
       const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
-      
+
       const meetingNotesObj = buildMeetingNotesObject(
         allReports,
         allMissed,
@@ -880,15 +946,14 @@ const DailyTab = () => {
       const existingRd =
         allReports.find(
           (r: any) =>
-            r.journal_id === meetingJournalId &&
-            r.report_data?.meeting_notes
+            r.journal_id === meetingJournalId && r.report_data?.meeting_notes
         )?.report_data || {};
 
       const payload = {
         report_data: {
           ...existingRd,
           meeting_notes: meetingNotesObj,
-        }
+        },
       };
 
       const res = await fetch(
@@ -902,8 +967,9 @@ const DailyTab = () => {
 
       const responseData = await res.json().catch(() => null);
       if (!res.ok || (responseData && responseData.success === false)) {
-         const errorMsg = responseData?.message || responseData?.error || `HTTP ${res.status}`;
-         throw new Error(errorMsg);
+        const errorMsg =
+          responseData?.message || responseData?.error || `HTTP ${res.status}`;
+        throw new Error(errorMsg);
       }
 
       toast.success("Meeting notes updated!");
@@ -936,7 +1002,7 @@ const DailyTab = () => {
         avgSelfRating,
         combinedKpis,
       } = buildCombinedData(allReports);
-      
+
       const meetingNotesObj = buildMeetingNotesObject(
         allReports,
         allMissed,
@@ -945,23 +1011,30 @@ const DailyTab = () => {
 
       const reportDataPayload = {
         meeting_notes: meetingNotesObj,
-        accomplishments: allAccomplishments.map(a => ({ title: a.title || a.text || "" })),
-        tasks_issues: allTasksIssues.map(t => ({ title: t.title || t.text || "", status: t.status || "open" })),
+        accomplishments: allAccomplishments.map((a) => ({
+          title: a.title || a.text || "",
+        })),
+        tasks_issues: allTasksIssues.map((t) => ({
+          title: t.title || t.text || "",
+          status: t.status || "open",
+        })),
         big_win: combinedBigWin || null,
-        tomorrow_plan: allTomorrowPlan.map(p => ({ title: p.title || p.text || "" })),
+        tomorrow_plan: allTomorrowPlan.map((p) => ({
+          title: p.title || p.text || "",
+        })),
         kpis: {
           score: `${combinedKpis.score}`,
           tasks: `${combinedKpis.tasks}`,
           issues: `${combinedKpis.issues}`,
           planning: `${combinedKpis.planning}`,
           timing: `${combinedKpis.timing}`,
-        }
+        },
       };
 
       const payload = {
         self_rating: avgSelfRating,
         status: "submitted",
-        report_data: reportDataPayload
+        report_data: reportDataPayload,
       };
 
       const res = await fetch(
@@ -975,8 +1048,9 @@ const DailyTab = () => {
 
       const responseData = await res.json().catch(() => null);
       if (!res.ok || (responseData && responseData.success === false)) {
-         const errorMsg = responseData?.message || responseData?.error || `HTTP ${res.status}`;
-         throw new Error(errorMsg);
+        const errorMsg =
+          responseData?.message || responseData?.error || `HTTP ${res.status}`;
+        throw new Error(errorMsg);
       }
 
       toast.success("Meeting updated successfully!");
@@ -1000,9 +1074,11 @@ const DailyTab = () => {
   const activeDateStatus = calendarRow.find(
     (d: any) => d.full_date === activeDate
   )?.status;
-  
+
   const isActiveDateSubmitted =
-    !!meetingJournalId || activeDateStatus === "done" || activeDateStatus === "submitted";
+    !!meetingJournalId ||
+    activeDateStatus === "done" ||
+    activeDateStatus === "submitted";
 
   const notesChanged = meetingNotes.trim() !== savedMeetingNotes.trim();
 
@@ -1025,7 +1101,6 @@ const DailyTab = () => {
         `${allIds.length} report${allIds.length !== 1 ? "s" : ""} selected`
       );
     } else {
-      // 🛠 FIX: Do not clear submitted members on deselect all
       const submittedIds = memberReports
         .filter((r: any) => r.status !== "pending")
         .map((r: any) => r.journal_id || r.user_id);
@@ -1113,7 +1188,7 @@ const DailyTab = () => {
             {calendarRow.map((dateItem: any) => {
               const isSelected = dateItem.full_date === activeDate;
               let rawStatus = dateItem.status;
-              
+
               if (isSelected && meetingJournalId) {
                 rawStatus = "submitted";
               }
@@ -1277,7 +1352,7 @@ const DailyTab = () => {
               </span>
             </div>
           ) : (
-            <CustomSelect
+            <SearchableSelect
               value={selectedMeetingId || ""}
               onChange={setSelectedMeetingId}
               placeholder="Loading Meetings..."
@@ -1295,7 +1370,7 @@ const DailyTab = () => {
               <span className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
                 Member
               </span>
-              <CustomSelect
+              <SearchableSelect
                 value={selectedMember}
                 onChange={setSelectedMember}
                 placeholder="All Members"
@@ -1449,9 +1524,7 @@ const DailyTab = () => {
 
                   <div className="p-4">
                     <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-2">
-                      {meetingJournalId
-                        ? "Discussion Points"
-                        : "Meeting Notes"}
+                      {meetingJournalId ? "Discussion Points" : "Meeting Notes"}
                     </p>
                     <textarea
                       value={meetingNotes}
@@ -1534,74 +1607,118 @@ const DailyTab = () => {
                       const isPending = report.status === "pending";
                       const hasDraft = !!report.daily_report;
                       const draftRaw = report.daily_report?.report_data || {};
-                      const rd = report.report_data || {};
 
-                      const rawDisplayRd =
-                        isPending && hasDraft
-                          ? {
-                              ...draftRaw,
-                              accomplishments:
-                                draftRaw.accomplishments?.items ||
-                                (Array.isArray(draftRaw.accomplishments)
-                                  ? draftRaw.accomplishments
-                                  : []),
-                              self_rating:
-                                draftRaw.details?.self_rating ??
-                                draftRaw.sections?.self_rating,
-                              total_score: draftRaw.total_score,
-                              is_absent:
-                                draftRaw.details?.is_absent ??
-                                draftRaw.sections?.is_absent,
-                            }
-                          : rd;
-
+                      const rawDisplayRd = resolveRawSource(report);
                       const displayRd = normalizeReportData(rawDisplayRd);
 
-                      const displayKpis = {
-                        tasks:
-                          draftRaw.sections?.tasks_issues ??
-                          rd.sections?.tasks_issues ??
-                          report.kpis?.tasks ??
-                          rd.kpis?.tasks,
-                        issues: report.kpis?.issues ?? rd.kpis?.issues,
-                        planning:
-                          draftRaw.sections?.planning ??
-                          rd.sections?.planning ??
-                          report.kpis?.planning ??
-                          rd.kpis?.planning,
-                        timing:
-                          draftRaw.sections?.timing ??
-                          rd.sections?.timing ??
-                          report.kpis?.timing ??
-                          rd.kpis?.timing,
-                      };
+                      const normalizedReportName = (report.name || "")
+                        .trim()
+                        .toLowerCase();
+
+                      const userAccomplishments =
+                        displayRd.accomplishments.filter(
+                          (item: any) =>
+                            !item.member ||
+                            String(item.member).trim().toLowerCase() ===
+                              normalizedReportName
+                        );
+
+                      const userTasksIssues = displayRd.tasks_issues.filter(
+                        (item: any) =>
+                          !item.member ||
+                          String(item.member).trim().toLowerCase() ===
+                            normalizedReportName
+                      );
+
+                      const userTomorrowPlan = displayRd.tomorrow_plan.filter(
+                        (item: any) =>
+                          !item.member ||
+                          String(item.member).trim().toLowerCase() ===
+                            normalizedReportName
+                      );
+
+                      const sd =
+                        draftRaw?.score_details ||
+                        report.report_data?.score_details ||
+                        {};
+
+                      const kpiAchieved =
+                        sd.kpi?.points ??
+                        report.kpis?.score ??
+                        report.score ??
+                        0;
+                      const kpiMax = sd.kpi?.maxPoints ?? 20;
+                      const kpiStr = `${kpiAchieved}/${kpiMax}`;
+
+                      const tasksAchieved =
+                        sd.tasksIssues?.points ??
+                        report.kpis?.tasks ??
+                        draftRaw?.sections?.tasks_issues ??
+                        0;
+                      const tasksMax = sd.tasksIssues?.maxPoints ?? 25;
+                      const tasksStr = `${tasksAchieved}/${tasksMax}`;
+
+                      const issuesAchieved =
+                        sd.tasksIssues?.newIssuesCount ??
+                        report.kpis?.issues ??
+                        0;
+                      const issuesStr = `${issuesAchieved}`;
+
+                      const planAchieved =
+                        sd.planning?.points ??
+                        report.kpis?.planning ??
+                        draftRaw?.sections?.planning ??
+                        0;
+                      const planMax = sd.planning?.maxPoints ?? 25;
+                      const planStr = `${planAchieved}/${planMax}`;
+
+                      const timeAchieved =
+                        sd.timing?.points ??
+                        report.kpis?.timing ??
+                        draftRaw?.sections?.timing ??
+                        0;
+                      const timeMax = sd.timing?.maxPoints ?? 25;
+                      const timeStr = `${timeAchieved}/${timeMax}`;
+
+                      const selfRating =
+                        rawDisplayRd?.self_rating ??
+                        draftRaw?.details?.self_rating ??
+                        draftRaw?.sections?.self_rating ??
+                        null;
+
+                      const totalScoreStr = Math.round(
+                        report.score ??
+                          rawDisplayRd?.total_score ??
+                          draftRaw?.total_score ??
+                          0
+                      );
 
                       const canExpand = !isPending || hasDraft;
+                      const isSelected = selectedReports.includes(rId);
 
                       return (
                         <div
                           key={rId}
                           className={cn(
-                            "bg-white border rounded-2xl shadow-sm overflow-hidden",
-                            isPending && !hasDraft
-                              ? "border-red-200"
+                            "bg-white border rounded-xl shadow-sm overflow-hidden transition-all",
+                            isSelected
+                              ? "border-[#4A90E2] border-l-[4px]"
                               : "border-[#EAE3DF]"
                           )}
                         >
                           <div
                             className={cn(
-                              "p-4 transition-colors",
+                              "p-4 transition-colors flex items-start gap-4",
                               canExpand
                                 ? "cursor-pointer hover:bg-gray-50"
                                 : "cursor-default"
                             )}
                             onClick={() => canExpand && toggleExpand(rId)}
                           >
-                            <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              {/* 🛠 FIX: Make checkbox permanently checked and disabled if submitted */}
+                            <div className="flex items-start gap-3 pt-1">
                               <input
                                 type="checkbox"
-                                checked={!isPending || selectedReports.includes(rId)}
+                                checked={!isPending || isSelected}
                                 disabled={!isPending}
                                 onChange={(e) => {
                                   e.stopPropagation();
@@ -1614,153 +1731,159 @@ const DailyTab = () => {
                                 }}
                                 onClick={(e) => e.stopPropagation()}
                                 className={cn(
-                                  "w-4 h-4 rounded border-gray-300 accent-[#CE7A5A]",
-                                  !isPending ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
+                                  "w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] shrink-0 mt-3",
+                                  !isPending
+                                    ? "opacity-60 cursor-not-allowed"
+                                    : "cursor-pointer"
                                 )}
                               />
-                              <h3 className="font-bold text-[#1A1A1A] text-[15px]">
-                                {report.name}
-                              </h3>
-                              {(report.name?.includes("HOD") ||
-                                report.name?.includes("TL")) && (
-                                <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                                  <Crown className="w-3 h-3 fill-orange-400" />{" "}
-                                  HOD
-                                </span>
-                              )}
-                              {report.department && (
-                                <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                  {report.department}
-                                </span>
-                              )}
-                              {isPending && !hasDraft ? (
-                                <span className="ml-auto text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full">
-                                  PENDING
-                                </span>
-                              ) : (
-                                <span className="ml-auto text-[10px] font-bold text-green-700 bg-green-100 border border-green-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                                  <CheckCircle2 className="w-3 h-3" /> Submitted
-                                </span>
-                              )}
-                            </div>
-
-                            <div className="text-[12px] text-gray-400 mb-3 ml-6">
-                              {report.email}
-                              {report.submitted_at && (
-                                <span className="ml-2">
-                                  • {formatDateTime(report.submitted_at)}
-                                </span>
-                              )}
-                              {isPending &&
-                                hasDraft &&
-                                report.daily_report?.submitted_at && (
-                                  <span className="ml-2 text-gray-400">
-                                    •{" "}
-                                    {formatDateTime(
-                                      report.daily_report.submitted_at
-                                    )}
+                              <div className="flex flex-col items-center gap-1">
+                                <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
+                                  {totalScoreStr}
+                                </div>
+                                {selfRating != null && (
+                                  <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-1.5 py-0.5 whitespace-nowrap">
+                                    ⭐ {selfRating}/10
                                   </span>
                                 )}
+                              </div>
                             </div>
 
-                            {(!isPending || hasDraft) && (
-                              <div className="flex flex-wrap items-center gap-2 mb-3 ml-6">
-                                {report.score !== null &&
-                                  report.score !== undefined && (
-                                    <span className="text-[11px] font-bold text-gray-700 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-lg">
-                                      {report.score}/20
-                                    </span>
-                                  )}
-                                {displayKpis.tasks !== undefined &&
-                                  displayKpis.tasks !== null && (
-                                    <span className="text-[11px] font-bold text-orange-600 bg-orange-50 border border-orange-100 px-2.5 py-1 rounded-lg">
-                                      Tasks/Issues: {displayKpis.tasks}
-                                    </span>
-                                  )}
-                                {displayKpis.issues !== undefined &&
-                                  displayKpis.issues !== null && (
-                                    <span className="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2.5 py-1 rounded-lg">
-                                      Issues: {displayKpis.issues}
-                                    </span>
-                                  )}
-                                {displayKpis.planning !== undefined &&
-                                  displayKpis.planning !== null && (
-                                    <span className="text-[11px] font-bold text-red-600 bg-red-50 border border-red-100 px-2.5 py-1 rounded-lg">
-                                      Planning: {displayKpis.planning}
-                                    </span>
-                                  )}
-                                {displayKpis.timing !== undefined &&
-                                  displayKpis.timing !== null && (
-                                    <span className="text-[11px] font-bold text-green-600 bg-green-50 border border-green-100 px-2.5 py-1 rounded-lg">
-                                      Timing: {displayKpis.timing}
-                                    </span>
-                                  )}
-                              </div>
-                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <h3 className="font-bold text-[#1A1A1A] text-[15px] truncate">
+                                      {report.name}
+                                    </h3>
+                                    {(report.name?.includes("HOD") ||
+                                      report.name?.includes("TL")) && (
+                                      <span className="flex items-center gap-1 border border-orange-200 bg-orange-50 text-orange-600 text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0">
+                                        <Crown className="w-3 h-3 fill-orange-400" />{" "}
+                                        HOD
+                                      </span>
+                                    )}
+                                    {report.department && (
+                                      <span className="border border-blue-200 bg-blue-50 text-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0">
+                                        {report.department}
+                                      </span>
+                                    )}
+                                    {isPending && !hasDraft ? (
+                                      <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shrink-0">
+                                        PENDING
+                                      </span>
+                                    ) : (
+                                      ""
+                                    )}
+                                  </div>
+                                  <div className="text-[11px] text-gray-400 mb-2 truncate">
+                                    {report.email}
+                                    {report.submitted_at && (
+                                      <span className="ml-1">
+                                        • {formatDateTime(report.submitted_at)}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
 
-                            {(!isPending || hasDraft) && dateRow.length > 0 && (
-                              <div className="flex items-center gap-1.5 ml-6 flex-wrap">
-                                {dateRow.map((d: any, i: number) => {
-                                  const s =
-                                    d.status === "non_meeting"
-                                      ? "holiday"
-                                      : d.status;
-                                  return (
-                                    <div
-                                      key={i}
+                                {canExpand && (
+                                  <button className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-50 text-blue-500 shrink-0 mt-1 transition-transform">
+                                    <ChevronDown
                                       className={cn(
-                                        "flex flex-col items-center justify-center w-7 h-8 rounded-lg text-[10px] font-bold border",
-                                        s === "done" || s === "submitted"
-                                          ? "bg-[#2ECC71] text-white border-[#2ECC71]"
-                                          : s === "missed"
-                                            ? "bg-[#EB4A4A] text-white border-[#EB4A4A]"
-                                            : s === "holiday"
-                                              ? "bg-yellow-100 text-yellow-600 border-yellow-200"
-                                              : "bg-gray-100 text-gray-400 border-gray-200"
+                                        "w-4 h-4 transition-transform",
+                                        isExpanded && "rotate-180"
                                       )}
-                                    >
-                                      <span className="text-[8px] opacity-80 leading-none mb-0.5">
-                                        {d.day ? d.day.charAt(0) : ""}
-                                      </span>
-                                      <span className="leading-none">
-                                        {d.date ?? ""}
-                                      </span>
-                                    </div>
-                                  );
-                                })}
+                                    />
+                                  </button>
+                                )}
                               </div>
-                            )}
 
-                            {canExpand && (
-                              <div className="flex justify-center mt-3">
-                                <span className="text-[10px] font-bold text-[#CE8261] opacity-50">
-                                  {isExpanded ? "▲ collapse" : "▼ view details"}
-                                </span>
-                              </div>
-                            )}
+                              {(!isPending || hasDraft) && (
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                    KPI: {kpiStr}
+                                  </span>
+                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                    Tasks: {tasksStr}
+                                  </span>
+                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                    Issues: {issuesStr}
+                                  </span>
+                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                    Planning: {planStr}
+                                  </span>
+                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
+                                    Timing: {timeStr}
+                                  </span>
+                                </div>
+                              )}
+
+                              {canExpand && (
+                                <p className="text-[10px] text-gray-400 italic mb-2 mt-1">
+                                  Click to view tasks, accomplishments & plan
+                                </p>
+                              )}
+
+                              {(!isPending || hasDraft) &&
+                                dateRow.length > 0 && (
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <span className="text-[10px] text-gray-500 font-medium whitespace-nowrap">
+                                      {configName}
+                                    </span>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      {dateRow.map((d: any, i: number) => {
+                                        const s =
+                                          d.status === "non_meeting"
+                                            ? "holiday"
+                                            : d.status;
+                                        return (
+                                          <div
+                                            key={i}
+                                            className={cn(
+                                              "flex flex-col items-center justify-center w-[22px] h-[26px] rounded-[4px] text-[9px] font-bold border",
+                                              s === "done" || s === "submitted"
+                                                ? "bg-[#10B981] text-white border-[#10B981]"
+                                                : s === "missed"
+                                                  ? "bg-[#EF4444] text-white border-[#EF4444]"
+                                                  : s === "holiday"
+                                                    ? "bg-[#E0F2FE] text-[#3B82F6] border-[#E0F2FE]"
+                                                    : "bg-gray-100 text-gray-400 border-gray-200"
+                                            )}
+                                          >
+                                            <span className="text-[8px] opacity-90 leading-none mb-0.5">
+                                              {d.day ? d.day.charAt(0) : ""}
+                                            </span>
+                                            <span className="leading-none">
+                                              {d.date ?? ""}
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                            </div>
                           </div>
 
                           {isExpanded && canExpand && (
                             <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
                               <div className="p-5 space-y-5">
                                 <div className="flex flex-wrap gap-3">
-                                  {displayRd.self_rating != null && (
+                                  {selfRating != null && (
                                     <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
                                       <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                                       <span className="text-sm font-bold text-yellow-800">
-                                        Self Rating: {displayRd.self_rating}/10
+                                        Self Rating: {selfRating}/10
                                       </span>
                                     </div>
                                   )}
-                                  {rawDisplayRd?.total_score !== undefined &&
-                                    rawDisplayRd?.total_score !== null && (
-                                      <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
-                                        <span className="text-sm font-bold text-purple-800">
-                                          Total Score:{" "}
-                                          {rawDisplayRd.total_score}
-                                        </span>
-                                      </div>
-                                    )}
+                                  {rawDisplayRd?.total_score != null && (
+                                    <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
+                                      <span className="text-sm font-bold text-purple-800">
+                                        Total Score: {rawDisplayRd.total_score}
+                                      </span>
+                                    </div>
+                                  )}
                                   {displayRd.is_absent !== null &&
                                     displayRd.is_absent !== undefined && (
                                       <div
@@ -1812,13 +1935,13 @@ const DailyTab = () => {
                                         Accomplishments
                                       </h4>
                                     </div>
-                                    {displayRd.accomplishments.length === 0 ? (
+                                    {userAccomplishments.length === 0 ? (
                                       <p className="text-xs text-neutral-300 italic">
                                         None recorded.
                                       </p>
                                     ) : (
                                       <ul className="space-y-2">
-                                        {displayRd.accomplishments.map(
+                                        {userAccomplishments.map(
                                           (item: any, i: number) => (
                                             <li
                                               key={i}
@@ -1845,13 +1968,13 @@ const DailyTab = () => {
                                         Tasks & Issues
                                       </h4>
                                     </div>
-                                    {displayRd.tasks_issues.length === 0 ? (
+                                    {userTasksIssues.length === 0 ? (
                                       <p className="text-xs text-neutral-300 italic">
                                         None recorded.
                                       </p>
                                     ) : (
                                       <ul className="space-y-2.5">
-                                        {displayRd.tasks_issues.map(
+                                        {userTasksIssues.map(
                                           (item: any, i: number) => (
                                             <li
                                               key={i}
@@ -1890,13 +2013,13 @@ const DailyTab = () => {
                                         Tomorrow's Plan
                                       </h4>
                                     </div>
-                                    {displayRd.tomorrow_plan.length === 0 ? (
+                                    {userTomorrowPlan.length === 0 ? (
                                       <p className="text-xs text-neutral-300 italic">
                                         None recorded.
                                       </p>
                                     ) : (
                                       <ul className="space-y-2">
-                                        {displayRd.tomorrow_plan.map(
+                                        {userTomorrowPlan.map(
                                           (item: any, i: number) => (
                                             <li
                                               key={i}
@@ -1956,10 +2079,11 @@ const DailyTab = () => {
                                   </button>
                                 </div>
 
+                                {/* Quick Add to Plan */}
                                 {quickActionOpenId === rId && (
                                   <div className="border-t border-[#EAE3DF] pt-4 mt-1">
                                     <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest mb-3">
-                                      Quick Actions
+                                      Add to Tomorrow's Plan
                                     </p>
                                     <div className="flex items-center gap-3">
                                       <input
@@ -2167,7 +2291,7 @@ const DailyTab = () => {
                                         </div>
                                       </div>
 
-                                      {/* COLUMN 2: Recent Feedbacks */}
+                                      {/* COLUMN 2: Recent Feedbacks — sorted newest first */}
                                       <div className="bg-[#FAF7F5] rounded-xl p-5 border border-[#EAE3DF] h-full flex flex-col">
                                         <div className="flex items-center justify-between mb-4">
                                           <p className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-widest">
@@ -2195,11 +2319,12 @@ const DailyTab = () => {
                                           </div>
                                         ) : (
                                           <div className="space-y-3 overflow-y-auto pr-1 flex-1">
+                                            {/* Already sorted newest-first in loadPastFeedbacks */}
                                             {fetchedFeedbacks
                                               .slice(0, 3)
                                               .map((fb: any, idx: number) => (
                                                 <div
-                                                  key={idx}
+                                                  key={fb.id ?? idx}
                                                   className="bg-white p-3 rounded-xl shadow-sm border border-gray-100"
                                                 >
                                                   <div className="flex items-center gap-1 mb-1.5">
@@ -2217,10 +2342,17 @@ const DailyTab = () => {
                                                       )
                                                     )}
                                                     {fb.created_at && (
-                                                      <span className="text-[9px] text-gray-400 ml-auto font-medium">
+                                                      <span className="text-[9px] text-gray-400 ml-auto font-medium whitespace-nowrap">
                                                         {new Date(
                                                           fb.created_at
-                                                        ).toLocaleDateString()}
+                                                        ).toLocaleDateString(
+                                                          "en-IN",
+                                                          {
+                                                            day: "numeric",
+                                                            month: "short",
+                                                            year: "2-digit",
+                                                          }
+                                                        )}
                                                       </span>
                                                     )}
                                                   </div>
@@ -2231,6 +2363,11 @@ const DailyTab = () => {
                                                   ) : (
                                                     <p className="text-xs text-neutral-400 italic">
                                                       No review provided.
+                                                    </p>
+                                                  )}
+                                                  {fb.reviewer && (
+                                                    <p className="text-[9px] text-neutral-400 mt-1 font-semibold">
+                                                      — {fb.reviewer.trim()}
                                                     </p>
                                                   )}
                                                 </div>
@@ -2323,25 +2460,6 @@ const DailyTab = () => {
         handleCloseDialog={() => setIsIssueModalOpen(false)}
         preSelectedProjectId={undefined}
       />
-
-      <style>{`
-        select option { font-family: 'Poppins', sans-serif; padding: 8px 12px; font-size: 13px; color: #374151; background: #ffffff; }
-        select option:checked, select option:hover { background: #FFF3EE; color: #CE7A5A; }
-        select:focus { outline: none; }
-        .calendar-row::-webkit-scrollbar { display: none; }
-        
-        @keyframes shimmer {
-          0% { background-position: -1000px 0; }
-          100% { background-position: 1000px 0; }
-        }
-        
-        .skeleton {
-          background: #F0EBE8;
-          background-image: linear-gradient(to right, #F0EBE8 4%, #FAF8F7 25%, #F0EBE8 36%);
-          background-size: 1000px 100%;
-          animation: shimmer 2s infinite linear;
-        }
-      `}</style>
     </div>
   );
 };

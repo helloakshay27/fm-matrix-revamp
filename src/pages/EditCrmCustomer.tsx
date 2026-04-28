@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLayout } from "../contexts/LayoutContext";
 import { Button } from "../components/ui/button";
-import { Calendar, Trash2, Settings, ArrowLeft } from "lucide-react";
+import { Calendar, Trash2, Settings, ArrowLeft, Globe } from "lucide-react";
 import { TextField, Card, CardContent } from "@mui/material";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { toast } from "sonner";
 import { editCustomer, getCustomerById } from "@/store/slices/cusomerSlice";
+import ReactSelect from 'react-select';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 interface Lease {
     id?: number;
@@ -50,6 +52,8 @@ export const EditCrmCustomer = () => {
     ]);
     const [domains, setDomains] = useState<Domain[]>([{ domain: "" }]);
     const [isSaving, setIsSaving] = useState(false);
+    const [sites, setSites] = useState<{ id: number; name: string }[]>([]);
+    const [selectedSiteIds, setSelectedSiteIds] = useState<number[]>([]);
 
     useEffect(() => {
         const fetchCustomer = async () => {
@@ -84,6 +88,9 @@ export const EditCrmCustomer = () => {
                           }))
                         : [{ domain: "" }]
                 );
+                if (response.entity.enable_site_ids && Array.isArray(response.entity.enable_site_ids)) {
+                    setSelectedSiteIds(response.entity.enable_site_ids);
+                }
             } catch (error: unknown) {
                 const errorMessage =
                     error instanceof Error ? error.message : "Failed to fetch customer";
@@ -97,7 +104,40 @@ export const EditCrmCustomer = () => {
 
     useEffect(() => {
         setCurrentSection("CRM");
+        fetchSites();
     }, [setCurrentSection]);
+
+    const fetchSites = async () => {
+        try {
+            const userData = localStorage.getItem('user');
+            let userId = '12437';
+            if (userData) {
+                try {
+                    const parsedUser = JSON.parse(userData);
+                    userId = parsedUser.id || parsedUser.user_id || '12437';
+                } catch (e) {
+                    console.warn('Could not parse user data from localStorage');
+                }
+            }
+            const response = await fetch(getFullUrl(`/pms/sites/allowed_sites.json?user_id=${userId}`), {
+                headers: {
+                    'Authorization': getAuthHeader(),
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.sites && Array.isArray(data.sites)) {
+                    setSites(data.sites);
+                } else {
+                    setSites([]);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching sites:', error);
+            toast.error('Failed to fetch sites');
+        }
+    };
 
     const handleInputChange = (field: string, value: string) => {
         setFormData((prev) => ({
@@ -201,6 +241,7 @@ export const EditCrmCustomer = () => {
         if (isSaving) return;
         setIsSaving(true);
         const payload = {
+            site_ids: selectedSiteIds,
             entity: {
                 name: formData.customerName,
                 email: formData.email,
@@ -413,11 +454,62 @@ export const EditCrmCustomer = () => {
                                         />
                                           </div>
                                 </div>
-                            <div>
-                               
-                                        
-                                  
-                            </div>
+                        </div>
+
+                        {/* Enable Sites Multi-Select */}
+                        <div className="mt-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Enable Sites <span className="text-red-500">*</span>
+                            </label>
+                            <ReactSelect
+                                isMulti
+                                options={sites.map(site => ({
+                                    value: site.id,
+                                    label: site.name
+                                }))}
+                                onChange={(selected) => {
+                                    if (!selected || selected.length === 0) {
+                                        setSelectedSiteIds([]);
+                                        return;
+                                    }
+                                    setSelectedSiteIds(selected.map(s => s.value));
+                                }}
+                                value={sites
+                                    .filter(site => selectedSiteIds.includes(site.id))
+                                    .map(site => ({
+                                        value: site.id,
+                                        label: site.name
+                                    }))
+                                }
+                                placeholder="Select sites..."
+                                noOptionsMessage={() => "No sites available"}
+                                menuPortalTarget={document.body}
+                                menuPosition="fixed"
+                                styles={{
+                                    control: (base) => ({
+                                        ...base,
+                                        minHeight: '40px',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '8px',
+                                        boxShadow: 'none',
+                                        '&:hover': { border: '1px solid #cbd5e1' }
+                                    }),
+                                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                                    menu: (base) => ({ ...base, zIndex: 9999 }),
+                                    multiValue: (base) => ({
+                                        ...base,
+                                        backgroundColor: '#f1f5f9',
+                                        borderRadius: '4px'
+                                    }),
+                                    multiValueLabel: (base) => ({ ...base, color: '#334155' }),
+                                    multiValueRemove: (base) => ({
+                                        ...base,
+                                        color: '#64748b',
+                                        borderRadius: '0px',
+                                        '&:hover': { backgroundColor: '#e2e8f0', color: '#475569' }
+                                    })
+                                }}
+                            />
                         </div>
                     </div>
                     <div className="mb-8">
