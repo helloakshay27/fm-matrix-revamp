@@ -1316,6 +1316,7 @@ const WeeklyReports = () => {
                         total_score: Math.round(weeklyScore.total),
                         remarks: formattedRemarks,
                         remark_type: activeRemarkChip,
+                        score_override: true,
                         sections: {
                             weekly_kpi_achievement: weeklyScore.breakdown.weeklyKpi,
                             daily_kpi_achievement: weeklyScore.breakdown.dailyKpi,

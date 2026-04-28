@@ -90,15 +90,14 @@ export const InvoiceDashboardDetailsPage = () => {
     const [reference, setReference] = useState("");
     const [taxDeducted, setTaxDeducted] = useState("no");
     const [tdsAccount, setTdsAccount] = useState("Advance Tax");
-    const [notes, setNotes] = useState("");
-    const [sendThankYou, setSendThankYou] = useState(true);
+    const [amountWithHeld, setAmountWithHeld] = useState("");
     const [paymentReceivedOn, setPaymentReceivedOn] = useState("");
     const [attachments, setAttachments] = useState([]);
-
+    const [notes, setNotes] = useState("");
+    const [sendThankYou, setSendThankYou] = useState(true);
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const lock_account_id = localStorage.getItem("lock_account_id");
-
     useEffect(() => {
         if (id && baseUrl && token) {
             fetchInvoiceDetails();
@@ -331,7 +330,7 @@ export const InvoiceDashboardDetailsPage = () => {
         setPaymentReceivedOn(defaultDate);
     }, [invoiceData]);
 
-    const handleRecordPayment = async () => {
+    const handleRecordPayment = async (paymentStatus = "paid") => {
         if (!selectedCustomerId) {
             sonnerToast.error("Customer is not available for this invoice.");
             return;
@@ -365,10 +364,12 @@ export const InvoiceDashboardDetailsPage = () => {
                 deposit_to_ledger_id: Number(depositTo),
                 tax_deducted: taxDeducted === "yes",
                 tds_lock_account_ledger_id: taxDeducted === "yes" && tdsAccount ? tdsAccount : null,
+                amount_withheld:taxDeducted==="yes" ? Number(amountWithHeld) || 0 :0,
                 notes,
                 payment_amount: Number(amountReceived) || 0,
                 excess_amount: 0,
-                status: "paid",
+               payment_status: paymentStatus === "draft" ? "draft" : "paid",
+
                 lock_bill_payments_attributes: [
                     {
                         resource_id: Number(id),
@@ -398,7 +399,7 @@ export const InvoiceDashboardDetailsPage = () => {
             formData.append("lock_payment[notes]", lp.notes || "");
             formData.append("lock_payment[payment_amount]", String(lp.payment_amount));
             formData.append("lock_payment[excess_amount]", String(lp.excess_amount));
-            formData.append("lock_payment[status]", lp.status);
+            formData.append("lock_payment[payment_status]", lp.payment_status);
             lp.lock_bill_payments_attributes.forEach((row, index) => {
                 formData.append(`lock_payment[lock_bill_payments_attributes][${index}][resource_id]`, String(row.resource_id));
                 formData.append(`lock_payment[lock_bill_payments_attributes][${index}][resource_type]`, row.resource_type);
@@ -627,7 +628,7 @@ export const InvoiceDashboardDetailsPage = () => {
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                     <TabsList className="grid grid-cols-5 w-full max-w-4xl">
                         <TabsTrigger value="invoice-details">Invoice Details</TabsTrigger>
-                        <TabsTrigger value="record-payment">Record Payment</TabsTrigger>
+                     {invoiceData.status ==="Overdue" && <TabsTrigger value="record-payment">Record Payment</TabsTrigger>}
                         <TabsTrigger value="customer-info">Customer Info</TabsTrigger>
                         <TabsTrigger value="attachments">Attachments & Comms</TabsTrigger>
                         <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
@@ -1051,6 +1052,21 @@ export const InvoiceDashboardDetailsPage = () => {
                                                 </MuiSelect>
                                             </FormControl>
                                         </div>
+
+                                        <div>
+                                        <p className="text-sm font-medium mb-2">
+                                                Amount Withheld<span className="text-red-500">*</span>
+                                            </p>
+                                            <TextField
+                                            fullWidth
+                                            type="number"
+                                            value={amountWithHeld}
+                                            onChange={(e) => setAmountWithHeld(e.target.value)}
+                                            sx={fieldStyles}
+                                        />
+                                            
+
+                                        </div>
                                     </div>
                                 )}
 
@@ -1184,7 +1200,7 @@ export const InvoiceDashboardDetailsPage = () => {
                                     )}
                                 </div>
 
-                                <div>
+                                {/* <div>
                                     <FormControlLabel
                                         control={
                                             <Checkbox
@@ -1201,7 +1217,7 @@ export const InvoiceDashboardDetailsPage = () => {
                                             {selectedCustomer.email}
                                         </div>
                                     )}
-                                </div>
+                                </div> */}
 
                                 <div className="flex items-center justify-end gap-3 pt-2">
                                     <Button
@@ -1211,11 +1227,20 @@ export const InvoiceDashboardDetailsPage = () => {
                                         Cancel
                                     </Button>
                                     <Button
-                                        onClick={handleRecordPayment}
+                                        onClick={() => handleRecordPayment("paid")}
                                         disabled={paymentSubmitting}
                                         className="bg-[#C72030] hover:bg-[#a81a28]"
                                     >
                                         {paymentSubmitting ? "Saving..." : "Save as Paid"}
+                                    </Button>
+
+                                    
+                                    <Button
+                                        onClick={() => handleRecordPayment("draft")}
+                                        disabled={paymentSubmitting}
+                                        className="bg-[#C72030] hover:bg-[#a81a28]"
+                                    >
+                                        {paymentSubmitting ? "Saving..." : "Save as Draft"}
                                     </Button>
                                 </div>
                             </CardContent>
