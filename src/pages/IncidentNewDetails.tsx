@@ -2363,7 +2363,7 @@ export const IncidentNewDetails = () => {
                     <Button
                         size="sm"
                         onClick={() => setShowStatusModal(true)}
-                        className="flex items-center gap-2 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                        className="flex items-center gap-2"
                     >
                         Update Status
                     </Button>
@@ -2496,7 +2496,7 @@ export const IncidentNewDetails = () => {
                                     Save as draft
                                 </Button>
                                 <Button
-                                    className="flex-1 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    className="flex-1"
                                     onClick={handleNext}
                                 >
                                     Next
