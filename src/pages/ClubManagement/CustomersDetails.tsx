@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, User, Mail, Phone, MapPin } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select, MenuItem, ThemeProvider, createTheme } from "@mui/material";
 import { toast } from "sonner";
@@ -111,12 +110,6 @@ interface CustomerData {
     currency_code: string;
     account_receivable?: string;
     opening_balance: number;
-    opening_balance_bill_no?: string;
-    opening_balance_bill_date?: string;
-    opening_balance_due_date?: string;
-    bill_no?: string;
-    bill_date?: string;
-    due_date?: string;
     enable_portal: boolean;
     remarks: string;
     payment_term_id?: number;
@@ -134,12 +127,6 @@ export const CustomersDetails = () => {
     const token = localStorage.getItem("token");
     const [loading, setLoading] = useState(false);
     const [customerData, setCustomerData] = useState<CustomerData | null>(null);
-    const [openingBalanceForm, setOpeningBalanceForm] = useState({
-        bill_no: "",
-        bill_date: "",
-        due_date: "",
-        amount: "",
-    });
 
     const fetchCustomerDetails = async () => {
         setLoading(true);
@@ -166,29 +153,12 @@ export const CustomersDetails = () => {
         }
     }, [id]);
 
-    useEffect(() => {
-        if (!customerData) return;
-
-        setOpeningBalanceForm({
-            bill_no: customerData.opening_balance_bill_no || customerData.bill_no || "",
-            bill_date: customerData.opening_balance_bill_date || customerData.bill_date || "",
-            due_date: customerData.opening_balance_due_date || customerData.due_date || "",
-            amount: customerData.opening_balance != null ? String(customerData.opening_balance) : "",
-        });
-    }, [customerData]);
-
     const handleEditClick = () => {
         navigate(`/accounting/customers/edit/${id}`);
     };
 
     const handleClose = () => {
         navigate("/accounting/customers");
-    };
-
-    const formatDisplayDate = (value?: string) => {
-        if (!value) return "-";
-        const date = new Date(value);
-        return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("en-GB");
     };
 
     if (loading) {
@@ -234,13 +204,6 @@ export const CustomersDetails = () => {
                     </div>
                 </div>
 
-                <Tabs defaultValue="customer-details" className="space-y-6">
-                    <TabsList className="grid w-full max-w-md grid-cols-2">
-                        <TabsTrigger value="customer-details">Customer Details</TabsTrigger>
-                        <TabsTrigger value="opening-balance">Opening Balance</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="customer-details" className="space-y-6">
                         <div className="space-y-6">
                             {/* Customer Overview Section */}
                             <div className="bg-white rounded-lg border-2 p-6 space-y-6">
@@ -658,76 +621,6 @@ export const CustomersDetails = () => {
                         </div>
                             )}
                         </div>
-                    </TabsContent>
-
-                    <TabsContent value="opening-balance">
-                        <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                                    <MapPin className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                                        Opening Balance
-                                    </h3>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <TextField
-                                    label="Bill No"
-                                    value={openingBalanceForm.bill_no}
-                                    onChange={(e) =>
-                                        setOpeningBalanceForm((prev) => ({
-                                            ...prev,
-                                            bill_no: e.target.value,
-                                        }))
-                                    }
-                                    placeholder="Enter bill no"
-                                />
-
-                                <TextField
-                                    label="Bill Date"
-                                    type="date"
-                                    value={openingBalanceForm.bill_date}
-                                    onChange={(e) =>
-                                        setOpeningBalanceForm((prev) => ({
-                                            ...prev,
-                                            bill_date: e.target.value,
-                                        }))
-                                    }
-                                    InputLabelProps={{ shrink: true }}
-                                />
-
-                                <TextField
-                                    label="Due Date"
-                                    type="date"
-                                    value={openingBalanceForm.due_date}
-                                    onChange={(e) =>
-                                        setOpeningBalanceForm((prev) => ({
-                                            ...prev,
-                                            due_date: e.target.value,
-                                        }))
-                                    }
-                                    InputLabelProps={{ shrink: true }}
-                                />
-
-                                <TextField
-                                    label="Amount"
-                                    type="number"
-                                    value={openingBalanceForm.amount}
-                                    onChange={(e) =>
-                                        setOpeningBalanceForm((prev) => ({
-                                            ...prev,
-                                            amount: e.target.value,
-                                        }))
-                                    }
-                                    placeholder="Enter amount"
-                                />
-                            </div>
-                        </div>
-                    </TabsContent>
-                </Tabs>
             </div>
         </ThemeProvider>
     );
