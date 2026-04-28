@@ -3,8 +3,7 @@
  * 
  * Total possible score: 100 points
  * - Daily KPI Achievement: Max 20 points
- * - Daily Checklist Achievement: Max 10 points
- * - Accomplishments: Max 10 points
+ * - Accomplishments (Checklist 10 + Accomplishments 10): Max 20 points
  * - Tasks & Issues: Max 20 points
  * - Items Planned for Coming Day: Max 20 points
  * - Report Timing: Max 20 points
@@ -132,13 +131,14 @@ function calculateKPIScore(kpis: any[]): { score: number; details: KPIDetails } 
 }
 
 /**
- * Calculate Accomplishments Score (Max 10 points)
+ * Calculate Accomplishments Score (Max 20 points)
+ * Combines Daily Checklist (max 10) + Accomplishments (max 10)
  * Points awarded proportionally based on completion percentage
  */
 function calculateAccomplishmentsScore(
     accomplishments: any[]
 ): { score: number; details: AccomplishmentsDetails } {
-    const maxPoints = 10;
+    const maxPoints = 20; // 10 checklist + 10 accomplishments
 
     if (!accomplishments || accomplishments.length === 0) {
         return {
@@ -419,26 +419,14 @@ export function calculateDailyScore(
     const planningResult = calculatePlanningScore(planningItems);
     const timingResult = calculateTimingScore(submissionTime);
 
-    const hasKPIs = kpiResult.details.hasKPIs;
-
-    // Initialize base scores
-    let kpiScore = kpiResult.score;
-    let checklistScore = 0; // We don't have checklist data in the current form
-    let accomplishmentsScore = accomplishmentsResult.score;
-    let tasksIssuesScore = tasksIssuesResult.score;
-    let planningScore = planningResult.score;
-    let timingScore = timingResult.score;
-    let bonusPoints = 0;
-
-    // Apply dynamic point allocation
-    if (!hasKPIs) {
-        // When no KPIs: Accomplishments, Tasks, Planning, and Timing each get +5 bonus
-        accomplishmentsScore = Math.min(accomplishmentsScore + 5, 15); // Max becomes 15
-        tasksIssuesScore = Math.min(tasksIssuesScore + 5, 25); // Max becomes 25
-        planningScore = Math.min(planningScore + 5, 25); // Max becomes 25
-        timingScore = Math.min(timingScore + 5, 25); // Max becomes 25
-        bonusPoints += 20;
-    }
+    // Scores are fixed — no dynamic redistribution
+    const kpiScore = kpiResult.score;
+    const checklistScore = 0; // Checklist is folded into accomplishmentsScore (max 20)
+    const accomplishmentsScore = accomplishmentsResult.score;
+    const tasksIssuesScore = tasksIssuesResult.score;
+    const planningScore = planningResult.score;
+    const timingScore = timingResult.score;
+    const bonusPoints = 0;
 
     const totalScore = Math.min(
         kpiScore +
@@ -470,23 +458,21 @@ export function calculateDailyScore(
 }
 
 /**
- * Simplified scoring for live preview (without timing, as we don't have submission time yet)
+ * Live preview scoring — includes real-time timing score based on current time.
  */
 export function calculateLivePreviewScore(
     kpis: any[] = [],
     accomplishments: any[] = [],
     taskIssues: any[] = [],
     planningItems: any[] = []
-): Omit<DailyScoreBreakdown, "timingScore"> & { timingScore: number } {
-    const result = calculateDailyScore(
+): DailyScoreBreakdown {
+    // Pass current time so timing score reflects the current moment
+    return calculateDailyScore(
         kpis,
         accomplishments,
         taskIssues,
-        planningItems
+        planningItems,
+        new Date().toISOString().split("T")[0],
+        new Date()
     );
-
-    return {
-        ...result,
-        timingScore: 0, // No timing score in live preview
-    };
 }
