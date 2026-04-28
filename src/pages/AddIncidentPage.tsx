@@ -1536,6 +1536,10 @@ export const AddIncidentPage = () => {
   };
 
   const handleInputChange = (field: string, value: string) => {
+    // Character limit for description field
+    if (field === 'description' && value.length > 240) {
+      return; // Don't update state if exceeds 240 characters
+    }
     setIncidentData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -2104,15 +2108,26 @@ export const AddIncidentPage = () => {
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  padding: "10px", // Increased padding
-                  minHeight: "120px", // Ensure minimum height
-                  marginTop: "8px", // Space between label and input
+                  height: "auto !important",
+                  padding: "2px !important",
+                  display: "flex",
+                },
+                "& .MuiInputBase-input[aria-hidden='true']": {
+                  flex: 0,
+                  width: 0,
+                  height: 0,
+                  padding: "0 !important",
+                  margin: 0,
+                  display: "none",
                 },
                 "& .MuiInputBase-input": {
                   resize: "none !important",
                 },
               }}
             />
+            <div className="mt-2 text-sm text-gray-600">
+              {incidentData.description.length} / 240
+            </div>
           </div>
         </CardContent>
       </Card>

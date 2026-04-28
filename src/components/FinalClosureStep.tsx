@@ -603,7 +603,7 @@ import dayjs from 'dayjs';
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from '@/components/ui/textarea';
-import { FormControl, InputLabel, MenuItem, Select as MuiSelect, TextField } from "@mui/material";
+import { FormControl, MenuItem, Select as MuiSelect, TextField } from "@mui/material";
 import type { Investigator, CorrectiveAction, PreventiveAction } from '../pages/IncidentNewDetails';
 
 /* ----------------------------- TYPES ----------------------------- */
@@ -856,98 +856,118 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
 
   /* ----------------------------- UI ----------------------------- */
   return (
-    <div className="p-4 space-y-4">
-      {/* Time and Duration */}
-      <div className="flex items-center justify-between p-3 rounded">
-        <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4" />
-          <span className="text-sm">Occurred Time</span>
-          <span className="font-medium text-sm">{incident?.inc_time ? formatTime(incident.inc_time) : '-'}</span>
+    <div className="p-4 space-y-3 bg-gray-100 min-h-full">
+
+      {/* Time and Duration Bar */}
+      <div className="flex items-center justify-between bg-[#EDE8DC] rounded-lg px-4 py-3 gap-4">
+        <div className="flex flex-col items-start gap-0.5">
+          <span className="text-xs text-gray-500 font-medium">Occurred Time</span>
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-gray-600" />
+            <span className="text-sm font-semibold text-gray-800">{incident?.inc_time ? formatTime(incident.inc_time) : '-'}</span>
+          </div>
         </div>
-        <div className="text-sm">
-          <span className="text-red-500 font-medium">Total Duration</span>
-          <span className="ml-2">{calculateTotalDuration(incident, incidentOverTime)}</span>
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-xs text-gray-500 font-medium">Total Duration</span>
+          <span className="text-sm font-bold text-[#BF213E]">{calculateTotalDuration(incident, incidentOverTime)}</span>
         </div>
-        <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4" />
-          <span className="text-sm">Incident Over Time</span>
-          <span className="font-medium text-sm">
-            {formatIncidentOverTime(incidentOverTime)}
-          </span>
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="text-xs text-gray-500 font-medium">Incident Over Time</span>
+          <div className="flex items-center gap-1.5">
+            <Clock className="w-3.5 h-3.5 text-gray-600" />
+            <span className="text-sm font-semibold text-gray-800">{formatIncidentOverTime(incidentOverTime)}</span>
+          </div>
         </div>
       </div>
 
-      {/* Investigators */}
-      <div className="p-3 rounded">
+      {/* Investigators Row */}
+      <div className="bg-white rounded-lg px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap gap-2 items-center">
-            {investigators.length > 0 ? (
-              investigators.map((inv, idx) => (
-                <React.Fragment key={inv.id}>
-                  <span className="font-medium text-sm">{inv.name}</span>
-                  {idx < investigators.length - 1 && <span className="text-gray-400">,</span>}
-                </React.Fragment>
-              ))
+            {investigators && investigators.length > 0 ? (
+              <span className="font-medium text-sm text-gray-800">
+                {investigators
+                  .map((inv) => inv.name)
+                  .filter(Boolean)
+                  .join(", ")}
+              </span>
             ) : (
-              <span className="font-medium text-sm text-gray-400">No investigators added yet</span>
+              <span className="text-sm text-gray-400">No investigators added yet</span>
             )}
           </div>
-          <Button variant="outline" size="sm" className="border-[#BF213E] text-[#BF213E]">
+          <Button variant="outline" size="sm" className="shrink-0 border-[#BF213E] text-[#BF213E] hover:bg-red-50">
             + Investigator
           </Button>
         </div>
       </div>
 
-      {/* Final Closure Section */}
-      <div className="rounded">
-        <div className="flex items-center justify-between p-3 border-b border-gray-300">
-          <h3 className="font-semibold">Final Closure</h3>
-          <Button variant="ghost" size="sm" className="text-xs bg-gray-800 text-white hover:bg-gray-700 h-7">
+      {/* Corrective Actions Card */}
+      <div className="bg-[#EDE8DC] rounded-lg overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3">
+          <h3 className="font-bold text-gray-900 text-base">Corrective Actions</h3>
+          <button className="bg-gray-900 text-white text-xs font-semibold px-4 py-1.5 rounded-md flex items-center gap-1.5 hover:bg-gray-800">
             Open
-          </Button>
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
         </div>
 
-        <div className="p-3 space-y-4">
-          {/* Corrective Actions */}
-          <div>
-            <h4 className="font-semibold text-sm mb-3">Corrective Actions:</h4>
+        <div className="bg-white mx-3 mb-3 rounded-lg p-4 space-y-4">
+          {correctiveActions.length > 0 && (
+            <div className="space-y-4">
+              {correctiveActions.map((action, index) => (
+                <div key={action.id} className="space-y-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                  <span className="text-sm font-semibold text-gray-700">Action #{index + 1}</span>
 
-            {correctiveActions.length > 0 && (
-              <div className="space-y-4 mb-4">
-                {correctiveActions.map((action, index) => (
-                  <div key={action.id} className="p-4 rounded-lg border border-gray-200 space-y-3 bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <h5 className="text-sm font-semibold">Action #{index + 1}</h5>
-                    </div>
-
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-800">Action Type</label>
                     <FormControl fullWidth size="small">
-                      <InputLabel>Select corrective action</InputLabel>
                       <MuiSelect
                         value={action.action || ''}
                         onChange={(e) => updateCorrectiveAction(action.id, 'action', e.target.value)}
-                        label="Select corrective action"
-                        sx={{ backgroundColor: 'white' }}
+                        displayEmpty
+                        sx={{
+                          backgroundColor: 'white',
+                          '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
+                          '& .MuiSelect-icon': { color: '#BF213E' },
+                        }}
                       >
+                        <MenuItem value="" disabled>
+                          <span className="text-gray-400">Select corrective action</span>
+                        </MenuItem>
                         {localCorrectiveCategories.map((cat) => (
                           <MenuItem key={cat.id} value={cat.id.toString()}>{cat.name}</MenuItem>
                         ))}
                       </MuiSelect>
                     </FormControl>
+                  </div>
 
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-800">Responsible Person</label>
                     <FormControl fullWidth size="small">
-                      <InputLabel>Responsible Person</InputLabel>
                       <MuiSelect
                         value={action.responsiblePerson || ''}
                         onChange={(e) => updateCorrectiveAction(action.id, 'responsiblePerson', e.target.value)}
-                        label="Responsible Person"
-                        sx={{ backgroundColor: 'white' }}
+                        displayEmpty
+                        sx={{
+                          backgroundColor: 'white',
+                          '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
+                          '& .MuiSelect-icon': { color: '#BF213E' },
+                        }}
                       >
+                        <MenuItem value="" disabled>
+                          <span className="text-gray-400">Select responsible person</span>
+                        </MenuItem>
                         {localInternalUsers.map((user) => (
                           <MenuItem key={user.id} value={user.id.toString()}>{user.full_name || user.name}</MenuItem>
                         ))}
                       </MuiSelect>
                     </FormControl>
+                  </div>
 
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-800">Target Date</label>
                     <TextField
                       fullWidth
                       size="small"
@@ -957,72 +977,96 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
                       sx={{ backgroundColor: 'white' }}
                       InputLabelProps={{ shrink: true }}
                     />
+                  </div>
 
-                    <div>
-                      <div className="text-sm font-medium text-gray-600 mb-1">Description:</div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-800">Description</label>
+                    <div className="relative">
                       <Textarea
                         value={action.description || ''}
                         onChange={(e) => updateCorrectiveAction(action.id, 'description', e.target.value)}
-                        placeholder="Enter description"
-                        className="bg-white min-h-[80px]"
+                        placeholder="Give a brief description of the action."
+                        className="bg-white min-h-[90px] pr-8 text-sm resize-none"
                       />
+                      <svg className="absolute bottom-2.5 right-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z" />
+                      </svg>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
-            {/* <div className="space-y-2">
-              <label className="text-sm font-medium">Final Corrective Action Summary</label>
-              <Textarea
-                value={finalClosureCorrectiveDescription}
-                onChange={handleFinalClosureCorrectiveDescriptionChange}
-                placeholder="Provide the final summary of all corrective actions taken..."
-                className="bg-white min-h-[100px]"
-              />
-            </div> */}
-          </div>
+      {/* Preventive Actions Card */}
+      <div className="bg-[#EDE8DC] rounded-lg overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3">
+          <h3 className="font-bold text-gray-900 text-base">Preventive Actions</h3>
+          <button className="bg-gray-900 text-white text-xs font-semibold px-4 py-1.5 rounded-md flex items-center gap-1.5 hover:bg-gray-800">
+            Open
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+        </div>
 
-          {/* Preventive Actions */}
-          <div className="border-t border-gray-300 pt-4">
-            <h4 className="font-semibold text-sm mb-3">Preventive Actions:</h4>
+        <div className="bg-white mx-3 mb-3 rounded-lg p-4 space-y-4">
+          {preventiveActions.length > 0 && (
+            <div className="space-y-4">
+              {preventiveActions.map((action, index) => (
+                <div key={action.id} className="space-y-3 pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                  <span className="text-sm font-semibold text-gray-700">Action #{index + 1}</span>
 
-            {preventiveActions.length > 0 && (
-              <div className="space-y-4 mb-4">
-                {preventiveActions.map((action, index) => (
-                  <div key={action.id} className="p-4 rounded-lg border border-gray-200 space-y-3 bg-gray-50">
-                    <div className="flex items-center justify-between">
-                      <h5 className="text-sm font-semibold">Action #{index + 1}</h5>
-                    </div>
-
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-800">Action Type</label>
                     <FormControl fullWidth size="small">
-                      <InputLabel>Select preventive action</InputLabel>
                       <MuiSelect
                         value={action.action || ''}
                         onChange={(e) => updatePreventiveAction(action.id, 'action', e.target.value)}
-                        label="Select preventive action"
-                        sx={{ backgroundColor: 'white' }}
+                        displayEmpty
+                        sx={{
+                          backgroundColor: 'white',
+                          '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
+                          '& .MuiSelect-icon': { color: '#BF213E' },
+                        }}
                       >
+                        <MenuItem value="" disabled>
+                          <span className="text-gray-400">Select preventive action</span>
+                        </MenuItem>
                         {localPreventiveCategories.map((cat) => (
                           <MenuItem key={cat.id} value={cat.id.toString()}>{cat.name}</MenuItem>
                         ))}
                       </MuiSelect>
                     </FormControl>
+                  </div>
 
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-800">Responsible Person</label>
                     <FormControl fullWidth size="small">
-                      <InputLabel>Responsible Person</InputLabel>
                       <MuiSelect
                         value={action.responsiblePerson || ''}
                         onChange={(e) => updatePreventiveAction(action.id, 'responsiblePerson', e.target.value)}
-                        label="Responsible Person"
-                        sx={{ backgroundColor: 'white' }}
+                        displayEmpty
+                        sx={{
+                          backgroundColor: 'white',
+                          '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
+                          '& .MuiSelect-icon': { color: '#BF213E' },
+                        }}
                       >
+                        <MenuItem value="" disabled>
+                          <span className="text-gray-400">Select responsible person</span>
+                        </MenuItem>
                         {localInternalUsers.map((user) => (
                           <MenuItem key={user.id} value={user.id.toString()}>{user.full_name || user.name}</MenuItem>
                         ))}
                       </MuiSelect>
                     </FormControl>
+                  </div>
 
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-800">Target Date</label>
                     <TextField
                       fullWidth
                       size="small"
@@ -1032,74 +1076,77 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
                       sx={{ backgroundColor: 'white' }}
                       InputLabelProps={{ shrink: true }}
                     />
+                  </div>
 
-                    <div>
-                      <div className="text-sm font-medium text-gray-600 mb-1">Description:</div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-gray-800">Description</label>
+                    <div className="relative">
                       <Textarea
                         value={action.description || ''}
                         onChange={(e) => updatePreventiveAction(action.id, 'description', e.target.value)}
-                        placeholder="Enter description"
-                        className="bg-white min-h-[80px]"
+                        placeholder="Give a brief description of the action."
+                        className="bg-white min-h-[90px] pr-8 text-sm resize-none"
                       />
+                      <svg className="absolute bottom-2.5 right-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 016 0v6a3 3 0 01-3 3z" />
+                      </svg>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {/* <div className="space-y-2">
-              <label className="text-sm font-medium">Final Preventive Action Summary</label>
-              <Textarea
-                value={finalClosurePreventiveDescription}
-                onChange={handleFinalClosurePreventiveDescriptionChange}
-                placeholder="Provide the final summary of all preventive actions implemented..."
-                className="bg-white min-h-[100px]"
-              />
-            </div> */}
-          </div>
-
-          {/* Schedule Next Review */}
-          <div className="border-t border-gray-300 pt-4">
-            <h4 className="font-semibold text-sm mb-3 text-[#BF213E]">Schedule Next Review</h4>
-
-            <div className="space-y-3">
-              <FormControl fullWidth size="small">
-                <InputLabel>Responsible Person</InputLabel>
-                <MuiSelect
-                  value={nextReviewResponsible}
-                  onChange={(e) => setNextReviewResponsible(e.target.value)}
-                  label="Responsible Person"
-                  sx={{ backgroundColor: 'white' }}
-                >
-                  {localInternalUsers.length > 0 ? (
-                    localInternalUsers.map((user) => (
-                      <MenuItem key={user.id} value={user.id?.toString() || ''}>
-                        {user.full_name || user.name}
-                      </MenuItem>
-                    ))
-                  ) : (
-                    <MenuItem value="" disabled>
-                      No users available
-                    </MenuItem>
-                  )}
-                </MuiSelect>
-              </FormControl>
-
-              <div className="flex items-center gap-2">
-                <TextField
-                  fullWidth
-                  size="small"
-                  type="date"
-                  value={nextReviewDate}
-                  onChange={(e) => setNextReviewDate(e.target.value)}
-                  sx={{ backgroundColor: 'white', flex: 1 }}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </div>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </div>
       </div>
+
+      {/* Schedule Next Review Card */}
+      <div className="bg-white rounded-lg p-4 space-y-4">
+        <h4 className="font-bold text-base text-[#BF213E]">Schedule Next Review</h4>
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-800">Responsible Person</label>
+          <FormControl fullWidth size="small">
+            <MuiSelect
+              value={nextReviewResponsible}
+              onChange={(e) => setNextReviewResponsible(e.target.value)}
+              displayEmpty
+              sx={{
+                backgroundColor: 'white',
+                '& .MuiOutlinedInput-notchedOutline': { borderColor: '#d1d5db' },
+                '& .MuiSelect-icon': { color: '#BF213E' },
+              }}
+            >
+              <MenuItem value="" disabled>
+                <span className="text-gray-400">Select responsible person</span>
+              </MenuItem>
+              {localInternalUsers.length > 0 ? (
+                localInternalUsers.map((user) => (
+                  <MenuItem key={user.id} value={user.id?.toString() || ''}>
+                    {user.full_name || user.name}
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem value="" disabled>No users available</MenuItem>
+              )}
+            </MuiSelect>
+          </FormControl>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-semibold text-gray-800">Next Review Date</label>
+          <TextField
+            fullWidth
+            size="small"
+            type="date"
+            value={nextReviewDate}
+            onChange={(e) => setNextReviewDate(e.target.value)}
+            sx={{ backgroundColor: 'white' }}
+            InputLabelProps={{ shrink: true }}
+          />
+        </div>
+      </div>
+
+      <div className="h-2" />
     </div>
   );
 };
