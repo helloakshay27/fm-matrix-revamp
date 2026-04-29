@@ -23,6 +23,8 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from '@/components/ui/pagination';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 
 // Debounce utility
 const debounce = (func: (...args: any[]) => void, wait: number) => {
@@ -118,6 +120,8 @@ export const AssetAuditDashboard = () => {
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
 
   // Fetch data from API
   const fetchAudits = async (page: number = 1, filters: FilterParams = {}, statusFilter: string = '', search: string = '') => {
@@ -945,13 +949,21 @@ export const AssetAuditDashboard = () => {
               onSearchChange={handleSearchChange}
               enableSearch={true}
               searchPlaceholder="Search by audit name..."
+              // leftActions={
+              //   <Button
+              //     onClick={handleAddClick}
+              //     className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
+              //   >
+              //     <Plus className="w-4 h-4 mr-2" />
+              //     Action Audit
+              //   </Button>
+              // }
               leftActions={
                 <Button
-                  onClick={handleAddClick}
+                  onClick={() => setShowActionPanel(prev => !prev)}
                   className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
                 >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Action Audit
+                  + Action
                 </Button>
               }
             />
@@ -987,6 +999,26 @@ export const AssetAuditDashboard = () => {
           currentFilters={appliedFilters}
         />
       </div>
+      {showActionPanel && (
+        <SelectionPanel
+          onAdd={() => {
+            setShowActionPanel(false);
+            handleAddClick();
+          }}
+          onImport={() => {
+            setShowActionPanel(false);
+            setShowImportDialog(true);
+          }}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+
+      )}
+      <BulkUploadDialog
+        open={showImportDialog}
+        onOpenChange={setShowImportDialog}
+        title="Import Assets"
+        context="assets"
+      />
     </div>
   );
 };

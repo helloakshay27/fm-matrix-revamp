@@ -374,7 +374,7 @@ export const CreditNoteDetails = () => {
 
           <div className="flex items-center gap-2">
             <Badge className={`${getStatusColor(salesOrder.status)} border`}>
-              {/* {salesOrder.status.toUpperCase()} */}
+              {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
             </Badge>
           </div>
         </div>

@@ -862,7 +862,7 @@ function CopySopModal({
             {filteredUsers.length === 0 ? (
               <div className="text-center py-10">
                 <p className="text-[13px] font-semibold text-gray-500">
-                  No users found matching "{searchQuery}"
+                  Loading users...
                 </p>
               </div>
             ) : (
@@ -874,20 +874,18 @@ function CopySopModal({
                   <div
                     key={u.value}
                     onClick={() => toggleUser(u.value)}
-                    className={`flex items-center gap-4 py-3 px-3 rounded-xl cursor-pointer transition-all border border-transparent mb-1 ${
-                      hasIt
-                        ? "opacity-60 cursor-not-allowed"
-                        : isChecked
-                          ? "bg-blue-50 border-blue-100"
-                          : "hover:bg-gray-50 border-gray-50"
-                    }`}
+                    className={`flex items-center gap-4 py-3 px-3 rounded-xl cursor-pointer transition-all border border-transparent mb-1 ${hasIt
+                      ? "opacity-60 cursor-not-allowed"
+                      : isChecked
+                        ? "bg-blue-50 border-blue-100"
+                        : "hover:bg-gray-50 border-gray-50"
+                      }`}
                   >
                     <div
-                      className={`w-5 h-5 flex shrink-0 items-center justify-center rounded-md border transition-colors ${
-                        isChecked
-                          ? "bg-blue-600 border-blue-600"
-                          : "bg-white border-gray-300"
-                      }`}
+                      className={`w-5 h-5 flex shrink-0 items-center justify-center rounded-md border transition-colors ${isChecked
+                        ? "bg-blue-600 border-blue-600"
+                        : "bg-white border-gray-300"
+                        }`}
                     >
                       {isChecked && (
                         <Check
@@ -1297,11 +1295,10 @@ function SopKanbanCard({
   return (
     <div
       {...(dragHandleProps ?? {})}
-      className={`sop-kanban-card bp-card-lift ${
-        dragHandleProps
-          ? "cursor-grab active:cursor-grabbing select-none touch-manipulation"
-          : ""
-      }`}
+      className={`sop-kanban-card bp-card-lift ${dragHandleProps
+        ? "cursor-grab active:cursor-grabbing select-none touch-manipulation"
+        : ""
+        }`}
     >
       <p
         className="font-black text-[14px] leading-snug mb-3"
@@ -1451,9 +1448,8 @@ function SopColumnBody({ colKey, children, emptySlot }: any) {
   return (
     <div
       ref={setNodeRef}
-      className={`flex min-h-[180px] flex-1 flex-col rounded-2xl border-2 border-dashed border-transparent p-1 transition-colors ${
-        isOver ? "drag-over-col" : ""
-      }`}
+      className={`flex min-h-[180px] flex-1 flex-col rounded-2xl border-2 border-dashed border-transparent p-1 transition-colors ${isOver ? "drag-over-col" : ""
+        }`}
     >
       {children}
       {emptySlot}
@@ -1691,33 +1687,29 @@ const SystemAndSOP = () => {
     if (filterDept !== "all")
       filters.push({
         id: "dept",
-        label: `Dept: ${
-          departments.find((d) => d.value === filterDept)?.label || filterDept
-        }`,
+        label: `Dept: ${departments.find((d) => d.value === filterDept)?.label || filterDept
+          }`,
         onClear: () => setFilterDept("all"),
       });
     if (filterAssignee !== "all")
       filters.push({
         id: "assignee",
-        label: `Person: ${
-          users.find((a) => a.value === filterAssignee)?.label || filterAssignee
-        }`,
+        label: `Person: ${users.find((a) => a.value === filterAssignee)?.label || filterAssignee
+          }`,
         onClear: () => setFilterAssignee("all"),
       });
     if (filterPriority !== "all")
       filters.push({
         id: "priority",
-        label: `Priority: ${
-          filterPriority.charAt(0).toUpperCase() + filterPriority.slice(1)
-        }`,
+        label: `Priority: ${filterPriority.charAt(0).toUpperCase() + filterPriority.slice(1)
+          }`,
         onClear: () => setFilterPriority("all"),
       });
     if (filterStatus !== "all")
       filters.push({
         id: "status",
-        label: `Status: ${
-          COL_TO_STATUS[filterStatus as ColumnKey] || filterStatus
-        }`,
+        label: `Status: ${COL_TO_STATUS[filterStatus as ColumnKey] || filterStatus
+          }`,
         onClear: () => setFilterStatus("all"),
       });
     return filters;

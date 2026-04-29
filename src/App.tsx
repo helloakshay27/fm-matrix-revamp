@@ -1297,6 +1297,7 @@ import HouseSetupPage from "./pages/HouseSetupPage";
 import HSNCodeSetup from "./pages/HSNCodeSetup";
 import DashboardUI from "./pages/DashboardUI";
 import OrganisationMaster from "./pages/ClubManagement/OrganisationMaster";
+import MyInboxPage from "./features/inbox/MyInboxPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -3654,6 +3655,7 @@ function App() {
                           path="/employee/dashboard"
                           element={<EmployeeDashboard />}
                         />
+                          <Route path="/my-inbox" element={<MyInboxPage />} />
                         <Route
                           path="/employee/calendar"
                           element={<EmployeeCalendarPage />}

@@ -207,7 +207,7 @@ const UserSelect = ({
   const selectedUser = users.find((u: any) => u.id === value);
   const displayValue = selectedUser
     ? selectedUser.full_name ||
-      `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
+    `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
     : "";
 
   const filteredUsers = users.filter((u: any) => {
@@ -319,7 +319,7 @@ interface Goal {
 interface StrategicGoalData {
   id?: number;
   title: string;
-  period: string; 
+  period: string;
   targetDate: string;
   revenueTarget: string;
   profitTarget: string;
@@ -708,15 +708,15 @@ export const ShortTermSection = () => {
     try {
       const res = editingGoalId
         ? await fetch(`${BASE_URL}/goals/${editingGoalId}`, {
-            method: "PUT",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(payload),
-          })
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        })
         : await fetch(`${BASE_URL}/goals`, {
-            method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(payload),
-          });
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       closeModal();
       fetchGoals();
@@ -810,7 +810,7 @@ export const ShortTermSection = () => {
           </div>
 
           {isInfoHovered && ReactDOM.createPortal(
-            <div 
+            <div
               style={{
                 position: "absolute",
                 top: infoPos.top,
@@ -928,7 +928,7 @@ export const ShortTermSection = () => {
                     </div>
                   </div>
                 ))}
-                
+
                 <div className="flex justify-end mt-4">
                   <button
                     onClick={() => openStrategicModal()}
@@ -1382,38 +1382,38 @@ export const ShortTermSection = () => {
                         No goals available to link.
                       </p>
                     ) : (
-                     allGoals.map((g) => (
-  <label
-    key={g.id}
-    className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
-  >
-    <input
-      type="checkbox"
-      checked={linkedStrategicInitiatives.includes(
-        g.id as number
-      )}
-      onChange={() => toggleStrategicLink(g.id as number)}
-      className="mt-0.5 w-4 h-4"
-      style={{ accentColor: C.primary }}
-    />
-    <div className="flex-1 min-w-0">
-      <div
-        className="text-[13px] font-medium leading-tight"
-        style={{ color: C.textMain }}
-      >
-        {g.title}
-      </div>
-      {g.period && (
-        <span
-          className="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wide"
-          style={{ background: C.primaryTint, color: C.primary }}
-        >
-          {getPeriodBadgeLabel(g.period)}
-        </span>
-      )}
-    </div>
-  </label>
-))
+                      allGoals.map((g) => (
+                        <label
+                          key={g.id}
+                          className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={linkedStrategicInitiatives.includes(
+                              g.id as number
+                            )}
+                            onChange={() => toggleStrategicLink(g.id as number)}
+                            className="mt-0.5 w-4 h-4"
+                            style={{ accentColor: C.primary }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div
+                              className="text-[13px] font-medium leading-tight"
+                              style={{ color: C.textMain }}
+                            >
+                              {g.title}
+                            </div>
+                            {g.period && (
+                              <span
+                                className="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wide"
+                                style={{ background: C.primaryTint, color: C.primary }}
+                              >
+                                {getPeriodBadgeLabel(g.period)}
+                              </span>
+                            )}
+                          </div>
+                        </label>
+                      ))
                     )}
                   </div>
                 </div>

@@ -186,25 +186,70 @@ export const RecurringBillCreatePage: React.FC = () => {
     fetchSalespersons();
   }, []);
   // Fetch payment terms from API and set as dropdown options
-  useEffect(() => {
+  // useEffect(() => {
+  //   const fetchPaymentTerms = async () => {
+  //     const baseUrl = localStorage.getItem('baseUrl');
+  //     const token = localStorage.getItem('token');
+  //     const lock_account_id = localStorage.getItem('lock_account_id');
+  //     try {
+  //       const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
+  //         headers: {
+  //           Authorization: token ? `Bearer ${token}` : undefined,
+  //           'Content-Type': 'application/json'
+  //         }
+  //       });
+  //       if (res && res.data && Array.isArray(res.data)) {
+  //         setPaymentTermsList(res.data.map(pt => ({ id: pt.id, name: pt.name, days: pt.no_of_days })));
+  //       }
+  //     } catch (err) {
+  //       setPaymentTermsList([]);
+  //     }
+  //   };
+  //   fetchPaymentTerms();
+  // }, []);
+
+     useEffect(() => {
     const fetchPaymentTerms = async () => {
       const baseUrl = localStorage.getItem('baseUrl');
       const token = localStorage.getItem('token');
       const lock_account_id = localStorage.getItem('lock_account_id');
+  
       try {
-        const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
-          headers: {
-            Authorization: token ? `Bearer ${token}` : undefined,
-            'Content-Type': 'application/json'
+        const res = await axios.get(
+          `https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`,
+          {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : undefined,
+              'Content-Type': 'application/json',
+            },
           }
-        });
-        if (res && res.data && Array.isArray(res.data)) {
-          setPaymentTermsList(res.data.map(pt => ({ id: pt.id, name: pt.name, days: pt.no_of_days })));
+        );
+  
+        if (res && Array.isArray(res.data)) {
+          const mappedTerms = res.data.map((pt) => ({
+            id: pt.id,
+            name: pt.name,
+            days: pt.no_of_days,
+          }));
+  
+          setPaymentTermsList(mappedTerms);
+  
+          // ✅ Use mappedTerms instead of state
+          const dueOnReceipt = mappedTerms.find(
+            (t) => t.name.toLowerCase() === 'due on receipt'
+          );
+  
+          if (dueOnReceipt) {
+            setSelectedTerm(String(dueOnReceipt.id));
+          } else {
+            setSelectedTerm(""); // fallback
+          }
         }
       } catch (err) {
         setPaymentTermsList([]);
       }
     };
+  
     fetchPaymentTerms();
   }, []);
   // Payment Terms Modal Handlers
@@ -1943,12 +1988,12 @@ if (!profileName || profileName.trim() === "") {
             <div>
 
   {/* Label */}
-  <label className="block text-sm font-medium mb-2">
+  {/* <label className="block text-sm font-medium mb-2">
     Payment Terms<span className="text-red-500">*</span>
-  </label>
+  </label> */}
 
   {/* Select */}
-  <FormControl fullWidth>
+  {/* <FormControl fullWidth>
 
     <Select
       value={selectedTerm || ""}
@@ -1973,15 +2018,15 @@ if (!profileName || profileName.trim() === "") {
         return found ? found.name : val;
 
       }}
-    >
+    > */}
 
       {/* Placeholder */}
-      <MenuItem value="">
+      {/* <MenuItem value="">
         Select payment term
-      </MenuItem>
+      </MenuItem> */}
 
       {/* Payment term list */}
-      {filteredTerms.map(term => (
+              {/* {filteredTerms.map(term => (
 
         <MenuItem
           key={term.id || term.name}
@@ -1994,8 +2039,41 @@ if (!profileName || profileName.trim() === "") {
 
     </Select>
 
-  </FormControl>
+  </FormControl> */}
 
+<label className="block text-sm font-medium mb-2">
+                                Payment Terms<span className="text-red-500">*</span>
+                            </label>
+
+                            <FormControl fullWidth error={!!errors.paymentTerms}>
+                                <Select
+                                    value={selectedTerm || ""}
+                                    onChange={(e) => setSelectedTerm(e.target.value)}
+                                    displayEmpty
+                                    renderValue={(val) => {
+                                        if (!val) {
+                                            return <span className="text-gray-400">Select payment term</span>;
+                                        }
+
+                                        const found = paymentTermsList.find(
+                                            (term) => String(term.id) === String(val)
+                                        );
+
+                                        return found ? found.name : val;
+                                    }}
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="">
+                                        <span className="text-gray-400">Select payment term</span>
+                                    </MenuItem>
+
+                                    {filteredTerms.map((term) => (
+                                        <MenuItem key={term.id || term.name} value={String(term.id)}>
+                                            {term.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
 
   {/* Configure Payment Terms Modal */}
   {showConfig && (
