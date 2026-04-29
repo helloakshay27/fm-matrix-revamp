@@ -1637,48 +1637,28 @@ const DailyTab = ({
                             normalizedReportName
                       );
 
-                      const sd =
-                        draftRaw?.score_details ||
-                        report.report_data?.score_details ||
-                        {};
+                      // ── NEW LOGIC FOR SCORING ──
+                      const sections = draftRaw?.sections || rawDisplayRd?.sections || displayRd?.sections || report?.report_data?.sections || {};
+                      const kpisFallback = report.kpis || report.report_data?.kpis || rawDisplayRd?.kpis || {};
 
-                      const kpiAchieved =
-                        sd.kpi?.points ??
-                        report.kpis?.score ??
-                        report.score ??
-                        0;
-                      const kpiMax = sd.kpi?.maxPoints ?? 20;
-                      const kpiStr = `${kpiAchieved}/${kpiMax}`;
+                      // Explicit strict checker to prevent `0` from failing over to fallback values
+                      const getScore = (val1: any, val2: any) => {
+                        if (val1 !== undefined && val1 !== null && val1 !== "") return Number(val1);
+                        if (val2 !== undefined && val2 !== null && val2 !== "") return Number(val2);
+                        return 0;
+                      };
 
-                      const tasksAchieved =
-                        sd.tasksIssues?.points ??
-                        report.kpis?.tasks ??
-                        draftRaw?.sections?.tasks_issues ??
-                        0;
-                      const tasksMax = sd.tasksIssues?.maxPoints ?? 25;
-                      const tasksStr = `${tasksAchieved}/${tasksMax}`;
+                      const kpiAchieved = getScore(sections.kpi_achievement, kpisFallback.score);
+                      const kpiStr = `${kpiAchieved}/20`;
 
-                      const issuesAchieved =
-                        sd.tasksIssues?.newIssuesCount ??
-                        report.kpis?.issues ??
-                        0;
-                      const issuesStr = `${issuesAchieved}`;
+                      const tasksIssuesAchieved = getScore(sections.tasks_issues, kpisFallback.tasks);
+                      const tasksIssuesStr = `${tasksIssuesAchieved}/20`;
 
-                      const planAchieved =
-                        sd.planning?.points ??
-                        report.kpis?.planning ??
-                        draftRaw?.sections?.planning ??
-                        0;
-                      const planMax = sd.planning?.maxPoints ?? 25;
-                      const planStr = `${planAchieved}/${planMax}`;
+                      const planAchieved = getScore(sections.planning, kpisFallback.planning);
+                      const planStr = `${planAchieved}/20`;
 
-                      const timeAchieved =
-                        sd.timing?.points ??
-                        report.kpis?.timing ??
-                        draftRaw?.sections?.timing ??
-                        0;
-                      const timeMax = sd.timing?.maxPoints ?? 25;
-                      const timeStr = `${timeAchieved}/${timeMax}`;
+                      const timeAchieved = getScore(sections.timing, kpisFallback.timing);
+                      const timeStr = `${timeAchieved}/20`;
 
                       const selfRating =
                         rawDisplayRd?.self_rating ??
@@ -1804,10 +1784,7 @@ const DailyTab = ({
                                     KPI: {kpiStr}
                                   </span>
                                   <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    Tasks: {tasksStr}
-                                  </span>
-                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    Issues: {issuesStr}
+                                    Tasks & Issues: {tasksIssuesStr}
                                   </span>
                                   <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
                                     Planning: {planStr}
