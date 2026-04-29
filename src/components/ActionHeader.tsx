@@ -15,7 +15,9 @@ export const ActionHeader = () => {
   const filteredModules = availableModules.filter(
     (module) =>
       module.module_name !== "Employee Sidebar" &&
-      module.module_name !== "Employee Projects Sidebar"
+      module.module_name !== "Employee Projects Sidebar" &&
+      module.module_name !== "Employee Business Compass" &&
+      module.module_name !== "Employee Admin Compass"
   );
 
   // Sort modules to ensure Master is second-to-last and Settings is last

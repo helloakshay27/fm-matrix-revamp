@@ -25,7 +25,9 @@ const Index = () => {
       // Only look for Employee-specific modules
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       ) {
         // Find first active function with a react_link
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
