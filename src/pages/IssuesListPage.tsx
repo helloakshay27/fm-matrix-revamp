@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import {
   useIssues,
   useUpdateIssue,
@@ -192,14 +192,19 @@ const IssuesListPage = ({
 }: { preSelectedProjectId?: string } = {}) => {
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
-  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { shouldShow } = useDynamicPermissions();
   const { id: projectId } = useParams<{ id: string }>();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
 
-  // URL search params
-  const searchParams = new URLSearchParams(location.search);
+  // Parse URL params with default values
+  const initSearch = searchParams.get("search") || "";
+  const initFilters = searchParams.get("filters") || "";
+  const initView = (searchParams.get("view") || "List") as "Kanban" | "List";
+  const initMyIssues = searchParams.get("myIssues") !== "false";
+
+  // URL params for backward compatibility
   const projectIdParam = searchParams.get("project_id");
   const milestoneIdParam = searchParams.get("milestone_id");
   const taskIdParam = searchParams.get("task_id");
@@ -210,14 +215,39 @@ const IssuesListPage = ({
     setCurrentSection(
       view === "admin" ? "Value Added Services" : "Project Task"
     );
-  }, [setCurrentSection]);
+  }, [setCurrentSection, view]);
+
+  /**
+   * Helper function to update URL query parameters
+   * Deletes params if value is null/undefined/empty string
+   */
+  const updateQueryParams = useCallback(
+    (updates: Record<string, string | number | boolean | null | undefined>, replace = false) => {
+      const params = new URLSearchParams(searchParams);
+
+      Object.entries(updates).forEach(([key, value]) => {
+        if (
+          value === undefined ||
+          value === null ||
+          value === ""
+        ) {
+          params.delete(key);
+        } else {
+          params.set(key, String(value));
+        }
+      });
+
+      setSearchParams(params, { replace });
+    },
+    [searchParams, setSearchParams]
+  );
 
   // Pagination and filtering state
   const [currentPage, setCurrentPage] = useState(1);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [tempSearchQuery, setTempSearchQuery] = useState("");
-  const [appliedFilters, setAppliedFilters] = useState("");
-  const [showMyIssuesOnly, setShowMyIssuesOnly] = useState(true);
+  const [searchQuery, setSearchQuery] = useState(initSearch);
+  const [tempSearchQuery, setTempSearchQuery] = useState(initSearch);
+  const [appliedFilters, setAppliedFilters] = useState(initFilters);
+  const [showMyIssuesOnly, setShowMyIssuesOnly] = useState(initMyIssues);
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   // UI State
@@ -251,18 +281,19 @@ const IssuesListPage = ({
       ];
   });
 
-  // Kanban/List view state
+  // Kanban/List view state - initialized from URL, fallback to localStorage
   const [selectedView, setSelectedView] = useState<"Kanban" | "List">(() => {
-    const saved = localStorage.getItem("issuePageViewPreference");
-    return (saved as "Kanban" | "List") || "List";
+    // Check URL first, then localStorage for backward compatibility
+    return initView;
   });
   const [isViewDropdownOpen, setIsViewDropdownOpen] = useState(false);
   const viewDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Save view preference
+  // Sync view preference to both URL and localStorage
   useEffect(() => {
     localStorage.setItem("issuePageViewPreference", selectedView);
-  }, [selectedView]);
+    updateQueryParams({ view: selectedView }, true);
+  }, [selectedView, updateQueryParams]);
 
   // Handle click outside for view dropdown
   useEffect(() => {
@@ -285,13 +316,17 @@ const IssuesListPage = ({
 
   // Build filter string based on current state
   let filterString = "";
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const myIssuesFilter = user.id ? `q[responsible_person_id_eq]=${user.id.toString()}` : "";
+
   if (appliedFilters !== "") {
+    // If custom filters are applied, combine with myIssues filter if enabled
     filterString = appliedFilters;
-  } else if (showMyIssuesOnly) {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    if (user.id) {
-      filterString = `q[responsible_person_id_eq]=${user.id.toString()}`;
+    if (showMyIssuesOnly && myIssuesFilter) {
+      filterString = `${filterString}&${myIssuesFilter}`;
     }
+  } else if (showMyIssuesOnly) {
+    filterString = myIssuesFilter;
   } else if (projectId || projectIdParam || taskIdParam || milestoneIdParam) {
     const params = [];
     if (projectId || projectIdParam) {
@@ -441,7 +476,41 @@ const IssuesListPage = ({
     }
   }, [token, baseUrl]);
 
-  // Debounced search effect
+  // Sync myIssuesOnly to URL
+  useEffect(() => {
+    updateQueryParams(
+      {
+        myIssues: showMyIssuesOnly ? undefined : "false",
+      },
+      true
+    );
+  }, [showMyIssuesOnly, updateQueryParams]);
+
+  // Sync URL changes to component state (browser back/forward/pasted URL)
+  // Only sync when URL actually changes from external navigation
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || "";
+    const urlFilters = searchParams.get("filters") || "";
+    const urlView = (searchParams.get("view") || "List") as "Kanban" | "List";
+    const urlMyIssues = searchParams.get("myIssues") !== "false";
+
+    // Only update state if URL values differ (avoids circular updates)
+    if (urlSearch !== searchQuery) {
+      setSearchQuery(urlSearch);
+      setTempSearchQuery(urlSearch);
+    }
+    if (urlFilters !== appliedFilters) {
+      setAppliedFilters(urlFilters);
+    }
+    if (urlView !== selectedView) {
+      setSelectedView(urlView);
+    }
+    if (urlMyIssues !== showMyIssuesOnly) {
+      setShowMyIssuesOnly(urlMyIssues);
+    }
+  }, [searchParams]);
+
+  // Debounced search effect - updates state and URL after 500ms
   useEffect(() => {
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
@@ -450,6 +519,13 @@ const IssuesListPage = ({
     debounceTimer.current = setTimeout(() => {
       setSearchQuery(tempSearchQuery);
       setCurrentPage(1);
+      // Update URL with search
+      updateQueryParams(
+        {
+          search: tempSearchQuery || undefined,
+        },
+        true
+      );
     }, 500); // 500ms debounce delay
 
     return () => {
@@ -457,7 +533,7 @@ const IssuesListPage = ({
         clearTimeout(debounceTimer.current);
       }
     };
-  }, [tempSearchQuery]);
+  }, [tempSearchQuery, updateQueryParams]);
 
   const handleOpenDialog = () => setOpenIssueModal(true);
 
@@ -861,6 +937,7 @@ const IssuesListPage = ({
       return;
     }
     setCurrentPage(page);
+    // URL sync handled by useEffect above
   };
 
   const renderPaginationItems = () => {
@@ -1037,6 +1114,10 @@ const IssuesListPage = ({
           setIsModalOpen={setIsFilterModalOpen}
           onApplyFilters={(filterString) => {
             setAppliedFilters(filterString);
+            setCurrentPage(1);
+            updateQueryParams({
+              filters: filterString || undefined,
+            });
           }}
           issueTypes={issueTypeOptions}
           users={users}
@@ -1100,6 +1181,10 @@ const IssuesListPage = ({
         setIsModalOpen={setIsFilterModalOpen}
         onApplyFilters={(filterString) => {
           setAppliedFilters(filterString);
+          setCurrentPage(1);
+          updateQueryParams({
+            filters: filterString || undefined,
+          });
         }}
         issueTypes={issueTypeOptions}
         users={users}
@@ -1215,7 +1300,7 @@ const IssuesListPage = ({
             <PaginationItem>
               <PaginationPrevious
                 onClick={() =>
-                  handlePageChange(Math.max(1, pagination.current_page - 1))
+                  handlePageChange(Math.max(1, pagination.current_page))
                 }
                 className={
                   pagination.current_page === 1 || isFetching
@@ -1231,7 +1316,7 @@ const IssuesListPage = ({
                   handlePageChange(
                     Math.min(
                       pagination.total_pages,
-                      pagination.current_page + 1
+                      pagination.current_page
                     )
                   )
                 }
