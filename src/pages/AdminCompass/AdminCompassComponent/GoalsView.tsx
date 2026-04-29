@@ -1135,7 +1135,7 @@ export const GoalsView = () => {
     loadGoals(1);
     fetchUsersFromApi()
       .then(setUsers)
-      .catch(() => {});
+      .catch(() => { });
   }, [loadGoals]);
 
   const closeModal = () => {
@@ -1451,60 +1451,60 @@ export const GoalsView = () => {
       >
         {isFetching
           ? [1, 2, 3, 4].map((n) => (
-              <div
-                key={n}
-                className="gv-skeleton"
-                style={{ height: 88, borderRadius: 18 }}
-              />
-            ))
+            <div
+              key={n}
+              className="gv-skeleton"
+              style={{ height: 88, borderRadius: 18 }}
+            />
+          ))
           : stats.map((s) => (
-              <div
-                key={s.label}
-                className="gv-stat-card"
-                style={{
-                  background: s.bg,
-                  borderRadius: 18,
-                  padding: "18px 20px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                }}
-              >
-                <div>
-                  <p
-                    style={{
-                      fontSize: 28,
-                      fontWeight: 800,
-                      color: s.textColor,
-                      margin: 0,
-                      lineHeight: 1,
-                    }}
-                  >
-                    {s.value}
-                  </p>
-                  <p
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: s.textColor,
-                      opacity: 0.8,
-                      margin: "4px 0 0",
-                    }}
-                  >
-                    {s.label}
-                  </p>
-                </div>
-                <GoalIcon
+            <div
+              key={s.label}
+              className="gv-stat-card"
+              style={{
+                background: s.bg,
+                borderRadius: 18,
+                padding: "18px 20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+              }}
+            >
+              <div>
+                <p
                   style={{
-                    width: 30,
-                    height: 30,
-                    color: s.iconColor,
-                    opacity: 0.7,
+                    fontSize: 28,
+                    fontWeight: 800,
+                    color: s.textColor,
+                    margin: 0,
+                    lineHeight: 1,
                   }}
-                />
+                >
+                  {s.value}
+                </p>
+                <p
+                  style={{
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: s.textColor,
+                    opacity: 0.8,
+                    margin: "4px 0 0",
+                  }}
+                >
+                  {s.label}
+                </p>
               </div>
-            ))}
+              <GoalIcon
+                style={{
+                  width: 30,
+                  height: 30,
+                  color: s.iconColor,
+                  opacity: 0.7,
+                }}
+              />
+            </div>
+          ))}
       </div>
 
       {/* ── Main card wrapper ── */}

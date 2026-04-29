@@ -521,7 +521,7 @@ export const QuarterlySection = () => {
         current_value: Number(tempGoal.currentValue) || 0,
         progress_percentage: clampProgress(tempGoal.progress),
         unit: tempGoal.unit || "days",
-period: "this_quarter",
+        period: "this_quarter",
         status: tempGoal.status || "On Track",
         owner_id: tempGoal.ownerId ? Number(tempGoal.ownerId) : null,
         target_date: tempGoalDate ? formatDateForApi(tempGoalDate) : "",
@@ -858,18 +858,18 @@ period: "this_quarter",
                     </select>
                   </div>
 
-                   <div>
-                  <label className="st-label">Status</label>
-                  <select value={tempGoal.status || "not_started"} onChange={(e) => setTempGoal({ ...tempGoal, status: e.target.value })} className="st-select">
-                    <option value="not_started">Not Started</option>
-                    <option value="on_track">On Track</option>
-                    <option value="behind">Behind</option>
-                    <option value="achieved">Achieved</option>
-                  </select>
+                  <div>
+                    <label className="st-label">Status</label>
+                    <select value={tempGoal.status || "not_started"} onChange={(e) => setTempGoal({ ...tempGoal, status: e.target.value })} className="st-select">
+                      <option value="not_started">Not Started</option>
+                      <option value="on_track">On Track</option>
+                      <option value="behind">Behind</option>
+                      <option value="achieved">Achieved</option>
+                    </select>
+                  </div>
+
                 </div>
-                  
-                </div>
-               
+
                 {editingGoalId && (
                   <div style={{ background: C.primaryBg, borderRadius: 12, padding: "16px 18px", border: `1px solid ${C.primaryBord}` }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>

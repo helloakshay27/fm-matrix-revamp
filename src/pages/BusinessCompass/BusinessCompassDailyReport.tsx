@@ -1644,21 +1644,20 @@ const BusinessCompassDailyReport: React.FC = () => {
                           multiple
                           className="hidden"
                         />
-                        <Button
-                          disabled={
-                            uploadedFiles.length + reportAttachments.length >= 5
-                          }
-                          className={cn(
-                            "bg-[#10b981] text-white font-black px-6 h-10 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none",
-                            uploadedFiles.length + reportAttachments.length >= 5
-                              ? "opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400"
-                              : "hover:bg-[#059669]"
-                          )}
-                          onClick={triggerFileUpload}
-                        >
-                          <Upload size={16} />
-                          File Upload
-                        </Button>
+                        <button
+  disabled={uploadedFiles.length + reportAttachments.length >= 5}
+  onClick={triggerFileUpload}
+  style={{
+    backgroundColor: uploadedFiles.length + reportAttachments.length >= 5 ? '#d1d5db' : '#DA7756',
+    color: '#ffffff',
+    cursor: uploadedFiles.length + reportAttachments.length >= 5 ? 'not-allowed' : 'pointer',
+    opacity: uploadedFiles.length + reportAttachments.length >= 5 ? 0.5 : 1,
+  }}
+  className="flex items-center gap-2 px-6 h-10 rounded-[8px] text-xs font-black shadow-md transition-all border-none"
+>
+  <Upload size={16} />
+  File Upload
+</button>
                       </div>
                     </div>
 
@@ -2102,13 +2101,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                         {selfRating[0]}/10
                       </span>
                     </div>
-                    <Slider
-                      value={selfRating}
-                      onValueChange={setSelfRating}
-                      max={10}
-                      step={1}
-                      className="cursor-pointer [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-[#DA7756] [&_[data-orientation=horizontal]]:h-1 [&_[data-orientation=horizontal]_span:first-child]:bg-[#DA7756]"
-                    />
+                   <Slider
+  value={selfRating}
+  onValueChange={setSelfRating}
+  max={10}
+  step={1}
+  className="cursor-pointer [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer [&_[role=slider]]:outline-none [&_[data-orientation=horizontal]]:h-1.5 [&_[data-orientation=horizontal]_span:first-child]:bg-[#DA7756]"
+/>
                   </div>
                   <div className="flex items-center gap-3 bg-[#DA7756]/5 px-4 py-3 rounded-[10px] border border-[#DA7756]/20 min-w-[150px] justify-center">
                     <Checkbox

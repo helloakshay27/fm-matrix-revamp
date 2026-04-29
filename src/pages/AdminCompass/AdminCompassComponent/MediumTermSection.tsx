@@ -204,7 +204,7 @@ const UserSelect = ({
   const selectedUser = users.find((u: any) => u.id === value);
   const displayValue = selectedUser
     ? selectedUser.full_name ||
-      `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
+    `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
     : "";
 
   const filteredUsers = users.filter((u: any) => {
@@ -740,15 +740,15 @@ export const MediumTermSection = () => {
     try {
       const res = editingGoalId
         ? await fetch(`${BASE_URL}/goals/${editingGoalId}`, {
-            method: "PUT",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(payload),
-          })
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        })
         : await fetch(`${BASE_URL}/goals`, {
-            method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(payload),
-          });
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       closeModal();
       dispatchGoalsUpdated(); // ✅ notify all sections
