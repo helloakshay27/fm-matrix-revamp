@@ -113,7 +113,7 @@ const SearchableSelect = ({
           value={open ? search : displayValue}
           onClick={() => {
             setOpen(true);
-            setSearch("");
+            search("");
           }}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -381,16 +381,16 @@ const DailyTab = ({
 
   const navigate = useNavigate();
 
-  // ── Auto-populate submitted reports into selectedReports ──
+  // ── Auto-populate checked in reports into selectedReports ──
   useEffect(() => {
     if (dailyData) {
       const reports = dailyData.member_reports || dailyData.reports || [];
-      const submittedIds = reports
-        .filter((r: any) => r.status !== "pending")
+      const checkedInIds = reports
+        .filter((r: any) => r.checked_in_meeting === true)
         .map((r: any) => r.journal_id || r.user_id);
 
       setSelectedReports((prev) => {
-        const combined = new Set([...prev, ...submittedIds]);
+        const combined = new Set([...prev, ...checkedInIds]);
         return Array.from(combined);
       });
     }
@@ -753,7 +753,7 @@ const DailyTab = ({
     };
   };
 
-  const buildMeetingNotesObject = (
+const buildMeetingNotesObject = (
     allReports: any[],
     allMissed: any[],
     meetingNotesText: string
@@ -804,6 +804,7 @@ const DailyTab = ({
           false;
 
         return {
+          user_id: report.user_id, // <--- YAHAN USER ID ADD KIYA HAI
           name: report.name || "Unknown",
           attendance: isAbsent ? "Absent" : "Present",
           self_rating: `${selfRatingVal}/10`,
@@ -819,7 +820,6 @@ const DailyTab = ({
       detailed_reports,
     };
   };
-
   // ── Save Meeting (POST) ──
   const handleSaveMeeting = async () => {
     if (selectedMeetingId === "all" || !selectedMeetingId) {
@@ -1101,10 +1101,10 @@ const DailyTab = ({
         `${allIds.length} report${allIds.length !== 1 ? "s" : ""} selected`
       );
     } else {
-      const submittedIds = memberReports
-        .filter((r: any) => r.status !== "pending")
+      const checkedInIds = memberReports
+        .filter((r: any) => r.checked_in_meeting === true)
         .map((r: any) => r.journal_id || r.user_id);
-      setSelectedReports(submittedIds);
+      setSelectedReports(checkedInIds);
       toast("Selection cleared for pending members", { icon: "✕" });
     }
   };
@@ -1606,6 +1606,7 @@ const DailyTab = ({
                       const isExpanded = expandedReports.includes(rId);
                       const isPending = report.status === "pending";
                       const hasDraft = !!report.daily_report;
+                      const isPermanentlyChecked = report.checked_in_meeting === true;
                       const draftRaw = report.daily_report?.report_data || {};
 
                       const rawDisplayRd = resolveRawSource(report);
@@ -1698,11 +1699,11 @@ const DailyTab = ({
                             <div className="flex items-start gap-3 pt-1">
                               <input
                                 type="checkbox"
-                                checked={!isPending || isSelected}
-                                disabled={!isPending}
+                                checked={isPermanentlyChecked || isSelected}
+                                disabled={isPermanentlyChecked}
                                 onChange={(e) => {
                                   e.stopPropagation();
-                                  if (!isPending) return;
+                                  if (isPermanentlyChecked) return;
                                   setSelectedReports((prev) =>
                                     e.target.checked
                                       ? [...prev, rId]
@@ -1712,7 +1713,7 @@ const DailyTab = ({
                                 onClick={(e) => e.stopPropagation()}
                                 className={cn(
                                   "w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] shrink-0 mt-3",
-                                  !isPending
+                                  isPermanentlyChecked
                                     ? "opacity-60 cursor-not-allowed"
                                     : "cursor-pointer"
                                 )}
