@@ -1924,239 +1924,276 @@ export const InvoiceAdd: React.FC = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">
+                            {/* <label className="block text-sm font-medium mb-2">
                                 Terms<span className="text-red-500">*</span>
                             </label>
                             <FormControl fullWidth error={!!errors.paymentTerms}>
                                 {/* <InputLabel>Payment Terms</InputLabel> */}
-                                <Select
-                                    value={selectedTerm}
-                                    label="Payment Terms"
-                                    onChange={e => setSelectedTerm(e.target.value)}
-                                    renderValue={val => {
-                                        const found = paymentTermsList.find(term => String(term.id) === String(val));
-                                        return found ? found.name : val;
-                                    }}
-                                    sx={fieldStyles}
-                                >
-                                    <MenuItem value="" disabled>Select payment term</MenuItem>
-                                    {filteredTerms.map(term => (
-                                        <MenuItem key={term.id || term.name} value={String(term.id)}>{term.name}</MenuItem>
-                                    ))}
+                            {/* <Select
+                                value={selectedTerm}
+                                label="Payment Terms"
+                                onChange={e => setSelectedTerm(e.target.value)}
+                                renderValue={val => {
+                                    if (!val) {
+                                        return <span className="text-gray-400">Select payment term</span>;
+                                    }
+                                    const found = paymentTermsList.find(term => String(term.id) === String(val));
+                                    return found ? found.name : val;
+                                }}
+                                sx={fieldStyles}
+                            >
+                                <MenuItem value="" >Select payment term</MenuItem>
+                                {filteredTerms.map(term => (
+                                    <MenuItem key={term.id || term.name} value={String(term.id)}>{term.name}</MenuItem>
+                                ))}
 
-                                </Select>
-                            </FormControl>
-                            {/* Configure Payment Terms Modal */}
-                            {showConfig && (
-                                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-                                    <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
-                                        <h2 className="text-lg font-semibold mb-4">Configure Payment Terms</h2>
-                                        <table className="w-full mb-4 text-sm">
-                                            <thead>
-                                                <tr className="bg-gray-100">
-                                                    <th className="p-2 border">Term Name</th>
-                                                    <th className="p-2 border">Number of Days</th>
-                                                    <th className="p-2 border"></th>
+                            </Select>
+                        </FormControl> */} 
+                        
+                        <label className="block text-sm font-medium mb-2">
+                            Terms<span className="text-red-500">*</span>
+                        </label>
+
+                        <FormControl fullWidth error={!!errors.paymentTerms}>
+                            <Select
+                                value={selectedTerm || ""}
+                                onChange={(e) => setSelectedTerm(e.target.value)}
+                                displayEmpty
+                                renderValue={(val) => {
+                                    if (!val) {
+                                        return <span className="text-gray-400">Select payment term</span>;
+                                    }
+
+                                    const found = paymentTermsList.find(
+                                        (term) => String(term.id) === String(val)
+                                    );
+
+                                    return found ? found.name : val;
+                                }}
+                                sx={fieldStyles}
+                            >
+                                <MenuItem value="">
+                                    <span className="text-gray-400">Select payment term</span>
+                                </MenuItem>
+
+                                {filteredTerms.map((term) => (
+                                    <MenuItem key={term.id || term.name} value={String(term.id)}>
+                                        {term.name}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        {/* Configure Payment Terms Modal */}
+                        {showConfig && (
+                            <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+                                <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
+                                    <h2 className="text-lg font-semibold mb-4">Configure Payment Terms</h2>
+                                    <table className="w-full mb-4 text-sm">
+                                        <thead>
+                                            <tr className="bg-gray-100">
+                                                <th className="p-2 border">Term Name</th>
+                                                <th className="p-2 border">Number of Days</th>
+                                                <th className="p-2 border"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {editTerms.map((row, idx) => (
+                                                <tr key={idx}>
+                                                    <td className="border p-2">
+                                                        <input
+                                                            className="border rounded px-2 py-1 w-full"
+                                                            placeholder="Term Name"
+                                                            value={row.name}
+                                                            onChange={e => handleNewRowChange(idx, 'name', e.target.value)}
+                                                        />
+                                                    </td>
+                                                    <td className="border p-2">
+                                                        <input
+                                                            className="border rounded px-2 py-1 w-full"
+                                                            placeholder="Days"
+                                                            type="number"
+                                                            value={row.days}
+                                                            onChange={e => handleNewRowChange(idx, 'days', e.target.value)}
+                                                        />
+                                                    </td>
+                                                    <td className="border p-2">
+                                                        <button className="text-red-600 text-xs" onClick={async () => {
+                                                            if (row.id) {
+                                                                await handleRemovePaymentTerm(row.id, idx);
+                                                            } else {
+                                                                handleRemoveNewRow(idx);
+                                                            }
+                                                        }}>Remove</button>
+                                                    </td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                {editTerms.map((row, idx) => (
-                                                    <tr key={idx}>
-                                                        <td className="border p-2">
-                                                            <input
-                                                                className="border rounded px-2 py-1 w-full"
-                                                                placeholder="Term Name"
-                                                                value={row.name}
-                                                                onChange={e => handleNewRowChange(idx, 'name', e.target.value)}
-                                                            />
-                                                        </td>
-                                                        <td className="border p-2">
-                                                            <input
-                                                                className="border rounded px-2 py-1 w-full"
-                                                                placeholder="Days"
-                                                                type="number"
-                                                                value={row.days}
-                                                                onChange={e => handleNewRowChange(idx, 'days', e.target.value)}
-                                                            />
-                                                        </td>
-                                                        <td className="border p-2">
-                                                            <button className="text-red-600 text-xs" onClick={async () => {
-                                                                if (row.id) {
-                                                                    await handleRemovePaymentTerm(row.id, idx);
-                                                                } else {
-                                                                    handleRemoveNewRow(idx);
-                                                                }
-                                                            }}>Remove</button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                        <div className="flex gap-2 mb-2">
-                                            <button
-                                                className="text-blue-600 text-sm"
-                                                onClick={handleAddNewTerm}
-                                            >
-                                                + Add New
-                                            </button>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <button
-                                                className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
-                                                onClick={handleSaveTerms}
-                                            >
-                                                Save
-                                            </button>
-                                            <button
-                                                className="bg-gray-200 px-4 py-2 rounded"
-                                                onClick={() => {
-                                                    setEditTerms(paymentTerms.map(term => ({ ...term })));
-                                                    setShowConfig(false);
-                                                }}
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                    <div className="flex gap-2 mb-2">
+                                        <button
+                                            className="text-blue-600 text-sm"
+                                            onClick={handleAddNewTerm}
+                                        >
+                                            + Add New
+                                        </button>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                                            onClick={handleSaveTerms}
+                                        >
+                                            Save
+                                        </button>
+                                        <button
+                                            className="bg-gray-200 px-4 py-2 rounded"
+                                            onClick={() => {
+                                                setEditTerms(paymentTerms.map(term => ({ ...term })));
+                                                setShowConfig(false);
+                                            }}
+                                        >
+                                            Cancel
+                                        </button>
                                     </div>
                                 </div>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium ">
-                                Subject
-                            </label>
-                            <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
-                                rows={4}
-                                value={subject}
-                                onChange={(e) => {
-                                    if (e.target.value.length <= 500) setSubject(e.target.value);
-                                }}
-                                placeholder="Enter subject (max 500 characters)"
-                                maxLength={500}
-                            />
-                            <div className="text-xs text-gray-400 text-right mt-1">
-                                {(subject?.length || 0)}/500
                             </div>
-                        </div>
-
-
-                        <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Salesperson
-                            </label>
-                            <FormControl fullWidth>
-                                <Select
-                                    value={salesperson}
-                                    onChange={(e) => setSalesperson(e.target.value)}
-                                    displayEmpty
-                                    sx={fieldStyles}
-                                >
-                                    <MenuItem value="" disabled>Select or Add Salesperson</MenuItem>
-                                    {salespersons.map(person => (
-                                        <MenuItem key={person.id} value={person.id}>{person.name}</MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                        </div>
-
-                    </div>
-                </Section>
-
-                {/* Item Table */}
-                <Section title="Item Table" icon={<Package className="w-5 h-5" />}>
-                    <div className="space-y-4">
-                        {errors.items && (
-                            <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
                         )}
+                    </div>
 
-                        <div className="border border-border rounded-lg overflow-hidden">
-                            <table className="w-full">
-                                <thead className="bg-muted/50">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
-                                        {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
-                                        <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
-                                        <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
-                                        <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
+                    <div>
+                        <label className="block text-sm font-medium ">
+                            Subject
+                        </label>
+                        <textarea
+                            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                            rows={4}
+                            value={subject}
+                            onChange={(e) => {
+                                if (e.target.value.length <= 500) setSubject(e.target.value);
+                            }}
+                            placeholder="Enter subject (max 500 characters)"
+                            maxLength={500}
+                        />
+                        <div className="text-xs text-gray-400 text-right mt-1">
+                            {(subject?.length || 0)}/500
+                        </div>
+                    </div>
 
-                                    {items.map((item, index) => (
-                                        <tr key={item.id} className="hover:bg-muted/30 transition-colors">
-                                            <td className="px-4 py-3">
-                                                <FormControl fullWidth sx={{ minWidth: 250 }}>
-                                                    <ItemSearchInput
-                                                        value={item.name}
-                                                        itemOptions={itemOptions}
-                                                        onSelect={(selected) => {
-                                                            const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-                                                            let taxFields: Partial<Item> = {};
-                                                            if (selected.tax_preference === "non_taxable") {
-                                                                taxFields = { item_tax_type: "non_taxable", tax_exemption_id: selected.tax_exemption_id };
-                                                            } else if (selected.tax_preference === "taxable") {
-                                                                taxFields = { item_tax_type: isSameState ? "tax_group" : "tax_rate", tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id };
-                                                            } else if (selected.tax_preference === "out_of_scope") {
-                                                                taxFields = { item_tax_type: "out_of_scope" };
-                                                            } else if (selected.tax_preference === "non_gst_supply") {
-                                                                taxFields = { item_tax_type: "non_gst_supply" };
-                                                            }
-                                                            updateItemFields(index, { item_id: String(selected.id), name: selected.name, rate: selected.rate || 0, description: selected.description || '', ...taxFields });
-                                                        }}
-                                                        onType={(typed) => updateItemFields(index, { item_id: null, name: typed })}
-                                                    />
-                                                </FormControl>
-                                                <TextField
-                                                    fullWidth
-                                                    size="small"
-                                                    placeholder="Description"
-                                                    value={item.description}
-                                                    onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                    sx={{ mt: 1 }}
-                                                />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <TextField
-                                                    type="number"
-                                                    size="small"
-                                                    value={item.quantity}
-                                                    onChange={(e) => {
-                                                        const val = parseFloat(e.target.value);
-                                                        if (val < 0) {
-                                                            toast.error('Quantity cannot be negative');
-                                                            updateItem(index, 'quantity', 0);
-                                                        } else {
-                                                            updateItem(index, 'quantity', isNaN(val) ? "" : val);
-                                                        }
-                                                    }}
-                                                    inputProps={{ min: 0, step: 1 }}
-                                                    sx={{ width: 80 }}
-                                                />
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <TextField
-                                                    type="number"
-                                                    size="small"
-                                                    value={item.rate}
-                                                    onChange={(e) => {
-                                                        const val = parseFloat(e.target.value);
-                                                        if (val < 0) {
-                                                            toast.error('Rate cannot be negative');
-                                                            updateItem(index, 'rate', 0);
-                                                        } else {
-                                                            updateItem(index, 'rate', isNaN(val) ? "" : val);
-                                                        }
-                                                    }}
-                                                    inputProps={{ min: 0, step: 0.01 }}
-                                                    sx={{ width: 100 }}
-                                                />
-                                            </td>
-                                            {/* <td className="px-4 py-3"> */}
-                                            {/* <div className="flex items-center gap-2">
+
+                    <div>
+                        <label className="block text-sm font-medium mb-2">
+                            Salesperson
+                        </label>
+                        <FormControl fullWidth>
+                            <Select
+                                value={salesperson}
+                                onChange={(e) => setSalesperson(e.target.value)}
+                                displayEmpty
+                                sx={fieldStyles}
+                            >
+                                <MenuItem value="" disabled>Select or Add Salesperson</MenuItem>
+                                {salespersons.map(person => (
+                                    <MenuItem key={person.id} value={person.id}>{person.name}</MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    </div>
+
+            </div>
+        </Section>
+
+                {/* Item Table */ }
+    <Section title="Item Table" icon={<Package className="w-5 h-5" />}>
+        <div className="space-y-4">
+            {errors.items && (
+                <div className="text-red-500 text-sm bg-red-50 p-3 rounded-md">{errors.items}</div>
+            )}
+
+            <div className="border border-border rounded-lg overflow-hidden">
+                <table className="w-full">
+                    <thead className="bg-muted/50">
+                        <tr>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Item Details</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Quantity</th>
+                            <th className="px-4 py-3 text-left text-sm font-medium">Rate</th>
+                            {/* <th className="px-4 py-3 text-left text-sm font-medium">Discount</th> */}
+                            <th className="px-4 py-3 text-left text-sm font-medium">Tax</th>
+                            <th className="px-4 py-3 text-right text-sm font-medium">Amount</th>
+                            <th className="px-4 py-3 text-center text-sm font-medium">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+
+                        {items.map((item, index) => (
+                            <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                                <td className="px-4 py-3">
+                                    <FormControl fullWidth sx={{ minWidth: 250 }}>
+                                        <ItemSearchInput
+                                            value={item.name}
+                                            itemOptions={itemOptions}
+                                            onSelect={(selected) => {
+                                                const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                let taxFields: Partial<Item> = {};
+                                                if (selected.tax_preference === "non_taxable") {
+                                                    taxFields = { item_tax_type: "non_taxable", tax_exemption_id: selected.tax_exemption_id };
+                                                } else if (selected.tax_preference === "taxable") {
+                                                    taxFields = { item_tax_type: isSameState ? "tax_group" : "tax_rate", tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id };
+                                                } else if (selected.tax_preference === "out_of_scope") {
+                                                    taxFields = { item_tax_type: "out_of_scope" };
+                                                } else if (selected.tax_preference === "non_gst_supply") {
+                                                    taxFields = { item_tax_type: "non_gst_supply" };
+                                                }
+                                                updateItemFields(index, { item_id: String(selected.id), name: selected.name, rate: selected.rate || 0, description: selected.description || '', ...taxFields });
+                                            }}
+                                            onType={(typed) => updateItemFields(index, { item_id: null, name: typed })}
+                                        />
+                                    </FormControl>
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        placeholder="Description"
+                                        value={item.description}
+                                        onChange={(e) => updateItem(index, 'description', e.target.value)}
+                                        sx={{ mt: 1 }}
+                                    />
+                                </td>
+                                <td className="px-4 py-3">
+                                    <TextField
+                                        type="number"
+                                        size="small"
+                                        value={item.quantity}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            if (val < 0) {
+                                                toast.error('Quantity cannot be negative');
+                                                updateItem(index, 'quantity', 0);
+                                            } else {
+                                                updateItem(index, 'quantity', isNaN(val) ? "" : val);
+                                            }
+                                        }}
+                                        inputProps={{ min: 0, step: 1 }}
+                                        sx={{ width: 80 }}
+                                    />
+                                </td>
+                                <td className="px-4 py-3">
+                                    <TextField
+                                        type="number"
+                                        size="small"
+                                        value={item.rate}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            if (val < 0) {
+                                                toast.error('Rate cannot be negative');
+                                                updateItem(index, 'rate', 0);
+                                            } else {
+                                                updateItem(index, 'rate', isNaN(val) ? "" : val);
+                                            }
+                                        }}
+                                        inputProps={{ min: 0, step: 0.01 }}
+                                        sx={{ width: 100 }}
+                                    />
+                                </td>
+                                {/* <td className="px-4 py-3"> */}
+                                {/* <div className="flex items-center gap-2">
                                                     <TextField
                                                         type="number"
                                                         size="small"
@@ -2175,378 +2212,378 @@ export const InvoiceAdd: React.FC = () => {
                                                         </Select>
                                                     </FormControl>
                                                 </div> */}
-                                            {/* </td> */}
-                                            <td className="px-4 py-3">
-                                                <FormControl size="small" sx={{ width: 200 }}>
-                                                    <Select
-                                                        value={["tax_group", "tax_rate"].includes(item.item_tax_type) ? item.tax_group_id : item.item_tax_type || ""}
-                                                        displayEmpty
-                                                        onChange={(e) => {
-                                                            const value = String(e.target.value);
-                                                            const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                {/* </td> */}
+                                <td className="px-4 py-3">
+                                    <FormControl size="small" sx={{ width: 200 }}>
+                                        <Select
+                                            value={["tax_group", "tax_rate"].includes(item.item_tax_type) ? item.tax_group_id : item.item_tax_type || ""}
+                                            displayEmpty
+                                            onChange={(e) => {
+                                                const value = String(e.target.value);
+                                                const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
 
-                                                            // Static tax types
-                                                            if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
-                                                                updateItem(index, "item_tax_type", value);
-                                                                updateItem(index, "tax_group_id", null);
+                                                // Static tax types
+                                                if (["non_taxable", "out_of_scope", "non_gst_supply"].includes(value)) {
+                                                    updateItem(index, "item_tax_type", value);
+                                                    updateItem(index, "tax_group_id", null);
 
-                                                                if (value === "non_taxable") {
-                                                                    setCurrentItemIndex(index);
-                                                                    setExemptionModalOpen(true);
-                                                                }
-                                                            }
-                                                            // Tax group/rate selected
-                                                            else {
-                                                                updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
-                                                                updateItem(index, "tax_group_id", Number(value));
-                                                            }
-                                                        }}
-                                                    >
-                                                        <MenuItem value="">Select Tax</MenuItem>
+                                                    if (value === "non_taxable") {
+                                                        setCurrentItemIndex(index);
+                                                        setExemptionModalOpen(true);
+                                                    }
+                                                }
+                                                // Tax group/rate selected
+                                                else {
+                                                    updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
+                                                    updateItem(index, "tax_group_id", Number(value));
+                                                }
+                                            }}
+                                        >
+                                            <MenuItem value="">Select Tax</MenuItem>
 
-                                                        {/* Static Options */}
-                                                        {taxTypeOptions.map((opt) => (
-                                                            <MenuItem key={opt.value} value={opt.value}>
-                                                                {opt.label}
-                                                            </MenuItem>
-                                                        ))}
+                                            {/* Static Options */}
+                                            {taxTypeOptions.map((opt) => (
+                                                <MenuItem key={opt.value} value={opt.value}>
+                                                    {opt.label}
+                                                </MenuItem>
+                                            ))}
 
-                                                        {(() => {
-                                                            const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-                                                            return isSameState ? (
-                                                                [
-                                                                    <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
-                                                                    ...taxGroups.map((group) => (
-                                                                        <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
-                                                                    ))
-                                                                ]
-                                                            ) : (
-                                                                [
-                                                                    <MenuItem key="__divider__" disabled>Tax Rates (IGST)</MenuItem>,
-                                                                    ...taxRates.map((rate) => (
-                                                                        <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
-                                                                    ))
-                                                                ]
-                                                            );
-                                                        })()}
-                                                    </Select>
-                                                </FormControl>
-                                            </td>
-                                            <td className="px-4 py-3 text-right font-semibold">
-                                                ₹{item.amount.toFixed(2)}
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => {
-                                                        setDeleteTargetIndex(index);
-                                                        setDeleteTargetType('item');
-                                                        setDeleteConfirmOpen(true);
-                                                    }}
-                                                    disabled={items.length === 1}
-                                                    color="error"
-                                                >
-                                                    <Delete fontSize="small" />
-                                                </IconButton>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                            {(() => {
+                                                const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+                                                return isSameState ? (
+                                                    [
+                                                        <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
+                                                        ...taxGroups.map((group) => (
+                                                            <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                                                        ))
+                                                    ]
+                                                ) : (
+                                                    [
+                                                        <MenuItem key="__divider__" disabled>Tax Rates (IGST)</MenuItem>,
+                                                        ...taxRates.map((rate) => (
+                                                            <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
+                                                        ))
+                                                    ]
+                                                );
+                                            })()}
+                                        </Select>
+                                    </FormControl>
+                                </td>
+                                <td className="px-4 py-3 text-right font-semibold">
+                                    ₹{item.amount.toFixed(2)}
+                                </td>
+                                <td className="px-4 py-3 text-center">
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => {
+                                            setDeleteTargetIndex(index);
+                                            setDeleteTargetType('item');
+                                            setDeleteConfirmOpen(true);
+                                        }}
+                                        disabled={items.length === 1}
+                                        color="error"
+                                    >
+                                        <Delete fontSize="small" />
+                                    </IconButton>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
 
-                        <div className="flex gap-3 pt-4">
-                            <Button
-                                startIcon={<Add />}
-                                onClick={addItem}
-                                variant="outlined"
-                                sx={{ textTransform: 'none' }}
-                            >
-                                Add New Row
-                            </Button>
-                            {/* <Button
+            <div className="flex gap-3 pt-4">
+                <Button
+                    startIcon={<Add />}
+                    onClick={addItem}
+                    variant="outlined"
+                    sx={{ textTransform: 'none' }}
+                >
+                    Add New Row
+                </Button>
+                {/* <Button
                                 variant="outlined"
                                 sx={{ textTransform: 'none' }}
                             >
                                 Add Items in Bulk
                             </Button> */}
-                        </div>
+            </div>
+        </div>
+    </Section>
+
+    {/* Summary Section */ }
+    <Section title="Summary" icon={<ShoppingCart className="w-5 h-5" />}>
+        <div className="flex justify-end">
+            <div className="w-full md:w-1/2 space-y-4">
+                <div className="flex justify-between items-center py-2">
+                    <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
+                    <span className="font-semibold text-base">₹{subTotal.toFixed(2)}</span>
+                </div>
+
+                <div className="flex justify-between items-center py-2">
+                    <span className="text-sm font-medium text-muted-foreground">Discount</span>
+                    <div className="flex items-center gap-2">
+                        <Select
+                            size="small"
+                            value={discountTypeOnTotal}
+                            onChange={e => setDiscountTypeOnTotal(e.target.value as 'percentage' | 'amount')}
+                            sx={{ width: 100 }}
+                        >
+                            <MenuItem value="percentage">%</MenuItem>
+                            <MenuItem value="amount">Amount</MenuItem>
+                        </Select>
+                        <TextField
+                            type="number"
+                            size="small"
+                            value={discountOnTotal}
+                            onChange={(e) => {
+                                const val = parseFloat(e.target.value);
+                                if (val < 0) {
+                                    toast.error('Discount cannot be negative');
+                                    setDiscountOnTotal(0);
+                                } else if (discountTypeOnTotal === 'percentage' && val > 100) {
+                                    toast.error('Discount percentage cannot exceed 100%');
+                                    setDiscountOnTotal(100);
+                                } else {
+                                    setDiscountOnTotal(isNaN(val) ? 0 : val);
+                                }
+                            }}
+                            inputProps={{ min: 0, step: 0.01, max: discountTypeOnTotal === 'percentage' ? 100 : undefined }}
+                            sx={{ width: 80 }}
+                        />
+                        <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                     </div>
-                </Section>
+                </div>
+                {taxBreakdown.map((tax, index) => (
+                    <div key={index} className="flex justify-between items-center py-2">
+                        <span className="text-sm font-medium text-muted-foreground">
+                            {tax.name} ({tax.rate}%)
+                        </span>
+                        <span className="font-semibold text-base">
+                            ₹{tax.amount.toFixed(2)}
+                        </span>
+                    </div>
+                ))}
+                <Divider />
 
-                {/* Summary Section */}
-                <Section title="Summary" icon={<ShoppingCart className="w-5 h-5" />}>
-                    <div className="flex justify-end">
-                        <div className="w-full md:w-1/2 space-y-4">
-                            <div className="flex justify-between items-center py-2">
-                                <span className="text-sm font-medium text-muted-foreground">Sub Total</span>
-                                <span className="font-semibold text-base">₹{subTotal.toFixed(2)}</span>
-                            </div>
-
-                            <div className="flex justify-between items-center py-2">
-                                <span className="text-sm font-medium text-muted-foreground">Discount</span>
-                                <div className="flex items-center gap-2">
-                                    <Select
-                                        size="small"
-                                        value={discountTypeOnTotal}
-                                        onChange={e => setDiscountTypeOnTotal(e.target.value as 'percentage' | 'amount')}
-                                        sx={{ width: 100 }}
-                                    >
-                                        <MenuItem value="percentage">%</MenuItem>
-                                        <MenuItem value="amount">Amount</MenuItem>
-                                    </Select>
-                                    <TextField
-                                        type="number"
-                                        size="small"
-                                        value={discountOnTotal}
-                                        onChange={(e) => {
-                                            const val = parseFloat(e.target.value);
-                                            if (val < 0) {
-                                                toast.error('Discount cannot be negative');
-                                                setDiscountOnTotal(0);
-                                            } else if (discountTypeOnTotal === 'percentage' && val > 100) {
-                                                toast.error('Discount percentage cannot exceed 100%');
-                                                setDiscountOnTotal(100);
-                                            } else {
-                                                setDiscountOnTotal(isNaN(val) ? 0 : val);
-                                            }
-                                        }}
-                                        inputProps={{ min: 0, step: 0.01, max: discountTypeOnTotal === 'percentage' ? 100 : undefined }}
-                                        sx={{ width: 80 }}
-                                    />
-                                    <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
-                                </div>
-                            </div>
-                            {taxBreakdown.map((tax, index) => (
-                                <div key={index} className="flex justify-between items-center py-2">
-                                    <span className="text-sm font-medium text-muted-foreground">
-                                        {tax.name} ({tax.rate}%)
-                                    </span>
-                                    <span className="font-semibold text-base">
-                                        ₹{tax.amount.toFixed(2)}
-                                    </span>
-                                </div>
+                <div className="flex flex-wrap items-center gap-3 py-2">
+                    <RadioGroup
+                        row
+                        value={taxType}
+                        onChange={(e) => setTaxType(e.target.value as 'TDS' | 'TCS')}
+                    >
+                        <FormControlLabel
+                            value="TDS"
+                            control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                            label={<span className="text-sm">TDS</span>}
+                        />
+                        <FormControlLabel
+                            value="TCS"
+                            control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
+                            label={<span className="text-sm">TCS</span>}
+                        />
+                    </RadioGroup>
+                    <FormControl size="small" sx={{ minWidth: 150 }}>
+                        <Select
+                            value={selectedTax}
+                            onChange={(e) => setSelectedTax(e.target.value)}
+                            displayEmpty
+                            MenuProps={{
+                                PaperProps: {
+                                    style: {
+                                        maxHeight: 224,
+                                        backgroundColor: 'white',
+                                        border: '1px solid #e2e8f0',
+                                        borderRadius: '8px',
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                                    },
+                                },
+                                disablePortal: true,
+                            }}
+                        >
+                            <MenuItem value="">Select a Tax</MenuItem>
+                            {taxOptions.map(tax => (
+                                <MenuItem key={tax.id || tax.name} value={tax.name}>{tax.name}
+                                    {/* {typeof tax.percentage === 'number' ? `(${tax.percentage}%)` : ''} */}
+                                </MenuItem>
                             ))}
-                            <Divider />
+                        </Select>
+                    </FormControl>
+                    <span className="font-semibold text-base text-red-600">-₹{taxAmount2.toFixed(2)}</span>
+                </div>
 
-                            <div className="flex flex-wrap items-center gap-3 py-2">
-                                <RadioGroup
-                                    row
-                                    value={taxType}
-                                    onChange={(e) => setTaxType(e.target.value as 'TDS' | 'TCS')}
-                                >
-                                    <FormControlLabel
-                                        value="TDS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
-                                        label={<span className="text-sm">TDS</span>}
-                                    />
-                                    <FormControlLabel
-                                        value="TCS"
-                                        control={<Radio size="small" sx={{ color: 'primary.main', '&.Mui-checked': { color: 'primary.main' } }} />}
-                                        label={<span className="text-sm">TCS</span>}
-                                    />
-                                </RadioGroup>
-                                <FormControl size="small" sx={{ minWidth: 150 }}>
-                                    <Select
-                                        value={selectedTax}
-                                        onChange={(e) => setSelectedTax(e.target.value)}
-                                        displayEmpty
-                                        MenuProps={{
-                                            PaperProps: {
-                                                style: {
-                                                    maxHeight: 224,
-                                                    backgroundColor: 'white',
-                                                    border: '1px solid #e2e8f0',
-                                                    borderRadius: '8px',
-                                                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                                                },
-                                            },
-                                            disablePortal: true,
-                                        }}
-                                    >
-                                        <MenuItem value="">Select a Tax</MenuItem>
-                                        {taxOptions.map(tax => (
-                                            <MenuItem key={tax.id || tax.name} value={tax.name}>{tax.name}
-                                                {/* {typeof tax.percentage === 'number' ? `(${tax.percentage}%)` : ''} */}
-                                            </MenuItem>
-                                        ))}
-                                    </Select>
-                                </FormControl>
-                                <span className="font-semibold text-base text-red-600">-₹{taxAmount2.toFixed(2)}</span>
-                            </div>
-
-                            <div className="flex justify-between items-center py-2">
-                                <div className="flex items-center gap-2">
-                                    <TextField
-                                        size="small"
-                                        value={adjustmentLabel}
-                                        onChange={e => setAdjustmentLabel(e.target.value)}
-                                        sx={{ width: 120 }}
-                                        placeholder="Adjustment Name"
-                                    />
-                                    <TextField
-                                        type="number"
-                                        size="small"
-                                        value={adjustment}
-                                        onChange={(e) => setAdjustment(parseFloat(e.target.value) || '')}
-                                        inputProps={{ step: 0.01 }}
-                                        sx={{ width: 100 }}
-                                    />
-                                </div>
-                            </div>
-
-                            <Divider sx={{ my: 2 }} />
-
-                            <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
-                                <span className="font-bold text-base">Total ( ₹ )</span>
-                                <span className="font-bold text-primary text-2xl">₹{totalAmount2.toFixed(2)}</span>
-                            </div>
-                        </div>
-                    </div>
-                </Section>
-
-                {/* Customer Notes */}
-                <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
-                    <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
-                        rows={3}
-                        value={customerNotes}
-                        onChange={(e) => {
-                            if (e.target.value.length <= 500) setCustomerNotes(e.target.value);
-                        }}
-                        placeholder="Enter any notes for the customer (max 500 characters)"
-                        maxLength={500}
-                    />
-                    <div className="text-xs text-gray-400 text-right mt-1">
-                        {(customerNotes?.length || 0)}/500
-                    </div>
-                </Section>
-
-                {/* Terms & Conditions */}
-                <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
-                    <textarea
-                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
-                        rows={4}
-                        value={termsAndConditions}
-                        onChange={(e) => {
-                            if (e.target.value.length <= 500) setTermsAndConditions(e.target.value);
-                        }}
-                        placeholder="Enter the terms and conditions of your business to be displayed in your transaction (max 500 characters)"
-                        maxLength={500}
-                    />
-                    <div className="text-xs text-gray-400 text-right mt-1">
-                        {(termsAndConditions?.length || 0)}/500
-                    </div>
-                </Section>
-
-                {/* Attachments */}
-                <Section title="Attach Files to Invoice" icon={<AttachFile className="w-5 h-5" />}>
-                    <div className="space-y-4">
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                            <input
-                                type="file"
-                                id="file-upload"
-                                multiple
-                                onChange={handleFileUpload}
-                                className="hidden"
-                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                            />
-                            <label htmlFor="file-upload" className="cursor-pointer">
-                                <CloudUpload className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-                                <Typography variant="body1" className="text-gray-700 font-semibold">
-                                    Upload File
-                                </Typography>
-                                <Typography variant="body2" className="text-gray-500 mt-1">
-                                    You can upload a maximum of 10 files, 5MB each
-                                </Typography>
-                            </label>
-                        </div>
-
-                        {attachments.length > 0 && (
-                            <div className="space-y-2">
-                                {attachments.map((file, index) => (
-                                    <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded">
-                                        <div className="flex items-center gap-2">
-                                            <AttachFile fontSize="small" />
-                                            <span className="text-sm">{file.name}</span>
-                                            <span className="text-xs text-gray-500">
-                                                ({(file.size / 1024).toFixed(2)} KB)
-                                            </span>
-                                        </div>
-                                        <IconButton size="small" onClick={() => {
-                                            setDeleteTargetIndex(index);
-                                            setDeleteTargetType('attachment');
-                                            setDeleteConfirmOpen(true);
-                                        }}>
-                                            <Close fontSize="small" />
-                                        </IconButton>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    checked={displayAttachmentsInPortal}
-                                    onChange={(e) => setDisplayAttachmentsInPortal(e.target.checked)}
-                                />
-                            }
-                            label="Display attachments in customer portal and emails"
+                <div className="flex justify-between items-center py-2">
+                    <div className="flex items-center gap-2">
+                        <TextField
+                            size="small"
+                            value={adjustmentLabel}
+                            onChange={e => setAdjustmentLabel(e.target.value)}
+                            sx={{ width: 120 }}
+                            placeholder="Adjustment Name"
+                        />
+                        <TextField
+                            type="number"
+                            size="small"
+                            value={adjustment}
+                            onChange={(e) => setAdjustment(parseFloat(e.target.value) || '')}
+                            inputProps={{ step: 0.01 }}
+                            sx={{ width: 100 }}
                         />
                     </div>
-                </Section>
+                </div>
 
-                {/* Email Communications */}
-                <Section title="Email Communications" icon={<FileText className="w-5 h-5" />}>
-                    <div className="space-y-4">
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    checked={sendEmailToCustomer}
-                                    onChange={(e) => setSendEmailToCustomer(e.target.checked)}
-                                />
-                            }
-                            label="Send email to selected customer above"
-                        />
+                <Divider sx={{ my: 2 }} />
 
-                        {/* Contact Persons Section */}
-                        {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
-                            <div>
-                                <Typography variant="body2" className="font-semibold mb-2">
-                                    Select contact persons to email
-                                </Typography>
-                                <div className="flex flex-col gap-2">
-                                    {selectedCustomer.contact_persons.map((person) => (
-                                        <div key={person.id} className="flex items-center gap-2">
-                                            <Checkbox
-                                                checked={selectedContactPersons.includes(person.id)}
-                                                onChange={e => {
-                                                    if (e.target.checked) {
-                                                        setSelectedContactPersons([...selectedContactPersons, person.id]);
-                                                    } else {
-                                                        setSelectedContactPersons(selectedContactPersons.filter(id => id !== person.id));
-                                                    }
-                                                }}
-                                                size="small"
-                                            />
-                                            <Chip
-                                                label={`${person.first_name} ${person.last_name} (${person.email})`}
-                                                variant={selectedContactPersons.includes(person.id) ? "filled" : "outlined"}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
+                <div className="flex justify-between items-center py-3 bg-primary/5 px-4 rounded-lg">
+                    <span className="font-bold text-base">Total ( ₹ )</span>
+                    <span className="font-bold text-primary text-2xl">₹{totalAmount2.toFixed(2)}</span>
+                </div>
+            </div>
+        </div>
+    </Section>
+
+    {/* Customer Notes */ }
+    <Section title="Customer Notes" icon={<FileText className="w-5 h-5" />}>
+        <textarea
+            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+            rows={3}
+            value={customerNotes}
+            onChange={(e) => {
+                if (e.target.value.length <= 500) setCustomerNotes(e.target.value);
+            }}
+            placeholder="Enter any notes for the customer (max 500 characters)"
+            maxLength={500}
+        />
+        <div className="text-xs text-gray-400 text-right mt-1">
+            {(customerNotes?.length || 0)}/500
+        </div>
+    </Section>
+
+    {/* Terms & Conditions */ }
+    <Section title="Terms & Conditions" icon={<FileText className="w-5 h-5" />}>
+        <textarea
+            className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+            rows={4}
+            value={termsAndConditions}
+            onChange={(e) => {
+                if (e.target.value.length <= 500) setTermsAndConditions(e.target.value);
+            }}
+            placeholder="Enter the terms and conditions of your business to be displayed in your transaction (max 500 characters)"
+            maxLength={500}
+        />
+        <div className="text-xs text-gray-400 text-right mt-1">
+            {(termsAndConditions?.length || 0)}/500
+        </div>
+    </Section>
+
+    {/* Attachments */ }
+    <Section title="Attach Files to Invoice" icon={<AttachFile className="w-5 h-5" />}>
+        <div className="space-y-4">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <input
+                    type="file"
+                    id="file-upload"
+                    multiple
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                />
+                <label htmlFor="file-upload" className="cursor-pointer">
+                    <CloudUpload className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                    <Typography variant="body1" className="text-gray-700 font-semibold">
+                        Upload File
+                    </Typography>
+                    <Typography variant="body2" className="text-gray-500 mt-1">
+                        You can upload a maximum of 10 files, 5MB each
+                    </Typography>
+                </label>
+            </div>
+
+            {attachments.length > 0 && (
+                <div className="space-y-2">
+                    {attachments.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded">
+                            <div className="flex items-center gap-2">
+                                <AttachFile fontSize="small" />
+                                <span className="text-sm">{file.name}</span>
+                                <span className="text-xs text-gray-500">
+                                    ({(file.size / 1024).toFixed(2)} KB)
+                                </span>
                             </div>
-                        )}
+                            <IconButton size="small" onClick={() => {
+                                setDeleteTargetIndex(index);
+                                setDeleteTargetType('attachment');
+                                setDeleteConfirmOpen(true);
+                            }}>
+                                <Close fontSize="small" />
+                            </IconButton>
+                        </div>
+                    ))}
+                </div>
+            )}
 
-                        {/* External Users Section */}
-                        <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <Typography variant="body2" className="font-semibold">
-                                    Add external users (email users other than the selected customer above)
-                                </Typography>
-                                {/* <Button
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        checked={displayAttachmentsInPortal}
+                        onChange={(e) => setDisplayAttachmentsInPortal(e.target.checked)}
+                    />
+                }
+                label="Display attachments in customer portal and emails"
+            />
+        </div>
+    </Section>
+
+    {/* Email Communications */ }
+    <Section title="Email Communications" icon={<FileText className="w-5 h-5" />}>
+        <div className="space-y-4">
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        checked={sendEmailToCustomer}
+                        onChange={(e) => setSendEmailToCustomer(e.target.checked)}
+                    />
+                }
+                label="Send email to selected customer above"
+            />
+
+            {/* Contact Persons Section */}
+            {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
+                <div>
+                    <Typography variant="body2" className="font-semibold mb-2">
+                        Select contact persons to email
+                    </Typography>
+                    <div className="flex flex-col gap-2">
+                        {selectedCustomer.contact_persons.map((person) => (
+                            <div key={person.id} className="flex items-center gap-2">
+                                <Checkbox
+                                    checked={selectedContactPersons.includes(person.id)}
+                                    onChange={e => {
+                                        if (e.target.checked) {
+                                            setSelectedContactPersons([...selectedContactPersons, person.id]);
+                                        } else {
+                                            setSelectedContactPersons(selectedContactPersons.filter(id => id !== person.id));
+                                        }
+                                    }}
+                                    size="small"
+                                />
+                                <Chip
+                                    label={`${person.first_name} ${person.last_name} (${person.email})`}
+                                    variant={selectedContactPersons.includes(person.id) ? "filled" : "outlined"}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* External Users Section */}
+            <div>
+                <div className="flex items-center justify-between mb-2">
+                    <Typography variant="body2" className="font-semibold">
+                        Add external users (email users other than the selected customer above)
+                    </Typography>
+                    {/* <Button
                                                     startIcon={<PersonAdd />}
                                                     onClick={() => setAddUserDialogOpen(true)}
                                                     size="small"
@@ -2555,347 +2592,349 @@ export const InvoiceAdd: React.FC = () => {
                                                 >
                                                     Add More
                                                 </Button> */}
-                            </div>
+                </div>
 
-                            {externalUsers.length > 0 && (
-                                <div className="flex flex-wrap gap-2">
-                                    {externalUsers.map((user, index) => (
-                                        <Chip
-                                            key={index}
-                                            label={`${user.name} (${user.email})`}
-                                            onDelete={() => removeExternalUser(index)}
-                                            variant="outlined"
-                                        />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                {externalUsers.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                        {externalUsers.map((user, index) => (
+                            <Chip
+                                key={index}
+                                label={`${user.name} (${user.email})`}
+                                onDelete={() => removeExternalUser(index)}
+                                variant="outlined"
+                            />
+                        ))}
                     </div>
-                </Section>
-
-                {/* Additional Fields */}
-                <Section title="Additional Custom Fields" icon={<FileText className="w-5 h-5" />}>
-                    <Typography variant="body2" className="text-gray-600">
-                        Add custom fields to your sales orders by going to Settings → Sales → Sales Orders → Field Customization
-                    </Typography>
-                </Section>
+                )}
             </div>
+        </div>
+    </Section>
 
-            <div className="flex items-center gap-3 justify-center pt-2">
-                <Button
-                    variant="text"
-                    onClick={() => handleSubmit(true)}
-                    disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        bgcolor: '#f8f1f1',
-                        color: '#C72030',
-                        fontWeight: 600,
-                        '&:hover': {
-                            bgcolor: '#f1e8e8',
-                            color: '#A01020'
-                        }
-                    }}
-                >
-                    Save as Draft
-                </Button>
-                <Button
-                    variant="text"
-                    onClick={() => handleSubmit(false)}
-                    disabled={isSubmitting}
-                    sx={{
-                        bgcolor: '#f8f1f1',
-                        color: '#C72030',
-                        fontWeight: 600,
-                        px: 4,
-                        '&:hover': {
-                            bgcolor: '#f1e8e8',
-                            color: '#A01020'
-                        },
-                        textTransform: 'none'
-                    }}
-                >
-                    {isSubmitting ? 'Submitting...' : 'Save and Send'}
-                </Button>
-                <Button
-                    variant="outlined"
-                    onClick={() => navigate('/accounting/invoices/list')}
-                    disabled={isSubmitting}
-                    sx={{
-                        textTransform: 'none',
-                        px: 4,
-                        borderColor: '#C72030',
-                        color: '#C72030',
-                        fontWeight: 600,
-                        '&:hover': {
-                            borderColor: '#A01020',
-                            bgcolor: '#f8f1f1',
-                            color: '#A01020'
-                        }
-                    }}
-                >
-                    Cancel
-                </Button>
-            </div>
+    {/* Additional Fields */ }
+    <Section title="Additional Custom Fields" icon={<FileText className="w-5 h-5" />}>
+        <Typography variant="body2" className="text-gray-600">
+            Add custom fields to your sales orders by going to Settings → Sales → Sales Orders → Field Customization
+        </Typography>
+    </Section>
+            </div >
 
-            {/* Customer Details Drawer */}
-            {customerDrawerOpen && (
-                <div className="fixed inset-0 z-50 flex justify-end">
-                    <div
-                        className="absolute inset-0 bg-black/20"
+    <div className="flex items-center gap-3 justify-center pt-2">
+        <Button
+            variant="text"
+            onClick={() => handleSubmit(true)}
+            disabled={isSubmitting}
+            sx={{
+                textTransform: 'none',
+                px: 4,
+                bgcolor: '#f8f1f1',
+                color: '#C72030',
+                fontWeight: 600,
+                '&:hover': {
+                    bgcolor: '#f1e8e8',
+                    color: '#A01020'
+                }
+            }}
+        >
+            Save as Draft
+        </Button>
+        <Button
+            variant="text"
+            onClick={() => handleSubmit(false)}
+            disabled={isSubmitting}
+            sx={{
+                bgcolor: '#f8f1f1',
+                color: '#C72030',
+                fontWeight: 600,
+                px: 4,
+                '&:hover': {
+                    bgcolor: '#f1e8e8',
+                    color: '#A01020'
+                },
+                textTransform: 'none'
+            }}
+        >
+            {isSubmitting ? 'Submitting...' : 'Save and Send'}
+        </Button>
+        <Button
+            variant="outlined"
+            onClick={() => navigate('/accounting/invoices/list')}
+            disabled={isSubmitting}
+            sx={{
+                textTransform: 'none',
+                px: 4,
+                borderColor: '#C72030',
+                color: '#C72030',
+                fontWeight: 600,
+                '&:hover': {
+                    borderColor: '#A01020',
+                    bgcolor: '#f8f1f1',
+                    color: '#A01020'
+                }
+            }}
+        >
+            Cancel
+        </Button>
+    </div>
+
+{/* Customer Details Drawer */ }
+{
+    customerDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+            <div
+                className="absolute inset-0 bg-black/20"
+                onClick={() => setCustomerDrawerOpen(false)}
+            />
+            <div className="relative w-full max-w-[450px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                {/* Header */}
+                <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-10">
+                    <span className="font-semibold text-gray-800 text-lg">Customer details</span>
+                    <button
                         onClick={() => setCustomerDrawerOpen(false)}
-                    />
-                    <div className="relative w-full max-w-[450px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-                        {/* Header */}
-                        <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-10">
-                            <span className="font-semibold text-gray-800 text-lg">Customer details</span>
-                            <button
-                                onClick={() => setCustomerDrawerOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-                            >
-                                ✕
-                            </button>
+                        className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                {customerDetailLoading ? (
+                    <div className="flex-1 flex items-center justify-center">
+                        <CircularProgress size={36} />
+                    </div>
+                ) : customerDetail ? (
+                    <div className="flex-1 overflow-y-auto">
+                        {/* Customer Name + Avatar */}
+                        <div className="px-5 py-4 flex items-center gap-3 border-b border-gray-100">
+                            <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg">
+                                {(customerDetail.company_name || customerDetail.first_name || "?")[0].toUpperCase()}
+                            </div>
+                            <div>
+                                <div className="font-semibold text-gray-800 text-base flex items-center gap-1">
+                                    {customerDetail.company_name ||
+                                        [customerDetail.salutation, customerDetail.first_name, customerDetail.last_name]
+                                            .filter(Boolean)
+                                            .join(" ")}
+                                    <span className="text-blue-500 cursor-pointer text-sm">↗</span>
+                                </div>
+                                {customerDetail.company_name && (
+                                    <div className="text-sm text-gray-500">{customerDetail.company_name}</div>
+                                )}
+                                {customerDetail.email && (
+                                    <div className="text-xs text-blue-500">{customerDetail.email}</div>
+                                )}
+                            </div>
                         </div>
 
-                        {customerDetailLoading ? (
-                            <div className="flex-1 flex items-center justify-center">
-                                <CircularProgress size={36} />
-                            </div>
-                        ) : customerDetail ? (
-                            <div className="flex-1 overflow-y-auto">
-                                {/* Customer Name + Avatar */}
-                                <div className="px-5 py-4 flex items-center gap-3 border-b border-gray-100">
-                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg">
-                                        {(customerDetail.company_name || customerDetail.first_name || "?")[0].toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <div className="font-semibold text-gray-800 text-base flex items-center gap-1">
-                                            {customerDetail.company_name ||
-                                                [customerDetail.salutation, customerDetail.first_name, customerDetail.last_name]
-                                                    .filter(Boolean)
-                                                    .join(" ")}
-                                            <span className="text-blue-500 cursor-pointer text-sm">↗</span>
+                        {/* Tabs */}
+                        <div className="flex border-b border-gray-200 px-4">
+                            {(["Details", "Activity Log"] as const).map((t, i) => (
+                                <button
+                                    key={t}
+                                    onClick={() => setDrawerActiveTab(i === 0 ? 'details' : 'activity')}
+                                    className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${drawerActiveTab === (i === 0 ? 'details' : 'activity')
+                                        ? "border-[#C72030] text-[#C72030]"
+                                        : "border-transparent text-gray-500 hover:text-gray-700"
+                                        }`}
+                                >
+                                    {t}
+                                </button>
+                            ))}
+                        </div>
+
+                        {drawerActiveTab === 'details' && (
+                            <div className="p-4 space-y-4">
+                                {/* Outstanding & Credits */}
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="border border-gray-200 rounded-lg p-3 text-center">
+                                        <div className="text-orange-400 text-xl mb-1">⚠</div>
+                                        <div className="text-xs text-gray-500">Outstanding Receivables</div>
+                                        <div className="font-semibold text-gray-800 text-sm mt-1">
+                                            ₹{Number(customerDetail.outstanding_receivable_amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
                                         </div>
-                                        {customerDetail.company_name && (
-                                            <div className="text-sm text-gray-500">{customerDetail.company_name}</div>
-                                        )}
-                                        {customerDetail.email && (
-                                            <div className="text-xs text-blue-500">{customerDetail.email}</div>
-                                        )}
+                                    </div>
+                                    <div className="border border-gray-200 rounded-lg p-3 text-center">
+                                        <div className="text-green-500 text-xl mb-1">●</div>
+                                        <div className="text-xs text-gray-500">Unused Credits</div>
+                                        <div className="font-semibold text-gray-800 text-sm mt-1">
+                                            ₹{Number(customerDetail.unused_credits_receivable_amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Tabs */}
-                                <div className="flex border-b border-gray-200 px-4">
-                                    {(["Details", "Activity Log"] as const).map((t, i) => (
-                                        <button
-                                            key={t}
-                                            onClick={() => setDrawerActiveTab(i === 0 ? 'details' : 'activity')}
-                                            className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${drawerActiveTab === (i === 0 ? 'details' : 'activity')
-                                                ? "border-[#C72030] text-[#C72030]"
-                                                : "border-transparent text-gray-500 hover:text-gray-700"
-                                                }`}
-                                        >
-                                            {t}
-                                        </button>
+                                {/* Contact Details */}
+                                <div className="border border-gray-200 rounded-lg p-4">
+                                    <div className="font-semibold text-gray-700 mb-3 text-sm">Contact Details</div>
+                                    {[
+                                        ["Customer Type", customerDetail.customer_type || "—"],
+                                        ["Currency", customerDetail.currency || "INR"],
+                                        ["Payment Terms", customerDetail.payment_terms || "—"],
+                                        ["Portal Status", customerDetail.portal_status || "—"],
+                                        ["Customer Language", customerDetail.customer_language || "English"],
+                                        ["GST Treatment", customerDetail.gst_treatment || "—"],
+                                        ["GSTIN", customerDetail.gstin || "—"],
+                                        ["PAN", customerDetail.pan || "—"],
+                                        ["Place of Supply", customerDetail.place_of_supply || "Yet to be updated"],
+                                        ["Tax Preference", customerDetail.tax_preference || "—"],
+                                    ].map(([label, value]) => (
+                                        <div key={label} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0">
+                                            <span className="text-xs text-[#C72030] w-36 shrink-0">{label}</span>
+                                            <span className="text-xs text-gray-700 text-right">{value}</span>
+                                        </div>
                                     ))}
                                 </div>
 
-                                {drawerActiveTab === 'details' && (
-                                    <div className="p-4 space-y-4">
-                                        {/* Outstanding & Credits */}
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="border border-gray-200 rounded-lg p-3 text-center">
-                                                <div className="text-orange-400 text-xl mb-1">⚠</div>
-                                                <div className="text-xs text-gray-500">Outstanding Receivables</div>
-                                                <div className="font-semibold text-gray-800 text-sm mt-1">
-                                                    ₹{Number(customerDetail.outstanding_receivable_amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                                                </div>
-                                            </div>
-                                            <div className="border border-gray-200 rounded-lg p-3 text-center">
-                                                <div className="text-green-500 text-xl mb-1">●</div>
-                                                <div className="text-xs text-gray-500">Unused Credits</div>
-                                                <div className="font-semibold text-gray-800 text-sm mt-1">
-                                                    ₹{Number(customerDetail.unused_credits_receivable_amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                                                </div>
-                                            </div>
+                                {/* Contact Persons */}
+                                {customerDetail.contact_persons && customerDetail.contact_persons.length > 0 && (
+                                    <div className="border border-gray-200 rounded-lg">
+                                        <div
+                                            className="flex items-center justify-between px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+                                            onClick={() => setContactPersonsExpanded(!contactPersonsExpanded)}
+                                        >
+                                            <span className="font-semibold text-gray-700 text-sm">
+                                                Contact Persons
+                                                <span className="ml-2 bg-gray-200 text-gray-600 text-xs rounded-full px-1.5 py-0.5">
+                                                    {customerDetail.contact_persons.length}
+                                                </span>
+                                            </span>
+                                            {contactPersonsExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
                                         </div>
-
-                                        {/* Contact Details */}
-                                        <div className="border border-gray-200 rounded-lg p-4">
-                                            <div className="font-semibold text-gray-700 mb-3 text-sm">Contact Details</div>
-                                            {[
-                                                ["Customer Type", customerDetail.customer_type || "—"],
-                                                ["Currency", customerDetail.currency || "INR"],
-                                                ["Payment Terms", customerDetail.payment_terms || "—"],
-                                                ["Portal Status", customerDetail.portal_status || "—"],
-                                                ["Customer Language", customerDetail.customer_language || "English"],
-                                                ["GST Treatment", customerDetail.gst_treatment || "—"],
-                                                ["GSTIN", customerDetail.gstin || "—"],
-                                                ["PAN", customerDetail.pan || "—"],
-                                                ["Place of Supply", customerDetail.place_of_supply || "Yet to be updated"],
-                                                ["Tax Preference", customerDetail.tax_preference || "—"],
-                                            ].map(([label, value]) => (
-                                                <div key={label} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0">
-                                                    <span className="text-xs text-[#C72030] w-36 shrink-0">{label}</span>
-                                                    <span className="text-xs text-gray-700 text-right">{value}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Contact Persons */}
-                                        {customerDetail.contact_persons && customerDetail.contact_persons.length > 0 && (
-                                            <div className="border border-gray-200 rounded-lg">
-                                                <div
-                                                    className="flex items-center justify-between px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
-                                                    onClick={() => setContactPersonsExpanded(!contactPersonsExpanded)}
-                                                >
-                                                    <span className="font-semibold text-gray-700 text-sm">
-                                                        Contact Persons
-                                                        <span className="ml-2 bg-gray-200 text-gray-600 text-xs rounded-full px-1.5 py-0.5">
-                                                            {customerDetail.contact_persons.length}
-                                                        </span>
-                                                    </span>
-                                                    {contactPersonsExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                                                </div>
-                                                {contactPersonsExpanded && (
-                                                    <div className="divide-y divide-gray-100">
-                                                        {customerDetail.contact_persons.map((cp, idx) => (
-                                                            <div key={cp.id || idx} className="px-4 py-4 flex items-start gap-3">
-                                                                <div className="relative mt-1">
-                                                                    <div className="w-8 h-8 rounded-full bg-[#EAEEF6] flex items-center justify-center text-[#7C8DAC] font-semibold text-sm shrink-0">
-                                                                        {(cp.first_name || "?")[0].toUpperCase()}
-                                                                    </div>
-                                                                    {idx === 0 && (
-                                                                        <div className="absolute -bottom-1 -right-1 w-[14px] h-[14px] bg-[#42C867] rounded-full border-[1.5px] border-white flex justify-center items-center">
-                                                                            <Star className="w-[8px] h-[8px] text-white fill-current" />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-
-                                                                <div className="flex-1">
-                                                                    <div className="text-sm font-medium text-gray-900 mb-1">
-                                                                        {[cp.salutation, cp.first_name, cp.last_name].filter(Boolean).join(" ")}
-                                                                    </div>
-                                                                    <div className="space-y-1">
-                                                                        {cp.email && (
-                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
-                                                                                <Mail className="w-3.5 h-3.5 text-gray-400" /> {cp.email}
-                                                                            </div>
-                                                                        )}
-                                                                        {cp.work_phone && (
-                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
-                                                                                <Phone className="w-3.5 h-3.5 text-gray-400" /> {cp.work_phone}
-                                                                            </div>
-                                                                        )}
-                                                                        {!cp.work_phone && cp.phone && (
-                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
-                                                                                <Phone className="w-3.5 h-3.5 text-gray-400" /> {cp.phone}
-                                                                            </div>
-                                                                        )}
-                                                                        {cp.mobile && (
-                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
-                                                                                <Smartphone className="w-3.5 h-3.5 text-gray-400" /> {cp.mobile}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
+                                        {contactPersonsExpanded && (
+                                            <div className="divide-y divide-gray-100">
+                                                {customerDetail.contact_persons.map((cp, idx) => (
+                                                    <div key={cp.id || idx} className="px-4 py-4 flex items-start gap-3">
+                                                        <div className="relative mt-1">
+                                                            <div className="w-8 h-8 rounded-full bg-[#EAEEF6] flex items-center justify-center text-[#7C8DAC] font-semibold text-sm shrink-0">
+                                                                {(cp.first_name || "?")[0].toUpperCase()}
                                                             </div>
-                                                        ))}
+                                                            {idx === 0 && (
+                                                                <div className="absolute -bottom-1 -right-1 w-[14px] h-[14px] bg-[#42C867] rounded-full border-[1.5px] border-white flex justify-center items-center">
+                                                                    <Star className="w-[8px] h-[8px] text-white fill-current" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="flex-1">
+                                                            <div className="text-sm font-medium text-gray-900 mb-1">
+                                                                {[cp.salutation, cp.first_name, cp.last_name].filter(Boolean).join(" ")}
+                                                            </div>
+                                                            <div className="space-y-1">
+                                                                {cp.email && (
+                                                                    <div className="text-[13px] text-gray-500 flex items-center gap-2">
+                                                                        <Mail className="w-3.5 h-3.5 text-gray-400" /> {cp.email}
+                                                                    </div>
+                                                                )}
+                                                                {cp.work_phone && (
+                                                                    <div className="text-[13px] text-gray-500 flex items-center gap-2">
+                                                                        <Phone className="w-3.5 h-3.5 text-gray-400" /> {cp.work_phone}
+                                                                    </div>
+                                                                )}
+                                                                {!cp.work_phone && cp.phone && (
+                                                                    <div className="text-[13px] text-gray-500 flex items-center gap-2">
+                                                                        <Phone className="w-3.5 h-3.5 text-gray-400" /> {cp.phone}
+                                                                    </div>
+                                                                )}
+                                                                {cp.mobile && (
+                                                                    <div className="text-[13px] text-gray-500 flex items-center gap-2">
+                                                                        <Smartphone className="w-3.5 h-3.5 text-gray-400" /> {cp.mobile}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Address */}
+                                <div className="border border-gray-200 rounded-lg">
+                                    <div
+                                        className="px-4 py-3 border-b border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
+                                        onClick={() => setAddressExpanded(!addressExpanded)}
+                                    >
+                                        <span className="font-semibold text-gray-700 text-sm">Address</span>
+                                        {addressExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                                    </div>
+                                    {addressExpanded && (
+                                        <div className="p-4 space-y-3">
+                                            <div>
+                                                <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
+                                                    <span>📋</span> Billing Address
+                                                </div>
+                                                {customerDetail.billing_address?.address ? (
+                                                    <div className="text-xs text-gray-700 leading-relaxed">
+                                                        <div>{customerDetail.billing_address.address}</div>
+                                                        {customerDetail.billing_address.address_line_two && (
+                                                            <div>{customerDetail.billing_address.address_line_two}</div>
+                                                        )}
+                                                        <div>
+                                                            {[customerDetail.billing_address.city, customerDetail.billing_address.state]
+                                                                .filter(Boolean)
+                                                                .join(", ")}
+                                                            {customerDetail.billing_address.pin_code
+                                                                ? " " + customerDetail.billing_address.pin_code
+                                                                : ""}
+                                                        </div>
+                                                        {customerDetail.billing_address.country && (
+                                                            <div>{customerDetail.billing_address.country}</div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-xs text-gray-400 italic">No billing address provided</div>
                                                 )}
                                             </div>
-                                        )}
 
-                                        {/* Address */}
-                                        <div className="border border-gray-200 rounded-lg">
-                                            <div
-                                                className="px-4 py-3 border-b border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
-                                                onClick={() => setAddressExpanded(!addressExpanded)}
-                                            >
-                                                <span className="font-semibold text-gray-700 text-sm">Address</span>
-                                                {addressExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                                            </div>
-                                            {addressExpanded && (
-                                                <div className="p-4 space-y-3">
-                                                    <div>
-                                                        <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
-                                                            <span>📋</span> Billing Address
-                                                        </div>
-                                                        {customerDetail.billing_address?.address ? (
-                                                            <div className="text-xs text-gray-700 leading-relaxed">
-                                                                <div>{customerDetail.billing_address.address}</div>
-                                                                {customerDetail.billing_address.address_line_two && (
-                                                                    <div>{customerDetail.billing_address.address_line_two}</div>
-                                                                )}
-                                                                <div>
-                                                                    {[customerDetail.billing_address.city, customerDetail.billing_address.state]
-                                                                        .filter(Boolean)
-                                                                        .join(", ")}
-                                                                    {customerDetail.billing_address.pin_code
-                                                                        ? " " + customerDetail.billing_address.pin_code
-                                                                        : ""}
-                                                                </div>
-                                                                {customerDetail.billing_address.country && (
-                                                                    <div>{customerDetail.billing_address.country}</div>
-                                                                )}
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-xs text-gray-400 italic">No billing address provided</div>
-                                                        )}
-                                                    </div>
-
-                                                    <div>
-                                                        <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
-                                                            <span>🚚</span> Shipping Address
-                                                        </div>
-                                                        {customerDetail.shipping_address?.address ? (
-                                                            <div className="text-xs text-gray-700 leading-relaxed">
-                                                                <div>{customerDetail.shipping_address.address}</div>
-                                                                {customerDetail.shipping_address.address_line_two && (
-                                                                    <div>{customerDetail.shipping_address.address_line_two}</div>
-                                                                )}
-                                                                <div>
-                                                                    {[customerDetail.shipping_address.city, customerDetail.shipping_address.state]
-                                                                        .filter(Boolean)
-                                                                        .join(", ")}
-                                                                    {customerDetail.shipping_address.pin_code
-                                                                        ? " " + customerDetail.shipping_address.pin_code
-                                                                        : ""}
-                                                                </div>
-                                                                {customerDetail.shipping_address.country && (
-                                                                    <div>{customerDetail.shipping_address.country}</div>
-                                                                )}
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-xs text-gray-400 italic">No shipping address provided</div>
-                                                        )}
-                                                    </div>
+                                            <div>
+                                                <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
+                                                    <span>🚚</span> Shipping Address
                                                 </div>
-                                            )}
+                                                {customerDetail.shipping_address?.address ? (
+                                                    <div className="text-xs text-gray-700 leading-relaxed">
+                                                        <div>{customerDetail.shipping_address.address}</div>
+                                                        {customerDetail.shipping_address.address_line_two && (
+                                                            <div>{customerDetail.shipping_address.address_line_two}</div>
+                                                        )}
+                                                        <div>
+                                                            {[customerDetail.shipping_address.city, customerDetail.shipping_address.state]
+                                                                .filter(Boolean)
+                                                                .join(", ")}
+                                                            {customerDetail.shipping_address.pin_code
+                                                                ? " " + customerDetail.shipping_address.pin_code
+                                                                : ""}
+                                                        </div>
+                                                        {customerDetail.shipping_address.country && (
+                                                            <div>{customerDetail.shipping_address.country}</div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="text-xs text-gray-400 italic">No shipping address provided</div>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
-                                {drawerActiveTab === 'activity' && (
-                                    <div className="p-10 text-center">
-                                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <FileText className="w-8 h-8 text-gray-300" />
-                                        </div>
-                                        <div className="text-gray-500 text-sm">No activity logs found</div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
-                        ) : (
-                            <div className="flex-1 flex items-center justify-center text-gray-400">
-                                No customer details available
+                        )}
+                        {drawerActiveTab === 'activity' && (
+                            <div className="p-10 text-center">
+                                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <FileText className="w-8 h-8 text-gray-300" />
+                                </div>
+                                <div className="text-gray-500 text-sm">No activity logs found</div>
                             </div>
                         )}
                     </div>
-                </div>
-            )}
+                ) : (
+                    <div className="flex-1 flex items-center justify-center text-gray-400">
+                        No customer details available
+                    </div>
+                )}
+            </div>
+        </div>
+    )
+}
 
-            {/* Add External User Dialog */}
+{/* Add External User Dialog */ }
             <Dialog open={addUserDialogOpen} onClose={() => setAddUserDialogOpen(false)} maxWidth="sm" fullWidth>
                 <DialogTitle>Add External User</DialogTitle>
                 <DialogContent>
@@ -3096,7 +3135,7 @@ export const InvoiceAdd: React.FC = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* Add Contact Person Dialog */}
+{/* Add Contact Person Dialog */ }
             <Dialog
                 open={contactPersonDialogOpen}
                 onClose={() => setContactPersonDialogOpen(false)}
@@ -3280,6 +3319,6 @@ export const InvoiceAdd: React.FC = () => {
                 </DialogActions>
             </Dialog>
 
-        </div>
+        </div >
     );
 };

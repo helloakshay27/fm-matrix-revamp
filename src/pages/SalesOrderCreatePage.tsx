@@ -1912,13 +1912,16 @@ export const SalesOrderCreatePage: React.FC = () => {
                                     value={selectedTerm}
                                     onChange={(e) => setSelectedTerm(e.target.value)}
                                     renderValue={(val) => {
+                                        if (!val) {
+                                            return <span className="text-gray-400">Select payment term</span>;
+                                        }
                                         const found = filteredTerms.find(term => term.id === val);
                                         return found ? found.name : val;
                                     }}
                                     displayEmpty
                                     sx={fieldStyles}
                                 >
-                                    <MenuItem value="" disabled>
+                                    <MenuItem value="">
                                         Select payment term
                                     </MenuItem>
 

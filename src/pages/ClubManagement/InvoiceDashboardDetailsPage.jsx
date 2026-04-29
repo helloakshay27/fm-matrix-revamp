@@ -566,10 +566,10 @@ export const InvoiceDashboardDetailsPage = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge className={`${getStatusColor(invoiceData.status)} border`}>
-              {invoiceData.status?.toUpperCase()}
-            </Badge>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className={`${getStatusColor(invoiceData.status)} border`}>
+                            {invoiceData.status?.replace(/_/g, " ").toUpperCase()}
+                        </Badge>
 
             {invoiceData?.approval_status?.approval_levels?.length > 0 && (
               <Button
@@ -760,15 +760,11 @@ export const InvoiceDashboardDetailsPage = () => {
                               </button>
                             </TableCell>
 
-                            <TableCell>
-                              <Badge
-                                className={getStatusColor(
-                                  invoiceData.sale_order.status
-                                )}
-                              >
-                                {invoiceData.sale_order.status?.toUpperCase()}
-                              </Badge>
-                            </TableCell>
+                                                        <TableCell>
+                                                            <Badge className={getStatusColor(invoiceData.sale_order.status)}>
+                                                                {invoiceData.sale_order.status?.replace(/_/g, " ").toUpperCase()}
+                                                            </Badge>
+                                                        </TableCell>
 
                             <TableCell>
                               {formatDate(invoiceData.sale_order.shipment_date)}
@@ -782,93 +778,61 @@ export const InvoiceDashboardDetailsPage = () => {
               </Accordion>
             )}
 
-            {/* Invoice Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-primary" />
-                  Invoice Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Invoice Number
-                    </p>
-                    <p className="text-base font-semibold mt-1">
-                      {invoiceData.invoice_number}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Order Number
-                    </p>
-                    <p className="text-base font-semibold mt-1">
-                      {invoiceData.order_number || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Invoice Date
-                    </p>
-                    <p className="text-base font-semibold mt-1">
-                      {formatDate(invoiceData.date)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Due Date
-                    </p>
-                    <p className="text-base font-semibold mt-1">
-                      {formatDate(invoiceData.due_date)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Payment Terms
-                    </p>
-                    <p className="text-base font-semibold mt-1">
-                      {invoiceData.payment_term || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Salesperson
-                    </p>
-                    <p className="text-base font-semibold mt-1">
-                      {invoiceData.sales_person_name || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Subject
-                    </p>
-                    <p className="text-base font-semibold mt-1 break-all">
-                      {invoiceData.subject || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Tax Type
-                    </p>
-                    <p className="text-base font-semibold mt-1">
-                      {invoiceData.tax_type?.toUpperCase() || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Status
-                    </p>
-                    <Badge
-                      className={`${getStatusColor(invoiceData.status)} border mt-1`}
-                    >
-                      {invoiceData.status.toUpperCase()}
-                    </Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                        {/* Invoice Information */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileText className="h-5 w-5 text-primary" />
+                                    Invoice Information
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Invoice Number</p>
+                                        <p className="text-base font-semibold mt-1">{invoiceData.invoice_number}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Order Number</p>
+                                        <p className="text-base font-semibold mt-1">{invoiceData.order_number || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Invoice Date</p>
+                                        <p className="text-base font-semibold mt-1">
+                                            {formatDate(invoiceData.date)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Due Date</p>
+                                        <p className="text-base font-semibold mt-1">
+                                            {formatDate(invoiceData.due_date)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Payment Terms</p>
+                                        <p className="text-base font-semibold mt-1">{invoiceData.payment_term || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Salesperson</p>
+                                        <p className="text-base font-semibold mt-1">{invoiceData.sales_person_name || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Subject</p>
+                                        <p className="text-base font-semibold mt-1 break-all">{invoiceData.subject || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Tax Type</p>
+                                        <p className="text-base font-semibold mt-1">{invoiceData.tax_type?.toUpperCase() || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-medium text-muted-foreground">Status</p>
+                                        <Badge className={`${getStatusColor(invoiceData.status)} border mt-1`}>
+                                            {invoiceData.status.replace(/_/g, " ").toUpperCase()}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
 
             {/* Items Table */}
             <Card>
