@@ -7,7 +7,6 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import "./styles/theme.css"; /* Lockated Brand Theme — loaded AFTER tailwind utilities so overrides cascade correctly */
 
 /* Mobile-friendly scrollbar styling */
 .scrollbar-thin {
@@ -1551,7 +1550,6 @@ button.text-blue-600 {
 .quill-content li[data-list="ordered"] {
   list-style-type: decimal;
 }
-
 
 /* Hide Quill UI helper span */
 .quill-content .ql-ui {

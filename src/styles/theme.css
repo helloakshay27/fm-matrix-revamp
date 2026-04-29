@@ -489,29 +489,56 @@ select:focus {
   background-color: var(--color-primary) !important;
 }
 
-/* Radix Checkbox - only override checked state with #C72030 class */
+/* Native HTML checkbox & radio — accent-color drives the browser-native tint.
+   CSS !important beats non-!important inline style="accentColor:#C72030" */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-primary) !important;
+}
+
+/* Radix Checkbox - checked state (any usage) */
 [data-state="checked"][class*="bg-[#C72030]"],
 [data-state="checked"].bg-\[\#C72030\],
 [data-state="checked"][class*="border-[#C72030]"],
-[data-state="checked"].border-\[\#C72030\] {
+[data-state="checked"].border-\[\#C72030\],
+[role="checkbox"][data-state="checked"] {
   background-color: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
 }
 
-/* Radix Radio - only override if it has #C72030 class */
+/* Radix Radio - any radio button, checked or unchecked border/ring */
+[role="radio"] {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+[role="radio"][data-state="checked"] {
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
 [role="radio"][class*="text-[#C72030]"],
 [role="radio"].text-\[\#C72030\] {
   color: var(--color-primary) !important;
 }
-
 [role="radio"][class*="border-[#C72030]"],
 [role="radio"].border-\[\#C72030\] {
   border-color: var(--color-primary) !important;
 }
 
-/* Radio circle fill - only for #C72030 */
+/* Radio inner indicator circle fill */
+[role="radio"] span,
+[role="radio"] > span {
+  background-color: var(--color-primary) !important;
+}
+[role="radio"] svg,
 [role="radio"] svg[class*="fill-[#C72030]"],
 [role="radio"] svg[class*="text-[#C72030]"] {
+  fill: var(--color-primary) !important;
+  color: var(--color-primary) !important;
+}
+
+/* Flag / bookmark SVG icons using Tailwind red-500 as brand action colour */
+svg.fill-red-500,
+svg.text-red-500.fill-red-500 {
   fill: var(--color-primary) !important;
   color: var(--color-primary) !important;
 }
