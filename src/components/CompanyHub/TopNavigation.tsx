@@ -345,7 +345,9 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
     for (const module of userRole.lock_modules) {
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       )
         continue;
       const firstActiveFunction = module.lock_functions.find(
