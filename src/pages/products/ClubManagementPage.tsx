@@ -1686,7 +1686,7 @@ const clubData: ProductData = {
         {
           rank: "1",
           segment:
-            "Premium Sports Clubs (Padel, Squash, Badminton, Pickleball)",
+            "Premium Sports Clubs (Padel, Squash, Badminton, Pickleball) (Clubs)",
           indicator:
             "300+ padel courts in India 2025, growing 40%+ YoY; 1,200+ squash courts; 5,000+ badminton clubs",
           whyMatters:
@@ -1698,7 +1698,7 @@ const clubData: ProductData = {
         },
         {
           rank: "2",
-          segment: "Premium and Multi-Branch Fitness Chains",
+          segment: "Premium and Multi-Branch Fitness Chains (Clubs)",
           indicator:
             "India fitness industry INR 4,500 crore; 15,000+ organised gyms; growing at 12% CAGR",
           whyMatters:
@@ -1710,7 +1710,7 @@ const clubData: ProductData = {
         },
         {
           rank: "3",
-          segment: "Corporate Wellness Centres and Office Fitness Facilities",
+          segment: "Corporate Wellness Centres and Office Fitness Facilities (Clubs)",
           indicator:
             "1,500+ large Indian companies offer on-site fitness; corporate wellness market INR 800 crore and growing",
           whyMatters:
@@ -1722,7 +1722,7 @@ const clubData: ProductData = {
         },
         {
           rank: "4",
-          segment: "Hotel and Resort Amenity Management (Fitness, Spa, Courts)",
+          segment: "Hotel and Resort Amenity Management (Fitness, Spa, Courts) (Hospitality)",
           indicator:
             "India hotel industry 1.5 million rooms; premium hotels invest in sports and wellness amenity as differentiator",
           whyMatters:
@@ -1734,7 +1734,7 @@ const clubData: ProductData = {
         },
         {
           rank: "5",
-          segment: "Residential Society and Gated Community Amenity Management",
+          segment: "Residential Society and Gated Community Amenity Management (Community management)",
           indicator:
             "5,000+ premium gated communities in India; society amenity booking is a recurring friction point for 2.5 crore flat owners",
           whyMatters:
@@ -1746,7 +1746,7 @@ const clubData: ProductData = {
         },
         {
           rank: "6",
-          segment: "Government and Municipal Sports Complexes",
+          segment: "Government and Municipal Sports Complexes (Clubs)",
           indicator:
             "Sports Authority of India (SAI) operates 1,900+ facilities; state governments add several thousand more",
           whyMatters:
@@ -1758,7 +1758,7 @@ const clubData: ProductData = {
         },
         {
           rank: "7",
-          segment: "Standalone Premium Gyms and Boutique Fitness Studios",
+          segment: "Standalone Premium Gyms and Boutique Fitness Studios (Clubs)",
           indicator:
             "30,000+ standalone gyms and studios; boutique segment (CrossFit, pilates, yoga studios) growing 20% YoY",
           whyMatters:
@@ -1782,7 +1782,7 @@ const clubData: ProductData = {
         },
         {
           rank: "9",
-          segment: "University and College Sports Facilities",
+          segment: "University and College Sports Facilities (Clubs)",
           indicator:
             "900+ universities, 40,000+ colleges; most have multi-sport facilities; sports infrastructure under-utilised",
           whyMatters:
@@ -1794,7 +1794,7 @@ const clubData: ProductData = {
         },
         {
           rank: "10",
-          segment: "Country Clubs and Recreational Member Clubs",
+          segment: "Country Clubs and Recreational Member Clubs (Clubs)",
           indicator:
             "2,000+ traditional country clubs in India (DLF, Gymkhana, golf clubs, social clubs); these are high-ACV accounts",
           whyMatters:

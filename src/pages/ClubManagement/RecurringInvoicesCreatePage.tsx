@@ -225,7 +225,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                     headers: {
                         Authorization: token ? `Bearer ${token}` : undefined,
                         'Content-Type': 'application/json'
-                    }   
+                    }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
                     setSalespersons(res.data.map(person => ({ id: person.id, name: person.name })));
@@ -251,6 +251,10 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                 });
                 if (res && res.data && Array.isArray(res.data)) {
                     setPaymentTermsList(res.data.map(pt => ({ id: pt.id, name: pt.name, days: pt.no_of_days })));
+                    const dueOnReceipt = paymentTermsList.find(t => t.name.toLowerCase() === 'due on receipt');
+                    if (dueOnReceipt) {
+                        setSelectedTerm(dueOnReceipt.id);
+                    }
                 }
             } catch (err) {
                 setPaymentTermsList([]);
@@ -628,7 +632,7 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
     const selectedGstDetail = gstDetails.find(g => String(g.id) === String(selectedGstDetailId)) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
 
     const fetchCustomerDetail = async (
-        customerId: string | number, 
+        customerId: string | number,
         preferredGstin?: string,
         newAddressToSelect?: { type: 'billing' | 'shipping', attention: string, address: string, pin_code: string }
     ) => {
@@ -668,8 +672,8 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
             // Billing address logic
             let finalBilling = null;
             if (newAddressToSelect?.type === 'billing') {
-                finalBilling = nextBilling.find(a => 
-                    a.attention === newAddressToSelect.attention && 
+                finalBilling = nextBilling.find(a =>
+                    a.attention === newAddressToSelect.attention &&
                     a.address === newAddressToSelect.address &&
                     a.pin_code === newAddressToSelect.pin_code
                 );
@@ -678,16 +682,16 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                 finalBilling = nextBilling.find(a => String(a.id) === String(selectedBillingAddressId));
             }
             if (!finalBilling) {
-                finalBilling = data.default_billing_address 
-                    ? mapAddress(data.default_billing_address, 'billing') 
+                finalBilling = data.default_billing_address
+                    ? mapAddress(data.default_billing_address, 'billing')
                     : (nextBilling.length > 0 ? nextBilling[0] : null);
             }
 
             // Shipping address logic
             let finalShipping = null;
             if (newAddressToSelect?.type === 'shipping') {
-                finalShipping = nextShipping.find(a => 
-                    a.attention === newAddressToSelect.attention && 
+                finalShipping = nextShipping.find(a =>
+                    a.attention === newAddressToSelect.attention &&
                     a.address === newAddressToSelect.address &&
                     a.pin_code === newAddressToSelect.pin_code
                 );
@@ -696,8 +700,8 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                 finalShipping = nextShipping.find(a => String(a.id) === String(selectedShippingAddressId));
             }
             if (!finalShipping) {
-                finalShipping = data.default_shipping_address 
-                    ? mapAddress(data.default_shipping_address, 'shipping') 
+                finalShipping = data.default_shipping_address
+                    ? mapAddress(data.default_shipping_address, 'shipping')
                     : (nextShipping.length > 0 ? nextShipping[0] : null);
             }
 
@@ -1461,7 +1465,8 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                 <FormControl fullWidth error={!!errors.customer}>
                                     <Select
                                         value={selectedCustomer?.id || ''}
-                                        onChange={(e) => {                                            const customerId = e.target.value;
+                                        onChange={(e) => {
+                                            const customerId = e.target.value;
                                             const customer = customers.find(c => c.id === customerId);
                                             setSelectedCustomer(customer || null);
                                             setSelectedBillingAddressId(null);
@@ -1831,12 +1836,12 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">
+                            {/* <label className="block text-sm font-medium mb-2">
                                 Payment Terms<span className="text-red-500">*</span>
                             </label>
-                            <FormControl fullWidth error={!!errors.paymentTerms}>
+                            <FormControl fullWidth error={!!errors.paymentTerms}> */}
                                 {/* <InputLabel>Payment Terms</InputLabel> */}
-                                <Select
+                                {/* <Select
                                     value={selectedTerm}
                                     label="Payment Terms"
                                     onChange={e => setSelectedTerm(e.target.value)}
@@ -1852,7 +1857,43 @@ export const RecurringInvoicesCreatePage: React.FC = () => {
                                     ))}
 
                                 </Select>
+                            </FormControl> */}
+
+                            <label className="block text-sm font-medium mb-2">
+                                Payment Terms<span className="text-red-500">*</span>
+                            </label>
+
+                            <FormControl fullWidth error={!!errors.paymentTerms}>
+                                <Select
+                                    value={selectedTerm || ""}
+                                    onChange={(e) => setSelectedTerm(e.target.value)}
+                                    displayEmpty
+                                    renderValue={(val) => {
+                                        if (!val) {
+                                            return <span className="text-gray-400">Select payment term</span>;
+                                        }
+
+                                        const found = paymentTermsList.find(
+                                            (term) => String(term.id) === String(val)
+                                        );
+
+                                        return found ? found.name : val;
+                                    }}
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="">
+                                        <span className="text-gray-400">Select payment term</span>
+                                    </MenuItem>
+
+                                    {filteredTerms.map((term) => (
+                                        <MenuItem key={term.id || term.name} value={String(term.id)}>
+                                            {term.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
                             </FormControl>
+
+
                             {/* Configure Payment Terms Modal */}
                             {showConfig && (
                                 <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">

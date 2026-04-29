@@ -490,7 +490,7 @@ export const BillDetails = () => {
               {salesOrder.status.toUpperCase()}
             </Badge> */}
             <Badge className={`${getStatusColor(salesOrder.status)} border`}>
-              {salesOrder.status?.toUpperCase()}
+              {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
             </Badge>
             {(salesOrder as any)?.approval_status?.approval_levels?.length > 0 && (
               <Button
