@@ -675,7 +675,7 @@ const cpManagementData: ProductData = {
         {
           segment: 'Tier A Residential Developers — India',
           demographics: 'Organisations with INR 500Cr-5,000Cr+ annual sales. C-suite and VP-level buyers. IT-enabled, SAP and Salesforce live. Primarily Mumbai, Delhi NCR, Pune, Bengaluru, Hyderabad.',
-          industry: 'Real Estate Development',
+          industry: 'Residential Real Estate',
           painPoints: `1. (Industry) CP commissions are the single largest variable sales cost — no systematic tool to manage scheme accuracy at scale leads to disputes and overpayment.
 2. (Company) CP teams in smaller developer brands struggle to retain top CPs who default to Tier A developers with structured programs.
 3. (Company) No dedicated CP management software — everything runs on SFDC, Excel, and email.`,
@@ -685,7 +685,7 @@ const cpManagementData: ProductData = {
         {
           segment: 'Tier B Residential Developers — India',
           demographics: 'INR 100Cr-500Cr annual sales. Smaller tech footprint — may not have SAP or full SFDC. 100-1,000 CPs. Tier 1 and Tier 2 cities. Sales-led culture.',
-          industry: 'Real Estate Development',
+          industry: 'Residential Real Estate',
           painPoints: `1. (Industry) Smaller developer brands struggle to retain top CPs who default to Tier A developers with structured programs.
 2. (Company) No dedicated CP management software — everything runs on Excel, email, and phone.`,
           notSolved: 'Top CP talent shifts inventory to competitors, end-buyer misinformation creates legal liability, brokerage errors cause CP relationship breakdowns, and developer brand perception suffers among broker community.',
@@ -703,7 +703,7 @@ const cpManagementData: ProductData = {
         {
           segment: 'Independent Channel Partners and Small Brokerage Firms — India',
           demographics: 'Individual brokers or 1-20 person firms. RERA registered. Monthly transaction volumes of 2-20 bookings. Active across 3-10 developer relationships simultaneously. Primarily mobile-first users.',
-          industry: 'Real Estate Brokerage',
+          industry: 'Real Estate Brokerage (Real Estate Development)',
           painPoints: `1. (Industry) CPs juggling 10 developer portals and 10 different commission structures cannot optimise their effort toward the highest-return developer.
 2. (Company) Small firms have no visibility on brokerage due dates.`,
           notSolved: 'CP defaults to the developer who calls them most — not the one with the best product. Cash flow stress leads CPs to take bridging loans or exit the profession. End-buyer receives substandard marketing material.',
@@ -712,7 +712,7 @@ const cpManagementData: ProductData = {
         {
           segment: 'Large IPC Firms — India and GCC',
           demographics: 'JLL, CBRE, Knight Frank, Anarock, and regional equivalents. 100-2,000 associate brokers. Multi-developer, multi-city relationships. Both India and GCC geographies.',
-          industry: 'Real Estate Brokerage and Advisory',
+          industry: 'Real Estate Brokerage and Advisory (Real Estate Development)',
           painPoints: `1. (Industry) IPC firms managing hundreds of associates need consolidated performance visibility that no single developer portal provides.
 2. (Company) Brokerage reconciliation across multiple developer relationships consumes disproportionate admin time.`,
           notSolved: 'Associate productivity is unmeasurable at the firm level, brokerage leakage from unregistered sub-CPs is undetected, and IPC firms cannot demonstrate ROI to developer clients with data.',
@@ -1094,7 +1094,7 @@ const cpManagementData: ProductData = {
         },
         {
           rank: '4',
-          industry: 'Luxury and Ultra-Luxury Residential',
+          industry: 'Luxury and Ultra-Luxury (Residential)',
           features: 'Redemption Store (Lounge, Experiences, Travel), Tier Management, Personalised Collateral, Analytics. Smaller CP networks but high-value transactions.',
           useCase: 'Luxury developers use the platform to run exclusive VIP reward programs for top-performing CPs — airport lounge access, international experiences, curated travel. Collateral personalization ensures brand consistency at the premium end.',
           profile: 'Ultra-luxury developer with ASPs above INR 5Cr per unit. 20-150 active CPs. Relationship-driven sales model. Mumbai, Delhi NCR, Dubai, Abu Dhabi.',
@@ -1118,7 +1118,7 @@ const cpManagementData: ProductData = {
         },
         {
           rank: '6',
-          industry: 'Real Estate Brokerage Aggregators (IPC Firms)',
+          industry: 'Real Estate Brokerage Aggregators (IPC Firms) (Real Estate Development)',
           features: 'Sub-CP management, My Activity, Reports, Brokerage Summary, Analytics. Master CP and associate management are central use cases.',
           useCase: 'Large IPC firms (JLL, CBRE, Knight Frank, Anarock) use the sub-CP hierarchy to manage their associate networks across multiple developer relationships. Consolidated performance tracking and brokerage summaries replace manual reconciliation.',
           profile: 'National or regional IPC firm. 100-2,000 associates. Multi-developer, multi-city relationships. India metros and GCC.',
@@ -1130,7 +1130,7 @@ const cpManagementData: ProductData = {
         },
         {
           rank: '7',
-          industry: 'Real Estate Investment and Fund Management',
+          industry: 'Real Estate Investment and Fund Management (Asset Management)',
           features: 'Analytics, Brokerage Summary, Reports, AOP. Fund managers use data outputs to assess CP network health and channel efficiency as part of asset portfolio diligence.',
           useCase: 'Funds investing in real estate developers use the platform’s analytics layer to evaluate CP network health, channel efficiency, and sales velocity as diligence inputs. Not primary operators of the platform.',
           profile: 'Real estate PE funds or REITs with portfolio company investments in active developers. India and GCC.',
@@ -1166,7 +1166,7 @@ const cpManagementData: ProductData = {
         },
         {
           rank: '10',
-          industry: 'Proptech Platforms and Developer Marketplaces',
+          industry: 'Proptech Platforms and Developer Marketplaces (Real Estate Development)',
           features: 'Integrations (CRM, Accounting), API layer. Marketplaces building developer partnerships use the integration connectors.',
           useCase: 'Proptech marketplaces (e.g. 99acres, Housing.com, Bayut) can integrate the platform’s CP management layer to offer structured broker programs to their developer clients as a value-added service.',
           profile: 'Proptech platform with developer inventory listings and registered broker base. India and GCC.',

@@ -650,7 +650,7 @@ const productData = {
     detailedMarketAnalysis: {
       targetAudience: [
         {
-          segment: "Technology / SaaS",
+          segment:"Technology / SaaS 50–300 employees Bengaluru, Pune, Hyderabad, Dubai Growth-stage companies",
           demographics:
             "50–300 employees | Bengaluru, Pune, Hyderabad, Dubai | Growth-stage companies",
           industry: "Technology",
@@ -664,7 +664,7 @@ const productData = {
           primaryBuyer: "CTO / VP Engineering",
         },
         {
-          segment: "Real Estate & Construction",
+          segment: " Real Estate & Construction 5–50 active projectsPan-India + UAE, Saudi Mid-to-large developers",
           demographics:
             "5–50 active projects | Pan-India + UAE, Saudi | Mid-to-large developers",
           industry: "Real Estate & Construction",
@@ -678,7 +678,7 @@ const productData = {
           primaryBuyer: "Project Director / COO",
         },
         {
-          segment: "Professional Services (Consulting, Legal, Audit)",
+          segment: "Professional Services (Consulting, Legal, Audit) 20–150 professionals | Mumbai, Delhi, Bengaluru + Dubai DIFC",
           demographics:
             "20–150 professionals | Mumbai, Delhi, Bengaluru + Dubai DIFC",
           industry: "Professional Services",

@@ -3066,7 +3066,7 @@ export const useCases: UseCase[] = [
   },
   {
     rank: 2,
-    industry: "Commercial Real Estate Occupiers (BFSI and IT)",
+    industry: "Commercial Real Estate Occupiers (BFSI and IT) (Offices)",
     howRelevant:
       "A bank with 150 branch offices uses the Location Hierarchy (Country to Circle) to filter all Maharashtra branches and see aggregate rent exposure in one view. Audit Logs for All Changes satisfy internal audit requirements for every rent escalation change. The OPEX and Expense Management module tracks housekeeping, security, and AMC costs per branch. The AMC Management module schedules annual maintenance visits for ATM, CCTV, and fire suppression systems at each branch.",
     idealProfile:
@@ -3080,7 +3080,7 @@ export const useCases: UseCase[] = [
   },
   {
     rank: 3,
-    industry: "Property Management Companies",
+    industry: "Property Management Companies (Mixed Real Estate)",
     howRelevant:
       "A property management firm managing 100 commercial properties for clients uses the Tenant Directory to maintain all tenant profiles, and Rent Collection and Financial Tracking to generate monthly rent collection reports per property owner client. The Maintenance Request Ticketing module logs and tracks all tenant-raised maintenance issues with vendor assignment and SLA tracking. The Portfolio Overview Dashboard gives each property owner client a live view of their portfolio performance.",
     idealProfile:
@@ -3094,7 +3094,7 @@ export const useCases: UseCase[] = [
   },
   {
     rank: 4,
-    industry: "Industrial and Logistics",
+    industry: "Industrial and Logistics (Warehousing)",
     howRelevant:
       "A logistics company with 30 warehouses across India uses the Property Master Database to maintain all warehouse records including carpet area, chargeable area, and loading bay count. The Utilities Management module tracks electricity consumption per warehouse and flags properties where consumption has risen more than 15% year-on-year. The Security Deposit Management module flags Rs 8 crore in deposits held in warehouses with leases expiring in the next 6 months.",
     idealProfile:
@@ -3122,7 +3122,7 @@ export const useCases: UseCase[] = [
   },
   {
     rank: 6,
-    industry: "Government and Public Sector Undertakings",
+    industry: "Government and Public Sector Undertakings (Tenants)",
     howRelevant:
       "A central PSU with 100 leased offices uses the Audit Logs for All Changes to satisfy CAG audit requirements for every lease modification. The Compliance Repository stores all municipal approvals with validity dates. The Security Deposit Management module reconciles Rs 15 crore in security deposits held across all locations. The Location Hierarchy organises all offices by State and Region for zone-wise reporting to the board.",
     idealProfile:
@@ -3136,7 +3136,7 @@ export const useCases: UseCase[] = [
   },
   {
     rank: 7,
-    industry: "Corporate Enterprises and Conglomerates",
+    industry: "Corporate Enterprises and Conglomerates (Offices)",
     howRelevant:
       "A diversified conglomerate with 250 leased properties spanning offices, factories, and retail outlets across 8 business units uses Custom Fields for Leases to tag each lease with Business Unit and Cost Centre Code. The Regional Performance Insights module allows the Group CFO to see rent exposure by business unit and geography in one dashboard. OPEX and Expense Management tracks maintenance and utility costs per property and rolls up to business unit P&L.",
     idealProfile:
@@ -3164,7 +3164,7 @@ export const useCases: UseCase[] = [
   },
   {
     rank: 9,
-    industry: "Hospitality and Food and Beverage",
+    industry: "Hospitality and Food and Beverage (F&B)",
     howRelevant:
       "A restaurant chain with 80 outlets uses the Rent Due Scheduling module to auto-generate monthly rent due entries per outlet based on variable lease terms. The OPEX Management module tracks per-outlet kitchen maintenance, HVAC, and pest control costs for P&L reporting. The Compliance Management module tracks FSSAI licences, fire NOC, and health certificates per outlet with renewal alerts 90 days in advance.",
     idealProfile:

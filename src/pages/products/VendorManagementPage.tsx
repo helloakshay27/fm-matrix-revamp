@@ -1202,6 +1202,8 @@ const vendorManagementData: ProductData = {
           globalPrice: "USD 40,000–200,000+",
           strength: "Deep SAP ERP integration; global procurement suite",
           weakness: "No India-specific GST/KYC workflow; extremely high cost",
+          sovereignty: "",
+          segment: "",
           indiaPresence: "Strong – large IT/manufacturing",
           targetSegment: "Large Enterprise",
           differentiator2026:
@@ -1216,6 +1218,8 @@ const vendorManagementData: ProductData = {
             "India-origin; Merlin AI suite; IDC MarketScape leader 2025",
           weakness:
             "No dedicated re-KYC or assessment module; weak vendor portal",
+          sovereignty: "",
+          segment: "",
           indiaPresence: "Very Strong – Mid to large enterprise",
           targetSegment: "Mid to Large Enterprise",
           differentiator2026:
@@ -1229,6 +1233,8 @@ const vendorManagementData: ProductData = {
           strength: "Workforce/contractor VMS; SAP ecosystem",
           weakness:
             "Contractor-focused; not designed for material vendor onboarding",
+          sovereignty: "",
+          segment: "",
           indiaPresence: "Moderate – multinationals",
           targetSegment: "Enterprise / Contingent Workforce",
           differentiator2026:
@@ -1242,6 +1248,8 @@ const vendorManagementData: ProductData = {
           strength: "Oracle ERP native; strong analytics; global scale",
           weakness:
             "Complex implementation; no India GST defaulter or re-KYC flow",
+          sovereignty: "",
+          segment: "",
           indiaPresence: "Moderate – large enterprises",
           targetSegment: "Large Enterprise",
           differentiator2026:
@@ -1254,6 +1262,8 @@ const vendorManagementData: ProductData = {
           globalPrice: "USD 35,000–180,000",
           strength: "Intelligent spend management; 2025 Navi multi-agent AI",
           weakness: "Premium pricing; inconsistent local India support",
+          sovereignty: "",
+          segment: "",
           indiaPresence: "Limited – enterprise",
           targetSegment: "Enterprise",
           differentiator2026:
@@ -1266,6 +1276,8 @@ const vendorManagementData: ProductData = {
           globalPrice: "USD 12,000–60,000",
           strength: "Acquired BravoSolution Jan 2025; strong compliance mgmt",
           weakness: "No India-specific statutory validation; complex UI",
+          sovereignty: "",
+          segment: "",
           indiaPresence: "Moderate",
           targetSegment: "SME to Mid-Enterprise",
           differentiator2026:
@@ -1278,6 +1290,8 @@ const vendorManagementData: ProductData = {
           globalPrice: "USD 18,000–90,000",
           strength: "India delivery; unified source-to-pay; strong analytics",
           weakness: "Weak vendor self-service portal; no auction module",
+          sovereignty: "",
+          segment: "",
           indiaPresence: "Moderate – Mid to Large Enterprise",
           targetSegment: "BPO/FMCG",
           differentiator2026:
@@ -1291,6 +1305,8 @@ const vendorManagementData: ProductData = {
           strength:
             "Highly affordable; no-code customization; Indian SME focus",
           weakness: "No pre-qualification, re-KYC, or SAP integration",
+          sovereignty: "",
+          segment: "",
           indiaPresence: "Very Strong – SME",
           targetSegment: "SME / Startup",
           differentiator2026:
@@ -1303,6 +1319,8 @@ const vendorManagementData: ProductData = {
           globalPrice: "USD 3,000–15,000",
           strength: "Easy UI; no-code approvals; fast deployment for SME",
           weakness: "No assessment engine, GST validation, or vendor portal",
+          sovereignty: "",
+          segment: "",
           indiaPresence: "Strong – SME to Mid-market",
           targetSegment: "SME / Mid-Market",
           differentiator2026:
@@ -1316,6 +1334,8 @@ const vendorManagementData: ProductData = {
           strength:
             "Tata brand trust; regulated sector templates; public sector ready",
           weakness: "Limited vendor self-service; limited SaaS flexibility",
+          sovereignty: "",
+          segment: "",
           indiaPresence: "Strong – PSUs/manufacturing",
           targetSegment: "Public Sector / Manufacturing",
           differentiator2026:
@@ -1328,7 +1348,7 @@ const vendorManagementData: ProductData = {
       /* ── Part 2: Top 10 Industries by VMS Relevance ──────────────────────── */
       topIndustries: [
         {
-          rank: "1",
+          rank: 1,
           industry: "Manufacturing",
           indiaRelevance: "Very High",
           vendorComplexity: "High — 100–500+ vendors",
@@ -1345,7 +1365,7 @@ const vendorManagementData: ProductData = {
           dealSize: "₹5–25L/yr",
         },
         {
-          rank: "2",
+          rank: 2,
           industry: "Real Estate",
           indiaRelevance: "Very High",
           vendorComplexity: "High — mix of material+services",
@@ -1362,7 +1382,7 @@ const vendorManagementData: ProductData = {
           dealSize: "₹3–15L/yr",
         },
         {
-          rank: "3",
+          rank: 3,
           industry: "Infrastructure & EPC",
           indiaRelevance: "High",
           vendorComplexity: "Very High — multi-tier vendors",
@@ -1379,7 +1399,7 @@ const vendorManagementData: ProductData = {
           dealSize: "₹8–30L/yr",
         },
         {
-          rank: "4",
+          rank: 4,
           industry: "Retail & E-Commerce",
           indiaRelevance: "High",
           vendorComplexity: "High — supplier diversity",
@@ -1395,7 +1415,7 @@ const vendorManagementData: ProductData = {
           dealSize: "₹3–12L/yr",
         },
         {
-          rank: "5",
+          rank: 5,
           industry: "Logistics & Supply",
           indiaRelevance: "High",
           vendorComplexity: "Medium — fleet + service vendors",
@@ -1411,7 +1431,7 @@ const vendorManagementData: ProductData = {
           dealSize: "₹2–8L/yr",
         },
         {
-          rank: "6",
+          rank: 6,
           industry: "Healthcare & Pharma",
           indiaRelevance: "High",
           vendorComplexity: "High — regulated vendors",
@@ -1428,7 +1448,7 @@ const vendorManagementData: ProductData = {
           dealSize: "₹4–15L/yr",
         },
         {
-          rank: "7",
+          rank: 7,
           industry: "BFSI",
           indiaRelevance: "Medium-High",
           vendorComplexity: "Medium — IT + service vendors",
@@ -1443,7 +1463,7 @@ const vendorManagementData: ProductData = {
           dealSize: "₹3–10L/yr",
         },
         {
-          rank: "8",
+          rank: 8,
           industry: "Hospitality & FM",
           indiaRelevance: "Medium",
           vendorComplexity: "High — high vendor turnover",
@@ -1459,7 +1479,7 @@ const vendorManagementData: ProductData = {
           dealSize: "₹2–8L/yr",
         },
         {
-          rank: "9",
+          rank: 9,
           industry: "IT & Technology",
           indiaRelevance: "Medium",
           vendorComplexity: "Medium — global + local vendors",
@@ -1475,7 +1495,7 @@ const vendorManagementData: ProductData = {
           dealSize: "₹2–6L/yr",
         },
         {
-          rank: "10",
+          rank: 10,
           industry: "Education & EdTech",
           indiaRelevance: "Low-Medium",
           vendorComplexity: "Medium — campus services vendors",
@@ -1802,7 +1822,7 @@ const vendorManagementData: ProductData = {
         },
         {
           rank: "2",
-          industry: "Real Estate & Construction",
+          industry: "Real Estate & Construction (Real Estate Development)",
           primaryUser: "Billing / Contract User + Finance",
           corePainPoint:
             "Services and FM vendors managed over email, leading to delayed approvals and compliance gaps for RERA audits.",
@@ -1820,7 +1840,7 @@ const vendorManagementData: ProductData = {
         },
         {
           rank: "3",
-          industry: "Infrastructure & EPC",
+          industry: "Infrastructure & EPC (EPCE)",
           primaryUser: "Purchase HOD + QA",
           corePainPoint:
             "Multi-tier subcontractor compliance impossible without centralized records. Labour compliance and statutory docs scattered.",
@@ -1838,7 +1858,7 @@ const vendorManagementData: ProductData = {
         },
         {
           rank: "4",
-          industry: "Retail & E-commerce",
+          industry: "Retail & E-commerce (retail chain)",
           primaryUser: "Purchase Manager + Finance",
           corePainPoint:
             "Onboarding hundreds of suppliers across categories with product compliance, FSSAI, and GST validation handled manually.",
@@ -1856,7 +1876,7 @@ const vendorManagementData: ProductData = {
         },
         {
           rank: "5",
-          industry: "Logistics & Supply Chain",
+          industry: "Logistics & Supply Chain (warehousing)",
           primaryUser: "Purchase Manager + Finance",
           corePainPoint:
             "Fleet and service vendor re-KYC not triggered on time; bank data and GST updates missed, causing payment rejections.",
@@ -1929,7 +1949,7 @@ const vendorManagementData: ProductData = {
         },
         {
           rank: "9",
-          industry: "IT & Technology",
+          industry: "IT & Technology (IT/ITES)",
           primaryUser: "Purchase Manager + Admin",
           corePainPoint:
             "Global and local software vendors onboarded slowly; no vendor portal for bid comparison; duplicate vendor codes in SAP.",
@@ -1947,7 +1967,7 @@ const vendorManagementData: ProductData = {
         },
         {
           rank: "10",
-          industry: "Education & EdTech",
+          industry: "Education",
           primaryUser: "Purchase Manager + Finance",
           corePainPoint:
             "Campus service vendors (canteen, security, transport) onboarded ad-hoc. No compliance record. Payment approval by email.",
