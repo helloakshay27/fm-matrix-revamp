@@ -10,6 +10,7 @@ import SWOTAnalysis from "./AdminCompassComponent/SWOTAnalysis";
 import { GoalsView } from "./AdminCompassComponent/GoalsView";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 import { toast } from "sonner";
+import GoalsPage from "./AdminCompassComponent/goalsPage";
 
 // ── Design Tokens ──
 const C = {
@@ -1728,17 +1729,17 @@ const BusinessPlanAndGoles = () => {
     text += `CORE VALUES\n${"=".repeat(60)}\n`;
     coreValues.length
       ? coreValues.forEach((v, i) => {
-          text += `${i + 1}. ${v.value}\n`;
-        })
+        text += `${i + 1}. ${v.value}\n`;
+      })
       : (text += `(No core values)\n`);
     text += `\n`;
 
     text += `BRAND PROMISES\n${"=".repeat(60)}\n`;
     brandPromises.length
       ? brandPromises.forEach((p, i) => {
-          text += `${i + 1}. ${p.text}\n`;
-          if (p.kpis?.length) text += `   Tracked by: ${p.kpis.join(", ")}\n`;
-        })
+        text += `${i + 1}. ${p.text}\n`;
+        if (p.kpis?.length) text += `   Tracked by: ${p.kpis.join(", ")}\n`;
+      })
       : (text += `(No brand promises)\n`);
     text += `\n`;
 
@@ -1764,16 +1765,16 @@ const BusinessPlanAndGoles = () => {
     text += `CRITICAL NUMBERS\n${"=".repeat(60)}\n`;
     kpis.length
       ? kpis.forEach((kpi: any, i: number) => {
-          text += `${i + 1}. ${kpi.name || kpi.title || "Unnamed"}\n`;
-          text += `   Current: ${kpi.current_value || 0} / Target: ${kpi.target_value || 0} ${kpi.unit || "#"}\n`;
-          text += `   Frequency: ${kpi.frequency || "N/A"}\n`;
-          const owner =
-            kpi.owner ||
-            kpi.assignee?.name ||
-            kpi.assignee?.full_name ||
-            kpi.assignee?.email;
-          if (owner) text += `   Owner: ${owner}\n`;
-        })
+        text += `${i + 1}. ${kpi.name || kpi.title || "Unnamed"}\n`;
+        text += `   Current: ${kpi.current_value || 0} / Target: ${kpi.target_value || 0} ${kpi.unit || "#"}\n`;
+        text += `   Frequency: ${kpi.frequency || "N/A"}\n`;
+        const owner =
+          kpi.owner ||
+          kpi.assignee?.name ||
+          kpi.assignee?.full_name ||
+          kpi.assignee?.email;
+        if (owner) text += `   Owner: ${owner}\n`;
+      })
       : (text += `(No KPIs)\n`);
     text += `\n`;
 
@@ -1781,15 +1782,15 @@ const BusinessPlanAndGoles = () => {
     text += `KEY PROCESSES\n${"=".repeat(60)}\n`;
     sops.length
       ? sops.forEach((sop: any, i: number) => {
-          text += `${i + 1}. ${sop.system_name || sop.name || "Unnamed"}\n`;
-          text += `   Status: ${sop.status || "to_start"}\n`;
-          const owner =
-            sop.owner ||
-            sop.assignee?.name ||
-            sop.assignee?.full_name ||
-            sop.assignee?.email;
-          if (owner) text += `   Owner: ${owner}\n`;
-        })
+        text += `${i + 1}. ${sop.system_name || sop.name || "Unnamed"}\n`;
+        text += `   Status: ${sop.status || "to_start"}\n`;
+        const owner =
+          sop.owner ||
+          sop.assignee?.name ||
+          sop.assignee?.full_name ||
+          sop.assignee?.email;
+        if (owner) text += `   Owner: ${owner}\n`;
+      })
       : (text += `(No SOPs)\n`);
     text += `\n`;
 
@@ -1800,8 +1801,8 @@ const BusinessPlanAndGoles = () => {
         text += `${key.charAt(0).toUpperCase() + key.slice(1)}:\n`;
         swotData[key].length
           ? swotData[key].forEach((item, i) => {
-              text += `  ${i + 1}. ${item}\n`;
-            })
+            text += `  ${i + 1}. ${item}\n`;
+          })
           : (text += `  (No items)\n`);
         text += `\n`;
       }
@@ -2949,9 +2950,7 @@ const BusinessPlanAndGoles = () => {
 
           {/* Sub-sections */}
           <BhagSection />
-          <MediumTermSection />
-          <ShortTermSection />
-          <QuarterlySection />
+          <GoalsPage />
           <CriticalNumbers />
           <KeyProcessesSection />
           <SWOTAnalysis />
@@ -3301,10 +3300,10 @@ const BusinessPlanAndGoles = () => {
                       {(tempBrandPromises || []).filter(
                         (p) => p.text.trim() !== ""
                       ).length === 0 && (
-                        <p className="text-[13px] text-gray-400 italic">
-                          Add promises above to link KPIs.
-                        </p>
-                      )}
+                          <p className="text-[13px] text-gray-400 italic">
+                            Add promises above to link KPIs.
+                          </p>
+                        )}
                     </div>
                   </div>
                 </div>
