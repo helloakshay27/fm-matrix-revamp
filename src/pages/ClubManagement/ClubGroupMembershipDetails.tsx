@@ -272,7 +272,7 @@ export const ClubGroupMembershipDetails = () => {
   // Payment modal state
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [paymentMode, setPaymentMode] = useState('online');
-  const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [transactionId, setTransactionId] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -1994,10 +1994,20 @@ export const ClubGroupMembershipDetails = () => {
                       <SelectValue placeholder="Select Payment Method" />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
-                      <SelectItem value="upi">UPI</SelectItem>
-                      <SelectItem value="card">Card</SelectItem>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="netbanking">Net Banking</SelectItem>
+                      {
+                        paymentMode === "online" ? (
+                          <>
+                            <SelectItem value="upi">UPI</SelectItem>
+                            <SelectItem value="card">Card</SelectItem>
+                            <SelectItem value="cash">Cash</SelectItem>
+                            <SelectItem value="netbanking">Net Banking</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="offline">Offline</SelectItem>
+                          </>
+                        )
+                      }
                     </SelectContent>
                   </Select>
                 </div>

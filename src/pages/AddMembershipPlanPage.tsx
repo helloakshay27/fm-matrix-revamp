@@ -314,9 +314,9 @@ export const AddMembershipPlanPage = () => {
                 onChange={(e) => {
                   const value = e.target.value;
                   // Only allow letters and spaces, no numbers
-                  if (/^[a-zA-Z\s]*$/.test(value)) {
-                    setFormData({ ...formData, name: value });
-                  }
+                  // if (/^[a-zA-Z\s]*$/.test(value)) {
+                  setFormData({ ...formData, name: value });
+                  // }
                 }}
                 variant="outlined"
               />
