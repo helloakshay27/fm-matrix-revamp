@@ -513,8 +513,9 @@ export const BhagSection = () => {
     }
   }, []);
 
-  const fetchGoals = useCallback(async () => {
-    setIsFetching(true);
+  const fetchGoals = useCallback(async (silent = false) => {
+    // Agar silent true hai, toh loader (skeleton) mat dikhao
+    if (!silent) setIsFetching(true);
     setFetchError(null);
     try {
       const records = await fetchCachedGoals();
@@ -542,10 +543,9 @@ export const BhagSection = () => {
     } catch (err) {
       setFetchError(err.message || "Failed to load BHAG data");
     } finally {
-      setIsFetching(false);
+      if (!silent) setIsFetching(false);
     }
   }, []);
-
   const fetchUsers = useCallback(async () => {
     try {
       const data = await fetchCachedUsers();
@@ -666,26 +666,56 @@ export const BhagSection = () => {
     }
   };
 
+  // UI ko smooth update karne ke liye
+  // UI ko smooth aur accurately update karne ke liye
+  const handleLocalProgress = (id, val) => {
+    const c = clamp(val); // Slider ki percentage
+    setInitiatives((prev) =>
+      prev.map((i) => {
+        if (i.id === id) {
+          // Exact logic based on target value and percentage
+          const target = parseFloat(i.targetValue) || 0;
+          const calculatedCurVal = (c / 100) * target;
+          return { ...i, progress: c, currentValue: String(calculatedCurVal) };
+        }
+        return i;
+      })
+    );
+  };
+
+  // Jab user drag chhod de toh exact calculated value API bhejenge
+  // Jab user drag chhod de toh exact calculated value API bhejenge
   const handleCardSlider = async (id, val) => {
     const c = clamp(val);
-    setInitiatives((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, progress: c } : i))
-    );
+    const goal = initiatives.find((i) => i.id === id);
+
+    // API bhejte waqt current_value calculate karna
+    const target = goal ? parseFloat(goal.targetValue) || 0 : 0;
+    const calculatedCurVal = (c / 100) * target;
+
     try {
       const res = await fetch(apiUrl(`/goals/${id}`), {
         method: "PATCH",
         headers: authHeaders(),
         body: JSON.stringify({
-          goal: { progress_percentage: c, current_value: c },
+          goal: {
+            progress_percentage: c,
+            current_value: calculatedCurVal,
+          },
         }),
       });
-      if (!res.ok) {
-        clearCachedGoals();
-        fetchGoals();
-      }
-    } catch {
+
+      // Update hote hi cache clear karo aur SILENTLY naya data GET karo
       clearCachedGoals();
-      fetchGoals();
+      fetchGoals(true); // <--- 'true' pass kiya taaki loading skeleton na aaye
+
+      if (!res.ok) {
+        toast.error("Failed to update progress on server.");
+      }
+    } catch (err) {
+      clearCachedGoals();
+      fetchGoals(true); // Yahan bhi true pass kiya
+      toast.error("Network error. Progress might not be saved.");
     }
   };
 
@@ -750,7 +780,12 @@ export const BhagSection = () => {
 
   const handleProgressChange = (val) => {
     const c = clamp(val);
-    setTempGoal((prev) => ({ ...prev, progress: c, currentValue: String(c) }));
+    setTempGoal((prev) => {
+      // Modal ke current goal ke target value se multiply karna
+      const target = parseFloat(prev.targetValue) || 0;
+      const calculatedCurVal = (c / 100) * target;
+      return { ...prev, progress: c, currentValue: String(calculatedCurVal) };
+    });
   };
 
   const ytId = extractYouTubeId(bhagVideoUrl);
@@ -1211,8 +1246,15 @@ export const BhagSection = () => {
                         step="1"
                         value={ini.progress}
                         onChange={(e) =>
-                          handleCardSlider(ini.id, e.target.value)
+                          handleLocalProgress(ini.id, e.target.value)
                         }
+                        onPointerDown={(e) =>
+                          e.target.setPointerCapture(e.pointerId)
+                        }
+                        onPointerUp={(e) => {
+                          e.target.releasePointerCapture(e.pointerId);
+                          handleCardSlider(ini.id, e.target.value);
+                        }}
                         className="bh-slider-card"
                         style={{ background: sliderBg(ini.progress) }}
                       />
