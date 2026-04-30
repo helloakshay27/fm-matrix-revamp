@@ -910,7 +910,7 @@ const loyaltyEngineData: ProductData = {
       industryUseCases: [
         {
           rank: "1",
-          industry: "Real Estate & Property Development",
+          industry: "Real Estate Development",
           features:
             "AI modules fully applicable.\nTeams: Sales, CRM, Collections, Marketing, Finance.\nFeatures: Transaction Events (demand note/payment triggers), Milestones, Tier Management, Encashment, Escrow Wallet, CRM Integration, Referral rules, Time-Based Events.",
           useCase:

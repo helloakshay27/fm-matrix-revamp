@@ -561,14 +561,17 @@ const ProjectTasksPage = () => {
     const [selectedCreators, setSelectedCreators] = useState<number[]>([]);
     const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
     const [selectedWorkflowStatus, setSelectedWorkflowStatus] = useState<string[]>([]);
+    const [selectedTags, setSelectedTags] = useState<any[]>([]);
     const [dates, setDates] = useState({ startDate: '', endDate: '', completedAt: '' });
     const [projectOptions, setProjectOptions] = useState<any[]>([]);
+    const [tags, setTags] = useState<any[]>([]);
     const [dropdowns, setDropdowns] = useState({
         status: false,
         workflowStatus: false,
         responsiblePerson: false,
         createdBy: false,
         project: false,
+        tags: false,
         startDate: false,
         endDate: false,
         completedAt: false,
@@ -579,6 +582,7 @@ const ProjectTasksPage = () => {
         responsiblePerson: '',
         createdBy: '',
         project: '',
+        tags: '',
     });
 
     // Pause Modal State
@@ -726,6 +730,34 @@ const ProjectTasksPage = () => {
         localStorage.setItem("taskPageViewPreference", selectedView);
     }, [selectedView]);
 
+    // Fetch tags from API
+    useEffect(() => {
+        const fetchTags = async () => {
+            try {
+                const response = baseUrl
+                    ? await axios.get(`https://${baseUrl}/company_tags.json`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    })
+                    : await baseClient.get(`/company_tags.json`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+                const tagsList = response.data || [];
+                setTags(tagsList);
+            } catch (error) {
+                console.log('Error fetching tags:', error);
+                setTags([]);
+            }
+        };
+
+        if (token && baseUrl) {
+            fetchTags();
+        }
+    }, [baseUrl, token]);
+
     // Save filter state to localStorage whenever it changes
     useEffect(() => {
         const filters = {
@@ -734,12 +766,14 @@ const ProjectTasksPage = () => {
             selectedCreators,
             selectedProjects,
             selectedWorkflowStatus,
+            selectedTags,
             dates,
             statusSearch: searchTerms.status,
             workflowStatusSearch: searchTerms.workflowStatus,
             ResponsiblePersonSearch: searchTerms.responsiblePerson,
             creatorSearch: searchTerms.createdBy,
             projectSearch: searchTerms.project,
+            tagsSearch: searchTerms.tags,
         };
         if (
             selectedStatuses?.length > 0 ||
@@ -747,6 +781,7 @@ const ProjectTasksPage = () => {
             selectedCreators?.length > 0 ||
             selectedProjects?.length > 0 ||
             selectedWorkflowStatus?.length > 0 ||
+            selectedTags?.length > 0 ||
             dates.startDate ||
             dates.endDate ||
             dates.completedAt
@@ -759,6 +794,7 @@ const ProjectTasksPage = () => {
         selectedCreators,
         selectedProjects,
         selectedWorkflowStatus,
+        selectedTags,
         dates,
         searchTerms,
     ]);
@@ -778,6 +814,7 @@ const ProjectTasksPage = () => {
                 startDate: false,
                 endDate: false,
                 completedAt: false,
+                tags: false,
                 [key]: true,
             };
         });
@@ -902,6 +939,9 @@ const ProjectTasksPage = () => {
         if (selectedProjects.length > 0) {
             filters['q[project_management_id_in][]'] = selectedProjects;
         }
+        if (selectedTags.length > 0) {
+            filters['q[task_tags_company_tag_id_in][]'] = selectedTags;
+        }
         if (dates.startDate) {
             filters['q[start_date_eq]'] = dates.startDate;
         }
@@ -953,8 +993,9 @@ const ProjectTasksPage = () => {
         setSelectedCreators([]);
         setSelectedProjects([]);
         setSelectedWorkflowStatus([]);
+        setSelectedTags([]);
         setDates({ startDate: '', endDate: '', completedAt: '' });
-        setSearchTerms({ status: '', workflowStatus: '', responsiblePerson: '', createdBy: '', project: '' });
+        setSearchTerms({ status: '', workflowStatus: '', responsiblePerson: '', createdBy: '', project: '', tags: '' });
         localStorage.removeItem('taskFilters');
         setCurrentPage(1);
         // Filters automatically cleared and refetched through useTasks hook
@@ -2597,6 +2638,44 @@ const ProjectTasksPage = () => {
                                         selectedCreators,
                                         setSelectedCreators,
                                         searchTerms.createdBy
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Tags */}
+                        <div className="p-6 py-3">
+                            <div
+                                className="flex items-center justify-between cursor-pointer"
+                                onClick={() => toggleDropdown('tags')}
+                            >
+                                <span className="font-medium text-sm select-none">Tags</span>
+                                {dropdowns.tags ? (
+                                    <ChevronDown className="text-gray-400" />
+                                ) : (
+                                    <ChevronRight className="text-gray-400" />
+                                )}
+                            </div>
+                            {dropdowns.tags && (
+                                <div className="mt-4 border">
+                                    <div className="relative border-b">
+                                        <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="Filter tags..."
+                                            className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
+                                            value={searchTerms.tags}
+                                            onChange={(e) => setSearchTerms({ ...searchTerms, tags: e.target.value })}
+                                        />
+                                    </div>
+                                    {renderCheckboxList(
+                                        tags.map((tag: any) => ({
+                                            label: tag.name || tag.label,
+                                            value: tag.id,
+                                        })),
+                                        selectedTags,
+                                        setSelectedTags,
+                                        searchTerms.tags
                                     )}
                                 </div>
                             )}

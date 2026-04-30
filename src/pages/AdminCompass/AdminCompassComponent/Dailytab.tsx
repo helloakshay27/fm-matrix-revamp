@@ -113,7 +113,7 @@ const SearchableSelect = ({
           value={open ? search : displayValue}
           onClick={() => {
             setOpen(true);
-            setSearch("");
+            search("");
           }}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -381,16 +381,16 @@ const DailyTab = ({
 
   const navigate = useNavigate();
 
-  // ── Auto-populate submitted reports into selectedReports ──
+  // ── Auto-populate checked in reports into selectedReports ──
   useEffect(() => {
     if (dailyData) {
       const reports = dailyData.member_reports || dailyData.reports || [];
-      const submittedIds = reports
-        .filter((r: any) => r.status !== "pending")
+      const checkedInIds = reports
+        .filter((r: any) => r.checked_in_meeting === true)
         .map((r: any) => r.journal_id || r.user_id);
 
       setSelectedReports((prev) => {
-        const combined = new Set([...prev, ...submittedIds]);
+        const combined = new Set([...prev, ...checkedInIds]);
         return Array.from(combined);
       });
     }
@@ -753,7 +753,7 @@ const DailyTab = ({
     };
   };
 
-  const buildMeetingNotesObject = (
+const buildMeetingNotesObject = (
     allReports: any[],
     allMissed: any[],
     meetingNotesText: string
@@ -804,6 +804,7 @@ const DailyTab = ({
           false;
 
         return {
+          user_id: report.user_id, // <--- YAHAN USER ID ADD KIYA HAI
           name: report.name || "Unknown",
           attendance: isAbsent ? "Absent" : "Present",
           self_rating: `${selfRatingVal}/10`,
@@ -819,7 +820,6 @@ const DailyTab = ({
       detailed_reports,
     };
   };
-
   // ── Save Meeting (POST) ──
   const handleSaveMeeting = async () => {
     if (selectedMeetingId === "all" || !selectedMeetingId) {
@@ -1101,10 +1101,10 @@ const DailyTab = ({
         `${allIds.length} report${allIds.length !== 1 ? "s" : ""} selected`
       );
     } else {
-      const submittedIds = memberReports
-        .filter((r: any) => r.status !== "pending")
+      const checkedInIds = memberReports
+        .filter((r: any) => r.checked_in_meeting === true)
         .map((r: any) => r.journal_id || r.user_id);
-      setSelectedReports(submittedIds);
+      setSelectedReports(checkedInIds);
       toast("Selection cleared for pending members", { icon: "✕" });
     }
   };
@@ -1606,6 +1606,7 @@ const DailyTab = ({
                       const isExpanded = expandedReports.includes(rId);
                       const isPending = report.status === "pending";
                       const hasDraft = !!report.daily_report;
+                      const isPermanentlyChecked = report.checked_in_meeting === true;
                       const draftRaw = report.daily_report?.report_data || {};
 
                       const rawDisplayRd = resolveRawSource(report);
@@ -1637,48 +1638,28 @@ const DailyTab = ({
                             normalizedReportName
                       );
 
-                      const sd =
-                        draftRaw?.score_details ||
-                        report.report_data?.score_details ||
-                        {};
+                      // ── NEW LOGIC FOR SCORING ──
+                      const sections = draftRaw?.sections || rawDisplayRd?.sections || displayRd?.sections || report?.report_data?.sections || {};
+                      const kpisFallback = report.kpis || report.report_data?.kpis || rawDisplayRd?.kpis || {};
 
-                      const kpiAchieved =
-                        sd.kpi?.points ??
-                        report.kpis?.score ??
-                        report.score ??
-                        0;
-                      const kpiMax = sd.kpi?.maxPoints ?? 20;
-                      const kpiStr = `${kpiAchieved}/${kpiMax}`;
+                      // Explicit strict checker to prevent `0` from failing over to fallback values
+                      const getScore = (val1: any, val2: any) => {
+                        if (val1 !== undefined && val1 !== null && val1 !== "") return Number(val1);
+                        if (val2 !== undefined && val2 !== null && val2 !== "") return Number(val2);
+                        return 0;
+                      };
 
-                      const tasksAchieved =
-                        sd.tasksIssues?.points ??
-                        report.kpis?.tasks ??
-                        draftRaw?.sections?.tasks_issues ??
-                        0;
-                      const tasksMax = sd.tasksIssues?.maxPoints ?? 25;
-                      const tasksStr = `${tasksAchieved}/${tasksMax}`;
+                      const kpiAchieved = getScore(sections.kpi_achievement, kpisFallback.score);
+                      const kpiStr = `${kpiAchieved}/20`;
 
-                      const issuesAchieved =
-                        sd.tasksIssues?.newIssuesCount ??
-                        report.kpis?.issues ??
-                        0;
-                      const issuesStr = `${issuesAchieved}`;
+                      const tasksIssuesAchieved = getScore(sections.tasks_issues, kpisFallback.tasks);
+                      const tasksIssuesStr = `${tasksIssuesAchieved}/20`;
 
-                      const planAchieved =
-                        sd.planning?.points ??
-                        report.kpis?.planning ??
-                        draftRaw?.sections?.planning ??
-                        0;
-                      const planMax = sd.planning?.maxPoints ?? 25;
-                      const planStr = `${planAchieved}/${planMax}`;
+                      const planAchieved = getScore(sections.planning, kpisFallback.planning);
+                      const planStr = `${planAchieved}/20`;
 
-                      const timeAchieved =
-                        sd.timing?.points ??
-                        report.kpis?.timing ??
-                        draftRaw?.sections?.timing ??
-                        0;
-                      const timeMax = sd.timing?.maxPoints ?? 25;
-                      const timeStr = `${timeAchieved}/${timeMax}`;
+                      const timeAchieved = getScore(sections.timing, kpisFallback.timing);
+                      const timeStr = `${timeAchieved}/20`;
 
                       const selfRating =
                         rawDisplayRd?.self_rating ??
@@ -1718,11 +1699,11 @@ const DailyTab = ({
                             <div className="flex items-start gap-3 pt-1">
                               <input
                                 type="checkbox"
-                                checked={!isPending || isSelected}
-                                disabled={!isPending}
+                                checked={isPermanentlyChecked || isSelected}
+                                disabled={isPermanentlyChecked}
                                 onChange={(e) => {
                                   e.stopPropagation();
-                                  if (!isPending) return;
+                                  if (isPermanentlyChecked) return;
                                   setSelectedReports((prev) =>
                                     e.target.checked
                                       ? [...prev, rId]
@@ -1732,7 +1713,7 @@ const DailyTab = ({
                                 onClick={(e) => e.stopPropagation()}
                                 className={cn(
                                   "w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] shrink-0 mt-3",
-                                  !isPending
+                                  isPermanentlyChecked
                                     ? "opacity-60 cursor-not-allowed"
                                     : "cursor-pointer"
                                 )}
@@ -1804,10 +1785,7 @@ const DailyTab = ({
                                     KPI: {kpiStr}
                                   </span>
                                   <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    Tasks: {tasksStr}
-                                  </span>
-                                  <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    Issues: {issuesStr}
+                                    Tasks & Issues: {tasksIssuesStr}
                                   </span>
                                   <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
                                     Planning: {planStr}

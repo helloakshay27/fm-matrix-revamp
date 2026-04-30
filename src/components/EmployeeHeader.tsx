@@ -72,8 +72,16 @@ const headerIconMap: Record<string, any> = {
 // Fallback static employeeModules for backward compatibility
 const staticEmployeeModules = [
   { name: "Company Hub", icon: Globe, action_name: "employee_company_hub" },
-  { name: "Company Hub New", icon: Globe, action_name: "employee_company_hub_new" },
-  { name: "Business Compass", icon: Compass, action_name: "employee_business_compass" },
+  {
+    name: "Company Hub New",
+    icon: Globe,
+    action_name: "employee_company_hub_new",
+  },
+  {
+    name: "Business Compass",
+    icon: Compass,
+    action_name: "employee_business_compass",
+  },
   { name: "Dashboard", icon: Home, action_name: "employee_dashboard" },
   {
     name: "Project Task",
@@ -113,7 +121,9 @@ export const EmployeeHeader: React.FC = () => {
       // Skip Employee Sidebar and Employee Projects Sidebar modules
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       ) {
         continue;
       }
@@ -324,9 +334,7 @@ export const EmployeeHeader: React.FC = () => {
       );
     }
     if (notification.ntype === "projectspace") {
-      navigate(
-        `/vas/channels/groups/${notification.payload.project_space_id}`
-      );
+      navigate(`/vas/channels/groups/${notification.payload.project_space_id}`);
     }
     if (notification.payload.ntype === "newtaskmanagement") {
       navigate(`/vas/tasks/${notification.payload.task_management_id}`);
@@ -653,10 +661,11 @@ export const EmployeeHeader: React.FC = () => {
                         onDrop={(e) => handleModuleDrop(e, module.name)}
                         onDragOver={handleModuleDragOver}
                         onClick={() => handleModuleClick(module)}
-                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${isActive
-                          ? "bg-white text-[#C72030] shadow-sm"
-                          : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
-                          }`}
+                        className={`flex-col flex items-center align-middle gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all whitespace-nowrap cursor-move ${
+                          isActive
+                            ? "bg-white text-[#C72030] shadow-sm"
+                            : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+                        }`}
                       >
                         <Icon className="w-4 h-4 flex-shrink-0" />
                         <span className="hidden lg:inline text-[10px] sm:text-xs">
@@ -717,10 +726,11 @@ export const EmployeeHeader: React.FC = () => {
                                 handleModuleDragStart(e, module.name)
                               }
                               onClick={() => handleModuleClick(module)}
-                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${isActive
-                                ? "bg-[#DBC2A9] text-[#1a1a1a]"
-                                : "hover:bg-[#f6f4ee] text-gray-700"
-                                }`}
+                              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors cursor-move ${
+                                isActive
+                                  ? "bg-[#DBC2A9] text-[#1a1a1a]"
+                                  : "hover:bg-[#f6f4ee] text-gray-700"
+                              }`}
                             >
                               <Icon className="w-5 h-5 flex-shrink-0" />
                               <span className="text-sm font-medium">
@@ -840,15 +850,17 @@ export const EmployeeHeader: React.FC = () => {
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
-                          }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          !notification.read ? "bg-blue-50/30" : ""
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                              ? "bg-[#C72030]"
-                              : "bg-gray-300"
-                              }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              !notification.read
+                                ? "bg-[#C72030]"
+                                : "bg-gray-300"
+                            }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">

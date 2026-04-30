@@ -148,6 +148,13 @@ interface Attachment {
   document_file_name?: string;
 }
 
+interface SystemLog {
+  id: number;
+  changed_by: number;
+  changed_attr: string | null;
+  created_at: string;
+}
+
 interface ServicePR {
   amc_declaration: any;
   company?: Company;
@@ -156,6 +163,7 @@ interface ServicePR {
   approvals?: Approval[];
   totals?: Totals;
   attachments?: Attachment[];
+  system_logs?: SystemLog[];
   preparedBy?: string;
   signature?: string;
   contractor?: string;
@@ -269,11 +277,10 @@ export const ServicePRDetailsPage = () => {
           showSap: response.show_send_sap_yes,
           editWbsCode: response.can_edit_wbs_codes,
         });
-        // Set external API calls if available
-        console.log("response.page", response.page.api_responses);
-        if (response.api_calls && Array.isArray(response.api_calls)) {
-          setExternalApiCalls(response.api_calls);
-          console.log("API Calls set in state:", response.api_calls);
+        const apiCalls = response.page.api_responses;
+        console.log("[Debug] external_api_calls:", apiCalls, "| top-level:", response.external_api_calls, "| page-level:", response.page?.external_api_calls);
+        if (Array.isArray(apiCalls)) {
+          setExternalApiCalls(apiCalls);
         }
         // Initialize updatedWbsCodes with current WBS codes
         const initialWbsCodes = response.page?.inventories?.reduce(
@@ -1248,6 +1255,7 @@ export const ServicePRDetailsPage = () => {
             )}
           </CardContent>
         </Card>
+
 
         {shouldShowButtons && (
           <div className="flex items-center justify-center gap-4 my-6">
