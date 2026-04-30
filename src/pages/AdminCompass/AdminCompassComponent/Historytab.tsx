@@ -368,12 +368,14 @@ const MeetingCard = ({
   }, [historyData]);
 
   const memberReports: any[] = localData?.member_reports || [];
-  const submittedCount = memberReports.filter(
-    (r: any) => r.status === "submitted"
-  ).length;
-  const missedCount = memberReports.filter(
-    (r: any) => r.status === "pending" || r.status === "missed"
-  ).length;
+  const submittedCount =
+    localData?.submitted ??
+    memberReports.filter((r: any) => r.status === "submitted").length;
+  const missedCount =
+    localData?.missed ??
+    memberReports.filter(
+      (r: any) => r.status === "pending" || r.status === "missed"
+    ).length;
   const meetingHeadReport =
     memberReports.find(
       (r: any) =>
@@ -604,7 +606,7 @@ const MeetingCard = ({
                     style={{ color: "rgba(255,255,255,0.7)" }}
                   >
                     <span className="flex items-center gap-1">
-                      Done:
+                      Submitted:
                       <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-400 text-white text-[10px] font-black">
                         {submittedCount}
                       </span>

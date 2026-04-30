@@ -131,7 +131,7 @@ const MeetingConfigModal = ({
     name: existingConfig?.name ?? "",
     // ── FIX: default to "12:00" (12:00 PM) instead of "00:00" for new meetings ──
     meeting_time:
-      existingConfig?.meetingTime ?? existingConfig?.meeting_time ?? "12:00",
+      existingConfig?.meetingTime ?? existingConfig?.meeting_time ?? "10:00",
     meeting_days: existingConfig?.meetingDays ??
       existingConfig?.meeting_days ?? ["Mon", "Tue", "Wed", "Thu", "Fri"],
     meeting_head_id: existingConfig?.meetingHead?.id

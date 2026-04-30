@@ -21,6 +21,7 @@ import {
   Megaphone,
   Car,
   Activity,
+  Mail,
 } from "lucide-react";
 import recessLogo from "@/assets/recess-logo";
 import { useSelector } from "react-redux";
@@ -152,6 +153,12 @@ const navMenuOptions: Record<
       description: "Access your contacts",
       icon: <User className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
       href: "/directory",
+    },
+    {
+      title: "Mail",
+      description: "Access your mail",
+      icon: <Mail className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/my-inbox",
     },
     {
       title: "Ask AI",
@@ -569,20 +576,18 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                 className="flex items-center gap-1.5 cursor-pointer group"
               >
                 <span
-                  className={`text-[13px] font-medium tracking-wider transition-colors ${
-                    activeNavMenu === item
+                  className={`text-[13px] font-medium tracking-wider transition-colors ${activeNavMenu === item
                       ? "text-[#DA7756]"
                       : "text-[rgba(16,24,40,1)] group-hover:text-gray-900"
-                  }`}
+                    }`}
                 >
                   {item}
                 </span>
                 <ChevronRight
-                  className={`w-3.5 h-3.5 transition-transform ${
-                    activeNavMenu === item
+                  className={`w-3.5 h-3.5 transition-transform ${activeNavMenu === item
                       ? "-rotate-90 text-[#DA7756]"
                       : "rotate-90 text-[rgba(16,24,40,1)]"
-                  }`}
+                    }`}
                 />
               </div>
             ))}

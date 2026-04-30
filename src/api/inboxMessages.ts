@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { apiClient } from "@/utils/apiClient";
+import { apiClient } from "./client";
 
 export const InboxMessageSchema = z.object({
   id: z.string(),
