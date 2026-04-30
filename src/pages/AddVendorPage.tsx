@@ -238,6 +238,9 @@ export const AddVendorPage = () => {
   const [kycAttachments, setKycAttachments] = useState<File[]>([]);
   const [complianceAttachments, setComplianceAttachments] = useState<File[]>([]);
   const [otherAttachments, setOtherAttachments] = useState<File[]>([]);
+  const [openingBalances, setOpeningBalances] = useState([
+    { billNo: '', date: '', dueDate: '', amount: '' }
+  ]);
 
   const validateStep = () => {
     const newErrors: any = {};
@@ -561,6 +564,16 @@ export const AddVendorPage = () => {
     kycAttachments.forEach(file => apiFormData.append('kyc_attachments[]', file));
     complianceAttachments.forEach(file => apiFormData.append('compliance_attachments[]', file));
     otherAttachments.forEach(file => apiFormData.append('cancle_checque[]', file));
+
+    // Step 0 (cont): Opening Balance Details - optional, only append if data exists
+    openingBalances.forEach((row, index) => {
+      if (row.billNo || row.date || row.dueDate || row.amount) {
+        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][bill_no]`, row.billNo || '');
+        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][date]`, row.date || '');
+        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][due_date]`, row.dueDate || '');
+        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][amount]`, row.amount || '');
+      }
+    });
 
     // Hardcoded values from API spec
     apiFormData.append('pms_supplier[active]', 'true');
@@ -1004,6 +1017,90 @@ export const AddVendorPage = () => {
                     helperText={errors.pan}
                     placeholder="ABCDE1234F"
                   />
+                </div>
+              </Box>
+            </SectionCard>
+            <SectionCard>
+              <SectionHeader>
+                <Landmark className="text-[#C72030]" />
+                <SectionTitle>OPENING BALANCE</SectionTitle>
+              </SectionHeader>
+              <Box p={3}>
+                <div className="space-y-3">
+                  {openingBalances.map((row, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <TextField
+                        label="Bill No"
+                        placeholder="Enter bill number"
+                        size="small"
+                        value={row.billNo}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].billNo = e.target.value;
+                          setOpeningBalances(updated);
+                        }}
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        label="Bill Date"
+                        type="date"
+                        size="small"
+                        value={row.date}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].date = e.target.value;
+                          setOpeningBalances(updated);
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        label="Due Date"
+                        type="date"
+                        size="small"
+                        value={row.dueDate}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].dueDate = e.target.value;
+                          setOpeningBalances(updated);
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        label="Amount"
+                        placeholder="Enter amount"
+                        type="number"
+                        size="small"
+                        value={row.amount}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].amount = e.target.value;
+                          setOpeningBalances(updated);
+                        }}
+                        sx={{ flex: 1 }}
+                      />
+                      <IconButton
+                        onClick={() => {
+                          if (index === openingBalances.length - 1) {
+                            setOpeningBalances([...openingBalances, { billNo: '', date: '', dueDate: '', amount: '' }]);
+                          } else {
+                            setOpeningBalances(openingBalances.filter((_, i) => i !== index));
+                          }
+                        }}
+                        sx={{
+                          border: '1px solid #C72030',
+                          borderRadius: '4px',
+                          color: '#C72030',
+                          width: 36,
+                          height: 36,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {index === openingBalances.length - 1 ? <Plus size={16} /> : <Trash2 size={16} />}
+                      </IconButton>
+                    </div>
+                  ))}
                 </div>
               </Box>
             </SectionCard>

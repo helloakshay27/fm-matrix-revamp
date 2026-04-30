@@ -1,445 +1,456 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { TicketPagination } from '@/components/TicketPagination';
-import { toast } from 'sonner';
-import axios from 'axios';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Eye, Edit, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { EnhancedTaskTable } from "@/components/enhanced-table/EnhancedTaskTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { TicketPagination } from "@/components/TicketPagination";
+import { toast } from "sonner";
+import axios from "axios";
 
 // Type definitions for Bill
 interface Bill {
-    id: number;
-    bill_number: string;
-    vendor_name: string;
-    date: string;
-    due_date: string;
-    amount: number;
-    balance_due: number;
-    status: 'draft' | 'open' | 'paid' | 'overdue' | 'cancelled';
-    reference_number: string;
-    active: boolean;
-    created_at: string;
-    updated_at: string;
+  id: number;
+  bill_number: string;
+  bill_date?: string | null;
+  vendor_name: string;
+  date: string;
+  due_date?: string | null;
+  amount: number;
+  total_amount: number;
+  balance_due: number;
+  status: "draft" | "open" | "paid" | "overdue" | "cancelled";
+  reference_number: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
+const formatBillDate = (date?: string | null) => {
+  if (!date) return "-";
+  const parsedDate = new Date(date);
+  if (Number.isNaN(parsedDate.getTime())) return "-";
+
+  return parsedDate.toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
+
 interface ApiResponse {
-    success: boolean;
-    data: Bill[];
-    pagination: {
-        current_page: number;
-        per_page: number;
-        total_pages: number;
-        total_count: number;
-        has_next_page: boolean;
-        has_prev_page: boolean;
-    };
+  success: boolean;
+  data: Bill[];
+  pagination: {
+    current_page: number;
+    per_page: number;
+    total_pages: number;
+    total_count: number;
+    has_next_page: boolean;
+    has_prev_page: boolean;
+  };
 }
 
 interface BillFilters {
-    status?: string;
-    vendorId?: number;
-    dateFrom?: string;
-    dateTo?: string;
+  status?: string;
+  vendorId?: number;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-    {
-        key: 'actions',
-        label: 'Action',
-        sortable: false,
-        hideable: false,
-        draggable: false
-    },
-    {
-        key: 'bill_date',
-        label: 'Date',
-        sortable: true,
-        hideable: true,
-        draggable: true
-    },
-    {
-        key: 'bill_number',
-        label: 'Bill#',
-        sortable: true,
-        hideable: true,
-        draggable: true
-    },
-    {
-        key: 'order_number',
-        label: 'Reference Number',
-        sortable: true,
-        hideable: true,
-        draggable: true
-    },
-    {
-        key: 'vendor_name',
-        label: 'Vendor Name',
-        sortable: true,
-        hideable: true,
-        draggable: true
-    },
-    {
-        key: 'status',
-        label: 'Status',
-        sortable: true,
-        hideable: true,
-        draggable: true
-    },
-    {
-        key: 'due_date',
-        label: 'Due Date',
-        sortable: true,
-        hideable: true,
-        draggable: true
-    },
-    {
-        key: 'total_amount',
-        label: 'Amount',
-        sortable: true,
-        hideable: true,
-        draggable: true
-    },
-    {
-        key: 'balance_due',
-        label: 'Balance Due',
-        sortable: true,
-        hideable: true,
-        draggable: true
-    }
+  {
+    key: "actions",
+    label: "Action",
+    sortable: false,
+    hideable: false,
+    draggable: false,
+  },
+  {
+    key: "bill_date",
+    label: "Date",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "bill_number",
+    label: "Bill#",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "order_number",
+    label: "Reference Number",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "vendor_name",
+    label: "Vendor Name",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "due_date",
+    label: "Due Date",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "total_amount",
+    label: "Amount",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "balance_due",
+    label: "Balance Due",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
 ];
 
 export const BillListPage: React.FC = () => {
-    const navigate = useNavigate();
-    const [currentPage, setCurrentPage] = useState(1);
-    const [perPage, setPerPage] = useState(10);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [appliedFilters, setAppliedFilters] = useState<BillFilters>({});
-    const [billData, setBillData] = useState<Bill[]>([]);
-    const [loading, setLoading] = useState(false);
-      const baseUrl = localStorage.getItem('baseUrl');
-            const token = localStorage.getItem('token');
-            const lock_account_id = localStorage.getItem("lock_account_id");
+  const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [appliedFilters, setAppliedFilters] = useState<BillFilters>({});
+  const [billData, setBillData] = useState<Bill[]>([]);
+  const [loading, setLoading] = useState(false);
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+  const lock_account_id = localStorage.getItem("lock_account_id");
 
-    // Fetch bill data from API
-    // const fetchBillData = async (page = 1, per_page = 10, search = '', filters: BillFilters = {}) => {
-    //     setLoading(true);
-    //     try {
-    //         // Mock data - replace with actual API call
-    //         const mockData: Bill[] = [
-    //             {
-    //                 id: 1,
-    //                 bill_number: '123',
-    //                 vendor_name: 'Gophygital',
-    //                 date: '2026-02-10',
-    //                 due_date: '2026-02-10',
-    //                 amount: 250.00,
-    //                 balance_due: 0.00,
-    //                 status: 'paid',
-    //                 reference_number: 'PO-00002',
-    //                 active: true,
-    //                 created_at: '2026-02-10',
-    //                 updated_at: '2026-02-10'
-    //             },
-    //             {
-    //                 id: 2,
-    //                 bill_number: '555',
-    //                 vendor_name: 'Gophygital',
-    //                 date: '2025-11-04',
-    //                 due_date: '2025-11-28',
-    //                 amount: 250.00,
-    //                 balance_due: 0.00,
-    //                 status: 'paid',
-    //                 reference_number: 'es.PO-00001',
-    //                 active: true,
-    //                 created_at: '2025-11-04',
-    //                 updated_at: '2025-11-28'
-    //             }
-    //         ];
+  // Fetch bill data from API
+  // const fetchBillData = async (page = 1, per_page = 10, search = '', filters: BillFilters = {}) => {
+  //     setLoading(true);
+  //     try {
+  //         // Mock data - replace with actual API call
+  //         const mockData: Bill[] = [
+  //             {
+  //                 id: 1,
+  //                 bill_number: '123',
+  //                 vendor_name: 'Gophygital',
+  //                 date: '2026-02-10',
+  //                 due_date: '2026-02-10',
+  //                 amount: 250.00,
+  //                 balance_due: 0.00,
+  //                 status: 'paid',
+  //                 reference_number: 'PO-00002',
+  //                 active: true,
+  //                 created_at: '2026-02-10',
+  //                 updated_at: '2026-02-10'
+  //             },
+  //             {
+  //                 id: 2,
+  //                 bill_number: '555',
+  //                 vendor_name: 'Gophygital',
+  //                 date: '2025-11-04',
+  //                 due_date: '2025-11-28',
+  //                 amount: 250.00,
+  //                 balance_due: 0.00,
+  //                 status: 'paid',
+  //                 reference_number: 'es.PO-00001',
+  //                 active: true,
+  //                 created_at: '2025-11-04',
+  //                 updated_at: '2025-11-28'
+  //             }
+  //         ];
 
-    //         // Filter based on search
-    //         let filteredData = mockData;
-    //         if (search.trim()) {
-    //             filteredData = mockData.filter(bill =>
-    //                 bill.bill_number.toLowerCase().includes(search.toLowerCase()) ||
-    //                 bill.vendor_name.toLowerCase().includes(search.toLowerCase()) ||
-    //                 bill.reference_number.toLowerCase().includes(search.toLowerCase())
-    //             );
-    //         }
+  //         // Filter based on search
+  //         let filteredData = mockData;
+  //         if (search.trim()) {
+  //             filteredData = mockData.filter(bill =>
+  //                 bill.bill_number.toLowerCase().includes(search.toLowerCase()) ||
+  //                 bill.vendor_name.toLowerCase().includes(search.toLowerCase()) ||
+  //                 bill.reference_number.toLowerCase().includes(search.toLowerCase())
+  //             );
+  //         }
 
-    //         // Apply filters
-    //         if (filters.status) {
-    //             filteredData = filteredData.filter(order => order.status === filters.status);
-    //         }
+  //         // Apply filters
+  //         if (filters.status) {
+  //             filteredData = filteredData.filter(order => order.status === filters.status);
+  //         }
 
-    //         const totalCount = filteredData.length;
-    //         const totalPages = Math.ceil(totalCount / per_page);
-    //         const startIndex = (page - 1) * per_page;
-    //         const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
+  //         const totalCount = filteredData.length;
+  //         const totalPages = Math.ceil(totalCount / per_page);
+  //         const startIndex = (page - 1) * per_page;
+  //         const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
 
-    //         setBillData(paginatedData);
-    //         setPagination({
-    //             current_page: page,
-    //             per_page: per_page,
-    //             total_pages: totalPages,
-    //             total_count: totalCount,
-    //             has_next_page: page < totalPages,
-    //             has_prev_page: page > 1
-    //         });
+  //         setBillData(paginatedData);
+  //         setPagination({
+  //             current_page: page,
+  //             per_page: per_page,
+  //             total_pages: totalPages,
+  //             total_count: totalCount,
+  //             has_next_page: page < totalPages,
+  //             has_prev_page: page > 1
+  //         });
 
-    //     } catch (error: unknown) {
-    //         console.error('Error fetching bill data:', error);
-    //         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    //         toast.error(`Failed to load bill data: ${errorMessage}`, {
-    //             duration: 5000,
-    //         });
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
+  //     } catch (error: unknown) {
+  //         console.error('Error fetching bill data:', error);
+  //         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+  //         toast.error(`Failed to load bill data: ${errorMessage}`, {
+  //             duration: 5000,
+  //         });
+  //     } finally {
+  //         setLoading(false);
+  //     }
+  // };
 
+  const fetchBillData = async (
+    _page = 1,
+    _per_page = 10,
+    _search = "",
+    _filters: BillFilters = {}
+  ) => {
+    setLoading(true);
 
-    const fetchBillData = async (
-        _page = 1,
-        _per_page = 10,
-        _search = '',
-        _filters: BillFilters = {}
-    ) => {
-        setLoading(true);
-
-        try {
-            const response = await axios.get(
-                `https://${baseUrl}/lock_account_bills.json?lock_account_id=${lock_account_id}`,
-                {
-                    params: {
-                        lock_account_id: lock_account_id,
-                        //   page,
-                        //   per_page,
-                        //   search,
-                        //   status: filters.status || undefined,
-                    },
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`, // if required
-                    },
-                }
-            );
-
-            // 🔥 Adjust this based on actual API response structure
-            const apiData = response.data;
-
-            const bills: Bill[] = apiData?.data || apiData || [];
-
-            setBillData(bills);
-
-        } catch (error: unknown) {
-            console.error("Error fetching bill data:", error);
-
-            const errorMessage =
-                error instanceof Error ? error.message : "Unknown error";
-
-            toast.error(`Failed to load bill data: ${errorMessage}`, {
-                duration: 5000,
-            });
-
-        } finally {
-            setLoading(false);
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/lock_account_bills.json?lock_account_id=${lock_account_id}`,
+        {
+          params: {
+            lock_account_id: lock_account_id,
+            //   page,
+            //   per_page,
+            //   search,
+            //   status: filters.status || undefined,
+          },
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`, // if required
+          },
         }
+      );
+
+      // 🔥 Adjust this based on actual API response structure
+      const apiData = response.data;
+
+      const bills: Bill[] = apiData?.data || apiData || [];
+
+      setBillData(bills);
+    } catch (error: unknown) {
+      console.error("Error fetching bill data:", error);
+
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+
+      toast.error(`Failed to load bill data: ${errorMessage}`, {
+        duration: 5000,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    fetchBillData(currentPage, perPage, "", appliedFilters);
+  }, [appliedFilters]);
+
+  // Client-side search filter (same pattern as PaymentTermsMaster)
+  const filteredBills = billData.filter(
+    (bill) =>
+      bill.bill_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bill.vendor_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bill.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      bill.status?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const paginatedBills = filteredBills.slice(
+    (currentPage - 1) * perPage,
+    currentPage * perPage
+  );
+
+  const handleTableSearch = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle per page change
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage);
+    setCurrentPage(1);
+  };
+
+  // Helper function to get status badge
+  const getStatusBadge = (status: string) => {
+    const statusColors: Record<string, string> = {
+      draft: "bg-gray-100 text-gray-800",
+      open: "bg-yellow-100 text-yellow-800",
+      paid: "bg-green-100 text-green-800",
+      overdue: "bg-red-100 text-red-800",
+      cancelled: "bg-red-100 text-red-800",
     };
 
-    // Load data on component mount
-    useEffect(() => {
-        fetchBillData(currentPage, perPage, '', appliedFilters);
-    }, [appliedFilters]);
-
-    // Client-side search filter (same pattern as PaymentTermsMaster)
-    const filteredBills = billData.filter((bill) =>
-        bill.bill_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        bill.vendor_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        bill.order_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        bill.status?.toLowerCase().includes(searchQuery.toLowerCase())
+    return (
+      <span
+        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || "bg-gray-100 text-gray-800"}`}
+      >
+        {status.replace(/_/g, " ").toUpperCase()}
+      </span>
     );
+  };
 
-    const paginatedBills = filteredBills.slice(
-        (currentPage - 1) * perPage,
-        currentPage * perPage
-    );
+  const totalRecords = filteredBills.length;
+  const totalPages = Math.ceil(totalRecords / perPage);
 
-    const handleTableSearch = (value: string) => {
-        setSearchQuery(value);
-        setCurrentPage(1);
-    };
-
-    // Handle page change
-    const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-    };
-
-    // Handle per page change
-    const handlePerPageChange = (newPerPage: number) => {
-        setPerPage(newPerPage);
-        setCurrentPage(1);
-    };
-
-    // Helper function to get status badge
-    const getStatusBadge = (status: string) => {
-        const statusColors: Record<string, string> = {
-            draft: 'bg-gray-100 text-gray-800',
-            open: 'bg-yellow-100 text-yellow-800',
-            paid: 'bg-green-100 text-green-800',
-            overdue: 'bg-red-100 text-red-800',
-            cancelled: 'bg-red-100 text-red-800'
-        };
-
-        return (
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
-                {status.replace(/_/g, " ").toUpperCase()}
-            </span>
-        );
-    };
-
-    const totalRecords = filteredBills.length;
-    const totalPages = Math.ceil(totalRecords / perPage);
-
-    // Render row function for enhanced table
-    const renderRow = (bill: Bill) => ({
-        actions: (
-            <div className="flex items-center gap-2">
-                <button
-                    onClick={() => handleView(bill.id)}
-                    className="p-1 text-black hover:bg-gray-100 rounded"
-                    title="View"
-                >
-                    <Eye className="w-4 h-4" />
-                </button>
-                {/* <button
+  // Render row function for enhanced table
+  const renderRow = (bill: Bill) => ({
+    actions: (
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => handleView(bill.id)}
+          className="p-1 text-black hover:bg-gray-100 rounded"
+          title="View"
+        >
+          <Eye className="w-4 h-4" />
+        </button>
+        {/* <button
                     onClick={() => handleEdit(bill.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
                 >
                     <Edit className="w-4 h-4" />
                 </button> */}
-                {/* <button
+        {/* <button
                     onClick={() => handleDelete(bill.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Delete"
                 >
                     <Trash2 className="w-4 h-4" />
                 </button> */}
-            </div>
-        ),
-        // bill_date: (
-        //     <span className="text-sm text-gray-600">
-        //         {new Date(bill.bill_date).toLocaleDateString('en-GB', {
-        //             day: '2-digit',
-        //             month: '2-digit',
-        //             year: 'numeric'
-        //         })}
-        //     </span>
-        // ),
+      </div>
+    ),
+    // bill_date: (
+    //     <span className="text-sm text-gray-600">
+    //         {new Date(bill.bill_date).toLocaleDateString('en-GB', {
+    //             day: '2-digit',
+    //             month: '2-digit',
+    //             year: 'numeric'
+    //         })}
+    //     </span>
+    // ),
 
-        bill_date: (
-            <span className="text-sm text-gray-600">
-                {bill.bill_date
-                    ? new Date(bill.bill_date).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                    })
-                    : "-"}
-            </span>
-        ),
-        bill_number: (
-            <div className="font-medium text-blue-600">{bill.bill_number}</div>
-        ),
-        order_number: (
-            <span className="text-sm text-gray-900">{bill.order_number}</span>
-        ),
-        vendor_name: (
-            <span className="text-sm text-gray-900">{bill.vendor_name}</span>
-        ),
-        status: (
-            <div className="flex items-center justify-center">
-                {getStatusBadge(bill.status)}
-            </div>
-        ),
-        due_date: (
-            <span className="text-sm text-gray-600">
-                {new Date(bill.due_date).toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                })}
-            </span>
-        ),
-        total_amount: (
-            <span className="text-sm font-medium text-gray-900">
-                ₹{bill?.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-        ),
-        balance_due: (
-            <span className="text-sm font-medium text-gray-900">
-                ₹{bill.balance_due.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </span>
-        )
-    });
+    bill_date: (
+      <span className="text-sm text-gray-600">
+        {formatBillDate(bill.bill_date)}
+      </span>
+    ),
+    bill_number: (
+      <div className="font-medium text-blue-600">{bill.bill_number}</div>
+    ),
+    order_number: (
+      <span className="text-sm text-gray-900">{bill.order_number}</span>
+    ),
+    vendor_name: (
+      <span className="text-sm text-gray-900">{bill.vendor_name}</span>
+    ),
+    status: (
+      <div className="flex items-center justify-center">
+        {getStatusBadge(bill.status)}
+      </div>
+    ),
+    due_date: (
+      <span className="text-sm text-gray-600">
+        {formatBillDate(bill.due_date)}
+      </span>
+    ),
+    total_amount: (
+      <span className="text-sm font-medium text-gray-900">
+        ₹
+        {bill?.total_amount.toLocaleString("en-IN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}
+      </span>
+    ),
+    balance_due: (
+      <span className="text-sm font-medium text-gray-900">
+        ₹
+        {bill.balance_due.toLocaleString("en-IN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}
+      </span>
+    ),
+  });
 
-    const handleView = (id: number) => {
-        navigate(`/accounting/bills/${id}`);
-    };
+  const handleView = (id: number) => {
+    navigate(`/accounting/bills/${id}`);
+  };
 
-    const handleEdit = (id: number) => {
-        navigate(`/accounting/bills/edit/${id}`);
-    };
+  const handleEdit = (id: number) => {
+    navigate(`/accounting/bills/edit/${id}`);
+  };
 
-    const handleDelete = (id: number) => {
-        if (confirm('Are you sure you want to delete this bill?')) {
-            toast.success('Bill deleted successfully!', {
-            });
-            fetchBillData(currentPage, perPage, '', appliedFilters);
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this bill?")) {
+      toast.success("Bill deleted successfully!", {});
+      fetchBillData(currentPage, perPage, "", appliedFilters);
+    }
+  };
+
+  return (
+    <div className="p-6 space-y-6">
+      <header className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">All Bills</h1>
+      </header>
+
+      <EnhancedTaskTable
+        data={paginatedBills}
+        columns={columns}
+        renderRow={renderRow}
+        storageKey="bills-dashboard-v1"
+        hideTableExport={true}
+        hideTableSearch={false}
+        enableSearch={true}
+        onSearch={handleTableSearch}
+        loading={loading}
+        leftActions={
+          <Button
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            onClick={() => navigate("/accounting/bills/create")}
+          >
+            <Plus className="w-4 h-4 mr-2" /> New
+          </Button>
         }
-    };
+      />
 
-    return (
-        <div className="p-6 space-y-6">
-            <header className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">All Bills</h1>
-            </header>
-
-            <EnhancedTaskTable
-                data={paginatedBills}
-                columns={columns}
-                renderRow={renderRow}
-                storageKey="bills-dashboard-v1"
-                hideTableExport={true}
-                hideTableSearch={false}
-                enableSearch={true}
-                onSearch={handleTableSearch}
-                loading={loading}
-                leftActions={(
-                    <Button
-                        className='bg-primary text-primary-foreground hover:bg-primary/90'
-                        onClick={() => navigate('/accounting/bills/create')}
-                    >
-                        <Plus className="w-4 h-4 mr-2" /> New
-                    </Button>
-                )}
-            />
-
-            {totalRecords > 0 && (
-                <TicketPagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    totalRecords={totalRecords}
-                    perPage={perPage}
-                    isLoading={loading}
-                    onPageChange={handlePageChange}
-                    onPerPageChange={handlePerPageChange}
-                />
-            )}
-        </div>
-    );
+      {totalRecords > 0 && (
+        <TicketPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalRecords={totalRecords}
+          perPage={perPage}
+          isLoading={loading}
+          onPageChange={handlePageChange}
+          onPerPageChange={handlePerPageChange}
+        />
+      )}
+    </div>
+  );
 };
 
 export default BillListPage;
