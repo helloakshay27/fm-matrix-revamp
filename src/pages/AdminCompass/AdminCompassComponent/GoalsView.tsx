@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
+import { toast } from "sonner";
 
 // ── Design tokens ──
 const C = {
@@ -172,10 +173,10 @@ const mapApiGoal = (k: any): Goal => ({
   update_remarks: k.update_remarks ?? "",
 });
 
-// ── API helpers ──
-const fetchGoalsFromApi = async (
-  page: number = 1,
-  perPage: number = 20
+// ── API calls ──
+const fetchGoalsPage = async (
+  page: number,
+  perPage: number
 ): Promise<{ goals: Goal[]; totalPages: number }> => {
   const res = await fetch(
     `${BASE_URL}/goals?q[goal_category_eq]=operational&page=${page}&per_page=${perPage}`,
@@ -183,14 +184,12 @@ const fetchGoalsFromApi = async (
   );
   const raw = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${raw.slice(0, 200)}`);
-
   let json: any;
   try {
     json = JSON.parse(raw);
   } catch {
     json = {};
   }
-
   const list: any[] = Array.isArray(json)
     ? json
     : Array.isArray(json.goals)
@@ -200,16 +199,28 @@ const fetchGoalsFromApi = async (
         : Array.isArray(json.data)
           ? json.data
           : [];
-
   let totalPages = 1;
   if (json.meta?.total_pages) totalPages = json.meta.total_pages;
   else if (json.pagination?.total_pages)
     totalPages = json.pagination.total_pages;
   else if (json.total_pages) totalPages = json.total_pages;
   else if (json.data?.total_pages) totalPages = json.data.total_pages;
-
   return { goals: list.map(mapApiGoal), totalPages };
 };
+
+const fetchAllGoals = async (): Promise<Goal[]> => {
+  const first = await fetchGoalsPage(1, 100);
+  if (first.totalPages <= 1) return first.goals;
+  const remaining = Array.from(
+    { length: first.totalPages - 1 },
+    (_, i) => i + 2
+  );
+  const rest = await Promise.all(remaining.map((p) => fetchGoalsPage(p, 100)));
+  return [...first.goals, ...rest.flatMap((r) => r.goals)];
+};
+
+const fetchGoalsFromApi = async (page: number = 1, perPage: number = 20) =>
+  fetchGoalsPage(page, perPage);
 
 const fetchUsersFromApi = async (): Promise<UserRecord[]> => {
   const orgId =
@@ -318,9 +329,7 @@ const patchGoalStatusInApi = async (
   });
   if (!res.ok) {
     const t = await res.text();
-    throw new Error(
-      `PATCH status error ${res.status}: ${t || res.statusText}`
-    );
+    throw new Error(`PATCH status error ${res.status}: ${t || res.statusText}`);
   }
 };
 
@@ -555,6 +564,7 @@ const Styles = () => (
       background-size: 16px; cursor: pointer; box-sizing: border-box; outline: none;
     }
     .gv-select:focus { border-color: ${C.primary}; box-shadow: 0 0 0 3px rgba(218,119,86,0.12); }
+    .gv-select.error { border-color: #fca5a5; }
     .gv-input {
       width: 100%; border: 1px solid #e5e5e5; border-radius: 12px;
       padding: 10px 14px; font-size: 14px; color: #171717;
@@ -562,6 +572,8 @@ const Styles = () => (
     }
     .gv-input:focus { border-color: ${C.primary}; box-shadow: 0 0 0 3px rgba(218,119,86,0.12); }
     .gv-input::placeholder { color: #a3a3a3; }
+    .gv-input.error { border-color: #fca5a5 !important; box-shadow: 0 0 0 3px rgba(252,165,165,0.18) !important; }
+    .gv-field-error { font-size: 11px; color: #dc2626; font-weight: 600; margin-top: 4px; }
     .gv-slider {
       -webkit-appearance: none; appearance: none;
       width: 100%; height: 6px; border-radius: 99px; outline: none; cursor: pointer;
@@ -678,7 +690,6 @@ const UserDropdown = ({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
-
   const selectedUser = users.find((u) => String(u.id) === value);
   const displayValue = selectedUser ? getUserName(selectedUser) : "";
 
@@ -694,7 +705,6 @@ const UserDropdown = ({
   const filtered = users.filter((u) =>
     getUserName(u).toLowerCase().includes(search.toLowerCase())
   );
-
   const initials = (u: UserRecord) =>
     getUserName(u)
       .split(" ")
@@ -745,7 +755,6 @@ const UserDropdown = ({
           />
         </svg>
       </div>
-
       {open && (
         <div className="gv-user-dropdown">
           {value && (
@@ -844,7 +853,7 @@ const PERIODS = [
   "BHAG",
 ];
 const STATUSES_LIST = ["not_started", "on_track", "achieved", "behind"];
-const UNITS = ["%", "₹", "$", "Count", "Days", "Hours", "Score"];
+const UNITS = ["%", "Days", "Amount", "Count"];
 
 const EMPTY_FORM: GoalFormState = {
   title: "",
@@ -877,6 +886,29 @@ const getBarColor = (period: string) =>
       : period === "3-5 Years"
         ? "#f97316"
         : "#7c3aed";
+
+// ── Validation ──
+interface FormErrors {
+  title?: string;
+  period?: string;
+  unit?: string;
+  target?: string;
+}
+
+const validateForm = (form: GoalFormState): FormErrors => {
+  const errors: FormErrors = {};
+  if (!form.title.trim()) errors.title = "Goal title is required.";
+  if (!form.period || form.period === "All Periods")
+    errors.period = "Period is required.";
+  if (!form.unit) errors.unit = "Unit is required.";
+  const targetNum = Number(form.target);
+  if (!form.target && form.target !== 0)
+    errors.target = "Target value is required.";
+  else if (isNaN(targetNum) || targetNum === 0)
+    errors.target = "Target value cannot be zero.";
+  else if (targetNum < 0) errors.target = "Target value must be positive.";
+  return errors;
+};
 
 // ── Goal Card (Kanban) ──
 const GoalCard = ({
@@ -1089,64 +1121,88 @@ const GoalCard = ({
 
 // ── Main export ──
 export const GoalsView = () => {
-  const [goals, setGoals] = useState<Goal[]>([]);
+  const [kanbanGoals, setKanbanGoals] = useState<Goal[]>([]);
+  const [listGoals, setListGoals] = useState<Goal[]>([]);
   const [users, setUsers] = useState<UserRecord[]>([]);
-  const [isFetching, setIsFetching] = useState(true);
+  const [isFetchingKanban, setIsFetchingKanban] = useState(true);
+  const [isFetchingList, setIsFetchingList] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [view, setView] = useState<"kanban" | "list">("kanban");
   const [search, setSearch] = useState("");
   const [filterPeriod, setFilterPeriod] = useState("All Periods");
   const [filterOwner, setFilterOwner] = useState("All Owners");
-  const [activeModal, setActiveModal] = useState<"create" | "edit" | null>(null);
+  const [activeModal, setActiveModal] = useState<"create" | "edit" | null>(
+    null
+  );
 
-  // Pagination (list view only)
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const perPage = 20;
 
   const [form, setForm] = useState<GoalFormState>(EMPTY_FORM);
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
-  const progressTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+  const progressTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>(
+    {}
+  );
   const dragId = useRef<number | null>(null);
 
-  const loadGoals = useCallback(
+  const loadKanbanGoals = useCallback(async () => {
+    setIsFetchingKanban(true);
+    setFetchError(null);
+    try {
+      const all = await fetchAllGoals();
+      setKanbanGoals(all);
+    } catch (err: any) {
+      setFetchError(err.message || "Failed to load goals.");
+    } finally {
+      setIsFetchingKanban(false);
+    }
+  }, []);
+
+  const loadListGoals = useCallback(
     async (page: number = 1) => {
-      setIsFetching(true);
+      setIsFetchingList(true);
       setFetchError(null);
       try {
         const data = await fetchGoalsFromApi(page, perPage);
-        setGoals(data.goals);
+        setListGoals(data.goals);
         setTotalPages(data.totalPages);
         setCurrentPage(page);
       } catch (err: any) {
         setFetchError(err.message || "Failed to load goals.");
       } finally {
-        setIsFetching(false);
+        setIsFetchingList(false);
       }
     },
     [perPage]
   );
 
   useEffect(() => {
-    loadGoals(1);
+    loadKanbanGoals();
     fetchUsersFromApi()
       .then(setUsers)
-      .catch(() => { });
-  }, [loadGoals]);
+      .catch(() => {});
+  }, [loadKanbanGoals]);
+
+  useEffect(() => {
+    if (view === "list") loadListGoals(1);
+  }, [view]); // eslint-disable-line
+
+  const isFetching = view === "kanban" ? isFetchingKanban : isFetchingList;
+  const goals = view === "kanban" ? kanbanGoals : listGoals;
 
   const closeModal = () => {
     setActiveModal(null);
     setForm(EMPTY_FORM);
+    setFormErrors({});
     setEditingId(null);
-    setSaveError(null);
   };
 
-  // ── Owner filter options from actual goals ──
-  const ownerNames = Array.from(new Set(goals.map((g) => g.owner)));
+  const ownerNames = Array.from(new Set(kanbanGoals.map((g) => g.owner)));
   const ownerFilterOptions = ["All Owners", ...ownerNames];
 
   const filtered = goals.filter((g) => {
@@ -1156,14 +1212,20 @@ export const GoalsView = () => {
     return ms && mp && mo;
   });
 
-  const total = filtered.length;
-  const achieved = filtered.filter((g) => g.status === "achieved").length;
-  const onTrack = filtered.filter((g) => g.status === "on_track").length;
-  const behind = filtered.filter((g) => g.status === "behind").length;
+  const statsSource = kanbanGoals.filter((g) => {
+    const ms = g.title.toLowerCase().includes(search.toLowerCase());
+    const mp = filterPeriod === "All Periods" || g.period === filterPeriod;
+    const mo = filterOwner === "All Owners" || g.owner === filterOwner;
+    return ms && mp && mo;
+  });
+  const total = statsSource.length;
+  const achieved = statsSource.filter((g) => g.status === "achieved").length;
+  const onTrack = statsSource.filter((g) => g.status === "on_track").length;
+  const behind = statsSource.filter((g) => g.status === "behind").length;
 
   const openCreate = () => {
     setForm(EMPTY_FORM);
-    setSaveError(null);
+    setFormErrors({});
     setActiveModal("create");
   };
 
@@ -1181,17 +1243,24 @@ export const GoalsView = () => {
       status: goal.status,
       update_remarks: goal.update_remarks ?? "",
     });
+    setFormErrors({});
     setEditingId(goal.id);
-    setSaveError(null);
     setActiveModal("edit");
+  };
+
+  const reloadAfterMutation = () => {
+    loadKanbanGoals();
+    if (view === "list") loadListGoals(currentPage);
   };
 
   const handleDelete = async (id: number) => {
     setDeletingId(id);
     try {
       await deleteGoalFromApi(id);
-      loadGoals(currentPage);
+      toast.success("Goal deleted successfully!", { icon: false });
+      reloadAfterMutation();
     } catch (err: any) {
+      toast.error(err.message || "Failed to delete goal.", { icon: false });
       setFetchError(err.message || "Failed to delete goal.");
     } finally {
       setDeletingId(null);
@@ -1199,9 +1268,15 @@ export const GoalsView = () => {
   };
 
   const handleProgressChange = (id: number, val: number) => {
-    setGoals((prev) =>
-      prev.map((g) => (g.id === id ? { ...g, current: val } : g))
-    );
+    if (view === "kanban") {
+      setKanbanGoals((prev) =>
+        prev.map((g) => (g.id === id ? { ...g, current: val } : g))
+      );
+    } else {
+      setListGoals((prev) =>
+        prev.map((g) => (g.id === id ? { ...g, current: val } : g))
+      );
+    }
     if (progressTimers.current[id]) clearTimeout(progressTimers.current[id]);
     progressTimers.current[id] = setTimeout(async () => {
       try {
@@ -1212,37 +1287,88 @@ export const GoalsView = () => {
     }, 600);
   };
 
-  const handleStatusChange = async (id: number, status: string) => {
-    setGoals((prev) => prev.map((g) => (g.id === id ? { ...g, status } : g)));
+  const handleStatusChange = async (
+    id: number,
+    status: string,
+    fromDrag = false
+  ) => {
+    const prevKanban = kanbanGoals.find((g) => g.id === id);
+    const prevList = listGoals.find((g) => g.id === id);
+
+    setKanbanGoals((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, status } : g))
+    );
+    setListGoals((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, status } : g))
+    );
+
+    const label = STATUS_DISPLAY[status] || status;
+    if (fromDrag) {
+      toast(`Goal moved to "${label}"`, { icon: false });
+    } else {
+      toast(`Status changed to "${label}"`, { icon: false });
+    }
+
     try {
       await patchGoalStatusInApi(id, status);
     } catch (err: any) {
       console.error("[Goals] PATCH status error:", err);
-      loadGoals(currentPage);
+      toast.error("Failed to update status. Reverting...", { icon: false });
+      // Revert
+      if (prevKanban)
+        setKanbanGoals((prev) =>
+          prev.map((g) =>
+            g.id === id ? { ...g, status: prevKanban.status } : g
+          )
+        );
+      if (prevList)
+        setListGoals((prev) =>
+          prev.map((g) => (g.id === id ? { ...g, status: prevList.status } : g))
+        );
     }
   };
 
   const handleSave = async () => {
-    if (!form.title.trim()) {
-      setSaveError("Goal title is required.");
+    const errors = validateForm(form);
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      // Show first error as toast
+      const firstErr = Object.values(errors)[0];
+      toast.error(firstErr!, { icon: false });
       return;
     }
+    setFormErrors({});
     setIsSaving(true);
-    setSaveError(null);
     try {
       if (activeModal === "create") {
         await createGoalInApi(form);
+        toast.success("Goal created successfully!", { icon: false });
         closeModal();
-        loadGoals(currentPage);
+        reloadAfterMutation();
       } else if (editingId !== null) {
         await updateGoalInApi(editingId, form);
+        toast.success("Goal updated successfully!", { icon: false });
         closeModal();
-        loadGoals(currentPage);
+        reloadAfterMutation();
       }
     } catch (err: any) {
-      setSaveError(err.message || "Failed to save. Please try again.");
+      toast.error(err.message || "Failed to save. Please try again.", {
+        icon: false,
+      });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Update a single form field and clear its error
+  const updateForm = (field: keyof GoalFormState, value: any) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+    if (formErrors[field as keyof FormErrors]) {
+      setFormErrors((prev) => {
+        const n = { ...prev };
+        delete n[field as keyof FormErrors];
+        return n;
+      });
     }
   };
 
@@ -1281,7 +1407,11 @@ export const GoalsView = () => {
   const handleDrop = (e: React.DragEvent, colKey: string) => {
     e.preventDefault();
     if (dragId.current == null) return;
-    handleStatusChange(dragId.current, colKey);
+    const id = dragId.current;
+    const goal = kanbanGoals.find((g) => g.id === id);
+    if (goal && goal.status !== colKey) {
+      handleStatusChange(id, colKey, true);
+    }
     setDragOverCol(null);
     dragId.current = null;
   };
@@ -1320,13 +1450,15 @@ export const GoalsView = () => {
     },
   ];
 
-  const getPageNumbers = (current: number, total: number): (number | string)[] => {
+  const getPageNumbers = (
+    current: number,
+    total: number
+  ): (number | string)[] => {
     if (total <= 5) return Array.from({ length: total }, (_, i) => i + 1);
     if (current <= 3) return [1, 2, 3, "...", total];
     if (current >= total - 2) return [1, "...", total - 2, total - 1, total];
     return [1, "...", current, "...", total];
   };
-
   const pageNumbers = getPageNumbers(currentPage, totalPages);
 
   return (
@@ -1360,7 +1492,9 @@ export const GoalsView = () => {
             boxShadow: "0 2px 8px rgba(218,119,86,0.3)",
             flexShrink: 0,
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = C.primaryHov)}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.background = C.primaryHov)
+          }
           onMouseLeave={(e) => (e.currentTarget.style.background = C.primary)}
         >
           <PlusIcon /> Add New Goal
@@ -1424,7 +1558,9 @@ export const GoalsView = () => {
         >
           <span>⚠ {fetchError}</span>
           <button
-            onClick={() => loadGoals(currentPage)}
+            onClick={() =>
+              view === "kanban" ? loadKanbanGoals() : loadListGoals(currentPage)
+            }
             style={{
               background: "none",
               border: "none",
@@ -1449,62 +1585,62 @@ export const GoalsView = () => {
           marginBottom: 20,
         }}
       >
-        {isFetching
+        {isFetchingKanban
           ? [1, 2, 3, 4].map((n) => (
-            <div
-              key={n}
-              className="gv-skeleton"
-              style={{ height: 88, borderRadius: 18 }}
-            />
-          ))
-          : stats.map((s) => (
-            <div
-              key={s.label}
-              className="gv-stat-card"
-              style={{
-                background: s.bg,
-                borderRadius: 18,
-                padding: "18px 20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-              }}
-            >
-              <div>
-                <p
-                  style={{
-                    fontSize: 28,
-                    fontWeight: 800,
-                    color: s.textColor,
-                    margin: 0,
-                    lineHeight: 1,
-                  }}
-                >
-                  {s.value}
-                </p>
-                <p
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: s.textColor,
-                    opacity: 0.8,
-                    margin: "4px 0 0",
-                  }}
-                >
-                  {s.label}
-                </p>
-              </div>
-              <GoalIcon
-                style={{
-                  width: 30,
-                  height: 30,
-                  color: s.iconColor,
-                  opacity: 0.7,
-                }}
+              <div
+                key={n}
+                className="gv-skeleton"
+                style={{ height: 88, borderRadius: 18 }}
               />
-            </div>
-          ))}
+            ))
+          : stats.map((s) => (
+              <div
+                key={s.label}
+                className="gv-stat-card"
+                style={{
+                  background: s.bg,
+                  borderRadius: 18,
+                  padding: "18px 20px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                }}
+              >
+                <div>
+                  <p
+                    style={{
+                      fontSize: 28,
+                      fontWeight: 800,
+                      color: s.textColor,
+                      margin: 0,
+                      lineHeight: 1,
+                    }}
+                  >
+                    {s.value}
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: s.textColor,
+                      opacity: 0.8,
+                      margin: "4px 0 0",
+                    }}
+                  >
+                    {s.label}
+                  </p>
+                </div>
+                <GoalIcon
+                  style={{
+                    width: 30,
+                    height: 30,
+                    color: s.iconColor,
+                    opacity: 0.7,
+                  }}
+                />
+              </div>
+            ))}
       </div>
 
       {/* ── Main card wrapper ── */}
@@ -1586,9 +1722,9 @@ export const GoalsView = () => {
           </select>
         </div>
 
-        {/* ── KANBAN VIEW (no pagination) ── */}
+        {/* ── KANBAN VIEW ── */}
         {view === "kanban" &&
-          (isFetching ? (
+          (isFetchingKanban ? (
             <div
               style={{
                 display: "grid",
@@ -1671,7 +1807,11 @@ export const GoalsView = () => {
                           }}
                         >
                           <p
-                            style={{ fontSize: 12, color: "#a3a3a3", margin: 0 }}
+                            style={{
+                              fontSize: 12,
+                              color: "#a3a3a3",
+                              margin: 0,
+                            }}
                           >
                             Drop goals here
                           </p>
@@ -1697,9 +1837,9 @@ export const GoalsView = () => {
             </div>
           ))}
 
-        {/* ── LIST VIEW (with pagination) ── */}
+        {/* ── LIST VIEW ── */}
         {view === "list" &&
-          (isFetching ? (
+          (isFetchingList ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[1, 2, 3, 4, 5].map((n) => (
                 <div
@@ -1794,24 +1934,29 @@ export const GoalsView = () => {
                           background: C.primaryBg,
                         }}
                       >
-                        {["Goal", "Period", "Owner", "Progress", "Status", ""].map(
-                          (h, i) => (
-                            <th
-                              key={i}
-                              style={{
-                                textAlign: "left",
-                                padding: "12px 16px",
-                                fontSize: 11,
-                                fontWeight: 700,
-                                color: "#737373",
-                                textTransform: "uppercase",
-                                letterSpacing: "0.05em",
-                              }}
-                            >
-                              {h}
-                            </th>
-                          )
-                        )}
+                        {[
+                          "Goal",
+                          "Period",
+                          "Owner",
+                          "Progress",
+                          "Status",
+                          "",
+                        ].map((h, i) => (
+                          <th
+                            key={i}
+                            style={{
+                              textAlign: "left",
+                              padding: "12px 16px",
+                              fontSize: 11,
+                              fontWeight: 700,
+                              color: "#737373",
+                              textTransform: "uppercase",
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            {h}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
@@ -1954,11 +2099,13 @@ export const GoalsView = () => {
                                     color: "#a3a3a3",
                                   }}
                                   onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = C.primaryBg;
+                                    e.currentTarget.style.background =
+                                      C.primaryBg;
                                     e.currentTarget.style.color = C.primary;
                                   }}
                                   onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = "transparent";
+                                    e.currentTarget.style.background =
+                                      "transparent";
                                     e.currentTarget.style.color = "#a3a3a3";
                                   }}
                                 >
@@ -1981,11 +2128,13 @@ export const GoalsView = () => {
                                     alignItems: "center",
                                   }}
                                   onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = "#fff5f5";
+                                    e.currentTarget.style.background =
+                                      "#fff5f5";
                                     e.currentTarget.style.color = "#dc2626";
                                   }}
                                   onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = "transparent";
+                                    e.currentTarget.style.background =
+                                      "transparent";
                                     e.currentTarget.style.color = "#a3a3a3";
                                   }}
                                 >
@@ -2005,12 +2154,11 @@ export const GoalsView = () => {
                 )}
               </div>
 
-              {/* ── PAGINATION — List view only ── */}
               {totalPages > 1 && (
                 <div className="gv-pagination">
                   <button
                     disabled={currentPage === 1}
-                    onClick={() => loadGoals(currentPage - 1)}
+                    onClick={() => loadListGoals(currentPage - 1)}
                     className="gv-page-item"
                   >
                     <ChevronLeftIcon />
@@ -2021,7 +2169,7 @@ export const GoalsView = () => {
                       className={`gv-page-item ${num === currentPage ? "active" : ""} ${num === "..." ? "dots" : ""}`}
                       disabled={num === "..."}
                       onClick={() => {
-                        if (num !== "...") loadGoals(Number(num));
+                        if (num !== "...") loadListGoals(Number(num));
                       }}
                     >
                       {num}
@@ -2029,7 +2177,7 @@ export const GoalsView = () => {
                   ))}
                   <button
                     disabled={currentPage === totalPages}
-                    onClick={() => loadGoals(currentPage + 1)}
+                    onClick={() => loadListGoals(currentPage + 1)}
                     className="gv-page-item"
                   >
                     <ChevronRightIcon />
@@ -2098,11 +2246,7 @@ export const GoalsView = () => {
                 gap: 16,
               }}
             >
-              {saveError && (
-                <div className="gv-error-banner">{saveError}</div>
-              )}
-
-              {/* Title */}
+              {/* Title — required */}
               <div>
                 <label
                   style={{
@@ -2119,10 +2263,13 @@ export const GoalsView = () => {
                   type="text"
                   placeholder="e.g. Increase Revenue by 20%"
                   value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="gv-input"
+                  onChange={(e) => updateForm("title", e.target.value)}
+                  className={`gv-input${formErrors.title ? " error" : ""}`}
                   autoFocus
                 />
+                {formErrors.title && (
+                  <p className="gv-field-error">{formErrors.title}</p>
+                )}
               </div>
 
               {/* Description */}
@@ -2142,14 +2289,12 @@ export const GoalsView = () => {
                   type="text"
                   placeholder="e.g. Build enterprise sales capability"
                   value={form.description}
-                  onChange={(e) =>
-                    setForm({ ...form, description: e.target.value })
-                  }
+                  onChange={(e) => updateForm("description", e.target.value)}
                   className="gv-input"
                 />
               </div>
 
-              {/* Period + Status */}
+              {/* Period + Status — period required */}
               <div
                 style={{
                   display: "grid",
@@ -2167,19 +2312,20 @@ export const GoalsView = () => {
                       marginBottom: 6,
                     }}
                   >
-                    Period
+                    Period <span style={{ color: "#dc2626" }}>*</span>
                   </label>
                   <select
                     value={form.period}
-                    onChange={(e) =>
-                      setForm({ ...form, period: e.target.value })
-                    }
-                    className="gv-select"
+                    onChange={(e) => updateForm("period", e.target.value)}
+                    className={`gv-select${formErrors.period ? " error" : ""}`}
                   >
                     {PERIODS.filter((p) => p !== "All Periods").map((p) => (
                       <option key={p}>{p}</option>
                     ))}
                   </select>
+                  {formErrors.period && (
+                    <p className="gv-field-error">{formErrors.period}</p>
+                  )}
                 </div>
                 <div>
                   <label
@@ -2195,9 +2341,7 @@ export const GoalsView = () => {
                   </label>
                   <select
                     value={form.status}
-                    onChange={(e) =>
-                      setForm({ ...form, status: e.target.value })
-                    }
+                    onChange={(e) => updateForm("status", e.target.value)}
                     className="gv-select"
                   >
                     {STATUSES_LIST.map((s) => (
@@ -2209,7 +2353,7 @@ export const GoalsView = () => {
                 </div>
               </div>
 
-              {/* Owner + Target Date */}
+              {/* Owner + Due Date */}
               <div
                 style={{
                   display: "grid",
@@ -2231,13 +2375,14 @@ export const GoalsView = () => {
                   </label>
                   <UserDropdown
                     value={form.owner_id}
-                    onChange={(id, name) =>
-                      setForm({
-                        ...form,
-                        owner_id: id,
+                    onChange={(id, name) => {
+                      updateForm("owner_id", id);
+                      setForm((p) => ({
+                        ...p,
                         owner: name || "Unassigned",
-                      })
-                    }
+                        owner_id: id,
+                      }));
+                    }}
                     users={users}
                     placeholder="Search owner..."
                   />
@@ -2261,15 +2406,13 @@ export const GoalsView = () => {
                         ? form.dueDate
                         : parseDateToApi(form.dueDate)
                     }
-                    onChange={(e) =>
-                      setForm({ ...form, dueDate: e.target.value })
-                    }
+                    onChange={(e) => updateForm("dueDate", e.target.value)}
                     className="gv-input"
                   />
                 </div>
               </div>
 
-              {/* Target Value + Unit */}
+              {/* Target Value + Unit — both required, target ≠ 0 */}
               <div
                 style={{
                   display: "grid",
@@ -2287,16 +2430,19 @@ export const GoalsView = () => {
                       marginBottom: 6,
                     }}
                   >
-                    Target Value
+                    Target Value <span style={{ color: "#dc2626" }}>*</span>
                   </label>
                   <input
                     type="number"
                     value={form.target}
                     onChange={(e) =>
-                      setForm({ ...form, target: Number(e.target.value) })
+                      updateForm("target", Number(e.target.value))
                     }
-                    className="gv-input"
+                    className={`gv-input${formErrors.target ? " error" : ""}`}
                   />
+                  {formErrors.target && (
+                    <p className="gv-field-error">{formErrors.target}</p>
+                  )}
                 </div>
                 <div>
                   <label
@@ -2308,17 +2454,21 @@ export const GoalsView = () => {
                       marginBottom: 6,
                     }}
                   >
-                    Unit
+                    Unit <span style={{ color: "#dc2626" }}>*</span>
                   </label>
                   <select
                     value={form.unit}
-                    onChange={(e) => setForm({ ...form, unit: e.target.value })}
-                    className="gv-select"
+                    onChange={(e) => updateForm("unit", e.target.value)}
+                    className={`gv-select${formErrors.unit ? " error" : ""}`}
                   >
+                    <option value="">Select unit</option>
                     {UNITS.map((u) => (
                       <option key={u}>{u}</option>
                     ))}
                   </select>
+                  {formErrors.unit && (
+                    <p className="gv-field-error">{formErrors.unit}</p>
+                  )}
                 </div>
               </div>
 
@@ -2339,9 +2489,7 @@ export const GoalsView = () => {
                   type="text"
                   placeholder="e.g. Interview pipeline is active"
                   value={form.update_remarks}
-                  onChange={(e) =>
-                    setForm({ ...form, update_remarks: e.target.value })
-                  }
+                  onChange={(e) => updateForm("update_remarks", e.target.value)}
                   className="gv-input"
                 />
               </div>
@@ -2364,11 +2512,7 @@ export const GoalsView = () => {
                   }}
                 >
                   <label
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: "#525252",
-                    }}
+                    style={{ fontSize: 13, fontWeight: 600, color: "#525252" }}
                   >
                     Current Value / Progress
                   </label>
@@ -2381,13 +2525,10 @@ export const GoalsView = () => {
                       min={0}
                       max={form.target}
                       onChange={(e) =>
-                        setForm({
-                          ...form,
-                          current: Math.min(
-                            Number(e.target.value),
-                            Number(form.target)
-                          ),
-                        })
+                        updateForm(
+                          "current",
+                          Math.min(Number(e.target.value), Number(form.target))
+                        )
                       }
                       style={{
                         width: 60,
@@ -2400,7 +2541,7 @@ export const GoalsView = () => {
                       }}
                     />
                     <span style={{ fontSize: 13, color: "#737373" }}>
-                      {form.unit}
+                      {form.unit || "unit"}
                     </span>
                   </div>
                 </div>
@@ -2411,7 +2552,7 @@ export const GoalsView = () => {
                   step={1}
                   value={form.current}
                   onChange={(e) =>
-                    setForm({ ...form, current: Number(e.target.value) })
+                    updateForm("current", Number(e.target.value))
                   }
                   className="gv-slider"
                   style={{ background: modalSliderBg(getProgress(form)) }}
@@ -2468,29 +2609,26 @@ export const GoalsView = () => {
               </button>
               <button
                 onClick={handleSave}
-                disabled={!form.title.trim() || isSaving}
+                disabled={isSaving}
                 style={{
                   padding: "10px 22px",
                   fontSize: 14,
                   fontWeight: 700,
                   color: "#fff",
-                  background:
-                    form.title.trim() && !isSaving ? C.primary : "#e5b5a3",
+                  background: !isSaving ? C.primary : "#e5b5a3",
                   border: "none",
                   borderRadius: 12,
-                  cursor:
-                    form.title.trim() && !isSaving ? "pointer" : "not-allowed",
+                  cursor: !isSaving ? "pointer" : "not-allowed",
                   display: "flex",
                   alignItems: "center",
                   gap: 8,
                 }}
                 onMouseEnter={(e) => {
-                  if (form.title.trim() && !isSaving)
+                  if (!isSaving)
                     e.currentTarget.style.background = C.primaryHov;
                 }}
                 onMouseLeave={(e) => {
-                  if (form.title.trim() && !isSaving)
-                    e.currentTarget.style.background = C.primary;
+                  if (!isSaving) e.currentTarget.style.background = C.primary;
                 }}
               >
                 {isSaving && <LoaderIcon />}
