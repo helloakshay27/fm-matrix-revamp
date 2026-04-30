@@ -1,6 +1,8 @@
-﻿import React from "react";
+﻿import React, { useRef } from "react";
+import html2canvas from "html2canvas";
 
 const PostPossessionFeaturesTab: React.FC = () => {
+  const tableRef = useRef<HTMLDivElement>(null);
   const styles: Record<string, React.CSSProperties> = {
     s11: {
       borderBottom: "1px solid #C4B89D",
@@ -176,25 +178,63 @@ const PostPossessionFeaturesTab: React.FC = () => {
     },
   };
 
+  const handleScreenshot = async () => {
+    if (!tableRef.current) {
+      alert("Unable to capture screenshot. Please try again.");
+      return;
+    }
+
+    try {
+      const canvas = await html2canvas(tableRef.current, {
+        allowTaint: true,
+        useCORS: true,
+        scale: 2,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      // Create a download link
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png");
+      link.download = `PostPossessionFeatures_${new Date().toISOString().split("T")[0]}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Screenshot failed:", error);
+      alert("Failed to capture screenshot. Please try again.");
+    }
+  };
+
   return (
-    <div className="w-full overflow-x-auto font-sans">
-      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-4">
-        <h2 className="text-xl font-bold uppercase tracking-wider">
-          POST POSSESSION — FULL FEATURE LIST
-        </h2>
+    <div className="w-full font-sans">
+      <div className="flex items-center justify-between mb-6">
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] flex-1">
+          <h2 className="text-xl font-bold uppercase tracking-wider">
+            POST POSSESSION — FULL FEATURE LIST
+          </h2>
+        </div>
+        <button
+          onClick={handleScreenshot}
+          className="ml-4 px-6 py-3 bg-[#DA7756] text-white font-bold rounded-lg hover:bg-[#c86a4a] transition-colors shadow-md whitespace-nowrap"
+          title="Download table as PNG image"
+        >
+          📸 Screenshot
+        </button>
       </div>
 
-      <table
-        style={{
-          borderCollapse: "collapse",
-          tableLayout: "fixed",
-          width: "100%",
-          minWidth: "1200px",
-          backgroundColor: "white",
-        }}
-        cellSpacing={0}
-        cellPadding={0}
-      >
+      <div className="overflow-x-auto" ref={tableRef}>
+        <table
+          style={{
+            borderCollapse: "collapse",
+            tableLayout: "fixed",
+            width: "100%",
+            minWidth: "1200px",
+            backgroundColor: "white",
+          }}
+          cellSpacing={0}
+          cellPadding={0}
+        >
         <colgroup>
           <col style={{ width: "160px" }} />
           <col style={{ width: "190px" }} />
@@ -3083,6 +3123,7 @@ const PostPossessionFeaturesTab: React.FC = () => {
           </tr>
         </tbody>
       </table>
+    </div>
     </div>
   );
 };
