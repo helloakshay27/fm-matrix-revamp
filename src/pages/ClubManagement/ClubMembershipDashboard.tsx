@@ -646,7 +646,7 @@ export const ClubMembershipDashboard = () => {
     { key: 'site_name', label: 'Site Name', sortable: true },
     { key: 'start_date', label: 'Start Date', sortable: true },
     { key: 'end_date', label: 'End Date', sortable: true },
-    { key: 'membershipStatus', label: 'Membership Status', sortable: true },
+    // { key: 'membershipStatus', label: 'Membership Status', sortable: true },
     { key: 'access_card_enabled', label: 'Card Allocated', sortable: true },
     { key: 'access_card_id', label: 'Access Card ID', sortable: true },
     // { key: 'identification_image', label: 'ID Card', sortable: false },
