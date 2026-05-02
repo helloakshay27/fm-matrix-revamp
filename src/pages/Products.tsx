@@ -18,6 +18,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useProductSecurity } from "./products/useProductSecurity";
+import { SecurityOverlays } from "./products/SecurityOverlays";
 
 interface Product {
   id: string;
@@ -690,6 +692,7 @@ const productData: Product[] = [
 
 const Products: React.FC = () => {
   const navigate = useNavigate();
+  const security = useProductSecurity();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProductTypes, setSelectedProductTypes] = useState<string[]>(
     []
@@ -927,7 +930,8 @@ const Products: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] font-sans">
+    <div className="min-h-screen bg-[#FAF9F6] font-sans select-none">
+      <SecurityOverlays security={security} />
       <style>{`
         /* Standard Header Override */
         [data-radix-scroll-area-viewport] thead tr th,
