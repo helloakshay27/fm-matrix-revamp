@@ -51,6 +51,12 @@ const columns: ColumnConfig[] = [
         label: 'Status',
         sortable: true,
         draggable: true
+    },
+    {
+        key: 'payment_status',
+        label: 'Payment Status',
+        sortable: true,
+        draggable: true
     }
 ];
 
@@ -186,6 +192,22 @@ const EventPendingList = () => {
             return item.status.charAt(0).toUpperCase() + item.status.slice(1);
         }
 
+        if (columnKey === 'payment_status') {
+            const status = item.payment_status?.toLowerCase();
+
+            const statusStyles = {
+                success: "bg-green-100 text-green-700",
+                pending: "bg-yellow-100 text-yellow-700",
+                failed: "bg-red-100 text-red-700",
+            };
+
+            return (
+                <span className={`px-2 py-1 rounded text-sm font-medium ${statusStyles[status] || "bg-gray-100 text-gray-700"}`}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                </span>
+            );
+        }
+
         return item[columnKey] || "-";
     };
 
@@ -203,17 +225,17 @@ const EventPendingList = () => {
                         <div className="flex gap-4">
                             <Button
                                 variant="outline"
-                                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white px-8 h-10 disabled:opacity-50"
+                                className="border-[#C72030] !text-black hover:bg-[#C72030] hover:!text-white px-8 h-10 disabled:opacity-50"
                                 onClick={() => handleStatusUpdate('rejected')}
-                                disabled={selectedItems.length === 0 || isUpdating || eventData.total_registed_count === eventData.capacity}
+                                disabled={selectedItems.length === 0 || isUpdating}
                             >
                                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                 Deny
                             </Button>
                             <Button
-                                className="!bg-[#00A651] !hover:bg-[#008C44] !text-black px-8 h-10 disabled:opacity-50"
+                                className="!bg-[#00A651] !hover:bg-[#008C44] !text-[#000] px-8 h-10 disabled:opacity-50"
                                 onClick={() => handleStatusUpdate('approved')}
-                                disabled={selectedItems.length === 0 || isUpdating || eventData.total_registed_count === eventData.capacity}
+                                disabled={selectedItems.length === 0 || isUpdating}
                             >
                                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                                 Approve

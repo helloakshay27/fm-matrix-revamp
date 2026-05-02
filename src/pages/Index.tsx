@@ -25,7 +25,9 @@ const Index = () => {
       // Only look for Employee-specific modules
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       ) {
         // Find first active function with a react_link
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,7 +58,9 @@ const Index = () => {
       // Skip Employee Sidebar and Employee Projects Sidebar modules
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       ) {
         continue;
       }
@@ -187,8 +191,6 @@ const Index = () => {
       navigate("/safety/m-safe/internal", { replace: true });
     } else if (isClubSite) {
       navigate("/club-management/membership", { replace: true });
-    } else if (isPulseSite) {
-      navigate("/maintenance/ticket", { replace: true });
     } else {
       navigate("/maintenance/asset", { replace: true });
     }

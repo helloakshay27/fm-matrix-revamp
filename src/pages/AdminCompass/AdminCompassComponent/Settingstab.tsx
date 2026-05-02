@@ -24,6 +24,94 @@ import {
   getBaseUrl,
 } from "./Shared";
 
+// ── Searchable Select Component ──
+const SearchableSelect = ({
+  value,
+  onChange,
+  options,
+  placeholder,
+  disabled = false,
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((o) => String(o.id) === String(value));
+  const displayValue = selectedOption ? selectedOption.name : "";
+
+  const filteredOptions = options.filter((o) => {
+    const name = o.name || "";
+    return name.toLowerCase().includes(search.toLowerCase());
+  });
+
+  return (
+    <div className="relative w-full" ref={ref}>
+      <input
+        type="text"
+        disabled={disabled}
+        className="w-full bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] px-4 py-3 text-sm font-bold text-[#1A1A1A] focus:outline-none focus:border-[#EB4A4A] transition-colors disabled:opacity-50 pr-10 cursor-pointer"
+        placeholder={placeholder}
+        value={open ? search : displayValue}
+        onClick={() => {
+          if (!disabled) {
+            setOpen(true);
+            setSearch("");
+          }
+        }}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setOpen(true);
+        }}
+      />
+      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
+
+      {open && (
+        <div className="absolute z-[999] top-full left-0 right-0 mt-2 bg-white border border-[#F0EBE8] rounded-[16px] shadow-lg max-h-48 overflow-y-auto">
+          {value && (
+            <div
+              className="p-3 hover:bg-[#EB4A4A]/10 cursor-pointer text-sm font-bold border-b border-[#F0EBE8] text-[#EB4A4A] truncate transition-colors"
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+                setSearch("");
+              }}
+            >
+              Clear Selection
+            </div>
+          )}
+          {filteredOptions.length === 0 ? (
+            <div className="p-3 text-sm text-[#8C8580] text-center font-bold truncate">
+              No results found
+            </div>
+          ) : (
+            filteredOptions.map((o) => (
+              <div
+                key={o.id}
+                className="p-3 hover:bg-[#FCFAFA] cursor-pointer text-sm font-bold text-[#1A1A1A] border-b border-[#F0EBE8] last:border-0 truncate transition-colors"
+                onClick={() => {
+                  onChange(String(o.id));
+                  setOpen(false);
+                  setSearch("");
+                }}
+              >
+                {o.name}
+              </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── MeetingConfigModal ──
 const MeetingConfigModal = ({
   onClose,
@@ -41,8 +129,9 @@ const MeetingConfigModal = ({
 
   const [form, setForm] = useState({
     name: existingConfig?.name ?? "",
+    // ── FIX: default to "12:00" (12:00 PM) instead of "00:00" for new meetings ──
     meeting_time:
-      existingConfig?.meetingTime ?? existingConfig?.meeting_time ?? "",
+      existingConfig?.meetingTime ?? existingConfig?.meeting_time ?? "10:00",
     meeting_days: existingConfig?.meetingDays ??
       existingConfig?.meeting_days ?? ["Mon", "Tue", "Wed", "Thu", "Fri"],
     meeting_head_id: existingConfig?.meetingHead?.id
@@ -88,6 +177,16 @@ const MeetingConfigModal = ({
         .includes(memberSearch.toLowerCase()) ||
       (u.email ?? "").toLowerCase().includes(memberSearch.toLowerCase())
   );
+
+  const userOptions = users.map((u) => ({
+    id: u.id,
+    name: u.name ?? u.full_name ?? u.username,
+  }));
+
+  const deptOptions = departments.map((d) => ({
+    id: d.id,
+    name: d.department_name,
+  }));
 
   const handleSubmit = async () => {
     if (!form.name.trim() || !form.meeting_time || !form.meeting_head_id) {
@@ -217,26 +316,15 @@ const MeetingConfigModal = ({
               <label className="text-[11px] font-black text-[#8C8580] uppercase tracking-widest mb-2 block">
                 Meeting Head <span className="text-[#EB4A4A]">*</span>
               </label>
-              <div className="relative">
-                <select
-                  value={form.meeting_head_id}
-                  onChange={(e) =>
-                    setForm({ ...form, meeting_head_id: e.target.value })
-                  }
-                  disabled={dropdownsLoading}
-                  className="w-full bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] px-4 py-3 text-sm font-bold text-[#1A1A1A] appearance-none focus:outline-none focus:border-[#EB4A4A] transition-colors disabled:opacity-50"
-                >
-                  <option value="">
-                    {dropdownsLoading ? "Loading..." : "Select meeting head"}
-                  </option>
-                  {users.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name ?? u.full_name ?? u.username}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
-              </div>
+              <SearchableSelect
+                value={form.meeting_head_id}
+                onChange={(val) => setForm({ ...form, meeting_head_id: val })}
+                options={userOptions}
+                placeholder={
+                  dropdownsLoading ? "Loading..." : "Search meeting head..."
+                }
+                disabled={dropdownsLoading}
+              />
             </div>
 
             {/* Department */}
@@ -244,26 +332,15 @@ const MeetingConfigModal = ({
               <label className="text-[11px] font-black text-[#8C8580] uppercase tracking-widest mb-2 block">
                 Department (Optional)
               </label>
-              <div className="relative">
-                <select
-                  value={form.department_id}
-                  onChange={(e) =>
-                    setForm({ ...form, department_id: e.target.value })
-                  }
-                  disabled={dropdownsLoading}
-                  className="w-full bg-[#FCFAFA] border border-[#F0EBE8] rounded-[16px] px-4 py-3 text-sm font-bold text-[#1A1A1A] appearance-none focus:outline-none focus:border-[#EB4A4A] transition-colors disabled:opacity-50"
-                >
-                  <option value="">
-                    {dropdownsLoading ? "Loading..." : "Select department"}
-                  </option>
-                  {departments.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.department_name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8C8580] pointer-events-none" />
-              </div>
+              <SearchableSelect
+                value={form.department_id}
+                onChange={(val) => setForm({ ...form, department_id: val })}
+                options={deptOptions}
+                placeholder={
+                  dropdownsLoading ? "Loading..." : "Search department..."
+                }
+                disabled={dropdownsLoading}
+              />
             </div>
 
             {/* Meeting Members */}
@@ -421,9 +498,7 @@ const DeleteConfirmModal = ({ configName, onConfirm, onCancel, isDeleting }) =>
 // ─────────────────────────────────────────────────────────
 //  Day helpers
 // ─────────────────────────────────────────────────────────
-
-/** Maps our 2-char display keys to JS Date.getDay() (0=Sun..6=Sat) */
-const DAY_TO_JS_IDX: Record<string, number> = {
+const DAY_TO_JS_IDX = {
   Su: 0,
   Mo: 1,
   Tu: 2,
@@ -433,9 +508,8 @@ const DAY_TO_JS_IDX: Record<string, number> = {
   Sa: 6,
 };
 
-/** Normalise any API day format to 2-char display key */
-const normalizeDayKey = (d: string): string => {
-  const map: Record<string, string> = {
+const normalizeDayKey = (d) => {
+  const map = {
     Sun: "Su",
     Mon: "Mo",
     Tue: "Tu",
@@ -461,61 +535,41 @@ const normalizeDayKey = (d: string): string => {
   return map[d] ?? d;
 };
 
-const WEEK_DISPLAY_KEYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
+const WEEK_DISPLAY_KEYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-/** Returns dot colour + whether the column is today */
-const getDayStatus = (
-  displayKey: string,
-  activeDayKeys: Set<string>,
-  todayJsIdx: number
-): { color: string; ringColor: string; isToday: boolean } => {
+const getDayStatus = (displayKey, activeDayKeys, todayJsIdx) => {
   const dayIdx = DAY_TO_JS_IDX[displayKey];
   const isScheduled = activeDayKeys.has(displayKey);
   const isToday = dayIdx === todayJsIdx;
 
-  if (!isScheduled) {
-    return { color: "bg-[#E5E7EB]", ringColor: "", isToday };
-  }
-  if (isToday) {
+  if (!isScheduled) return { color: "bg-[#E5E7EB]", ringColor: "", isToday };
+  if (isToday)
     return {
-      color: "bg-[#DA7756]", // Yellow replaced with Coral
-      ringColor: "ring-2 ring-offset-1 ring-[#DA7756]", // Yellow replaced with Coral
+      color: "bg-[#DA7756]",
+      ringColor: "ring-2 ring-offset-1 ring-[#DA7756]",
       isToday,
     };
-  }
-  if (dayIdx < todayJsIdx) {
+  if (dayIdx < todayJsIdx)
     return { color: "bg-[#2ECC71]", ringColor: "", isToday };
-  }
   return { color: "bg-[#E5E7EB]", ringColor: "", isToday };
 };
 
 // ─────────────────────────────────────────────────────────
-//  getNextMeeting — calculates next upcoming meeting slot
-//  across ALL configs dynamically
+//  getNextMeeting
 // ─────────────────────────────────────────────────────────
-const getNextMeeting = (configs: any[]): string | null => {
+const getNextMeeting = (configs) => {
   if (!configs.length) return null;
 
   const today = new Date();
-  const todayJsIdx = today.getDay(); // 0=Sun … 6=Sat
+  const todayJsIdx = today.getDay();
   const nowMinutes = today.getHours() * 60 + today.getMinutes();
-
   const DAY_LABELS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-  let earliest: {
-    daysAhead: number;
-    meetingMinutes: number;
-    label: string;
-    time: string;
-    name: string;
-  } | null = null;
+  let earliest = null;
 
   configs.forEach((c) => {
-    const days: string[] = (c.meetingDays || c.meeting_days || []).map(
-      normalizeDayKey
-    );
-
-    const timeStr: string = c.meetingTime || c.meeting_time || "";
+    const days = (c.meetingDays || c.meeting_days || []).map(normalizeDayKey);
+    const timeStr = c.meetingTime || c.meeting_time || "";
     if (!timeStr) return;
 
     const [h, m] = timeStr.split(":").map(Number);
@@ -526,11 +580,7 @@ const getNextMeeting = (configs: any[]): string | null => {
       if (jsIdx === undefined) return;
 
       let daysAhead = (jsIdx - todayJsIdx + 7) % 7;
-
-      // If it's today but time has already passed → push to next week
-      if (daysAhead === 0 && meetingMinutes <= nowMinutes) {
-        daysAhead = 7;
-      }
+      if (daysAhead === 0 && meetingMinutes <= nowMinutes) daysAhead = 7;
 
       const isBetter =
         !earliest ||
@@ -552,17 +602,14 @@ const getNextMeeting = (configs: any[]): string | null => {
 
   if (!earliest) return null;
 
-  // Format time to 12-hr for readability e.g. "09:00" → "9:00 AM"
-  const e = earliest as { label: string; time: string; meetingMinutes: number; name: string };
-  const totalMin = e.meetingMinutes;
+  const totalMin = earliest.meetingMinutes;
   const hh = Math.floor(totalMin / 60);
   const mm = totalMin % 60;
   const suffix = hh >= 12 ? "PM" : "AM";
   const displayH = hh % 12 === 0 ? 12 : hh % 12;
   const displayM = mm.toString().padStart(2, "0");
-  const formattedTime = `${displayH}:${displayM} ${suffix}`;
 
-  return `${e.name} - ${e.label} at ${formattedTime}`;
+  return `${earliest.name} - ${earliest.label} at ${displayH}:${displayM} ${suffix}`;
 };
 
 // ── ConfigCard ──
@@ -604,7 +651,6 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
   const meetingHeadName =
     getDisplayName(config.meetingHead || config.meeting_head) || "Unknown Head";
   const meetingHeadId = config.meetingHeadId || config.meeting_head?.id;
-
   const membersArray = config.members || [];
 
   const mappedMembers = membersArray.map((m) => {
@@ -619,9 +665,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
   const hiddenMembersCount = mappedMembers.length - 3;
   const membersText =
     mappedMembers.length > 0
-      ? `${visibleMembers.join(", ")}${
-          hiddenMembersCount > 0 ? ` +${hiddenMembersCount} more` : ""
-        }`
+      ? `${visibleMembers.join(", ")}${hiddenMembersCount > 0 ? ` +${hiddenMembersCount} more` : ""}`
       : "No members assigned";
 
   const meetingHeadUser = allUsers.find(
@@ -632,10 +676,8 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
 
   const meetingTime =
     config.meetingTime || config.meeting_time || "No time set";
-
   const today = new Date();
   const todayJsIdx = today.getDay();
-
   const activeDayKeys = new Set(
     (config.meetingDays || config.meeting_days || []).map(normalizeDayKey)
   );
@@ -643,7 +685,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
   return (
     <>
       <div className="bg-white border border-[#F0EBE8] rounded-[24px] shadow-sm p-6 hover:shadow-md hover:border-[#D37E5F] transition-all relative">
-        {/* ── Three-dot menu ── */}
+        {/* Three-dot menu */}
         <div className="absolute top-5 right-4" ref={menuRef}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
@@ -670,14 +712,14 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
                 disabled={isDeleting}
                 className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-[#EB4A4A] hover:bg-[#EB4A4A]/10"
               >
-                <Trash className="w-4 h-4 text-[#EB4A4A]" />{" "}
+                <Trash className="w-4 h-4 text-[#EB4A4A]" />
                 {isDeleting ? "Deleting..." : "Delete"}
               </button>
             </div>
           )}
         </div>
 
-        {/* ── Name + Time + Day pills ── */}
+        {/* Name + Time + Day pills */}
         <div className="mb-5 pr-8">
           <h3 className="text-[18px] font-black text-[#1A1A1A] mb-3 leading-tight tracking-tight">
             {config.name}
@@ -686,35 +728,32 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
             <Clock className="w-3.5 h-3.5 text-[#8C8580]" /> {meetingTime}
           </div>
 
-          {/* Day pills */}
           <div className="flex gap-1.5 flex-wrap">
-            {(["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const).map(
-              (day) => {
-                const isActive = activeDayKeys.has(day);
-                const isToday = DAY_TO_JS_IDX[day] === todayJsIdx;
-                return (
-                  <div
-                    key={day}
-                    className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider transition-all",
-                      isActive && isToday
-                        ? "bg-[#DA7756] text-white ring-2 ring-offset-1 ring-[#DA7756]" // Yellow replaced with Coral
-                        : isActive
-                          ? "bg-[#1A1A1A] text-white"
-                          : isToday
-                            ? "bg-[#FCFAFA] border-2 border-[#DA7756] text-[#DA7756]" // Yellow replaced with Coral
-                            : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
-                    )}
-                  >
-                    {day}
-                  </div>
-                );
-              }
-            )}
+            {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => {
+              const isActive = activeDayKeys.has(day);
+              const isToday = DAY_TO_JS_IDX[day] === todayJsIdx;
+              return (
+                <div
+                  key={day}
+                  className={cn(
+                    "w-8 h-8 flex items-center justify-center rounded-[8px] text-[11px] font-black tracking-wider transition-all",
+                    isActive && isToday
+                      ? "bg-[#DA7756] text-white ring-2 ring-offset-1 ring-[#DA7756]"
+                      : isActive
+                        ? "bg-[#1A1A1A] text-white"
+                        : isToday
+                          ? "bg-[#FCFAFA] border-2 border-[#DA7756] text-[#DA7756]"
+                          : "bg-[#FCFAFA] border border-[#F0EBE8] text-[#8C8580]"
+                  )}
+                >
+                  {day}
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* ── Meeting Head ── */}
+        {/* Meeting Head */}
         <div className="mb-5">
           <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-2">
             Meeting Head
@@ -734,7 +773,7 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
           </div>
         </div>
 
-        {/* ── Members ── */}
+        {/* Members */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-2">
             <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest">
@@ -766,12 +805,11 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
           </div>
         </div>
 
-        {/* ── This Week — DYNAMIC ── */}
+        {/* This Week */}
         <div className="pt-5 border-t border-[#F0EBE8]">
           <div className="text-[10px] font-black text-[#8C8580] uppercase tracking-widest mb-3">
             This Week
           </div>
-
           <div className="flex justify-between items-center px-1 mb-4">
             {WEEK_DISPLAY_KEYS.map((day) => {
               const { color, ringColor, isToday } = getDayStatus(
@@ -802,25 +840,21 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
               );
             })}
           </div>
-
-          {/* Legend */}
           <div className="flex items-center gap-3 flex-wrap text-[10px] font-bold text-[#8C8580]">
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-[#2ECC71]" />
-              Held
+              <div className="w-2 h-2 rounded-full bg-[#2ECC71]" /> Held
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-[#DA7756]" /> {/* Yellow replaced with Coral */}
-              Today
+              <div className="w-2 h-2 rounded-full bg-[#DA7756]" /> Today
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-[#E5E7EB]" />
-              Upcoming / Off
+              <div className="w-2 h-2 rounded-full bg-[#E5E7EB]" /> Upcoming /
+              Off
             </div>
           </div>
         </div>
 
-        {/* ── Default badge ── */}
+        {/* Default badge */}
         {(config.isDefault || config.is_default) && (
           <div className="mt-5 flex">
             <span className="bg-[#1A1A1A] text-white text-[10px] font-black tracking-widest uppercase px-3 py-1.5 rounded-[8px]">
@@ -830,7 +864,6 @@ const ConfigCard = ({ config, onEdit, loadConfigs, allUsers = [] }) => {
         )}
       </div>
 
-      {/* Delete confirm modal */}
       {showDeleteConfirm && (
         <DeleteConfirmModal
           configName={config.name}
@@ -957,12 +990,11 @@ const SettingsTab = () => {
     0
   );
 
-  // Dynamic next meeting across all configs
   const nextMeeting = getNextMeeting(configs);
 
   return (
     <div
-      className="space-y-6 pb-12   min-h-screen pt-8"
+      className="space-y-6 pb-12 min-h-screen pt-8"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       <div className="space-y-6">
@@ -984,7 +1016,7 @@ const SettingsTab = () => {
           </button>
         </div>
 
-        {/* Stats Bar — only shown when configs exist */}
+        {/* Stats Bar */}
         {configs.length > 0 && (
           <div className="bg-white rounded-[24px] border border-[#F0EBE8] p-6 shadow-sm flex flex-wrap items-center gap-4 text-sm font-bold text-[#8C8580]">
             <div className="text-[#1A1A1A] font-black">
@@ -1069,7 +1101,6 @@ const SettingsTab = () => {
           </div>
         ) : filteredConfigs.length === 0 && !listError ? (
           configs.length === 0 ? (
-            // ── Zero configs exist — onboarding empty state ──
             <div className="flex flex-col items-center justify-center py-24 bg-white border-2 border-dashed border-[#F0EBE8] rounded-[32px] gap-6">
               <div className="w-16 h-16 rounded-[20px] bg-[#FDF5F1] border border-[#F6E1D7] flex items-center justify-center">
                 <CalendarClock className="w-8 h-8 text-[#D37E5F]" />
@@ -1091,7 +1122,6 @@ const SettingsTab = () => {
               </button>
             </div>
           ) : (
-            // ── Configs exist but search/filter returned nothing ──
             <div className="text-center py-24 bg-white border-2 border-dashed border-[#F0EBE8] rounded-[32px]">
               <p className="text-[#8C8580] font-bold text-sm">
                 No meetings match your search or filter.
@@ -1109,8 +1139,6 @@ const SettingsTab = () => {
                 allUsers={users}
               />
             ))}
-
-            {/* Create New Card */}
             <button
               onClick={handleCreate}
               className="border-2 border-dashed border-[#F0EBE8] rounded-[24px] p-6 flex flex-col items-center justify-center gap-4 text-[#8C8580] hover:bg-[#FCFAFA] hover:text-[#1A1A1A] transition-all duration-200 min-h-[320px] group"
@@ -1126,7 +1154,6 @@ const SettingsTab = () => {
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <MeetingConfigModal
           onClose={handleModalClose}

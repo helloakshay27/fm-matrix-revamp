@@ -425,8 +425,18 @@ export const IncidentNewDetails = () => {
                     setInvestigationDescription(incidentData.description);
                 }
 
-                // Investigators
-                if (incidentData.incident_investigations && incidentData.incident_investigations.length > 0) {
+                // Investigators - prioritize investigator_details, fallback to incident_investigations
+                if (incidentData.investigator_details && incidentData.investigator_details.length > 0) {
+                    const mappedInvestigators = incidentData.investigator_details.map((inv: any) => ({
+                        id: inv.id?.toString() || Date.now().toString(),
+                        name: inv.investigator_name || inv.name || '',
+                        email: '',
+                        role: inv.role || '',
+                        contactNo: inv.mobile || '',
+                        type: inv.investigator_type === 'external' ? 'external' : 'internal' as 'internal' | 'external',
+                    }));
+                    setInvestigators(mappedInvestigators);
+                } else if (incidentData.incident_investigations && incidentData.incident_investigations.length > 0) {
                     const mappedInvestigators = incidentData.incident_investigations.map((inv) => ({
                         id: inv.id?.toString() || Date.now().toString(),
                         name: inv.name,
@@ -2353,7 +2363,7 @@ export const IncidentNewDetails = () => {
                     <Button
                         size="sm"
                         onClick={() => setShowStatusModal(true)}
-                        className="flex items-center gap-2 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                        className="flex items-center gap-2"
                     >
                         Update Status
                     </Button>
@@ -2486,7 +2496,7 @@ export const IncidentNewDetails = () => {
                                     Save as draft
                                 </Button>
                                 <Button
-                                    className="flex-1 bg-[#BF213E] text-white hover:bg-[#9d1a32]"
+                                    className="flex-1"
                                     onClick={handleNext}
                                 >
                                     Next

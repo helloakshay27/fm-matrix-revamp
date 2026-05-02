@@ -6,6 +6,13 @@ import {
   TabsList,
   TabsTrigger,
 } from "../../components/ui/tabs";
+import { useProductSecurity } from "./useProductSecurity";
+import {
+  CameraPermissionPending,
+  CameraPermissionDenied,
+  ModelLoadingScreen,
+  SecurityOverlays,
+} from "./SecurityOverlays";
 import {
   ClipboardList,
   CheckSquare,
@@ -643,7 +650,7 @@ const productData = {
     detailedMarketAnalysis: {
       targetAudience: [
         {
-          segment: "Technology / SaaS",
+          segment:"Technology / SaaS 50–300 employees Bengaluru, Pune, Hyderabad, Dubai Growth-stage companies",
           demographics:
             "50–300 employees | Bengaluru, Pune, Hyderabad, Dubai | Growth-stage companies",
           industry: "Technology",
@@ -657,7 +664,7 @@ const productData = {
           primaryBuyer: "CTO / VP Engineering",
         },
         {
-          segment: "Real Estate & Construction",
+          segment: " Real Estate & Construction 5–50 active projectsPan-India + UAE, Saudi Mid-to-large developers",
           demographics:
             "5–50 active projects | Pan-India + UAE, Saudi | Mid-to-large developers",
           industry: "Real Estate & Construction",
@@ -671,7 +678,7 @@ const productData = {
           primaryBuyer: "Project Director / COO",
         },
         {
-          segment: "Professional Services (Consulting, Legal, Audit)",
+          segment: "Professional Services (Consulting, Legal, Audit) 20–150 professionals | Mumbai, Delhi, Bengaluru + Dubai DIFC",
           demographics:
             "20–150 professionals | Mumbai, Delhi, Bengaluru + Dubai DIFC",
           industry: "Professional Services",
@@ -5268,8 +5275,20 @@ const PTMAssetsTab: React.FC = () => {
 const TaskManagerPage: React.FC = () => {
   const navigate = useNavigate();
   const ptmTabsScrollRef = useRef<HTMLDivElement>(null);
+  const security = useProductSecurity();
 
   const tabOrder = productData.tabOrder;
+
+  // Camera permission states
+  if (security.cameraPermission === "pending") {
+    return <CameraPermissionPending />;
+  }
+  if (security.cameraPermission === "denied") {
+    return <CameraPermissionDenied />;
+  }
+  if (security.modelLoading) {
+    return <ModelLoadingScreen />;
+  }
 
   return (
     <div className="min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300">
@@ -5382,6 +5401,8 @@ const TaskManagerPage: React.FC = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      <SecurityOverlays security={security} />
     </div>
   );
 };

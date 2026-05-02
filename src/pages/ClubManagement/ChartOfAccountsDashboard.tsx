@@ -276,6 +276,12 @@ export const ChartOfAccountsDashboard = () => {
   const [lockLedgers, setLockLedgers] = useState<any[]>([]);
   // Add lock account groups tree state
   const [lockAccountGroupsTree, setLockAccountGroupsTree] = useState<any[]>([]);
+  // Search and pagination for lockLedgers
+  const [lockLedgerSearch, setLockLedgerSearch] = useState("");
+  const debouncedLockLedgerSearch = useDebounce(lockLedgerSearch, 300);
+  const [lockLedgerPage, setLockLedgerPage] = useState(1);
+  const [lockLedgerTotalPages, setLockLedgerTotalPages] = useState(1);
+  const lockLedgerPerPage = 10;
   const [memberships, setMemberships] = useState<GroupMembershipData[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -293,7 +299,8 @@ export const ChartOfAccountsDashboard = () => {
     title: string;
     items: string[];
   }>({ isOpen: false, title: "", items: [] });
-  const [viewType, setViewType] = useState<"table" | "tree">("table");
+  // const [viewType, setViewType] = useState<"table" | "tree">("table");
+  const [viewType, setViewType] = useState<"table" | "tree" | "group">("table");
   const [filters, setFilters] = useState<ClubMembershipFilters>({
     search: "",
     clubMemberEnabled: "",
@@ -303,28 +310,152 @@ export const ChartOfAccountsDashboard = () => {
   });
 
   const perPage = 20;
+  const [groupViewData, setGroupViewData] = useState<any[]>([]);
+  const [groupSearch, setGroupSearch] = useState("");
+  const debouncedGroupSearch = useDebounce(groupSearch, 300);
+  const [groupLoading, setGroupLoading] = useState(false);
+  const fetchGroupsOnly = async () => {
+    try {
+      setGroupLoading(true);
+
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+      const lock_account_id = localStorage.getItem("lock_account_id");
+
+      const url = new URL(
+        `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/lock_accounts/${lock_account_id}/lock_account_groups`
+      );
+
+      url.searchParams.append("access_token", token || "");
+      url.searchParams.append("format", "groups_only");
+
+      if (debouncedGroupSearch.trim()) {
+        url.searchParams.append(
+          "q[group_name_cont]",
+          debouncedGroupSearch.trim()
+        );
+      }
+
+      const res = await fetch(url.toString());
+
+      if (!res.ok) throw new Error("Failed groups");
+
+      const data = await res.json();
+
+      setGroupViewData(data.data || []);
+    } catch (err) {
+      console.error(err);
+      setGroupViewData([]);
+    } finally {
+      setGroupLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchGroupsOnly();
+  }, [debouncedGroupSearch]);
 
   // Fetch lock account ledgers and lock account groups tree
   useEffect(() => {
+    // Fetch lock ledgers for table view with search and pagination
+    // const fetchLockLedgers = async () => {
+    //   const baseUrl = API_CONFIG.BASE_URL;
+    //   const token = API_CONFIG.TOKEN;
+    //   const lock_account_id = localStorage.getItem("lock_account_id");
+    //   try {
+    //     const url = new URL(`https://${baseUrl}/${lock_account_id}/lock_accounts.json`);
+    //     url.searchParams.append("access_token", token || "");
+    //     if (debouncedLockLedgerSearch.trim()) {
+    //       url.searchParams.append(
+    //         "q[name_or_account_code_or_lock_account_group_group_name_or_lock_account_group_base_group_group_name_cont]",
+    //         debouncedLockLedgerSearch.trim()
+    //       );
+    //     }
+    //     url.searchParams.append("page", lockLedgerPage.toString());
+    //     url.searchParams.append("per_page", lockLedgerPerPage.toString());
+    //     const response = await fetch(url.toString(), {
+    //       method: "GET",
+    //       headers: { "Content-Type": "application/json" },
+    //     });
+    //     if (!response.ok) throw new Error(`Failed to fetch lock accounts: ${response.status}`);
+    //     const data = await response.json();
+    //     setLockLedgers(data.lock_accounts || []);
+    //     // Try to get pagination info if available
+    //     if (data.pagination) {
+    //       setLockLedgerTotalPages(Math.ceil((data.pagination.total_count || 0) / lockLedgerPerPage));
+    //     } else {
+    //       setLockLedgerTotalPages(1);
+    //     }
+    //   } catch (error) {
+    //     console.error("Error fetching lock account ledgers:", error);
+    //     setLockLedgers([]);
+    //     setLockLedgerTotalPages(1);
+    //   }
+    // };
+
+
     const fetchLockLedgers = async () => {
+      const baseUrl = API_CONFIG.BASE_URL;
+      const token = API_CONFIG.TOKEN;
+      const lock_account_id = localStorage.getItem("lock_account_id");
+
       try {
-        const baseUrl = API_CONFIG.BASE_URL;
-        const token = API_CONFIG.TOKEN;
-        // Fetch ledgers for table view
-        const url = new URL(`${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/lock_accounts.json`);
+        const url = new URL(
+          `${baseUrl.startsWith("http") ? baseUrl : `https://${baseUrl}`}/lock_accounts.json`
+        );
+
         url.searchParams.append("access_token", token || "");
+
+        if (debouncedLockLedgerSearch.trim()) {
+          url.searchParams.append(
+            "q[name_or_account_code_or_lock_account_group_group_name_or_lock_account_group_base_group_group_name_cont]",
+            debouncedLockLedgerSearch.trim()
+          );
+        }
+
+        url.searchParams.append("page", lockLedgerPage.toString());
+        url.searchParams.append("per_page", lockLedgerPerPage.toString());
+
         const response = await fetch(url.toString(), {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
-        if (!response.ok) throw new Error(`Failed to fetch lock accounts: ${response.status}`);
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch lock accounts: ${response.status}`);
+        }
+
         const data = await response.json();
+
+        // ✅ FIXED DATA MAPPING
         setLockLedgers(data.lock_account_ledgers || []);
+
+        // ✅ FIXED PAGINATION MAPPING
+        // if (data.lock_account_ledgers_pagination) {
+        //   setLockLedgerTotalPages(
+        //     data.lock_account_ledgers_pagination.total_pages || 1
+        //   );
+        // } else {
+        //   setLockLedgerTotalPages(1);
+        // }
+
+
+        if (data.lock_account_ledgers_pagination) {
+          setLockLedgerPage(data.lock_account_ledgers_pagination.current_page || 1);
+          setLockLedgerTotalPages(
+            data.lock_account_ledgers_pagination.total_pages || 1
+          );
+        } else {
+          setLockLedgerTotalPages(1);
+        }
+
       } catch (error) {
         console.error("Error fetching lock account ledgers:", error);
         setLockLedgers([]);
+        setLockLedgerTotalPages(1);
       }
     };
+
     const fetchLockAccountGroupsTree = async () => {
       try {
         const baseUrl = API_CONFIG.BASE_URL;
@@ -345,9 +476,10 @@ export const ChartOfAccountsDashboard = () => {
         setLockAccountGroupsTree([]);
       }
     };
+
     fetchLockLedgers();
     fetchLockAccountGroupsTree();
-  }, []);
+  }, [debouncedLockLedgerSearch, lockLedgerPage]);
 
   // Fetch memberships data
   const fetchMemberships = useCallback(
@@ -1019,7 +1151,7 @@ export const ChartOfAccountsDashboard = () => {
         <Plus className="w-4 h-4 mr-2" />
         Add Group
       </Button>
-       <Button
+      <Button
         className="bg-[#f7f2eb] hover:bg-[#efe6d8] text-[#C72030] border-none px-6 py-2 h-auto rounded-lg font-bold transition-all duration-200"
         onClick={handleAddAccount}
       >
@@ -1068,21 +1200,21 @@ export const ChartOfAccountsDashboard = () => {
         // Ledgers as files
         ...(Array.isArray(group.ledgers)
           ? group.ledgers.map((ledger: any) => ({
-              id: ledger.id,
-              account_name: ledger.name,
-              account_code: ledger.account_code || '',
-              account_type: 'Ledger',
-              type: 'file',
-              file_size: '',
-              club_members: [],
-              created_at: ledger.created_at,
-              updated_at: ledger.updated_at,
-              membership_plan_id: 0,
-              pms_site_id: 0,
-              start_date: null,
-              end_date: null,
-              children: [],
-            }))
+            id: ledger.id,
+            account_name: ledger.name,
+            account_code: ledger.account_code || '',
+            account_type: 'Ledger',
+            type: 'file',
+            file_size: '',
+            club_members: [],
+            created_at: ledger.created_at,
+            updated_at: ledger.updated_at,
+            membership_plan_id: 0,
+            pms_site_id: 0,
+            start_date: null,
+            end_date: null,
+            children: [],
+          }))
           : []),
         // Children groups as subfolders
         ...(Array.isArray(group.children)
@@ -1179,7 +1311,170 @@ export const ChartOfAccountsDashboard = () => {
       </div>
     );
   };
+  const handleLockLedgerPageChange = (page: number) => {
+    if (page < 1 || page > lockLedgerTotalPages) return;
+    setLockLedgerPage(page);
+  };
 
+  const renderLockLedgerPages = () => {
+    const pages = [];
+    const groupSize = 5;
+
+    const currentGroup = Math.ceil(lockLedgerPage / groupSize);
+    const startPage = (currentGroup - 1) * groupSize + 1;
+    const endPage = Math.min(startPage + groupSize - 1, lockLedgerTotalPages);
+
+    // Page numbers (5 at a time)
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <PaginationItem key={i}>
+          <PaginationLink
+            isActive={lockLedgerPage === i}
+            onClick={() => handleLockLedgerPageChange(i)}
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+
+    // Ellipsis + Last page
+    if (endPage < lockLedgerTotalPages) {
+      pages.push(
+        <PaginationItem key="ellipsis">
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+
+      pages.push(
+        <PaginationItem key={lockLedgerTotalPages}>
+          <PaginationLink
+            onClick={() =>
+              handleLockLedgerPageChange(lockLedgerTotalPages)
+            }
+          >
+            {lockLedgerTotalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+
+    return pages;
+  };
+
+
+  const filterGroups = (groups: any[], query: string): any[] => {
+    if (!query) return groups;
+
+    return groups
+      .map((group) => {
+        const match = group.group_name
+          .toLowerCase()
+          .includes(query.toLowerCase());
+
+        const filteredChildren = filterGroups(group.children || [], query);
+
+        if (match || filteredChildren.length > 0) {
+          return {
+            ...group,
+            children: filteredChildren,
+          };
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+  };
+
+  const GroupTreeNode = ({
+    node,
+    level = 0,
+    search,
+  }: {
+    node: any;
+    level?: number;
+    search: string;
+  }) => {
+    // const [expanded, setExpanded] = useState(level === 0);
+    const [expanded, setExpanded] = useState(true);
+
+    const hasChildren = node.children && node.children.length > 0;
+
+    return (
+      <div className="relative">
+        {/* CONNECTOR LINE */}
+        {level > 0 && (
+          <div className="absolute -left-5 top-0 bottom-0 border-l border-dashed border-gray-300"></div>
+        )}
+
+        {/* NODE ROW */}
+        <div
+          className="flex items-center gap-2 py-1 cursor-pointer group"
+          onClick={() => hasChildren && setExpanded(!expanded)}
+          style={{ paddingLeft: level * 20 }}
+        >
+          {/* Expand Icon */}
+          {hasChildren ? (
+            // <ChevronRight
+            //   className={`w-4 h-4 transition-transform ${
+            //     expanded ? "rotate-90" : ""
+            //   }`}
+            // />
+
+            <ChevronRight
+              className={`w-4 h-4 text-gray-500 group-hover:text-[#C72030] transition-all ${expanded ? "rotate-90" : ""
+                }`}
+            />
+          ) : (
+            <div className="w-4" />
+          )}
+
+          {/* Folder Icon */}
+          {/* <Folder className="w-4 h-4 text-blue-500" /> */}
+          <Folder className="w-4 h-4 text-[#C72030] group-hover:text-[#a01a26] transition-colors" />
+
+          {/* Name */}
+          {/* <span className="text-sm text-gray-700 group-hover:text-black">
+          {node.group_name}
+        </span> */}
+
+          <span className="text-sm text-gray-700 group-hover:text-black">
+            {highlightText(node.group_name, groupSearch)}
+          </span>
+        </div>
+
+        {/* CHILDREN */}
+        {expanded && hasChildren && (
+          <div className="ml-4">
+            {node.children.map((child: any) => (
+              <GroupTreeNode
+                key={child.id}
+                node={child}
+                level={level + 1}
+                search={search}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const highlightText = (text: string, query: string) => {
+    if (!query) return text;
+
+    const parts = text.split(new RegExp(`(${query})`, "gi"));
+
+    return parts.map((part, i) =>
+      part.toLowerCase() === query.toLowerCase() ? (
+        <span key={i} className="bg-gray-300 font-semibold">
+          {part}
+        </span>
+      ) : (
+        part
+      )
+    );
+  };
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       <div className="animate-fade-in">
@@ -1193,7 +1488,7 @@ export const ChartOfAccountsDashboard = () => {
         )}
 
         {/* Toggle for Lock Ledgers Table/Tree View */}
-        <div className="mb-4 flex gap-2">
+        {/* <div className="mb-4 flex gap-2">
           <Button
             variant={viewType === "table" ? "default" : "outline"}
             size="sm"
@@ -1212,81 +1507,149 @@ export const ChartOfAccountsDashboard = () => {
           </Button>
         </div>
 
-        {viewType === "table" ? (
+        <div className="mb-4 flex gap-2">
+  <Button onClick={() => setViewType("table")}>Table</Button>
+  <Button onClick={() => setViewType("tree")}>Tree</Button>
+  <Button onClick={() => setViewType("group")}>Group</Button>
+</div> */}
+
+
+
+        <div className="mb-4 flex gap-2">
+          {/* TABLE */}
+          <Button
+            variant={viewType === "table" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewType("table")}
+            className={
+              viewType === "table"
+                ? "bg-[#C72030] text-white"
+                : "border-[#C72030] text-[#C72030]"
+            }
+          >
+            Ledgers
+          </Button>
+
+          {/* TREE */}
+          <Button
+            variant={viewType === "tree" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewType("tree")}
+            className={
+              viewType === "tree"
+                ? "bg-[#C72030] text-white"
+                : "border-[#C72030] text-[#C72030]"
+            }
+          >
+            Tree View
+          </Button>
+
+          {/* GROUP */}
+          <Button
+            variant={viewType === "group" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setViewType("group")}
+            className={
+              viewType === "group"
+                ? "bg-[#C72030] text-white"
+                : "border-[#C72030] text-[#C72030]"
+            }
+          >
+            Groups
+          </Button>
+        </div>
+
+
+
+        {viewType === "table" && (
           <>
-            <h3 className="text-lg font-semibold mb-2">Chart Of Accounts List</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Chart Of Accounts List
+            </h3>
+
             <EnhancedTable
               data={lockLedgers}
               columns={lockLedgerColumns}
               renderCell={renderLockLedgerCell}
               pagination={false}
-              enableExport={true}
-              exportFileName="lock-account-ledgers"
-              storageKey="lock-account-ledgers-table"
-              hideTableExport={true}
-              hideColumnsButton={false}
-              className="transition-all duration-500 ease-in-out mb-8"
-              loading={false}
-              loadingMessage="Loading lock ledgers..."
-               leftActions={
-            <div className="flex gap-3">
-              {renderCustomActions()}
-            </div>
-          }
+              enableSearch
+              searchValue={lockLedgerSearch}
+              onSearchChange={(value) => {
+                setLockLedgerSearch(value);
+                setLockLedgerPage(1);
+              }}
+              leftActions={<div className="flex gap-3">{renderCustomActions()}</div>}
             />
+
+            {lockLedgerTotalPages > 1 && (
+              <div className="flex flex-col items-center gap-4 mt-6 pb-4">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() =>
+                          handleLockLedgerPageChange(lockLedgerPage - 1)
+                        }
+                      />
+                    </PaginationItem>
+
+                    {renderLockLedgerPages()}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() =>
+                          handleLockLedgerPageChange(lockLedgerPage + 1)
+                        }
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </>
-        ) : (
+        )}
+
+        {viewType === "tree" && (
           <>
-            <h3 className="text-lg font-semibold mb-2">Chart Of Accounts (Tree View)</h3>
-            <div className="min-h-[300px] max-h-[600px] overflow-y-auto pr-2 custom-scrollbar flex flex-col gap-3 mb-8">
+            <h3 className="text-lg font-semibold mb-2">
+              Chart Of Accounts (Tree View)
+            </h3>
+
+            <div className="flex flex-col gap-3 mb-8">
               {buildAccountTreeFromGroups(lockAccountGroupsTree).map((root) => (
                 <TreeViewNode key={root.id} node={root} />
               ))}
             </div>
           </>
         )}
+
+        {viewType === "group" && (
+          <>
+            <h3 className="text-lg font-semibold mb-3">
+              Account Groups
+            </h3>
+
+            {/* SEARCH */}
+            <div className="mb-4 w-80 relative">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search groups..."
+                value={groupSearch}
+                onChange={(e) => setGroupSearch(e.target.value)}
+                className="pl-9 pr-3 py-2 border rounded-lg w-full"
+              />
+            </div>
+
+            {/* TREE */}
+            <div className="bg-white border rounded-lg p-4">
+              {filterGroups(groupViewData, groupSearch).map((group) => (
+                <GroupTreeNode key={group.id} node={group} search={groupSearch} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
-
-      {/* Pagination Section */}
-      {totalPages > 1 && (
-        <div className="flex flex-col items-center gap-4 mt-6 pb-4">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                  className={
-                    currentPage === 1 || loading
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                />
-              </PaginationItem>
-              {renderPaginationItems()}
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() =>
-                    handlePageChange(Math.min(totalPages, currentPage + 1))
-                  }
-                  className={
-                    currentPage === totalPages || loading
-                      ? "pointer-events-none opacity-50"
-                      : "cursor-pointer"
-                  }
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-
-          {/* Page Info */}
-          <div className="text-sm text-gray-600">
-            Page {currentPage} of {totalPages} | Showing{" "}
-            {memberships.length +
-              (viewType === "tree" ? DUMMY_ACCOUNTS.length : 0)}{" "}
-            items
-          </div>
-        </div>
-      )}
       {/* Filter Dialog */}
       <ClubMembershipFilterDialog
         isOpen={isFilterOpen}
@@ -1336,7 +1699,7 @@ export const ChartOfAccountsDashboard = () => {
         onOpenChange={setIsAddAccountOpen}
         onSave={handleSaveAccount}
       />
-       {/* Add Account Modal */}
+      {/* Add Account Modal */}
       <AddChartofAccountGroupModal
         open={isAddAccountOpenGroup}
         // onClose={() => setIsAddAccountOpen(false)}

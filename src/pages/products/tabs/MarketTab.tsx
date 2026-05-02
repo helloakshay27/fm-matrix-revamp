@@ -77,14 +77,7 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
   const isClubMarketSheet = !!clubMarketAnalysis?.isClubMarket;
 
   // Snag360-specific format detection
-  const isSnag360Format =
-    productData.name === "Snag 360" ||
-    !!detailedMarketAnalysis?.topIndustries?.some(
-      (ind) => ind.buyReason || ind.scale || ind.decisionMaker || ind.dealSize
-    ) ||
-    !!detailedMarketAnalysis?.competitors?.some(
-      (comp) => comp.sovereignty || comp.segment
-    );
+  const isSnag360Format = productData.name === "Snag 360";
 
   return (
     <>

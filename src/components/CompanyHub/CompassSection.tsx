@@ -27,7 +27,7 @@ const CompassSection: React.FC<CompassSectionProps> = ({
           <div className="flex-1 p-8 lg:border-r border-gray-100">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-bold text-gray-800 tracking-tight">
-                Business Compass
+                Bussiness workspace
               </h3>
               <button className="text-[11px] text-[#E67E5F] font-bold uppercase tracking-widest">
                 View All
@@ -76,7 +76,7 @@ const CompassSection: React.FC<CompassSectionProps> = ({
           <div className="flex-1 p-8">
             <div className="flex items-center justify-between mb-8">
               <h3 className="text-xl font-bold text-gray-800 tracking-tight">
-                Life Compass
+                Personal workspace
               </h3>
               <button className="text-[11px] text-[#E67E5F] font-bold uppercase tracking-widest hover:underline">
                 View All

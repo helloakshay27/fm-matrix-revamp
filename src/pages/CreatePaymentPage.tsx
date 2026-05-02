@@ -436,17 +436,23 @@ export const CreatePaymentPage: React.FC = () => {
         ? format(date, "dd/MM/yyyy")
         : format(new Date(), "dd/MM/yyyy");
 
-      const lock_bill_payments_attributes = Object.entries(appliedAmounts)
-        .filter(([, v]) => parseFloat(v) > 0)
-        .map(([billId, v]) => ({
-          lock_account_bill_id: parseInt(billId, 10),
-          amount: parseFloat(v),
-          payment_date: paymentDate,
-        }));
+      const lock_bill_payments_attributes =
+        activeTab === "bill_payment"
+          ? Object.entries(appliedAmounts)
+              .filter(([, v]) => parseFloat(v) > 0)
+              .map(([billId, v]) => ({
+                resource_id: parseInt(billId, 10),
+                resource_type: "LockAccountBill",
+                amount: parseFloat(v),
+                payment_date: paymentDate,
+              }))
+          : [];
 
       const paidAmount = parseFloat(amount) || 0;
       const paymentAmount = totalApplied;
       const excessAmount = Math.max(0, paidAmount - totalApplied);
+
+      const isPaid = status === "PAID";
 
       const payload = {
         lock_payment: {
@@ -455,7 +461,7 @@ export const CreatePaymentPage: React.FC = () => {
           payment_of_id: parseInt(selectedVendor, 10),
           paid_amount: paidAmount,
           // Use the dynamically selected TDS id (vendor_advance tab only)
-          lock_account_tax_id: selectedTds ? parseInt(selectedTds, 10) : (lockAccountTaxId),
+          lock_account_tax_id: selectedTds ? parseInt(selectedTds, 10) : lockAccountTaxId,
           tds_amount: tdsAmount > 0 ? tdsAmount : undefined,
           tds_percentage: tdsPercentage > 0 ? tdsPercentage : undefined,
           net_amount: tdsAmount > 0 ? paidAmount - tdsAmount : undefined,
@@ -467,11 +473,16 @@ export const CreatePaymentPage: React.FC = () => {
           deposit_to_ledger_id: depositToLedgerId,
           advance: activeTab === "vendor_advance",
           reverse_charge: activeTab === "vendor_advance" ? isReverseCharge : undefined,
-          reverse_charge_tax_id: (activeTab === "vendor_advance" && isReverseCharge && reverseChargeTax) ? parseInt(reverseChargeTax, 10) : undefined,
+          reverse_charge_tax_id:
+            activeTab === "vendor_advance" && isReverseCharge && reverseChargeTax
+              ? parseInt(reverseChargeTax, 10)
+              : undefined,
           source_of_supply: activeTab === "vendor_advance" ? sourceOfSupply : undefined,
           destination_of_supply: activeTab === "vendor_advance" ? destinationOfSupply : undefined,
           description_of_supply: activeTab === "vendor_advance" ? descriptionOfSupply : undefined,
           notes: notes,
+          payment_made: isPaid,
+          status: isPaid ? "paid" : "draft",
           payment_amount: paymentAmount,
           excess_amount: excessAmount,
           lock_bill_payments_attributes,
@@ -480,7 +491,10 @@ export const CreatePaymentPage: React.FC = () => {
       };
       console.error("[handleSave] payload:", JSON.stringify(payload, null, 2));
 
-      const res = await accountingClient.post("/lock_payments.json", payload);
+      const res = await accountingClient.post(
+        `/lock_payments.json?lock_account_id=${lock_account_id}`,
+        payload
+      );
       sonnerToast.success("Payment saved successfully!");
       const newId = res.data?.id || res.data?.lock_payment?.id;
       if (newId) {

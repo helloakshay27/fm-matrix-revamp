@@ -884,13 +884,13 @@ const FinalClosureStep: React.FC<FinalClosureStepProps> = ({
       <div className="bg-white rounded-lg px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex flex-wrap gap-2 items-center">
-            {investigators.length > 0 ? (
-              investigators.map((inv, idx) => (
-                <React.Fragment key={inv.id}>
-                  <span className="font-medium text-sm text-gray-800">{inv.name}</span>
-                  {idx < investigators.length - 1 && <span className="text-gray-400">,</span>}
-                </React.Fragment>
-              ))
+            {investigators && investigators.length > 0 ? (
+              <span className="font-medium text-sm text-gray-800">
+                {investigators
+                  .map((inv) => inv.name)
+                  .filter(Boolean)
+                  .join(", ")}
+              </span>
             ) : (
               <span className="text-sm text-gray-400">No investigators added yet</span>
             )}

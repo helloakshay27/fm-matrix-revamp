@@ -139,7 +139,8 @@ export const AMCDetailsPage = () => {
   const amcVisitData = amcData?.amc_visit_logs?.map((visit) => visit) ?? [];
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState("amc-information"); // Changed default to 'amc-information'
+  const [activeTab, setActiveTab] = useState("amc-information");
+  const [activeSubTab, setActiveSubTab] = useState("analytics");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   // Tickets state
@@ -151,6 +152,15 @@ export const AMCDetailsPage = () => {
   const [occurrencesLoading, setOccurrencesLoading] = useState(false);
   const [occurrenceStatusFilter, setOccurrenceStatusFilter] = useState("Scheduled");
   const [occurrenceSearch, setOccurrenceSearch] = useState("");
+  const [occurrencePage, setOccurrencePage] = useState(1);
+  const [occurrenceTotalCount, setOccurrenceTotalCount] = useState(0);
+  // AMC Visits History state
+  const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
+  const [showVisitEditModal, setShowVisitEditModal] = useState(false);
+  const [visitEditRemarks, setVisitEditRemarks] = useState("");
+  const [visitEditStatus, setVisitEditStatus] = useState("");
+  const [visitEditDocument, setVisitEditDocument] = useState<File | null>(null);
+  const [visitUpdateLoading, setVisitUpdateLoading] = useState(false);
 
   const fetchTicketsForAssets = async (assetIds: number[]) => {
     if (!assetIds.length) return;
@@ -205,6 +215,62 @@ export const AMCDetailsPage = () => {
     }
   };
 
+  const fetchOccurrences = async (page: number = 1) => {
+    const assetIds =
+      amcDetails?.amc_assets?.map((a: any) => a.asset_id).filter(Boolean) ?? [];
+    if (!assetIds.length) return;
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    if (!baseUrl || !token) return;
+    setOccurrencesLoading(true);
+    try {
+      const idsQs = assetIds.map((aid: number) => `ids[]=${aid}`).join("&");
+      const url = `https://${baseUrl}/pms/asset_amcs/occurrences.json?${idsQs}&access_token=${token}&page=${page}&per_page=20`;
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!res.ok) throw new Error(`Occurrences fetch failed: ${res.status}`);
+      const data = await res.json();
+      const items = Array.isArray(data)
+        ? data
+        : data.occurrences ?? data.data ?? [];
+      const total = data.total_count ?? data.total ?? items.length;
+      setOccurrences(items);
+      setOccurrenceTotalCount(total);
+    } catch (e: any) {
+      console.error("Occurrences Error:", e);
+    } finally {
+      setOccurrencesLoading(false);
+    }
+  };
+
+  const handleVisitUpdate = async () => {
+    if (!selectedVisitId) return;
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    if (!baseUrl || !token) return;
+    setVisitUpdateLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append("id", String(selectedVisitId));
+      formData.append("amc_history[remarks]", visitEditRemarks);
+      formData.append("amc_history[status]", visitEditStatus);
+      if (visitEditDocument) {
+        formData.append("amc_history[document]", visitEditDocument);
+      }
+      const res = await fetch(
+        `https://${baseUrl}/pms/asset_amcs/amc_history_update.json?access_token=${token}`,
+        { method: "POST", body: formData }
+      );
+      if (!res.ok) throw new Error(`Update failed: ${res.status}`);
+      setShowVisitEditModal(false);
+      setSelectedVisitId(null);
+      if (id) dispatch(fetchAMCDetails(id));
+    } catch (e: any) {
+      console.error("Visit update error:", e);
+    } finally {
+      setVisitUpdateLoading(false);
+    }
+  };
+
   // Fetch tickets when AMC details loaded
   useEffect(() => {
     if (amcDetails?.amc_assets?.length) {
@@ -221,6 +287,13 @@ export const AMCDetailsPage = () => {
       dispatch(fetchAMCDetails(id));
     }
   }, [dispatch, id]);
+
+  useEffect(() => {
+    if (amcDetails?.amc_assets?.length) {
+      fetchOccurrences(occurrencePage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [amcDetails?.amc_assets, occurrencePage]);
 
   const formatDate = (dateString: string | null): string => {
     if (!dateString) return "—";
@@ -298,44 +371,39 @@ export const AMCDetailsPage = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">AMC Details</h1>
           <div className="flex gap-2">
-            <Button
-              onClick={() => navigate(`/maintenance/amc/edit/${id}`)}
-              variant="outline"
-              className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
-            >
-              <svg
-                width="21"
-                height="21"
-                viewBox="0 0 21 21"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+            {activeTab === "amc-information" && activeSubTab === "amc-details" && (
+              <Button
+                onClick={() => navigate(`/maintenance/amc/edit/${id}`)}
+                variant="outline"
+                className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50 px-4 py-2"
               >
-                <mask
-                  id="mask0_107_2076"
-                  style={{ maskType: "alpha" }}
-                  maskUnits="userSpaceOnUse"
-                  x="0"
-                  y="0"
+                <svg
                   width="21"
                   height="21"
+                  viewBox="0 0 21 21"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
                 >
-                  <rect width="21" height="21" fill="#C72030" />
-                </mask>
-                <g mask="url(#mask0_107_2076)">
-                  <path
-                    d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
-                    fill="#C72030"
-                  />
-                </g>
-              </svg>
-            </Button>
-            <Button
-              onClick={() => setShowAddVisitModal(true)}
-              style={{ backgroundColor: "#C72030" }}
-              className="text-white hover:bg-[#C72030]/90"
-            >
-              Add Visit
-            </Button>
+                  <mask
+                    id="mask0_107_2076"
+                    style={{ maskType: "alpha" }}
+                    maskUnits="userSpaceOnUse"
+                    x="0"
+                    y="0"
+                    width="21"
+                    height="21"
+                  >
+                    <rect width="21" height="21" fill="#C72030" />
+                  </mask>
+                  <g mask="url(#mask0_107_2076)">
+                    <path
+                      d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
+                      fill="#C72030"
+                    />
+                  </g>
+                </svg>
+              </Button>
+            )}
             {/* <Button
               onClick={() => navigate(`/maintenance/amc/edit/${id}`)}
               variant="outline"
@@ -362,7 +430,7 @@ export const AMCDetailsPage = () => {
             color: rgba(199, 32, 48, 1) !important;
           }
         `}</style>
-        <Tabs defaultValue="amc-information" className="w-full">
+        <Tabs defaultValue="amc-information" className="w-full" onValueChange={setActiveTab}>
           <TabsList
             className="top-level-tabs w-full flex flex-nowrap rounded-t-lg p-0 overflow-x-auto mb-4"
             style={{
@@ -377,8 +445,9 @@ export const AMCDetailsPage = () => {
               { label: "AMC Information", value: "amc-information" },
               { label: "Supplier Information", value: "supplier-information" },
               { label: "Attachments", value: "attachments" },
-              { label: "History", value: "history" },
+              { label: "Scheduled AMC", value: "scheduled-amc" },
               { label: "Tickets", value: "tickets" },
+              { label: "AMC Visits History", value: "amc-visits-history" },
               { label: "Association", value: "association" },
             ].map((tab) => (
               <TabsTrigger
@@ -416,7 +485,7 @@ export const AMCDetailsPage = () => {
               className="rounded-lg shadow-sm border border-gray-200"
               style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
             >
-              <Tabs defaultValue="analytics" className="w-full">
+              <Tabs defaultValue="analytics" className="w-full" onValueChange={setActiveSubTab}>
                 <TabsList className="w-full flex flex-wrap bg-gray-50 rounded-t-lg h-[36px] p-0 text-sm justify-stretch border-b border-gray-200">
                   <TabsTrigger
                     value="analytics"
@@ -1010,9 +1079,9 @@ export const AMCDetailsPage = () => {
             </Card>
           </TabsContent>
 
-          {/* History */}
+          {/* Scheduled AMC */}
           <TabsContent
-            value="history"
+            value="scheduled-amc"
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
@@ -1029,16 +1098,14 @@ export const AMCDetailsPage = () => {
                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
                     <Calendar className="w-5 h-5 text-[#C72030]" />
                   </div>
-                  HISTORY
+                  Scheduled AMC
                 </CardTitle>
               </CardHeader>
               <CardContent
                 className="p-6"
                 style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
               >
-                {/* Status Cards */}
                 {(() => {
-                  const assetIds = amcDetails?.amc_assets?.map((a: any) => a.asset_id).filter(Boolean) ?? [];
                   const statusCards = [
                     { label: "Scheduled", color: "#6366F1" },
                     { label: "Open", color: "#EF4444" },
@@ -1046,33 +1113,6 @@ export const AMCDetailsPage = () => {
                     { label: "Closed", color: "#10B981" },
                     { label: "Overdue", color: "#C72030" },
                   ];
-
-                  // Fetch occurrences on first render when assets available
-                  const fetchOccurrences = async () => {
-                    if (!assetIds.length) return;
-                    const baseUrl = localStorage.getItem("baseUrl");
-                    const token = localStorage.getItem("token");
-                    if (!baseUrl || !token) return;
-                    setOccurrencesLoading(true);
-                    try {
-                      const results: any[] = [];
-                      for (const aid of assetIds) {
-                        try {
-                          const res = await fetch(
-                            `https://${baseUrl}/pms/assets/${aid}/occurrences.json`,
-                            { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
-                          );
-                          if (res.ok) {
-                            const d = await res.json();
-                            (d.occurrences || []).forEach((o: any) => results.push(o));
-                          }
-                        } catch {}
-                      }
-                      setOccurrences(results);
-                    } finally {
-                      setOccurrencesLoading(false);
-                    }
-                  };
 
                   const filtered = occurrences.filter(
                     (o) =>
@@ -1082,6 +1122,8 @@ export const AMCDetailsPage = () => {
                         (o.schedule || "").toLowerCase().includes(occurrenceSearch.toLowerCase())
                       )
                   );
+
+                  const totalPages = Math.max(1, Math.ceil(occurrenceTotalCount / 20));
 
                   return (
                     <div className="space-y-6">
@@ -1098,7 +1140,7 @@ export const AMCDetailsPage = () => {
                               style={{ backgroundColor: "#F6F4EE" }}
                               onClick={() => {
                                 setOccurrenceStatusFilter(card.label);
-                                if (!occurrences.length && !occurrencesLoading) fetchOccurrences();
+                                setOccurrencePage(1);
                               }}
                             >
                               <div className="flex items-center gap-3">
@@ -1119,14 +1161,12 @@ export const AMCDetailsPage = () => {
 
                       {/* Search */}
                       <div className="flex justify-end">
-                        <div className="relative">
-                          <Input
-                            placeholder="Search..."
-                            value={occurrenceSearch}
-                            onChange={(e) => setOccurrenceSearch(e.target.value)}
-                            className="pl-3 w-64"
-                          />
-                        </div>
+                        <Input
+                          placeholder="Search..."
+                          value={occurrenceSearch}
+                          onChange={(e) => setOccurrenceSearch(e.target.value)}
+                          className="pl-3 w-64"
+                        />
                       </div>
 
                       {/* Occurrences Table */}
@@ -1147,13 +1187,13 @@ export const AMCDetailsPage = () => {
                             {occurrencesLoading ? (
                               <TableRow>
                                 <TableCell colSpan={7} className="text-center py-6 text-gray-500">
-                                  Loading history...
+                                  Loading...
                                 </TableCell>
                               </TableRow>
                             ) : filtered.length === 0 ? (
                               <TableRow>
                                 <TableCell colSpan={7} className="text-center py-6 text-gray-500">
-                                  No history found.
+                                  No records found.
                                 </TableCell>
                               </TableRow>
                             ) : (
@@ -1179,6 +1219,31 @@ export const AMCDetailsPage = () => {
                           </TableBody>
                         </Table>
                       </div>
+
+                      {/* Pagination */}
+                      {totalPages > 1 && (
+                        <div className="flex justify-end items-center gap-3 pt-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={occurrencePage <= 1 || occurrencesLoading}
+                            onClick={() => setOccurrencePage((p) => p - 1)}
+                          >
+                            Previous
+                          </Button>
+                          <span className="text-sm text-gray-600">
+                            Page {occurrencePage} of {totalPages}
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={occurrencePage >= totalPages || occurrencesLoading}
+                            onClick={() => setOccurrencePage((p) => p + 1)}
+                          >
+                            Next
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -1320,6 +1385,223 @@ export const AMCDetailsPage = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* AMC Visits History */}
+          <TabsContent
+            value="amc-visits-history"
+            className="p-3 sm:p-6"
+            style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+          >
+            <Card
+              className="border-[#D9D9D9] bg-white shadow-sm"
+              style={{
+                borderRadius: "4px",
+                background: "#FFF",
+                boxShadow: "0 4px 14.2px 0 rgba(0, 0, 0, 0.10)",
+              }}
+            >
+              <CardHeader className="bg-[#F6F4EE] border-b border-gray-300">
+                <CardTitle className="text-[#1a1a1a] font-semibold text-lg flex items-center">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
+                    <Calendar className="w-5 h-5 text-[#C72030]" />
+                  </div>
+                  AMC VISITS HISTORY
+                </CardTitle>
+              </CardHeader>
+              <CardContent
+                className="p-6"
+                style={{ backgroundColor: "rgba(246, 247, 247, 1)" }}
+              >
+                {/* Visits Table */}
+                <div className="bg-white rounded-lg border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-[#EDEAE3]">
+                        <TableHead className="w-10" />
+                        <TableHead className="font-semibold text-[#1a1a1a]">Visit #</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Visit Date</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Asset Period</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="bg-white">
+                      {amcVisitData.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center py-6 text-gray-500">
+                            No visit history found.
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        amcVisitData.map((visit) => {
+                          const isSelected = selectedVisitId === visit.id;
+                          return (
+                            <TableRow
+                              key={visit.id}
+                              className={`border-b border-gray-200 transition-colors ${
+                                isSelected ? "bg-[#FFF8F8]" : "hover:bg-gray-50"
+                              }`}
+                            >
+                              <TableCell className="w-10">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() =>
+                                    setSelectedVisitId(isSelected ? null : visit.id)
+                                  }
+                                  className="w-4 h-4 rounded border-gray-300 accent-[#C72030] cursor-pointer"
+                                />
+                              </TableCell>
+                              <TableCell className="font-medium text-gray-900">
+                                {visit.visit_number ?? "—"}
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {visit.visit_date
+                                  ? new Date(visit.visit_date).toLocaleDateString("en-GB")
+                                  : "—"}
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {visit.asset_period || "—"}
+                              </TableCell>
+                              <TableCell className="text-gray-900">
+                                {visit.technician?.name || "—"}
+                              </TableCell>
+                              <TableCell className="text-gray-900 max-w-[200px] whitespace-normal break-words">
+                                {visit.remarks || "—"}
+                              </TableCell>
+                              <TableCell>
+                                {(visit as any).status ? (
+                                  <span
+                                    className={`px-2 py-1 text-xs font-medium rounded uppercase tracking-wide ${
+                                      (visit as any).status.toLowerCase() === "completed"
+                                        ? "bg-green-100 text-green-800"
+                                        : (visit as any).status.toLowerCase() === "cancelled"
+                                          ? "bg-red-100 text-red-800"
+                                          : "bg-gray-100 text-gray-700"
+                                    }`}
+                                  >
+                                    {((visit as any).status as string).toUpperCase()}
+                                  </span>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                {visit.attachment?.document || visit.attachment?.document_url ? (
+                                  <a
+                                    href={visit.attachment.document || visit.attachment.document_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center gap-1 text-[#C72030] hover:underline text-sm"
+                                  >
+                                    <FileText className="w-4 h-4" />
+                                    View
+                                  </a>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">—</span>
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Edit Visit Modal */}
+            <Dialog open={showVisitEditModal} onOpenChange={setShowVisitEditModal}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="text-[#1a1a1a] font-semibold">Edit Visit</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-5 py-2">
+                  {/* Remarks */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Remarks</label>
+                    <textarea
+                      value={visitEditRemarks}
+                      onChange={(e) => setVisitEditRemarks(e.target.value)}
+                      rows={3}
+                      placeholder="Enter remarks..."
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                    />
+                  </div>
+
+                  {/* Status */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Status</label>
+                    <select
+                      value={visitEditStatus}
+                      onChange={(e) => setVisitEditStatus(e.target.value)}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                    >
+                      <option value="">Select status</option>
+                      <option value="pending">Pending</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  {/* Attachment */}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-gray-700">Attachment</label>
+                    <div
+                      className="flex items-center gap-3 border border-dashed border-gray-300 rounded-md px-4 py-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() =>
+                        document.getElementById("visit-doc-input")?.click()
+                      }
+                    >
+                      <Paperclip className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-sm text-gray-500 truncate">
+                        {visitEditDocument
+                          ? visitEditDocument.name
+                          : "Click to attach a file"}
+                      </span>
+                      <input
+                        id="visit-doc-input"
+                        type="file"
+                        className="hidden"
+                        onChange={(e) =>
+                          setVisitEditDocument(e.target.files?.[0] || null)
+                        }
+                      />
+                    </div>
+                    {visitEditDocument && (
+                      <button
+                        className="text-xs text-red-500 hover:underline mt-1"
+                        onClick={() => setVisitEditDocument(null)}
+                      >
+                        Remove file
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowVisitEditModal(false)}
+                      disabled={visitUpdateLoading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      style={{ backgroundColor: "#C72030" }}
+                      className="text-white hover:bg-[#C72030]/90 min-w-[80px]"
+                      disabled={visitUpdateLoading}
+                      onClick={handleVisitUpdate}
+                    >
+                      {visitUpdateLoading ? "Saving..." : "Save"}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* Asset Information */}
@@ -1699,6 +1981,92 @@ export const AMCDetailsPage = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Fixed selection panel — mirrors AssetSelectionPanel style */}
+      {selectedVisitId !== null && (
+        <div
+          className="fixed bg-white border border-gray-200 rounded-sm shadow-lg z-50"
+          style={{ bottom: "24px", left: "50%", transform: "translateX(-50%)", width: "760px", height: "90px" }}
+        >
+          <div className="flex items-center justify-between w-full h-full pr-6">
+            {/* Left: count badge + visit label */}
+            <div className="flex items-center gap-2">
+              <div className="text-[#C72030] bg-[#C4B89D] rounded-l-sm w-[44px] h-[90px] flex items-center justify-center text-sm font-bold flex-shrink-0">
+                1
+              </div>
+              <div className="flex flex-col justify-center px-3 py-2">
+                <span className="text-[16px] font-semibold text-[#1A1A1A] whitespace-nowrap leading-none">
+                  Selection
+                </span>
+                <span className="text-[12px] font-medium text-[#6B7280] leading-tight">
+                  {(() => {
+                    const v = amcVisitData.find((x) => x.id === selectedVisitId);
+                    return v
+                      ? `Visit #${v.visit_number} — ${v.visit_date ? new Date(v.visit_date).toLocaleDateString("en-GB") : ""}`
+                      : `Visit ID: ${selectedVisitId}`;
+                  })()}
+                </span>
+              </div>
+            </div>
+
+            {/* Right: action buttons */}
+            <div className="flex items-center ml-6">
+              {/* Edit */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 h-auto mr-6"
+                onClick={() => {
+                  const visit = amcVisitData.find((v) => v.id === selectedVisitId);
+                  setVisitEditRemarks((visit as any)?.remarks || "");
+                  setVisitEditStatus((visit as any)?.status || "");
+                  setVisitEditDocument(null);
+                  setShowVisitEditModal(true);
+                }}
+              >
+                <svg
+                  className="w-5 h-5 mt-3"
+                  viewBox="0 0 21 21"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <mask
+                    id="visit-sel-edit-mask"
+                    style={{ maskType: "alpha" }}
+                    maskUnits="userSpaceOnUse"
+                    x="0"
+                    y="0"
+                    width="21"
+                    height="21"
+                  >
+                    <rect width="21" height="21" fill="#1C1B1F" />
+                  </mask>
+                  <g mask="url(#visit-sel-edit-mask)">
+                    <path
+                      d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
+                      fill="#1C1B1F"
+                    />
+                  </g>
+                </svg>
+                <span className="text-xs font-medium">Edit</span>
+              </Button>
+
+              <div className="w-px h-8 bg-gray-300 mr-6" />
+
+              {/* Clear */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSelectedVisitId(null)}
+                className="text-gray-600 hover:bg-gray-100"
+                style={{ width: "44px", height: "44px" }}
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AddVisitModal
         isOpen={showAddVisitModal}

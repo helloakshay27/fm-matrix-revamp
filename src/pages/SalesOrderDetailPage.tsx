@@ -354,6 +354,7 @@ export const SalesOrderDetailPage = () => {
             shipped: "bg-purple-100 text-purple-800 border-purple-200",
             delivered: "bg-green-100 text-green-800 border-green-200",
             cancelled: "bg-red-100 text-red-800 border-red-200",
+            pending_approval: 'bg-orange-100 text-orange-800',
         };
         return colors[status] || colors.draft;
     };
@@ -448,7 +449,7 @@ export const SalesOrderDetailPage = () => {
 
                     <div className="flex items-center gap-2 flex-wrap">
                         <Badge className={`${getStatusColor(salesOrder.status)} border`}>
-                            {salesOrder.status?.toUpperCase()}
+                            {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
                         </Badge>
 
                         {(salesOrder as any)?.approval_status?.approval_levels?.length > 0 && (

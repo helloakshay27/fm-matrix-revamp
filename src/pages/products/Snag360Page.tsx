@@ -754,7 +754,7 @@ const productData = {
         },
         {
           rank: 2,
-          industry: "EPC Contractors and Infrastructure Firms",
+          industry: "EPC Contractors and Infrastructure Firms (EPCE)",
           buyReason:
             "Large multi-site projects require structured QC; government contracts demand audit trails; stage-wise inspection mandatory",
           scale:
@@ -814,7 +814,7 @@ const productData = {
         },
         {
           rank: 8,
-          industry: "Data Center and Technology Campus Construction",
+          industry: "Data Center and Technology Campus Construction (IT/ITES)",
           buyReason:
             "Precision QC for raised floors, cooling, electrical; clean room standards; strict commissioning protocols",
           scale:
@@ -1311,7 +1311,7 @@ const productData = {
         },
         {
           rank: 2,
-          industry: "EPC Contractors and Infrastructure Firms",
+          industry: "EPC Contractors and Infrastructure Firms (EPCE)",
           useCase:
             "Multi-site quality monitoring across highway, bridge, or large infrastructure project stages",
           workflow:
@@ -1335,7 +1335,7 @@ const productData = {
         },
         {
           rank: 4,
-          industry: "Industrial and Warehousing Construction",
+          industry: "Industrial and Warehousing Construction (Warehousing)",
           useCase:
             "MEP and civil quality inspection for large-format logistics park units before occupancy",
           workflow:
@@ -1347,7 +1347,7 @@ const productData = {
         },
         {
           rank: 5,
-          industry: "Facility Management Organizations",
+          industry: "Facility Management",
           useCase:
             "Post-handover snag tracking and asset condition documentation for FM takeover",
           workflow:
@@ -1359,7 +1359,7 @@ const productData = {
         },
         {
           rank: 6,
-          industry: "Government and Public Infrastructure",
+          industry: "Government and Public Infrastructure (EPCE)",
           useCase:
             "Third-party quality audit documentation for PWD or NHAI project inspections",
           workflow:
@@ -1371,7 +1371,7 @@ const productData = {
         },
         {
           rank: 7,
-          industry: "Healthcare and Education Facility Construction",
+          industry: "Healthcare and Education Facility Construction (EPCE)",
           useCase:
             "Infection control and finish quality inspection for hospital or university construction before commissioning",
           workflow:
@@ -1383,7 +1383,7 @@ const productData = {
         },
         {
           rank: 8,
-          industry: "Data Center and Technology Campus Construction",
+          industry: "Data Center and Technology Campus Construction (IT/ITES)",
           useCase:
             "Precision commissioning inspection for raised floor, cooling, power, and cable management before go-live",
           workflow:
@@ -1407,7 +1407,7 @@ const productData = {
         },
         {
           rank: 10,
-          industry: "SEZs and Industrial Parks",
+          industry: "SEZs and Industrial Parks (SEZ/ IT Parks)",
           useCase:
             "Multi-building phased delivery inspection with tenant-specific punch lists before lease commencement",
           workflow:

@@ -145,7 +145,9 @@ export const ActionLayoutProvider: React.FC<ActionLayoutProviderProps> = ({
       if (
         userType !== "pms_occupant" &&
         (module.module_name === "Employee Sidebar" ||
-          module.module_name === "Employee Projects Sidebar")
+          module.module_name === "Employee Projects Sidebar" ||
+          module.module_name === "Employee Business Compass" ||
+          module.module_name === "Employee Admin Compass")
       ) {
         continue;
       }

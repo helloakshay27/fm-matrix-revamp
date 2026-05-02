@@ -187,55 +187,55 @@ export const TaskDetailsPage = () => {
             // Use the location that was already mapped by taskService
             location: rawDetails.task_details?.location ||
               rawDetails.location || {
-                site: "NA",
-                building: "NA",
-                wing: "NA",
-                floor: "NA",
-                area: "NA",
-                room: "NA",
-              },
+              site: "NA",
+              building: "NA",
+              wing: "NA",
+              floor: "NA",
+              area: "NA",
+              room: "NA",
+            },
           },
           // Map activity/checklist responses - if responses exist, map them; otherwise map questions
           activity: {
             resp: rawDetails.checklist_responses
               ? rawDetails.checklist_responses.map((item: any) => ({
-                  label: item.label || item.activity,
-                  hint: item.hint || item.help_text || "",
-                  userData: item.userData || [item.input_value],
-                  comment: item.comment || item.comments || "",
-                  weightage: item.weightage || "",
-                  rating: item.rating || "",
-                  values: item.values || [],
-                  attachments: item.attachments || [],
-                  name: item.name,
-                  className: item.className,
-                  type: item.type,
-                  required: item.required,
-                  is_reading: item.is_reading,
-                  group_id: item.group_id || "",
-                  sub_group_id: item.sub_group_id || "",
-                  group_name: item.group_name || "",
-                  sub_group_name: item.sub_group_name || "",
-                }))
+                label: item.label || item.activity,
+                hint: item.hint || item.help_text || "",
+                userData: item.userData || [item.input_value],
+                comment: item.comment || item.comments || "",
+                weightage: item.weightage || "",
+                rating: item.rating || "",
+                values: item.values || [],
+                attachments: item.attachments || [],
+                name: item.name,
+                className: item.className,
+                type: item.type,
+                required: item.required,
+                is_reading: item.is_reading,
+                group_id: item.group_id || "",
+                sub_group_id: item.sub_group_id || "",
+                group_name: item.group_name || "",
+                sub_group_name: item.sub_group_name || "",
+              }))
               : (rawDetails.checklist_questions || []).map((item: any) => ({
-                  label: item.label || item.activity,
-                  hint: item.hint || item.help_text || "",
-                  userData: ["-"], // Show '-' for questions without responses
-                  comment: "-",
-                  weightage: item.weightage || "",
-                  rating: "",
-                  values: item.values || [],
-                  attachments: [],
-                  name: item.name,
-                  className: item.className,
-                  type: item.type,
-                  required: item.required,
-                  is_reading: item.is_reading,
-                  group_id: item.group_id || "",
-                  sub_group_id: item.sub_group_id || "",
-                  group_name: item.group_name || "",
-                  sub_group_name: item.sub_group_name || "",
-                })),
+                label: item.label || item.activity,
+                hint: item.hint || item.help_text || "",
+                userData: ["-"], // Show '-' for questions without responses
+                comment: "-",
+                weightage: item.weightage || "",
+                rating: "",
+                values: item.values || [],
+                attachments: [],
+                name: item.name,
+                className: item.className,
+                type: item.type,
+                required: item.required,
+                is_reading: item.is_reading,
+                group_id: item.group_id || "",
+                sub_group_id: item.sub_group_id || "",
+                group_name: item.group_name || "",
+                sub_group_name: item.sub_group_name || "",
+              })),
           },
           // Map before/after attachments
           bef_sub_attachment: rawDetails.bef_sub_attachment,
@@ -598,7 +598,7 @@ export const TaskDetailsPage = () => {
 
       sonnerToast.success(
         response.message ||
-          `Ticket ${!currentFlagStatus ? "flagged" : "unflagged"} successfully`
+        `Ticket ${!currentFlagStatus ? "flagged" : "unflagged"} successfully`
       );
 
       // Refresh ticket data to ensure consistency with server
@@ -618,9 +618,8 @@ export const TaskDetailsPage = () => {
 
       sonnerToast.success(
         response.message ||
-          `Golden Ticket ${
-            !currentGoldenStatus ? "marked" : "unmarked"
-          } successfully!`
+        `Golden Ticket ${!currentGoldenStatus ? "marked" : "unmarked"
+        } successfully!`
       );
 
       // Refresh ticket data to ensure consistency with server
@@ -960,24 +959,30 @@ export const TaskDetailsPage = () => {
           </span>
         );
       case "input": {
-        const formatInputValue = (val: string): string => {
-          if (!val || val === "-") return val || "-";
-          try {
-            const parsed = JSON.parse(val);
-            if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-              return Object.entries(parsed as Record<string, string>)
-                .filter(([, v]) => v)
-                .map(([k, v]) => `${k}: ${v}`)
-                .join(" | ") || val;
-            }
-          } catch {
-            // not JSON, use as-is
+        // Pair values array with userData array
+        let inputText = "-";
+
+        if (Array.isArray(item.input) && item.input.length > 0) {
+          // Check if we have values array to pair with userData
+          if (item.values && Array.isArray(item.values) && item.values.length > 0) {
+            // Pair each value with corresponding userData
+            inputText = item.input
+              .map((data: string, index: number) => {
+                if (!data || data === "-") return null;
+                const key = item.values[index] || `Item ${index + 1}`;
+                return `${key}: ${data}`;
+              })
+              .filter((text: string | null) => text !== null)
+              .join(" | ") || "-";
+          } else {
+            // Fallback: just join input data with comma
+            inputText = item.input.filter((val: string) => val && val !== "-").join(", ") || "-";
           }
-          return val;
-        };
-        const inputText = Array.isArray(item.input)
-          ? item.input.map(formatInputValue).join(", ")
-          : formatInputValue(item.input);
+        } else if (item.input && item.input !== "-") {
+          // Single value case
+          inputText = item.input;
+        }
+
         return (
           <span
             className="text-xs cursor-help truncate max-w-[200px] block"
@@ -1046,28 +1051,25 @@ export const TaskDetailsPage = () => {
               <Eye className="w-4 h-4 text-gray-600" />
             </button>
             <button
-              className={`p-1 hover:bg-gray-100 rounded transition-colors ${
-                item.is_flagged
+              className={`p-1 hover:bg-gray-100 rounded transition-colors ${item.is_flagged
                   ? "text-red-500 hover:text-red-600"
                   : "text-gray-400 hover:text-red-400"
-              }`}
+                }`}
               onClick={() => handleTicketFlag(item.id, item.is_flagged)}
               title={item.is_flagged ? "Remove flag" : "Flag ticket"}
             >
               <Flag
-                className={`w-4 h-4 transition-all duration-200 ${
-                  item.is_flagged
+                className={`w-4 h-4 transition-all duration-200 ${item.is_flagged
                     ? "text-red-500 fill-red-500"
                     : "text-gray-600"
-                }`}
+                  }`}
               />
             </button>
             <button
-              className={`p-1 hover:bg-gray-100 rounded transition-colors ${
-                item.is_golden_ticket
+              className={`p-1 hover:bg-gray-100 rounded transition-colors ${item.is_golden_ticket
                   ? "text-yellow-500 hover:text-yellow-600"
                   : "text-gray-400 hover:text-yellow-400"
-              }`}
+                }`}
               onClick={() =>
                 handleTicketGoldenTicket(item.id, item.is_golden_ticket)
               }
@@ -1078,11 +1080,10 @@ export const TaskDetailsPage = () => {
               }
             >
               <Star
-                className={`w-4 h-4 transition-all duration-200 hover:scale-110 ${
-                  item.is_golden_ticket
+                className={`w-4 h-4 transition-all duration-200 hover:scale-110 ${item.is_golden_ticket
                     ? "text-yellow-500 fill-yellow-500"
                     : "text-gray-600"
-                }`}
+                  }`}
               />
             </button>
           </div>
@@ -1116,15 +1117,14 @@ export const TaskDetailsPage = () => {
         return (
           <div className="space-y-1">
             <Badge
-              className={`px-2 py-1 text-xs ${
-                item.priority === "P1"
+              className={`px-2 py-1 text-xs ${item.priority === "P1"
                   ? "bg-red-100 text-red-700"
                   : item.priority === "P2"
                     ? "bg-yellow-100 text-yellow-700"
                     : item.priority === "P3"
                       ? "bg-green-100 text-green-700"
                       : "bg-gray-100 text-gray-700"
-              }`}
+                }`}
             >
               {item.priority || "N/A"}
             </Badge>
@@ -1175,20 +1175,18 @@ export const TaskDetailsPage = () => {
         return (
           <div className="space-y-1">
             <div
-              className={`text-xs px-2 py-1 rounded ${
-                item.response_escalation === "Breached"
+              className={`text-xs px-2 py-1 rounded ${item.response_escalation === "Breached"
                   ? "bg-red-100 text-red-700"
                   : "bg-green-100 text-green-700"
-              }`}
+                }`}
             >
               Response: {item.response_escalation || "N/A"}
             </div>
             <div
-              className={`text-xs px-2 py-1 rounded ${
-                item.resolution_escalation === "Breached"
+              className={`text-xs px-2 py-1 rounded ${item.resolution_escalation === "Breached"
                   ? "bg-red-100 text-red-700"
                   : "bg-green-100 text-green-700"
-              }`}
+                }`}
             >
               Resolution: {item.resolution_escalation || "N/A"}
             </div>
@@ -1255,22 +1253,22 @@ export const TaskDetailsPage = () => {
                     <>
                       {(taskDetails?.actions?.can_reschedule ||
                         taskDetails?.actions?.can_edit) && (
-                        <Button
-                          onClick={handleTaskReschedule}
-                          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-                        >
-                          Task Reschedule
-                        </Button>
-                      )}
+                          <Button
+                            onClick={handleTaskReschedule}
+                            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                          >
+                            Task Reschedule
+                          </Button>
+                        )}
                       {(taskDetails?.actions?.can_submit_task ||
                         taskDetails?.actions?.can_edit) && (
-                        <Button
-                          onClick={handleSubmitTask}
-                          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-                        >
-                          Submit Task
-                        </Button>
-                      )}
+                          <Button
+                            onClick={handleSubmitTask}
+                            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                          >
+                            Submit Task
+                          </Button>
+                        )}
                     </>
                   );
                 } else if (["scheduled"].includes(status)) {
@@ -1278,13 +1276,13 @@ export const TaskDetailsPage = () => {
                     <>
                       {(taskDetails?.actions?.can_reschedule ||
                         taskDetails?.actions?.can_edit) && (
-                        <Button
-                          onClick={handleTaskReschedule}
-                          className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
-                        >
-                          Task Reschedule
-                        </Button>
-                      )}
+                          <Button
+                            onClick={handleTaskReschedule}
+                            className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
+                          >
+                            Task Reschedule
+                          </Button>
+                        )}
                     </>
                   );
                 }
@@ -1299,14 +1297,14 @@ export const TaskDetailsPage = () => {
                         ["closed", "completed", "partially closed"].includes(
                           status
                         )) && (
-                        <Button
-                          onClick={handleJobSheetModalClick}
-                          variant="outline"
-                          className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
-                        >
-                          Job Sheet
-                        </Button>
-                      )}
+                          <Button
+                            onClick={handleJobSheetModalClick}
+                            variant="outline"
+                            className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
+                          >
+                            Job Sheet
+                          </Button>
+                        )}
                     </>
                   );
                 }
@@ -1332,14 +1330,14 @@ export const TaskDetailsPage = () => {
                       ["closed", "completed", "partially closed"].includes(
                         status
                       )) && (
-                      <Button
-                        onClick={handleJobSheetModalClick}
-                        variant="outline"
-                        className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
-                      >
-                        Job Sheet
-                      </Button>
-                    )}
+                        <Button
+                          onClick={handleJobSheetModalClick}
+                          variant="outline"
+                          className="border-[#1e40af] text-[#1e40af] hover:bg-[#1e40af]/10 px-4 py-2"
+                        >
+                          Job Sheet
+                        </Button>
+                      )}
                     {taskDetails?.actions?.can_submit_task && (
                       <Button
                         onClick={handleSubmitTask}
@@ -1944,7 +1942,7 @@ export const TaskDetailsPage = () => {
             </div>
             <div className="figma-card-content">
               {taskDetails?.checklist_questions?.length > 0 ||
-              taskDetails?.activity?.resp?.length > 0 ? (
+                taskDetails?.activity?.resp?.length > 0 ? (
                 <div className="space-y-6">
                   {/* Grouped Checklist Sections */}
                   {getGroupedActivityData().map((section, sectionIndex) => (
@@ -2044,7 +2042,7 @@ export const TaskDetailsPage = () => {
                             typeof attachment === "string"
                               ? `Attachment ${index + 1}`
                               : attachment?.filename ||
-                                `Attachment ${index + 1}`;
+                              `Attachment ${index + 1}`;
 
                           return (
                             <div

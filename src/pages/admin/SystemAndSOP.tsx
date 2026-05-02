@@ -7,8 +7,10 @@ import React, {
 } from "react";
 import ReactDOM from "react-dom";
 import {
+  Check,
   CheckCircle2,
-  ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Circle,
   Clock,
   Copy,
@@ -53,7 +55,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-// ── Design Tokens (matches BusinessPlanAndGoles) ──
+// ── Design Tokens ──
 const C = {
   primary: "#DA7756",
   primaryHov: "#c9673f",
@@ -70,13 +72,14 @@ const C = {
 };
 
 // ─────────────────────────────────────────────
-// THEME STYLES (matches BusinessPlanAndGoles)
+// THEME STYLES
 // ─────────────────────────────────────────────
 const ThemeStyle = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
-.sop-wrap * { font-family: 'Poppins', sans-serif !important; }
-.sop-modal-box, .sop-modal-box * { font-family: 'Poppins', sans-serif !important; }    .sop-modal-portal {
+    .sop-wrap * { font-family: 'Poppins', sans-serif !important; }
+    .sop-modal-box, .sop-modal-box * { font-family: 'Poppins', sans-serif !important; }
+    .sop-modal-portal {
       position: fixed; inset: 0; z-index: 99999;
       display: flex; align-items: center; justify-content: center;
       padding: 16px;
@@ -150,11 +153,16 @@ const ThemeStyle = () => (
       overflow: hidden;
     }
     .drag-over-col { border: 2px dashed #DA7756 !important; opacity: 0.6; }
+    .kpi-list-scroll { max-height: 200px; overflow-y: auto; }
+    .kpi-list-scroll::-webkit-scrollbar { width: 4px; }
+    .kpi-list-scroll::-webkit-scrollbar-track { background: transparent; }
+    .kpi-list-scroll::-webkit-scrollbar-thumb { background: #C4B89D; border-radius: 10px; }
+    .kpi-list-scroll::-webkit-scrollbar-thumb:hover { background: #DA7756; }
   `}</style>
 );
 
 // ─────────────────────────────────────────────
-// SHARED BUTTONS (matches BusinessPlanAndGoles)
+// SHARED BUTTONS
 // ─────────────────────────────────────────────
 const BtnPrimary = ({
   children,
@@ -165,7 +173,7 @@ const BtnPrimary = ({
   <button
     onClick={onClick}
     disabled={disabled}
-    className={`inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.97] disabled:opacity-60 ${className}`}
+    className={`inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
     style={{ background: C.primary, fontFamily: C.font }}
     onMouseEnter={(e) => {
       if (!disabled) e.currentTarget.style.background = C.primaryHov;
@@ -185,7 +193,7 @@ const BtnOutline = ({
   <button
     onClick={onClick}
     disabled={disabled}
-    className={`inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm font-bold bg-white shadow-sm transition-all duration-150 active:scale-[0.97] border disabled:opacity-60 ${className}`}
+    className={`inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm font-bold bg-white shadow-sm transition-all duration-150 active:scale-[0.97] border disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
     style={{ borderColor: C.primaryBord, color: C.primary, fontFamily: C.font }}
     onMouseEnter={(e) => {
       if (!disabled) {
@@ -240,30 +248,54 @@ const LoaderIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
 );
 
 // ─────────────────────────────────────────────
-// API CONFIG
+// TYPES & UTILS
 // ─────────────────────────────────────────────
-const BASE_URL = () => localStorage.getItem("baseUrl") || "";
-const getToken = () => localStorage.getItem("token") || "";
+type SopTab = "my" | "all";
+type ColumnKey = "toStart" | "broken" | "running";
 
-const getUserId = () => {
-  try {
-    const user = JSON.parse(localStorage.getItem("user") || "{}");
-    return String(user?.id || "");
-  } catch {
-    return "";
-  }
+type KpiItem = {
+  kpi_id: number;
+  kpi_name: string;
+  kpi_category: string;
+  kpi_frequency: string;
+  position: number;
 };
 
-const apiHeaders = () => ({
-  Accept: "application/json",
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${getToken()}`,
-});
+type KpiOption = {
+  id: number;
+  name: string;
+  category: string;
+  frequency: string;
+};
+
+type SopCardData = {
+  id: string;
+  title: string;
+  department: string;
+  departmentId?: number | null;
+  priority: "low" | "medium" | "high";
+  healthPercent: number;
+  description?: string;
+  docUrl?: string;
+  assigneeId?: number | null;
+  assigneeName?: string | null;
+  status?: string;
+  kpis?: KpiItem[];
+  createdById?: number | null;
+  _raw?: any;
+};
+
+function coerceHealthPercent(n: unknown): number {
+  const v = Number(n);
+  if (!Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(100, v));
+}
 
 const STATUS_TO_COL: Record<string, ColumnKey> = {
   "To Start": "toStart",
   to_start: "toStart",
   "to start": "toStart",
+  toStart: "toStart",
   Broken: "broken",
   broken: "broken",
   Running: "running",
@@ -285,10 +317,66 @@ const PRIORITY_MAP: Record<string, SopCardData["priority"]> = {
   high: "high",
 };
 
+function buildColumnsFromList(
+  list: SopCardData[]
+): Record<ColumnKey, SopCardData[]> {
+  const cols: Record<ColumnKey, SopCardData[]> = {
+    toStart: [],
+    broken: [],
+    running: [],
+  };
+  for (const item of list) {
+    const col = STATUS_TO_COL[item.status ?? ""] ?? "broken";
+    cols[col].push(item);
+  }
+  return cols;
+}
+
+function findColumnForCard(
+  cols: Record<ColumnKey, SopCardData[]>,
+  cardId: string
+): ColumnKey | null {
+  for (const k of Object.keys(cols) as ColumnKey[]) {
+    if (cols[k].some((c) => c.id === cardId)) return k;
+  }
+  return null;
+}
+
+function parseCardId(id: string | number): string | null {
+  const s = String(id);
+  if (!s.startsWith("sop-card-")) return null;
+  return s.slice("sop-card-".length);
+}
+
+// ─────────────────────────────────────────────
+// API CONFIG
+// ─────────────────────────────────────────────
+const BASE_URL = () => localStorage.getItem("baseUrl") || "";
+const getToken = () => localStorage.getItem("token") || "";
+
+const getUserId = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
+    const id = user?.id ?? user?.user_id ?? user?.userId ?? "";
+    if (id) return String(id);
+    return (
+      localStorage.getItem("user_id") || localStorage.getItem("userId") || ""
+    );
+  } catch {
+    return "";
+  }
+};
+
+const apiHeaders = () => ({
+  Accept: "application/json",
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${getToken()}`,
+});
+
 const normalizeSopFromAPI = (raw: any): SopCardData => ({
   id: String(raw.id ?? Math.random()),
   title: raw.system_name ?? raw.title ?? "Untitled",
-  department: raw.department ?? raw.department_name ?? raw.dept ?? "General",
+  department: raw.department_name ?? raw.department ?? raw.dept ?? "General",
   departmentId: raw.department_id ?? null,
   priority: PRIORITY_MAP[raw.priority] ?? "medium",
   healthPercent: coerceHealthPercent(
@@ -298,7 +386,7 @@ const normalizeSopFromAPI = (raw: any): SopCardData => ({
   docUrl: raw.documentation_url ?? raw.doc_url ?? raw.docUrl ?? undefined,
   assigneeId: raw.assignee_id ?? raw.assigned_to_id ?? null,
   assigneeName: raw.assignee_name ?? raw.assigned_to ?? null,
-  status: raw.status ?? "Broken",
+  status: raw.status ?? "broken",
   kpis: Array.isArray(raw.kpis) ? raw.kpis : [],
   createdById: raw.created_by_id ?? null,
   _raw: raw,
@@ -312,7 +400,9 @@ const fetchAllSops = async (): Promise<SopCardData[]> => {
   const json = await res.json();
   const arr = Array.isArray(json)
     ? json
-    : (json.data ?? json.system_sops ?? []);
+    : Array.isArray(json.data)
+      ? json.data
+      : (json.system_sops ?? []);
   return arr.map(normalizeSopFromAPI);
 };
 
@@ -325,14 +415,20 @@ const fetchMySops = async (): Promise<SopCardData[]> => {
   const json = await res.json();
   const arr = Array.isArray(json)
     ? json
-    : (json.data ?? json.system_sops ?? []);
+    : Array.isArray(json.data)
+      ? json.data
+      : (json.system_sops ?? []);
   return arr
-    .filter((sop: any) => String(sop.assignee_id) === String(userId))
+    .filter((sop: any) => {
+      const assigneeId =
+        sop.assignee_id ?? sop.assigned_to_id ?? sop.assignee?.id;
+      return String(assigneeId) === String(userId);
+    })
     .map(normalizeSopFromAPI);
 };
 
 const fetchUsersData = async (): Promise<
-  { value: string; label: string }[]
+  { value: string; label: string; email?: string }[]
 > => {
   const orgId = localStorage.getItem("org_id") || "";
   if (!orgId) return [];
@@ -351,6 +447,7 @@ const fetchUsersData = async (): Promise<
         `${u.firstname || ""} ${u.lastname || ""}`.trim() ||
         u.email ||
         `User ${u.id}`,
+      email: u.email || "",
     }));
   } catch (err) {
     console.error("Error fetching users:", err);
@@ -377,6 +474,32 @@ const fetchDepartmentsData = async (): Promise<
     }));
   } catch (err) {
     console.error("Error fetching departments:", err);
+    return [];
+  }
+};
+
+const fetchKpisData = async (): Promise<KpiOption[]> => {
+  try {
+    const res = await fetch(`https://${BASE_URL()}/kpis`, {
+      headers: apiHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to fetch KPIs");
+    const json = await res.json();
+    const arr = Array.isArray(json)
+      ? json
+      : Array.isArray(json.data)
+        ? json.data
+        : Array.isArray(json.data?.kpis)
+          ? json.data.kpis
+          : (json.kpis ?? []);
+    return arr.map((k: any) => ({
+      id: k.id,
+      name: k.name ?? k.kpi_name ?? `KPI ${k.id}`,
+      category: k.category ?? k.kpi_category ?? "",
+      frequency: k.frequency ?? k.kpi_frequency ?? "monthly",
+    }));
+  } catch (err) {
+    console.error("Error fetching KPIs:", err);
     return [];
   }
 };
@@ -429,101 +552,7 @@ const deleteSop = async (id: string) => {
 };
 
 // ─────────────────────────────────────────────
-// TYPES & UTILS
-// ─────────────────────────────────────────────
-type SopTab = "my" | "all";
-type ColumnKey = "toStart" | "broken" | "running";
-
-type KpiItem = {
-  kpi_id: number;
-  kpi_name: string;
-  kpi_category: string;
-  kpi_frequency: string;
-  position: number;
-};
-
-type SopCardData = {
-  id: string;
-  title: string;
-  department: string;
-  departmentId?: number | null;
-  priority: "low" | "medium" | "high";
-  healthPercent: number;
-  description?: string;
-  docUrl?: string;
-  assigneeId?: number | null;
-  assigneeName?: string | null;
-  status?: string;
-  kpis?: KpiItem[];
-  createdById?: number | null;
-  _raw?: any;
-};
-
-function coerceHealthPercent(n: unknown): number {
-  const v = Number(n);
-  if (!Number.isFinite(v)) return 0;
-  return Math.max(0, Math.min(100, v));
-}
-
-function buildColumnsFromList(
-  list: SopCardData[]
-): Record<ColumnKey, SopCardData[]> {
-  const cols: Record<ColumnKey, SopCardData[]> = {
-    toStart: [],
-    broken: [],
-    running: [],
-  };
-  for (const item of list) {
-    const col = STATUS_TO_COL[item.status ?? ""] ?? "broken";
-    cols[col].push(item);
-  }
-  return cols;
-}
-
-function findColumnForCard(
-  cols: Record<ColumnKey, SopCardData[]>,
-  cardId: string
-): ColumnKey | null {
-  for (const k of Object.keys(cols) as ColumnKey[]) {
-    if (cols[k].some((c) => c.id === cardId)) return k;
-  }
-  return null;
-}
-
-function parseCardId(id: string | number): string | null {
-  const s = String(id);
-  if (!s.startsWith("sop-card-")) return null;
-  return s.slice("sop-card-".length);
-}
-
-// ─────────────────────────────────────────────
-// LABEL FIELD WRAPPER
-// ─────────────────────────────────────────────
-const FieldBox = ({
-  label,
-  required,
-  children,
-}: {
-  label: string;
-  required?: boolean;
-  children: React.ReactNode;
-}) => (
-  <div
-    className="rounded-2xl border p-4 bg-white"
-    style={{ borderColor: C.primaryBord }}
-  >
-    <label
-      className="block text-[12px] font-black mb-2"
-      style={{ color: C.textMain }}
-    >
-      {label} {required && <span style={{ color: C.primary }}>*</span>}
-    </label>
-    {children}
-  </div>
-);
-
-// ─────────────────────────────────────────────
-// MODAL (matches BusinessPlanAndGoles portal style)
+// MODAL & UI WRAPPERS
 // ─────────────────────────────────────────────
 const Modal = ({
   children,
@@ -551,20 +580,38 @@ const Modal = ({
   );
 };
 
+const FieldBox = ({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: React.ReactNode;
+}) => (
+  <div
+    className="rounded-2xl border p-4 bg-white"
+    style={{ borderColor: C.primaryBord }}
+  >
+    <label
+      className="block text-[12px] font-black mb-2"
+      style={{ color: C.textMain }}
+    >
+      {label} {required && <span style={{ color: C.primary }}>*</span>}
+    </label>
+    {children}
+  </div>
+);
+
 // ─────────────────────────────────────────────
-// SEARCHABLE SELECT (ported from BhagSection)
+// SEARCHABLE SELECT
 // ─────────────────────────────────────────────
 const SearchableSelect = ({
   value,
   onChange,
   options,
   placeholder = "Search...",
-}: {
-  value: string;
-  onChange: (val: string) => void;
-  options: { value: string; label: string }[];
-  placeholder?: string;
-}) => {
+}: any) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
@@ -578,8 +625,8 @@ const SearchableSelect = ({
     return () => document.removeEventListener("mousedown", handleOutside);
   }, []);
 
-  const selected = options.find((o) => o.value === value);
-  const filtered = options.filter((o) =>
+  const selected = options.find((o: any) => o.value === value);
+  const filtered = options.filter((o: any) =>
     o.label.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -607,30 +654,17 @@ const SearchableSelect = ({
             position: "absolute",
             right: 12,
             top: "50%",
-            transform: "translateY(-50%)",
+            transform: open
+              ? "translateY(-50%) rotate(180deg)"
+              : "translateY(-50%)",
             color: "#9ca3af",
             pointerEvents: "none",
             transition: "transform .2s",
-            ...(open ? { transform: "translateY(-50%) rotate(180deg)" } : {}),
           }}
         >
-          <svg
-            width="14"
-            height="14"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+          <ChevronDown className="w-4 h-4" />
         </div>
       </div>
-
       {open && (
         <div
           style={{
@@ -648,7 +682,6 @@ const SearchableSelect = ({
             fontFamily: C.font,
           }}
         >
-          {/* Clear option */}
           {value && (
             <div
               onClick={() => {
@@ -664,12 +697,6 @@ const SearchableSelect = ({
                 cursor: "pointer",
                 borderBottom: `1px solid ${C.borderLgt}`,
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "#fef2f2")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "transparent")
-              }
             >
               ✕ Clear
             </div>
@@ -686,7 +713,7 @@ const SearchableSelect = ({
               No results found
             </div>
           ) : (
-            filtered.map((o) => (
+            filtered.map((o: any) => (
               <div
                 key={o.value}
                 onClick={() => {
@@ -706,31 +733,14 @@ const SearchableSelect = ({
                   alignItems: "center",
                   justifyContent: "space-between",
                 }}
-                onMouseEnter={(e) => {
-                  if (o.value !== value)
-                    e.currentTarget.style.background = "#f9fafb";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background =
-                    o.value === value ? C.primaryTint : "transparent";
-                }}
               >
                 {o.label}
                 {o.value === value && (
-                  <svg
-                    width="13"
-                    height="13"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke={C.primary}
-                    strokeWidth={2.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
+                  <Check
+                    className="w-4 h-4"
+                    color={C.primary}
+                    strokeWidth={3}
+                  />
                 )}
               </div>
             ))
@@ -742,7 +752,197 @@ const SearchableSelect = ({
 };
 
 // ─────────────────────────────────────────────
-// SOP FORM DIALOG (restyled)
+// COPY SOP MODAL (ASSIGNMENT)
+// ─────────────────────────────────────────────
+function CopySopModal({
+  open,
+  onClose,
+  item,
+  users,
+  existingUserIds,
+  onConfirm,
+}: {
+  open: boolean;
+  onClose: () => void;
+  item: SopCardData | null;
+  users: { value: string; label: string; email?: string }[];
+  existingUserIds: string[];
+  onConfirm: (selectedIds: string[]) => Promise<void>;
+}) {
+  const [selected, setSelected] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Auto-check users who already have the SOP & reset search on open
+  useEffect(() => {
+    if (open) {
+      setSelected([...existingUserIds]);
+      setSearchQuery("");
+    }
+  }, [open, existingUserIds]);
+
+  const filteredUsers = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return users;
+    return users.filter(
+      (u) =>
+        u.label.toLowerCase().includes(q) ||
+        (u.email && u.email.toLowerCase().includes(q))
+    );
+  }, [users, searchQuery]);
+
+  if (!open || !item) return null;
+
+  const toggleUser = (uid: string) => {
+    if (existingUserIds.includes(uid)) return; // Prevent unchecking if they already have it
+    setSelected((prev) =>
+      prev.includes(uid) ? prev.filter((id) => id !== uid) : [...prev, uid]
+    );
+  };
+
+  const handleSave = async () => {
+    const newAssignments = selected.filter(
+      (id) => !existingUserIds.includes(id)
+    );
+    if (newAssignments.length === 0) {
+      onClose();
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onConfirm(newAssignments);
+      onClose();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to assign copies");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal onClose={onClose}>
+      <div className="sop-modal-box max-w-2xl bg-white shadow-2xl flex flex-col max-h-[85vh]">
+        {/* Header */}
+        <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100 shrink-0">
+          <h2 className="font-bold text-[18px] text-gray-900 m-0 tracking-tight">
+            Assign System SOP
+          </h2>
+          <BtnIcon onClick={onClose}>
+            <X className="w-4 h-4" />
+          </BtnIcon>
+        </div>
+
+        {/* Banner & Sticky Search Bar */}
+        <div className="shrink-0 flex flex-col z-10 bg-white">
+          <div className="p-4 bg-blue-50/50 border-b border-blue-100">
+            <p className="text-[13px] font-semibold text-blue-900 leading-relaxed max-w-[95%]">
+              Select users to assign this SOP to. The system will automatically
+              skip users who already have this SOP.
+            </p>
+          </div>
+          <div className="p-4 border-b border-gray-100">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search users by name or email..."
+                className="bp-input"
+                style={{ paddingLeft: "36px" }}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* User List */}
+        <div className="flex-1 overflow-y-auto bp-scroll p-4">
+          <div className="flex flex-col">
+            {filteredUsers.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-[13px] font-semibold text-gray-500">
+                  Loading users...
+                </p>
+              </div>
+            ) : (
+              filteredUsers.map((u) => {
+                const hasIt = existingUserIds.includes(u.value);
+                const isChecked = selected.includes(u.value);
+
+                return (
+                  <div
+                    key={u.value}
+                    onClick={() => toggleUser(u.value)}
+                    className={`flex items-center gap-4 py-3 px-3 rounded-xl cursor-pointer transition-all border border-transparent mb-1 ${hasIt
+                      ? "opacity-60 cursor-not-allowed"
+                      : isChecked
+                        ? "bg-blue-50 border-blue-100"
+                        : "hover:bg-gray-50 border-gray-50"
+                      }`}
+                  >
+                    <div
+                      className={`w-5 h-5 flex shrink-0 items-center justify-center rounded-md border transition-colors ${isChecked
+                        ? "bg-blue-600 border-blue-600"
+                        : "bg-white border-gray-300"
+                        }`}
+                    >
+                      {isChecked && (
+                        <Check
+                          className="w-3.5 h-3.5 text-white"
+                          strokeWidth={3}
+                        />
+                      )}
+                    </div>
+
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      <p className="text-[14px] font-bold text-gray-900 truncate">
+                        {u.label}
+                      </p>
+                      {u.email && (
+                        <p className="text-[12px] font-medium text-gray-500 truncate mt-0.5">
+                          {u.email}
+                        </p>
+                      )}
+                    </div>
+
+                    {hasIt && (
+                      <span className="text-[12px] font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full shrink-0">
+                        Already has SOP
+                      </span>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-5 flex items-center justify-between border-t border-gray-100 bg-white shrink-0">
+          <p className="text-[14px] font-medium text-gray-600">
+            Summary:{" "}
+            <span className="font-bold text-gray-900">
+              {selected.length} user(s)
+            </span>{" "}
+            will receive a copy of this SOP
+          </p>
+          <div className="flex gap-3">
+            <BtnOutline onClick={onClose} disabled={isSubmitting}>
+              Cancel
+            </BtnOutline>
+            <BtnPrimary onClick={handleSave} disabled={isSubmitting}>
+              {isSubmitting ? <LoaderIcon /> : "Assign SOP"}
+            </BtnPrimary>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ─────────────────────────────────────────────
+// SOP FORM MODAL
 // ─────────────────────────────────────────────
 function SopFormModal({
   open,
@@ -752,15 +952,8 @@ function SopFormModal({
   onSave,
   users,
   departments,
-}: {
-  open: boolean;
-  onClose: () => void;
-  isEdit: boolean;
-  initialData?: SopCardData | null;
-  onSave: (data: any, column: ColumnKey) => Promise<void>;
-  users: { value: string; label: string }[];
-  departments: { value: string; label: string; id: number }[];
-}) {
+  kpiOptions,
+}: any) {
   const [systemName, setSystemName] = useState("");
   const [description, setDescription] = useState("");
   const [department, setDepartment] = useState("");
@@ -769,7 +962,7 @@ function SopFormModal({
   const [assignUser, setAssignUser] = useState("");
   const [healthScore, setHealthScore] = useState(0);
   const [docUrl, setDocUrl] = useState("");
-  const [kpiInvoice, setKpiInvoice] = useState(false);
+  const [selectedKpiIds, setSelectedKpiIds] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -785,7 +978,7 @@ function SopFormModal({
         setAssignUser(String(initialData.assigneeId ?? ""));
         setHealthScore(initialData.healthPercent);
         setDocUrl(initialData.docUrl ?? "");
-        setKpiInvoice((initialData.kpis ?? []).some((k) => k.kpi_id === 10));
+        setSelectedKpiIds((initialData.kpis ?? []).map((k: any) => k.kpi_id));
       } else {
         setSystemName("");
         setDescription("");
@@ -795,12 +988,18 @@ function SopFormModal({
         setAssignUser("");
         setHealthScore(0);
         setDocUrl("");
-        setKpiInvoice(false);
+        setSelectedKpiIds([]);
       }
     }
   }, [open, isEdit, initialData]);
 
   if (!open) return null;
+
+  const toggleKpi = (id: number) => {
+    setSelectedKpiIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
 
   const handleSubmit = async () => {
     if (!systemName.trim()) return toast.error("Please enter a system name");
@@ -808,18 +1007,18 @@ function SopFormModal({
     if (!assignUser) return toast.error("Please assign a user");
     setIsSaving(true);
     try {
-      const selectedDept = departments.find((d) => d.value === department);
-      const kpis = kpiInvoice
-        ? [
-            {
-              kpi_id: 10,
-              kpi_name: "Invoices Raised",
-              kpi_category: "Accounts",
-              kpi_frequency: "monthly",
-              position: 1,
-            },
-          ]
-        : [];
+      const selectedDept = departments.find((d: any) => d.value === department);
+      const builtKpis = selectedKpiIds.map((id, i) => {
+        const k = kpiOptions.find((x: any) => x.id === id);
+        return {
+          kpi_id: id,
+          kpi_name: k?.name ?? `KPI ${id}`,
+          kpi_category: k?.category ?? "",
+          kpi_frequency: k?.frequency ?? "monthly",
+          position: i + 1,
+        };
+      });
+
       const payload = {
         system_name: systemName.trim(),
         description: description.trim() || undefined,
@@ -829,42 +1028,18 @@ function SopFormModal({
         assignee_id: parseInt(assignUser, 10),
         health_score: healthScore,
         documentation_url: docUrl.trim() || undefined,
-        kpis: isEdit ? initialData?.kpis : kpis,
+        kpis: isEdit ? initialData?.kpis : builtKpis,
       };
+
       await onSave(payload, statusColumn);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const statusOptions = [
-    {
-      value: "toStart",
-      label: "To Start",
-      icon: <Clock className="w-4 h-4" style={{ color: "#0284c7" }} />,
-    },
-    {
-      value: "broken",
-      label: "Broken",
-      icon: <XCircle className="w-4 h-4" style={{ color: "#dc2626" }} />,
-    },
-    {
-      value: "running",
-      label: "Running",
-      icon: <CheckCircle2 className="w-4 h-4" style={{ color: "#16a34a" }} />,
-    },
-  ];
-
-  const priorityOptions = [
-    { value: "low", label: "Low", dot: "#0284c7" },
-    { value: "medium", label: "Medium", dot: "#f59e0b" },
-    { value: "high", label: "High", dot: "#dc2626" },
-  ];
-
   return (
     <Modal onClose={onClose}>
       <div className="sop-modal-box">
-        {/* Header */}
         <div
           className="flex justify-between items-center px-6 py-5 border-b"
           style={{ background: C.cardBg, borderColor: C.primaryBord }}
@@ -892,7 +1067,6 @@ function SopFormModal({
           </BtnIcon>
         </div>
 
-        {/* Body */}
         <div className="p-6 flex-1 overflow-y-auto bp-scroll space-y-4">
           <FieldBox label="System Name" required>
             <input
@@ -918,20 +1092,25 @@ function SopFormModal({
               <SearchableSelect
                 value={department}
                 onChange={setDepartment}
-                options={departments.map((d) => ({
+                options={departments.map((d: any) => ({
                   value: d.value,
                   label: d.label,
                 }))}
                 placeholder="Search department..."
               />
             </FieldBox>
+
             <FieldBox label="Status" required>
               <select
                 className="bp-select"
                 value={statusColumn}
                 onChange={(e) => setStatusColumn(e.target.value as ColumnKey)}
               >
-                {statusOptions.map((s) => (
+                {[
+                  { value: "toStart", label: "To Start" },
+                  { value: "broken", label: "Broken" },
+                  { value: "running", label: "Running" },
+                ].map((s) => (
                   <option key={s.value} value={s.value}>
                     {s.label}
                   </option>
@@ -942,7 +1121,11 @@ function SopFormModal({
 
           <FieldBox label="Priority">
             <div className="flex gap-2 mt-1">
-              {priorityOptions.map((p) => (
+              {[
+                { value: "low", label: "Low", dot: "#0284c7" },
+                { value: "medium", label: "Medium", dot: "#f59e0b" },
+                { value: "high", label: "High", dot: "#dc2626" },
+              ].map((p) => (
                 <button
                   key={p.value}
                   type="button"
@@ -1008,38 +1191,49 @@ function SopFormModal({
 
           {!isEdit && (
             <FieldBox label="Link KPIs">
-              <div
-                className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
-                style={{
-                  borderColor: kpiInvoice ? C.primary : C.borderLgt,
-                  background: kpiInvoice ? C.primaryTint : "#fff",
-                }}
-                onClick={() => setKpiInvoice(!kpiInvoice)}
-              >
-                <input
-                  type="checkbox"
-                  checked={kpiInvoice}
-                  onChange={(e) => setKpiInvoice(e.target.checked)}
-                  className="w-4 h-4 accent-[#DA7756] cursor-pointer"
-                />
-                <span
-                  className="text-[13px] font-black"
-                  style={{ color: C.textMain }}
+              {kpiOptions.length === 0 ? (
+                <p
+                  className="text-[12px] font-semibold py-2"
+                  style={{ color: C.textMuted }}
                 >
-                  Invoices Raised
-                </span>
-                <span
-                  className="ml-auto px-2 py-0.5 rounded-md text-[11px] font-black"
-                  style={{ background: "#f3f4f6", color: C.textMuted }}
-                >
-                  Invoices
-                </span>
-              </div>
+                  No KPIs available
+                </p>
+              ) : (
+                <div className="kpi-list-scroll flex flex-col gap-2">
+                  {kpiOptions.map((k: any) => {
+                    const checked = selectedKpiIds.includes(k.id);
+                    return (
+                      <div
+                        key={k.id}
+                        onClick={() => toggleKpi(k.id)}
+                        className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
+                        style={{
+                          borderColor: checked ? C.primary : C.borderLgt,
+                          background: checked ? C.primaryTint : "#fff",
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleKpi(k.id)}
+                          className="w-4 h-4 accent-[#DA7756] cursor-pointer shrink-0"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                        <span
+                          className="text-[13px] font-black flex-1 min-w-0 truncate"
+                          style={{ color: C.textMain }}
+                        >
+                          {k.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </FieldBox>
           )}
         </div>
 
-        {/* Footer */}
         <div
           className="p-5 flex justify-end gap-3 border-t"
           style={{ background: C.cardBg, borderColor: C.primaryBord }}
@@ -1052,12 +1246,8 @@ function SopFormModal({
             disabled={isSaving}
             className="px-6 py-2 text-[13px] font-black text-white rounded-xl transition-colors shadow-sm active:scale-[0.97] flex items-center gap-2 disabled:opacity-60"
             style={{ background: "#1a1a1a", fontFamily: C.font }}
-            onMouseEnter={(e) => {
-              if (!isSaving) e.currentTarget.style.background = "#000";
-            }}
-            onMouseLeave={(e) => (e.currentTarget.style.background = "#1a1a1a")}
           >
-            {isSaving && <LoaderIcon />}
+            {isSaving && <LoaderIcon />}{" "}
             {isSaving ? "Saving..." : isEdit ? "Update SOP" : "Create SOP"}
           </button>
         </div>
@@ -1086,15 +1276,7 @@ function SopKanbanCard({
   onEditClick,
   onDuplicateClick,
   onDeleteClick,
-}: {
-  item: SopCardData;
-  column: ColumnKey;
-  displayHealthPercent: number;
-  dragHandleProps?: React.HTMLAttributes<HTMLDivElement>;
-  onEditClick?: () => void;
-  onDuplicateClick?: () => void;
-  onDeleteClick?: () => void;
-}) {
+}: any) {
   const health = coerceHealthPercent(displayHealthPercent);
   const barColor =
     column === "running"
@@ -1102,8 +1284,7 @@ function SopKanbanCard({
       : column === "toStart"
         ? "#38bdf8"
         : "#ef4444";
-  const pChip = PRIORITY_CHIP[item.priority];
-
+  const pChip = PRIORITY_CHIP[item.priority as "low" | "medium" | "high"];
   const statusChip =
     column === "running"
       ? { label: "Running", bg: "#dcfce7", color: "#15803d" }
@@ -1114,7 +1295,10 @@ function SopKanbanCard({
   return (
     <div
       {...(dragHandleProps ?? {})}
-      className={`sop-kanban-card bp-card-lift ${dragHandleProps ? "cursor-grab active:cursor-grabbing select-none touch-manipulation" : ""}`}
+      className={`sop-kanban-card bp-card-lift ${dragHandleProps
+        ? "cursor-grab active:cursor-grabbing select-none touch-manipulation"
+        : ""
+        }`}
     >
       <p
         className="font-black text-[14px] leading-snug mb-3"
@@ -1188,10 +1372,6 @@ function SopKanbanCard({
           }}
           className="flex-1 py-2 rounded-xl text-[12px] font-black text-white flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.97]"
           style={{ background: C.primary }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.background = C.primaryHov)
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.background = C.primary)}
         >
           <Pencil className="w-3.5 h-3.5" /> Edit
         </button>
@@ -1268,7 +1448,8 @@ function SopColumnBody({ colKey, children, emptySlot }: any) {
   return (
     <div
       ref={setNodeRef}
-      className={`flex min-h-[180px] flex-1 flex-col rounded-2xl border-2 border-dashed border-transparent p-1 transition-colors ${isOver ? "drag-over-col" : ""}`}
+      className={`flex min-h-[180px] flex-1 flex-col rounded-2xl border-2 border-dashed border-transparent p-1 transition-colors ${isOver ? "drag-over-col" : ""
+        }`}
     >
       {children}
       {emptySlot}
@@ -1320,6 +1501,8 @@ const COLUMN_META = [
 // ─────────────────────────────────────────────
 const SystemAndSOP = () => {
   const [bannerVisible, setBannerVisible] = useState(true);
+  const [bannerExpanded, setBannerExpanded] = useState(false);
+
   const [sopTab, setSopTab] = useState<SopTab>("my");
   const [search, setSearch] = useState("");
   const [filterDept, setFilterDept] = useState("all");
@@ -1342,14 +1525,25 @@ const SystemAndSOP = () => {
     column: ColumnKey;
   } | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [users, setUsers] = useState<{ value: string; label: string }[]>([]);
+
+  // New Copy Modal State
+  const [copyModalOpen, setCopyModalOpen] = useState(false);
+  const [copyTargetItem, setCopyTargetItem] = useState<SopCardData | null>(
+    null
+  );
+
+  const [users, setUsers] = useState<
+    { value: string; label: string; email?: string }[]
+  >([]);
   const [departments, setDepartments] = useState<
     { value: string; label: string; id: number }[]
   >([]);
+  const [kpiOptions, setKpiOptions] = useState<KpiOption[]>([]);
 
   useEffect(() => {
     fetchUsersData().then(setUsers);
     fetchDepartmentsData().then(setDepartments);
+    fetchKpisData().then(setKpiOptions);
   }, []);
 
   const loadSops = useCallback(async () => {
@@ -1420,30 +1614,102 @@ const SystemAndSOP = () => {
     [displayedByCol]
   );
 
+  // Calculate user IDs who already have the current SOP selected for duplication
+  const usersWithCurrentSop = useMemo(() => {
+    if (!copyTargetItem) return [];
+    const targetTitle = copyTargetItem.title.toLowerCase().trim();
+    const allItems = [
+      ...columns.toStart,
+      ...columns.broken,
+      ...columns.running,
+    ];
+
+    const owners = allItems
+      .filter(
+        (s) => s.title.toLowerCase().trim() === targetTitle && s.assigneeId
+      )
+      .map((s) => String(s.assigneeId));
+
+    return Array.from(new Set(owners));
+  }, [copyTargetItem, columns]);
+
+  const openCopyModal = (item: SopCardData) => {
+    setCopyTargetItem(item);
+    setCopyModalOpen(true);
+  };
+
+  const handleConfirmCopy = async (selectedUserIds: string[]) => {
+    if (!copyTargetItem) return;
+
+    // Use Promise.all to create multiple SOPs
+    const promises = selectedUserIds.map(async (uid) => {
+      // Find matching department object or default to id 1
+      const selectedDept = departments.find(
+        (d) =>
+          d.label === copyTargetItem.department ||
+          d.value === copyTargetItem.department
+      );
+      const deptId = selectedDept?.id || copyTargetItem.departmentId || 1;
+
+      // Clean KPI data for insertion if exists
+      const kpisPayload = copyTargetItem.kpis?.map((k, index) => ({
+        kpi_id: k.kpi_id,
+        kpi_name: k.kpi_name,
+        kpi_category: k.kpi_category,
+        kpi_frequency: k.kpi_frequency,
+        position: k.position || index + 1,
+      }));
+
+      const payload = {
+        system_name: copyTargetItem.title,
+        description: copyTargetItem.description || undefined,
+        department_id: deptId,
+        status: copyTargetItem.status || "Broken",
+        priority:
+          copyTargetItem.priority.charAt(0).toUpperCase() +
+          copyTargetItem.priority.slice(1),
+        assignee_id: parseInt(uid, 10),
+        health_score: copyTargetItem.healthPercent,
+        documentation_url: copyTargetItem.docUrl || undefined,
+        kpis: kpisPayload,
+      };
+
+      return createSop(payload);
+    });
+
+    await Promise.all(promises);
+    toast.success(`System assigned to ${selectedUserIds.length} user(s)`);
+    await loadSops(); // Reload the board to show new cards
+  };
+
   const activeFilters = useMemo(() => {
     const filters = [];
     if (filterDept !== "all")
       filters.push({
         id: "dept",
-        label: `Dept: ${departments.find((d) => d.value === filterDept)?.label || filterDept}`,
+        label: `Dept: ${departments.find((d) => d.value === filterDept)?.label || filterDept
+          }`,
         onClear: () => setFilterDept("all"),
       });
     if (filterAssignee !== "all")
       filters.push({
         id: "assignee",
-        label: `Person: ${users.find((a) => a.value === filterAssignee)?.label || filterAssignee}`,
+        label: `Person: ${users.find((a) => a.value === filterAssignee)?.label || filterAssignee
+          }`,
         onClear: () => setFilterAssignee("all"),
       });
     if (filterPriority !== "all")
       filters.push({
         id: "priority",
-        label: `Priority: ${filterPriority.charAt(0).toUpperCase() + filterPriority.slice(1)}`,
+        label: `Priority: ${filterPriority.charAt(0).toUpperCase() + filterPriority.slice(1)
+          }`,
         onClear: () => setFilterPriority("all"),
       });
     if (filterStatus !== "all")
       filters.push({
         id: "status",
-        label: `Status: ${COL_TO_STATUS[filterStatus as ColumnKey] || filterStatus}`,
+        label: `Status: ${COL_TO_STATUS[filterStatus as ColumnKey] || filterStatus
+          }`,
         onClear: () => setFilterStatus("all"),
       });
     return filters;
@@ -1550,24 +1816,6 @@ const SystemAndSOP = () => {
     }
   };
 
-  const handleDuplicateCard = useCallback(
-    (item: SopCardData, column: ColumnKey) => {
-      const copy: SopCardData = {
-        ...item,
-        id: `sop-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-        title: `${item.title} (copy)`,
-      };
-      setColumns((prev) => {
-        const list = [...prev[column]];
-        const idx = list.findIndex((c) => c.id === item.id);
-        const next = [...list];
-        next.splice(idx < 0 ? next.length : idx + 1, 0, copy);
-        return { ...prev, [column]: next };
-      });
-    },
-    []
-  );
-
   const handleDeleteCard = useCallback(async (itemId: string) => {
     if (!window.confirm("Delete this system/SOP?")) return;
     try {
@@ -1597,7 +1845,7 @@ const SystemAndSOP = () => {
 
   const Shimmer = ({ w = "100%", h = 16 }: { w?: string; h?: number }) => (
     <div
-      className="animate-pulse rounded-xl"
+      className="rounded-xl animate-pulse"
       style={{ width: w, height: h, background: "#e5e1d8" }}
     />
   );
@@ -1621,7 +1869,9 @@ const SystemAndSOP = () => {
         onSave={handleEditSave}
         users={users}
         departments={departments}
+        kpiOptions={kpiOptions}
       />
+
       <SopFormModal
         open={addOpen}
         onClose={() => setAddOpen(false)}
@@ -1629,6 +1879,20 @@ const SystemAndSOP = () => {
         onSave={handleAddCreate}
         users={users}
         departments={departments}
+        kpiOptions={kpiOptions}
+      />
+
+      {/* New Bulk Copy Modal */}
+      <CopySopModal
+        open={copyModalOpen}
+        onClose={() => {
+          setCopyModalOpen(false);
+          setCopyTargetItem(null);
+        }}
+        item={copyTargetItem}
+        users={users}
+        existingUserIds={usersWithCurrentSop}
+        onConfirm={handleConfirmCopy}
       />
 
       {/* ── Page Header ── */}
@@ -1672,7 +1936,7 @@ const SystemAndSOP = () => {
         </div>
       </div>
 
-      {/* ── Tab Bar (matches BusinessPlanAndGoles) ── */}
+      {/* ── Tab Bar ── */}
       <div
         className="flex w-fit rounded-2xl p-1 gap-1 overflow-x-auto"
         style={{ background: C.primary }}
@@ -1696,63 +1960,117 @@ const SystemAndSOP = () => {
       {/* ── Banner ── */}
       {bannerVisible && (
         <div
-          className="flex items-center gap-3 rounded-2xl border px-5 py-3 shadow-sm"
-          style={{ background: C.primaryTint, borderColor: C.primaryBord }}
+          className="rounded-2xl border shadow-sm transition-all overflow-hidden"
+          style={{ background: "#f0f7ff", borderColor: "#bfdbfe" }}
         >
           <div
-            className="flex w-9 h-9 shrink-0 items-center justify-center rounded-xl"
-            style={{ background: "rgba(218,119,86,0.14)" }}
+            className="flex items-center gap-3 px-5 py-3 cursor-pointer select-none"
+            onClick={() => setBannerExpanded(!bannerExpanded)}
           >
-            <Lightbulb
-              className="w-5 h-5"
-              style={{ color: C.primary }}
-              strokeWidth={2}
-            />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-black" style={{ color: C.textMain }}>
-              Creating Systems &amp; SOPs
-            </p>
-            <p
-              className="text-[11px] font-semibold"
-              style={{ color: C.textMuted }}
+            <div
+              className="flex w-9 h-9 shrink-0 items-center justify-center rounded-xl"
+              style={{ background: "#2563eb" }}
             >
-              Click to view tips for building effective SOPs
-            </p>
+              <Lightbulb
+                className="w-5 h-5"
+                style={{ color: "#ffffff" }}
+                strokeWidth={2}
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[14px] font-bold" style={{ color: "#1e3a8a" }}>
+                Creating Systems & SOPs
+              </p>
+              {!bannerExpanded && (
+                <p
+                  className="text-[11px] font-semibold mt-0.5"
+                  style={{ color: "#3b82f6" }}
+                >
+                  Click to view tips for building effective SOPs
+                </p>
+              )}
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+                style={{ color: "#2563eb" }}
+              >
+                {bannerExpanded ? (
+                  <ChevronUp className="w-5 h-5" />
+                ) : (
+                  <ChevronDown className="w-5 h-5" />
+                )}
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setBannerVisible(false);
+                }}
+                className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+                style={{ color: "#94a3b8" }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#475569")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <div className="flex shrink-0 items-center gap-1">
-            <button
-              className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
-              style={{
-                background: "rgba(218,119,86,0.12)",
-                color: C.primary,
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "rgba(218,119,86,0.18)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "rgba(218,119,86,0.12)")
-              }
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setBannerVisible(false)}
-              className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
-              style={{
-                background: "rgba(218,119,86,0.12)",
-                color: C.primary,
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "rgba(218,119,86,0.18)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "rgba(218,119,86,0.12)")
-              }
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+
+          {/* Expanded Content */}
+          {bannerExpanded && (
+            <div className="px-5 pb-5 pt-1 text-[13px] text-[#334155] animate-in slide-in-from-top-2 fade-in duration-200">
+              <p className="font-bold mb-2 text-[#1e3a8a]">How to use:</p>
+              <ul className="list-disc pl-5 space-y-1.5 mb-5 marker:text-[#3b82f6]">
+                <li>
+                  Systems are the processes that make your business run smoothly
+                  and predictably.
+                </li>
+                <li>
+                  Document 'Running' systems that work well, fix 'Broken'
+                  systems, and plan 'To Start' systems.
+                </li>
+                <li>
+                  Link SOPs to KPIs to show which processes drive key metrics.
+                </li>
+                <li>
+                  Include document URLs (Google Docs, videos, workflow diagrams)
+                  for detailed instructions.
+                </li>
+                <li>
+                  Assign system owners who are responsible for maintaining and
+                  improving them.
+                </li>
+              </ul>
+
+              <p className="font-bold mb-2 text-[#166534] flex items-center gap-1.5">
+                <span role="img" aria-label="bulb">
+                  💡
+                </span>{" "}
+                Best Practices:
+              </p>
+              <ul className="space-y-1.5 pl-1">
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-[#16a34a] shrink-0 mt-0.5" />
+                  <span>
+                    Start with your most critical or broken processes first
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-[#16a34a] shrink-0 mt-0.5" />
+                  <span>
+                    Keep SOPs simple and visual - use screenshots, videos, and
+                    checklists
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-4 h-4 text-[#16a34a] shrink-0 mt-0.5" />
+                  <span>
+                    Review and update systems quarterly as business needs evolve
+                  </span>
+                </li>
+              </ul>
+            </div>
+          )}
         </div>
       )}
 
@@ -1922,7 +2240,7 @@ const SystemAndSOP = () => {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="rounded-2xl border p-5 space-y-3 animate-pulse"
+              className="rounded-2xl border p-5 space-y-3"
               style={{ borderColor: C.primaryBord, background: C.cardBg }}
             >
               <Shimmer w="50%" h={18} />
@@ -2022,9 +2340,7 @@ const SystemAndSOP = () => {
                                 setEditTarget({ item, column: col.key });
                                 setEditOpen(true);
                               }}
-                              onDuplicateClick={() =>
-                                handleDuplicateCard(item, col.key)
-                              }
+                              onDuplicateClick={() => openCopyModal(item)}
                               onDeleteClick={() => handleDeleteCard(item.id)}
                             />
                           ))}
@@ -2041,7 +2357,9 @@ const SystemAndSOP = () => {
             {activeItem && activeColumn ? (
               <div
                 className="w-[min(100vw-2rem,320px)] cursor-grabbing opacity-95"
-                style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.20))" }}
+                style={{
+                  filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.20))",
+                }}
               >
                 <SopKanbanCard
                   item={activeItem}
@@ -2069,7 +2387,11 @@ const SystemAndSOP = () => {
           >
             <FileText
               className="w-14 h-14 mb-4"
-              style={{ color: C.primary, opacity: 0.35, strokeWidth: 1.25 }}
+              style={{
+                color: C.primary,
+                opacity: 0.35,
+                strokeWidth: 1.25,
+              }}
             />
             <p className="text-[17px] font-black" style={{ color: C.textMain }}>
               No systems found

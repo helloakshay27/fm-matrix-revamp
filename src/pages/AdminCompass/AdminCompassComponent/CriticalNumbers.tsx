@@ -537,6 +537,22 @@ const Modal = ({
 const UNITS = ["Select unit", "%", "₹", "$", "Count", "Hours", "Days", "Score"];
 const FREQUENCIES = ["Daily", "Weekly", "Monthly", "Quarterly", "Yearly"];
 
+// ── Validation Helpers ──
+const reqStar = <span style={{ color: C.primary }}>*</span>;
+const FieldHint = ({ msg }: { msg: string }) => (
+  <p
+    style={{
+      fontSize: 11,
+      color: "#dc2626",
+      marginTop: 4,
+      fontWeight: 600,
+      fontFamily: C.font,
+    }}
+  >
+    {msg}
+  </p>
+);
+
 // ── Custom Searchable Select (Reusable for Users & Departments) ──
 const SearchableSelect = ({
   value,
@@ -708,10 +724,15 @@ export const CriticalNumbers = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [attempted, setAttempted] = useState(false);
 
   // Info Tooltip State
   const [isInfoHovered, setIsInfoHovered] = useState(false);
-  const [infoPos, setInfoPos] = useState({ top: 0, left: 0, transform: "translateX(-50%)" });
+  const [infoPos, setInfoPos] = useState({
+    top: 0,
+    left: 0,
+    transform: "translateX(-50%)",
+  });
   const infoBtnRef = useRef<HTMLSpanElement>(null);
 
   // Users & Departments
@@ -774,6 +795,7 @@ export const CriticalNumbers = () => {
     setForm(EMPTY_FORM);
     setEditingKpi(null);
     setSaveError(null);
+    setAttempted(false);
     setShowCreateModal(true);
   };
 
@@ -790,6 +812,7 @@ export const CriticalNumbers = () => {
     });
     setEditingKpi(kpi);
     setSaveError(null);
+    setAttempted(false);
     setShowCreateModal(true);
   };
 
@@ -797,6 +820,7 @@ export const CriticalNumbers = () => {
     setForm(EMPTY_FORM);
     setEditingKpi(null);
     setSaveError(null);
+    setAttempted(false);
     setShowCreateModal(false);
   };
 
@@ -804,12 +828,31 @@ export const CriticalNumbers = () => {
   const findName = (list: { id: number; name: string }[], idStr: string) =>
     list.find((x) => String(x.id) === idStr)?.name ?? null;
 
-  const handleCreate = async () => {
+  // ── Validation ──
+  const validate = () => {
     if (!form.name.trim()) {
-      setSaveError("KPI Name is required.");
       toast.error("KPI Name is required.");
-      return;
+      return false;
     }
+    if (!form.department_id) {
+      toast.error("Please select a department.");
+      return false;
+    }
+    if (!form.frequency) {
+      toast.error("Frequency is required.");
+      return false;
+    }
+    if (!form.assign_to_id) {
+      toast.error("Assignee is required.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleCreate = async () => {
+    setAttempted(true);
+    if (!validate()) return;
+
     setIsSaving(true);
     setSaveError(null);
     try {
@@ -834,12 +877,10 @@ export const CriticalNumbers = () => {
   };
 
   const handleUpdate = async () => {
+    setAttempted(true);
     if (!editingKpi) return;
-    if (!form.name.trim()) {
-      setSaveError("KPI Name is required.");
-      toast.error("KPI Name is required.");
-      return;
-    }
+    if (!validate()) return;
+
     setIsSaving(true);
     setSaveError(null);
     try {
@@ -901,6 +942,7 @@ export const CriticalNumbers = () => {
       setIsSaving(false);
     }
   };
+
   const handleDelete = async (id: number) => {
     setDeletingId(id);
     try {
@@ -914,8 +956,6 @@ export const CriticalNumbers = () => {
       setDeletingId(null);
     }
   };
-
-  const canSave = form.name.trim().length > 0;
 
   return (
     <div className="kpi-wrap" style={{ padding: "24px 0", fontFamily: C.font }}>
@@ -960,14 +1000,14 @@ export const CriticalNumbers = () => {
           >
             Critical Numbers (KPIs)
           </h1>
-          <span 
+          <span
             ref={infoBtnRef}
             onMouseEnter={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               setInfoPos({
                 top: rect.bottom + window.scrollY + 10,
                 left: rect.left + window.scrollX + rect.width / 2,
-                transform: "translateX(-50%)"
+                transform: "translateX(-50%)",
               });
               setIsInfoHovered(true);
             }}
@@ -977,53 +1017,89 @@ export const CriticalNumbers = () => {
             <InfoIcon />
           </span>
 
-          {isInfoHovered && ReactDOM.createPortal(
-            <div 
-              style={{
-                position: "absolute",
-                top: infoPos.top,
-                left: infoPos.left,
-                transform: infoPos.transform,
-                zIndex: 99999,
-                background: "#16102b", // Dark purple/blue tint
-                color: "#fff",
-                borderRadius: 12,
-                boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-                padding: "16px",
-                width: 380,
-                textAlign: "center",
-                fontFamily: "'Poppins', sans-serif",
-                pointerEvents: "none",
-                border: "1px solid rgba(218,119,86,0.2)"
-              }}
-            >
-              <h4 style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 800, color: "#fff" }}>
-                Critical Numbers - Your Business Dashboard
-              </h4>
-              <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#d1d5db" }}>
-                The 3-5 most important metrics that tell you if your business is healthy. These are leading indicators - numbers that predict future success.
-              </p>
-              <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#d1d5db" }}>
-                Review these WEEKLY in your team meetings. Everyone should know these numbers by heart.
-              </p>
-              <p style={{ margin: "0 0 10px 0", fontSize: 11, fontStyle: "italic", color: "#9ca3af" }}>
-                From Scaling Up: "If you can't measure it, you can't improve it. Pick the vital few metrics, not the trivial many."
-              </p>
-              <div style={{ fontSize: 11, color: "#9ca3af" }}>
-                <div style={{ fontStyle: "italic", marginBottom: 2 }}>
-                  Examples for Indian businesses:
+          {isInfoHovered &&
+            ReactDOM.createPortal(
+              <div
+                style={{
+                  position: "absolute",
+                  top: infoPos.top,
+                  left: infoPos.left,
+                  transform: infoPos.transform,
+                  zIndex: 99999,
+                  background: "#16102b", // Dark purple/blue tint
+                  color: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                  padding: "16px",
+                  width: 380,
+                  textAlign: "center",
+                  fontFamily: "'Poppins', sans-serif",
+                  pointerEvents: "none",
+                  border: "1px solid rgba(218,119,86,0.2)",
+                }}
+              >
+                <h4
+                  style={{
+                    margin: "0 0 10px 0",
+                    fontSize: 13,
+                    fontWeight: 800,
+                    color: "#fff",
+                  }}
+                >
+                  Critical Numbers - Your Business Dashboard
+                </h4>
+                <p
+                  style={{
+                    margin: "0 0 10px 0",
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                    color: "#d1d5db",
+                  }}
+                >
+                  The 3-5 most important metrics that tell you if your business
+                  is healthy. These are leading indicators - numbers that
+                  predict future success.
+                </p>
+                <p
+                  style={{
+                    margin: "0 0 10px 0",
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                    color: "#d1d5db",
+                  }}
+                >
+                  Review these WEEKLY in your team meetings. Everyone should
+                  know these numbers by heart.
+                </p>
+                <p
+                  style={{
+                    margin: "0 0 10px 0",
+                    fontSize: 11,
+                    fontStyle: "italic",
+                    color: "#9ca3af",
+                  }}
+                >
+                  From Scaling Up: "If you can't measure it, you can't improve
+                  it. Pick the vital few metrics, not the trivial many."
+                </p>
+                <div style={{ fontSize: 11, color: "#9ca3af" }}>
+                  <div style={{ fontStyle: "italic", marginBottom: 2 }}>
+                    Examples for Indian businesses:
+                  </div>
+                  <div style={{ fontStyle: "italic", marginBottom: 2 }}>
+                    <strong style={{ color: "#d1d5db" }}>Manufacturing:</strong>{" "}
+                    Daily production units, defect rate, on-time delivery %
+                  </div>
+                  <div style={{ fontStyle: "italic" }}>
+                    <strong style={{ color: "#d1d5db" }}>Services:</strong>{" "}
+                    Customer retention rate, average project margin, new client
+                    meetings/week
+                  </div>
                 </div>
-                <div style={{ fontStyle: "italic", marginBottom: 2 }}>
-                  <strong style={{ color: "#d1d5db" }}>Manufacturing:</strong> Daily production units, defect rate, on-time delivery %
-                </div>
-                <div style={{ fontStyle: "italic" }}>
-                  <strong style={{ color: "#d1d5db" }}>Services:</strong> Customer retention rate, average project margin, new client meetings/week
-                </div>
-              </div>
-            </div>,
-            document.body
-          )}
-          
+              </div>,
+              document.body
+            )}
+
           {isFetching && <LoaderIcon />}
         </div>
 
@@ -1639,7 +1715,7 @@ export const CriticalNumbers = () => {
                     fontFamily: C.font,
                   }}
                 >
-                  KPI Name <span style={{ color: C.primary }}>*</span>
+                  KPI Name {reqStar}
                 </label>
                 <input
                   type="text"
@@ -1648,7 +1724,14 @@ export const CriticalNumbers = () => {
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className="kpi-input"
                   autoFocus
+                  style={{
+                    borderColor:
+                      attempted && !form.name.trim() ? "#fca5a5" : undefined,
+                  }}
                 />
+                {attempted && !form.name.trim() && (
+                  <FieldHint msg="KPI Name is required." />
+                )}
               </div>
 
               {/* Unit + Target */}
@@ -1727,17 +1810,30 @@ export const CriticalNumbers = () => {
                       fontFamily: C.font,
                     }}
                   >
-                    Department
+                    Department {reqStar}
                   </label>
-                  <SearchableSelect
-                    value={form.department_id}
-                    onChange={(v: string) =>
-                      setForm({ ...form, department_id: v })
-                    }
-                    options={departments}
-                    loading={loadingDepts}
-                    placeholder="Search & select department"
-                  />
+                  <div
+                    style={{
+                      border:
+                        attempted && !form.department_id
+                          ? "1px solid #fca5a5"
+                          : undefined,
+                      borderRadius: 12,
+                    }}
+                  >
+                    <SearchableSelect
+                      value={form.department_id}
+                      onChange={(v: string) =>
+                        setForm({ ...form, department_id: v })
+                      }
+                      options={departments}
+                      loading={loadingDepts}
+                      placeholder="Search department"
+                    />
+                  </div>
+                  {attempted && !form.department_id && (
+                    <FieldHint msg="Department is required." />
+                  )}
                 </div>
                 <div>
                   <label
@@ -1750,7 +1846,7 @@ export const CriticalNumbers = () => {
                       fontFamily: C.font,
                     }}
                   >
-                    Frequency <span style={{ color: C.primary }}>*</span>
+                    Frequency {reqStar}
                   </label>
                   <select
                     value={form.frequency}
@@ -1758,11 +1854,18 @@ export const CriticalNumbers = () => {
                       setForm({ ...form, frequency: e.target.value })
                     }
                     className="kpi-select"
+                    style={{
+                      borderColor:
+                        attempted && !form.frequency ? "#fca5a5" : undefined,
+                    }}
                   >
                     {FREQUENCIES.map((f) => (
                       <option key={f}>{f}</option>
                     ))}
                   </select>
+                  {attempted && !form.frequency && (
+                    <FieldHint msg="Frequency is required." />
+                  )}
                 </div>
               </div>
 
@@ -1778,17 +1881,30 @@ export const CriticalNumbers = () => {
                     fontFamily: C.font,
                   }}
                 >
-                  Assign to User
+                  Assign to User {reqStar}
                 </label>
-                <SearchableSelect
-                  value={form.assign_to_id}
-                  onChange={(v: string) =>
-                    setForm({ ...form, assign_to_id: v })
-                  }
-                  options={users}
-                  loading={loadingUsers}
-                  placeholder="Search & select user"
-                />
+                <div
+                  style={{
+                    border:
+                      attempted && !form.assign_to_id
+                        ? "1px solid #fca5a5"
+                        : undefined,
+                    borderRadius: 12,
+                  }}
+                >
+                  <SearchableSelect
+                    value={form.assign_to_id}
+                    onChange={(v: string) =>
+                      setForm({ ...form, assign_to_id: v })
+                    }
+                    options={users}
+                    loading={loadingUsers}
+                    placeholder="Search & select user"
+                  />
+                </div>
+                {attempted && !form.assign_to_id && (
+                  <FieldHint msg="Assignee is required." />
+                )}
               </div>
             </div>
 
@@ -1830,17 +1946,17 @@ export const CriticalNumbers = () => {
               </button>
               <button
                 onClick={editingKpi ? handleUpdate : handleCreate}
-                disabled={!canSave || isSaving}
+                disabled={isSaving}
                 style={{
                   padding: "10px 22px",
                   fontSize: 13,
                   fontWeight: 900,
                   color: "#fff",
-                  background: canSave && !isSaving ? "#1a1a1a" : "#9ca3af",
+                  background: !isSaving ? "#1a1a1a" : "#9ca3af",
                   border: "none",
                   borderRadius: 12,
-                  cursor: canSave && !isSaving ? "pointer" : "not-allowed",
-                  boxShadow: canSave ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
+                  cursor: !isSaving ? "pointer" : "not-allowed",
+                  boxShadow: !isSaving ? "0 2px 8px rgba(0,0,0,0.15)" : "none",
                   transition: "background .15s",
                   display: "flex",
                   alignItems: "center",
@@ -1848,12 +1964,10 @@ export const CriticalNumbers = () => {
                   fontFamily: C.font,
                 }}
                 onMouseEnter={(e) => {
-                  if (canSave && !isSaving)
-                    e.currentTarget.style.background = "#000";
+                  if (!isSaving) e.currentTarget.style.background = "#000";
                 }}
                 onMouseLeave={(e) => {
-                  if (canSave && !isSaving)
-                    e.currentTarget.style.background = "#1a1a1a";
+                  if (!isSaving) e.currentTarget.style.background = "#1a1a1a";
                 }}
               >
                 {isSaving && <LoaderIcon />}
