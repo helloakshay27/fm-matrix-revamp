@@ -343,7 +343,7 @@ const Receipt = ({
                                 {/* Right: Invoice Title + Bill To Details */}
                                 <div className="text-right">
                                     <p className="text-[#1F5E2E] font-bold mb-4 text-sm">
-                                        ORIGINAL FOR RECEPIENT
+                                        ORIGINAL FOR RECIPIENT
                                     </p>
                                     <p className="text-[#1F5E2E] text-xs">
                                         <span className="font-bold">
