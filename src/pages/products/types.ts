@@ -62,6 +62,17 @@ export interface ProductData {
     rawSummaryTable?: React.ReactNode | null;
     rawFeaturesTable?: React.ReactNode | null;
     rawUseCasesTable?: React.ReactNode | null;
+    rawMarketTable?: React.ReactNode | null;
+    rawPricingTable?: React.ReactNode | null;
+    rawPricingSections?: {
+      title: string;
+      subtitle?: string;
+      sections: {
+        title: string;
+        columns: string[];
+        rows: string[][];
+      }[];
+    };
     featureSummary?: string | React.ReactNode;
     productSummaryNew: {
       summarySubtitle?: string;
@@ -74,6 +85,13 @@ export interface ProductData {
         gain: string;
       }[];
       today: { dimension: string; state: string }[];
+      featureSummary?: {
+        modules: {
+          module: string;
+          description: string;
+          isUSP?: boolean;
+        }[];
+      };
       summaryFeatureModules?: { label: string; detail: string }[];
       summaryUsps?: { label: string; detail: string }[];
       tractionMilestones?: { label: string; detail: string }[];
@@ -98,6 +116,7 @@ export interface ProductData {
       module: string;
       feature: string;
       subFeatures: string;
+      description?: string;
       works: string;
       userType: string;
       usp: boolean;
@@ -431,6 +450,7 @@ export interface ProductData {
       }[];
     };
     detailedRoadmap?: {
+      roadmapTableVariant?: "html";
       phases?: {
         title: string;
         initiatives: {
@@ -499,6 +519,7 @@ export interface ProductData {
       }[];
     };
     detailedBusinessPlan?: {
+      isClubBusinessPlan?: boolean;
       planQuestions: {
         id?: string;
         question: string;
@@ -514,6 +535,10 @@ export interface ProductData {
           | "yellow"
           | "orange";
       }[];
+      checklist?: {
+        reference: string;
+        action: string;
+      }[];
       founderChecklist?: {
         id?: string;
         item: string;
@@ -522,6 +547,7 @@ export interface ProductData {
       }[];
     };
     detailedGTM?: {
+      isClubGTM?: boolean;
       targetGroups: {
         id?: string;
         title: string;
@@ -577,6 +603,7 @@ export interface ProductData {
       }[];
     };
     detailedSWOT?: {
+      isClubSWOT?: boolean;
       strengths: { headline: string; explanation: string }[];
       weaknesses: { headline: string; explanation: string }[];
       opportunities: { headline: string; explanation: string }[];
@@ -660,3 +687,285 @@ export interface ProductData {
     }[];
   };
 }
+
+// Sample SWOT table data extracted from provided HTML (Procurement Management ERP)
+export const procurementManagementDetailedSWOTTable = {
+  strengths: {
+    columns: ["#", "Strength", "Explanation"],
+    rows: [
+      [
+        "1",
+        "Native India Compliance",
+        "Built-in GST, TDS, and e-invoicing support eliminates need for expensive localization unlike SAP or Oracle",
+      ],
+      [
+        "2",
+        "BOQ-Linked Procurement",
+        "Unique construction-grade feature that validates every MOR against project BOQ, preventing material leakage",
+      ],
+      [
+        "3",
+        "Auto-Trigger MOR",
+        "Threshold-based automatic replenishment eliminates stockouts and reduces emergency purchases by 45%",
+      ],
+      [
+        "4",
+        "RFID/QR Material Tracking",
+        "End-to-end material lifecycle tracking from warehouse to site, a feature competitors lack natively",
+      ],
+      [
+        "5",
+        "Competitive Pricing",
+        "INR 2,500-15,000/user/month vs INR 15,000-55,000 for global players, targeting underserved mid-market",
+      ],
+      [
+        "6",
+        "Construction Project Hierarchy",
+        "INR 2,500-15,000/user/month versus INR 15,000-55,000 for global platforms, with superior India-specific functionality including GST/TDS compliance, BOQ integration, Gate Management, and service contract modules that global tools require expensive customization to deliver.",
+      ],
+      [
+        "7",
+        "AI-Powered Bid Analytics",
+        "L1/L2/L3 ranking with landed cost calculation for objective vendor selection",
+      ],
+      [
+        "8",
+        "Comprehensive Module Coverage",
+        "14 integrated modules covering entire P2P lifecycle from MOR demand creation through tendering, purchase order management, gate management, GRN and QC, inventory control, billing and payment, audit and control, plus P0 roadmap for MTO and service contract modules.",
+      ],
+      [
+        "9",
+        "Mobile-First Design",
+        "Full MOR creation and approval workflows on mobile for field teams and site engineers",
+      ],
+      [
+        "10",
+        "Quick Implementation",
+        "4-6 week deployment vs 12-18 months for enterprise solutions like SAP Ariba",
+      ],
+    ],
+  },
+  weaknesses: {
+    columns: ["#", "Weakness", "Explanation"],
+    rows: [
+      [
+        "1",
+        "Limited AI Maturity",
+        "Predictive analytics and AI spend intelligence lag behind Coupa Navi and Zycus Merlin capabilities",
+      ],
+      [
+        "2",
+        "No Multi-Language Support",
+        "Currently English-only interface limits adoption in regional markets and Tier-2/3 cities",
+      ],
+      [
+        "3",
+        "Offline Mode Absent",
+        "No offline-first mobile capability for remote construction sites with poor connectivity",
+      ],
+      [
+        "4",
+        "Brand Recognition",
+        "New entrant competing against established players with 20+ years of market presence",
+      ],
+      [
+        "5",
+        "Limited Integration Ecosystem",
+        "Fewer pre-built connectors compared to SAP or Oracle ecosystem today. Tally integration in Phase 1 roadmap. Power BI connector and 50+ API connectors in Phase 3. Currently requires custom integration for finance platforms other than Tally.",
+      ],
+      [
+        "6",
+        "Small Customer Base",
+        "Early-stage traction limits reference customers and case studies for enterprise sales",
+      ],
+      [
+        "7",
+        "No Global Compliance",
+        "India-focused compliance engine not ready for international expansion (UAE, US, UK)",
+      ],
+      [
+        "8",
+        "Basic Analytics",
+        "Dashboard and reporting capabilities behind enterprise BI expectations",
+      ],
+      [
+        "9",
+        "Single Geography Focus",
+        "No local support or data centers outside India currently",
+      ],
+      [
+        "10",
+        "Limited SI Partnerships",
+        "No established relationships with major system integrators for enterprise deals",
+      ],
+    ],
+  },
+  opportunities: {
+    columns: ["#", "Opportunity", "Explanation"],
+    rows: [
+      [
+        "1",
+        "Low Enterprise Adoption",
+        "Less than 15% of Indian enterprises use procurement software, massive greenfield opportunity",
+      ],
+      [
+        "2",
+        "Infrastructure Push",
+        "INR 10 lakh crore government infrastructure spend (PM Gati Shakti) driving digitization",
+      ],
+      [
+        "3",
+        "Construction Tech Boom",
+        "Real estate sector recovering with focus on operational efficiency and cost control",
+      ],
+      [
+        "4",
+        "GST Compliance Mandate",
+        "E-invoicing requirements pushing companies toward integrated procurement solutions",
+      ],
+      [
+        "5",
+        "Remote Work Acceleration",
+        "Post-pandemic distributed teams need cloud-based procurement with mobile access",
+      ],
+      [
+        "6",
+        "GeM Integration Potential",
+        "Government e-Marketplace integration (Phase 3 roadmap) can unlock INR 3+ lakh crore PSU procurement market. Internal Fulfilment/MTO module (P0) addresses government and PSU multi-site transfer requirements, positioning for GeM and defense procurement opportunities.",
+      ],
+      [
+        "7",
+        "AI Wave in Procurement",
+        "80% of CPOs planning GenAI adoption, positioning for AI-native procurement platform",
+      ],
+      [
+        "8",
+        "Mid-Market Gap",
+        "No dominant player in INR 50 Cr - 500 Cr revenue segment, underserved by expensive enterprise tools",
+      ],
+      [
+        "9",
+        "SI Partnership Opportunity",
+        "System integrators seeking India-focused procurement solutions to complement ERP implementations",
+      ],
+      [
+        "10",
+        "Regional Language Demand",
+        "First mover advantage for Hindi, Tamil, Telugu language support in procurement software",
+      ],
+    ],
+  },
+  threats: {
+    columns: ["#", "Threat", "Explanation"],
+    rows: [
+      [
+        "1",
+        "SAP/Oracle Price Cuts",
+        "Global giants may reduce India pricing to defend market share against local competitors",
+      ],
+      [
+        "2",
+        "Zycus Expansion",
+        "Indian enterprise leader expanding into mid-market with localized offerings",
+      ],
+      [
+        "3",
+        "Moglix/Cognilix Growth",
+        "Well-funded unicorns expanding from marketplace to full procurement platform",
+      ],
+      [
+        "4",
+        "ERP Vendor Bundling",
+        "Tally, Zoho, Oracle NetSuite may bundle procurement modules at marginal cost",
+      ],
+      [
+        "5",
+        "Economic Slowdown",
+        "Construction and infrastructure spending cuts during economic downturns delay purchases",
+      ],
+      [
+        "6",
+        "Talent Competition",
+        "Difficulty hiring experienced procurement domain experts and enterprise sales talent",
+      ],
+      [
+        "7",
+        "Data Security Concerns",
+        "Enterprise customers may hesitate with cloud solutions due to data sovereignty fears",
+      ],
+      [
+        "8",
+        "Regulatory Changes",
+        "GST/TDS rule changes require continuous compliance updates and engineering investment",
+      ],
+      [
+        "9",
+        "Customer Concentration Risk",
+        "Early-stage dependence on few large customers creates revenue volatility",
+      ],
+      [
+        "10",
+        "Technology Obsolescence",
+        "Rapid AI advancement may require continuous re-platforming to stay competitive",
+      ],
+    ],
+  },
+};
+
+// Individual THREATS table (kept minimal to match provided image exactly)
+export const procurementManagementThreatsTable = {
+  columns: ["#", "Threat", "Explanation"],
+  rows: [
+    [
+      "1",
+      "SAP/Oracle Price Cuts",
+      "Global giants may reduce India pricing to defend market share against local competitors",
+    ],
+    [
+      "2",
+      "Zycus Expansion",
+      "Indian enterprise leader expanding into mid-market with localized offerings",
+    ],
+    [
+      "3",
+      "Moglix/Cognilix Growth",
+      "Well-funded unicorns expanding from marketplace to full procurement platform",
+    ],
+    [
+      "4",
+      "ERP Vendor Bundling",
+      "Tally, Zoho, Oracle NetSuite may bundle procurement modules at marginal cost",
+    ],
+    [
+      "5",
+      "Economic Slowdown",
+      "Construction and infrastructure spending cuts during economic downturns delay purchases",
+    ],
+    [
+      "6",
+      "Talent Competition",
+      "Difficulty hiring experienced procurement domain experts and enterprise sales talent",
+    ],
+    [
+      "7",
+      "Data Security Concerns",
+      "Enterprise customers may hesitate with cloud solutions due to data sovereignty fears",
+    ],
+    [
+      "8",
+      "Regulatory Changes",
+      "GST/TDS rule changes require continuous compliance updates and engineering investment",
+    ],
+    [
+      "9",
+      "Customer Concentration Risk",
+      "Early-stage dependence on few large customers creates revenue volatility",
+    ],
+    [
+      "10",
+      "Technology Obsolescence",
+      "Rapid AI advancement may require continuous re-platforming to stay competitive",
+    ],
+  ],
+};
+

@@ -148,7 +148,7 @@ const productData: Product[] = [
   },
   {
     id: "7",
-    name: "Procurement / Contracts / Tendering*",
+    name: "Procurement/ Contracts/ Tendering",
     slug: "procurement",
     company: "Lockated",
     businessSPOC1: "Saba",
@@ -162,7 +162,7 @@ const productData: Product[] = [
     problemSolved:
       "Procurement runs on emails, Excel comparatives, and manual approvals, creating compliance risk, weak vendor accountability, and no audit trail for contract terms.",
     type: "Vendor Portal",
-    isActive: false,
+    isActive: true,
   },
   {
     id: "8",

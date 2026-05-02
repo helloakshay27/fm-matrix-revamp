@@ -7,12 +7,7 @@ import {
   TabsTrigger,
 } from "../../components/ui/tabs";
 import { useProductSecurity } from "./useProductSecurity";
-import {
-  CameraPermissionPending,
-  CameraPermissionDenied,
-  ModelLoadingScreen,
-  SecurityOverlays,
-} from "./SecurityOverlays";
+import { SecurityOverlays } from "./SecurityOverlays";
 import {
   ClipboardList,
   CheckSquare,
@@ -5278,17 +5273,6 @@ const TaskManagerPage: React.FC = () => {
   const security = useProductSecurity();
 
   const tabOrder = productData.tabOrder;
-
-  // Camera permission states
-  if (security.cameraPermission === "pending") {
-    return <CameraPermissionPending />;
-  }
-  if (security.cameraPermission === "denied") {
-    return <CameraPermissionDenied />;
-  }
-  if (security.modelLoading) {
-    return <ModelLoadingScreen />;
-  }
 
   return (
     <div className="min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300">

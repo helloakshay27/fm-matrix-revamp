@@ -329,8 +329,8 @@ const PostPossessionUseCasesTab: React.FC = () => {
         <div className="border border-[#C4B89D]/50 bg-white rounded-b-xl overflow-x-auto shadow-sm">
           <table className="min-w-[1200px] w-full table-fixed border-collapse text-[13px] leading-relaxed font-poppins">
             <thead>
-              <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#C4B89D]/50 font-bold uppercase text-[10px] text-center sticky top-0">
-                <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[4%]">
+              <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#C4B89D]/50 font-bold uppercase text-[15px] text-center sticky top-0">
+                <th className="border border-[#C4B89D]/50 px-2 py-2 text-center w-[5%]">
                   Rank
                 </th>
                 <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[12%]">
@@ -417,7 +417,7 @@ const PostPossessionUseCasesTab: React.FC = () => {
         <div className="border border-[#C4B89D]/50 bg-white overflow-x-auto shadow-sm">
           <table className="min-w-[1200px] w-full table-fixed border-collapse text-[13px] leading-relaxed font-poppins">
             <thead>
-              <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#C4B89D]/50 font-bold uppercase text-[10px] text-center sticky top-0">
+              <tr className="bg-[#F6F4EE] text-[#DA7756] border-b border-[#C4B89D]/50 font-bold uppercase text-[16px] text-center sticky top-0">
                 <th className="border border-[#C4B89D]/50 px-2 py-2 text-left w-[15%]">
                   Team Name
                 </th>
