@@ -733,7 +733,7 @@ export const BookingSetupDetailClubPage = () => {
               <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                 <CalendarDays className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE SLOT</h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Facility Operational Timings & Booking</h3>
             </div>
 
             <div className="space-y-6">
@@ -912,7 +912,7 @@ export const BookingSetupDetailClubPage = () => {
                         </Label>
                       </div>
                     </PopoverTrigger>
-                    <PopoverContent className="w-80">
+                    <PopoverContent className="w-80 bg-white">
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <h4 className="font-medium text-sm">Set Premium Percentage</h4>
