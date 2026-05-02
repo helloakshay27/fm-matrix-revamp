@@ -39,6 +39,10 @@ type ClubMarketAnalysis = NonNullable<
 };
 
 const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
+  if (productData.extendedContent?.rawMarketTable) {
+    return <div className="w-full mt-4">{productData.extendedContent.rawMarketTable}</div>;
+  }
+
   const detailedMarketAnalysis =
     productData.extendedContent?.detailedMarketAnalysis;
   const clubMarketAnalysis = detailedMarketAnalysis as

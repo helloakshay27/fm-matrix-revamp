@@ -1,12 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useProductSecurity } from "./useProductSecurity";
-import {
-  CameraPermissionPending,
-  CameraPermissionDenied,
-  ModelLoadingScreen,
-  SecurityOverlays,
-  AlwaysMountedVideos,
-} from "./SecurityOverlays";
+import { SecurityOverlays } from "./SecurityOverlays";
 import {
   ArrowLeft,
   Monitor,
@@ -3986,32 +3980,6 @@ const Snag360Page: React.FC = () => {
   const navigate = useNavigate();
   const security = useProductSecurity();
   const snagTabsScrollRef = useRef<HTMLDivElement>(null);
-
-  // Security checks
-  if (security.cameraPermission === "pending") {
-    return (
-      <>
-        <AlwaysMountedVideos security={security} />
-        <CameraPermissionPending />
-      </>
-    );
-  }
-  if (security.cameraPermission === "denied") {
-    return (
-      <>
-        <AlwaysMountedVideos security={security} />
-        <CameraPermissionDenied />
-      </>
-    );
-  }
-  if (security.modelLoading) {
-    return (
-      <>
-        <AlwaysMountedVideos security={security} />
-        <ModelLoadingScreen />
-      </>
-    );
-  }
 
   // Extract use cases data for custom component
   const industryUseCases =

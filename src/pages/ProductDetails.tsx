@@ -1,12 +1,32 @@
 import React, { useState } from "react";
-import { useProductSecurity } from "./products/useProductSecurity";
 import {
-  CameraPermissionPending,
-  CameraPermissionDenied,
-  ModelLoadingScreen,
-  SecurityOverlays,
-  AlwaysMountedVideos,
-} from "./products/SecurityOverlays";
+  procurementManagementDetailedSWOTTable,
+  procurementManagementThreatsTable,
+} from "./products/types";
+
+// Convert table-shaped SWOT data (columns/rows) into the UI-friendly detailedSWOT shape
+type SWOTTable = {
+  isClubSWOT?: boolean;
+  strengths?: { columns: string[]; rows: string[][] };
+  weaknesses?: { columns: string[]; rows: string[][] };
+  opportunities?: { columns: string[]; rows: string[][] };
+  threats?: { columns: string[]; rows: string[][] };
+};
+
+const tableToDetailedSWOT = (table: SWOTTable) => {
+  const mapRows = (rows: string[][] = []) =>
+    rows.map((r: string[]) => ({ headline: r[1] ?? "", explanation: r[2] ?? "" }));
+
+  return {
+    isClubSWOT: !!table?.isClubSWOT,
+    strengths: mapRows(table?.strengths?.rows || []),
+    weaknesses: mapRows(table?.weaknesses?.rows || []),
+    opportunities: mapRows(table?.opportunities?.rows || []),
+    threats: mapRows(table?.threats?.rows || []),
+  };
+};
+import { useProductSecurity } from "./products/useProductSecurity";
+import { SecurityOverlays } from "./products/SecurityOverlays";
 import {
   ArrowLeft,
   Monitor,
@@ -194,7 +214,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
     productIdProp || productIdFromParams || location.state?.productId || "1";
 
   const security = useProductSecurity();
-  const { cameraPermission, isBlurred } = security;
+  const { isBlurred } = security;
 
   const allProductsData: { [key: string]: ProductInfo } = {
     "1": {
@@ -1794,6 +1814,24 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
         },
       ],
       owner: "Mangal Sahu",
+      extendedContent: ({
+        // attach the detailed SWOT converted from table format
+        detailedSWOT: (() => {
+          const converted = tableToDetailedSWOT(procurementManagementDetailedSWOTTable);
+          // If a separate threats table exists, prefer it (map rows to UI shape)
+          if (
+            procurementManagementThreatsTable &&
+            Array.isArray(procurementManagementThreatsTable.rows) &&
+            procurementManagementThreatsTable.rows.length > 0
+          ) {
+            converted.threats = procurementManagementThreatsTable.rows.map((r: string[]) => ({
+              headline: r[1] ?? "",
+              explanation: r[2] ?? "",
+            }));
+          }
+          return converted;
+        })(),
+      } as unknown) as ExtendedProductContent,
     },
     "13": {
       name: "Loyalty Engine",
@@ -2441,31 +2479,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 
   const assets = productData.assets || [];
   const credentials = productData.credentials || [];
-
-  if (security.cameraPermission === "pending") {
-    return (
-      <>
-        <AlwaysMountedVideos security={security} />
-        <CameraPermissionPending />
-      </>
-    );
-  }
-  if (security.cameraPermission === "denied") {
-    return (
-      <>
-        <AlwaysMountedVideos security={security} />
-        <CameraPermissionDenied />
-      </>
-    );
-  }
-  if (security.modelLoading) {
-    return (
-      <>
-        <AlwaysMountedVideos security={security} />
-        <ModelLoadingScreen />
-      </>
-    );
-  }
 
   return (
     <div

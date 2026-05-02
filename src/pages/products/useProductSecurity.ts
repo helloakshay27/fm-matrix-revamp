@@ -254,6 +254,11 @@ export function useProductSecurity(): SecurityState {
       (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.shiftKey && ["i", "j", "c"].includes(e.key.toLowerCase()),
       (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.altKey && e.key.toLowerCase() === "i",
     ];
+    const keywordSearchCombos = [
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f",
+      (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "g",
+      (e: KeyboardEvent) => e.key === "F3",
+    ];
     const handleKeyDown = (e: KeyboardEvent) => {
       if (screenshotKeys.some((check) => check(e))) {
         e.preventDefault();
@@ -263,12 +268,21 @@ export function useProductSecurity(): SecurityState {
         navigator.clipboard?.writeText("");
         return;
       }
+      if (keywordSearchCombos.some((check) => check(e))) {
+        e.preventDefault();
+        e.stopPropagation();
+        triggerBlackout(
+          "Keyword Search Blocked",
+          "Keyword searching, screenshots, recording, and developer tools are prohibited on this page."
+        );
+        return;
+      }
       if (blockedCombos.some((check) => check(e))) {
         e.preventDefault();
         e.stopPropagation();
         triggerBlackout(
           "Prohibited Action",
-          "Screenshot, recording, and developer tools are strictly prohibited on this page."
+          "Screenshots, keyword search, recording, clipboard actions, and developer tools are prohibited on this page."
         );
       }
     };

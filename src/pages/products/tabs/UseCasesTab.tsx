@@ -6,6 +6,10 @@ interface UseCasesTabProps {
 }
 
 const UseCasesTab: React.FC<UseCasesTabProps> = ({ productData }) => {
+  if (productData.extendedContent?.rawUseCasesTable) {
+    return <div className="w-full mt-4">{productData.extendedContent.rawUseCasesTable}</div>;
+  }
+
   const detailedUseCases = productData.extendedContent?.detailedUseCases;
   const hasPostSalesIndustrySheet =
     detailedUseCases?.industryUseCases?.some(
