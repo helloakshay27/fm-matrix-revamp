@@ -1,0 +1,1253 @@
+export default function SurveyMetricsContent() {
+  return (
+    <>
+      <div className="ritz grid-container" dir="ltr">
+        <table className="waffle" cellSpacing="0" cellPadding="0">
+          <thead>
+            <tr>
+              <th className="row-header freezebar-origin-ltr"></th>
+              <th
+                id="1843412743C0"
+                style={{ width: 170 }}
+                className="column-headers-background"
+              >
+                A
+              </th>
+              <th
+                id="1843412743C1"
+                style={{ width: 153 }}
+                className="column-headers-background"
+              >
+                B
+              </th>
+              <th
+                id="1843412743C2"
+                style={{ width: 262 }}
+                className="column-headers-background"
+              >
+                C
+              </th>
+              <th
+                id="1843412743C3"
+                style={{ width: 153 }}
+                className="column-headers-background"
+              >
+                D
+              </th>
+              <th
+                id="1843412743C4"
+                style={{ width: 125 }}
+                className="column-headers-background"
+              >
+                E
+              </th>
+              <th
+                id="1843412743C5"
+                style={{ width: 213 }}
+                className="column-headers-background"
+              >
+                F
+              </th>
+              <th
+                id="1843412743C6"
+                style={{ width: 209 }}
+                className="column-headers-background"
+              >
+                G
+              </th>
+              <th
+                id="1843412743C7"
+                style={{ width: 125 }}
+                className="column-headers-background"
+              >
+                H
+              </th>
+              <th
+                id="1843412743C8"
+                style={{ width: 174 }}
+                className="column-headers-background"
+              >
+                I
+              </th>
+              <th
+                id="1843412743C9"
+                style={{ width: 153 }}
+                className="column-headers-background"
+              >
+                J
+              </th>
+              <th
+                id="1843412743C10"
+                style={{ width: 195 }}
+                className="column-headers-background"
+              >
+                K
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style={{ height: 36 }}>
+              <th
+                id="1843412743R0"
+                style={{ height: 36 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 36 }}>
+                  1
+                </div>
+              </th>
+              <td className="s0" colSpan="11">
+                Metrics
+              </td>
+            </tr>
+            <tr style={{ height: 23 }}>
+              <th
+                id="1843412743R1"
+                style={{ height: 23 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 23 }}>
+                  2
+                </div>
+              </th>
+              <td className="s1" colSpan="11">
+                Section 1: Client impact metrics (landing page proof points) |
+                Section 2: Product launch tracking (30-day and 3-month, with and
+                without Phase 1 roadmap)
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R2"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  3
+                </div>
+              </th>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+            </tr>
+            <tr style={{ height: 28 }}>
+              <th
+                id="1843412743R3"
+                style={{ height: 28 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 28 }}>
+                  4
+                </div>
+              </th>
+              <td className="s3" colSpan="11">
+                SECTION 1 - CLIENT IMPACT METRICS (What to track after go-live -
+                Landing page proof points)
+              </td>
+            </tr>
+            <tr style={{ height: 32 }}>
+              <th
+                id="1843412743R4"
+                style={{ height: 32 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 32 }}>
+                  5
+                </div>
+              </th>
+              <td className="s4" colSpan="11">
+                These 10 metrics measure real-world business impact created in
+                client companies. Track from Day 30 with every client. Use the
+                best results as landing page social proof.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R5"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  6
+                </div>
+              </th>
+              <td className="s5">#</td>
+              <td className="s5">Metric Name</td>
+              <td className="s5">What it measures</td>
+              <td className="s5">Impact range</td>
+              <td className="s5">Feature driving the impact</td>
+              <td className="s5">How the impact is caused</td>
+              <td className="s5">Example landing page claim</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R6"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  7
+                </div>
+              </th>
+              <td className="s4">1</td>
+              <td className="s4">Time to detect a service failure</td>
+              <td className="s4">
+                How many hours pass from a negative customer experience to
+                operations manager awareness
+              </td>
+              <td className="s4">From 72 hours average to under 2 hours</td>
+              <td className="s4">
+                * Negative Response Trigger, Survey Info Dashboard
+              </td>
+              <td className="s4">
+                Ticket created automatically on negative QR scan. Dashboard
+                shows new ticket count in real time. No manual routing required.
+              </td>
+              <td className="s4">
+                &#39;After deploying Survey, our operations team knows about a
+                service failure the same hour it happens - not 3 days later in a
+                weekly report.&#39;
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R7"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  8
+                </div>
+              </th>
+              <td className="s6">2</td>
+              <td className="s6">Missed complaint rate</td>
+              <td className="s6">
+                Percentage of negative experiences that fail to generate a
+                documented ticket
+              </td>
+              <td className="s6">From 60 to 80% missed to under 5% missed</td>
+              <td className="s6">
+                * Negative Response Trigger, * Ticket Panel on Response Page
+              </td>
+              <td className="s6">
+                Every negative scan auto-creates a ticket. No response is missed
+                unless the respondent does not scan the QR. No manual step
+                required from the helpdesk team.
+              </td>
+              <td className="s6">
+                &#39;Survey reduced our missed complaint rate from 70% to under
+                5% in 30 days at 80 locations.&#39;
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R8"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  9
+                </div>
+              </th>
+              <td className="s4">3</td>
+              <td className="s4">Ticket creation time per complaint</td>
+              <td className="s4">
+                Minutes of helpdesk staff time spent creating and categorizing a
+                ticket from survey feedback
+              </td>
+              <td className="s4">
+                From 5 to 10 minutes manual to under 30 seconds automated
+              </td>
+              <td className="s4">
+                * Functional Ticket Capture, Auto Ticket Management
+              </td>
+              <td className="s4">
+                Ticket is created with pre-filled category, subcategory,
+                location, and root cause from the additional field. Helpdesk
+                staff reviews rather than creates.
+              </td>
+              <td className="s4">
+                &#39;Our helpdesk team saves 4 hours per day on manual ticket
+                entry since deploying Survey across 50 locations.&#39;
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R9"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  10
+                </div>
+              </th>
+              <td className="s6">4</td>
+              <td className="s6">Location-level CSAT visibility</td>
+              <td className="s6">
+                How many locations have a current-week CSAT score visible to the
+                operations manager
+              </td>
+              <td className="s6">
+                From 0 locations with real-time CSAT to 100% of mapped locations
+              </td>
+              <td className="s6">
+                * Survey Info Dashboard, * Location Mapping
+              </td>
+              <td className="s6">
+                Each QR-mapped location generates its own response stream.
+                Dashboard aggregates per-location CSAT automatically.
+              </td>
+              <td className="s6">
+                &#39;We went from knowing nothing about individual store
+                satisfaction to having current-week scores for all 120 stores on
+                one screen.&#39;
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R10"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  11
+                </div>
+              </th>
+              <td className="s4">5</td>
+              <td className="s4">Response rate vs paper forms</td>
+              <td className="s4">
+                Percentage of visitors who submit feedback via Survey QR vs
+                previous paper form usage
+              </td>
+              <td className="s4">From 2 to 5% (paper) to 8 to 25% (QR)</td>
+              <td className="s4">
+                * Unique QR Generation, Emoji Rating, Multiple Choice
+              </td>
+              <td className="s4">
+                QR survey takes under 60 seconds. Emoji format reduces friction.
+                Printed QR on checkout counter or signage reaches every visitor.
+              </td>
+              <td className="s4">
+                &#39;Survey increased our feedback response rate from 4% on
+                paper forms to 18% on QR in the first month.&#39;
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R11"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  12
+                </div>
+              </th>
+              <td className="s6">6</td>
+              <td className="s6">Recurring complaint identification speed</td>
+              <td className="s6">
+                Days from a complaint pattern appearing to it being identified
+                and escalated by the analytics team
+              </td>
+              <td className="s6">
+                From 30+ days (monthly report) to under 7 days (live trend view)
+              </td>
+              <td className="s6">
+                Trend and Pattern View, * Survey Info Dashboard
+              </td>
+              <td className="s6">
+                Trend view surfaces recurring negative reason codes
+                automatically. Pattern view groups complaints by category across
+                locations.
+              </td>
+              <td className="s6">
+                &#39;Our quality team identified a recurring cleaning issue at 3
+                specific floor areas within 5 days - it previously took a
+                monthly audit to find it.&#39;
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R12"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  13
+                </div>
+              </th>
+              <td className="s4">7</td>
+              <td className="s4">Client CSAT report preparation time</td>
+              <td className="s4">
+                Hours spent by FM or hospitality companies preparing monthly
+                client CSAT reports from survey data
+              </td>
+              <td className="s4">
+                From 6 to 12 hours manual (Excel) to under 30 minutes (export)
+              </td>
+              <td className="s4">
+                Export (Response and Mapping), Tabular Response Export
+              </td>
+              <td className="s4">
+                Monthly Excel export from response table contains all data
+                columns needed for client reporting. FM account manager
+                downloads and shares directly.
+              </td>
+              <td className="s4">
+                &#39;We reduced our monthly client CSAT report preparation from
+                10 hours to 25 minutes using Survey&#39;s export function.&#39;
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R13"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  14
+                </div>
+              </th>
+              <td className="s6">8</td>
+              <td className="s6">SLA ticket TAT compliance rate</td>
+              <td className="s6">
+                Percentage of auto-raised tickets resolved within the configured
+                TAT
+              </td>
+              <td className="s6">
+                From baseline to 20 to 35 percentage point improvement in TAT
+                compliance
+              </td>
+              <td className="s6">
+                * Ticket Panel on Response Page, Team Assignment
+              </td>
+              <td className="s6">
+                Tickets are pre-assigned to the correct team based on category.
+                TAT is visible in the ticket panel. No routing delay. Escalation
+                flag appears when TAT is breached.
+              </td>
+              <td className="s6">
+                &#39;TAT compliance for complaint resolution improved from 52%
+                to 87% after Survey removed manual routing delays at 30
+                sites.&#39;
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R14"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  15
+                </div>
+              </th>
+              <td className="s4">9</td>
+              <td className="s4">QR deployment time per location</td>
+              <td className="s4">
+                Hours required to go live with a new location including location
+                creation, survey mapping, and QR generation
+              </td>
+              <td className="s4">
+                From 30 to 60 minutes manual to under 5 minutes with bulk import
+                and auto-QR
+              </td>
+              <td className="s4">
+                Bulk Location Import, * Unique QR Generation, Survey Mapping
+              </td>
+              <td className="s4">
+                Bulk import creates all locations in one step. QR is
+                auto-generated per mapping. Administrator downloads and prints
+                or displays QR. No IT involvement required.
+              </td>
+              <td className="s4">
+                &#39;We deployed Survey to 50 new locations in one afternoon
+                using bulk import and auto-QR generation - it would have taken a
+                week manually.&#39;
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R15"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  16
+                </div>
+              </th>
+              <td className="s6">10</td>
+              <td className="s6">
+                Negative response volume recovery (week-over-week)
+              </td>
+              <td className="s6">
+                Percentage reduction in negative response volume at a location
+                after a ticket is raised, resolved, and root cause is addressed
+              </td>
+              <td className="s6">
+                10 to 30% reduction in negative response volume at targeted
+                locations after resolution
+              </td>
+              <td className="s6">
+                Trend and Pattern View, * Ticket Panel on Response Page
+              </td>
+              <td className="s6">
+                Trend view shows negative response volume declining at a
+                location after a specific ticket category is resolved.
+                Operations teams use this data to validate that interventions
+                are working.
+              </td>
+              <td className="s6">
+                &#39;After we resolved the F&amp;B complaint tickets identified
+                by Survey, negative responses at our restaurant dropped by 22%
+                in the following two weeks.&#39;
+              </td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R16"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  17
+                </div>
+              </th>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R17"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  18
+                </div>
+              </th>
+              <td className="s3" colSpan="11">
+                SECTION 2 - PRODUCT LAUNCH TRACKING METRICS (North Star + Top
+                10)
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R18"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  19
+                </div>
+              </th>
+              <td className="s7" colSpan="11">
+                NORTH STAR METRIC
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R19"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  20
+                </div>
+              </th>
+              <td className="s8">North Star Metric Name:</td>
+              <td className="s9" colSpan="10">
+                Locations with at least 1 auto-raised ticket from a QR-sourced
+                negative response in the last 7 days
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R20"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  21
+                </div>
+              </th>
+              <td className="s10">Why this is the North Star:</td>
+              <td className="s6" colSpan="10">
+                Survey&#39;s core value proposition is not that surveys are
+                submitted - it is that negative feedback generates a ticket and
+                drives resolution. A location where this cycle is working proves
+                Survey&#39;s primary value. A location that has only QRs
+                displayed but no negative response tickets raised is not yet
+                delivering the product&#39;s core promise. This metric therefore
+                measures adoption of the full QR-to-ticket workflow, not just
+                response volume.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R21"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  22
+                </div>
+              </th>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R22"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  23
+                </div>
+              </th>
+              <td className="s5">#</td>
+              <td className="s5">Metric</td>
+              <td className="s5">What it measures</td>
+              <td className="s5">Activation definition</td>
+              <td className="s5">
+                30-day target
+                <br />
+                (current product)
+              </td>
+              <td className="s5">
+                30-day target
+                <br />
+                (with Phase 1)
+              </td>
+              <td className="s5">
+                3-month target
+                <br />
+                (current product)
+              </td>
+              <td className="s5">
+                3-month target
+                <br />
+                (with Phase 1)
+              </td>
+              <td className="s5">Why it matters</td>
+              <td className="s5">Success signal</td>
+              <td className="s5">Uplift reason from Phase 1</td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R23"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  24
+                </div>
+              </th>
+              <td className="s4">1</td>
+              <td className="s4">New account signups</td>
+              <td className="s4">
+                Organizations that have created a Survey account and mapped at
+                least 1 location
+              </td>
+              <td className="s4">
+                Account created + at least 1 QR code generated and scanned at
+                least once
+              </td>
+              <td className="s4">5 to 10 accounts</td>
+              <td className="s4">8 to 15 accounts</td>
+              <td className="s4">20 to 30 accounts</td>
+              <td className="s4">30 to 50 accounts</td>
+              <td className="s4">Raw pipeline indicator</td>
+              <td className="s4">
+                More than 5 accounts in first 30 days signals product-market fit
+                in target segment
+              </td>
+              <td className="s4">
+                WhatsApp distribution opens new acquisition channel beyond
+                QR-only onboarding
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R24"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  25
+                </div>
+              </th>
+              <td className="s6">2</td>
+              <td className="s6">Activated users</td>
+              <td className="s6">
+                Accounts where the full QR-to-ticket cycle has completed at
+                least once (QR scanned, negative response submitted, ticket
+                auto-created)
+              </td>
+              <td className="s6">
+                First ticket auto-raised from a QR scan. This is the activation
+                event - it proves the core workflow works in the customer&#39;s
+                environment.
+              </td>
+              <td className="s6">3 of 10 accounts activated</td>
+              <td className="s6">5 of 15 accounts</td>
+              <td className="s6">15 of 30 accounts</td>
+              <td className="s6">25 of 50 accounts</td>
+              <td className="s6">
+                Activation rate predicts retention. Accounts that complete the
+                QR-to-ticket cycle within 14 days have 3x higher 90-day
+                retention than those who do not.
+              </td>
+              <td className="s6">
+                Activation rate above 50% in 30 days signals strong product-fit.
+                Below 30% means onboarding friction needs addressing.
+              </td>
+              <td className="s6">
+                Offline kiosk mode (Phase 1) unlocks activations in locations
+                with connectivity issues. Multi-language support (Phase 1)
+                unlocks activation at Tier 2 locations.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R25"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  26
+                </div>
+              </th>
+              <td className="s4">3</td>
+              <td className="s4">Paid conversions</td>
+              <td className="s4">
+                Free trial accounts that convert to a paid subscription
+              </td>
+              <td className="s4">
+                Trial-to-paid conversion within 30 days of account creation.
+                Paid defined as first successful subscription payment received.
+              </td>
+              <td className="s4">1 to 3 accounts paying</td>
+              <td className="s4">2 to 5 accounts</td>
+              <td className="s4">10 to 15 accounts paying</td>
+              <td className="s4">18 to 28 accounts</td>
+              <td className="s4">
+                Revenue validation. Trial-to-paid rate benchmark for SaaS is 15
+                to 25%.
+              </td>
+              <td className="s4">
+                Conversion rate above 20% of activated accounts signals
+                willingness to pay at launch pricing
+              </td>
+              <td className="s4">
+                WhatsApp distribution and AI sentiment (Phase 1) justify premium
+                pricing tier and increase conversion from mid-market buyers who
+                needed these features
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R26"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  27
+                </div>
+              </th>
+              <td className="s6">4</td>
+              <td className="s6">Negative-to-ticket automation adoption</td>
+              <td className="s6">
+                Percentage of accounts where the Auto Ticket feature is active
+                and generating tickets weekly
+              </td>
+              <td className="s6">
+                At least 3 tickets auto-raised in the past 7 days from QR scans.
+                Confirms the negative response trigger is configured and
+                working.
+              </td>
+              <td className="s6">60% of activated accounts</td>
+              <td className="s6">65% of activated accounts</td>
+              <td className="s6">75% of all paid accounts</td>
+              <td className="s6">85% of all paid accounts</td>
+              <td className="s6">
+                This is the product&#39;s core USP feature. Accounts not using
+                auto-ticket creation are not experiencing the full value.
+              </td>
+              <td className="s6">
+                Adoption above 70% by Month 3 confirms the feature solves a real
+                daily pain. Below 50% means activation coaching needed.
+              </td>
+              <td className="s6">
+                Functional Ticket Capture (additional field) completion rate
+                improves with multi-language support in Phase 1, increasing the
+                percentage of respondents who complete the root cause selection
+                step
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R27"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  28
+                </div>
+              </th>
+              <td className="s4">5</td>
+              <td className="s4">NPS proxy (First feedback score)</td>
+              <td className="s4">
+                Customer satisfaction with the Survey product itself. Measured
+                via a single-question email survey sent to account admins at Day
+                30.
+              </td>
+              <td className="s4">
+                Response to &#39;How likely are you to recommend Survey to a
+                colleague?&#39; (0-10 scale). Sent at Day 30 post-activation.
+              </td>
+              <td className="s4">NPS of 30 to 50 among activated accounts</td>
+              <td className="s4">NPS of 35 to 55</td>
+              <td className="s4">NPS of 40 to 60</td>
+              <td className="s4">NPS of 50 to 65</td>
+              <td className="s4">
+                Predicts word-of-mouth growth and renewal intent. Target NPS
+                above 40 to sustain organic growth.
+              </td>
+              <td className="s4">
+                NPS above 40 at Day 30 in activated accounts signals strong
+                product-market fit and referral potential.
+              </td>
+              <td className="s4">
+                Phase 1 features (WhatsApp, AI sentiment) address the
+                most-requested capabilities. Adding them before the 30-day NPS
+                survey improves scores.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R28"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  29
+                </div>
+              </th>
+              <td className="s6">6</td>
+              <td className="s6">Support ticket volume per account</td>
+              <td className="s6">
+                Number of support requests generated per activated account per
+                month. Measures onboarding friction.
+              </td>
+              <td className="s6">
+                Any inbound support request (email, chat, or call) from an
+                activated account in their first 30 days.
+              </td>
+              <td className="s6">
+                Less than 3 support tickets per account in Month 1
+              </td>
+              <td className="s6">Less than 2 tickets per account</td>
+              <td className="s6">Less than 2 tickets per account by Month 3</td>
+              <td className="s6">Less than 1.5 tickets per account</td>
+              <td className="s6">
+                High ticket volume signals onboarding friction. Target is less
+                than 2 tickets per account per month after the first week.
+              </td>
+              <td className="s6">
+                Support ticket volume declining month-over-month signals
+                improving onboarding experience. Spike in specific ticket
+                categories signals a UX issue.
+              </td>
+              <td className="s6">
+                Offline kiosk mode and multi-language support (Phase 1) reduce
+                support requests from accounts with connectivity and language
+                issues
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R29"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  30
+                </div>
+              </th>
+              <td className="s4">7</td>
+              <td className="s4">30-day churn rate</td>
+              <td className="s4">
+                Percentage of paid accounts that cancel or fail to renew within
+                30 days of first payment
+              </td>
+              <td className="s4">
+                Account cancellation or failed renewal after first payment
+              </td>
+              <td className="s4">Target below 5% in Month 1 to 3</td>
+              <td className="s4">Target below 4%</td>
+              <td className="s4">
+                Below 8% by Month 3 (acceptable early churn as wrong-fit
+                accounts self-select out)
+              </td>
+              <td className="s4">
+                Below 5% by Month 3 with Phase 1 features reducing wrong-fit
+                rejections
+              </td>
+              <td className="s4">
+                Early churn above 10% signals product-market fit issues or
+                mis-qualified sales pipeline.
+              </td>
+              <td className="s4">
+                Churn below 5% at 3 months signals sustainable growth. Above 10%
+                requires ICP or onboarding review.
+              </td>
+              <td className="s4">
+                Phase 1 features close 3 of the 4 GAP features that currently
+                cause enterprise accounts to churn or not convert
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R30"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  31
+                </div>
+              </th>
+              <td className="s6">8</td>
+              <td className="s6">
+                North Star metric - Active resolution locations
+              </td>
+              <td className="s6">
+                Number of locations (not accounts) where at least 1 ticket was
+                auto-raised and resolved in the past 7 days
+              </td>
+              <td className="s6">
+                Location active: QR scanned at least once in last 7 days. Ticket
+                raised and status updated to resolved within 48 hours.
+              </td>
+              <td className="s6">
+                25 to 50 active resolution locations across all accounts
+              </td>
+              <td className="s6">40 to 75 locations</td>
+              <td className="s6">150 to 250 active resolution locations</td>
+              <td className="s6">250 to 400 locations</td>
+              <td className="s6">
+                This is the product&#39;s ultimate proof of value delivery.
+                Locations where the QR-to-ticket-to-resolution cycle is complete
+                prove Survey works in the real world.
+              </td>
+              <td className="s6">
+                Growth of active resolution locations month-over-month above 20%
+                confirms the product is scaling. Stagnation means location
+                activation is blocked.
+              </td>
+              <td className="s6">
+                Offline kiosk (Phase 1) unlocks locations with connectivity
+                issues. WhatsApp (Phase 1) adds a second feedback channel per
+                location, increasing ticket volume.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R31"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  32
+                </div>
+              </th>
+              <td className="s4">9</td>
+              <td className="s4">QR scan rate per location per day</td>
+              <td className="s4">
+                Average number of QR scans per active mapped location per day.
+                Measures physical touchpoint effectiveness.
+              </td>
+              <td className="s4">
+                Any scan that results in a survey page load, regardless of
+                completion
+              </td>
+              <td className="s4">
+                Target 5 to 20 scans per location per day (dependent on footfall
+                volume)
+              </td>
+              <td className="s4">Same target</td>
+              <td className="s4">
+                Target 10 to 30 scans per active location per day by Month 3
+              </td>
+              <td className="s4">
+                15 to 40 scans with Phase 1 WhatsApp supplement
+              </td>
+              <td className="s4">
+                Low scan rate (under 3/day) indicates QR placement or visibility
+                issues. This is an early warning signal for accounts that will
+                churn due to low value realization.
+              </td>
+              <td className="s4">
+                Scan rate above 10/day at high-footfall locations (retail,
+                hospitality F&amp;B areas) confirms QR placement is working.
+              </td>
+              <td className="s4">
+                WhatsApp distribution (Phase 1) adds a second response channel,
+                raising effective response volume for locations where QR scan
+                rate is inherently limited
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R32"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  33
+                </div>
+              </th>
+              <td className="s6">10</td>
+              <td className="s6">Monthly recurring revenue (MRR)</td>
+              <td className="s6">
+                Total monthly revenue from all active paying accounts
+              </td>
+              <td className="s6">
+                All subscription payments received in calendar month
+              </td>
+              <td className="s6">INR 1 to 3 Lakh MRR by end of Month 1</td>
+              <td className="s6">INR 2 to 5 Lakh MRR</td>
+              <td className="s6">INR 5 to 12 Lakh MRR by end of Month 3</td>
+              <td className="s6">
+                INR 8 to 18 Lakh MRR with Phase 1 enabling premium tier
+                conversion
+              </td>
+              <td className="s6">
+                Primary business health indicator. Target INR 5 Lakh MRR by
+                Month 3 to validate commercial traction.
+              </td>
+              <td className="s6">
+                MRR growth above 20% month-over-month for first 3 months
+                confirms early commercial traction and pricing validation.
+              </td>
+              <td className="s6">
+                Phase 1 WhatsApp and AI sentiment features justify introducing a
+                premium pricing tier at INR 8,000 to 15,000/month, increasing
+                average contract value by 40 to 60%
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R33"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  34
+                </div>
+              </th>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R34"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  35
+                </div>
+              </th>
+              <td className="s11" colSpan="11">
+                White columns = current product without Phase 1 roadmap |
+                Green-shaded columns = projections with Phase 1 roadmap features
+                shipped | All ranges are realistic targets, not guarantees
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R35"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  36
+                </div>
+              </th>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R36"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  37
+                </div>
+              </th>
+              <td className="s3" colSpan="11">
+                METRICS SUMMARY - KEY TAKEAWAYS FOR LEADERSHIP REVIEW
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R37"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  38
+                </div>
+              </th>
+              <td className="s8">THE NORTH STAR METRIC:</td>
+              <td className="s4" colSpan="10">
+                Locations with at least 1 auto-raised ticket from a QR-sourced
+                negative response in the last 7 days. This measures whether
+                Survey is delivering its core promise - not just that surveys
+                are submitted, but that the full QR-to-ticket-to-resolution
+                cycle is working. Target: 150 to 250 active resolution locations
+                by Month 3.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R38"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  39
+                </div>
+              </th>
+              <td className="s10">
+                THE THREE LEADING INDICATORS OF PLATFORM HEALTH:
+              </td>
+              <td className="s6" colSpan="10">
+                1. Activation rate (activated accounts as % of signups) - target
+                above 50% by Month 2. 2. Negative-to-ticket adoption (% of
+                accounts with auto-ticket active weekly) - target above 70% by
+                Month 3. 3. QR scan rate per location per day - target above 10
+                scans/day at high-footfall locations.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1843412743R39"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  40
+                </div>
+              </th>
+              <td className="s8">THE PHASE 1 INVESTMENT PAYBACK LOGIC:</td>
+              <td className="s4" colSpan="10">
+                Expected return: Phase 1 features (WhatsApp distribution, AI
+                sentiment, Freshdesk/Zendesk integration, offline kiosk) are
+                projected to increase MRR by INR 3 to 7 Lakh/month by Month 6
+                through: (1) conversion of 3 to 5 enterprise accounts previously
+                blocked by integration GAPs, (2) introduction of a premium
+                pricing tier at 40 to 60% above base, and (3) activation of
+                locations previously blocked by connectivity issues. ROI on
+                Phase 1 investment: if Phase 1 engineering costs INR 20 to 40
+                Lakh, the MRR uplift recovers this investment within 4 to 8
+                months of Phase 1 completion.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
