@@ -361,7 +361,7 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
       <div className="fixed bottom-6 right-6 z-50">
         <Button
           onClick={() => setIsCreateModalOpen(true)}
-          className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+          className="w-14 h-14 rounded-full bg-red-500 hover:bg-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
         >
           <Plus className="h-6 w-6" />
         </Button>
