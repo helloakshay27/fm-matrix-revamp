@@ -1,5 +1,6 @@
+import axios from "axios";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Settings, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Loader2, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   TextField,
@@ -59,6 +60,8 @@ export const EditServicePRPage = () => {
   const [overallWbs, setOverallWbs] = useState("");
   const [wbsCodes, setWbsCodes] = useState([]);
   const [showRadio, setShowRadio] = useState(false);
+  const [glAccountOptions, setGlAccountOptions] = useState([]);
+  const [taxCodeOptions, setTaxCodeOptions] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
@@ -90,6 +93,8 @@ export const EditServicePRPage = () => {
       item_id: null,
       service: "",
       productDescription: "",
+      glCode: "",
+      taxCode: "",
       quantityArea: "",
       uom: "",
       expectedDate: new Date().toISOString().split("T")[0],
@@ -111,6 +116,53 @@ export const EditServicePRPage = () => {
   ]);
 
   const [submitting, setSubmitting] = useState(false);
+
+  const fetchGlAccountOptions = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/get_additional_fields.json?q[fields_for_eq]=gl_account`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.additional_fields && Array.isArray(response.data.additional_fields)) {
+        setGlAccountOptions(response.data.additional_fields);
+      }
+    } catch (error) {
+      console.error("Error fetching GL Account options:", error);
+    }
+  };
+
+  const fetchTaxCodeOptions = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/get_additional_fields.json?q[fields_for_eq]=tax_code`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.additional_fields && Array.isArray(response.data.additional_fields)) {
+        setTaxCodeOptions(response.data.additional_fields);
+      }
+    } catch (error) {
+      console.error("Error fetching Tax Code options:", error);
+    }
+  };
+
+  const fetchGlCodeForWbs = async (detailId, wbsCode) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/wbs_costs/get_gl_code.json?wbs_code=${wbsCode}`,
+        { headers: { Authorization: token } }
+      );
+      if (response.data && response.data.gl_code) {
+        setDetailsForms((prev) =>
+          prev.map((form) =>
+            form.id === detailId ? { ...form, glCode: response.data.gl_code } : form
+          )
+        );
+        toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
+      }
+    } catch (error) {
+      console.error("Error fetching GL Code for WBS:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -169,6 +221,8 @@ export const EditServicePRPage = () => {
     fetchPlantDetails();
     fetchAddresses();
     fetchServices();
+    fetchGlAccountOptions();
+    fetchTaxCodeOptions();
   }, [dispatch, baseUrl, token]);
 
   useEffect(() => {
@@ -201,6 +255,8 @@ export const EditServicePRPage = () => {
             item_id: item.id,
             service: item.pms_service_id,
             productDescription: item.product_description,
+            glCode: item.gl_account || "",
+            taxCode: item.tax_code || "",
             quantityArea: item.quantity,
             uom: item.unit,
             expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
@@ -310,6 +366,9 @@ export const EditServicePRPage = () => {
           ) {
             return calculateItem(updatedForm);
           }
+          if (field === "wbsCode" && value) {
+            fetchGlCodeForWbs(id, value);
+          }
           return updatedForm;
         }
         return form;
@@ -324,6 +383,8 @@ export const EditServicePRPage = () => {
       item_id: null,
       service: "",
       productDescription: "",
+      glCode: "",
+      taxCode: "",
       quantityArea: "",
       uom: "",
       expectedDate: new Date().toISOString().split("T")[0],
@@ -485,6 +546,8 @@ export const EditServicePRPage = () => {
           taxable_value: item.taxAmount,
           total_value: item.amount,
           total_amount: item.totalAmount,
+          gl_account: item.glCode,
+          tax_code: item.taxCode,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
           _destroy: item._destroy,
         })),
@@ -505,7 +568,12 @@ export const EditServicePRPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {submitting && (
+        <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
+          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+        </div>
+      )}
       <div className="p-6 mx-auto">
         <Button
           variant="ghost"
@@ -515,19 +583,15 @@ export const EditServicePRPage = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
         </Button>
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">
-                SERVICE PR DETAILS
-              </h2>
-            </div>
-          </div>
+        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+          <CardHeader className="bg-[#F6F4EE] mb-4">
+            <CardTitle className="text-lg text-black flex items-center">
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+              SERVICE PR DETAILS
+            </CardTitle>
+          </CardHeader>
 
-          <div className="p-6">
+          <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Select Contractor*</InputLabel>
@@ -788,20 +852,18 @@ export const EditServicePRPage = () => {
                 </FormControl>
               )}
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
-            </div>
-          </div>
+        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+          <CardHeader className="bg-[#F6F4EE] mb-4">
+            <CardTitle className="text-lg text-black flex items-center">
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
+              DETAILS
+            </CardTitle>
+          </CardHeader>
 
-          <div className="p-6">
+          <CardContent>
             {detailsForms
               .filter((detailsData) => detailsData._destroy !== 1)
               .map((detailsData, index) => (
@@ -1127,6 +1189,66 @@ export const EditServicePRPage = () => {
                         </MuiSelect>
                       </FormControl>
                     )}
+
+                    {wbsSelection !== "overall" && (
+                      wbsSelection === "individual" && wbsCodes.length > 0 ? (
+                        <TextField
+                          label="GL Code*"
+                          value={detailsData.glCode}
+                          placeholder="Auto-populated after WBS selection"
+                          fullWidth
+                          variant="outlined"
+                          InputLabelProps={{ shrink: true }}
+                          InputProps={{ sx: fieldStyles, readOnly: true }}
+                          sx={{ mt: 1 }}
+                          disabled
+                        />
+                      ) : (
+                        <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                          <InputLabel shrink>GL Code*</InputLabel>
+                          <MuiSelect
+                            label="GL Code*"
+                            value={detailsData.glCode}
+                            onChange={(e) =>
+                              handleDetailsChange(detailsData.id, "glCode", e.target.value)
+                            }
+                            displayEmpty
+                            sx={fieldStyles}
+                          >
+                            <MenuItem value="">
+                              <em>Select GL Code</em>
+                            </MenuItem>
+                            {glAccountOptions.map((option) => (
+                              <MenuItem key={option.id} value={option.content.code}>
+                                {option.content.code} - {option.content.name}
+                              </MenuItem>
+                            ))}
+                          </MuiSelect>
+                        </FormControl>
+                      )
+                    )}
+
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel shrink>Tax Code*</InputLabel>
+                      <MuiSelect
+                        label="Tax Code*"
+                        value={detailsData.taxCode}
+                        onChange={(e) =>
+                          handleDetailsChange(detailsData.id, "taxCode", e.target.value)
+                        }
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value="">
+                          <em>Select Tax Code</em>
+                        </MenuItem>
+                        {taxCodeOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.content.code}>
+                            {option.content.code} - {option.content.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   </div>
                 </div>
               ))}
@@ -1139,8 +1261,8 @@ export const EditServicePRPage = () => {
                 Add Items
               </Button>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <div className="flex items-center justify-end my-4">
           <Button className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed" type="button">
@@ -1148,17 +1270,15 @@ export const EditServicePRPage = () => {
           </Button>
         </div>
 
-        <div className="my-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
-            </div>
-          </div>
+        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+          <CardHeader className="bg-[#F6F4EE] mb-4">
+            <CardTitle className="text-lg text-black flex items-center">
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+              DETAILS
+            </CardTitle>
+          </CardHeader>
 
-          <div className="p-6">
+          <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <TextField
@@ -1298,39 +1418,53 @@ export const EditServicePRPage = () => {
                 />
               </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-[#C72030] flex items-center">
-              <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                3
-              </h2>
+        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
+          <CardHeader className="bg-[#F6F4EE] mb-4">
+            <CardTitle className="text-lg text-black flex items-center">
+              <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">4</span>
               ATTACHMENTS
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div
-              className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center cursor-pointer"
+              className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center"
               onClick={handleDashedBorderClick}
             >
-              <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <div className="text-sm text-gray-600">
-                <span className="font-medium">Drag & Drop or Click to Upload</span>
-                <input
-                  type="file"
-                  multiple
-                  onChange={handleFileChange}
-                  className="hidden"
-                  id="file-upload"
-                  ref={fileInputRef}
-                />
-                <span className="ml-1">
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                id="file-upload"
+                onChange={handleFileChange}
+                ref={fileInputRef}
+              />
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <span className="text-[#C72030] font-medium" style={{ fontSize: '14px' }}>Choose File</span>
+                <span className="text-gray-500" style={{ fontSize: '14px' }}>
                   {(attachedFiles.length + existingAttachments.length) > 0
                     ? `${attachedFiles.length + existingAttachments.length} file(s) selected`
-                    : "No files chosen"}
+                    : "No file chosen"}
                 </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => document.getElementById('file-upload')?.click()}
+                className="bg-[#f6f4ee] text-[#C72030] px-4 py-2 rounded text-sm flex items-center justify-center"
+              >
+                <span className="text-lg mr-2">+</span> Upload Files
+              </button>
+              <div className="mt-4 w-full max-w-[520px]">
+                <div className="text-[12px] text-gray-700 border border-gray-200 rounded-md bg-gray-50 px-3 py-2">
+                  <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                    <span className="text-gray-600 font-bold">Allowed formats:</span>
+                    <span className="text-gray-800">PDF, JPG, JPEG, XLS, XLSX</span>
+                    <span className="text-gray-600 font-bold">Max size per file:</span>
+                    <span className="text-gray-800">10 MB</span>
+                  </div>
+                </div>
               </div>
             </div>
 
