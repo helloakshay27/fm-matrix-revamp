@@ -161,7 +161,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
               className="overflow-x-auto no-scrollbar mb-8"
             >
               <div className="flex justify-start pb-2 px-1">
-                <TabsList className="inline-flex gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5  h-auto items-center justify-start">
+                <TabsList className="inline-flex min-w-max gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5  h-auto items-center justify-start">
                   {tabOrder.map((tabId) => (
                     <TabsTrigger
                       key={tabId}
@@ -177,7 +177,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
           ) : (
             <div className="overflow-x-auto no-scrollbar mb-8">
               <div className="flex justify-start pb-2 px-1">
-                <TabsList className="inline-flex gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5  h-auto items-center justify-start">
+                <TabsList className="inline-flex min-w-max gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5  h-auto items-center justify-start">
                   {tabOrder.map((tabId) => (
                     <TabsTrigger
                       key={tabId}

@@ -1366,7 +1366,7 @@ const vendorManagementData: ProductData = {
         },
         {
           rank: 2,
-          industry: "Real Estate",
+          industry: "Real Estate & Construction (Real Estate Development)",
           indiaRelevance: "Very High",
           vendorComplexity: "High — mix of material+services",
           keyVmsUseCase:
@@ -1383,7 +1383,7 @@ const vendorManagementData: ProductData = {
         },
         {
           rank: 3,
-          industry: "Infrastructure & EPC",
+          industry: "Infrastructure & EPC (EPCE)",
           indiaRelevance: "High",
           vendorComplexity: "Very High — multi-tier vendors",
           keyVmsUseCase:
@@ -1400,7 +1400,7 @@ const vendorManagementData: ProductData = {
         },
         {
           rank: 4,
-          industry: "Retail & E-Commerce",
+          industry: "Retail & E-commerce (Retail Chain)",
           indiaRelevance: "High",
           vendorComplexity: "High — supplier diversity",
           keyVmsUseCase: "Bulk invite, vendor portal PO/GRN view, assessment",
@@ -1416,7 +1416,7 @@ const vendorManagementData: ProductData = {
         },
         {
           rank: 5,
-          industry: "Logistics & Supply",
+          industry: "Logistics & Supply Chain (Warehousing)",
           indiaRelevance: "High",
           vendorComplexity: "Medium — fleet + service vendors",
           keyVmsUseCase:
@@ -1480,7 +1480,7 @@ const vendorManagementData: ProductData = {
         },
         {
           rank: 9,
-          industry: "IT & Technology",
+          industry: "IT & Technology (IT/ITES)",
           indiaRelevance: "Medium",
           vendorComplexity: "Medium — global + local vendors",
           keyVmsUseCase: "Onboarding speed, vendor portal, auction bidding",
@@ -1496,7 +1496,7 @@ const vendorManagementData: ProductData = {
         },
         {
           rank: 10,
-          industry: "Education & EdTech",
+          industry: "Education-",
           indiaRelevance: "Low-Medium",
           vendorComplexity: "Medium — campus services vendors",
           keyVmsUseCase:

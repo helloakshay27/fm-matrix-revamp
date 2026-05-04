@@ -645,7 +645,8 @@ const productData = {
     detailedMarketAnalysis: {
       targetAudience: [
         {
-          segment:"Technology / SaaS 50–300 employees Bengaluru, Pune, Hyderabad, Dubai Growth-stage companies",
+          segment:
+            "Technology / SaaS 50–300 employees Bengaluru, Pune, Hyderabad, Dubai Growth-stage companies",
           demographics:
             "50–300 employees | Bengaluru, Pune, Hyderabad, Dubai | Growth-stage companies",
           industry: "Technology",
@@ -659,7 +660,8 @@ const productData = {
           primaryBuyer: "CTO / VP Engineering",
         },
         {
-          segment: " Real Estate & Construction 5–50 active projectsPan-India + UAE, Saudi Mid-to-large developers",
+          segment:
+            " Real Estate & Construction 5–50 active projectsPan-India + UAE, Saudi Mid-to-large developers",
           demographics:
             "5–50 active projects | Pan-India + UAE, Saudi | Mid-to-large developers",
           industry: "Real Estate & Construction",
@@ -673,7 +675,8 @@ const productData = {
           primaryBuyer: "Project Director / COO",
         },
         {
-          segment: "Professional Services (Consulting, Legal, Audit) 20–150 professionals | Mumbai, Delhi, Bengaluru + Dubai DIFC",
+          segment:
+            "Professional Services (Consulting, Legal, Audit) 20–150 professionals | Mumbai, Delhi, Bengaluru + Dubai DIFC",
           demographics:
             "20–150 professionals | Mumbai, Delhi, Bengaluru + Dubai DIFC",
           industry: "Professional Services",
@@ -1031,85 +1034,107 @@ const productData = {
       pricingCurrentRows: [
         {
           label: "Standard pricing models",
-          detail: "Per-seat SaaS (annual billing) is the category standard. Freemium (free up to 10 users) drives viral adoption ,Notion, ClickUp, Asana all use it. Module add-ons create upsell revenue. Enterprise custom contracts with 20–30% discounts for 500+ seats.",
+          detail:
+            "Per-seat SaaS (annual billing) is the category standard. Freemium (free up to 10 users) drives viral adoption ,Notion, ClickUp, Asana all use it. Module add-ons create upsell revenue. Enterprise custom contracts with 20–30% discounts for 500+ seats.",
         },
         {
           label: "India price ranges",
-          detail: "Entry/Starter: ₹400-800/user/month. Mid/Professional: ₹900-1,500/user/month. Enterprise: ₹1,500-3,000/user/month (custom). Competitors: Asana Personal ~₹880, Jira Standard ~₹650, Monday Standard ~₹1,000, ClickUp Unlimited ~₹580.",
+          detail:
+            "Entry/Starter: ₹400-800/user/month. Mid/Professional: ₹900-1,500/user/month. Enterprise: ₹1,500-3,000/user/month (custom). Competitors: Asana Personal ~₹880, Jira Standard ~₹650, Monday Standard ~₹1,000, ClickUp Unlimited ~₹580.",
         },
         {
           label: "GCC price ranges",
-          detail: "Entry: $5–10/user/month (AED 18–37). Mid: $10–20/user/month (AED 37–73). Enterprise: $20–40+/user/month (custom, annual). GCC pricing carries a premium justified by data residency compliance value.",
+          detail:
+            "Entry: $5–10/user/month (AED 18–37). Mid: $10–20/user/month (AED 37–73). Enterprise: $20–40+/user/month (custom, annual). GCC pricing carries a premium justified by data residency compliance value.",
         },
         {
           label: "Recommended pricing now",
-          detail: "₹599–799/user/month (India) | AED 28–35/user/month (GCC). Free 14-day trial. Starter: up to 20 users at ₹499. Growth: 21–200 users at ₹699 (adds advanced dashboards and MoM features). Do not go below ₹499, too cheap signals 'not enterprise-ready'.",
+          detail:
+            "₹599–799/user/month (India) | AED 28–35/user/month (GCC). Free 14-day trial. Starter: up to 20 users at ₹499. Growth: 21–200 users at ₹699 (adds advanced dashboards and MoM features). Do not go below ₹499, too cheap signals 'not enterprise-ready'.",
         },
         {
           label: "At 6 months (post mobile + integrations)",
-          detail: "Raise Growth tier to ₹899–999. Introduce Workplace add-on at ₹150/user (when those features are built). Add freemium entry tier (5 users free, forever) to drive viral SMB adoption.",
+          detail:
+            "Raise Growth tier to ₹899–999. Introduce Workplace add-on at ₹150/user (when those features are built). Add freemium entry tier (5 users free, forever) to drive viral SMB adoption.",
         },
         {
           label: "At 18 months",
-          detail: "Enterprise tier: ₹1,499–1,999/user/month with on-premise deployment option (₹2–5L setup fee). GCC Enterprise: AED 50–70/user/month for full data sovereignty compliance stack.",
+          detail:
+            "Enterprise tier: ₹1,499–1,999/user/month with on-premise deployment option (₹2–5L setup fee). GCC Enterprise: AED 50–70/user/month for full data sovereignty compliance stack.",
         },
         {
           label: "Pricing risk to watch",
-          detail: "Do not compete on price alone against ClickUp ($7) or Notion ($8). Data sovereignty and MoM-to-task are worth a premium. Never discount below ₹499. Instead of discounting: offer extended trial (30–45 days), free onboarding session, or 2 months free on annual contract.",
+          detail:
+            "Do not compete on price alone against ClickUp ($7) or Notion ($8). Data sovereignty and MoM-to-task are worth a premium. Never discount below ₹499. Instead of discounting: offer extended trial (30–45 days), free onboarding session, or 2 months free on annual contract.",
         },
       ],
       pricingPositioningRows: [
         {
           label: "Single most defensible position",
-          detail: "The only project management platform where 100% of your company's data ,tasks, documents, MoMs, communications ,stays on infrastructure you own. With MS Office document creation built in.",
+          detail:
+            "The only project management platform where 100% of your company's data ,tasks, documents, MoMs, communications ,stays on infrastructure you own. With MS Office document creation built in.",
         },
         {
           label: "Segments to prioritise this year",
-          detail: "1. Tech/SaaS companies (50–300 employees, India metros) ,highest urgency, fastest cycle, engineering teams drive adoption\n2. Professional Services (consulting, legal, audit) in India + GCC ,data sovereignty is a compliance requirement, MoM-to-task is immediately compelling\n3. Lockated existing clients (all industries) ,zero CAC, warm relationships, cross-sell motion",
+          detail:
+            "1. Tech/SaaS companies (50–300 employees, India metros) ,highest urgency, fastest cycle, engineering teams drive adoption\n2. Professional Services (consulting, legal, audit) in India + GCC ,data sovereignty is a compliance requirement, MoM-to-task is immediately compelling\n3. Lockated existing clients (all industries) ,zero CAC, warm relationships, cross-sell motion",
         },
         {
           label: "Competitor to displace most aggressively",
-          detail: "Asana. It is the most common 'good enough' tool in target segments. Has no document creation, no MoM module, no sovereign storage. Displacement message: 'Replace Asana + Google Docs with one platform where your data never leaves your building.'",
+          detail:
+            "Asana. It is the most common 'good enough' tool in target segments. Has no document creation, no MoM module, no sovereign storage. Displacement message: 'Replace Asana + Google Docs with one platform where your data never leaves your building.'",
         },
         {
           label: "What to STOP doing or saying",
-          detail: "STOP: Pitching as 'just another PM tool' ,leads with feature list instead of sovereignty story\nSTOP: Saying 'we replace Jira' ,instead say 'keep Jira for engineering, use PTM for everyone else'\nSTOP: Discounting to compete with Notion/ClickUp pricing\nSTOP: Mentioning removed features (wallet, desk/space booking features, F&B, AI) in sales decks ,creates expectation confusion",
+          detail:
+            "STOP: Pitching as 'just another PM tool' ,leads with feature list instead of sovereignty story\nSTOP: Saying 'we replace Jira' ,instead say 'keep Jira for engineering, use PTM for everyone else'\nSTOP: Discounting to compete with Notion/ClickUp pricing\nSTOP: Mentioning removed features (wallet, desk/space booking features, F&B, AI) in sales decks ,creates expectation confusion",
         },
         {
           label: "Recommended GTM motion Year 1",
-          detail: "Founder-led direct sales (first 20 accounts). India-first outbound to CTOs, VPs Engineering, Managing Partners. Lockated existing clients as cross-sell pipeline. 2–3 invite-only roundtables on 'data sovereignty in work management'. GITEX (Dubai) for GCC presence.",
+          detail:
+            "Founder-led direct sales (first 20 accounts). India-first outbound to CTOs, VPs Engineering, Managing Partners. Lockated existing clients as cross-sell pipeline. 2–3 invite-only roundtables on 'data sovereignty in work management'. GITEX (Dubai) for GCC presence.",
         },
       ],
       pricingImprovementRows: [
         {
           currentVP: "'All-in-one platform ,replace multiple tools'",
           whoResonates: "IT heads, cost-conscious COOs",
-          improvedVersion: "'Stop paying for Asana, Google Docs, and a separate MoM tool. PTM does all three ,and your data stays on your servers.'",
-          whyStronger: "Names the specific tools being replaced (Asana + Google Docs + MoM tool). More concrete than 'all-in-one'. Sovereignty angle makes the status quo feel uncomfortable.",
+          improvedVersion:
+            "'Stop paying for Asana, Google Docs, and a separate MoM tool. PTM does all three ,and your data stays on your servers.'",
+          whyStronger:
+            "Names the specific tools being replaced (Asana + Google Docs + MoM tool). More concrete than 'all-in-one'. Sovereignty angle makes the status quo feel uncomfortable.",
         },
         {
           currentVP: "'Data sovereignty ,your data stays on your servers'",
           whoResonates: "CIOs, CISOs, compliance teams, BFSI, Legal",
-          improvedVersion: "'Your project plans, client deliverables, and meeting records shouldn't live on Asana's servers in Oregon. PTM keeps every byte on infrastructure you own ,period.'",
-          whyStronger: "Names what data is at risk and where it currently lives. Sovereignty becomes visceral rather than abstract.",
+          improvedVersion:
+            "'Your project plans, client deliverables, and meeting records shouldn't live on Asana's servers in Oregon. PTM keeps every byte on infrastructure you own ,period.'",
+          whyStronger:
+            "Names what data is at risk and where it currently lives. Sovereignty becomes visceral rather than abstract.",
         },
         {
           currentVP: "'Document creation with MS Office export'",
           whoResonates: "IT heads replacing MS 365, ops and finance teams",
-          improvedVersion: "'Write proposals and reports inside PTM. Share with anyone as a real Word or Excel file. Stop paying ₹750/user/month for MS 365 to create documents that live on Microsoft's servers.'",
-          whyStronger: "Names the financial saving and the sovereignty problem together. Choice becomes explicit.",
+          improvedVersion:
+            "'Write proposals and reports inside PTM. Share with anyone as a real Word or Excel file. Stop paying ₹750/user/month for MS 365 to create documents that live on Microsoft's servers.'",
+          whyStronger:
+            "Names the financial saving and the sovereignty problem together. Choice becomes explicit.",
         },
         {
           currentVP: "'MoM to task in one click'",
           whoResonates: "Project managers, ops leads, consulting teams",
-          improvedVersion: "'Every action item from every meeting becomes a tracked task, assigned to a person, with a deadline ,automatically. No more Word documents nobody follows up on.'",
-          whyStronger: "Frames the outcome ('no more Word documents nobody follows up on') rather than the feature. Addresses the specific frustration the buyer has already felt.",
+          improvedVersion:
+            "'Every action item from every meeting becomes a tracked task, assigned to a person, with a deadline ,automatically. No more Word documents nobody follows up on.'",
+          whyStronger:
+            "Frames the outcome ('no more Word documents nobody follows up on') rather than the feature. Addresses the specific frustration the buyer has already felt.",
         },
         {
           currentVP: "'Replace Jira, Slack, and Asana'",
           whoResonates: "Founders and CXOs frustrated with tool sprawl",
-          improvedVersion: "'Let engineering keep Jira. Give everyone else PTM ,one login, one bill, one place where your data lives on your terms.'",
-          whyStronger: "Original sounds arrogant. Improved version acknowledges Jira's entrenchment, positions PTM for the majority, and leads with simplicity.",
+          improvedVersion:
+            "'Let engineering keep Jira. Give everyone else PTM ,one login, one bill, one place where your data lives on your terms.'",
+          whyStronger:
+            "Original sounds arrogant. Improved version acknowledges Jira's entrenchment, positions PTM for the majority, and leads with simplicity.",
         },
       ],
       featuresVsMarket: [
@@ -2278,15 +2303,26 @@ const productData = {
           name: "TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
           sections: [
             {
-              title: "PROFILE | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
+              title:
+                "PROFILE | TG 1: Tech / SaaS Companies (50–300 employees, India metros)",
               columns: ["Attribute", "Value"],
               rows: [
                 { label: "Company size", detail: "50–300 employees" },
-                { label: "Industry", detail: "Technology, SaaS, Product companies" },
-                { label: "Geography", detail: "Bengaluru, Pune, Hyderabad, Mumbai (India primary); Dubai, Abu Dhabi (GCC secondary)" },
+                {
+                  label: "Industry",
+                  detail: "Technology, SaaS, Product companies",
+                },
+                {
+                  label: "Geography",
+                  detail:
+                    "Bengaluru, Pune, Hyderabad, Mumbai (India primary); Dubai, Abu Dhabi (GCC secondary)",
+                },
                 { label: "Buyer", detail: "CTO / VP Engineering / COO" },
                 { label: "Budget", detail: "₹6–18L/year" },
-                { label: "Current stack", detail: "Jira + Slack + Confluence + Google Workspace" },
+                {
+                  label: "Current stack",
+                  detail: "Jira + Slack + Confluence + Google Workspace",
+                },
               ],
             },
             {
@@ -2295,37 +2331,49 @@ const productData = {
               rows: [
                 {
                   label: "Primary sales motion",
-                  detail: "Founder-led direct outbound for first 20 accounts. Transition to SDR + AE model at Month 4. Deal size (₹6–15L/year) justifies high-touch sales; product complexity (sovereignty story) requires a human in the room for the first call.",
+                  detail:
+                    "Founder-led direct outbound for first 20 accounts. Transition to SDR + AE model at Month 4. Deal size (₹6–15L/year) justifies high-touch sales; product complexity (sovereignty story) requires a human in the room for the first call.",
                 },
                 {
                   label: "Avg. sales cycle",
-                  detail: "4–8 weeks for SMB tech companies (50–150 employees). 8–14 weeks for mid-market (150–500 employees). Flag: this is longer than typical for a tool-level SaaS purchase , driven by IT approval for data migration and procurement sign-off. Pre-empt by engaging IT Head in Week 1, not Week 6.",
+                  detail:
+                    "4–8 weeks for SMB tech companies (50–150 employees). 8–14 weeks for mid-market (150–500 employees). Flag: this is longer than typical for a tool-level SaaS purchase , driven by IT approval for data migration and procurement sign-off. Pre-empt by engaging IT Head in Week 1, not Week 6.",
                 },
                 {
                   label: "Economic buyer (signs)",
-                  detail: "CTO or VP Engineering for companies under 200 employees. COO or CFO for companies over 200 employees where the purchase spans multiple departments.",
+                  detail:
+                    "CTO or VP Engineering for companies under 200 employees. COO or CFO for companies over 200 employees where the purchase spans multiple departments.",
                 },
                 {
                   label: "Champion (internal advocate)",
-                  detail: "VP Engineering or Head of Product , they feel the Jira + Slack + Confluence fragmentation pain daily. Engineering managers who have been complaining about data security are natural champions.",
+                  detail:
+                    "VP Engineering or Head of Product , they feel the Jira + Slack + Confluence fragmentation pain daily. Engineering managers who have been complaining about data security are natural champions.",
                 },
                 {
                   label: "Blocker to anticipate",
-                  detail: "IT/Security Head who will demand a security audit and data flow documentation before approving any new platform. Pre-empt with a one-pager on PTM's data architecture and sovereignty compliance before the IT conversation begins.",
+                  detail:
+                    "IT/Security Head who will demand a security audit and data flow documentation before approving any new platform. Pre-empt with a one-pager on PTM's data architecture and sovereignty compliance before the IT conversation begins.",
                   textColor: "#C62828",
                   bgColor: "#FFEBEE",
                 },
                 {
                   label: "What closes this TG",
-                  detail: "A live demo showing the full project → sprint → MoM → task → documents → issues flow, followed by a 14-day sandbox trial where their actual team sets up one real project. Reference customer in a similar-stage tech company seals it. Sovereignty architecture documentation closes the IT objection.",
+                  detail:
+                    "A live demo showing the full project → sprint → MoM → task → documents → issues flow, followed by a 14-day sandbox trial where their actual team sets up one real project. Reference customer in a similar-stage tech company seals it. Sovereignty architecture documentation closes the IT objection.",
                   textColor: "#2E7D32",
                   bgColor: "#E8F5E9",
                 },
               ],
             },
             {
-              title: "COMPONENT 2 , MARKETING CHANNELS | TG 1: Tech / SaaS Companies",
-              columns: ["Channel", "Relevant?", "Execution approach", "Priority rank"],
+              title:
+                "COMPONENT 2 , MARKETING CHANNELS | TG 1: Tech / SaaS Companies",
+              columns: [
+                "Channel",
+                "Relevant?",
+                "Execution approach",
+                "Priority rank",
+              ],
               rows: [
                 {
                   col1: "LinkedIn (organic + paid)",
@@ -2366,56 +2414,155 @@ const productData = {
               ],
             },
             {
-              title: "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 1: Tech / SaaS Companies",
+              title:
+                "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 1: Tech / SaaS Companies",
               columns: ["Element", "Description", "Owner", "Output"],
               rows: [
-                { col1: "PHASE 1", col2: "DAYS 1-30: FOUNDATION", bgColor: "#e8eaf6" },
-                { col1: "Goal", col2: "Get 5 qualified demo calls booked with CTOs or VP Engineering at tech companies (50-300 employees) in India metros." },
-                { col1: "Action 1", col2: "Map all tech companies (50-300 employees) in India metros and identify decision makers.", col3: "Founder + SDR", col4: "Prioritised list of 200 target accounts." },
-                { col1: "Action 2", col2: "Send personalised LinkedIn connection + email sequence to target list.", col3: "SDR", col4: "10 qualified demos booked." },
-                { col1: "Action 3", col2: "Prepare 1-page 'Data Sovereignty for CTOs' brief.", col3: "Founder + Product", col4: "PDF asset for lead qualification." },
-                { col1: "Milestone", col2: "10 demos booked", bgColor: "#e3f2fd" },
-                { col1: "Biggest Risk", col2: "Generic messaging gets ignored. Pre-empt: research each company before outreach.", bgColor: "#fff3e0" },
-                { col1: "PHASE 2", col2: "DAYS 31-60: TRACTION", bgColor: "#e8eaf6" },
-                { col1: "Goal", col2: "Run 5+ live demos, convert minimum 3 to 14-day sandbox trials." },
-                { col1: "Action 1", col2: "Run live demo: project -> sprint -> MoM -> task -> documents flow.", col3: "Founder", col4: "Demo-to-trial conversion target: 60%." },
-                { col1: "Action 2", col2: "Set up personalised trial environments pre-loaded with team structure.", col3: "Product / Founder", col4: "Sandbox ready in 24 hours." },
-                { col1: "Action 3", col2: "Engage IT Head with architecture documentation.", col3: "Founder", col4: "IT review handled proactively." },
-                { col1: "Milestone", col2: "3 active 14-day trials running.", bgColor: "#e3f2fd" },
-                { col1: "Biggest Risk", col2: "Trial accounts go quiet. Pre-empt: assign dedicated onboarding call.", bgColor: "#fff3e0" },
-                { col1: "PHASE 3", col2: "DAYS 61-90: CONVERSION", bgColor: "#e8eaf6" },
-                { col1: "Goal", col2: "Sign first 2-3 paying tech company accounts. Minimum: 1 signed contract + 1 committed pilot." },
-                { col1: "Action 1", col2: "Week 9 check-in call: review trial usage data, surface wins.", col3: "Founder + CS", col4: "Data-driven closing conversation." },
-                { col1: "Action 2", col2: "Present custom ROI summary: tool consolidation savings + sovereignty value.", col3: "Founder", col4: "Quantified savings summary." },
-                { col1: "Action 3", col2: "Request reference introduction: 'Who else in your network has this problem?'", col3: "Founder", col4: "1-2 warm intros per signed account." },
-                { col1: "Milestone", col2: "2 signed contracts. 1 case study published.", bgColor: "#e3f2fd" },
-                { col1: "Biggest Risk", col2: "Procurement delays. Pre-empt: offer early payment discount.", bgColor: "#fff3e0" },
+                {
+                  col1: "PHASE 1",
+                  col2: "DAYS 1-30: FOUNDATION",
+                  bgColor: "#e8eaf6",
+                },
+                {
+                  col1: "Goal",
+                  col2: "Get 5 qualified demo calls booked with CTOs or VP Engineering at tech companies (50-300 employees) in India metros.",
+                },
+                {
+                  col1: "Action 1",
+                  col2: "Map all tech companies (50-300 employees) in India metros and identify decision makers.",
+                  col3: "Founder + SDR",
+                  col4: "Prioritised list of 200 target accounts.",
+                },
+                {
+                  col1: "Action 2",
+                  col2: "Send personalised LinkedIn connection + email sequence to target list.",
+                  col3: "SDR",
+                  col4: "10 qualified demos booked.",
+                },
+                {
+                  col1: "Action 3",
+                  col2: "Prepare 1-page 'Data Sovereignty for CTOs' brief.",
+                  col3: "Founder + Product",
+                  col4: "PDF asset for lead qualification.",
+                },
+                {
+                  col1: "Milestone",
+                  col2: "10 demos booked",
+                  bgColor: "#e3f2fd",
+                },
+                {
+                  col1: "Biggest Risk",
+                  col2: "Generic messaging gets ignored. Pre-empt: research each company before outreach.",
+                  bgColor: "#fff3e0",
+                },
+                {
+                  col1: "PHASE 2",
+                  col2: "DAYS 31-60: TRACTION",
+                  bgColor: "#e8eaf6",
+                },
+                {
+                  col1: "Goal",
+                  col2: "Run 5+ live demos, convert minimum 3 to 14-day sandbox trials.",
+                },
+                {
+                  col1: "Action 1",
+                  col2: "Run live demo: project -> sprint -> MoM -> task -> documents flow.",
+                  col3: "Founder",
+                  col4: "Demo-to-trial conversion target: 60%.",
+                },
+                {
+                  col1: "Action 2",
+                  col2: "Set up personalised trial environments pre-loaded with team structure.",
+                  col3: "Product / Founder",
+                  col4: "Sandbox ready in 24 hours.",
+                },
+                {
+                  col1: "Action 3",
+                  col2: "Engage IT Head with architecture documentation.",
+                  col3: "Founder",
+                  col4: "IT review handled proactively.",
+                },
+                {
+                  col1: "Milestone",
+                  col2: "3 active 14-day trials running.",
+                  bgColor: "#e3f2fd",
+                },
+                {
+                  col1: "Biggest Risk",
+                  col2: "Trial accounts go quiet. Pre-empt: assign dedicated onboarding call.",
+                  bgColor: "#fff3e0",
+                },
+                {
+                  col1: "PHASE 3",
+                  col2: "DAYS 61-90: CONVERSION",
+                  bgColor: "#e8eaf6",
+                },
+                {
+                  col1: "Goal",
+                  col2: "Sign first 2-3 paying tech company accounts. Minimum: 1 signed contract + 1 committed pilot.",
+                },
+                {
+                  col1: "Action 1",
+                  col2: "Week 9 check-in call: review trial usage data, surface wins.",
+                  col3: "Founder + CS",
+                  col4: "Data-driven closing conversation.",
+                },
+                {
+                  col1: "Action 2",
+                  col2: "Present custom ROI summary: tool consolidation savings + sovereignty value.",
+                  col3: "Founder",
+                  col4: "Quantified savings summary.",
+                },
+                {
+                  col1: "Action 3",
+                  col2: "Request reference introduction: 'Who else in your network has this problem?'",
+                  col3: "Founder",
+                  col4: "1-2 warm intros per signed account.",
+                },
+                {
+                  col1: "Milestone",
+                  col2: "2 signed contracts. 1 case study published.",
+                  bgColor: "#e3f2fd",
+                },
+                {
+                  col1: "Biggest Risk",
+                  col2: "Procurement delays. Pre-empt: offer early payment discount.",
+                  bgColor: "#fff3e0",
+                },
               ],
             },
             {
-              title: "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 1: Tech / SaaS Companies",
+              title:
+                "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 1: Tech / SaaS Companies",
               columns: ["Partnership element", "Details"],
               rows: [
                 {
                   label: "Timing for partnerships",
-                  detail: "Yes , but only after first 10 direct customers. Build direct sales motion first to understand the buyer deeply before training partners to sell it.",
+                  detail:
+                    "Yes , but only after first 10 direct customers. Build direct sales motion first to understand the buyer deeply before training partners to sell it.",
                 },
                 {
-                  label: "Partner type 1: Indian SaaS consultants / implementation partners",
-                  detail: "Who: boutique IT consulting firms that help tech companies set up their SaaS stack (Notion consultants, Atlassian partners, productivity consultants). Why they have access: they are already in procurement conversations about PM tools. What we offer: 20% referral commission on Year 1 ARR + co-marketing. India profile: SaaS implementation firms in Bengaluru (example: productivity-focused boutiques in Koramangala). Red flag to avoid: large SIs who will over-promise and under-deliver for a ₹8L deal.",
+                  label:
+                    "Partner type 1: Indian SaaS consultants / implementation partners",
+                  detail:
+                    "Who: boutique IT consulting firms that help tech companies set up their SaaS stack (Notion consultants, Atlassian partners, productivity consultants). Why they have access: they are already in procurement conversations about PM tools. What we offer: 20% referral commission on Year 1 ARR + co-marketing. India profile: SaaS implementation firms in Bengaluru (example: productivity-focused boutiques in Koramangala). Red flag to avoid: large SIs who will over-promise and under-deliver for a ₹8L deal.",
                 },
                 {
-                  label: "Partner type 2: Talent platforms & HRMS vendors (cross-sell)",
-                  detail: "Who: Darwinbox, Keka, or GreytHR , once PTM has HRMS integration built (Month 6+), these platforms have direct access to the same HR and IT heads we target. What we offer: joint webinars, co-marketing content, integration badge on their marketplace. What they offer: reach into their client base without a cold outreach. Red flag: do not position PTM as an HRMS replacement , we complement them.",
+                  label:
+                    "Partner type 2: Talent platforms & HRMS vendors (cross-sell)",
+                  detail:
+                    "Who: Darwinbox, Keka, or GreytHR , once PTM has HRMS integration built (Month 6+), these platforms have direct access to the same HR and IT heads we target. What we offer: joint webinars, co-marketing content, integration badge on their marketplace. What they offer: reach into their client base without a cold outreach. Red flag: do not position PTM as an HRMS replacement , we complement them.",
                 },
                 {
                   label: "Year 1 partnership structure",
-                  detail: "Referral-only for Year 1. No reseller margin, no white-label. A referred deal that closes earns the partner 20% of Year 1 ARR, paid 30 days after client payment clears. Reason: at our current stage, reseller complexity (training, support, margin management) will slow us down more than the incremental deals are worth. Direct sales builds the muscle first.",
+                  detail:
+                    "Referral-only for Year 1. No reseller margin, no white-label. A referred deal that closes earns the partner 20% of Year 1 ARR, paid 30 days after client payment clears. Reason: at our current stage, reseller complexity (training, support, margin management) will slow us down more than the incremental deals are worth. Direct sales builds the muscle first.",
                 },
               ],
             },
             {
-              title: "TG 1 ONE-PAGE SUMMARY , Tech / SaaS Companies (50–300 employees, India metros)",
+              title:
+                "TG 1 ONE-PAGE SUMMARY , Tech / SaaS Companies (50–300 employees, India metros)",
               columns: ["Element", "Answer", "Element ", "Answer "],
               rows: [
                 {
@@ -2453,15 +2600,29 @@ const productData = {
           name: "TG 2: Professional Services, Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
           sections: [
             {
-              title: "PROFILE | TG 2: Professional Services, Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
+              title:
+                "PROFILE | TG 2: Professional Services, Consulting, Legal, Audit (20–200 professionals, India metros + GCC)",
               columns: ["Attribute", "Value"],
               rows: [
                 { label: "Company size", detail: "20–200 professionals" },
-                { label: "Industry", detail: "Management consulting, legal, audit, advisory" },
-                { label: "Geography", detail: "Mumbai, Delhi, Bengaluru (India); Dubai (DIFC), Abu Dhabi (ADGM), Riyadh (GCC)" },
-                { label: "Buyer", detail: "Managing Partner / COO / Practice Head" },
+                {
+                  label: "Industry",
+                  detail: "Management consulting, legal, audit, advisory",
+                },
+                {
+                  label: "Geography",
+                  detail:
+                    "Mumbai, Delhi, Bengaluru (India); Dubai (DIFC), Abu Dhabi (ADGM), Riyadh (GCC)",
+                },
+                {
+                  label: "Buyer",
+                  detail: "Managing Partner / COO / Practice Head",
+                },
                 { label: "Budget", detail: "₹10–20L/year" },
-                { label: "Current stack", detail: "Monday/Asana + Google Docs + email" },
+                {
+                  label: "Current stack",
+                  detail: "Monday/Asana + Google Docs + email",
+                },
               ],
             },
             {
@@ -2470,37 +2631,49 @@ const productData = {
               rows: [
                 {
                   label: "Primary sales motion",
-                  detail: "Founder-led direct + field sales (in-person meetings). This TG buys on relationships and trust , not self-serve trials. A lunch meeting with a Managing Partner is worth more than 20 cold emails. Average deal size (₹10–20L) justifies in-person investment.",
+                  detail:
+                    "Founder-led direct + field sales (in-person meetings). This TG buys on relationships and trust , not self-serve trials. A lunch meeting with a Managing Partner is worth more than 20 cold emails. Average deal size (₹10–20L) justifies in-person investment.",
                 },
                 {
                   label: "Avg. sales cycle",
-                  detail: "6–10 weeks. Slower than tech , requires partner approval and often a legal/compliance review of the data architecture. Flag: In DIFC-regulated Dubai entities, legal team review can add 3–4 weeks. Engage the compliance team in Week 2.",
+                  detail:
+                    "6–10 weeks. Slower than tech , requires partner approval and often a legal/compliance review of the data architecture. Flag: In DIFC-regulated Dubai entities, legal team review can add 3–4 weeks. Engage the compliance team in Week 2.",
                 },
                 {
                   label: "Economic buyer (signs)",
-                  detail: "Managing Partner (small firms) or COO / Practice Head (larger firms). In GCC: General Manager or Regional Director with P&L authority.",
+                  detail:
+                    "Managing Partner (small firms) or COO / Practice Head (larger firms). In GCC: General Manager or Regional Director with P&L authority.",
                 },
                 {
                   label: "Champion (internal advocate)",
-                  detail: "Senior Manager or Associate Director who manages client project delivery , they feel the MoM + task tracking pain daily. They will champion PTM internally once they see the MoM-to-task demo.",
+                  detail:
+                    "Senior Manager or Associate Director who manages client project delivery , they feel the MoM + task tracking pain daily. They will champion PTM internally once they see the MoM-to-task demo.",
                 },
                 {
                   label: "Blocker to anticipate",
-                  detail: "Legal/compliance partner who will ask: 'Where does our client data go?' This is our strongest moment , the answer ('your servers, not ours') closes the objection immediately. Pre-arm the champion with a one-pager on data sovereignty before the compliance conversation.",
+                  detail:
+                    "Legal/compliance partner who will ask: 'Where does our client data go?' This is our strongest moment , the answer ('your servers, not ours') closes the objection immediately. Pre-arm the champion with a one-pager on data sovereignty before the compliance conversation.",
                   textColor: "#C62828",
                   bgColor: "#FFEBEE",
                 },
                 {
                   label: "What closes this TG",
-                  detail: "A single compelling demo of MoM-to-task auto-conversion + document creation with data sovereignty explanation. Followed by a reference from a similarly regulated firm (or a DIFC/SEBI compliance note). This TG buys on 'I trust this is safe and it solves my meeting-to-action problem.'",
+                  detail:
+                    "A single compelling demo of MoM-to-task auto-conversion + document creation with data sovereignty explanation. Followed by a reference from a similarly regulated firm (or a DIFC/SEBI compliance note). This TG buys on 'I trust this is safe and it solves my meeting-to-action problem.'",
                   textColor: "#2E7D32",
                   bgColor: "#E8F5E9",
                 },
               ],
             },
             {
-              title: "COMPONENT 2 , MARKETING CHANNELS | TG 2: Professional Services",
-              columns: ["Channel", "Relevant?", "Execution approach", "Priority rank"],
+              title:
+                "COMPONENT 2 , MARKETING CHANNELS | TG 2: Professional Services",
+              columns: [
+                "Channel",
+                "Relevant?",
+                "Execution approach",
+                "Priority rank",
+              ],
               rows: [
                 {
                   col1: "LinkedIn (organic + paid)",
@@ -2541,56 +2714,154 @@ const productData = {
               ],
             },
             {
-              title: "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 2: Professional Services",
+              title:
+                "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 2: Professional Services",
               columns: ["Element", "Description", "Owner", "Output"],
               rows: [
-                { col1: "PHASE 1", col2: "DAYS 1-30: FOUNDATION", bgColor: "#e8eaf6" },
-                { col1: "Goal", col2: "Get 3 qualified conversations with Managing Partners through warm introductions." },
-                { col1: "Action 1", col2: "Map 50 consulting/legal/audit firms in Mumbai, Delhi, Dubai; identify decision makers.", col3: "Founder", col4: "Prioritised hit list of 50 firms." },
-                { col1: "Action 2", col2: "Request warm introductions from existing network (investors, advisors).", col3: "Founder", col4: "5 warm intros from existing network." },
-                { col1: "Action 3", col2: "Draft sovereign data one-pager for professional services.", col3: "Founder + Marketing", col4: "1-page PDF for champion to forward." },
-                { col1: "Milestone", col2: "3 qualified meetings booked", bgColor: "#e3f2fd" },
-                { col1: "Biggest Risk", col2: "Warm intros slow. Pre-empt: run cold outreach in parallel.", bgColor: "#fff3e0" },
-                { col1: "PHASE 2", col2: "DAYS 31-60: TRACTION", bgColor: "#e8eaf6" },
-                { col1: "Goal", col2: "Run 3+ demos. Convert minimum 2 to paid pilots." },
-                { col1: "Action 1", col2: "In-person demo: MoM-to-task flow + document creation.", col3: "Founder", col4: "70% demo-to-pilot conversion target." },
-                { col1: "Action 2", col2: "Set up pilot for 1 practice team on a live client project.", col3: "Founder + Product", col4: "Active team usage on real client work." },
-                { col1: "Action 3", col2: "Send DIFC/SEBI compliance brief to GCC prospects.", col3: "Founder", col4: "Legal/compliance objection pre-removed." },
-                { col1: "Milestone", col2: "2 paid pilots underway", bgColor: "#e3f2fd" },
-                { col1: "Biggest Risk", col2: "Pilots run but no usage. Pre-empt: bind pilot to specific MoM.", bgColor: "#fff3e0" },
-                { col1: "PHASE 3", col2: "DAYS 61-90: CONVERSION", bgColor: "#e8eaf6" },
-                { col1: "Goal", col2: "Sign 2 paying accounts. Get permission for 1 anonymised case study." },
-                { col1: "Action 1", col2: "Pilot review call: present usage data + efficiency gains.", col3: "Founder + CS", col4: "Commercial proposal for full contract." },
-                { col1: "Action 2", col2: "ROI presentation: time saved on MoM + document creation.", col3: "Founder", col4: "Quantified savings summary." },
-                { col1: "Action 3", col2: "Request case study permission + 1 warm intro to peer firm.", col3: "Founder", col4: "1 case study + 1 referral." },
-                { col1: "Milestone", col2: "2 signed contracts. 1 case study published.", bgColor: "#e3f2fd" },
-                { col1: "Biggest Risk", col2: "Procurement delay. Pre-empt: 'start now, invoice later'.", bgColor: "#fff3e0" },
+                {
+                  col1: "PHASE 1",
+                  col2: "DAYS 1-30: FOUNDATION",
+                  bgColor: "#e8eaf6",
+                },
+                {
+                  col1: "Goal",
+                  col2: "Get 3 qualified conversations with Managing Partners through warm introductions.",
+                },
+                {
+                  col1: "Action 1",
+                  col2: "Map 50 consulting/legal/audit firms in Mumbai, Delhi, Dubai; identify decision makers.",
+                  col3: "Founder",
+                  col4: "Prioritised hit list of 50 firms.",
+                },
+                {
+                  col1: "Action 2",
+                  col2: "Request warm introductions from existing network (investors, advisors).",
+                  col3: "Founder",
+                  col4: "5 warm intros from existing network.",
+                },
+                {
+                  col1: "Action 3",
+                  col2: "Draft sovereign data one-pager for professional services.",
+                  col3: "Founder + Marketing",
+                  col4: "1-page PDF for champion to forward.",
+                },
+                {
+                  col1: "Milestone",
+                  col2: "3 qualified meetings booked",
+                  bgColor: "#e3f2fd",
+                },
+                {
+                  col1: "Biggest Risk",
+                  col2: "Warm intros slow. Pre-empt: run cold outreach in parallel.",
+                  bgColor: "#fff3e0",
+                },
+                {
+                  col1: "PHASE 2",
+                  col2: "DAYS 31-60: TRACTION",
+                  bgColor: "#e8eaf6",
+                },
+                {
+                  col1: "Goal",
+                  col2: "Run 3+ demos. Convert minimum 2 to paid pilots.",
+                },
+                {
+                  col1: "Action 1",
+                  col2: "In-person demo: MoM-to-task flow + document creation.",
+                  col3: "Founder",
+                  col4: "70% demo-to-pilot conversion target.",
+                },
+                {
+                  col1: "Action 2",
+                  col2: "Set up pilot for 1 practice team on a live client project.",
+                  col3: "Founder + Product",
+                  col4: "Active team usage on real client work.",
+                },
+                {
+                  col1: "Action 3",
+                  col2: "Send DIFC/SEBI compliance brief to GCC prospects.",
+                  col3: "Founder",
+                  col4: "Legal/compliance objection pre-removed.",
+                },
+                {
+                  col1: "Milestone",
+                  col2: "2 paid pilots underway",
+                  bgColor: "#e3f2fd",
+                },
+                {
+                  col1: "Biggest Risk",
+                  col2: "Pilots run but no usage. Pre-empt: bind pilot to specific MoM.",
+                  bgColor: "#fff3e0",
+                },
+                {
+                  col1: "PHASE 3",
+                  col2: "DAYS 61-90: CONVERSION",
+                  bgColor: "#e8eaf6",
+                },
+                {
+                  col1: "Goal",
+                  col2: "Sign 2 paying accounts. Get permission for 1 anonymised case study.",
+                },
+                {
+                  col1: "Action 1",
+                  col2: "Pilot review call: present usage data + efficiency gains.",
+                  col3: "Founder + CS",
+                  col4: "Commercial proposal for full contract.",
+                },
+                {
+                  col1: "Action 2",
+                  col2: "ROI presentation: time saved on MoM + document creation.",
+                  col3: "Founder",
+                  col4: "Quantified savings summary.",
+                },
+                {
+                  col1: "Action 3",
+                  col2: "Request case study permission + 1 warm intro to peer firm.",
+                  col3: "Founder",
+                  col4: "1 case study + 1 referral.",
+                },
+                {
+                  col1: "Milestone",
+                  col2: "2 signed contracts. 1 case study published.",
+                  bgColor: "#e3f2fd",
+                },
+                {
+                  col1: "Biggest Risk",
+                  col2: "Procurement delay. Pre-empt: 'start now, invoice later'.",
+                  bgColor: "#fff3e0",
+                },
               ],
             },
             {
-              title: "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 2: Professional Services",
+              title:
+                "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 2: Professional Services",
               columns: ["Partnership element", "Details"],
               rows: [
                 {
                   label: "Timing for partnerships",
-                  detail: "Yes , after 5 direct customers. Professional services referral networks are high-trust; a premature partnership can damage brand credibility.",
+                  detail:
+                    "Yes , after 5 direct customers. Professional services referral networks are high-trust; a premature partnership can damage brand credibility.",
                 },
                 {
-                  label: "Partner type 1: Big4 and mid-tier consulting alumni networks",
-                  detail: "Who: Former Big4 (Deloitte, EY, KPMG, PwC) partners who have set up boutique practices. Why they have access: direct relationships with Managing Partners at peer firms. What we offer: 20% referral fee on Year 1 ARR.",
+                  label:
+                    "Partner type 1: Big4 and mid-tier consulting alumni networks",
+                  detail:
+                    "Who: Former Big4 (Deloitte, EY, KPMG, PwC) partners who have set up boutique practices. Why they have access: direct relationships with Managing Partners at peer firms. What we offer: 20% referral fee on Year 1 ARR.",
                 },
                 {
                   label: "Partner type 2: Legal tech / RegTech vendors (GCC)",
-                  detail: "Who: Vendors selling DIFC/PDPL compliance tools. What we offer: Co-marketing content on data sovereignty + referral agreement.",
+                  detail:
+                    "Who: Vendors selling DIFC/PDPL compliance tools. What we offer: Co-marketing content on data sovereignty + referral agreement.",
                 },
                 {
                   label: "Year 1 structure",
-                  detail: "Referral-only. 20% of Year 1 ARR paid within 30 days of client payment. No reseller complexity in Year 1.",
+                  detail:
+                    "Referral-only. 20% of Year 1 ARR paid within 30 days of client payment. No reseller complexity in Year 1.",
                 },
               ],
             },
             {
-              title: "TG 2 ONE-PAGE SUMMARY , Professional Services (20–200 professionals, India metros + GCC)",
+              title:
+                "TG 2 ONE-PAGE SUMMARY , Professional Services (20–200 professionals, India metros + GCC)",
               columns: ["Element", "Answer", "Element ", "Answer "],
               rows: [
                 {
@@ -2628,53 +2899,81 @@ const productData = {
           name: "TG 3: Lockated Existing Clients , Cross-sell (FM Matrix + Loyalty base, all industries)",
           sections: [
             {
-              title: "PROFILE | TG 3: Lockated Existing Clients , Cross-sell (FM Matrix + Loyalty base, all industries)",
+              title:
+                "PROFILE | TG 3: Lockated Existing Clients , Cross-sell (FM Matrix + Loyalty base, all industries)",
               columns: ["Attribute", "Value"],
               rows: [
                 { label: "Company size", detail: "50–5,000 employees" },
-                { label: "Industry", detail: "Real Estate, Facility Management, Hospitality, Corporate" },
-                { label: "Geography", detail: "All geographies where Lockated operates" },
-                { label: "Buyer", detail: "Existing contract signatory (COO / CTO / Head of Ops)" },
-                { label: "Budget", detail: "Incremental ₹3–12L/year added to existing contract" },
+                {
+                  label: "Industry",
+                  detail:
+                    "Real Estate, Facility Management, Hospitality, Corporate",
+                },
+                {
+                  label: "Geography",
+                  detail: "All geographies where Lockated operates",
+                },
+                {
+                  label: "Buyer",
+                  detail:
+                    "Existing contract signatory (COO / CTO / Head of Ops)",
+                },
+                {
+                  label: "Budget",
+                  detail: "Incremental ₹3–12L/year added to existing contract",
+                },
               ],
             },
             {
-              title: "COMPONENT 1 , SALES MOTION | TG 3: Lockated Existing Clients , Cross-sell",
+              title:
+                "COMPONENT 1 , SALES MOTION | TG 3: Lockated Existing Clients , Cross-sell",
               columns: ["Sales element", "Details"],
               rows: [
                 {
                   label: "Primary sales motion",
-                  detail: "Account management / cross-sell led. Relationship already established. Existing account managers drive this; no SDR needed.",
+                  detail:
+                    "Account management / cross-sell led. Relationship already established. Existing account managers drive this; no SDR needed.",
                 },
                 {
                   label: "Avg. sales cycle",
-                  detail: "2–4 weeks (Fastest). Trust pre-established; data sovereignty story pre-validated. No new vendor approval needed.",
+                  detail:
+                    "2–4 weeks (Fastest). Trust pre-established; data sovereignty story pre-validated. No new vendor approval needed.",
                 },
                 {
                   label: "Economic buyer (signs)",
-                  detail: "Same as existing Lockated contract (COO/CTO/HOO). Bundling into existing billing makes it easy.",
+                  detail:
+                    "Same as existing Lockated contract (COO/CTO/HOO). Bundling into existing billing makes it easy.",
                 },
                 {
                   label: "Champion (internal advocate)",
-                  detail: "Internal FM or product team already using Lockated. They understand the infrastructure and trust the brand.",
+                  detail:
+                    "Internal FM or product team already using Lockated. They understand the infrastructure and trust the brand.",
                 },
                 {
                   label: "Blocker to anticipate",
-                  detail: "Budget objection: 'We're already paying for Lockated , why more?' Pre-empt with module positioning + bundled discount.",
+                  detail:
+                    "Budget objection: 'We're already paying for Lockated , why more?' Pre-empt with module positioning + bundled discount.",
                   textColor: "#C62828",
                   bgColor: "#FFEBEE",
                 },
                 {
                   label: "What closes this TG",
-                  detail: "30-min 'here's what PTM adds' talk + 30-day free trial. Trial converts due to low-friction adoption.",
+                  detail:
+                    "30-min 'here's what PTM adds' talk + 30-day free trial. Trial converts due to low-friction adoption.",
                   textColor: "#2E7D32",
                   bgColor: "#E8F5E9",
                 },
               ],
             },
             {
-              title: "COMPONENT 2 , MARKETING CHANNELS | TG 3: Lockated Existing Clients , Cross-sell",
-              columns: ["Channel", "Relevant?", "Execution approach", "Priority rank"],
+              title:
+                "COMPONENT 2 , MARKETING CHANNELS | TG 3: Lockated Existing Clients , Cross-sell",
+              columns: [
+                "Channel",
+                "Relevant?",
+                "Execution approach",
+                "Priority rank",
+              ],
               rows: [
                 {
                   col1: "LinkedIn (organic + paid)",
@@ -2709,56 +3008,153 @@ const productData = {
               ],
             },
             {
-              title: "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 3: Lockated Existing Clients , Cross-sell",
+              title:
+                "COMPONENT 3 , 90-DAY LAUNCH SEQUENCE | TG 3: Lockated Existing Clients , Cross-sell",
               columns: ["Element", "Description", "Owner", "Output"],
               rows: [
-                { col1: "PHASE 1", col2: "DAYS 1-30: FOUNDATION", bgColor: "#e8eaf6" },
-                { col1: "Goal", col2: "Identify 20 highest-potential PTM cross-sell targets within existing Lockated base." },
-                { col1: "Action 1", col2: "Map all existing Lockated clients (50+ employees) and score by team size/contract/NPS.", col3: "Account Manager + Founder", col4: "Ranked list of top 20 targets." },
-                { col1: "Action 2", col2: "Send personalised email from account manager.", col3: "Account Manager", col4: "10 personalised emails sent (Target 50% open rate)." },
-                { col1: "Action 3", col2: "Prepare industry-specific PTM demo decks (Real Estate, FM, Hospitality).", col3: "Founder + Product", col4: "3 demo decks ready." },
-                { col1: "Milestone", col2: "10 cross-sell conversations initiated. 5 demos scheduled.", bgColor: "#e3f2fd" },
-                { col1: "Biggest Risk", col2: "Existing clients feel upsold without value. Pre-empt: lead with problem statement.", bgColor: "#fff3e0" },
-                { col1: "PHASE 2", col2: "DAYS 31-60: TRACTION", bgColor: "#e8eaf6" },
-                { col1: "Goal", col2: "Convert 5+ conversations to 30-day free trials." },
-                { col1: "Action 1", col2: "Run 'Lockated + PTM' onboarding session (30 mins).", col3: "Account Manager + CS", col4: "Activation: team sets up 1 real project in PTM." },
-                { col1: "Action 2", col2: "Include PTM in next QBR for any client in active trial.", col3: "Account Manager", col4: "QBR agenda: 'Here is what your team has done in PTM'." },
-                { col1: "Action 3", col2: "Offer bundled pricing proposal (10-15% discount).", col3: "Account Manager + Founder", col4: "Written proposal sent to economic buyer." },
-                { col1: "Milestone", col2: "5 active trials. 2 bundled proposals submitted.", bgColor: "#e3f2fd" },
-                { col1: "Biggest Risk", col2: "Trial accounts revert to old tools. Pre-empt: assign a 'PTM champion'.", bgColor: "#fff3e0" },
-                { col1: "PHASE 3", col2: "DAYS 61-90: CONVERSION", bgColor: "#e8eaf6" },
-                { col1: "Goal", col2: "Convert 3-5 clients to paying accounts. Target: ₹15-30L ARR." },
-                { col1: "Action 1", col2: "Trial review call: present usage data + quantify value.", col3: "Account Manager", col4: "Commercial proposal for full contract." },
-                { col1: "Action 2", col2: "Escalate to Founder for deals above ₹5L.", col3: "Founder", col4: "Executive-to-executive close." },
-                { col1: "Action 3", col2: "Request referral from every converted account.", col3: "Account Manager", col4: "1-2 warm referrals per converted account." },
-                { col1: "Milestone", col2: "3 signed contracts. ₹15-25L ARR. 2 referrals generated.", bgColor: "#e3f2fd" },
-                { col1: "Biggest Risk", col2: "Procurement delays new PO. Pre-empt: add to existing annual renewal.", bgColor: "#fff3e0" },
+                {
+                  col1: "PHASE 1",
+                  col2: "DAYS 1-30: FOUNDATION",
+                  bgColor: "#e8eaf6",
+                },
+                {
+                  col1: "Goal",
+                  col2: "Identify 20 highest-potential PTM cross-sell targets within existing Lockated base.",
+                },
+                {
+                  col1: "Action 1",
+                  col2: "Map all existing Lockated clients (50+ employees) and score by team size/contract/NPS.",
+                  col3: "Account Manager + Founder",
+                  col4: "Ranked list of top 20 targets.",
+                },
+                {
+                  col1: "Action 2",
+                  col2: "Send personalised email from account manager.",
+                  col3: "Account Manager",
+                  col4: "10 personalised emails sent (Target 50% open rate).",
+                },
+                {
+                  col1: "Action 3",
+                  col2: "Prepare industry-specific PTM demo decks (Real Estate, FM, Hospitality).",
+                  col3: "Founder + Product",
+                  col4: "3 demo decks ready.",
+                },
+                {
+                  col1: "Milestone",
+                  col2: "10 cross-sell conversations initiated. 5 demos scheduled.",
+                  bgColor: "#e3f2fd",
+                },
+                {
+                  col1: "Biggest Risk",
+                  col2: "Existing clients feel upsold without value. Pre-empt: lead with problem statement.",
+                  bgColor: "#fff3e0",
+                },
+                {
+                  col1: "PHASE 2",
+                  col2: "DAYS 31-60: TRACTION",
+                  bgColor: "#e8eaf6",
+                },
+                {
+                  col1: "Goal",
+                  col2: "Convert 5+ conversations to 30-day free trials.",
+                },
+                {
+                  col1: "Action 1",
+                  col2: "Run 'Lockated + PTM' onboarding session (30 mins).",
+                  col3: "Account Manager + CS",
+                  col4: "Activation: team sets up 1 real project in PTM.",
+                },
+                {
+                  col1: "Action 2",
+                  col2: "Include PTM in next QBR for any client in active trial.",
+                  col3: "Account Manager",
+                  col4: "QBR agenda: 'Here is what your team has done in PTM'.",
+                },
+                {
+                  col1: "Action 3",
+                  col2: "Offer bundled pricing proposal (10-15% discount).",
+                  col3: "Account Manager + Founder",
+                  col4: "Written proposal sent to economic buyer.",
+                },
+                {
+                  col1: "Milestone",
+                  col2: "5 active trials. 2 bundled proposals submitted.",
+                  bgColor: "#e3f2fd",
+                },
+                {
+                  col1: "Biggest Risk",
+                  col2: "Trial accounts revert to old tools. Pre-empt: assign a 'PTM champion'.",
+                  bgColor: "#fff3e0",
+                },
+                {
+                  col1: "PHASE 3",
+                  col2: "DAYS 61-90: CONVERSION",
+                  bgColor: "#e8eaf6",
+                },
+                {
+                  col1: "Goal",
+                  col2: "Convert 3-5 clients to paying accounts. Target: ₹15-30L ARR.",
+                },
+                {
+                  col1: "Action 1",
+                  col2: "Trial review call: present usage data + quantify value.",
+                  col3: "Account Manager",
+                  col4: "Commercial proposal for full contract.",
+                },
+                {
+                  col1: "Action 2",
+                  col2: "Escalate to Founder for deals above ₹5L.",
+                  col3: "Founder",
+                  col4: "Executive-to-executive close.",
+                },
+                {
+                  col1: "Action 3",
+                  col2: "Request referral from every converted account.",
+                  col3: "Account Manager",
+                  col4: "1-2 warm referrals per converted account.",
+                },
+                {
+                  col1: "Milestone",
+                  col2: "3 signed contracts. ₹15-25L ARR. 2 referrals generated.",
+                  bgColor: "#e3f2fd",
+                },
+                {
+                  col1: "Biggest Risk",
+                  col2: "Procurement delays new PO. Pre-empt: add to existing annual renewal.",
+                  bgColor: "#fff3e0",
+                },
               ],
             },
             {
-              title: "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 3: Lockated Existing Clients , Cross-sell",
+              title:
+                "COMPONENT 4 , PARTNERSHIP & RESELLER STRATEGY | TG 3: Lockated Existing Clients , Cross-sell",
               columns: ["Partnership element", "Details"],
               rows: [
                 {
                   label: "Timing for partnerships",
-                  detail: "Not applicable for this TG. This is a direct cross-sell motion through existing account relationships.",
+                  detail:
+                    "Not applicable for this TG. This is a direct cross-sell motion through existing account relationships.",
                 },
                 {
                   label: "Internal 'partner': Lockated account managers",
-                  detail: "The account management team is the effective 'channel partner' for this TG. Train every AM with a 10-minute PTM pitch.",
+                  detail:
+                    "The account management team is the effective 'channel partner' for this TG. Train every AM with a 10-minute PTM pitch.",
                 },
                 {
                   label: "Cross-sell incentive for account managers",
-                  detail: "Commission structure: Account managers earn a cross-sell bonus (1–2% of PTM ARR generated from their accounts).",
+                  detail:
+                    "Commission structure: Account managers earn a cross-sell bonus (1–2% of PTM ARR generated from their accounts).",
                 },
                 {
                   label: "Partnership red flag to avoid",
-                  detail: "Do not involve external partners in cross-sell conversations with existing Lockated clients. Risks confusing a client.",
+                  detail:
+                    "Do not involve external partners in cross-sell conversations with existing Lockated clients. Risks confusing a client.",
                 },
               ],
             },
             {
-              title: "TG 3 ONE-PAGE SUMMARY , Lockated Existing Clients , Cross-sell (FM Matrix + Loyalty base, all industries)",
+              title:
+                "TG 3 ONE-PAGE SUMMARY , Lockated Existing Clients , Cross-sell (FM Matrix + Loyalty base, all industries)",
               columns: ["Element", "Answer", "Element ", "Answer "],
               rows: [
                 {
@@ -2796,66 +3192,110 @@ const productData = {
         title: "Project & Task Manager , Go-To-Market Strategy",
         targetGroups: [
           {
-            title: "TARGET GROUP 1 , Tech / SaaS Companies (50–300 employees, India metros)",
+            title:
+              "TARGET GROUP 1 , Tech / SaaS Companies (50–300 employees, India metros)",
             sections: [
               {
-                title: "Profile: 50–300 employees · Technology/SaaS · India primary; GCC secondary · Buyer: CTO/VP Eng · Budget: ₹6–18L/year",
+                title:
+                  "Profile: 50–300 employees · Technology/SaaS · India primary; GCC secondary · Buyer: CTO/VP Eng · Budget: ₹6–18L/year",
                 columns: [],
                 rows: [],
               },
               {
-                title: "COMPONENT 1 , SALES MOTION | TG 1: Tech / SaaS Companies",
+                title:
+                  "COMPONENT 1 , SALES MOTION | TG 1: Tech / SaaS Companies",
                 columns: ["Sales element", "Details"],
                 rows: [
-                  ["Primary sales motion", "Founder-led outbound → SDR+AE at Month 4"],
-                  ["Avg. sales cycle", "4–8 weeks (SMB); 8–14 weeks (Mid-market)"],
+                  [
+                    "Primary sales motion",
+                    "Founder-led outbound → SDR+AE at Month 4",
+                  ],
+                  [
+                    "Avg. sales cycle",
+                    "4–8 weeks (SMB); 8–14 weeks (Mid-market)",
+                  ],
                   ["Economic buyer", "CTO / VP Eng (<200) | COO / CFO (>200)"],
                 ],
               },
               {
-                title: "COMPONENT 2 , MARKETING CHANNELS | TG 1: Tech / SaaS Companies",
+                title:
+                  "COMPONENT 2 , MARKETING CHANNELS | TG 1: Tech / SaaS Companies",
                 columns: ["Channel", "Relevant?", "Execution", "Rank"],
                 rows: [
-                  ["LinkedIn", "Yes", "Founder organic + Sponsored Content", "#1"],
-                  ["Cold outreach", "Yes", "LinkedIn DM + Email sequence + Loom", "#1"],
+                  [
+                    "LinkedIn",
+                    "Yes",
+                    "Founder organic + Sponsored Content",
+                    "#1",
+                  ],
+                  [
+                    "Cold outreach",
+                    "Yes",
+                    "LinkedIn DM + Email sequence + Loom",
+                    "#1",
+                  ],
                 ],
               },
             ],
-            summary: "Direct outbound to tech engineering leaders. Lead with data sovereignty and Jira consolidation.",
+            summary:
+              "Direct outbound to tech engineering leaders. Lead with data sovereignty and Jira consolidation.",
           },
           {
-            title: "TARGET GROUP 2 , Professional Services , Consulting, Legal, Audit (20–150 professionals, India metros + GCC)",
+            title:
+              "TARGET GROUP 2 , Professional Services , Consulting, Legal, Audit (20–150 professionals, India metros + GCC)",
             sections: [
               {
-                title: "Profile: 20–150 professionals · Management consulting, legal, audit · India primary; GCC secondary · Buyer: Managing Partner / Practice Head · Budget: ₹10–20L/year",
+                title:
+                  "Profile: 20–150 professionals · Management consulting, legal, audit · India primary; GCC secondary · Buyer: Managing Partner / Practice Head · Budget: ₹10–20L/year",
                 columns: [],
                 rows: [],
               },
               {
-                title: "COMPONENT 1 , SALES MOTION | TG 2: Professional Services",
+                title:
+                  "COMPONENT 1 , SALES MOTION | TG 2: Professional Services",
                 columns: ["Sales element", "Details"],
                 rows: [
-                  ["Primary sales motion", "Founder-led direct + field sales (In-person)"],
-                  ["Avg. sales cycle", "6–10 weeks (Requires compliance review)"],
+                  [
+                    "Primary sales motion",
+                    "Founder-led direct + field sales (In-person)",
+                  ],
+                  [
+                    "Avg. sales cycle",
+                    "6–10 weeks (Requires compliance review)",
+                  ],
                   ["Economic buyer", "Managing Partner or Practice Head / COO"],
                 ],
               },
               {
-                title: "COMPONENT 2 , MARKETING CHANNELS | TG 2: Professional Services",
+                title:
+                  "COMPONENT 2 , MARKETING CHANNELS | TG 2: Professional Services",
                 columns: ["Channel", "Relevant?", "Execution", "Rank"],
                 rows: [
-                  ["LinkedIn", "Yes", "Content on data security & compliance", "#1"],
-                  ["Events", "Yes", "Hosted breakfast roundtables + FICCI/CII", "#2"],
+                  [
+                    "LinkedIn",
+                    "Yes",
+                    "Content on data security & compliance",
+                    "#1",
+                  ],
+                  [
+                    "Events",
+                    "Yes",
+                    "Hosted breakfast roundtables + FICCI/CII",
+                    "#2",
+                  ],
                 ],
               },
             ],
-            summary: "Field-led sales to high-trust services firms. lead with DIFC/SEBI compliance and MoM efficiency.",
+            summary:
+              "Field-led sales to high-trust services firms. lead with DIFC/SEBI compliance and MoM efficiency.",
           },
           {
-            title: "TARGET GROUP 3 , Lockated Existing Clients , Cross-sell (FM Matrix + Loyalty base, all industries)",
+            title:
+              "TARGET GROUP 3 , Lockated Existing Clients , Cross-sell (FM Matrix + Loyalty base, all industries)",
             sections: [
               {
-                title: "Profile: 50–5,000 employees · Real Estate, FM, Hospitality · Existing Lockated client base · Buyer: Existing contract signatory · Budget: Incremental ₹3–12L/year",
+                title:
+                  "Profile: 50–5,000 employees · Real Estate, FM, Hospitality · Existing Lockated client base · Buyer: Existing contract signatory · Budget: Incremental ₹3–12L/year",
                 columns: [],
                 rows: [],
               },
@@ -2863,21 +3303,31 @@ const productData = {
                 title: "COMPONENT 1 , SALES MOTION | TG 3: Existing Clients",
                 columns: ["Sales element", "Details"],
                 rows: [
-                  ["Primary sales motion", "Account management led (Warm cross-sell)"],
+                  [
+                    "Primary sales motion",
+                    "Account management led (Warm cross-sell)",
+                  ],
                   ["Avg. sales cycle", "2–4 weeks (Trust pre-established)"],
                   ["Economic buyer", "Same as existing contract (COO/CTO/HOO)"],
                 ],
               },
               {
-                title: "COMPONENT 2 , MARKETING CHANNELS | TG 3: Existing Clients",
+                title:
+                  "COMPONENT 2 , MARKETING CHANNELS | TG 3: Existing Clients",
                 columns: ["Channel", "Relevant?", "Execution", "Rank"],
                 rows: [
-                  ["Email Outreach", "Yes", "Warm personalised email from AM", "#1"],
+                  [
+                    "Email Outreach",
+                    "Yes",
+                    "Warm personalised email from AM",
+                    "#1",
+                  ],
                   ["QBRs", "Yes", "10-min PTM intro in standard QBR", "#1"],
                 ],
               },
             ],
-            summary: "Zero-CAC cross-sell to the base. Position as a data layer upgrade to existing FM Matrix setup.",
+            summary:
+              "Zero-CAC cross-sell to the base. Position as a data layer upgrade to existing FM Matrix setup.",
           },
         ],
       },
@@ -2885,8 +3335,10 @@ const productData = {
     detailedMetrics: {
       northStarMetric: {
         title: "Weekly Active Teams",
-        definition: "Number of companies (teams) that have at least 3 active users who created or updated a task, MoM, or document in the past 7 days. This metric captures genuine habitual usage , not just accounts created. A team that uses PTM every week has embedded it into their workflow. A team that logs in once a month has not. Everything else follows from this: revenue, retention, referrals, and NPS all correlate with weekly active team count.",
-        whyItIsNorthStar: "Weekly active teams predict MRR growth (teams that are active expand seats). They predict NPS (teams that use PTM weekly are the ones who recommend it). They predict churn prevention (teams that go quiet for 2+ weeks are at-risk accounts to intervene on). A stagnant Weekly Active Teams count , even with rising new signups , is an early warning of a product-market fit problem."
+        definition:
+          "Number of companies (teams) that have at least 3 active users who created or updated a task, MoM, or document in the past 7 days. This metric captures genuine habitual usage , not just accounts created. A team that uses PTM every week has embedded it into their workflow. A team that logs in once a month has not. Everything else follows from this: revenue, retention, referrals, and NPS all correlate with weekly active team count.",
+        whyItIsNorthStar:
+          "Weekly active teams predict MRR growth (teams that are active expand seats). They predict NPS (teams that use PTM weekly are the ones who recommend it). They predict churn prevention (teams that go quiet for 2+ weeks are at-risk accounts to intervene on). A stagnant Weekly Active Teams count , even with rising new signups , is an early warning of a product-market fit problem.",
       },
       clientImpact: [
         {
@@ -3731,16 +4183,18 @@ const PTMSummaryTab: React.FC = () => {
             {featureSummaryModules.map((module, i) => (
               <tr key={i} className={i % 2 === 0 ? "bg-[#FAF9F6]" : "bg-white"}>
                 <td
-                  className={`p-4 w-1/4 font-semibold border-r border-[#C4B89D]/50 align-top ${module.isUSP
-                    ? "bg-[#DA7756]/10 text-[#DA7756]"
-                    : "text-[#2C2C2C]"
-                    }`}
+                  className={`p-4 w-1/4 font-semibold border-r border-[#C4B89D]/50 align-top ${
+                    module.isUSP
+                      ? "bg-[#DA7756]/10 text-[#DA7756]"
+                      : "text-[#2C2C2C]"
+                  }`}
                 >
                   {module.module}
                 </td>
                 <td
-                  className={`p-4 text-[#2C2C2C] align-top font-poppins leading-relaxed ${module.isUSP ? "bg-[#DA7756]/10 text-[#DA7756]" : ""
-                    }`}
+                  className={`p-4 text-[#2C2C2C] align-top font-poppins leading-relaxed ${
+                    module.isUSP ? "bg-[#DA7756]/10 text-[#DA7756]" : ""
+                  }`}
                 >
                   {module.description}
                 </td>
@@ -3816,13 +4270,15 @@ const PTMFeaturesTab: React.FC = () => {
               <th className="border border-[#C4B89D]/50 p-2 text-left">
                 Market Standard
               </th>
-              <th className="border border-[#C4B89D]/50 p-2 text-left bg-[#DA7756] text-white">
+              <th className="border border-[#C4B89D]/50 p-2 text-left bg-[#2C2C2C] text-white">
                 Our Product
               </th>
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Status
               </th>
-              <th className="border border-[#C4B89D]/50 p-2 text-left">Notes</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-left">
+                Notes
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -3895,7 +4351,9 @@ const PTMFeaturesTab: React.FC = () => {
               <th className="border border-[#C4B89D]/50 p-3 text-center">
                 User Type
               </th>
-              <th className="border border-[#C4B89D]/50 p-3 text-center">USP</th>
+              <th className="border border-[#C4B89D]/50 p-3 text-center">
+                USP
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -4191,13 +4649,15 @@ const PTMPricingTab: React.FC = () => {
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Market Standard
               </th>
-              <th className="border border-[#C4B89D]/50 p-2 text-center bg-[#DA7756] text-white">
+              <th className="border border-[#C4B89D]/50 p-2 text-center bg-[#2C2C2C] text-white">
                 Our Product
               </th>
               <th className="border border-[#C4B89D]/50 p-2 text-center">
                 Status
               </th>
-              <th className="border border-[#C4B89D]/50 p-2 text-center">Notes</th>
+              <th className="border border-[#C4B89D]/50 p-2 text-center">
+                Notes
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -4750,15 +5210,20 @@ const PTMGTMTab: React.FC = () => {
                   <tbody>
                     {section.rows.map((row: any, rIdx: number) => {
                       const textColor = row.textColor || "#2C2C2C";
-                      const bgColor = row.bgColor || (rIdx % 2 === 0 ? "white" : "#F6F4EE");
+                      const bgColor =
+                        row.bgColor || (rIdx % 2 === 0 ? "white" : "#F6F4EE");
 
                       return (
                         <tr key={rIdx} style={{ backgroundColor: bgColor }}>
                           {section.columns.map((_, colIdx: number) => {
-                            const cellValue = colIdx === 0 ? (row.label || row.col1) :
-                              colIdx === 1 ? (row.detail || row.col2) :
-                                colIdx === 2 ? row.col3 :
-                                  row.col4;
+                            const cellValue =
+                              colIdx === 0
+                                ? row.label || row.col1
+                                : colIdx === 1
+                                  ? row.detail || row.col2
+                                  : colIdx === 2
+                                    ? row.col3
+                                    : row.col4;
 
                             const isYes = cellValue === "Yes";
 
@@ -4767,8 +5232,14 @@ const PTMGTMTab: React.FC = () => {
                                 key={colIdx}
                                 className={`border border-[#C4B89D]/50 p-3 ${colIdx === 0 ? "font-semibold text-[#DA7756] bg-[#F6F4EE]" : "text-[#2C2C2C]/80"} ${isYes ? "text-green-700 font-bold text-center bg-green-50/30" : ""}`}
                                 style={{
-                                  color: colIdx === 0 ? (textColor === "#2C2C2C" ? "#DA7756" : textColor) : textColor,
-                                  backgroundColor: colIdx === 0 ? "" : (isYes ? "" : bgColor)
+                                  color:
+                                    colIdx === 0
+                                      ? textColor === "#2C2C2C"
+                                        ? "#DA7756"
+                                        : textColor
+                                      : textColor,
+                                  backgroundColor:
+                                    colIdx === 0 ? "" : isYes ? "" : bgColor,
                                 }}
                               >
                                 {cellValue}
@@ -4788,7 +5259,9 @@ const PTMGTMTab: React.FC = () => {
             <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 p-6 rounded-lg text-sm text-[#DA7756] leading-relaxed font-poppins shadow-inner">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-2 h-2 bg-[#DA7756] rounded-full"></div>
-                <strong className="uppercase tracking-wider">Target Group Summary</strong>
+                <strong className="uppercase tracking-wider">
+                  Target Group Summary
+                </strong>
               </div>
               {tg.summaryBox}
             </div>
@@ -4867,10 +5340,14 @@ const PTMMetricsTab: React.FC = () => {
 
       {/* Business Targets */}
       <div className="bg-[#DA7756] text-white px-4 py-3 font-semibold text-sm font-poppins mt-8">
-        SECTION 2 , PRODUCT LAUNCH TRACKING METRICS (North Star + Top 10, with Phase 1 roadmap comparison)
+        SECTION 2 , PRODUCT LAUNCH TRACKING METRICS (North Star + Top 10, with
+        Phase 1 roadmap comparison)
       </div>
       <p className="text-[11px] text-[#2C2C2C]/70 italic font-medium font-poppins px-2 py-2 bg-[#DA7756]/10 border-l-4 border-[#DA7756]">
-        These metrics track the health of PTM's own product launch. North Star metric identified first. Then top 10 split by 30-day and 3-month windows, with expected ranges with and without Phase 1 roadmap improvements.
+        These metrics track the health of PTM's own product launch. North Star
+        metric identified first. Then top 10 split by 30-day and 3-month
+        windows, with expected ranges with and without Phase 1 roadmap
+        improvements.
       </p>
 
       {/* North Star Metric Box */}
@@ -4885,7 +5362,10 @@ const PTMMetricsTab: React.FC = () => {
                 Weekly Active Teams
               </td>
               <td className="w-[70%] bg-[#F6F4EE] p-4 text-[#2C2C2C] border border-[#C4B89D]/50">
-                {productData.extendedContent?.detailedMetrics?.northStarMetric?.definition}
+                {
+                  productData.extendedContent?.detailedMetrics?.northStarMetric
+                    ?.definition
+                }
               </td>
             </tr>
             <tr>
@@ -4893,7 +5373,10 @@ const PTMMetricsTab: React.FC = () => {
                 Why this is the North Star
               </td>
               <td className="w-[70%] bg-[#F6F4EE] p-4 text-[#2C2C2C] border border-[#C4B89D]/50">
-                {productData.extendedContent?.detailedMetrics?.northStarMetric?.whyItIsNorthStar}
+                {
+                  productData.extendedContent?.detailedMetrics?.northStarMetric
+                    ?.whyItIsNorthStar
+                }
               </td>
             </tr>
           </tbody>
@@ -5276,6 +5759,34 @@ const TaskManagerPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300">
+      {/* ── Scoped PTM layout & colour-hierarchy CSS ─────────────────── */}
+      <style>{`
+        /* 1. Snap table/scroll wrappers directly to the section header above them
+              (removes the 32px gap that space-y-8 inserts between header and table) */
+        #ptm-tabs-area div:has(> table),
+        #ptm-tabs-area div.overflow-x-auto:has(> table) {
+          margin-top: 0 !important;
+        }
+        /* 2. Card-like bottom rounding on table wrappers that follow section headers */
+        #ptm-tabs-area div:has(> table),
+        #ptm-tabs-area div.overflow-x-auto:has(> table) {
+          border-radius: 0 0 10px 10px;
+          overflow: hidden;
+          border: 1px solid rgba(196,184,157,0.35);
+          border-top: none;
+        }
+        /* 3. Section header divs: rounded top corners to complete the card look */
+        #ptm-tabs-area .space-y-8 > div:not(:has(*:not(h2,h3,p,span,button,svg))),
+        #ptm-tabs-area .space-y-6 > div:not(:has(table)):not(:has(.overflow-x-auto)) {
+          border-radius: 10px 10px 0 0;
+        }
+        /* 4. Sub-section partition gap: add top spacing on any second-or-later
+              orange section-header div that immediately follows a table wrapper */
+        #ptm-tabs-area div:has(> table) + div,
+        #ptm-tabs-area div.overflow-x-auto:has(> table) + div {
+          margin-top: 1.5rem;
+        }
+      `}</style>
       {/* Header */}
       <div className="relative mb-4 flex flex-col items-center bg-[#F6F4EE] pt-4">
         <div className="w-full max-w-7xl px-6 lg:px-10 mb-4">
@@ -5300,7 +5811,7 @@ const TaskManagerPage: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl px-6 lg:px-10 mx-auto">
+      <div id="ptm-tabs-area" className="max-w-7xl px-6 lg:px-10 mx-auto">
         <Tabs defaultValue="summary" className="w-full">
           <div
             ref={ptmTabsScrollRef}

@@ -1309,10 +1309,10 @@ export const AddGroupMembershipPage = () => {
             //     }
             // }
 
-            if (cardAllocated && !member.formData.accessCardId?.trim()) {
-                toast.error(`${memberLabel}: Access Card ID is required when Access Card Allocation is enabled`);
-                return;
-            }
+            // if (cardAllocated && !member.formData.accessCardId?.trim()) {
+            //     toast.error(`${memberLabel}: Access Card ID is required when Access Card Allocation is enabled`);
+            //     return;
+            // }
         }
 
         // Validate for duplicate Access Card IDs if cardAllocated is true

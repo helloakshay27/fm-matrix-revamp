@@ -45,6 +45,7 @@ export function useProductSecurity(): SecurityState {
   const videoRef = useRef<HTMLVideoElement>(null);
   const previewVideoRef = useRef<HTMLVideoElement>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
+  const screenshotBlankTimeoutRef = useRef<number | undefined>(undefined);
 
   const sessionId = useMemo(() => {
     return `SID-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 7).toUpperCase()}`;
@@ -62,6 +63,25 @@ export function useProductSecurity(): SecurityState {
   const dismissBlackout = useCallback(() => {
     setShowBlackout(false);
     setIsBlurred(false);
+  }, []);
+
+  const flashScreenshotBlank = useCallback((duration = 1800) => {
+    setScreenshotBlank(true);
+    if (screenshotBlankTimeoutRef.current) {
+      window.clearTimeout(screenshotBlankTimeoutRef.current);
+    }
+    screenshotBlankTimeoutRef.current = window.setTimeout(() => {
+      setScreenshotBlank(false);
+      screenshotBlankTimeoutRef.current = undefined;
+    }, duration);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (screenshotBlankTimeoutRef.current) {
+        window.clearTimeout(screenshotBlankTimeoutRef.current);
+      }
+    };
   }, []);
 
   // 1. Load face-api.js models + setup camera
@@ -224,18 +244,19 @@ export function useProductSecurity(): SecurityState {
 
   // Enhanced keyboard shortcut blocking
   useEffect(() => {
-    const flashBlank = () => {
-      setScreenshotBlank(true);
-      setTimeout(() => setScreenshotBlank(false), 800);
-    };
     const screenshotKeys = [
       (e: KeyboardEvent) => e.key === "PrintScreen",
       (e: KeyboardEvent) => e.key === "Snapshot",
       (e: KeyboardEvent) => e.key === "PrtSc",
       (e: KeyboardEvent) => e.key === "PrtScn",
+      (e: KeyboardEvent) => e.code === "PrintScreen",
       (e: KeyboardEvent) => e.metaKey && e.shiftKey && e.key.toLowerCase() === "s",
       (e: KeyboardEvent) => e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key),
       (e: KeyboardEvent) => e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "s",
+      (e: KeyboardEvent) => e.altKey && e.key.toLowerCase() === "printscreen",
+      (e: KeyboardEvent) => e.altKey && e.code === "PrintScreen",
+      (e: KeyboardEvent) => e.ctrlKey && e.altKey && e.key.toLowerCase() === "s",
+      (e: KeyboardEvent) => e.metaKey && e.altKey && e.key.toLowerCase() === "s",
     ];
     const blockedCombos = [
       (e: KeyboardEvent) => (e.ctrlKey || e.metaKey) && e.key === "p",
@@ -263,7 +284,7 @@ export function useProductSecurity(): SecurityState {
       if (screenshotKeys.some((check) => check(e))) {
         e.preventDefault();
         e.stopPropagation();
-        flashBlank();
+        flashScreenshotBlank(2500);
         // Clear clipboard to prevent screenshot paste
         navigator.clipboard?.writeText("");
         return;
@@ -287,9 +308,9 @@ export function useProductSecurity(): SecurityState {
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === "PrintScreen" || e.key === "Snapshot" || e.key === "PrtSc" || e.key === "PrtScn") {
+      if (e.key === "PrintScreen" || e.key === "Snapshot" || e.key === "PrtSc" || e.key === "PrtScn" || e.code === "PrintScreen") {
         e.preventDefault();
-        flashBlank();
+        flashScreenshotBlank(2500);
         navigator.clipboard?.writeText("");
       }
     };
@@ -299,7 +320,7 @@ export function useProductSecurity(): SecurityState {
       window.removeEventListener("keydown", handleKeyDown, true);
       window.removeEventListener("keyup", handleKeyUp, true);
     };
-  }, [triggerBlackout]);
+  }, [flashScreenshotBlank, triggerBlackout]);
 
   // Right-click disable
   useEffect(() => {
@@ -311,16 +332,23 @@ export function useProductSecurity(): SecurityState {
   // Visibility change
   useEffect(() => {
     const handler = () => {
-      if (document.hidden) setIsBlurred(true);
-      else setIsBlurred(false);
+      if (document.hidden) {
+        setIsBlurred(true);
+        flashScreenshotBlank(2500);
+      } else {
+        setIsBlurred(false);
+      }
     };
     document.addEventListener("visibilitychange", handler);
     return () => document.removeEventListener("visibilitychange", handler);
-  }, []);
+  }, [flashScreenshotBlank]);
 
   // Window blur
   useEffect(() => {
-    const handleBlur = () => setIsBlurred(true);
+    const handleBlur = () => {
+      setIsBlurred(true);
+      flashScreenshotBlank(2500);
+    };
     const handleFocus = () => setIsBlurred(false);
     window.addEventListener("blur", handleBlur);
     window.addEventListener("focus", handleFocus);
@@ -328,7 +356,7 @@ export function useProductSecurity(): SecurityState {
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener("focus", handleFocus);
     };
-  }, []);
+  }, [flashScreenshotBlank]);
 
   // Enhanced DevTools detection with multiple methods
   useEffect(() => {
@@ -559,14 +587,13 @@ export function useProductSecurity(): SecurityState {
     const handleBlur = () => {
       setIsBlurred(true);
       // Immediately flash blank screen when window loses focus (common during screenshots)
-      setScreenshotBlank(true);
+      flashScreenshotBlank(2500);
     };
 
     const handleFocus = () => {
       if (blurTimeout) window.clearTimeout(blurTimeout);
       blurTimeout = window.setTimeout(() => {
         setIsBlurred(false);
-        setScreenshotBlank(false);
       }, 200);
     };
 
@@ -578,19 +605,20 @@ export function useProductSecurity(): SecurityState {
       window.removeEventListener("blur", handleBlur);
       window.removeEventListener("focus", handleFocus);
     };
-  }, []);
+  }, [flashScreenshotBlank]);
 
   // Aggressive screenshot protection - blank screen on any key press
   useEffect(() => {
     const handleAnyKeyDown = (e: KeyboardEvent) => {
       // Flash blank screen on any key press to prevent screenshot timing
-      setScreenshotBlank(true);
-      setTimeout(() => setScreenshotBlank(false), 300);
+      if (e.key === "PrintScreen" || e.code === "PrintScreen" || e.metaKey) {
+        flashScreenshotBlank(2500);
+      }
     };
 
     window.addEventListener("keydown", handleAnyKeyDown, true);
     return () => window.removeEventListener("keydown", handleAnyKeyDown, true);
-  }, []);
+  }, [flashScreenshotBlank]);
 
   // Continuous protection overlay - makes screenshots unreadable
   useEffect(() => {
@@ -633,6 +661,48 @@ export function useProductSecurity(): SecurityState {
     };
   }, []);
 
+  // Hard DOM-level screenshot blanker. This sits outside React page structure,
+  // so custom product wrappers cannot accidentally cover it.
+  useEffect(() => {
+    let overlay = document.getElementById("fm-screenshot-hard-blank");
+    if (screenshotBlank) {
+      if (!overlay) {
+        overlay = document.createElement("div");
+        overlay.id = "fm-screenshot-hard-blank";
+        overlay.setAttribute("aria-hidden", "true");
+        overlay.style.cssText = `
+          position: fixed;
+          inset: 0;
+          z-index: 2147483647;
+          background: #ffffff;
+          pointer-events: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: rgba(44, 44, 44, 0.24);
+          font: 700 12px monospace;
+          letter-spacing: 0.28em;
+          text-transform: uppercase;
+        `;
+        overlay.textContent = "CONFIDENTIAL - SCREEN CAPTURE BLOCKED";
+        document.body.appendChild(overlay);
+      }
+      document.documentElement.classList.add("fm-screenshot-blank-active");
+      document.body.classList.add("fm-screenshot-blank-active");
+    } else {
+      overlay?.remove();
+      document.documentElement.classList.remove("fm-screenshot-blank-active");
+      document.body.classList.remove("fm-screenshot-blank-active");
+    }
+
+    return () => {
+      if (!screenshotBlank) return;
+      document.getElementById("fm-screenshot-hard-blank")?.remove();
+      document.documentElement.classList.remove("fm-screenshot-blank-active");
+      document.body.classList.remove("fm-screenshot-blank-active");
+    };
+  }, [screenshotBlank]);
+
   // Mobile screenshot detection — sudden minor resize can indicate screenshot toolbar
   useEffect(() => {
     let lastWidth = window.innerWidth;
@@ -650,8 +720,7 @@ export function useProductSecurity(): SecurityState {
         dh < 50 &&
         (dw > 0 || dh > 0)
       ) {
-        setScreenshotBlank(true);
-        setTimeout(() => setScreenshotBlank(false), 800);
+        flashScreenshotBlank(2500);
       }
       resizeTime = now;
       lastWidth = window.innerWidth;
@@ -660,7 +729,7 @@ export function useProductSecurity(): SecurityState {
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [flashScreenshotBlank]);
 
   const showBlankScreen =
     !faceDetected && model && cameraPermission === "granted";

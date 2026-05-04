@@ -298,10 +298,10 @@ export interface ProductData {
       }[];
       featuresVsMarket?: {
         featureArea: string;
-        marketStandard: string;
-        ourProduct: string;
-        summary: string;
-        status: string;
+        marketStandard?: string;
+        ourProduct?: string;
+        summary?: string;
+        status?: string;
         liveStatus?: string;
         whereWeStand?: string;
         dealImpact?: string;
