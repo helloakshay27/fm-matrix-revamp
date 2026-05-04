@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Clock, Filter, History, Plus, Flag, Timer } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Star, Filter, History, Plus, Flag, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ticketManagementAPI, TicketResponse } from '@/services/ticketManagementAPI';
@@ -12,6 +13,8 @@ interface MobileTicketListProps {
 
 export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSelect, onCreateTicket }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'my' | 'golden' | 'flagged' | 'all'>('all');
   const [activeFilter, setActiveFilter] = useState<'all' | 'approaching' | 'within' | 'breach'>('all');
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
