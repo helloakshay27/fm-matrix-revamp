@@ -35,15 +35,17 @@ const getBaseUrl = () => localStorage.getItem('baseUrl');
 
 export const fetchProjectsTags = createAsyncThunk(
     "projectTags/fetchProjectsTags",
-    async (_, { rejectWithValue }) => {
+    async ({ active }: { active?: boolean }, { rejectWithValue }) => {
         try {
             const baseUrl = getBaseUrl();
             const response = baseUrl
                 ? await axios.get(`https://${baseUrl}/company_tags.json`, {
-                    headers: getHeaders()
+                    headers: getHeaders(),
+                    params: active ? { "q[active_eq]": true } : {},
                 })
                 : await baseClient.get(`/company_tags.json`, {
-                    headers: getHeaders()
+                    headers: getHeaders(),
+                    params: active ? { "q[active_eq]": true } : {},
                 });
             return response.data;
         } catch (error: any) {
