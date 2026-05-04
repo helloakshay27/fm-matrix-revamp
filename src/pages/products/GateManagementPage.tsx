@@ -4,6 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import { useProductSecurity } from "./useProductSecurity";
 import { SecurityOverlays } from "./SecurityOverlays";
+import AssetsTab from "./tabs/AssetsTab";
+import { ProductData } from "./types";
 
 // ── Import research JSX files directly as React components ───────────────────
 import GateFeatureListContent from "../../../24_06_24_Gate_Management_Research_Doc/feature_list.jsx";
@@ -21,7 +23,7 @@ import GateUseCasesContent from "../../../24_06_24_Gate_Management_Research_Doc/
 // ── Tab metadata ─────────────────────────────────────────────────────────────
 const TAB_LABELS: Record<string, string> = {
   features: "Feature List",
-  pricing: "Features & Pricing",
+  pricing: "Features and Pricing",
   enhancements: "Enhancement Roadmap",
   business: "Business Plan Builder",
   gtm: "GTM Strategy",
@@ -31,21 +33,52 @@ const TAB_LABELS: Record<string, string> = {
   summary: "Product Summary",
   swot: "SWOT Analysis",
   usecases: "Use Cases",
+  assets: "Assets",
 };
 
 const TAB_ORDER = [
   "summary",
   "features",
+  "market",
   "pricing",
-  "enhancements",
+  "usecases",
+  "roadmap",
   "business",
   "gtm",
-  "market",
   "metrics",
-  "roadmap",
   "swot",
-  "usecases",
+  "enhancements",
+  "assets",
 ];
+
+const ASSETS_TAB_DATA: ProductData = {
+  name: "Gate Management",
+  description:
+    "Smart Secure & QuikGate — Digitise and control access for visitors, vehicles, contractors, and materials.",
+  brief: "",
+  industries: "Residential · Commercial · Industrial · Hospitality",
+  userStories: [],
+  usps: [],
+  includes: [],
+  upSelling: [],
+  integrations: [],
+  decisionMakers: [],
+  keyPoints: [],
+  roi: [],
+  assets: [],
+  credentials: [],
+  owner: "",
+  ownerImage: "",
+  extendedContent: {
+    productSummaryNew: {
+      identity: [],
+      problemSolves: [],
+      whoItIsFor: [],
+      today: [],
+    },
+    detailedFeatures: [],
+  },
+};
 
 // ── Scoped CSS — Lockated brand — enhanced manipulative table styling ─────────
 const MANIPULATIVE_CSS = `
@@ -72,13 +105,10 @@ const MANIPULATIVE_CSS = `
     overflow-x: auto !important;
     width: 100% !important;
     background: #ffffff !important;
-    margin-bottom: 32px !important;
-    border-radius: 12px !important;
-    border: 1px solid rgba(196,184,157,0.45) !important;
-    box-shadow:
-      0 1px 3px rgba(44,44,44,0.06),
-      0 4px 18px rgba(44,44,44,0.05),
-      0 0 0 1px rgba(218,119,86,0.06) !important;
+    margin-bottom: 24px !important;
+    border-radius: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
   }
 
   /* ── Table reset ─────────────────────────────────────────────────── */
@@ -117,15 +147,15 @@ const MANIPULATIVE_CSS = `
 
   /* ── s0  Title bar — warm terracotta gradient ────────────────────── */
   .gate-mgmt-page .ritz .s0 {
-    background: linear-gradient(135deg, #DA7756 0%, #C96240 100%) !important;
-    color: #ffffff !important;
+    background-color: #F6F4EE !important;
+    color: #2C2C2C !important;
     font-size: 13.5px !important;
     font-weight: 700 !important;
     letter-spacing: 0.02em !important;
     padding: 15px 16px !important;
     vertical-align: middle !important;
     border-bottom: 2px solid rgba(255,255,255,0.15) !important;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.15) !important;
+    text-shadow: none !important;
   }
 
   /* ── s1  Italic subtitle — warm cream with muted text ───────────── */
@@ -168,8 +198,8 @@ const MANIPULATIVE_CSS = `
 
   /* ── s5  Column header — Snag360-style: orange bg, white text ───── */
   .gate-mgmt-page .ritz .s5 {
-    background-color: #DA7756 !important;
-    color: #ffffff !important;
+    background-color: #F6F4EE !important;
+    color: #2C2C2C !important;
     font-weight: 700 !important;
     font-size: 10.5px !important;
     text-transform: uppercase !important;
@@ -178,7 +208,7 @@ const MANIPULATIVE_CSS = `
     border-bottom: none !important;
     border-top: none !important;
     vertical-align: middle !important;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.12) !important;
+    text-shadow: none !important;
   }
 
   /* ── s6  Alternating row A — warm parchment ─────────────────────── */
@@ -208,15 +238,15 @@ const MANIPULATIVE_CSS = `
 
   /* ── s9  Section header — DARK charcoal + orange left accent ───── */
   .gate-mgmt-page .ritz .s9 {
-    background-color: #2C2C2C !important;
-    color: #F6F4EE !important;
+    background-color: #F6F4EE !important;
+    color: #2C2C2C !important;
     font-weight: 700 !important;
     font-size: 10.5px !important;
     text-transform: uppercase !important;
     letter-spacing: 0.08em !important;
     padding: 10px 14px 10px 16px !important;
     vertical-align: middle !important;
-    border-left: 4px solid #DA7756 !important;
+    border-left: 0 !important;
     border-top: none !important;
     text-shadow: none !important;
   }
@@ -253,18 +283,6 @@ const MANIPULATIVE_CSS = `
   }
 
   /* ── Row hover — Lockated warm orange tint ───────────────────────── */
-  .gate-mgmt-page .ritz tbody tr:hover td {
-    background-color: rgba(218,119,86,0.05) !important;
-    transition: background-color 0.15s ease !important;
-  }
-  .gate-mgmt-page .ritz tbody tr:hover td.s9 {
-    background-color: #3a3a3a !important;
-  }
-  .gate-mgmt-page .ritz tbody tr:hover td.s0,
-  .gate-mgmt-page .ritz tbody tr:hover td.s5 {
-    filter: brightness(1.05) !important;
-  }
-
   /* ── Scrollbar ───────────────────────────────────────────────────── */
   .gate-mgmt-page .ritz.grid-container::-webkit-scrollbar { height: 5px; }
   .gate-mgmt-page .ritz.grid-container::-webkit-scrollbar-track {
@@ -272,11 +290,8 @@ const MANIPULATIVE_CSS = `
     border-radius: 10px;
   }
   .gate-mgmt-page .ritz.grid-container::-webkit-scrollbar-thumb {
-    background: linear-gradient(90deg, #DA7756, #C4B89D);
+    background: #C4B89D;
     border-radius: 10px;
-  }
-  .gate-mgmt-page .ritz.grid-container::-webkit-scrollbar-thumb:hover {
-    background: #DA7756;
   }
 `;
 
@@ -330,7 +345,7 @@ const GateManagementPage: React.FC = () => {
             className="overflow-x-auto no-scrollbar mb-8"
           >
             <div className="flex justify-start pb-2 px-1">
-              <TabsList className="inline-flex gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5 h-auto items-center justify-start">
+              <TabsList className="inline-flex min-w-max gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5 h-auto items-center justify-start">
                 {TAB_ORDER.map((tabId) => (
                   <TabsTrigger
                     key={tabId}
@@ -346,7 +361,7 @@ const GateManagementPage: React.FC = () => {
 
           {/* Feature List */}
           <TabsContent value="features" className="animate-fade-in">
-            <div className="bg-white border border-[#C4B89D] p-4 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
+            <div className="bg-white border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
               <h2 className="text-xl font-semibold font-poppins text-[#2C2C2C]">
                 Gate Management — Complete Feature List
               </h2>
@@ -364,7 +379,7 @@ const GateManagementPage: React.FC = () => {
 
           {/* Features & Pricing */}
           <TabsContent value="pricing" className="animate-fade-in">
-            <div className="bg-white border border-[#C4B89D] p-4 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
+            <div className="bg-white border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
               <h2 className="text-xl font-semibold font-poppins text-[#2C2C2C]">
                 Gate Management — Features vs Market &amp; Pricing
               </h2>
@@ -381,7 +396,7 @@ const GateManagementPage: React.FC = () => {
 
           {/* Enhancement Roadmap */}
           <TabsContent value="enhancements" className="animate-fade-in">
-            <div className="bg-white border border-[#C4B89D] p-4 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
+            <div className="bg-white border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
               <h2 className="text-xl font-semibold font-poppins text-[#2C2C2C]">
                 Gate Management — Feature Enhancement Roadmap
               </h2>
@@ -397,7 +412,7 @@ const GateManagementPage: React.FC = () => {
 
           {/* Business Plan Builder */}
           <TabsContent value="business" className="animate-fade-in">
-            <div className="bg-white border border-[#C4B89D] p-4 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
+            <div className="bg-white border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
               <h2 className="text-xl font-semibold font-poppins text-[#2C2C2C]">
                 Gate Management — Business Plan Builder
               </h2>
@@ -413,7 +428,7 @@ const GateManagementPage: React.FC = () => {
 
           {/* GTM Strategy */}
           <TabsContent value="gtm" className="animate-fade-in">
-            <div className="bg-white border border-[#C4B89D] p-4 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
+            <div className="bg-white border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
               <h2 className="text-xl font-semibold font-poppins text-[#2C2C2C]">
                 Gate Management — GTM Strategy
               </h2>
@@ -429,7 +444,7 @@ const GateManagementPage: React.FC = () => {
 
           {/* Market Analysis */}
           <TabsContent value="market" className="animate-fade-in">
-            <div className="bg-white border border-[#C4B89D] p-4 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
+            <div className="bg-white border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
               <h2 className="text-xl font-semibold font-poppins text-[#2C2C2C]">
                 Gate Management — Market Analysis
               </h2>
@@ -445,7 +460,7 @@ const GateManagementPage: React.FC = () => {
 
           {/* Metrics */}
           <TabsContent value="metrics" className="animate-fade-in">
-            <div className="bg-white border border-[#C4B89D] p-4 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
+            <div className="bg-white border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
               <h2 className="text-xl font-semibold font-poppins text-[#2C2C2C]">
                 Gate Management — Metrics
               </h2>
@@ -461,7 +476,7 @@ const GateManagementPage: React.FC = () => {
 
           {/* Product Roadmap */}
           <TabsContent value="roadmap" className="animate-fade-in">
-            <div className="bg-white border border-[#C4B89D] p-4 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
+            <div className="bg-white border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
               <h2 className="text-xl font-semibold font-poppins text-[#2C2C2C]">
                 Gate Management — Product Roadmap
               </h2>
@@ -477,7 +492,7 @@ const GateManagementPage: React.FC = () => {
 
           {/* Product Summary */}
           <TabsContent value="summary" className="animate-fade-in">
-            <div className="bg-white border border-[#C4B89D] p-4 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
+            <div className="bg-white border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
               <h2 className="text-xl font-semibold font-poppins text-[#2C2C2C]">
                 Gate Management — Product Summary
               </h2>
@@ -493,7 +508,7 @@ const GateManagementPage: React.FC = () => {
 
           {/* SWOT Analysis */}
           <TabsContent value="swot" className="animate-fade-in">
-            <div className="bg-white border border-[#C4B89D] p-4 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
+            <div className="bg-white border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
               <h2 className="text-xl font-semibold font-poppins text-[#2C2C2C]">
                 Gate Management — SWOT Analysis
               </h2>
@@ -509,7 +524,7 @@ const GateManagementPage: React.FC = () => {
 
           {/* Use Cases */}
           <TabsContent value="usecases" className="animate-fade-in">
-            <div className="bg-white border border-[#C4B89D] p-4 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
+            <div className="bg-white border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-0">
               <h2 className="text-xl font-semibold font-poppins text-[#2C2C2C]">
                 Gate Management — Use Cases
               </h2>
@@ -521,6 +536,10 @@ const GateManagementPage: React.FC = () => {
             <div className="bg-white rounded-b-xl border border-t-0 border-[#C4B89D] overflow-hidden">
               <GateUseCasesContent />
             </div>
+          </TabsContent>
+
+          <TabsContent value="assets" className="space-y-8">
+            <AssetsTab productData={ASSETS_TAB_DATA} />
           </TabsContent>
         </Tabs>
       </div>
