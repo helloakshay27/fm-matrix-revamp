@@ -397,6 +397,9 @@ import LeaseManagementPage from "./pages/products/lease-management/LeaseManageme
 import LifeCompassPage from "./pages/products/LifeCompassPage";
 import BusinessCompassPage from "./pages/products/BusinessCompassPage";
 import GateManagementPage from "./pages/products/GateManagementPage";
+import SurveyManagementPage from "./pages/products/SurveyManagementPage";
+import PTWManagementPage from "./pages/products/PTWManagementPage";
+import TenantManagementPage from "./pages/products/TenantManagementPage";
 import SurveysPage from "./pages/products/SurveysPage";
 import LMSSalesCRMPage from "./pages/products/LMSSalesCRMPage";
 import SupportCRMPage from "./pages/products/SupportCRMPage";
@@ -5698,11 +5701,11 @@ function App() {
                           path="/product/club-management"
                           element={<ClubManagementPage />}
                         />
-                        <Route
+                        {/* <Route
                           path="/product/gophygital-tenants"
                           element={<GoPhygitalTenantsPage />}
-                        />
-                        <Route path="/product/ptw" element={<PTWPage />} />
+                        /> */}
+                        {/* <Route path="/product/ptw" element={<PTWPage />} /> */}
                         <Route
                           path="/product/parking"
                           element={<ParkingPage />}
@@ -5737,8 +5740,20 @@ function App() {
                         />
                         <Route
                           path="/product/surveys"
-                          element={<SurveysPage />}
+                          element={<SurveyManagementPage />}
+                          />
+                          <Route
+                            path="/product/ptw"
+                            element={<PTWManagementPage />}
+                          />
+                          <Route
+                            path="/product/gophygital-tenants"
+                            element={<TenantManagementPage />}
                         />
+                          {/* <Route
+                            path="/product/surveys"
+                            element={<SurveysPage />}
+                          /> */}
                         <Route
                           path="/product/lms-sales-crm"
                           element={<LMSSalesCRMPage />}

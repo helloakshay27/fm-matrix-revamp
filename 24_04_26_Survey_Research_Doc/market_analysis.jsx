@@ -1,0 +1,1143 @@
+export default function SurveyMarketAnalysisContent() {
+  return (
+    <>
+      <div className="ritz grid-container" dir="ltr">
+        <table className="waffle no-grid" cellSpacing="0" cellPadding="0">
+          <thead>
+            <tr>
+              <th className="row-header freezebar-origin-ltr"></th>
+              <th
+                id="1384305420C0"
+                style={{ width: 125 }}
+                className="column-headers-background"
+              >
+                A
+              </th>
+              <th
+                id="1384305420C1"
+                style={{ width: 139 }}
+                className="column-headers-background"
+              >
+                B
+              </th>
+              <th
+                id="1384305420C2"
+                style={{ width: 195 }}
+                className="column-headers-background"
+              >
+                C
+              </th>
+              <th
+                id="1384305420C3"
+                style={{ width: 220 }}
+                className="column-headers-background"
+              >
+                D
+              </th>
+              <th
+                id="1384305420C4"
+                style={{ width: 232 }}
+                className="column-headers-background"
+              >
+                E
+              </th>
+              <th
+                id="1384305420C5"
+                style={{ width: 231 }}
+                className="column-headers-background"
+              >
+                F
+              </th>
+              <th
+                id="1384305420C6"
+                style={{ width: 195 }}
+                className="column-headers-background"
+              >
+                G
+              </th>
+              <th
+                id="1384305420C7"
+                style={{ width: 195 }}
+                className="column-headers-background"
+              >
+                H
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style={{ height: 36 }}>
+              <th
+                id="1384305420R0"
+                style={{ height: 36 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 36 }}>
+                  1
+                </div>
+              </th>
+              <td className="s0" colSpan="8">
+                Survey - Market Analysis
+              </td>
+            </tr>
+            <tr style={{ height: 23 }}>
+              <th
+                id="1384305420R1"
+                style={{ height: 23 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 23 }}>
+                  2
+                </div>
+              </th>
+              <td className="s1" colSpan="8">
+                Geography focus: India and Global | Section 1: Target Audience |
+                Section 2: Competitor Mapping (10 Competitors)
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R2"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  3
+                </div>
+              </th>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+            </tr>
+            <tr style={{ height: 28 }}>
+              <th
+                id="1384305420R3"
+                style={{ height: 28 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 28 }}>
+                  4
+                </div>
+              </th>
+              <td className="s3" colSpan="8">
+                SECTION 1 - TARGET AUDIENCE
+              </td>
+            </tr>
+            <tr style={{ height: 25 }}>
+              <th
+                id="1384305420R4"
+                style={{ height: 25 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 25 }}>
+                  5
+                </div>
+              </th>
+              <td className="s4" colSpan="8">
+                PART A - TARGET AUDIENCE (Geographies: India, Global)
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R5"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  6
+                </div>
+              </th>
+              <td className="s5">Audience Segment</td>
+              <td className="s5">Demographics</td>
+              <td className="s5">Industry and Company Profile</td>
+              <td className="s5">Key Pain Points (3 per segment)</td>
+              <td className="s5">What happens if pain points are NOT solved</td>
+              <td className="s5">What good enough looks like today</td>
+              <td className="s5">Urgency</td>
+              <td className="s5">Primary Buyer Title</td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R6"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  7
+                </div>
+              </th>
+              <td className="s6" dir="ltr">
+                Multi-location Retail and QSR Chains (
+                <span style={{ fontWeight: "bold" }}>Retail Chains)</span>
+              </td>
+              <td className="s6">
+                Operations teams in chains with 50 to 500 stores, India Tier 1
+                and Tier 2 cities, company age 5 to 20 years, revenue INR 100 Cr
+                to 2,000 Cr
+              </td>
+              <td className="s6">
+                Retail apparel, quick service restaurants, supermarkets,
+                electronics chains. Companies operating standard store formats
+                with front-desk or floor-level service staff.
+              </td>
+              <td className="s6">
+                1. Negative feedback at store level never reaches HQ in time to
+                prevent recurrence. 2. No location-wise comparison of CSAT - all
+                stores look the same on monthly reports. 3. Complaint routing to
+                store managers is manual and inconsistent.
+              </td>
+              <td className="s6">
+                Repeated service failures at the same locations. Customer churn
+                attributed to poor service that management only discovers in
+                quarterly brand surveys - too late to correct.
+              </td>
+              <td className="s6">
+                WhatsApp group messages from store managers, monthly mystery
+                audits, or manual Excel trackers submitted to the area manager
+                every two weeks.
+              </td>
+              <td className="s6">
+                High - Organized retail growth and rising customer expectations
+                from e-commerce comparisons means in-store experience is a
+                differentiator now
+              </td>
+              <td className="s6">
+                VP Operations / Head of Customer Experience
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R7"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  8
+                </div>
+              </th>
+              <td className="s7" dir="ltr">
+                <span style={{ fontWeight: "bold" }}>Facility Management</span>{" "}
+                Companies and Corporate Campuses
+              </td>
+              <td className="s7">
+                FM service providers managing 20 to 300 client sites, corporate
+                RE teams managing campuses for 500 to 10,000 employees, India
+                major metros and SEZ clusters
+              </td>
+              <td className="s7">
+                IFM companies (ISS, BVG, Sodexo franchisees), GCC campuses, tech
+                parks, manufacturing campuses. SLAs require documented proof of
+                service quality.
+              </td>
+              <td className="s7">
+                1. Tenant and occupant satisfaction is measured annually via
+                email survey - no real-time mechanism exists. 2. Facilities
+                complaints are handled through informal channels with no SLA
+                tracking. 3. Client reporting on service quality requires manual
+                aggregation from site teams.
+              </td>
+              <td className="s7">
+                SLA penalties from enterprise clients. Loss of contract renewal
+                where CSAT scores are contractually required. Reputational
+                damage if service failures go unaddressed for weeks.
+              </td>
+              <td className="s7">
+                Annual satisfaction surveys sent by email. Informal WhatsApp
+                complaints from occupants that never get documented or resolved
+                systematically.
+              </td>
+              <td className="s7">
+                High - Corporate clients in GCC and IT sectors are mandating CX
+                measurement as part of FM contract terms from 2024 onwards
+              </td>
+              <td className="s7">Head of Operations / Facility Manager</td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R8"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  9
+                </div>
+              </th>
+              <td className="s6" dir="ltr">
+                <span style={{ fontWeight: "bold" }}>Hospitality </span>Groups
+                and Hotel Chains
+              </td>
+              <td className="s6">
+                Hotel groups with 5 to 100 properties across India, average
+                occupancy 60 to 85%, mid-market to upscale segment, revenue INR
+                50 Cr to 1,500 Cr
+              </td>
+              <td className="s6">
+                Business hotels, resort chains, serviced apartment operators,
+                boutique hotel groups. Guest satisfaction directly impacts OTA
+                review scores and repeat booking rates.
+              </td>
+              <td className="s6">
+                1. Post-stay email surveys capture feedback 48 hours after
+                checkout - too late to resolve issues during the stay. 2.
+                In-room feedback forms are paper-based and not tracked
+                digitally. 3. Negative OTA reviews are discovered after the
+                damage is done, with no in-stay early-warning mechanism.
+              </td>
+              <td className="s6">
+                OTA rating decline. Negative TripAdvisor and Google reviews that
+                cannot be taken down. Loss of corporate account contracts that
+                require minimum satisfaction scores.
+              </td>
+              <td className="s6">
+                Post-stay email via hotel PMS integration or paper comment cards
+                at the front desk. Reactive response to online reviews only.
+              </td>
+              <td className="s6">
+                High - OTA platform algorithm weighting of recent reviews makes
+                real-time recovery critical for booking conversion rates
+              </td>
+              <td className="s6">General Manager / Guest Relations Manager</td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R9"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  10
+                </div>
+              </th>
+              <td className="s7" dir="ltr">
+                <span style={{ fontWeight: "bold" }}>Healthcare</span>{" "}
+                Outpatient and Diagnostic Centres
+              </td>
+              <td className="s7">
+                Clinic chains with 10 to 100 centres, diagnostic lab networks,
+                polyclinic operators, standalone hospitals with OPD volumes of
+                200 to 2,000 patients per day
+              </td>
+              <td className="s7">
+                Private hospital OPD departments, diagnostic chains (SRL,
+                Metropolis franchisees), polyclinic operators. Patient
+                satisfaction is tied to NABH accreditation requirements.
+              </td>
+              <td className="s7">
+                1. Patient feedback is collected on paper and aggregated
+                manually by admin staff - response rate below 15%. 2. Complaints
+                about wait time, billing, or clinical staff go unrecorded except
+                when escalated verbally. 3. No location-level comparison of
+                satisfaction across centres in a chain.
+              </td>
+              <td className="s7">
+                NABH accreditation risk if patient satisfaction data cannot be
+                produced during audits. Negative Google reviews affecting
+                patient acquisition. Repeat complaints about the same doctor or
+                location.
+              </td>
+              <td className="s7">
+                Paper feedback forms at reception. Rare post-visit SMS sent
+                through the hospital app if one exists.
+              </td>
+              <td className="s7">
+                Medium-High - NABH and JCI accreditation standards are being
+                tightened in 2025 with stricter patient feedback documentation
+                requirements
+              </td>
+              <td className="s7">Hospital Administrator / Head of Quality</td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R10"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  11
+                </div>
+              </th>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R11"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  12
+                </div>
+              </th>
+              <td className="s4" colSpan="8">
+                PART B - COMPANY-LEVEL PAIN POINTS (India and Global)
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R12"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  13
+                </div>
+              </th>
+              <td className="s5">Company Type and Size</td>
+              <td className="s5">Pain Point 1</td>
+              <td className="s5">Pain Point 2</td>
+              <td className="s5">Pain Point 3</td>
+              <td className="s5">Cost / Risk if unsolved</td>
+              <td className="s5"></td>
+              <td className="s5"></td>
+              <td className="s5"></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R13"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  14
+                </div>
+              </th>
+              <td className="s6">
+                Mid-market retail chain (50-200 stores, INR 200-800 Cr revenue)
+              </td>
+              <td className="s6">
+                No real-time visibility into which store has the lowest
+                satisfaction score today
+              </td>
+              <td className="s6">
+                Complaint routing relies on area manager WhatsApp groups with no
+                audit trail
+              </td>
+              <td className="s6">
+                QR-based feedback exists in some stores but response data is
+                siloed in the QR tool and never linked to the ticketing system
+              </td>
+              <td className="s6">
+                Customer churn from poor in-store experience estimated at 8 to
+                12% of repeat purchase frequency, recoverable only with
+                real-time intervention
+              </td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R14"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  15
+                </div>
+              </th>
+              <td className="s7">
+                Integrated facility management provider (20-300 client sites)
+              </td>
+              <td className="s7">
+                Client SLA requires documented CSAT data but FM company has no
+                standardized digital feedback mechanism across all client sites
+              </td>
+              <td className="s7">
+                Service complaints from building occupants arrive verbally or
+                informally and are never documented, creating liability if a
+                client demands records
+              </td>
+              <td className="s7">
+                Multiple client sites use different feedback tools, making
+                portfolio-level reporting to enterprise clients impossible
+              </td>
+              <td className="s7">
+                Contract non-renewal risk if CSAT scores cannot be reported.
+                Typical FM contract value at risk: INR 1 Cr to 10 Cr per
+                enterprise client per year
+              </td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R15"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  16
+                </div>
+              </th>
+              <td className="s6">
+                Hospitality group (10-50 properties, mid-market segment)
+              </td>
+              <td className="s6">
+                In-stay recovery is impossible because feedback is collected
+                post-checkout by email, which less than 20% of guests open
+                within 48 hours
+              </td>
+              <td className="s6">
+                Different properties use different comment card formats and no
+                digital aggregation exists
+              </td>
+              <td className="s6">
+                Housekeeping and F&amp;B complaints are not linked to ticketing
+                - the same issues recur because resolution is never tracked
+              </td>
+              <td className="s6">
+                OTA rating decline of 0.2 points on Booking.com or MakeMyTrip is
+                linked to a 5-8% occupancy drop in competitive markets
+              </td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R16"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  17
+                </div>
+              </th>
+              <td className="s7">Healthcare OPD chain (10-50 centres)</td>
+              <td className="s7">
+                Patient satisfaction documentation is required for NABH
+                accreditation but is currently produced from paper forms with
+                low accuracy and high effort
+              </td>
+              <td className="s7">
+                Complaints about clinical staff are not traceable to the
+                specific centre, doctor, or time slot, making root cause
+                analysis impossible
+              </td>
+              <td className="s7">
+                No digital trail of negative feedback means the organization
+                cannot demonstrate improvement when reapplying for accreditation
+              </td>
+              <td className="s7">
+                NABH accreditation lapse affects empanelment with insurance
+                companies and CGHS, directly impacting OPD revenue by 15-30%
+              </td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R17"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  18
+                </div>
+              </th>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+              <td className="s8"></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R18"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  19
+                </div>
+              </th>
+              <td className="s3" colSpan="8">
+                SECTION 2 - COMPETITOR MAPPING (10 Competitors, India and
+                Global)
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R19"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  20
+                </div>
+              </th>
+              <td className="s4" colSpan="8">
+                Include India-specific and global competitors. Pricing in INR
+                for India, USD for global.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R20"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  21
+                </div>
+              </th>
+              <td className="s5">Competitor</td>
+              <td className="s5">Primary Target Customer</td>
+              <td className="s5">Pricing Model and Approx Price</td>
+              <td className="s5">How buyers discover them</td>
+              <td className="s5">Their 3 Strongest Features</td>
+              <td className="s5">Their 3 Key Weaknesses</td>
+              <td className="s5">
+                Market Gap they leave open - How we capitalise
+              </td>
+              <td className="s5">Recent Innovation - The risk to us</td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R21"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  22
+                </div>
+              </th>
+              <td className="s6">Zonka Feedback (India / Global)</td>
+              <td className="s6">
+                Mid-market and enterprise CX teams in retail, healthcare,
+                hospitality across India and Southeast Asia
+              </td>
+              <td className="s6">
+                India: INR 3,500 to 25,000/month depending on responses and
+                channels. Global: $49 to $299/month. Annual discount 20%. Custom
+                enterprise pricing.
+              </td>
+              <td className="s6">
+                SEO, Google Ads, direct sales in India, G2 reviews
+              </td>
+              <td className="s6">
+                1. Omnichannel survey distribution (email, SMS, WhatsApp,
+                in-app, kiosk). 2. AI-powered text analytics and sentiment
+                scoring on open-text responses. 3. Closed-loop workflows with
+                CRM and helpdesk integrations (Salesforce, HubSpot, Zendesk).
+              </td>
+              <td className="s6">
+                1. QR-to-location mapping is present but requires manual
+                location tagging, not a dedicated mapping module with bulk
+                import. 2. Ticket creation from negative response requires
+                Zapier or a third-party helpdesk - not native. 3. Ticket detail
+                panel (TAT, escalation level, resolution tracking) is not
+                embedded inside the survey response view.
+              </td>
+              <td className="s6">
+                Zonka has no native negative-to-ticket workflow with embedded
+                ticket panel in the response view. Survey&#39;s native ticket
+                creation and ticket visibility within the response page is a
+                direct win against Zonka&#39;s integration-dependent approach.
+              </td>
+              <td className="s6">
+                Expanded AI Feedback Intelligence module in 2025 with urgency
+                detection. Risk: if Zonka adds native ticket creation, the gap
+                narrows. Timeline: likely 12 to 18 months based on their current
+                roadmap trajectory.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R22"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  23
+                </div>
+              </th>
+              <td className="s7">SurveySensum (India / Global)</td>
+              <td className="s7">
+                B2B enterprise and mid-market in automotive, NBFC, retail, SaaS.
+                Strong in India and Middle East. Growing in Southeast Asia.
+              </td>
+              <td className="s7">
+                India: INR 15,000 to 75,000/month for managed CX service model.
+                Global: $199 to $499/month for self-serve. High-touch onboarding
+                included.
+              </td>
+              <td className="s7">
+                Direct sales, CX consultancy partnerships, industry events,
+                content marketing targeting CX professionals
+              </td>
+              <td className="s7">
+                1. Dedicated CX manager included in all paid plans - a
+                service-plus-software model. 2. Strong NABH and ISO compliance
+                documentation support for healthcare. 3. AI text analytics on
+                NPS open-text with driver identification.
+              </td>
+              <td className="s7">
+                1. No QR-to-location mapping module - designed for digital and
+                email surveys, not physical touchpoint feedback. 2. Platform is
+                service-heavy - not designed for self-serve operations teams who
+                want to configure without a CX consultant. 3. No embedded ticket
+                visibility within response records.
+              </td>
+              <td className="s7">
+                SurveySensum has zero physical touchpoint capability. Any
+                customer needing QR-based in-person feedback is not served.
+                Survey owns this entire segment without competition from
+                SurveySensum.
+              </td>
+              <td className="s7">
+                Launched QR code survey feature in late 2024. Risk: if
+                SurveySensum adds location mapping and ticket integration, they
+                could target FM and hospitality with their existing enterprise
+                relationships.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R23"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  24
+                </div>
+              </th>
+              <td className="s6">SurveySparrow (India / Global)</td>
+              <td className="s6">
+                SMB to mid-market CX and employee experience teams. Strong in
+                IT, BFSI, and services sectors. 100,000+ customers globally.
+              </td>
+              <td className="s6">
+                Global: Free (100 responses/month), Basic $19/month, Starter
+                $39/month, Business $79/month, Enterprise custom. India pricing
+                available on request, estimated 30-40% below global rates.
+              </td>
+              <td className="s6">
+                SEO, SaaS review platforms (G2, Capterra), freemium self-serve,
+                content marketing, WhatsApp survey integration as growth hook
+              </td>
+              <td className="s6">
+                1. Conversational chat-style survey interface with documented
+                40% higher completion rates vs traditional surveys. 2. WhatsApp
+                survey distribution - strong for India mobile-first users. 3.
+                Case management module for closing the feedback loop (though not
+                native ticket automation).
+              </td>
+              <td className="s6">
+                1. Location mapping for physical spaces is not available -
+                surveys are distributed via link, email, or WhatsApp, not
+                QR-per-location. 2. Negative response ticket automation does not
+                exist natively - requires workflow builder configuration. 3.
+                Ticket detail panel with TAT and escalation is not embedded in
+                the response view.
+              </td>
+              <td className="s6">
+                SurveySparrow&#39;s case management is manual - it does not
+                automatically create a ticket when a negative response is
+                submitted. Survey&#39;s auto-trigger with embedded TAT tracking
+                is a direct feature advantage for operations-heavy buyers.
+              </td>
+              <td className="s6">
+                CogniVue AI analytics launched 2024 with sentiment
+                auto-categorization. AI survey builder for instant survey
+                generation. Risk: AI-generated surveys could reduce setup
+                friction and attract SMB operations teams who currently need
+                Survey&#39;s simplicity.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R24"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  25
+                </div>
+              </th>
+              <td className="s7">SurveyMonkey (Global / India)</td>
+              <td className="s7">
+                Enterprise and mid-market research, HR, and marketing teams
+                globally. Widely known for general-purpose survey creation.
+              </td>
+              <td className="s7">
+                Global: Free (25 responses), Standard $25/month, Advantage
+                $32/month, Premier $99/month. India pricing available in INR via
+                local payment gateway.
+              </td>
+              <td className="s7">
+                Brand recognition, SEO dominance, enterprise sales, integration
+                with Salesforce, HubSpot, Slack
+              </td>
+              <td className="s7">
+                1. 200+ integrations with enterprise tools. 2.
+                Methodologist-certified question types and research templates.
+                3. Industry benchmarking data for NPS and CSAT against sector
+                averages.
+              </td>
+              <td className="s7">
+                1. No QR-to-location mapping. 2. No automatic ticket creation
+                from negative responses. 3. Designed for research and HR use
+                cases - not for real-time operational feedback at physical
+                touchpoints. 4. No India-specific support or data residency.
+              </td>
+              <td className="s7">
+                SurveyMonkey is not competing for physical touchpoint feedback
+                customers. Its design and pricing assume digital survey
+                distribution. Survey captures the entire in-person feedback
+                segment SurveyMonkey ignores.
+              </td>
+              <td className="s7">
+                Launched AI survey summarization (Genius AI) in 2024. Acquired
+                for more enterprise customers. Risk: enterprise brand
+                recognition may cause procurement teams to default to
+                SurveyMonkey even when Survey is a better fit.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R25"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  26
+                </div>
+              </th>
+              <td className="s6">Qualtrics XM (Global)</td>
+              <td className="s6">
+                Large enterprise: Fortune 500, government, healthcare systems,
+                universities. Minimum viable customer is INR 15 Lakh to INR 50
+                Lakh/year.
+              </td>
+              <td className="s6">
+                Global: $420/month entry (1,000 responses). Enterprise: custom,
+                typically $50,000 to $300,000/year. India: custom, INR 15 Lakh
+                to INR 5 Cr/year for enterprise XM.
+              </td>
+              <td className="s6">
+                Enterprise sales team, Gartner Magic Quadrant positioning, SAP
+                and Salesforce partnership channel
+              </td>
+              <td className="s6">
+                1. Most advanced statistical analysis engine in the market. 2.
+                Predictive NPS driver modelling with Text iQ. 3. Global
+                compliance certifications (GDPR, FedRAMP, ISO 27001) trusted by
+                regulated industries.
+              </td>
+              <td className="s6">
+                1. No India-specific pricing tier - minimum spend is out of
+                reach for mid-market India buyers. 2. QR survey exists but
+                location mapping for physical spaces requires custom
+                configuration with professional services. 3. Ticket creation is
+                integration-dependent via Zendesk or ServiceNow connectors.
+              </td>
+              <td className="s6">
+                Qualtrics is priced out of the Indian mid-market entirely. Any
+                organization with a budget under INR 5 Lakh/year that needs
+                physical touchpoint feedback is not served by Qualtrics. Survey
+                owns this segment.
+              </td>
+              <td className="s6">
+                Launched Qualtrics AI 2024 with predictive feedback scoring and
+                generative survey design. Risk: Qualtrics may release an
+                SMB-priced tier targeting Indian market. No indication this is
+                in their roadmap but possible given SAP&#39;s India expansion.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R26"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  27
+                </div>
+              </th>
+              <td className="s7">Typeform (Global)</td>
+              <td className="s7">
+                Marketing, product, and growth teams at tech startups and
+                digital-native brands globally. Strong in Europe, North America,
+                and tech hubs in India.
+              </td>
+              <td className="s7">
+                Global: Free (10 responses/month), Basic $25/month, Plus
+                $50/month, Business $83/month, Enterprise custom. India: same
+                USD pricing via international card.
+              </td>
+              <td className="s7">
+                SEO and content, Product Hunt launches, integration with HubSpot
+                and Notion, design community word-of-mouth
+              </td>
+              <td className="s7">
+                1. Best-in-class survey design and visual aesthetics - highest
+                completion rates for brand research. 2. Conversational
+                one-question-at-a-time flow. 3. Extensive logic branching for
+                complex survey flows.
+              </td>
+              <td className="s7">
+                1. No QR-per-location mapping. 2. No ticket creation from
+                responses. 3. No helpdesk or operations dashboard - purely a
+                data collection and analysis tool. 4. USD pricing with no India
+                payment support.
+              </td>
+              <td className="s7">
+                Typeform serves brand and marketing research. It does not serve
+                operations teams that need real-time resolution at physical
+                locations. Survey addresses an entirely different buyer persona.
+              </td>
+              <td className="s7">
+                AI-powered survey creation from a prompt in 2024. Conditional
+                logic enhanced. Risk: Typeform&#39;s design quality and AI
+                features are attracting CX teams who may not investigate
+                operations-grade alternatives like Survey.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R27"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  28
+                </div>
+              </th>
+              <td className="s6">Medallia (Global)</td>
+              <td className="s6">
+                Largest enterprise accounts: telecom, banking, retail chains
+                with 5,000+ locations globally. India entry through Airtel, Tata
+                group, and banking sector deals.
+              </td>
+              <td className="s6">
+                Global: Enterprise only, $50,000 to $500,000+/year. India:
+                custom, INR 50 Lakh to INR 10 Cr/year for large enterprise.
+              </td>
+              <td className="s6">
+                Gartner Peer Insights, direct enterprise sales, analyst
+                relations, integration with SAP and Salesforce
+              </td>
+              <td className="s6">
+                1. End-to-end VoC platform with journey analytics across all
+                customer touchpoints. 2. Machine learning models for predictive
+                satisfaction scoring. 3. Real-time case management with
+                escalation workflows.
+              </td>
+              <td className="s6">
+                1. No viable entry point for organizations under INR 50
+                Lakh/year. 2. Implementation takes 6 to 18 months with
+                professional services. 3. QR-based physical feedback is possible
+                but requires custom setup that adds cost and delay.
+              </td>
+              <td className="s6">
+                Medallia leaves the entire Indian mid-market (INR 1 Lakh to 10
+                Lakh/year) completely unserved. Survey enters this segment with
+                a right-sized product, local support, and a price point 10 to
+                50x lower than Medallia.
+              </td>
+              <td className="s6">
+                Medallia launched GenAI-powered Ask Medallia in 2024 for natural
+                language querying of feedback data. Risk: If Medallia releases a
+                lower-priced India-market product, the competitive dynamic could
+                shift in 3 to 5 years.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R28"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  29
+                </div>
+              </th>
+              <td className="s7">Zoho Survey (India / Global)</td>
+              <td className="s7">
+                SMB customers within the Zoho ecosystem. Primarily used by teams
+                already on Zoho CRM, Zoho Desk, or Zoho One suite.
+              </td>
+              <td className="s7">
+                India: Free (10 questions, 100 responses), Plus INR 375/month,
+                Pro INR 1,125/month, Enterprise INR 2,625/month. Global: Plus
+                $7/month, Pro $20/month, Enterprise $35/month.
+              </td>
+              <td className="s7">
+                Zoho ecosystem cross-sell, app marketplace listings, content
+                marketing, search ads in India
+              </td>
+              <td className="s7">
+                1. Tight integration with Zoho CRM, Zoho Desk, and Zoho
+                Analytics. 2. Competitive India INR pricing. 3. Offline survey
+                mode for areas without connectivity.
+              </td>
+              <td className="s7">
+                1. No QR-to-location mapping module. 2. No negative response to
+                ticket automation without Zoho Flow configuration. 3. Analytics
+                are basic - no heat-map, no location-level comparison, no trend
+                analysis across locations.
+              </td>
+              <td className="s7">
+                Zoho Survey serves teams already in the Zoho stack and is not
+                positioned for multi-location physical feedback. Survey targets
+                buyers outside the Zoho ecosystem who need operations-linked
+                feedback. Head-to-head displacement is limited.
+              </td>
+              <td className="s7">
+                Zoho added AI response summarization in 2024. Zoho Desk
+                integration improved for ticket routing. Risk: Zoho could bundle
+                Survey-like features into Zoho Desk for free for Zoho One
+                subscribers, making it harder to displace in SMB segment.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R29"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  30
+                </div>
+              </th>
+              <td className="s6">QuestionPro (Global / India)</td>
+              <td className="s6">
+                Mid-market research and CX teams in academic institutions,
+                healthcare, and enterprise HR globally. Growing in India through
+                direct sales.
+              </td>
+              <td className="s6">
+                Global: Free (unlimited surveys, 300 responses/month), Advanced
+                $99/month, Team $83/user/month. India: custom INR pricing,
+                estimated INR 5,000 to 40,000/month for research tier.
+              </td>
+              <td className="s6">
+                G2, Capterra, direct sales, academic institution partnerships,
+                content marketing for research use cases
+              </td>
+              <td className="s6">
+                1. Research-grade question types including MaxDiff, conjoint,
+                and advanced logic. 2. Offline survey capability with sync on
+                reconnect. 3. Communities and panel access for market research
+                studies.
+              </td>
+              <td className="s6">
+                1. No QR-to-location mapping. 2. No native ticket creation from
+                negative responses. 3. Not designed for multi-location physical
+                feedback operations. 4. Dashboard analytics are
+                research-oriented, not operations-facing.
+              </td>
+              <td className="s6">
+                QuestionPro&#39;s research positioning makes it irrelevant for
+                retail and FM buyers who need operational feedback management.
+                Survey targets the operational use case QuestionPro ignores
+                entirely.
+              </td>
+              <td className="s6">
+                Launched Communities 2.0 with panel management in 2024.
+                AI-assisted analysis added. Risk: limited risk to Survey since
+                QuestionPro&#39;s growth is research-focused, not
+                operations-focused.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R30"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  31
+                </div>
+              </th>
+              <td className="s7">HappyOrNot (Global / India entry)</td>
+              <td className="s7">
+                Retail, airports, healthcare waiting areas, and public-facing
+                service environments globally. India entry through airport and
+                large retail accounts.
+              </td>
+              <td className="s7">
+                Global: Device rental model, $250 to $500/month per device
+                (smiley terminal). India: limited pricing data, estimated INR
+                15,000 to 30,000/device/month including hardware.
+              </td>
+              <td className="s7">
+                Airport and retail trade shows, direct sales to facility heads,
+                airport operator partnerships, OEM hardware distributors
+              </td>
+              <td className="s7">
+                1. Proprietary physical smiley terminal hardware with high
+                response rates at high-footfall locations. 2. Real-time
+                location-level dashboard with hourly response data. 3.
+                Benchmarking database with comparison to industry satisfaction
+                levels.
+              </td>
+              <td className="s7">
+                1. Requires hardware procurement and installation - high barrier
+                to entry for organizations wanting quick deployment. 2. No
+                negative response to ticket workflow - data collection only, no
+                resolution loop. 3. No question customization beyond the
+                four-button smiley scale.
+              </td>
+              <td className="s7">
+                HappyOrNot has no ticket automation. It collects smiley data but
+                does not create actionable resolution workflows. Survey offers
+                the same location-level analytics without hardware dependency
+                plus the resolution loop HappyOrNot lacks.
+              </td>
+              <td className="s7">
+                HappyOrNot launched a digital QR-based companion product in 2023
+                for non-hardware deployments. Risk: if they enhance the digital
+                product with ticket integration, they become a closer
+                competitor, particularly for airport and retail accounts.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1384305420R31"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  32
+                </div>
+              </th>
+              <td className="s4">COMPETITOR SUMMARY</td>
+              <td className="s6" colSpan="7">
+                Competitor to displace first: Zonka Feedback. Reason: Zonka is
+                the most-deployed India-market survey tool in the retail and
+                hospitality segments Survey is targeting. Its core weakness - no
+                native negative-to-ticket automation and no embedded ticket
+                detail panel inside the response view - is exactly Survey&#39;s
+                strongest feature. Zonka customers who have experienced the
+                limitation of configuring Zapier or Zendesk integrations to
+                close the feedback loop are the highest-intent prospects for a
+                direct displacement conversation. They already believe in
+                digital feedback, already have a budget, and already know the
+                pain. Survey can win them by demonstrating the native ticket
+                creation and the ticket panel in a 15-minute demo.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}

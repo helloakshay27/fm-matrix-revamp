@@ -5,12 +5,7 @@ import React, { useState, useRef } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useProductSecurity } from "../useProductSecurity";
-import {
-  CameraPermissionPending,
-  CameraPermissionDenied,
-  ModelLoadingScreen,
-  SecurityOverlays,
-} from "../SecurityOverlays";
+import { SecurityOverlays } from "../SecurityOverlays";
 
 // Import tab components
 import { SummaryTab } from "./tabs/SummaryTab";
@@ -82,17 +77,6 @@ export default function LeaseManagementPage() {
   const security = useProductSecurity();
   const [activeTab, setActiveTab] = useState<TabKey>("summary");
   const tabsContainerRef = useRef<HTMLDivElement>(null);
-
-  // Security check states
-  if (security.cameraPermission === "pending") {
-    return <CameraPermissionPending />;
-  }
-  if (security.cameraPermission === "denied") {
-    return <CameraPermissionDenied />;
-  }
-  if (security.modelLoading) {
-    return <ModelLoadingScreen />;
-  }
 
   const currentTabIndex = TAB_CONFIG.findIndex((t) => t.key === activeTab);
 

@@ -2,8 +2,8 @@ import React from 'react';
 
 const PostPossessionSummaryTab: React.FC = () => {
   // ── Style objects mapped 1:1 from HTML CSS classes ────────────────────────
-  const s0: React.CSSProperties = { borderBottom: '1px solid #C4B89D/50', borderRight: '1px solid #C4B89D/50', backgroundColor: '#DA7756', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 8px' };
-  const s1: React.CSSProperties = { borderBottom: '1px solid #C4B89D/50', borderRight: '1px solid #C4B89D/50', backgroundColor: '#DA7756', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '11pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '0px 8px' };
+  const s0: React.CSSProperties = { borderBottom: '1px solid #C4B89D/50', borderRight: '1px solid #C4B89D/50', backgroundColor: '#DA7756', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '13pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '6px 12px' };
+  const s1: React.CSSProperties = { borderBottom: '1px solid #C4B89D/50', borderRight: '1px solid #C4B89D/50', backgroundColor: '#DA7756', textAlign: 'left', fontWeight: 'bold', color: '#ffffff', fontFamily: 'Arial, sans-serif', fontSize: '13pt', verticalAlign: 'middle', whiteSpace: 'nowrap', padding: '6px 12px' };
   const s2: React.CSSProperties = { borderBottom: '1px solid #C4B89D/50', borderRight: '1px solid #C4B89D/50', backgroundColor: '#ffffff', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '8px' };
   const s3: React.CSSProperties = { borderBottom: '1px solid #C4B89D/50', borderRight: '1px solid #C4B89D/50', backgroundColor: '#F6F4EE', textAlign: 'left', color: '#1a1a1a', fontFamily: 'Arial, sans-serif', fontSize: '9pt', verticalAlign: 'top', wordWrap: 'break-word', padding: '8px' };
 
@@ -33,7 +33,7 @@ const PostPossessionSummaryTab: React.FC = () => {
         <tbody>
 
           {/* ── WHAT IT IS ─────────────────────────────────────────────────── */}
-          <tr style={{ height: '23px' }}>
+          <tr style={{ height: '32px' }}>
             <td style={s1} colSpan={8}>WHAT IT IS</td>
           </tr>
           <tr style={{ minHeight: '55px' }}>
@@ -44,7 +44,7 @@ const PostPossessionSummaryTab: React.FC = () => {
           </tr>
 
           {/* ── WHO IT'S FOR ───────────────────────────────────────────────── */}
-          <tr style={{ height: '23px' }}>
+          <tr style={{ height: '32px' }}>
             <td style={s1} colSpan={8}>WHO IT'S FOR</td>
           </tr>
           <tr style={{ minHeight: '55px' }}>
@@ -58,7 +58,7 @@ const PostPossessionSummaryTab: React.FC = () => {
           </tr>
 
           {/* ── PROBLEM IT SOLVES ──────────────────────────────────────────── */}
-          <tr style={{ height: '23px' }}>
+          <tr style={{ height: '32px' }}>
             <td style={s1} colSpan={8}>PROBLEM IT SOLVES</td>
           </tr>
           <tr style={{ minHeight: '55px' }}>
@@ -75,7 +75,7 @@ const PostPossessionSummaryTab: React.FC = () => {
           </tr>
 
           {/* ── WHERE IT IS TODAY ──────────────────────────────────────────── */}
-          <tr style={{ height: '23px' }}>
+          <tr style={{ height: '32px' }}>
             <td style={s1} colSpan={8}>WHERE IT IS TODAY</td>
           </tr>
           <tr style={{ minHeight: '55px' }}>
@@ -89,7 +89,7 @@ const PostPossessionSummaryTab: React.FC = () => {
           </tr>
 
           {/* ── FEATURE SUMMARY ────────────────────────────────────────────── */}
-          <tr style={{ height: '23px' }}>
+          <tr style={{ height: '32px' }}>
             <td style={s1} colSpan={8}>FEATURE SUMMARY (by module)</td>
           </tr>
           <tr style={{ minHeight: '55px' }}>
@@ -118,7 +118,7 @@ const PostPossessionSummaryTab: React.FC = () => {
           </tr>
 
           {/* ── KEY USPs ───────────────────────────────────────────────────── */}
-          <tr style={{ height: '23px' }}>
+          <tr style={{ height: '32px' }}>
             <td style={s1} colSpan={8}>KEY USPs</td>
           </tr>
           <tr style={{ minHeight: '55px' }}>
@@ -138,7 +138,7 @@ const PostPossessionSummaryTab: React.FC = () => {
           </tr>
 
           {/* ── TRACTION / MILESTONES ──────────────────────────────────────── */}
-          <tr style={{ height: '23px' }}>
+          <tr style={{ height: '32px' }}>
             <td style={s1} colSpan={8}>TRACTION / MILESTONES</td>
           </tr>
           <tr style={{ minHeight: '55px' }}>

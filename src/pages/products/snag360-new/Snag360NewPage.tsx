@@ -6,12 +6,7 @@ import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useProductSecurity } from "../useProductSecurity";
-import {
-  CameraPermissionPending,
-  CameraPermissionDenied,
-  ModelLoadingScreen,
-  SecurityOverlays,
-} from "../SecurityOverlays";
+import { SecurityOverlays } from "../SecurityOverlays";
 
 // Import tab components
 import { SummaryTab } from "./tabs/SummaryTab";
@@ -68,17 +63,6 @@ export default function Snag360NewPage() {
   const security = useProductSecurity();
   const [activeTab, setActiveTab] = useState<TabKey>("summary");
   const [tabScrollPosition, setTabScrollPosition] = useState(0);
-
-  // Security check states
-  if (security.cameraPermission === "pending") {
-    return <CameraPermissionPending />;
-  }
-  if (security.cameraPermission === "denied") {
-    return <CameraPermissionDenied />;
-  }
-  if (security.modelLoading) {
-    return <ModelLoadingScreen />;
-  }
 
   const currentTabIndex = TAB_CONFIG.findIndex((t) => t.key === activeTab);
 

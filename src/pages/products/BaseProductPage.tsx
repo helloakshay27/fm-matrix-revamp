@@ -9,12 +9,7 @@ import {
 } from "../../components/ui/tabs";
 import { ProductData } from "./types";
 import { useProductSecurity } from "./useProductSecurity";
-import {
-  CameraPermissionPending,
-  CameraPermissionDenied,
-  ModelLoadingScreen,
-  SecurityOverlays,
-} from "./SecurityOverlays";
+import { SecurityOverlays } from "./SecurityOverlays";
 import SummaryTab from "./tabs/SummaryTab";
 import FeaturesTab from "./tabs/FeaturesTab";
 import MarketTab from "./tabs/MarketTab";
@@ -127,17 +122,6 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
     ...defaultTabContentMap,
     ...customTabContent,
   };
-
-  // Camera permission gate — must grant before seeing content
-  if (security.cameraPermission === "pending") {
-    return <CameraPermissionPending />;
-  }
-  if (security.cameraPermission === "denied") {
-    return <CameraPermissionDenied />;
-  }
-  if (security.modelLoading) {
-    return <ModelLoadingScreen />;
-  }
 
   return (
     <div

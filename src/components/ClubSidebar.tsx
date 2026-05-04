@@ -363,33 +363,7 @@ const modulesByPackage = {
       name: "Reports",
       icon: BarChart3,
       subItems: [
-        {
-          name: "Sales Reports",
-          subItems: [
-            {
-              name: "Sales by Customer",
-              href: "/accounting/reports/sales-by-customer",
-            },
-            {
-              name: "Sales by Item",
-              href: "/accounting/reports/sales-by-item",
-            },
-            // {
-            //   name: "Sales by Sales Person",
-            //   href: "/accounting/reports/sales-by-sales-person",
-            // },
-            {
-              name: "Sales Summary",
-              href: "/accounting/reports/sales-summary",
-            },
-          ],
-        },
-        {
-          name: "Debtors & Creditors ",
-          href: "/accounting/reports/debtors-creditors",
-        },
-
-        {
+          {
           name: "Business Overview",
           // icon: TrendingUp,
           subItems: [
@@ -421,10 +395,10 @@ const modulesByPackage = {
             //   name: "Balance Sheet (Schedule III)",
             //   href: "/accounting/reports/balance-sheet-details",
             // },
-            {
-              name: "Business Performance Ratios",
-              href: "/accounting/reports/business-performance",
-            },
+            // {
+            //   name: "Business Performance Ratios",
+            //   href: "/accounting/reports/business-performance",
+            // },
             // {
             //   name: "Cash Flow Forecasting",
             //   href: "/accounting/reports/cash-flow-statement",
@@ -435,6 +409,33 @@ const modulesByPackage = {
             // },
           ],
         },
+        {
+          name: "Sales Reports",
+          subItems: [
+            {
+              name: "Sales by Customer",
+              href: "/accounting/reports/sales-by-customer",
+            },
+            {
+              name: "Sales by Item",
+              href: "/accounting/reports/sales-by-item",
+            },
+            // {
+            //   name: "Sales by Sales Person",
+            //   href: "/accounting/reports/sales-by-sales-person",
+            // },
+            {
+              name: "Sales Summary",
+              href: "/accounting/reports/sales-summary",
+            },
+          ],
+        },
+        {
+          name: "Debtors & Creditors ",
+          href: "/accounting/reports/debtors-creditors",
+        },
+
+      
 
 
 
@@ -516,10 +517,10 @@ const modulesByPackage = {
               name: "Sales Order Details",
               href: "/accounting/reports/sales-order-details",
             },
-            {
-              name: "Delivery Challan Details",
-              href: "/accounting/reports/delivery-challan-details",
-            },
+            // {
+            //   name: "Delivery Challan Details",
+            //   href: "/accounting/reports/delivery-challan-details",
+            // },
             {
               name: "Quote Details",
               href: "/accounting/reports/quote-details",
@@ -554,10 +555,10 @@ const modulesByPackage = {
               name: "Credit Note Details",
               href: "/accounting/reports/credit-note-details",
             },
-            {
-              name: "Refund History",
-              href: "/accounting/reports/refund-history",
-            },
+            // {
+            //   name: "Refund History",
+            //   href: "/accounting/reports/refund-history",
+            // },
 
           ],
         },
@@ -580,59 +581,15 @@ const modulesByPackage = {
               name: "Vendor Balance Summary",
               href: "/accounting/reports/vendor-balance-summary",
             },
-            {
-              name: "Payments Made",
-              href: "/accounting/reports/payments-made",
-            },
-            {
-              name: "Payable Details",
-              href: "/accounting/reports/payable-details",
-            },
-            {
-              name: "AP Aging Details",
-              href: "/accounting/reports/ap-aging-details",
-            },
-            {
-              name: "Refund History",
-              href: "/accounting/reports/payable-refund-history",
-            },
-            {
-              name: "Purchase Order Details",
-              href: "/accounting/reports/purchase-order-details",
-            },
-            {
-              name: "Expense Details",
-              href: "/accounting/reports/expense-details",
-            },
-            {
-              name: "Expense Summary by Category",
-              href: "/accounting/reports/expense-summary-by-category",
-            },
-            {
-              name: "Expenses by Project",
-              href: "/accounting/reports/expenses-by-project",
-            },
-            {
-              name: "Expenses by Employee",
-              href: "/accounting/reports/expenses-by-employee",
-            },
-            {
-              name: "Billable Expense Details",
-              href: "/accounting/reports/billable-expense-details",
-            },
-            {
-              name: "Purchases by Vendor",
-              href: "/accounting/reports/purchase-orders-by-vendor",
-            },
-            {
-              name: "Payable Summary",
-              href: "/accounting/reports/payable-summary",
-            },
-            {
+             {
               name: "AP Aging Summary",
               href: "/accounting/reports/ap-aging-summary",
             },
-            {
+             {
+              name: "AP Aging Details",
+              href: "/accounting/reports/ap-aging-details",
+            },
+             {
               name: "Bill Details",
               href: "/accounting/reports/bill-details",
             },
@@ -640,16 +597,71 @@ const modulesByPackage = {
               name: "Vendor Credits Details",
               href: "/accounting/reports/vendor-credits-details",
             },
+            {
+              name: "Payments Made",
+              href: "/accounting/reports/payments-made",
+            },
+              {
+              name: "Purchase Order Details",
+              href: "/accounting/reports/purchase-order-details",
+            },
+            {
+              name: "Purchases by Vendor",
+              href: "/accounting/reports/purchase-orders-by-vendor",
+            },
+              {
+              name: "Payable Summary",
+              href: "/accounting/reports/payable-summary",
+            },
+            {
+              name: "Payable Details",
+              href: "/accounting/reports/payable-details",
+            },
+           
+            // {
+            //   name: "Refund History",
+            //   href: "/accounting/reports/payable-refund-history",
+            // },
+          
+            // {
+            //   name: "Expense Details",
+            //   href: "/accounting/reports/expense-details",
+            // },
+            // {
+            //   name: "Expense Summary by Category",
+            //   href: "/accounting/reports/expense-summary-by-category",
+            // },
+            // {
+            //   name: "Expenses by Project",
+            //   href: "/accounting/reports/expenses-by-project",
+            // },
+            // {
+            //   name: "Expenses by Employee",
+            //   href: "/accounting/reports/expenses-by-employee",
+            // },
+            // {
+            //   name: "Billable Expense Details",
+            //   href: "/accounting/reports/billable-expense-details",
+            // },
+            
+          
+           
+           
           ],
         },
 
         {
           name: "Purchases and Expenses",
           subItems: [
-            {
-              name: "Purchase Order Details",
-              href: "/accounting/purchases-and-expenses/purchase-order-details",
+             {
+              name: "Purchases by Vendor",
+              href: "/accounting/purchases-and-expenses/purchases-by-vendor",
             },
+            {
+              name: "Purchases by Item",
+              href: "/accounting/purchases-and-expenses/purchases-by-item",
+            },
+           
             {
               name: "Expense Details",
               href: "/accounting/purchases-and-expenses/expense-details",
@@ -662,22 +674,15 @@ const modulesByPackage = {
               name: "Expenses by Customer",
               href: "/accounting/purchases-and-expenses/expenses-by-customer",
             },
-            {
-              name: "Expenses by Project",
-              href: "/accounting/purchases-and-expenses/expenses-by-project",
-            },
-            {
-              name: "Expenses by Employee",
-              href: "/accounting/purchases-and-expenses/expenses-by-employee",
-            },
-            {
-              name: "Purchases by Vendor",
-              href: "/accounting/purchases-and-expenses/purchases-by-vendor",
-            },
-            {
-              name: "Purchases by Item",
-              href: "/accounting/purchases-and-expenses/purchases-by-item",
-            },
+            // {
+            //   name: "Expenses by Project",
+            //   href: "/accounting/purchases-and-expenses/expenses-by-project",
+            // },
+            // {
+            //   name: "Expenses by Employee",
+            //   href: "/accounting/purchases-and-expenses/expenses-by-employee",
+            // },
+           
             {
               name: "Billable Expense Details",
               href: "/accounting/purchases-and-expenses/billable-expense-details",
@@ -692,39 +697,7 @@ const modulesByPackage = {
               name: "Tax Summary",
               href: "/accounting/reports/tax-summary",
             },
-            {
-              name: "GSTR-7",
-              href: "/accounting/reports/gstr-7",
-            },
-            {
-              name: "GSTR-3B Summary",
-              href: "/accounting/reports/gstr-3b-summary",
-            },
-            {
-              name: "Summary of Inward Supplies",
-              href: "/accounting/reports/summary-of-inward-supplies",
-            },
-            {
-              name: "PMT-06 (Self Assessment Basis)",
-              href: "/accounting/reports/pmt-06-self-assessment-basis",
-            },
-            {
-              name: "Summary of Outward Supplies (GSTR-1)",
-              href: "/accounting/reports/summary-of-outward-supplies-gstr-1",
-            },
-            {
-              name: "Invoice Furnishing Facility (IFF)",
-              href: "/accounting/reports/invoice-furnishing-facility-iff",
-            },
-            {
-              name: "Self-invoice Summary",
-              href: "/accounting/reports/self-invoice-summary",
-            },
-            {
-              name: "TCS Summary (Form No. 27EQ)",
-              href: "/accounting/reports/tcs-summary-form-27eq",
-            },
-            {
+             {
               name: "TDS Summary",
               href: "/accounting/reports/tds-summary",
             },
@@ -732,62 +705,95 @@ const modulesByPackage = {
               name: "TDS Receivables Summary",
               href: "/accounting/reports/tds-receivables-summary",
             },
+            {
+              name: "GSTR-7",
+              href: "/accounting/reports/gstr-7",
+            },
+            {
+              name: "GSTR-3B Summary",
+              href: "/accounting/reports/gstr-3b-summary",
+           },
+            // {
+            //   name: "Summary of Inward Supplies",
+            //   href: "/accounting/reports/summary-of-inward-supplies",
+            // },
+            // {
+            //   name: "PMT-06 (Self Assessment Basis)",
+            //   href: "/accounting/reports/pmt-06-self-assessment-basis",
+            // },
+            // {
+            //   name: "Summary of Outward Supplies (GSTR-1)",
+            //   href: "/accounting/reports/summary-of-outward-supplies-gstr-1",
+            // },
+            // {
+            //   name: "Invoice Furnishing Facility (IFF)",
+            //   href: "/accounting/reports/invoice-furnishing-facility-iff",
+            // },
+            // {
+            //   name: "Self-invoice Summary",
+            //   href: "/accounting/reports/self-invoice-summary",
+            // },
+            // {
+            //   name: "TCS Summary (Form No. 27EQ)",
+            //   href: "/accounting/reports/tcs-summary-form-27eq",
+            // },
+           
           ],
         },
 
-        {
-          name: "Activity",
-          subItems: [
-            {
-              name: "System Mails",
-              href: "/accounting/reports/system-mails",
-            },
-            {
-              name: "Activity Logs & Audit Trail",
-              href: "/accounting/reports/activity-logs-audit-trail",
-            },
-            {
-              name: "Exception Report",
-              href: "/accounting/reports/exception-report",
-            },
-            {
-              name: "Portal Activities",
-              href: "/accounting/reports/portal-activities",
-            },
-            {
-              name: "Customer Reviews",
-              href: "/accounting/reports/customer-reviews",
-            },
-            {
-              name: "API Usage",
-              href: "/accounting/reports/api-usage",
-            },
-          ],
-        },
+        // {
+        //   name: "Activity",
+        //   subItems: [
+        //     {
+        //       name: "System Mails",
+        //       href: "/accounting/reports/system-mails",
+        //     },
+        //     {
+        //       name: "Activity Logs & Audit Trail",
+        //       href: "/accounting/reports/activity-logs-audit-trail",
+        //     },
+        //     {
+        //       name: "Exception Report",
+        //       href: "/accounting/reports/exception-report",
+        //     },
+        //     {
+        //       name: "Portal Activities",
+        //       href: "/accounting/reports/portal-activities",
+        //     },
+        //     {
+        //       name: "Customer Reviews",
+        //       href: "/accounting/reports/customer-reviews",
+        //     },
+        //     {
+        //       name: "API Usage",
+        //       href: "/accounting/reports/api-usage",
+        //     },
+        //   ],
+        // },
 
         {
           name: "Account",
           subItems: [
-            {
-              name: "Account Transactions",
-              href: "/accounting/reports/account-transactions",
-            },
-            {
-              name: "Day Book",
-              href: "/accounting/reports/day-book",
-            },
-            {
-              name: "Journal Report",
-              href: "/accounting/reports/journal-report",
-            },
-            {
-              name: "General Ledger",
-              href: "/accounting/reports/general-ledger",
-            },
-            {
-              name: "Detailed General Ledger",
-              href: "/accounting/reports/detailed-general-ledger",
-            },
+            // {
+            //   name: "Account Transactions",
+            //   href: "/accounting/reports/account-transactions",
+            // },
+            // {
+            //   name: "Day Book",
+            //   href: "/accounting/reports/day-book",
+            // },
+            // {
+            //   name: "Journal Report",
+            //   href: "/accounting/reports/journal-report",
+            // },
+            // {
+            //   name: "General Ledger",
+            //   href: "/accounting/reports/general-ledger",
+            // },
+            // {
+            //   name: "Detailed General Ledger",
+            //   href: "/accounting/reports/detailed-general-ledger",
+            // },
             {
               name: "Trial Balance",
               href: "/accounting/reports/trial-balance",
@@ -795,52 +801,52 @@ const modulesByPackage = {
           ],
         },
 
-        {
-          name: "Fixed Asset",
-          subItems: [
-            {
-              name: "Fixed Asset Register",
-              href: "/accounting/reports/fixed-asset-register",
-            },
-          ],
-        },
-        {
-          name: "Project",
-          subItems: [
-            {
-              name: "Name of Project",
-              href: "/accounting/reports/name-of-project",
-            },
-            {
-              name: "Timesheet Details",
-              href: "/accounting/reports/timesheet-details",
-            },
-            {
-              name: "Timesheet Profitability Summary",
-              href: "/accounting/reports/timesheet-profitability-summary",
-            },
-            {
-              name: "Project Summary",
-              href: "/accounting/reports/project-summary",
-            },
-            {
-              name: "Project Details",
-              href: "/accounting/reports/project-details",
-            },
-            {
-              name: "Projects Cost Summary",
-              href: "/accounting/reports/projects-cost-summary",
-            },
-            {
-              name: "Projects Revenue Summary",
-              href: "/accounting/reports/projects-revenue-summary",
-            },
-            {
-              name: "Projects Performance Summary",
-              href: "/accounting/reports/projects-performance-summary",
-            },
-          ],
-        },
+        // {
+        //   name: "Fixed Asset",
+        //   subItems: [
+        //     {
+        //       name: "Fixed Asset Register",
+        //       href: "/accounting/reports/fixed-asset-register",
+        //     },
+        //   ],
+        // },
+        // {
+        //   name: "Project",
+        //   subItems: [
+        //     {
+        //       name: "Name of Project",
+        //       href: "/accounting/reports/name-of-project",
+        //     },
+        //     {
+        //       name: "Timesheet Details",
+        //       href: "/accounting/reports/timesheet-details",
+        //     },
+        //     {
+        //       name: "Timesheet Profitability Summary",
+        //       href: "/accounting/reports/timesheet-profitability-summary",
+        //     },
+        //     {
+        //       name: "Project Summary",
+        //       href: "/accounting/reports/project-summary",
+        //     },
+        //     {
+        //       name: "Project Details",
+        //       href: "/accounting/reports/project-details",
+        //     },
+        //     {
+        //       name: "Projects Cost Summary",
+        //       href: "/accounting/reports/projects-cost-summary",
+        //     },
+        //     {
+        //       name: "Projects Revenue Summary",
+        //       href: "/accounting/reports/projects-revenue-summary",
+        //     },
+        //     {
+        //       name: "Projects Performance Summary",
+        //       href: "/accounting/reports/projects-performance-summary",
+        //     },
+        //   ],
+        // },
 
       ],
     },

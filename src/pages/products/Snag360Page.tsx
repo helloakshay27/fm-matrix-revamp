@@ -1,12 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useProductSecurity } from "./useProductSecurity";
-import {
-  CameraPermissionPending,
-  CameraPermissionDenied,
-  ModelLoadingScreen,
-  SecurityOverlays,
-  AlwaysMountedVideos,
-} from "./SecurityOverlays";
+import { SecurityOverlays } from "./SecurityOverlays";
 import {
   ArrowLeft,
   Monitor,
@@ -774,7 +768,7 @@ const productData = {
         },
         {
           rank: 4,
-          industry: "Industrial and Warehousing Construction",
+          industry: "Industrial and Warehousing Construction (Warehousing)",
           buyReason:
             "Quality checks for fit-out, MEP, safety compliance before occupancy; lease agreement quality clauses",
           scale:
@@ -784,7 +778,7 @@ const productData = {
         },
         {
           rank: 5,
-          industry: "Facility Management Organizations",
+          industry: "Facility Management",
           buyReason:
             "Post-handover snag tracking; maintenance request management; asset condition documentation at takeover",
           scale:
@@ -794,7 +788,8 @@ const productData = {
         },
         {
           rank: 6,
-          industry: "Government and Public Infrastructure (PWD, NHAI, Metro)",
+          industry:
+            "Government and Public Infrastructure (PWD, NHAI, Metro) (EPCE)",
           buyReason:
             "Mandatory quality audits for public works; third-party inspection documentation; anti-corruption audit trail",
           scale:
@@ -804,7 +799,7 @@ const productData = {
         },
         {
           rank: 7,
-          industry: "Healthcare and Education Facility Construction",
+          industry: "Healthcare and Education Facility Construction (EPCE)",
           buyReason:
             "High compliance standards; infection control QC; zero-defect medical-grade finishing requirements",
           scale:
@@ -824,7 +819,8 @@ const productData = {
         },
         {
           rank: 9,
-          industry: "Affordable Housing (PMAY, State Housing Schemes)",
+          industry:
+            "Affordable Housing (PMAY, State Housing Schemes) (Residential Real Estate)",
           buyReason:
             "Volume delivery with standardized quality benchmarks; government audit compliance; digital handover required",
           scale:
@@ -834,7 +830,7 @@ const productData = {
         },
         {
           rank: 10,
-          industry: "Special Economic Zones and Industrial Parks",
+          industry: "Special Economic Zones and Industrial Parks (IT Parks)",
           buyReason:
             "Multi-building phased delivery; tenant-specific finishing quality; pre-occupancy punch list",
           scale:
@@ -3986,32 +3982,6 @@ const Snag360Page: React.FC = () => {
   const navigate = useNavigate();
   const security = useProductSecurity();
   const snagTabsScrollRef = useRef<HTMLDivElement>(null);
-
-  // Security checks
-  if (security.cameraPermission === "pending") {
-    return (
-      <>
-        <AlwaysMountedVideos security={security} />
-        <CameraPermissionPending />
-      </>
-    );
-  }
-  if (security.cameraPermission === "denied") {
-    return (
-      <>
-        <AlwaysMountedVideos security={security} />
-        <CameraPermissionDenied />
-      </>
-    );
-  }
-  if (security.modelLoading) {
-    return (
-      <>
-        <AlwaysMountedVideos security={security} />
-        <ModelLoadingScreen />
-      </>
-    );
-  }
 
   // Extract use cases data for custom component
   const industryUseCases =

@@ -1,0 +1,659 @@
+export default function SurveySwotAnalysisContent() {
+  return (
+    <>
+      <div className="ritz grid-container" dir="ltr">
+        <table className="waffle no-grid" cellSpacing="0" cellPadding="0">
+          <thead>
+            <tr>
+              <th className="row-header freezebar-origin-ltr"></th>
+              <th
+                id="491668293C0"
+                style={{ width: 34 }}
+                className="column-headers-background"
+              >
+                A
+              </th>
+              <th
+                id="491668293C1"
+                style={{ width: 335 }}
+                className="column-headers-background"
+              >
+                B
+              </th>
+              <th
+                id="491668293C2"
+                style={{ width: 34 }}
+                className="column-headers-background"
+              >
+                C
+              </th>
+              <th
+                id="491668293C3"
+                style={{ width: 335 }}
+                className="column-headers-background"
+              >
+                D
+              </th>
+              <th
+                id="491668293C4"
+                style={{ width: 34 }}
+                className="column-headers-background"
+              >
+                E
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style={{ height: 36 }}>
+              <th
+                id="491668293R0"
+                style={{ height: 36 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 36 }}>
+                  1
+                </div>
+              </th>
+              <td className="s0" colSpan="5">
+                SWOT Analysis (10 per quadrant)
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R1"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  2
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R2"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  3
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s3">STRENGTHS</td>
+              <td className="s2"></td>
+              <td className="s4">WEAKNESSES</td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R3"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  4
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s5">
+                Native QR-to-ticket workflow: Survey is the only India-built
+                platform that natively links a QR scan, a negative survey
+                response, and automatic ticket creation without requiring any
+                third-party integration or Zapier configuration.
+              </td>
+              <td className="s2"></td>
+              <td className="s6">
+                No WhatsApp or SMS distribution: Survey is limited to QR-based
+                feedback collection. The absence of WhatsApp distribution is a
+                GAP against all three top India-market competitors and blocks
+                penetration into digital CX use cases.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R4"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  5
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s5">
+                Embedded ticket detail panel: The ticket panel inside the
+                response detail view - showing TAT, escalation level,
+                assignment, and resolution status - is a unique feature
+                unavailable in Zonka Feedback, SurveySensum, or SurveySparrow at
+                any price tier.
+              </td>
+              <td className="s2"></td>
+              <td className="s6">
+                No AI sentiment analysis: Open-text responses require manual
+                reading. Competitors including Zonka Feedback, SurveySensum, and
+                SurveySparrow CogniVue offer automated NLP-based sentiment
+                scoring and theme detection.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R5"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  6
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s5">
+                Location mapping architecture: The unique-QR-per-mapping design
+                with bulk location import, active/inactive controls, and a
+                central mapping list is built specifically for multi-location
+                operations teams - not retrofitted from a digital survey tool.
+              </td>
+              <td className="s2"></td>
+              <td className="s6">
+                No native Freshdesk or Zendesk integration: Organizations with
+                mandated helpdesk platforms cannot push Survey tickets into
+                their existing queue. This is a direct disqualifier in
+                enterprise evaluations with IT-mandated tool stacks.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R6"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  7
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s5">
+                Pre-triaged complaint capture: The additional field on negative
+                selection captures the root cause reason (cleanliness, wait
+                time, billing error) at the point of submission, saving helpdesk
+                teams 3 to 5 minutes per ticket on manual categorization.
+              </td>
+              <td className="s2"></td>
+              <td className="s6">
+                No offline kiosk mode: Survey requires active internet
+                connectivity for respondents to submit feedback. This blocks
+                deployment in healthcare waiting rooms, rural retail locations,
+                and areas with unreliable Wi-Fi.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R7"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  8
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s5">
+                Self-serve deployment: Survey can be fully configured and
+                go-live by the operations team without requiring IT involvement
+                or a CX consultant. Bulk import and auto-QR generation make a
+                100-location rollout achievable in under a day.
+              </td>
+              <td className="s2"></td>
+              <td className="s6">
+                No NPS question type: Net Promoter Score is the mandated
+                measurement metric in BFSI, healthcare, and enterprise CX
+                programs. Its absence disqualifies Survey from these segments
+                until NPS is added in Phase 2.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R8"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  9
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s5">
+                India-built product with local pricing: Pricing in INR, local
+                support availability, and data hosting options suited for Indian
+                enterprise compliance requirements give Survey an inherent trust
+                advantage over foreign SaaS tools.
+              </td>
+              <td className="s2"></td>
+              <td className="s6">
+                No mobile app: Survey has no native iOS or Android app for
+                administrators or respondents. All access is web-based. This
+                limits the use case for field teams who manage surveys on mobile
+                devices.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R9"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  10
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s5">
+                Operations-centric design: Every feature in Survey is designed
+                for the operations team&#39;s daily workflow - not for research,
+                marketing, or HR. This focus means the product is immediately
+                useful to the buyer persona without training.
+              </td>
+              <td className="s2"></td>
+              <td className="s6">
+                No predictive analytics: Survey shows historical response data
+                but cannot predict which locations are at risk of satisfaction
+                decline. Competitors like Qualtrics (Text iQ) and Medallia offer
+                predictive models.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R10"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  11
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s5">
+                Heat-map analytics at no extra cost: Location-level heat-map
+                style analytics are available in all paid plans. Competing tools
+                (Qualtrics, Medallia) gate this capability behind enterprise
+                pricing.
+              </td>
+              <td className="s2"></td>
+              <td className="s6">
+                Brand recognition is limited: Survey is an early-stage product
+                competing against globally recognized brands (SurveyMonkey,
+                Qualtrics, Typeform). Procurement teams may default to known
+                brands during shortlisting.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R11"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  12
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s5">
+                Excel export across all modules: Response records, mapping
+                lists, and question configurations can all be exported to Excel
+                in standard formats. This meets the reporting needs of
+                operations and FM teams without BI tool integration.
+              </td>
+              <td className="s2"></td>
+              <td className="s6">
+                Limited integrations: Survey does not integrate with CRM tools
+                (Salesforce, HubSpot), BI tools (Power BI, Tableau), or
+                communication platforms (Slack, Teams). This limits its appeal
+                to organizations with existing data stacks.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R12"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  13
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s5">
+                Complaint channel configuration: Admin Portal allows the
+                helpdesk team to configure how complaints are tagged by source
+                (QR survey, walk-in, email), enabling multi-source ticket
+                management from a single platform.
+              </td>
+              <td className="s2"></td>
+              <td className="s6">
+                Single-language interface: The survey respondent interface and
+                admin portal are currently available in English only. This
+                limits penetration in Hindi-belt markets, South India, and
+                government/public utility segments.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R13"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  14
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td className="s2"></td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R14"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  15
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s7">OPPORTUNITIES</td>
+              <td className="s2"></td>
+              <td className="s8">THREATS</td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R15"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  16
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s9">
+                India organized retail expansion: India&#39;s organized retail
+                sector is growing at 20%+ CAGR with chains expanding from 50 to
+                500+ stores. Each new store is an addressable location for
+                Survey&#39;s QR-per-location model.
+              </td>
+              <td className="s2"></td>
+              <td className="s10">
+                Zonka Feedback adds native ticket creation: If Zonka Feedback
+                adds a native negative-to-ticket workflow without requiring
+                Zapier, Survey&#39;s primary AHEAD feature narrows. Timeline
+                risk: 12 to 18 months based on their 2024/2025 roadmap.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R16"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  17
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s9">
+                FM companies under SLA documentation pressure: Corporate clients
+                in GCC and IT sectors are mandating CSAT data in FM contracts
+                from 2024. FM companies currently have no structured digital
+                mechanism to produce this data - Survey fills the gap directly.
+              </td>
+              <td className="s2"></td>
+              <td className="s10">
+                SurveySensum expands physical touchpoint features: SurveySensum
+                added QR code survey support in 2024. If they add location
+                mapping and ticket integration, they could target FM and
+                hospitality with their existing enterprise relationships.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R17"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  18
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s9">
+                Hospitality rebound and OTA review pressure: India&#39;s hotel
+                market is growing at 4.31% CAGR to 2035. Rising OTA platform
+                competition makes in-stay feedback recovery a commercial
+                necessity, creating urgency for Survey&#39;s hospitality use
+                case.
+              </td>
+              <td className="s2"></td>
+              <td className="s10">
+                Global players release India-priced tiers: SurveyMonkey or
+                Qualtrics releasing an India-market pricing tier at INR 2,000 to
+                5,000/month would create a brand-recognition-backed competitor
+                at Survey&#39;s price point.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R18"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  19
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s9">
+                NABH accreditation requirements for healthcare: NABH standards
+                require documented patient satisfaction data. Over 1,000
+                hospitals and 5,000+ clinics in India are pursuing or
+                maintaining NABH accreditation, requiring digital feedback
+                infrastructure.
+              </td>
+              <td className="s2"></td>
+              <td className="s10">
+                HappyOrNot enhances its digital QR product: HappyOrNot launched
+                a digital QR companion product in 2023. If they add ticket
+                integration and location analytics, they become a direct
+                hardware-plus-digital competitor in retail and hospitality.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R19"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  20
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s9">
+                Government push for digital citizen feedback: Smart City
+                initiatives and DigiLocker-linked public service reforms include
+                mandates for citizen satisfaction measurement at government
+                touchpoints. Survey can serve as the QR feedback layer for this
+                requirement.
+              </td>
+              <td className="s2"></td>
+              <td className="s10">
+                Zoho bundles survey features into Zoho Desk for free: Zoho could
+                add QR-per-location mapping and basic ticket automation into
+                Zoho Desk as a free feature for Zoho One subscribers, making it
+                hard for Survey to displace Zoho in the SMB segment.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R20"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  21
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s9">
+                Phase 1 roadmap unlocks WhatsApp and AI: Adding WhatsApp
+                distribution and AI sentiment analysis in Phase 1 opens the
+                digital CX buyer segment (Zonka Feedback&#39;s current customer
+                base) without requiring a product rearchitecture.
+              </td>
+              <td className="s2"></td>
+              <td className="s10">
+                Customer data privacy regulations tightening in India: The
+                Digital Personal Data Protection (DPDP) Act 2023 creates
+                compliance obligations for survey response data. Non-compliance
+                risk if data handling practices are not aligned with DPDP
+                requirements.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R21"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  22
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s9">
+                FM as a channel partner: FM companies that adopt Survey as a
+                client-facing tool can resell it as part of their integrated
+                service offering to their enterprise clients, creating a channel
+                with 20 to 300 locations per deal.
+              </td>
+              <td className="s2"></td>
+              <td className="s10">
+                Survey fatigue at high-footfall locations: If QR response rates
+                decline because of repeated scanning from the same visitors, the
+                product&#39;s primary value (volume of feedback) erodes. This is
+                a risk at corporate campuses and hospitality locations with the
+                same repeat visitors.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R22"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  23
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s9">
+                Airport and transit hub expansion: India&#39;s airport expansion
+                program (50+ new airports by 2030) creates a new high-footfall
+                physical feedback market where Survey&#39;s location mapping and
+                QR architecture is directly applicable.
+              </td>
+              <td className="s2"></td>
+              <td className="s10">
+                Economic slowdown affecting operations software budgets: If
+                mid-market Indian companies cut non-core software budgets in a
+                downturn, CX feedback tools in the INR 2,000 to 10,000/month
+                range are at risk of cancellation in cost-cutting exercises.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R23"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  24
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s9">
+                Southeast Asia and Middle East expansion: The same
+                multi-location feedback problem exists in retail and hospitality
+                markets in the UAE, Singapore, and Malaysia. Survey&#39;s
+                India-built architecture is compatible with these markets
+                without major localization investment.
+              </td>
+              <td className="s2"></td>
+              <td className="s10">
+                Helpdesk platform consolidation: If Freshdesk or Zendesk adds
+                QR-based feedback collection natively within their helpdesk
+                products, they could offer an integrated helpdesk-plus-feedback
+                solution that Survey cannot easily compete with at a similar
+                price point.
+              </td>
+              <td></td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="491668293R24"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  25
+                </div>
+              </th>
+              <td className="s1"></td>
+              <td className="s9">
+                Banking branch network feedback mandates: RBI guidelines on
+                customer grievance redressal are tightening. Banks with 1,000+
+                branches need a structured digital feedback mechanism that
+                Survey can provide with its QR-to-ticket workflow.
+              </td>
+              <td className="s2"></td>
+              <td className="s10">
+                WhatsApp Business API access constraints: Meta&#39;s WhatsApp
+                Business API has tiered access and messaging limits that can
+                constrain survey distribution at scale. API cost and approval
+                process could delay or reduce the impact of Survey&#39;s Phase 1
+                WhatsApp distribution feature.
+              </td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
