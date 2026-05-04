@@ -9,12 +9,7 @@ import {
 } from "../../components/ui/tabs";
 import { ProductData } from "./types";
 import { useProductSecurity } from "./useProductSecurity";
-import {
-  CameraPermissionPending,
-  CameraPermissionDenied,
-  ModelLoadingScreen,
-  SecurityOverlays,
-} from "./SecurityOverlays";
+import { SecurityOverlays } from "./SecurityOverlays";
 import SummaryTab from "./tabs/SummaryTab";
 import FeaturesTab from "./tabs/FeaturesTab";
 import MarketTab from "./tabs/MarketTab";
@@ -128,17 +123,6 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
     ...customTabContent,
   };
 
-  // Camera permission gate — must grant before seeing content
-  if (security.cameraPermission === "pending") {
-    return <CameraPermissionPending />;
-  }
-  if (security.cameraPermission === "denied") {
-    return <CameraPermissionDenied />;
-  }
-  if (security.modelLoading) {
-    return <ModelLoadingScreen />;
-  }
-
   return (
     <div
       className={`min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300 ${security.showBlankScreen ? "blur-3xl brightness-50 pointer-events-none" : ""}`}
@@ -177,7 +161,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
               className="overflow-x-auto no-scrollbar mb-8"
             >
               <div className="flex justify-start pb-2 px-1">
-                <TabsList className="inline-flex gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5  h-auto items-center justify-start">
+                <TabsList className="inline-flex min-w-max gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5  h-auto items-center justify-start">
                   {tabOrder.map((tabId) => (
                     <TabsTrigger
                       key={tabId}
@@ -193,7 +177,7 @@ const BaseProductPage: React.FC<BaseProductPageProps> = ({
           ) : (
             <div className="overflow-x-auto no-scrollbar mb-8">
               <div className="flex justify-start pb-2 px-1">
-                <TabsList className="inline-flex gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5  h-auto items-center justify-start">
+                <TabsList className="inline-flex min-w-max gap-1 bg-[#F6F4EE] border-[1.31px] border-[#C4B89D] rounded-full p-1.5  h-auto items-center justify-start">
                   {tabOrder.map((tabId) => (
                     <TabsTrigger
                       key={tabId}

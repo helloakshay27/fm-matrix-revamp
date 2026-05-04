@@ -157,9 +157,16 @@ export const AMCDetailsPage = () => {
   // AMC Visits History state
   const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
   const [showVisitEditModal, setShowVisitEditModal] = useState(false);
+  const [visitEditVisitNumber, setVisitEditVisitNumber] = useState("");
+  const [visitEditVisitDate, setVisitEditVisitDate] = useState("");
+  const [visitEditActualVisitDate, setVisitEditActualVisitDate] = useState("");
+  const [visitEditTechnicianId, setVisitEditTechnicianId] = useState("");
   const [visitEditRemarks, setVisitEditRemarks] = useState("");
   const [visitEditStatus, setVisitEditStatus] = useState("");
   const [visitEditDocument, setVisitEditDocument] = useState<File | null>(null);
+  const [visitEditSelectedAssetIds, setVisitEditSelectedAssetIds] = useState<number[]>([]);
+  const [visitTechnicians, setVisitTechnicians] = useState<Technician[]>([]);
+  const [visitTechniciansLoading, setVisitTechniciansLoading] = useState(false);
   const [visitUpdateLoading, setVisitUpdateLoading] = useState(false);
 
   const fetchTicketsForAssets = async (assetIds: number[]) => {
@@ -242,6 +249,31 @@ export const AMCDetailsPage = () => {
     }
   };
 
+  const fetchVisitTechnicians = async () => {
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    if (!baseUrl || !token) return;
+    setVisitTechniciansLoading(true);
+    try {
+      const res = await fetch(
+        `https://${baseUrl}/pms/users/get_escalate_to_users.json`,
+        { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : (data.users ?? []);
+        // normalise full_name → name so the dropdown label always has a value
+        setVisitTechnicians(
+          list.map((u: any) => ({ ...u, name: u.full_name || u.name || "" }))
+        );
+      }
+    } catch (e) {
+      console.error("Technicians fetch error:", e);
+    } finally {
+      setVisitTechniciansLoading(false);
+    }
+  };
+
   const handleVisitUpdate = async () => {
     if (!selectedVisitId) return;
     const baseUrl = localStorage.getItem("baseUrl");
@@ -251,8 +283,15 @@ export const AMCDetailsPage = () => {
     try {
       const formData = new FormData();
       formData.append("id", String(selectedVisitId));
+      if (visitEditVisitNumber) formData.append("amc_history[visit_number]", visitEditVisitNumber);
+      if (visitEditVisitDate) formData.append("amc_history[visit_date]", visitEditVisitDate);
+      if (visitEditActualVisitDate) formData.append("amc_history[actual_visit_date]", visitEditActualVisitDate);
+      if (visitEditTechnicianId) formData.append("amc_history[technician_id]", visitEditTechnicianId);
       formData.append("amc_history[remarks]", visitEditRemarks);
       formData.append("amc_history[status]", visitEditStatus);
+      visitEditSelectedAssetIds.forEach((assetId) =>
+        formData.append("amc_history[asset_ids][]", String(assetId))
+      );
       if (visitEditDocument) {
         formData.append("amc_history[document]", visitEditDocument);
       }
@@ -445,7 +484,7 @@ export const AMCDetailsPage = () => {
               { label: "AMC Information", value: "amc-information" },
               { label: "Supplier Information", value: "supplier-information" },
               { label: "Attachments", value: "attachments" },
-              { label: "Scheduled AMC", value: "scheduled-amc" },
+              { label: "Scheduled Tasks", value: "scheduled-amc" },
               { label: "Tickets", value: "tickets" },
               { label: "AMC Visits History", value: "amc-visits-history" },
               { label: "Association", value: "association" },
@@ -1098,7 +1137,7 @@ export const AMCDetailsPage = () => {
                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
                     <Calendar className="w-5 h-5 text-[#C72030]" />
                   </div>
-                  Scheduled AMC
+                  Scheduled Tasks
                 </CardTitle>
               </CardHeader>
               <CardContent
@@ -1421,17 +1460,19 @@ export const AMCDetailsPage = () => {
                         <TableHead className="w-10" />
                         <TableHead className="font-semibold text-[#1a1a1a]">Visit #</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Visit Date</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Asset Period</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Actual Visit Date</TableHead>
+                        {/* <TableHead className="font-semibold text-[#1a1a1a]">Asset Period</TableHead> */}
                         <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody className="bg-white">
                       {amcVisitData.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center py-6 text-gray-500">
+                          <TableCell colSpan={10} className="text-center py-6 text-gray-500">
                             No visit history found.
                           </TableCell>
                         </TableRow>
@@ -1464,8 +1505,18 @@ export const AMCDetailsPage = () => {
                                   : "—"}
                               </TableCell>
                               <TableCell className="text-gray-900">
-                                {visit.asset_period || "—"}
+                                {(visit as any).actual_visit_date
+                                  ? (() => {
+                                      const raw = (visit as any).actual_visit_date as string;
+                                      if (raw.includes("/")) return raw;
+                                      const d = new Date(raw);
+                                      return isNaN(d.getTime()) ? raw : d.toLocaleDateString("en-GB");
+                                    })()
+                                  : "—"}
                               </TableCell>
+                              {/* <TableCell className="text-gray-900">
+                                {visit.asset_period || "—"}
+                              </TableCell> */}
                               <TableCell className="text-gray-900">
                                 {visit.technician?.name || "—"}
                               </TableCell>
@@ -1488,6 +1539,20 @@ export const AMCDetailsPage = () => {
                                 ) : (
                                   <span className="text-gray-400 text-sm">—</span>
                                 )}
+                              </TableCell>
+                              <TableCell>
+                                {(() => {
+                                  const ids: any[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
+                                  const total = amcDetails?.amc_assets?.length ?? 0;
+                                  const covered = ids.length;
+                                  return covered > 0 ? (
+                                    <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FFF0F0] text-[#C72030]">
+                                      {covered}{total > 0 ? ` / ${total}` : ""}
+                                    </span>
+                                  ) : (
+                                    <span className="text-gray-400 text-sm">—</span>
+                                  );
+                                })()}
                               </TableCell>
                               <TableCell>
                                 {visit.attachment?.document || visit.attachment?.document_url ? (
@@ -1516,11 +1581,70 @@ export const AMCDetailsPage = () => {
 
             {/* Edit Visit Modal */}
             <Dialog open={showVisitEditModal} onOpenChange={setShowVisitEditModal}>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="text-[#1a1a1a] font-semibold">Edit Visit</DialogTitle>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader className="border-b border-gray-100 pb-3">
+                  <DialogTitle className="text-[#1a1a1a] font-semibold text-base uppercase tracking-wide">
+                    Add Visit
+                  </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-5 py-2">
+
+                <div className="space-y-4 py-3">
+                  {/* Row 1: Visit Number + Visit Date */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">
+                        Visit Number <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={visitEditVisitNumber}
+                        onChange={(e) => setVisitEditVisitNumber(e.target.value)}
+                        placeholder="Enter Visit Number"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">Visit Date</label>
+                      <input
+                        type="date"
+                        value={visitEditVisitDate}
+                        onChange={(e) => setVisitEditVisitDate(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Row 2: Actual Visit Date + Technician */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">Actual Visit Date</label>
+                      <input
+                        type="date"
+                        value={visitEditActualVisitDate}
+                        onChange={(e) => setVisitEditActualVisitDate(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">Technician</label>
+                      <select
+                        value={visitEditTechnicianId}
+                        onChange={(e) => setVisitEditTechnicianId(e.target.value)}
+                        disabled={visitTechniciansLoading}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030] disabled:bg-gray-50"
+                      >
+                        <option value="">
+                          {visitTechniciansLoading ? "Loading..." : "Select Technician"}
+                        </option>
+                        {visitTechnicians.map((t) => (
+                          <option key={t.id} value={String(t.id)}>
+                            {t.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
                   {/* Remarks */}
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-gray-700">Remarks</label>
@@ -1533,70 +1657,156 @@ export const AMCDetailsPage = () => {
                     />
                   </div>
 
-                  {/* Status */}
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Status</label>
-                    <select
-                      value={visitEditStatus}
-                      onChange={(e) => setVisitEditStatus(e.target.value)}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
-                    >
-                      <option value="">Select status</option>
-                      <option value="pending">Pending</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                  </div>
-
-                  {/* Attachment */}
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-gray-700">Attachment</label>
-                    <div
-                      className="flex items-center gap-3 border border-dashed border-gray-300 rounded-md px-4 py-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() =>
-                        document.getElementById("visit-doc-input")?.click()
-                      }
-                    >
-                      <Paperclip className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                      <span className="text-sm text-gray-500 truncate">
-                        {visitEditDocument
-                          ? visitEditDocument.name
-                          : "Click to attach a file"}
-                      </span>
-                      <input
-                        id="visit-doc-input"
-                        type="file"
-                        className="hidden"
-                        onChange={(e) =>
-                          setVisitEditDocument(e.target.files?.[0] || null)
-                        }
-                      />
-                    </div>
-                    {visitEditDocument && (
-                      <button
-                        className="text-xs text-red-500 hover:underline mt-1"
-                        onClick={() => setVisitEditDocument(null)}
+                  {/* Row 3: Status + Attachment */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">Status</label>
+                      <select
+                        value={visitEditStatus}
+                        onChange={(e) => setVisitEditStatus(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C72030]"
                       >
-                        Remove file
-                      </button>
-                    )}
+                        <option value="">Select status</option>
+                        <option value="pending">Pending</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium text-gray-700">Attachment</label>
+                      <div
+                        className="flex items-center gap-2 border border-dashed border-gray-300 rounded-md px-3 py-2 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                        onClick={() => document.getElementById("visit-doc-input")?.click()}
+                      >
+                        <Paperclip className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-500 truncate flex-1">
+                          {visitEditDocument ? visitEditDocument.name : "Choose File"}
+                        </span>
+                        {visitEditDocument && (
+                          <button
+                            className="text-xs text-red-500 hover:underline flex-shrink-0"
+                            onClick={(e) => { e.stopPropagation(); setVisitEditDocument(null); }}
+                          >
+                            Remove
+                          </button>
+                        )}
+                        <input
+                          id="visit-doc-input"
+                          type="file"
+                          className="hidden"
+                          onChange={(e) => setVisitEditDocument(e.target.files?.[0] || null)}
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                  {/* Assets Table */}
+                  {amcDetails?.amc_assets && amcDetails.amc_assets.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-gray-700">
+                          Assets — select completed
+                        </label>
+                        <span className="text-sm font-semibold text-[#C72030] bg-[#FFF0F0] px-2.5 py-0.5 rounded-full">
+                          {visitEditSelectedAssetIds.length} / {amcDetails.amc_assets.length}
+                        </span>
+                      </div>
+                      <div className="border border-gray-200 rounded-md overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-[#EDEAE3]">
+                              <TableHead className="w-10">
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 accent-[#C72030] cursor-pointer"
+                                  checked={
+                                    visitEditSelectedAssetIds.length === amcDetails.amc_assets.length
+                                  }
+                                  onChange={(e) =>
+                                    setVisitEditSelectedAssetIds(
+                                      e.target.checked
+                                        ? amcDetails.amc_assets.map((a: any) => a.asset_id)
+                                        : []
+                                    )
+                                  }
+                                />
+                              </TableHead>
+                              <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Name</TableHead>
+                              <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Code</TableHead>
+                              <TableHead className="font-semibold text-[#1a1a1a] text-xs">Status</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody className="bg-white">
+                            {amcDetails.amc_assets.map((asset: any) => {
+                              const checked = visitEditSelectedAssetIds.includes(asset.asset_id);
+                              return (
+                                <TableRow
+                                  key={asset.id}
+                                  className={`border-b border-gray-100 cursor-pointer transition-colors ${checked ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
+                                  onClick={() =>
+                                    setVisitEditSelectedAssetIds((prev) =>
+                                      checked
+                                        ? prev.filter((x) => x !== asset.asset_id)
+                                        : [...prev, asset.asset_id]
+                                    )
+                                  }
+                                >
+                                  <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                                    <input
+                                      type="checkbox"
+                                      className="w-4 h-4 accent-[#C72030] cursor-pointer"
+                                      checked={checked}
+                                      onChange={() =>
+                                        setVisitEditSelectedAssetIds((prev) =>
+                                          checked
+                                            ? prev.filter((x) => x !== asset.asset_id)
+                                            : [...prev, asset.asset_id]
+                                        )
+                                      }
+                                    />
+                                  </TableCell>
+                                  <TableCell className="text-sm text-gray-900 py-2">
+                                    {asset.asset_name || "—"}
+                                  </TableCell>
+                                  <TableCell className="text-sm text-gray-600 py-2">
+                                    {asset.asset_code || "—"}
+                                  </TableCell>
+                                  <TableCell className="py-2">
+                                    <span
+                                      className={`px-2 py-0.5 text-xs rounded uppercase font-medium ${
+                                        asset.asset_status === "active"
+                                          ? "bg-green-100 text-green-700"
+                                          : "bg-gray-100 text-gray-600"
+                                      }`}
+                                    >
+                                      {asset.asset_status || "—"}
+                                    </span>
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-center gap-3 pt-3 border-t border-gray-100">
                     <Button
                       variant="outline"
                       onClick={() => setShowVisitEditModal(false)}
                       disabled={visitUpdateLoading}
+                      className="min-w-[100px]"
                     >
                       Cancel
                     </Button>
                     <Button
                       style={{ backgroundColor: "#C72030" }}
-                      className="text-white hover:bg-[#C72030]/90 min-w-[80px]"
+                      className="text-white hover:bg-[#C72030]/90 min-w-[100px]"
                       disabled={visitUpdateLoading}
                       onClick={handleVisitUpdate}
                     >
-                      {visitUpdateLoading ? "Saving..." : "Save"}
+                      {visitUpdateLoading ? "Saving..." : "Submit"}
                     </Button>
                   </div>
                 </div>
@@ -2018,9 +2228,36 @@ export const AMCDetailsPage = () => {
                 className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 h-auto mr-6"
                 onClick={() => {
                   const visit = amcVisitData.find((v) => v.id === selectedVisitId);
+                  setVisitEditVisitNumber(String((visit as any)?.visit_number ?? ""));
+                  setVisitEditVisitDate((visit as any)?.visit_date ? (() => {
+                    const raw = (visit as any).visit_date as string;
+                    if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+                      const [d, m, y] = raw.split("/");
+                      return `${y}-${m}-${d}`;
+                    }
+                    return raw.slice(0, 10);
+                  })() : "");
+                  setVisitEditActualVisitDate((visit as any)?.actual_visit_date ? (() => {
+                    const raw = (visit as any).actual_visit_date as string;
+                    if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+                      const [d, m, y] = raw.split("/");
+                      return `${y}-${m}-${d}`;
+                    }
+                    return raw.slice(0, 10);
+                  })() : "");
+                  setVisitEditTechnicianId(String(visit?.technician?.id ?? ""));
                   setVisitEditRemarks((visit as any)?.remarks || "");
                   setVisitEditStatus((visit as any)?.status || "");
                   setVisitEditDocument(null);
+                  // Pre-select assets that were already covered in this visit
+                  const existingAssetIds: number[] = (
+                    (visit as any)?.asset_ids ||
+                    (visit as any)?.amc_asset_ids ||
+                    (visit as any)?.covered_asset_ids ||
+                    []
+                  ).map(Number).filter(Boolean);
+                  setVisitEditSelectedAssetIds(existingAssetIds);
+                  fetchVisitTechnicians();
                   setShowVisitEditModal(true);
                 }}
               >
