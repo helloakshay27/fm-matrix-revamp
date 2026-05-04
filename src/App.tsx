@@ -744,7 +744,6 @@ import { EmailRuleSetupPage } from "./pages/maintenance/EmailRuleSetupPage";
 import { TaskEscalationPage } from "./pages/maintenance/TaskEscalationPage";
 import { TicketManagementSetupPage } from "./pages/maintenance/TicketManagementSetupPage";
 import { MobileTicketsPage } from "./pages/mobile/MobileTicketsPage";
-import { MobileNewTicketPage } from "./pages/mobile/MobileNewTicketPage";
 import { TicketListPage } from "./pages/TicketListPage";
 import { MobileRestaurantPage } from "./pages/mobile/MobileRestaurantPage";
 import { MobileAssetPage } from "./pages/mobile/MobileAssetPage";
@@ -6480,7 +6479,7 @@ function App() {
                         />
                         <Route
                           path="/mobile/tickets/new"
-                          element={<MobileNewTicketPage />}
+                          element={<MobileTicketsPage />}
                         />
                         <Route
                           path="/mobile/orders"
