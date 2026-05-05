@@ -744,6 +744,7 @@ import { EmailRuleSetupPage } from "./pages/maintenance/EmailRuleSetupPage";
 import { TaskEscalationPage } from "./pages/maintenance/TaskEscalationPage";
 import { TicketManagementSetupPage } from "./pages/maintenance/TicketManagementSetupPage";
 import { MobileTicketsPage } from "./pages/mobile/MobileTicketsPage";
+import { MobileNewTicketPage } from "./pages/mobile/MobileNewTicketPage";
 import { TicketListPage } from "./pages/TicketListPage";
 import { MobileRestaurantPage } from "./pages/mobile/MobileRestaurantPage";
 import { MobileAssetPage } from "./pages/mobile/MobileAssetPage";
@@ -821,6 +822,7 @@ import DetailsVendorPage from "./pages/DetailsVendorPage";
 import { EditPODashboard } from "./pages/EditPODashboard";
 import { EditWODashboard } from "./pages/EditWODashboard";
 import GateNumberPage from "./pages/master/GateNumberPage";
+import FieldsSetupPage from "./pages/master/FieldsSetupPage";
 import GatePassTypePage from "./pages/master/GatePassTypePage";
 import InventoryTypePage from "./pages/master/InventoryTypePage";
 import InventorySubTypePage from "./pages/master/InventorySubTypePage";
@@ -2460,6 +2462,10 @@ function App() {
                           path="/master/plant-detail"
                           element={<PlantDetailSetupPage />}
                         />
+                          <Route
+                            path="/master/fields-setup"
+                            element={<FieldsSetupPage />}
+                          />
                         {/* CRM Routes */}
                         <Route
                           path="/crm/campaign"
@@ -6426,6 +6432,10 @@ function App() {
                         path="/mobile/tickets"
                         element={<MobileTicketsPage />}
                       />
+                        <Route
+                          path="/mobile/tickets/new"
+                          element={<MobileNewTicketPage />}
+                        />
                       <Route
                         path="/mobile/orders"
                         element={<MobileOrdersPage />}

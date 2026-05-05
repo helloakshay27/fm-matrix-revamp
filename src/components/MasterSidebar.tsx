@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  MapPin, 
-  Users, 
-  CheckSquare, 
-  MapPinHouse, 
-  Package, 
+import {
+  ChevronDown,
+  ChevronRight,
+  MapPin,
+  Users,
+  CheckSquare,
+  MapPinHouse,
+  Package,
   FileText,
   DoorOpen,
   PackagePlus,
   Ticket,
-  Wallet
+  Wallet,
+  Settings2
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -69,6 +70,11 @@ const masterItems = [
     name: 'Plant Detail Setup',
     icon: DoorOpen,
     href: '/master/plant-detail'
+  },
+  {
+    name: 'Fields Setup',
+    icon: Settings2,
+    href: '/master/fields-setup'
   },
 ];
 

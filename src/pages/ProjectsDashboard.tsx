@@ -505,7 +505,7 @@ export const ProjectsDashboard = () => {
 
   const getTags = useCallback(async () => {
     try {
-      await dispatch(fetchProjectsTags()).unwrap();
+      await dispatch(fetchProjectsTags({ active: true })).unwrap();
     } catch (error) {
       console.log(error);
       toast.error(error);

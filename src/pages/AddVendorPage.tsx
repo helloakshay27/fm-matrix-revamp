@@ -176,16 +176,6 @@ const fieldStyles = {
   },
 };
 
-const initialAddress = {
-  addressType: 'billing',
-  country: '',
-  state: '',
-  city: '',
-  pincode: '',
-  addressLine1: '',
-  addressLine2: '',
-};
-
 const initialFormData = {
   companyName: '',
   primaryPhone: '',
@@ -196,9 +186,8 @@ const initialFormData = {
   supplierType: '',
   websiteUrl: '',
   serviceDescription: '',
-  date: null as Date | null,
+  date: '' as string,
   services: '',
-  addresses: [initialAddress],
   gstTreatment: '',
   gstin: '',
   businessLegalName: '',
@@ -230,7 +219,22 @@ export const AddVendorPage = () => {
   const [errors, setErrors] = useState<any>({});
   const [contactPersons, setContactPersons] = useState([initialContactPerson]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentAddressIndex, setCurrentAddressIndex] = useState(0);
+  const [billingAddress, setBillingAddress] = useState({
+    country: '',
+    state: '',
+    city: '',
+    pincode: '',
+    addressLine1: '',
+    addressLine2: '',
+  });
+  const [shippingAddress, setShippingAddress] = useState({
+    country: '',
+    state: '',
+    city: '',
+    pincode: '',
+    addressLine1: '',
+    addressLine2: '',
+  });
 
   const [panAttachments, setPanAttachments] = useState<File[]>([]);
   const [tanAttachments, setTanAttachments] = useState<File[]>([]);
@@ -333,62 +337,47 @@ export const AddVendorPage = () => {
 
     // Address validation for step 1
     if (activeStep === 1) {
-      // Validate at least one address exists
-      if (!formData.addresses || formData.addresses.length === 0) {
-        newErrors.addresses = 'At least one address is required';
-        isValid = false;
-      } else {
-        // Validate each address
-        formData.addresses.forEach((address: any, index: number) => {
-          // Country validation (REQUIRED)
-          if (!address.country.trim()) {
-            newErrors[`address_${index}_country`] = 'Country is required';
-            isValid = false;
-          } else {
-            if (address.country.trim() && !alphabeticRegex.test(address.country.trim())) {
-              newErrors[`address_${index}_country`] = 'Country should only contain alphabets and spaces';
-              isValid = false;
-            }
-          }
+      const alphabeticRegex = /^[a-zA-Z\s]+$/;
+      const addresses = [
+        { address: billingAddress, type: 'billing', label: 'Billing Address' },
+        { address: shippingAddress, type: 'shipping', label: 'Shipping Address' },
+      ];
 
-          // State validation (REQUIRED)
-          if (!address.state.trim()) {
-            newErrors[`address_${index}_state`] = 'State is required';
-            isValid = false;
-          } else {
-            if (address.state.trim() && !alphabeticRegex.test(address.state.trim())) {
-              newErrors[`address_${index}_state`] = 'State should only contain alphabets and spaces';
-              isValid = false;
-            }
-          }
+      addresses.forEach(({ address, type, label }) => {
+        if (!address.country.trim()) {
+          newErrors[`address_${type}_country`] = `${label} - Country is required`;
+          isValid = false;
+        } else if (!alphabeticRegex.test(address.country.trim())) {
+          newErrors[`address_${type}_country`] = `${label} - Country should only contain alphabets`;
+          isValid = false;
+        }
 
-          // City validation (REQUIRED)
-          if (!address.city.trim()) {
-            newErrors[`address_${index}_city`] = 'City is required';
-            isValid = false;
-          } else {
-            if (address.city.trim() && !alphabeticRegex.test(address.city.trim())) {
-              newErrors[`address_${index}_city`] = 'City should only contain alphabets and spaces';
-              isValid = false;
-            }
-          }
+        if (!address.state.trim()) {
+          newErrors[`address_${type}_state`] = `${label} - State is required`;
+          isValid = false;
+        } else if (!alphabeticRegex.test(address.state.trim())) {
+          newErrors[`address_${type}_state`] = `${label} - State should only contain alphabets`;
+          isValid = false;
+        }
 
-          // Address Line1 validation (REQUIRED)
-          if (!address.addressLine1.trim()) {
-            newErrors[`address_${index}_addressLine1`] = 'Address Line 1 is required';
-            isValid = false;
-          }
+        if (!address.city.trim()) {
+          newErrors[`address_${type}_city`] = `${label} - City is required`;
+          isValid = false;
+        } else if (!alphabeticRegex.test(address.city.trim())) {
+          newErrors[`address_${type}_city`] = `${label} - City should only contain alphabets`;
+          isValid = false;
+        }
 
-          // Pincode validation (optional - only validate format if provided)
-          if (address.pincode.trim()) {
-            const pincodeRegex = /^[0-9]{6}$/;
-            if (!pincodeRegex.test(address.pincode.trim())) {
-              newErrors[`address_${index}_pincode`] = 'Please enter a valid 6-digit pincode';
-              isValid = false;
-            }
-          }
-        });
-      }
+        if (!address.addressLine1.trim()) {
+          newErrors[`address_${type}_addressLine1`] = `${label} - Address Line 1 is required`;
+          isValid = false;
+        }
+
+        if (address.pincode.trim() && !/^[0-9]{6}$/.test(address.pincode.trim())) {
+          newErrors[`address_${type}_pincode`] = `${label} - Enter valid 6-digit pincode`;
+          isValid = false;
+        }
+      });
     }
 
     // Bank Details validation for step 2 (all optional - no red asterisks)
@@ -515,16 +504,27 @@ export const AddVendorPage = () => {
     // PAN - Send as separate field
     apiFormData.append('pms_supplier[pan_number]', formData.pan || '');
 
-    formData.addresses.forEach((address: any, index: number) => {
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][address]`, address.addressLine1 || '');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][address_type]`, address.addressType || 'billing');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][country]`, address.country || '');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][state]`, address.state || '');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][city]`, address.city || '');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][pin_code]`, address.pincode || '');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][address_line_two]`, address.addressLine2 || '');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][default_address]`, 'true');
-    });
+    // Billing Address - index 0
+    apiFormData.append('pms_supplier[addresses_attributes][0][address]', billingAddress.addressLine1 || '');
+    apiFormData.append('pms_supplier[addresses_attributes][0][address_type]', 'billing');
+    apiFormData.append('pms_supplier[addresses_attributes][0][country]', billingAddress.country || '');
+    apiFormData.append('pms_supplier[addresses_attributes][0][state]', billingAddress.state || '');
+    apiFormData.append('pms_supplier[addresses_attributes][0][city]', billingAddress.city || '');
+    apiFormData.append('pms_supplier[addresses_attributes][0][pin_code]', billingAddress.pincode || '');
+    apiFormData.append('pms_supplier[addresses_attributes][0][address_line_two]', billingAddress.addressLine2 || '');
+    apiFormData.append('pms_supplier[addresses_attributes][0][default_address]', 'true');
+    apiFormData.append('pms_supplier[addresses_attributes][0][default_shipping_address]', 'false');
+
+    // Shipping Address - index 1
+    apiFormData.append('pms_supplier[addresses_attributes][1][address]', shippingAddress.addressLine1 || '');
+    apiFormData.append('pms_supplier[addresses_attributes][1][address_type]', 'shipping');
+    apiFormData.append('pms_supplier[addresses_attributes][1][country]', shippingAddress.country || '');
+    apiFormData.append('pms_supplier[addresses_attributes][1][state]', shippingAddress.state || '');
+    apiFormData.append('pms_supplier[addresses_attributes][1][city]', shippingAddress.city || '');
+    apiFormData.append('pms_supplier[addresses_attributes][1][pin_code]', shippingAddress.pincode || '');
+    apiFormData.append('pms_supplier[addresses_attributes][1][address_line_two]', shippingAddress.addressLine2 || '');
+    apiFormData.append('pms_supplier[addresses_attributes][1][default_address]', 'true');
+    apiFormData.append('pms_supplier[addresses_attributes][1][default_shipping_address]', 'true');
 
     // Step 2: Bank Details - Send all fields
     apiFormData.append('pms_supplier[account_name]', formData.accountName || '');
@@ -854,7 +854,7 @@ export const AddVendorPage = () => {
                     fullWidth
                     variant="outlined"
                     value={formData.date}
-                    onChange={(date) => setFormData({ ...formData, date })}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
                     placeholder="Select Date"
@@ -1115,151 +1115,136 @@ export const AddVendorPage = () => {
             </SectionHeader>
             <Box p={3}>
               <div className="space-y-6">
-                {formData.addresses.map((address: any, index: number) => (
-                  <div key={index} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-sm font-semibold text-gray-700">Address {index + 1}</span>
-                      {formData.addresses.length > 1 && (
-                        <button
-                          onClick={() => {
-                            const newAddresses = formData.addresses.filter((_: any, i: number) => i !== index);
-                            setFormData({ ...formData, addresses: newAddresses });
-                          }}
-                          className="text-red-600 hover:text-red-800 flex items-center gap-1"
-                        >
-                          <Trash2 size={16} /> Remove
-                        </button>
-                      )}
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                      <TextField
-                        select
-                        label={<span>Address Type <span style={{ color: 'red' }}>*</span></span>}
-                        fullWidth
-                        value={address.addressType}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].addressType = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                      >
-                        <MenuItem value="billing">Billing Address</MenuItem>
-                        <MenuItem value="shipping">Shipping Address</MenuItem>
-                      </TextField>
-
-                      <TextField
-                        label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
-                        fullWidth
-                        value={address.country}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].country = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                        onKeyDown={(e) => {
-                          const char = e.key;
-                          if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        error={!!errors[`address_${index}_country`]}
-                        helperText={errors[`address_${index}_country`]}
-                        placeholder="e.g., India"
-                      />
-
-                      <TextField
-                        label={<span>State <span style={{ color: 'red' }}>*</span></span>}
-                        fullWidth
-                        value={address.state}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].state = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                        onKeyDown={(e) => {
-                          const char = e.key;
-                          if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        error={!!errors[`address_${index}_state`]}
-                        helperText={errors[`address_${index}_state`]}
-                        placeholder="e.g., Maharashtra"
-                      />
-
-                      <TextField
-                        label={<span>City <span style={{ color: 'red' }}>*</span></span>}
-                        fullWidth
-                        value={address.city}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].city = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                        onKeyDown={(e) => {
-                          const char = e.key;
-                          if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        error={!!errors[`address_${index}_city`]}
-                        helperText={errors[`address_${index}_city`]}
-                        placeholder="e.g., Mumbai"
-                      />
-
-                      <TextField
-                        label="Pincode"
-                        fullWidth
-                        value={address.pincode}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].pincode = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                        error={!!errors[`address_${index}_pincode`]}
-                        helperText={errors[`address_${index}_pincode`]}
-                        placeholder="123456"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <TextField
-                        label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
-                        fullWidth
-                        value={address.addressLine1}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].addressLine1 = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                        error={!!errors[`address_${index}_addressLine1`]}
-                        helperText={errors[`address_${index}_addressLine1`]}
-                      />
-                      <TextField
-                        label="Address Line 2"
-                        fullWidth
-                        value={address.addressLine2}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].addressLine2 = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                      />
-                    </div>
+                {/* Billing Address Block */}
+                <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="mb-4">
+                    <span className="text-sm font-semibold text-gray-700">Billing Address</span>
                   </div>
-                ))}
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <TextField
+                      label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={billingAddress.country}
+                      onChange={(e) => setBillingAddress({ ...billingAddress, country: e.target.value })}
+                      onKeyDown={(e) => { const char = e.key; if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) e.preventDefault(); }}
+                      error={!!errors['address_billing_country']}
+                      helperText={errors['address_billing_country']}
+                      placeholder="e.g., India"
+                    />
+                    <TextField
+                      label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={billingAddress.state}
+                      onChange={(e) => setBillingAddress({ ...billingAddress, state: e.target.value })}
+                      onKeyDown={(e) => { const char = e.key; if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) e.preventDefault(); }}
+                      error={!!errors['address_billing_state']}
+                      helperText={errors['address_billing_state']}
+                      placeholder="e.g., Maharashtra"
+                    />
+                    <TextField
+                      label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={billingAddress.city}
+                      onChange={(e) => setBillingAddress({ ...billingAddress, city: e.target.value })}
+                      onKeyDown={(e) => { const char = e.key; if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) e.preventDefault(); }}
+                      error={!!errors['address_billing_city']}
+                      helperText={errors['address_billing_city']}
+                      placeholder="e.g., Mumbai"
+                    />
+                    <TextField
+                      label="Pincode"
+                      fullWidth
+                      value={billingAddress.pincode}
+                      onChange={(e) => setBillingAddress({ ...billingAddress, pincode: e.target.value })}
+                      error={!!errors['address_billing_pincode']}
+                      helperText={errors['address_billing_pincode']}
+                      placeholder="123456"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    <TextField
+                      label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={billingAddress.addressLine1}
+                      onChange={(e) => setBillingAddress({ ...billingAddress, addressLine1: e.target.value })}
+                      error={!!errors['address_billing_addressLine1']}
+                      helperText={errors['address_billing_addressLine1']}
+                    />
+                    <TextField
+                      label="Address Line 2"
+                      fullWidth
+                      value={billingAddress.addressLine2}
+                      onChange={(e) => setBillingAddress({ ...billingAddress, addressLine2: e.target.value })}
+                    />
+                  </div>
+                </div>
 
-              <button
-                onClick={() => {
-                  const newAddresses = [...formData.addresses, { ...initialAddress }];
-                  setFormData({ ...formData, addresses: newAddresses });
-                }}
-                className="mt-6 flex items-center gap-2 px-4 py-2 rounded bg-[#C72030] text-white hover:bg-[#B8252F] transition-colors"
-              >
-                <Plus size={18} /> Add Another Address
-              </button>
+                {/* Shipping Address Block */}
+                <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="mb-4">
+                    <span className="text-sm font-semibold text-gray-700">Shipping Address</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <TextField
+                      label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={shippingAddress.country}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
+                      onKeyDown={(e) => { const char = e.key; if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) e.preventDefault(); }}
+                      error={!!errors['address_shipping_country']}
+                      helperText={errors['address_shipping_country']}
+                      placeholder="e.g., India"
+                    />
+                    <TextField
+                      label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={shippingAddress.state}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
+                      onKeyDown={(e) => { const char = e.key; if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) e.preventDefault(); }}
+                      error={!!errors['address_shipping_state']}
+                      helperText={errors['address_shipping_state']}
+                      placeholder="e.g., Maharashtra"
+                    />
+                    <TextField
+                      label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={shippingAddress.city}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
+                      onKeyDown={(e) => { const char = e.key; if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) e.preventDefault(); }}
+                      error={!!errors['address_shipping_city']}
+                      helperText={errors['address_shipping_city']}
+                      placeholder="e.g., Mumbai"
+                    />
+                    <TextField
+                      label="Pincode"
+                      fullWidth
+                      value={shippingAddress.pincode}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, pincode: e.target.value })}
+                      error={!!errors['address_shipping_pincode']}
+                      helperText={errors['address_shipping_pincode']}
+                      placeholder="123456"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    <TextField
+                      label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={shippingAddress.addressLine1}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine1: e.target.value })}
+                      error={!!errors['address_shipping_addressLine1']}
+                      helperText={errors['address_shipping_addressLine1']}
+                    />
+                    <TextField
+                      label="Address Line 2"
+                      fullWidth
+                      value={shippingAddress.addressLine2}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine2: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+              </div>
             </Box>
           </SectionCard>
         );

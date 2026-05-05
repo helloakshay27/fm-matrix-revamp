@@ -27,7 +27,7 @@ export const helpdeskAnalyticsAPI = {
   async getCustomerExperienceFeedback(fromDate: Date, toDate: Date): Promise<any> {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
-    const url = `/ratings/feedback_dashboard?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const url = `/api/pms/reports/customer_experience_feedback?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
     const resp = await apiClient.get(url);
     return resp.data;
   },
@@ -41,7 +41,7 @@ export const helpdeskAnalyticsAPI = {
   },
 
   // Convenience wrapper to return both datasets together
-  async getAgingClosureFeedbackOverview(fromDate: Date, toDate: Date): Promise<{ agingClosure: any; feedback: any; }>{
+  async getAgingClosureFeedbackOverview(fromDate: Date, toDate: Date): Promise<{ agingClosure: any; feedback: any; }> {
     const [agingClosure, feedback] = await Promise.all([
       this.getTicketAgingClosureEfficiency(fromDate, toDate),
       this.getCustomerExperienceFeedback(fromDate, toDate),
@@ -69,16 +69,16 @@ export const helpdeskAnalyticsAPI = {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
     const url = `/ticket_aging_closure_efficiency/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
-    
+
     const response = await apiClient.get(url, {
       responseType: 'blob',
     });
-    
+
     // Create a blob from the response
-    const blob = new Blob([response.data], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
-    
+
     // Create a download link and trigger it
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -94,16 +94,16 @@ export const helpdeskAnalyticsAPI = {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
     const url = `/ticket_performance_metrics/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
-    
+
     const response = await apiClient.get(url, {
       responseType: 'blob',
     });
-    
+
     // Create a blob from the response
-    const blob = new Blob([response.data], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
-    
+
     // Create a download link and trigger it
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -119,16 +119,16 @@ export const helpdeskAnalyticsAPI = {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
     const url = `/customer_experience_feedback/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
-    
+
     const response = await apiClient.get(url, {
       responseType: 'blob',
     });
-    
+
     // Create a blob from the response
-    const blob = new Blob([response.data], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
-    
+
     // Create a download link and trigger it
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -144,16 +144,16 @@ export const helpdeskAnalyticsAPI = {
     const start = formatDate(fromDate);
     const end = formatDate(toDate);
     const url = `/tat-performance-quarterly/export.xlsx?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
-    
+
     const response = await apiClient.get(url, {
       responseType: 'blob',
     });
-    
+
     // Create a blob from the response
-    const blob = new Blob([response.data], { 
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     });
-    
+
     // Create a download link and trigger it
     const downloadUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
