@@ -149,6 +149,40 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   };
 
+  // Smart validator — accepts a valid email OR a mobile number (7-15 digits, optional leading +)
+  const validateEmailOrMobile = (
+    value: string
+  ): { isValid: boolean; message: string } => {
+    const trimmed = value.trim();
+    if (!trimmed)
+      return {
+        isValid: false,
+        message: "Please enter your email or mobile number.",
+      };
+
+    const looksLikeEmail = trimmed.includes("@");
+    if (looksLikeEmail) {
+      const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+      return valid
+        ? { isValid: true, message: "" }
+        : {
+            isValid: false,
+            message:
+              "Please enter a valid email address (e.g. name@example.com).",
+          };
+    }
+
+    // Treat as mobile: strip spaces/dashes, allow optional leading +
+    const digits = trimmed.replace(/[\s\-().]/g, "");
+    const valid = /^\+?[0-9]{7,15}$/.test(digits);
+    return valid
+      ? { isValid: true, message: "" }
+      : {
+          isValid: false,
+          message: "Please enter a valid mobile number (7–15 digits).",
+        };
+  };
+
   const validatePassword = (password: string) => {
     // Password must be at least 8 characters long
     if (password.length < 8) {
@@ -195,13 +229,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   };
 
   const handleEmailSubmit = async () => {
-    if (!email) {
-      toast.error("Please enter your email address.");
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      toast.error("Please enter a valid email address.");
+    const validation = validateEmailOrMobile(email);
+    if (!validation.isValid) {
+      toast.error(validation.message);
       return;
     }
 
@@ -564,14 +594,14 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           htmlFor="email"
           className="text-gray-700 font-medium text-base block mb-2"
         >
-          Email Address
+          Email Address or Mobile Number
         </Label>
 
         {/* Input Field */}
         <TextField
           variant="outlined"
-          placeholder="Enter your email address"
-          type="email"
+          placeholder="Enter email or mobile number"
+          type="text"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleEmailSubmit()}
@@ -638,7 +668,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         )}
       </div>
       <p className="text-grey-300 text-sm mb-6 ">
-        Email: <span className="text-grey-500 font-bold">{email}</span>
+        Email / Mobile: <span className="text-grey-500 font-bold">{email}</span>
       </p>
 
       <p className="text-gray-500 text-sm">

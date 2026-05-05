@@ -446,6 +446,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                     tax_preference: item.tax_preference || '',
                     tax_exemption_id: item.tax_exemption_id || null,
                     tax_group_id: item.intra_state_tax_rate_id || item.tax_group_id || null,
+                    inter_state_tax_rate_id: item.inter_state_tax_rate_id || null
+
                 }));
                 setItemOptions(normalised);
             } catch (error) {
@@ -651,9 +653,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         const fetchAccountGroups = async () => {
             try {
                 // using lock_account_id from user (defaults to 1 if absent)
-                const accountId = JSON.parse(localStorage.getItem("user")).lock_account_id || 1;
+                const accountId = localStorage.getItem("lock_account_id");
                 const res = await axios.get(
-                    `https://${baseUrl}/lock_accounts/${accountId}/lock_account_groups?format=flat`,
+                    `https://${baseUrl}/lock_accounts/${accountId}/lock_account_groups?format=flat&q[group_type_in][]=purchase&q[group_type_in][]=both`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -674,9 +676,9 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     useEffect(() => {
         const fetchAccountGroups = async () => {
             try {
-                const accountId = JSON.parse(localStorage.getItem("user")).lock_account_id || 1;
+                const accountId = localStorage.getItem("lock_account_id");
                 const res = await axios.get(
-                    `https://${baseUrl}/lock_accounts/${accountId}/lock_account_groups?format=flat`,
+                    `https://${baseUrl}/lock_accounts/${accountId}/lock_account_groups?format=flat&q[group_type_in][]=purchase&q[group_type_in][]=both`,
                     {
                         headers: {
                             Authorization: `Bearer ${token}`,
@@ -2298,6 +2300,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                             name: selected.name,
                                                             rate: selected.rate || 0,
                                                             description: selected.description || '',
+                                                            account_id: String((selected as any).account || ''),
                                                             item_tax_type: selected.tax_preference === 'non_taxable' ? 'non_taxable'
                                                                 : selected.tax_preference === 'taxable' ? (isSameState ? 'tax_group' : 'tax_rate')
                                                                     : selected.tax_preference === 'out_of_scope' ? 'out_of_scope'
@@ -2326,7 +2329,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                             <td className="px-4 py-3">
                                                 <FormControl fullWidth sx={{ minWidth: 250 }}>
                                                     <Select
-                                                        value={item.account_id || ''}
+                                                        value={String(item.account_id || '')}
                                                         onChange={(e) => {
                                                             updateItem(index, 'account_id', e.target.value);
                                                             // Optional: if you need to store account name as well
@@ -2336,6 +2339,8 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                         displayEmpty
                                                         size="small"
                                                     >
+                                                        {console.log('item.account_id:', item.account_id, 'accountGroups:', accountGroups)}
+
                                                         <MenuItem value="">Select Account</MenuItem>
                                                         {/* if accountGroups is populated, render grouped dropdown like BillsAdd.tsx */}
                                                         {accountGroups.length > 0
@@ -2344,7 +2349,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                                     ? [
                                                                         <ListSubheader key={`group-${group.id}`}>{group.group_name}</ListSubheader>,
                                                                         ...group.ledgers.map((ledger: any) => (
-                                                                            <MenuItem key={ledger.id} value={ledger.id}>
+                                                                            <MenuItem key={ledger.id} value={String(ledger.id)}>
                                                                                 {ledger.name}
                                                                             </MenuItem>
                                                                         )),
@@ -2356,7 +2361,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                                                     )
                                                             )
                                                             : accountLedgers.map((ledger: any) => (
-                                                                <MenuItem key={ledger.id} value={ledger.id}>
+                                                                <MenuItem key={ledger.id} value={String(ledger.id)}>
                                                                     {ledger.name}
                                                                 </MenuItem>
                                                             ))}

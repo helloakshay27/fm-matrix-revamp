@@ -1294,7 +1294,7 @@ const ProjectTaskCreateModal = ({
 
   const getTags = async () => {
     try {
-      const response = await dispatch(fetchProjectsTags()).unwrap();
+      const response = await dispatch(fetchProjectsTags({ active: true })).unwrap();
       setTags(response);
     } catch (error) {
       console.log(error);
