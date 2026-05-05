@@ -163,11 +163,14 @@ const BookingReceipt = ({
                     " THOUSAND" +
                     (n % 1000 > 0 ? " " + convertLessThanSevenDigits(n % 1000) : "")
                 );
-            return (
-                convertLessThanSevenDigits(Math.floor(n / 100000)) +
-                " LAKH" +
-                (n % 100000 > 0 ? " " + convertLessThanSevenDigits(n % 100000) : "")
-            );
+            if (n < 10000000) // ✅ FIXED CONDITION
+                return (
+                    convertLessThanSevenDigits(Math.floor(n / 100000)) +
+                    " LAKH" +
+                    (n % 100000 > 0 ? " " + convertLessThanSevenDigits(n % 100000) : "")
+                );
+
+            return ""; // safety fallback
         };
 
         if (num === 0) return "ZERO";
