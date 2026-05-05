@@ -153,7 +153,7 @@ export const RecurringBillCreatePage: React.FC = () => {
           }
         });
         if (res && res.data && Array.isArray(res.data)) {
-          setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id, inter_state_tax_rate_id: item.inter_state_tax_rate_id })));
+          setItemOptions(res.data.map(item => ({ id: item.id, name: item.name, rate: item.purchase_rate, description: item.sale_description, tax_preference: item.tax_preference, tax_exemption_id: item.tax_exemption_id, tax_group_id: item.intra_state_tax_rate_id, inter_state_tax_rate_id: item.inter_state_tax_rate_id })));
           console.log('Fetched items:', res.data);
         }
       } catch (err) {
@@ -1185,7 +1185,7 @@ if (!profileName || profileName.trim() === "") {
       formData.append('lock_account_bill[customer_notes]', customerNotes);
       formData.append('lock_account_bill[terms_and_conditions]', termsAndConditions);
       formData.append('lock_account_bill[subject]', subject);
-      formData.append('lock_account_bill[status]', 'draft');
+      formData.append('lock_account_bill[status]', 'active');
       formData.append('lock_account_bill[total_amount]', String(totalAmount2));
       if (discountTypeOnTotal === 'percentage') {
         formData.append('lock_account_bill[discount_per]', String(discountOnTotal));
