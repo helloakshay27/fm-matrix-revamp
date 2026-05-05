@@ -76,6 +76,7 @@ const PREDEFINED_FIELDS = [
   { id: 'vendor_enabled', label: 'Vendor', type: 'select' },
   { id: 'reference_number_enabled', label: 'Reference Number', type: 'text' },
   { id: 'description_enabled', label: 'Description', type: 'textarea' },
+  { id: 'location_enabled', label: 'Location', type: 'select' },
 ];
 
 const emptyQuestion = (): SnagQuestion => ({ descr: '', qtype: 'text' });
