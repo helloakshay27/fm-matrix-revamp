@@ -764,11 +764,7 @@ export const AddAssetAuditPage = () => {
   const [auditTypeExpanded, setAuditTypeExpanded] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  const {
-    sites,
-    selectedSite,
-    loading: siteLoading,
-  } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.site);
 
   const [users, setUsers] = useState<any[]>([]);
   const [buildings, setBuildings] = useState<any[]>([]);
@@ -786,7 +782,6 @@ export const AddAssetAuditPage = () => {
     conductedBy: '',
     basedOn: 'Location',
 
-    site: '',
     building: [] as string[],
     wing: [] as string[],
     area: [] as string[],
@@ -950,10 +945,10 @@ export const AddAssetAuditPage = () => {
   }, []);
 
   useEffect(() => {
-    if (formData.site) fetchBuildings(formData.site);
+    if (selectedSite?.id) fetchBuildings(selectedSite.id);
     else setBuildings([]);
     setFormData(prev => ({ ...prev, building: [], wing: [], area: [], floor: [] }));
-  }, [formData.site]);
+  }, [selectedSite?.id]);
 
   useEffect(() => {
     if (formData.building?.length > 0) fetchWings(formData.building[0]);
@@ -1000,7 +995,6 @@ export const AddAssetAuditPage = () => {
   //   { name: 'assetSubGroup', label: 'Asset Subgroup', values: assetSubGroups, multiple: true },
   // ];
   const fieldsToRender = formData.basedOn === 'Location' ? [
-    { name: 'site', label: <>Site <span className="text-red-500">*</span></>, values: sites, multiple: false },
     { name: 'building', label: <>Building <span className="text-red-500">*</span></>, values: buildings, multiple: true },
     { name: 'wing', label: 'Wing', values: wings, multiple: true },
     { name: 'area', label: 'Area', values: areas, multiple: true },
@@ -1011,7 +1005,6 @@ export const AddAssetAuditPage = () => {
   ] : [
     { name: 'assetGroup', label: <>Asset Group <span className="text-red-500">*</span></>, values: assetGroups, multiple: true },
     { name: 'assetSubGroup', label: <>Asset Subgroup <span className="text-red-500">*</span></>, values: assetSubGroups, multiple: true },
-    { name: 'site', label: <>Site <span className="text-red-500">*</span></>, values: sites, multiple: false },
     { name: 'building', label: <>Building <span className="text-red-500">*</span></>, values: buildings, multiple: true },
     { name: 'wing', label: 'Wing', values: wings, multiple: true },
     { name: 'area', label: 'Area', values: areas, multiple: true },
@@ -1101,7 +1094,6 @@ export const AddAssetAuditPage = () => {
 
     // Location-based validations
     if (formData.basedOn === 'Location') {
-      if (!formData.site) return toast.error('Site is required for Location-based audit');
       if (!formData.building || formData.building.length === 0)
         return toast.error('Building is required');
     }
@@ -1114,7 +1106,6 @@ export const AddAssetAuditPage = () => {
       if (!formData.assetSubGroup || formData.assetSubGroup.length === 0)
         return toast.error('Asset Sub Group is required');
 
-      if (!formData.site) return toast.error('Site is required for Asset-based audit');
       if (!formData.building || formData.building.length === 0)
         return toast.error('Building is required');
     }
@@ -1132,7 +1123,7 @@ export const AddAssetAuditPage = () => {
           end_date: formData.endDate,
           conducted_by_ids: [formData.conductedBy],
           audit_type: formData.basedOn === 'Location' ? 'Location-based' : 'Asset-based',
-          site_ids: formData.site ? [formData.site] : [],
+          site_ids: selectedSite?.id ? [selectedSite.id] : [],
           building_ids: formData.building,
           wing_ids: formData.wing,
           area_ids: formData.area,
@@ -1171,7 +1162,6 @@ export const AddAssetAuditPage = () => {
           endDate: '',
           conductedBy: '',
           basedOn: 'Location',
-          site: '',
           building: [],
           wing: [],
           area: [],
