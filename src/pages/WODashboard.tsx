@@ -432,7 +432,7 @@ useEffect(() => {
   const leftActions = orgId === 63 ? null : (
     <>
       <Button
-        style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+      style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
         className="hover:bg-[#F2EEE9]/90"
         onClick={() => navigate('/finance/wo/add')}
       >

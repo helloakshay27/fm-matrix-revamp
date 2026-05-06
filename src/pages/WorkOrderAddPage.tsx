@@ -1753,7 +1753,7 @@ export const WorkOrderAddPage: React.FC = () => {
               </div>
               <div className="text-xs text-gray-500 mt-3 space-y-1">
                 <p>Accepts up to 12 MB files</p>
-                <p>Supported formats: JPG, PNG, PDF, XLS, XLSX, DOC, DOCX</p>
+                <p>Supported formats: PDF</p>
               </div>
             </div>
 
