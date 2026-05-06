@@ -1242,6 +1242,7 @@ import HouseSetupPage from "./pages/HouseSetupPage";
 import HSNCodeSetup from "./pages/HSNCodeSetup";
 import DashboardUI from "./pages/DashboardUI";
 import FieldsSetupPage from "./pages/master/FieldsSetupPage";
+import { MobileNewTicketPage } from "./pages/mobile/MobileNewTicketPage";
 
 const queryClient = new QueryClient();
 
@@ -6170,6 +6171,10 @@ function App() {
                         <Route
                           path="/mobile/tickets"
                           element={<MobileTicketsPage />}
+                        />
+                        <Route
+                          path="/mobile/tickets/new"
+                          element={<MobileNewTicketPage />}
                         />
                         <Route
                           path="/mobile/orders"
