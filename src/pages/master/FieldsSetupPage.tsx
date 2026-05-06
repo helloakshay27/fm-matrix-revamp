@@ -95,7 +95,7 @@ const FieldsSetupPage = () => {
   const [loadingExisting, setLoadingExisting] = useState(true);
   const [togglingField, setTogglingField] = useState<string | null>(null);
 
-  const siteId = localStorage.getItem('site_id') || '2189';
+  const siteId = localStorage.getItem('selectedSiteId') || '';
 
   useEffect(() => {
     const fetchExistingFields = async () => {
@@ -131,10 +131,10 @@ const FieldsSetupPage = () => {
         const fields: SnagQuestion[] = Array.isArray(data)
           ? data
           : Array.isArray(data?.snag_questions)
-          ? data.snag_questions
-          : Array.isArray(data?.fields)
-          ? data.fields
-          : [];
+            ? data.snag_questions
+            : Array.isArray(data?.fields)
+              ? data.fields
+              : [];
         setExistingFields(fields);
       } catch {
         // error already shown via toast in service
@@ -177,10 +177,10 @@ const FieldsSetupPage = () => {
       const fields: SnagQuestion[] = Array.isArray(data)
         ? data
         : Array.isArray(data?.snag_questions)
-        ? data.snag_questions
-        : Array.isArray(data?.fields)
-        ? data.fields
-        : [];
+          ? data.snag_questions
+          : Array.isArray(data?.fields)
+            ? data.fields
+            : [];
       setExistingFields(fields);
       setNewQuestions([emptyQuestion()]);
     } catch {
@@ -208,8 +208,7 @@ const FieldsSetupPage = () => {
 
       setFieldStates((prev) => ({ ...prev, [fieldId]: newValue }));
       toast.success(
-        `${PREDEFINED_FIELDS.find((f) => f.id === fieldId)?.label} ${
-          newValue ? 'enabled' : 'disabled'
+        `${PREDEFINED_FIELDS.find((f) => f.id === fieldId)?.label} ${newValue ? 'enabled' : 'disabled'
         } successfully.`
       );
     } catch (error) {
@@ -239,21 +238,19 @@ const FieldsSetupPage = () => {
       <div className="flex gap-0 mb-6 border-b border-gray-200">
         <button
           onClick={() => setActiveTab('existing')}
-          className={`px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 -mb-px ${
-            activeTab === 'existing'
-              ? 'border-[#C72030] text-[#C72030]'
-              : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
-          }`}
+          className={`px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 -mb-px ${activeTab === 'existing'
+            ? 'border-[#C72030] text-[#C72030]'
+            : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
+            }`}
         >
           Existing Fields
         </button>
         <button
           onClick={() => setActiveTab('custom')}
-          className={`px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 -mb-px ${
-            activeTab === 'custom'
-              ? 'border-[#C72030] text-[#C72030]'
-              : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
-          }`}
+          className={`px-6 py-3 text-sm font-medium transition-all duration-200 border-b-2 -mb-px ${activeTab === 'custom'
+            ? 'border-[#C72030] text-[#C72030]'
+            : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
+            }`}
         >
           Custom Fields
         </button>
@@ -299,65 +296,62 @@ const FieldsSetupPage = () => {
                 </tr>
               ) : (
                 PREDEFINED_FIELDS.map((field, idx) => {
-                const isEnabled = fieldStates[field.id];
-                const isToggling = togglingField === field.id;
-                return (
-                  <tr
-                    key={field.id}
-                    className="border-b border-gray-100 hover:bg-gray-50/60 transition-colors"
-                  >
-                    <td className="px-5 py-3.5 text-gray-400 font-medium">{idx + 1}</td>
-                    <td className="px-5 py-3.5 font-medium text-gray-800">{field.label}</td>
-                    <td className="px-5 py-3.5">
-                      <span
-                        className={`capitalize text-xs px-2.5 py-1 rounded-full font-medium ${getTypeBadge(
-                          field.type
-                        )}`}
-                      >
-                        {field.type}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span
-                        className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${
-                          isEnabled
+                  const isEnabled = fieldStates[field.id];
+                  const isToggling = togglingField === field.id;
+                  return (
+                    <tr
+                      key={field.id}
+                      className="border-b border-gray-100 hover:bg-gray-50/60 transition-colors"
+                    >
+                      <td className="px-5 py-3.5 text-gray-400 font-medium">{idx + 1}</td>
+                      <td className="px-5 py-3.5 font-medium text-gray-800">{field.label}</td>
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={`capitalize text-xs px-2.5 py-1 rounded-full font-medium ${getTypeBadge(
+                            field.type
+                          )}`}
+                        >
+                          {field.type}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span
+                          className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${isEnabled
                             ? 'bg-green-50 text-green-700 border border-green-200'
                             : 'bg-red-50 text-red-600 border border-red-200'
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            isEnabled ? 'bg-green-500' : 'bg-red-500'
-                          }`}
-                        />
-                        {isEnabled ? 'Enabled' : 'Disabled'}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-center">
-                      <button
-                        onClick={() => handleToggleField(field.id)}
-                        disabled={isToggling}
-                        title={isEnabled ? 'Disable this field' : 'Enable this field'}
-                        className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border transition-all duration-200 ${
-                          isEnabled
+                            }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${isEnabled ? 'bg-green-500' : 'bg-red-500'
+                              }`}
+                          />
+                          {isEnabled ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        <button
+                          onClick={() => handleToggleField(field.id)}
+                          disabled={isToggling}
+                          title={isEnabled ? 'Disable this field' : 'Enable this field'}
+                          className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md border transition-all duration-200 ${isEnabled
                             ? 'border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300'
                             : 'border-green-200 text-green-700 hover:bg-green-50 hover:border-green-300'
-                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                      >
-                        {isEnabled ? (
-                          <>
-                            <ToggleRight className="h-4 w-4" />
-                            Disable
-                          </>
-                        ) : (
-                          <>
-                            <ToggleLeft className="h-4 w-4" />
-                            Enable
-                          </>
-                        )}
-                      </button>
-                    </td>
-                  </tr>
+                            } disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          {isEnabled ? (
+                            <>
+                              <ToggleRight className="h-4 w-4" />
+                              Disable
+                            </>
+                          ) : (
+                            <>
+                              <ToggleLeft className="h-4 w-4" />
+                              Enable
+                            </>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
                   )
                 })
               )}
@@ -391,11 +385,10 @@ const FieldsSetupPage = () => {
 
             <div className="p-6">
               <div
-                className={`grid gap-6 ${
-                  newQuestions.length === 1
-                    ? "grid-cols-1"
-                    : "grid-cols-1 md:grid-cols-2"
-                }`}
+                className={`grid gap-6 ${newQuestions.length === 1
+                  ? "grid-cols-1"
+                  : "grid-cols-1 md:grid-cols-2"
+                  }`}
               >
                 {newQuestions.map((question, index) => (
                   <div
