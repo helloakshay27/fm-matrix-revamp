@@ -727,6 +727,88 @@ export const BillDetails = () => {
   });
   const taxRows = Object.entries(taxBreakdown);
 
+
+  // const reverseChargeData = salesOrder?.item_details?.map((item: any) => {
+  //   const rate = item?.tax_group?.rate || 0;
+  //   const name = item?.tax_group?.name || "Tax";
+
+  //   const taxAmount = (item.total_amount * rate) / 100;
+
+  //   return {
+  //     name,
+  //     rate,
+  //     amount: taxAmount,
+  //   };
+  // }) || [];
+
+  // const groupedReverseTax: any[] = [];
+
+  // reverseChargeData.forEach((tax) => {
+  //   const existing = groupedReverseTax.find(t => t.name === tax.name);
+
+  //   if (existing) {
+  //     existing.amount += tax.amount;
+  //   } else {
+  //     groupedReverseTax.push({ ...tax });
+  //   }
+  // });
+  // const totalReverseTax = groupedReverseTax.reduce(
+  //   (sum, t) => sum + t.amount,
+  //   0
+  // );
+
+
+  const reverseChargeData: any[] = [];
+
+salesOrder?.item_details?.forEach((item: any) => {
+
+  // ✅ Case 1: Maharashtra → tax_group with multiple tax_rates
+  if (item.tax_type === "tax_group" && item.tax_group?.tax_rates) {
+    item.tax_group.tax_rates.forEach((tax: any) => {
+      const taxAmount = (item.total_amount * tax.rate) / 100;
+
+      reverseChargeData.push({
+        name: tax.name,
+        rate: tax.rate,
+        amount: taxAmount,
+      });
+    });
+  }
+
+  // ✅ Case 2: Inter-state → single tax rate (IGST)
+  else if (item.tax_type === "tax_rate" && item.tax_group) {
+    const rate = item.tax_group.rate || 0;
+    const name = item.tax_group.name || "Tax";
+
+    const taxAmount = (item.total_amount * rate) / 100;
+
+    reverseChargeData.push({
+      name,
+      rate,
+      amount: taxAmount,
+    });
+  }
+});
+
+ 
+
+  const groupedReverseTax: any[] = [];
+
+reverseChargeData.forEach((tax) => {
+  const existing = groupedReverseTax.find(t => t.name === tax.name);
+
+  if (existing) {
+    existing.amount += tax.amount;
+  } else {
+    groupedReverseTax.push({ ...tax });
+  }
+});
+
+// ✅ ADD THIS HERE
+const totalReverseTax = groupedReverseTax.reduce(
+  (sum, t) => sum + t.amount,
+  0
+);
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -740,6 +822,7 @@ export const BillDetails = () => {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
+
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-3">
                 <ShoppingCart className="h-6 w-6 text-primary" />
@@ -978,6 +1061,44 @@ export const BillDetails = () => {
               className="p-3 sm:p-6 space-y-6"
               style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
             >
+
+              {salesOrder?.reverse_charge && groupedReverseTax.length > 0 && (
+                <div className="mt-6 border rounded-md overflow-hidden">
+
+                  <div className="bg-gray-100 px-4 py-2 font-semibold">
+                    Reverse Charge Summary
+                  </div>
+
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600">
+                      <tr>
+                        <th className="text-left px-4 py-2">Reverse Charge Rate</th>
+                        <th className="text-right px-4 py-2">Tax Amount</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {groupedReverseTax.map((tax, index) => (
+                        <tr key={index} className="border-t">
+                          <td className="px-4 py-2">
+                            {tax.name} ({tax.rate}%)
+                          </td>
+                          <td className="px-4 py-2 text-right">
+                            ₹{tax.amount.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+
+                      <tr className="border-t font-semibold bg-gray-50">
+                        <td className="px-4 py-2">Total</td>
+                        <td className="px-4 py-2 text-right">
+                          ₹{totalReverseTax.toFixed(2)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
               {/* Order Information */}
               <Card>
                 <CardHeader>
@@ -1064,6 +1185,21 @@ export const BillDetails = () => {
                       <p className="text-base font-semibold mt-1">
                         {salesOrder?.subject}
                       </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={
+                          salesOrder?.reverse_charge === true ||
+                          salesOrder?.reverse_charge === "true"
+                        }
+                        readOnly
+                        className="h-4 w-4 accent-[#bf213e] cursor-not-allowed"
+                      />
+                      <span className="text-sm font-medium text-muted-foreground">
+                        This transaction is applicable for reverse charge
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -1153,7 +1289,7 @@ export const BillDetails = () => {
                           -₹{salesOrder?.discount_amount?.toFixed(2)}
                         </span>
                       </div>
-                      {taxRows.map(([name, tax], index) => (
+                      {/* {taxRows.map(([name, tax], index) => (
                         <div
                           key={index}
                           className="flex justify-between items-center py-2"
@@ -1165,7 +1301,26 @@ export const BillDetails = () => {
                             ₹{tax.amount.toFixed(2)}
                           </span>
                         </div>
-                      ))}
+                      ))} */}
+
+                      {!(
+                        salesOrder?.reverse_charge === true ||
+                        salesOrder?.reverse_charge === "true"
+                      ) &&
+                        taxRows.map(([name, tax], index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center py-2"
+                          >
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {name} ({tax.rate}%)
+                            </span>
+                            <span className="font-semibold text-base">
+                              ₹{tax.amount.toFixed(2)}
+                            </span>
+                          </div>
+                        ))
+                      }
                       <div className="flex justify-between items-center py-2">
                         <span className="text-sm font-medium text-muted-foreground">
                           {salesOrder?.tax_type?.toUpperCase()}

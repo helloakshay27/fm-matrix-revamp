@@ -156,6 +156,7 @@ interface CustomerAddress {
 
 export const VendorCreditsAdd: React.FC = () => {
     const [subject, setSubject] = useState('');
+    const [reverseCharge, setReverseCharge] = useState(false);
     // Fetch item list from API
     useEffect(() => {
         const fetchItems = async () => {
@@ -1285,13 +1286,23 @@ export const VendorCreditsAdd: React.FC = () => {
 
             formData.append('lock_account_supplier_credit[pms_supplier_id]', selectedCustomer?.id || '');
             formData.append('lock_account_supplier_credit[order_number]', referenceNumber.trim());
-            formData.append('lock_account_supplier_credit[bill_date]', salesOrderDate);
+            formData.append('lock_account_supplier_credit[date]', salesOrderDate);
             formData.append('lock_account_supplier_credit[subject]', subject || '');
             formData.append('lock_account_supplier_credit[notes]', customerNotes);
             formData.append('lock_account_supplier_credit[source_of_supply]', sourceOfSupply);
             formData.append('lock_account_supplier_credit[destination_of_supply]', destinationOfSupply || '');
             formData.append('lock_account_supplier_credit[status]', saveAsDraft ? 'draft' : 'confirmed');
             formData.append('lock_account_supplier_credit[total_amount]', String(totalAmount2));
+             formData.append('lock_account_supplier_credit[tax_type]', taxType.toLowerCase());
+            formData.append(
+                'lock_account_supplier_credit[reverse_charge]',
+                reverseCharge ? 'true' : 'false'
+            );
+
+              formData.append(
+                'lock_account_supplier_credit[sub_total_amount]',
+                String(subTotal)
+            );
 
             // Items loop (keep your existing one)
             items.forEach((item, idx) => {
@@ -1304,6 +1315,7 @@ export const VendorCreditsAdd: React.FC = () => {
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_ledger_id]`, item.account || '');
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
+                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_type]`, item.item_tax_type || '');
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id || ''));
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id || ''));
@@ -1388,27 +1400,49 @@ export const VendorCreditsAdd: React.FC = () => {
         });
     const taxBreakdown: any[] = [];
 
-    selectedTaxGroups.forEach(group => {
-        group.taxRates.forEach(rate => {
-            const taxAmount = (group.itemAmount * rate.rate) / 100;
+    if (!reverseCharge) {
+        selectedTaxGroups.forEach(group => {
+            group.taxRates.forEach(rate => {
+                const taxAmount = (group.itemAmount * rate.rate) / 100;
 
-            const existing = taxBreakdown.find(t => t.name === rate.name);
+                const existing = taxBreakdown.find(t => t.name === rate.name);
 
-            if (existing) {
-                existing.amount += taxAmount;
-            } else {
-                taxBreakdown.push({
-                    name: rate.name,
-                    rate: rate.rate,
-                    amount: taxAmount
-                });
-            }
+                if (existing) {
+                    existing.amount += taxAmount;
+                } else {
+                    taxBreakdown.push({
+                        name: rate.name,
+                        rate: rate.rate,
+                        amount: taxAmount
+                    });
+                }
+            });
         });
-    });
+
+        // Tax rate breakdown (non-Maharashtra)
+        items
+            .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
+            .forEach(item => {
+                const rate = taxRates.find(r => r.id === item.tax_group_id);
+                if (!rate) return;
+                const rateValue = rate.rate ?? rate.percentage ?? 0;
+                const taxAmount = (item.amount * rateValue) / 100;
+                const existing = taxBreakdown.find(t => t.name === rate.name);
+                if (existing) {
+                    existing.amount += taxAmount;
+                } else {
+                    taxBreakdown.push({ name: rate.name, rate: rateValue, amount: taxAmount });
+                }
+            });
+
+
+    }
     // Calculate Final Total
 
-    const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
-
+    // const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+    const totalTax = reverseCharge
+        ? 0
+        : taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
     // Re-preselect tax type on items when destinationOfSupply or orgState changes
     useEffect(() => {
         if (!destinationOfSupply) return;
@@ -1436,6 +1470,18 @@ export const VendorCreditsAdd: React.FC = () => {
 
 
     }, [afterDiscount, totalTax, taxAmount2, adjustment]);
+
+
+    useEffect(() => {
+        const total =
+            afterDiscount +
+            totalTax -        // will be 0 if reverseCharge
+            taxAmount2 +      // TDS/TCS
+            (Number(adjustment) || 0);
+
+        setTotalAmount2(total);
+    }, [afterDiscount, totalTax, taxAmount2, adjustment, reverseCharge]);
+
     console.log('Tax Options:', taxOptions);
     return (
         <div className="p-6 space-y-6 relative">
@@ -1477,7 +1523,7 @@ export const VendorCreditsAdd: React.FC = () => {
                                         {customers.map((customer) => (
                                             <MenuItem key={customer.id} value={customer.id}>
                                                 {customer?.company_name}
-                                            </MenuItem> 
+                                            </MenuItem>
                                         ))}
                                     </Select>
                                 </FormControl>
@@ -1931,6 +1977,23 @@ export const VendorCreditsAdd: React.FC = () => {
                             />
                         </div>
 
+                        <div className="flex items-center gap-2 mt-2">
+                            <input
+                                type="checkbox"
+                                id="reverseCharge"
+                                checked={reverseCharge}
+                                onChange={(e) => setReverseCharge(e.target.checked)}
+                                className="w-4 h-4 accent-[#bf213e] cursor-pointer"
+                            />
+                            <label
+                                htmlFor="reverseCharge"
+                                className="text-sm font-medium text-gray-700 cursor-pointer"
+                            >
+                                This transaction is applicable for reverse charge
+                            </label>
+                        </div>
+
+
                         {/* <div>
                             <label className="block text-sm font-medium mb-2">
                                 Delivery Method
@@ -1995,9 +2058,9 @@ export const VendorCreditsAdd: React.FC = () => {
                                                             description: selected.description || '',
                                                             item_tax_type: selected.tax_preference === 'non_taxable' ? 'non_taxable'
                                                                 : selected.tax_preference === 'taxable' ? (isSameState ? 'tax_group' : 'tax_rate')
-                                                                : selected.tax_preference === 'out_of_scope' ? 'out_of_scope'
-                                                                : selected.tax_preference === 'non_gst_supply' ? 'non_gst_supply'
-                                                                : undefined,
+                                                                    : selected.tax_preference === 'out_of_scope' ? 'out_of_scope'
+                                                                        : selected.tax_preference === 'non_gst_supply' ? 'non_gst_supply'
+                                                                            : undefined,
                                                             tax_group_id: selected.tax_preference === 'taxable' ? (isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id) : null,
                                                             tax_exemption_id: selected.tax_preference === 'non_taxable' ? selected.tax_exemption_id : null,
                                                         });
@@ -2138,11 +2201,11 @@ export const VendorCreditsAdd: React.FC = () => {
                                                 </FormControl>
                                             </td> */}
 
+
                                             <td className="px-4 py-3">
                                                 <FormControl size="small" sx={{ width: 200 }}>
                                                     <Select
-                                                        //   value={item.tax_type || ""}
-                                                        value={item.item_tax_type === "tax_group" ? item.tax_group_id : item.item_tax_type || ""}
+                                                        value={["tax_group", "tax_rate"].includes(item.item_tax_type) ? item.tax_group_id : item.item_tax_type || ""}
                                                         displayEmpty
                                                         onChange={(e) => {
                                                             const value = e.target.value;
@@ -2158,7 +2221,7 @@ export const VendorCreditsAdd: React.FC = () => {
                                                                     setExemptionModalOpen(true);
                                                                 }
                                                             }
-                                                            // Tax group or tax rate selected
+                                                            // Tax group (same state) or tax rate (different state)
                                                             else {
                                                                 updateItem(index, "item_tax_type", isSameState ? "tax_group" : "tax_rate");
                                                                 updateItem(index, "tax_group_id", value);
@@ -2174,24 +2237,27 @@ export const VendorCreditsAdd: React.FC = () => {
                                                             </MenuItem>
                                                         ))}
 
-                                                        {/* Dynamic: Tax Groups (intra-state) or Tax Rates IGST (inter-state) */}
                                                         {(() => {
                                                             const isSameState = orgState && destinationOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-                                                            if (isSameState) {
-                                                                return [
-                                                                    <MenuItem key="__tg_header" disabled>Tax Groups</MenuItem>,
+                                                            return isSameState ? (
+                                                                [
+                                                                    <MenuItem key="__divider__" disabled>Tax Groups</MenuItem>,
                                                                     ...taxGroups.map((group) => (
-                                                                        <MenuItem key={group.id} value={group.id}>{group.name}</MenuItem>
+                                                                        <MenuItem key={group.id} value={group.id}>
+                                                                            {group.name}
+                                                                        </MenuItem>
                                                                     ))
-                                                                ];
-                                                            } else {
-                                                                return [
-                                                                    <MenuItem key="__tr_header" disabled>Tax Rates (IGST)</MenuItem>,
+                                                                ]
+                                                            ) : (
+                                                                [
+                                                                    <MenuItem key="__divider__" disabled>Tax Rates (IGST)</MenuItem>,
                                                                     ...taxRates.map((rate) => (
-                                                                        <MenuItem key={rate.id} value={rate.id}>{rate.name}</MenuItem>
+                                                                        <MenuItem key={rate.id} value={rate.id}>
+                                                                            {rate.name}
+                                                                        </MenuItem>
                                                                     ))
-                                                                ];
-                                                            }
+                                                                ]
+                                                            );
                                                         })()}
                                                     </Select>
                                                 </FormControl>
@@ -2266,7 +2332,7 @@ export const VendorCreditsAdd: React.FC = () => {
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
-                            {taxBreakdown.map((tax, index) => (
+                            {!reverseCharge && taxBreakdown.map((tax, index) => (
                                 <div key={index} className="flex justify-between items-center py-2">
                                     <span className="text-sm font-medium text-muted-foreground">
                                         {tax.name} ({tax.rate}%)

@@ -99,9 +99,9 @@ function mapRecurringBillToBill(recurringBill, customers, itemOptions) {
         selectedTerm: recurringBill?.payment_term_id ? String(recurringBill.payment_term_id) : '',
         billingAddress: recurringBill?.billing_address?.formatted_address || recurringBill?.supplier?.formatted_address || '',
         shippingAddress: recurringBill?.shipping_address?.formatted_address || '',
-        sourceOfSupply: recurringBill?.source_of_supply ,
+        sourceOfSupply: recurringBill?.source_of_supply,
         // || recurringBill?.billing_address?.state || recurringBill?.supplier?.state || '',
-        destinationOfSupply: recurringBill?.destination_of_supply ,
+        destinationOfSupply: recurringBill?.destination_of_supply,
         // || recurringBill?.shipping_address?.state || '',
         customerNotes: recurringBill?.notes || recurringBill?.customer_notes || '',
         termsAndConditions: recurringBill?.terms_and_conditions || '',
@@ -283,6 +283,9 @@ export const BillsAdd: React.FC = () => {
     const [poPrefill, setPoPrefill] = useState<any>(null);
     const [recurringBillPrefill, setRecurringBillPrefill] = useState<any>(null);
     const [subject, setSubject] = useState('');
+
+    const [reverseCharge, setReverseCharge] = useState(false);
+
     // Fetch item list from API
     const lock_account_id = localStorage.getItem("lock_account_id");
     useEffect(() => {
@@ -1538,6 +1541,10 @@ export const BillsAdd: React.FC = () => {
                 saveAsDraft ? 'draft' : 'open'
             );
             formData.append('lock_account_bill[subject]', subject || '');
+            formData.append(
+                'lock_account_bill[reverse_charge]',
+                reverseCharge ? 'true' : 'false'
+            );
             formData.append('lock_account_bill[total_amount]', String(totalAmount2));
             if (discountTypeOnTotal === 'percentage') {
                 formData.append('lock_account_bill[discount_per]', String(discountOnTotal));
@@ -1664,6 +1671,7 @@ export const BillsAdd: React.FC = () => {
     const taxBreakdown: any[] = [];
 
     // Tax group breakdown
+    if (!reverseCharge) {
     selectedTaxGroups.forEach(group => {
         group.taxRates.forEach(rate => {
             const taxAmount = (group.itemAmount * rate.rate) / 100;
@@ -1691,6 +1699,8 @@ export const BillsAdd: React.FC = () => {
                 taxBreakdown.push({ name: rate.name, rate: rateValue, amount: taxAmount });
             }
         });
+
+    }
     // Re-preselect tax on all taxable items when destination or orgState changes
     useEffect(() => {
         if (!destinationOfSupply) return;
@@ -1709,18 +1719,32 @@ export const BillsAdd: React.FC = () => {
 
     // Calculate Final Total
 
-    const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+    // const totalTax = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+    const totalTax = reverseCharge
+    ? 0
+    : taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+
+    // useEffect(() => {
+    //     const total =
+    //         afterDiscount +
+    //         totalTax  // tax from tax groups
+    //         - taxAmount2 + // TDS/TCS
+    //         (Number(adjustment) || 0);
+
+    //     setTotalAmount2(total);
+
+
+    // }, [afterDiscount, totalTax, taxAmount2, adjustment]);
+
     useEffect(() => {
-        const total =
-            afterDiscount +
-            totalTax  // tax from tax groups
-            - taxAmount2 + // TDS/TCS
-            (Number(adjustment) || 0);
+    const total =
+        afterDiscount +
+        totalTax -        // will be 0 if reverseCharge
+        taxAmount2 +      // TDS/TCS
+        (Number(adjustment) || 0);
 
-        setTotalAmount2(total);
-
-
-    }, [afterDiscount, totalTax, taxAmount2, adjustment]);
+    setTotalAmount2(total);
+}, [afterDiscount, totalTax, taxAmount2, adjustment, reverseCharge]);
     console.log('Tax Options:', taxOptions);
     return (
         <div className="p-6 space-y-6 relative">
@@ -2168,6 +2192,21 @@ export const BillsAdd: React.FC = () => {
                             />
                             <p className="text-xs text-gray-400 text-right mt-1">{subject.length}/500</p>
                         </div>
+                        <div className="flex items-center gap-2 mt-2">
+                            <input
+                                type="checkbox"
+                                id="reverseCharge"
+                                checked={reverseCharge}
+                                onChange={(e) => setReverseCharge(e.target.checked)}
+                                className="w-4 h-4 accent-[#bf213e] cursor-pointer"
+                            />
+                            <label
+                                htmlFor="reverseCharge"
+                                className="text-sm font-medium text-gray-700 cursor-pointer"
+                            >
+                                This transaction is applicable for reverse charge
+                            </label>
+                        </div>
 
                         {/* <div>
                             <label className="block text-sm font-medium mb-2">
@@ -2559,7 +2598,7 @@ export const BillsAdd: React.FC = () => {
                                     <span className="font-semibold text-base text-red-600 ml-2">-₹{totalDiscount.toFixed(2)}</span>
                                 </div>
                             </div>
-                            {taxBreakdown.length > 0 && (
+                            {!reverseCharge && taxBreakdown.length > 0 && (
                                 <>
                                     <div className="flex justify-between items-center py-1">
                                         <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Tax Summary</span>
