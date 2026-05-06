@@ -2462,10 +2462,10 @@ function App() {
                           path="/master/plant-detail"
                           element={<PlantDetailSetupPage />}
                         />
-                          <Route
-                            path="/master/fields-setup"
-                            element={<FieldsSetupPage />}
-                          />
+                        <Route
+                          path="/master/fields-setup"
+                          element={<FieldsSetupPage />}
+                        />
                         {/* CRM Routes */}
                         <Route
                           path="/crm/campaign"
@@ -3664,7 +3664,7 @@ function App() {
                           path="/employee/dashboard"
                           element={<EmployeeDashboard />}
                         />
-                          <Route path="/my-inbox" element={<MyInboxPage />} />
+                        <Route path="/my-inbox" element={<MyInboxPage />} />
                         <Route
                           path="/employee/calendar"
                           element={<EmployeeCalendarPage />}
@@ -4507,15 +4507,15 @@ function App() {
                           element={<ViewPerformancePage />}
                         />
                         <Route
-                          path="/maintenance/vendor"
+                          path="/accounting/vendor"
                           element={<VendorPage />}
                         />
                         <Route
-                          path="/maintenance/vendor/add"
+                          path="/accounting/vendor/add"
                           element={<AddVendorPage />}
                         />
                         <Route
-                          path="/maintenance/vendor/view/:id"
+                          path="/accounting/vendor/view/:id"
                           element={<DetailsVendorPage />}
                         />
                         <Route
@@ -5747,16 +5747,16 @@ function App() {
                         <Route
                           path="/product/surveys"
                           element={<SurveyManagementPage />}
-                          />
-                          <Route
-                            path="/product/ptw"
-                            element={<PTWManagementPage />}
-                          />
-                          <Route
-                            path="/product/gophygital-tenants"
-                            element={<TenantManagementPage />}
                         />
-                          {/* <Route
+                        <Route
+                          path="/product/ptw"
+                          element={<PTWManagementPage />}
+                        />
+                        <Route
+                          path="/product/gophygital-tenants"
+                          element={<TenantManagementPage />}
+                        />
+                        {/* <Route
                             path="/product/surveys"
                             element={<SurveysPage />}
                           /> */}
@@ -6113,26 +6113,26 @@ function App() {
                           path="/pulse/sos-category-setup"
                           element={<SOSCategorySetupPage />}
                         />
-                          <Route
-                            path="/pulse/support-contact-setup"
-                            element={<SupportContactSetupPage />}
-                          />
-                          <Route
-                            path="/pulse/support-contact-setup/add"
-                            element={<AddSupportContactPage />}
-                          />
-                          <Route
-                            path="/pulse/gre-site-assignment-setup"
-                            element={<GreSiteAssignmentSetupPage />}
-                          />
-                          <Route
-                            path="/pulse/gre-site-assignment-setup/add"
-                            element={<AddGreSiteAssignmentPage />}
-                          />
-                          <Route
-                            path="/pulse/gre-site-assignment-setup/edit/:id"
-                            element={<AddGreSiteAssignmentPage />}
-                          />
+                        <Route
+                          path="/pulse/support-contact-setup"
+                          element={<SupportContactSetupPage />}
+                        />
+                        <Route
+                          path="/pulse/support-contact-setup/add"
+                          element={<AddSupportContactPage />}
+                        />
+                        <Route
+                          path="/pulse/gre-site-assignment-setup"
+                          element={<GreSiteAssignmentSetupPage />}
+                        />
+                        <Route
+                          path="/pulse/gre-site-assignment-setup/add"
+                          element={<AddGreSiteAssignmentPage />}
+                        />
+                        <Route
+                          path="/pulse/gre-site-assignment-setup/edit/:id"
+                          element={<AddGreSiteAssignmentPage />}
+                        />
                       </Route>
 
                       <Route
@@ -6432,10 +6432,10 @@ function App() {
                         path="/mobile/tickets"
                         element={<MobileTicketsPage />}
                       />
-                        <Route
-                          path="/mobile/tickets/new"
-                          element={<MobileNewTicketPage />}
-                        />
+                      <Route
+                        path="/mobile/tickets/new"
+                        element={<MobileNewTicketPage />}
+                      />
                       <Route
                         path="/mobile/orders"
                         element={<MobileOrdersPage />}

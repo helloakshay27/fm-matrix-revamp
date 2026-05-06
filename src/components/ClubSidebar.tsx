@@ -110,7 +110,7 @@ const modulesByPackage = {
     {
       name: "Vendor",
       icon: Truck,
-      href: "/maintenance/vendor",
+      href: "/accounting/vendor",
     },
     // {
     //   name: "Invoices",
@@ -284,7 +284,7 @@ const modulesByPackage = {
       name: "Purchases",
       icon: Truck,
       subItems: [
-        { name: "Vendor", href: "/maintenance/vendor" },
+        { name: "Vendor", href: "/accounting/vendor" },
         { name: "Expense", href: "/accounting/expense" },
         { name: "Recurring Expenses", href: "/accounting/recurring-expenses" },
         { name: "Purchase Order", href: "/accounting/purchase-order" },
@@ -345,10 +345,10 @@ const modulesByPackage = {
         },
         {
           name: " Approval Matrix",
-           href: "/accounting/asset-setup/approval-matrix",
-         
+          href: "/accounting/asset-setup/approval-matrix",
 
-          
+
+
         },
         {
           name: "Organization",
@@ -363,7 +363,7 @@ const modulesByPackage = {
       name: "Reports",
       icon: BarChart3,
       subItems: [
-          {
+        {
           name: "Business Overview",
           // icon: TrendingUp,
           subItems: [
@@ -435,7 +435,7 @@ const modulesByPackage = {
           href: "/accounting/reports/debtors-creditors",
         },
 
-      
+
 
 
 
@@ -581,15 +581,15 @@ const modulesByPackage = {
               name: "Vendor Balance Summary",
               href: "/accounting/reports/vendor-balance-summary",
             },
-             {
+            {
               name: "AP Aging Summary",
               href: "/accounting/reports/ap-aging-summary",
             },
-             {
+            {
               name: "AP Aging Details",
               href: "/accounting/reports/ap-aging-details",
             },
-             {
+            {
               name: "Bill Details",
               href: "/accounting/reports/bill-details",
             },
@@ -601,7 +601,7 @@ const modulesByPackage = {
               name: "Payments Made",
               href: "/accounting/reports/payments-made",
             },
-              {
+            {
               name: "Purchase Order Details",
               href: "/accounting/reports/purchase-order-details",
             },
@@ -609,7 +609,7 @@ const modulesByPackage = {
               name: "Purchases by Vendor",
               href: "/accounting/reports/purchase-orders-by-vendor",
             },
-              {
+            {
               name: "Payable Summary",
               href: "/accounting/reports/payable-summary",
             },
@@ -617,12 +617,12 @@ const modulesByPackage = {
               name: "Payable Details",
               href: "/accounting/reports/payable-details",
             },
-           
+
             // {
             //   name: "Refund History",
             //   href: "/accounting/reports/payable-refund-history",
             // },
-          
+
             // {
             //   name: "Expense Details",
             //   href: "/accounting/reports/expense-details",
@@ -643,17 +643,17 @@ const modulesByPackage = {
             //   name: "Billable Expense Details",
             //   href: "/accounting/reports/billable-expense-details",
             // },
-            
-          
-           
-           
+
+
+
+
           ],
         },
 
         {
           name: "Purchases and Expenses",
           subItems: [
-             {
+            {
               name: "Purchases by Vendor",
               href: "/accounting/purchases-and-expenses/purchases-by-vendor",
             },
@@ -661,7 +661,7 @@ const modulesByPackage = {
               name: "Purchases by Item",
               href: "/accounting/purchases-and-expenses/purchases-by-item",
             },
-           
+
             {
               name: "Expense Details",
               href: "/accounting/purchases-and-expenses/expense-details",
@@ -682,7 +682,7 @@ const modulesByPackage = {
             //   name: "Expenses by Employee",
             //   href: "/accounting/purchases-and-expenses/expenses-by-employee",
             // },
-           
+
             {
               name: "Billable Expense Details",
               href: "/accounting/purchases-and-expenses/billable-expense-details",
@@ -697,7 +697,7 @@ const modulesByPackage = {
               name: "Tax Summary",
               href: "/accounting/reports/tax-summary",
             },
-             {
+            {
               name: "TDS Summary",
               href: "/accounting/reports/tds-summary",
             },
@@ -712,7 +712,7 @@ const modulesByPackage = {
             {
               name: "GSTR-3B Summary",
               href: "/accounting/reports/gstr-3b-summary",
-           },
+            },
             // {
             //   name: "Summary of Inward Supplies",
             //   href: "/accounting/reports/summary-of-inward-supplies",
@@ -737,7 +737,7 @@ const modulesByPackage = {
             //   name: "TCS Summary (Form No. 27EQ)",
             //   href: "/accounting/reports/tcs-summary-form-27eq",
             // },
-           
+
           ],
         },
 

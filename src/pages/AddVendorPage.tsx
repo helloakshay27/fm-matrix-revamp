@@ -587,7 +587,7 @@ export const AddVendorPage = () => {
     try {
       await vendorService.createVendor(apiFormData);
       toast.success('Vendor created successfully!');
-      navigate('/maintenance/vendor');
+      navigate('/accounting/vendor');
     } catch (error: any) {
       // Handle 422 Unprocessable Entity (validation errors)
       if (error.status === 422 && error.validationErrors) {
@@ -1467,7 +1467,7 @@ export const AddVendorPage = () => {
       <div className="mb-6">
         <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
           <button
-            onClick={() => navigate('/maintenance/vendor')}
+            onClick={() => navigate('/accounting/vendor')}
             className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 transition-colors mr-2"
             aria-label="Go back"
           >
