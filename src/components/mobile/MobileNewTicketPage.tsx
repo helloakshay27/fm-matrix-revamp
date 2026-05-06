@@ -595,6 +595,9 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
     const newFiles = files.slice(0, slots);
     
     setAttachments(prev => [...prev, ...newFiles]);
+
+    console.log("attachments", newFiles);
+
     
     // Generate previews for image files
     newFiles.forEach(file => {
@@ -642,12 +645,12 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         return acc;
       }, {} as Record<string, { remarks: string; qtype: string }>);
 
-      // Prepare attachments - convert to base64 format
-      const attachmentsData = attachments.map((file, index) => ({
-        data: attachmentPreviews[index] || '',
+      // Prepare attachments - send as object format
+      const attachmentsData = attachments.map((file) => ({
         file_name: file.name,
         file_type: file.type,
-      })).filter(att => att.data !== ''); // Only include files with data
+        file_size: file.size,
+      }));
 
       const ticketData = {
         site_id: siteId,
@@ -702,6 +705,48 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         basic_fields: basicFields,
       };
 
+      const payload = new FormData();
+
+payload.append('site_id', String(ticketData.site_id));
+payload.append('on_behalf_of', ticketData.on_behalf_of);
+
+if (ticketData.sel_id_user !== null) {
+  payload.append('sel_id_user', String(ticketData.sel_id_user));
+}
+
+if (ticketData.fm_user_id !== null) {
+  payload.append('fm_user_id', String(ticketData.fm_user_id));
+}
+
+if (ticketData.checklist_id !== null) {
+  payload.append('checklist_id', String(ticketData.checklist_id));
+}
+
+// complaint
+Object.entries(ticketData.complaint).forEach(([key, value]) => {
+  if (value !== undefined && value !== null && value !== '') {
+    payload.append(`complaint[${key}]`, String(value));
+  }
+});
+
+// attachments (real file objects, not base64)
+attachments.forEach((file) => {
+  payload.append('attachments[]', file);
+});
+
+// basic_fields
+Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
+  payload.append(
+    `basic_fields[${fieldId}][remarks]`,
+    fieldData.remarks
+  );
+
+  payload.append(
+    `basic_fields[${fieldId}][qtype]`,
+    fieldData.qtype
+  );
+});
+
       console.log('📤 Submitting ticket:', ticketData);
 
       // Try using the dynamic site domain, fallback to ticketManagementAPI
@@ -712,12 +757,10 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
         const response = await fetch(submitUrl, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(ticketData),
+          body: payload,
         });
         ticketResponse = await response.json();
+        console.log("ticketResponse", ticketResponse);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
