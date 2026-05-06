@@ -992,11 +992,11 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
       style={{ backgroundColor: '#f6f4ee' }}
     >
       {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white shadow-sm flex-shrink-0 md:sticky md:top-0 md:z-10 md:px-8">
-        <button onClick={onBack} className="p-1 rounded-lg active:bg-gray-100">
-          <ArrowLeft className="h-6 w-6" style={{ color: '#2c2c2c' }} />
-        </button>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center px-4 py-3 bg-white shadow-sm flex-shrink-0 md:sticky md:top-0 md:z-10 md:px-8">
+        {/* <button onClick={onBack} className="p-1 rounded-lg active:bg-gray-100"> */}
+          {/* <ArrowLeft className="h-6 w-6" style={{ color: '#2c2c2c' }} /> */}
+        {/* </button> */}
+        <div className="flex justify-center gap-2">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center"
             style={{ backgroundColor: '#da7756' }}
@@ -1005,9 +1005,9 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
           </div>
           <h1 className="text-lg font-semibold" style={{ color: '#2c2c2c' }}>New Ticket</h1>
         </div>
-        <button className="p-1 rounded-lg active:bg-gray-100">
-          <Settings className="h-6 w-6" style={{ color: '#2c2c2c' }} />
-        </button>
+        {/* <button className="p-1 rounded-lg active:bg-gray-100"> */}
+          {/* <Settings className="h-6 w-6" style={{ color: '#2c2c2c' }} /> */}
+        {/* </button> */}
       </div>
 
       {/* ── Scrollable body ────────────────────────────────────── */}
