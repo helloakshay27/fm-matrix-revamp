@@ -13,7 +13,7 @@ import { ticketManagementAPI, CategoryResponse, SubCategoryResponse } from '@/se
 import { getUser } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { co } from 'node_modules/@fullcalendar/core/internal-common';
-import { result } from 'lodash';
+// import { result } from 'lodash';
 
 const CATEGORY_ICON_LIST = [Sparkles, Wrench, Monitor, ShieldCheck, Wifi, Zap, Wind, Droplets];
 const PRIORITY_OPTIONS = [
@@ -355,6 +355,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const user = getUser();
+  let result
 
   // Extract site_id from URL or use default
   const siteIdParam = searchParams.get('site_id');
@@ -721,7 +722,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         console.error('❌ Error submitting ticket via dynamic domain:', dynamicError);
 
       }
-      
+
 
       // toast({ title: 'Success', description: 'Ticket submitted successfully!' });
       // onSuccess();
