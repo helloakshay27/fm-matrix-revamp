@@ -1241,6 +1241,7 @@ import TeamDashboard from "./pages/AdminCompass/TeamDashboard";
 import HouseSetupPage from "./pages/HouseSetupPage";
 import HSNCodeSetup from "./pages/HSNCodeSetup";
 import DashboardUI from "./pages/DashboardUI";
+import FieldsSetupPage from "./pages/master/FieldsSetupPage";
 
 const queryClient = new QueryClient();
 
@@ -2508,6 +2509,10 @@ function App() {
                           <Route
                             path="/crm/wallet-list"
                             element={<CRMWalletList />}
+                          />
+                          <Route
+                            path="/master/fields-setup"
+                            element={<FieldsSetupPage />}
                           />
                           <Route
                             path="/crm/wallet-list/:id"
