@@ -529,14 +529,14 @@ export const AddMaterialPRDashboard = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []) as File[];
-    const validFileTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const validFileTypes = ['application/pdf'];
     const maxFileSizeBytes = 12 * 1024 * 1024; // 12 MB
     const validFiles: File[] = [];
 
     selectedFiles.forEach((file) => {
       // Validate file type
       if (!validFileTypes.includes(file.type)) {
-        toast.error(`Invalid file type: ${file.name}. Accepted formats: JPG, PNG, PDF, XLS, XLSX, DOC, DOCX`);
+        toast.error(`Invalid file type: ${file.name}. Only PDF files are accepted.`);
         return;
       }
 

@@ -1303,6 +1303,7 @@ import HSNCodeSetup from "./pages/HSNCodeSetup";
 import DashboardUI from "./pages/DashboardUI";
 import OrganisationMaster from "./pages/ClubManagement/OrganisationMaster";
 import MyInboxPage from "./features/inbox/MyInboxPage.tsx";
+import { ExpenseEditPage } from "./pages/ExpenseEditPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -1479,7 +1480,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -3484,7 +3485,7 @@ function App() {
                           />
                           <Route
                             path="/accounting/expense/edit/:id"
-                            element={<ExpenseCreatePage />}
+                            element={<ExpenseEditPage />}
                           />
                           <Route
                             path="/accounting/section"
