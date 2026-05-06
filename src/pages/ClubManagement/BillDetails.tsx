@@ -441,18 +441,43 @@ export const BillDetails = () => {
   const selectedSupplier = supplierList.find(
     (supplier) => String(supplier.id) === String(selectedSupplierId)
   );
-  const isBillOverdue = String(salesOrder?.status || "")
+  // const isBillOverdue = String(salesOrder?.status || "")
+  //   .trim()
+  //   .toLowerCase()
+  //   .startsWith("overdue");
+  // const formatBillDate = (date?: string | null) => {
+  //   if (!date) return "-";
+  //   const parsedDate = new Date(date);
+  //   if (Number.isNaN(parsedDate.getTime())) return "-";
+
+  //   return parsedDate.toLocaleDateString("en-IN");
+  // };
+
+
+  const status = String(salesOrder?.status || "")
     .trim()
-    .toLowerCase()
-    .startsWith("overdue");
+    .toLowerCase();
+
+  // ✅ Check for both "overdue" OR "open"
+  const isBillOverdue = ["overdue", "open"].some(s =>
+    status.startsWith(s)
+  );
+
+  // (Optional) If you still want separate flags
+  const isBillOverdue2 = status.startsWith("overdue");
+  const isBillOpen = status.startsWith("open");
+
+  // Date formatter (unchanged - already correct)
   const formatBillDate = (date?: string | null) => {
     if (!date) return "-";
+
     const parsedDate = new Date(date);
     if (Number.isNaN(parsedDate.getTime())) return "-";
 
     return parsedDate.toLocaleDateString("en-IN");
   };
 
+  console.log("overdue", { isBillOverdue, isBillOpen })
   useEffect(() => {
     if (!isBillOverdue && activeTab === "record-payment") {
       setActiveTab("order-details");
@@ -672,7 +697,7 @@ export const BillDetails = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading sales order...</p>
+          <p className="mt-4 text-muted-foreground">Loading ...</p>
         </div>
       </div>
     );
@@ -702,6 +727,88 @@ export const BillDetails = () => {
   });
   const taxRows = Object.entries(taxBreakdown);
 
+
+  // const reverseChargeData = salesOrder?.item_details?.map((item: any) => {
+  //   const rate = item?.tax_group?.rate || 0;
+  //   const name = item?.tax_group?.name || "Tax";
+
+  //   const taxAmount = (item.total_amount * rate) / 100;
+
+  //   return {
+  //     name,
+  //     rate,
+  //     amount: taxAmount,
+  //   };
+  // }) || [];
+
+  // const groupedReverseTax: any[] = [];
+
+  // reverseChargeData.forEach((tax) => {
+  //   const existing = groupedReverseTax.find(t => t.name === tax.name);
+
+  //   if (existing) {
+  //     existing.amount += tax.amount;
+  //   } else {
+  //     groupedReverseTax.push({ ...tax });
+  //   }
+  // });
+  // const totalReverseTax = groupedReverseTax.reduce(
+  //   (sum, t) => sum + t.amount,
+  //   0
+  // );
+
+
+  const reverseChargeData: any[] = [];
+
+salesOrder?.item_details?.forEach((item: any) => {
+
+  // ✅ Case 1: Maharashtra → tax_group with multiple tax_rates
+  if (item.tax_type === "tax_group" && item.tax_group?.tax_rates) {
+    item.tax_group.tax_rates.forEach((tax: any) => {
+      const taxAmount = (item.total_amount * tax.rate) / 100;
+
+      reverseChargeData.push({
+        name: tax.name,
+        rate: tax.rate,
+        amount: taxAmount,
+      });
+    });
+  }
+
+  // ✅ Case 2: Inter-state → single tax rate (IGST)
+  else if (item.tax_type === "tax_rate" && item.tax_group) {
+    const rate = item.tax_group.rate || 0;
+    const name = item.tax_group.name || "Tax";
+
+    const taxAmount = (item.total_amount * rate) / 100;
+
+    reverseChargeData.push({
+      name,
+      rate,
+      amount: taxAmount,
+    });
+  }
+});
+
+ 
+
+  const groupedReverseTax: any[] = [];
+
+reverseChargeData.forEach((tax) => {
+  const existing = groupedReverseTax.find(t => t.name === tax.name);
+
+  if (existing) {
+    existing.amount += tax.amount;
+  } else {
+    groupedReverseTax.push({ ...tax });
+  }
+});
+
+// ✅ ADD THIS HERE
+const totalReverseTax = groupedReverseTax.reduce(
+  (sum, t) => sum + t.amount,
+  0
+);
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -715,6 +822,7 @@ export const BillDetails = () => {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
+
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-3">
                 <ShoppingCart className="h-6 w-6 text-primary" />
@@ -737,16 +845,16 @@ export const BillDetails = () => {
             </Badge>
             {(salesOrder as any)?.approval_status?.approval_levels?.length >
               0 && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowApprovalLog(true)}
-                className="gap-2"
-              >
-                <ClipboardList className="h-4 w-4" />
-                Approval Log
-              </Button>
-            )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowApprovalLog(true)}
+                  className="gap-2"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  Approval Log
+                </Button>
+              )}
 
             {/* ── WITHOUT APPROVAL ── */}
             {!hasSaleOrderApproval && (
@@ -953,6 +1061,44 @@ export const BillDetails = () => {
               className="p-3 sm:p-6 space-y-6"
               style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
             >
+
+              {salesOrder?.reverse_charge && groupedReverseTax.length > 0 && (
+                <div className="mt-6 border rounded-md overflow-hidden">
+
+                  <div className="bg-gray-100 px-4 py-2 font-semibold">
+                    Reverse Charge Summary
+                  </div>
+
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600">
+                      <tr>
+                        <th className="text-left px-4 py-2">Reverse Charge Rate</th>
+                        <th className="text-right px-4 py-2">Tax Amount</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {groupedReverseTax.map((tax, index) => (
+                        <tr key={index} className="border-t">
+                          <td className="px-4 py-2">
+                            {tax.name} ({tax.rate}%)
+                          </td>
+                          <td className="px-4 py-2 text-right">
+                            ₹{tax.amount.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+
+                      <tr className="border-t font-semibold bg-gray-50">
+                        <td className="px-4 py-2">Total</td>
+                        <td className="px-4 py-2 text-right">
+                          ₹{totalReverseTax.toFixed(2)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
               {/* Order Information */}
               <Card>
                 <CardHeader>
@@ -1040,6 +1186,21 @@ export const BillDetails = () => {
                         {salesOrder?.subject}
                       </p>
                     </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={
+                          salesOrder?.reverse_charge === true ||
+                          salesOrder?.reverse_charge === "true"
+                        }
+                        readOnly
+                        className="h-4 w-4 accent-[#bf213e] cursor-not-allowed"
+                      />
+                      <span className="text-sm font-medium text-muted-foreground">
+                        This transaction is applicable for reverse charge
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -1090,7 +1251,7 @@ export const BillDetails = () => {
                             </TableCell>
                             <TableCell className="text-right">
                               {item.tax_type === "tax_group" ||
-                              item.tax_type === "tax_rate"
+                                item.tax_type === "tax_rate"
                                 ? (item.tax_group?.name ?? "-")
                                 : item.tax_type === "non_taxable"
                                   ? "Non Taxable"
@@ -1128,7 +1289,7 @@ export const BillDetails = () => {
                           -₹{salesOrder?.discount_amount?.toFixed(2)}
                         </span>
                       </div>
-                      {taxRows.map(([name, tax], index) => (
+                      {/* {taxRows.map(([name, tax], index) => (
                         <div
                           key={index}
                           className="flex justify-between items-center py-2"
@@ -1140,7 +1301,26 @@ export const BillDetails = () => {
                             ₹{tax.amount.toFixed(2)}
                           </span>
                         </div>
-                      ))}
+                      ))} */}
+
+                      {!(
+                        salesOrder?.reverse_charge === true ||
+                        salesOrder?.reverse_charge === "true"
+                      ) &&
+                        taxRows.map(([name, tax], index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center py-2"
+                          >
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {name} ({tax.rate}%)
+                            </span>
+                            <span className="font-semibold text-base">
+                              ₹{tax.amount.toFixed(2)}
+                            </span>
+                          </div>
+                        ))
+                      }
                       <div className="flex justify-between items-center py-2">
                         <span className="text-sm font-medium text-muted-foreground">
                           {salesOrder?.tax_type?.toUpperCase()}
@@ -1265,7 +1445,7 @@ export const BillDetails = () => {
                                   {rec.ledger_id ? (
                                     <span
                                       className="text-black-600 cursor-pointer hover:underline"
-                                      // onClick={() => navigate(`/accounting/reports/balance-sheet/details/${rec.ledger_id}`)}
+                                    // onClick={() => navigate(`/accounting/reports/balance-sheet/details/${rec.ledger_id}`)}
                                     >
                                       {rec.ledger_name}
                                     </span>
@@ -1322,7 +1502,7 @@ export const BillDetails = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <DollarSign className="h-5 w-5 text-primary" />
-                    Payment for {salesOrder?.bill_number || "-"}
+                    Payment for : Bill {salesOrder?.bill_number || "-"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -1470,7 +1650,7 @@ export const BillDetails = () => {
                         sx={fieldStyles}
                       />
                     </div>
-                    <div>
+                    {/* <div>
                       <p className="text-sm font-medium mb-2">Notes</p>
                       <TextField
                         fullWidth
@@ -1479,6 +1659,28 @@ export const BillDetails = () => {
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                       />
+                    </div> */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Notes
+                      </label>
+
+                      <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        rows={3}
+                        maxLength={500}
+                        value={notes}
+                        onChange={(e) => {
+                          if (e.target.value.length <= 500) {
+                            setNotes(e.target.value);
+                          }
+                        }}
+                        placeholder="Enter any notes..."
+                      />
+
+                      <p className="text-xs text-gray-400 text-right mt-1">
+                        {notes.length}/500
+                      </p>
                     </div>
                   </div>
 
@@ -1678,7 +1880,7 @@ export const BillDetails = () => {
                 </CardHeader>
                 <CardContent>
                   {Array.isArray((salesOrder as any)?.activity_logs) &&
-                  (salesOrder as any).activity_logs.length > 0 ? (
+                    (salesOrder as any).activity_logs.length > 0 ? (
                     <div className="divide-y">
                       {(salesOrder as any).activity_logs.map(
                         (log: any, idx: number) => {
@@ -1815,9 +2017,9 @@ export const BillDetails = () => {
                     <TableCell className="text-sm">
                       {Array.isArray(lvl?.users)
                         ? lvl.users
-                            .map((u: any) => u?.name || u)
-                            .filter(Boolean)
-                            .join(", ")
+                          .map((u: any) => u?.name || u)
+                          .filter(Boolean)
+                          .join(", ")
                         : "—"}
                     </TableCell>
                   </TableRow>

@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
   TextField,
@@ -14,7 +13,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  InputLabel,
   RadioGroup,
   FormControlLabel,
   Radio,
@@ -49,7 +47,6 @@ interface AccountLedger {
   formatted_name: string;
   lock_account_group_id: number;
   active: boolean;
-  // Optional tax metadata returned by the API (used for auto tax selection)
   tax_preference?: string;
   tax_exemption_id?: number | null;
   tax_group_id?: number | null;
@@ -67,8 +64,8 @@ interface ExpenseLine {
   amount: string;
   notes: string;
   hsnSacCode: string;
-  hsnSacEditing: boolean;  // inline HSN/SAC edit mode per row
-  taxType: string;         // 'tax_group' | 'non_taxable' | ''
+  hsnSacEditing: boolean;
+  taxType: string;
   taxGroupId: string | number | null;
   taxExemptionId: string | number | null;
 }
@@ -93,7 +90,7 @@ const GST_TREATMENT_MAP: Record<string, string> = {
 const normalizeGstTreatment = (val: string): string => {
   return GST_TREATMENT_MAP[val] || val;
 };
-// ── Indian states list ───────────────────────────────────────────────────────
+
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa',
   'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala',
@@ -105,7 +102,6 @@ const INDIAN_STATES = [
   'Delhi', 'Jammu and Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry',
 ];
 
-// ── GST treatments ───────────────────────────────────────────────────────────
 const GST_TREATMENTS = [
   { value: 'registered_business_regular', label: 'Registered Business - Regular' },
   { value: 'registered_business_composition', label: 'Registered Business - Composition' },
@@ -121,31 +117,35 @@ const GST_TREATMENTS = [
   { value: 'input_service_distributor', label: 'Input Service Distributor' },
 ];
 
-// ── Shared field height styles ───────────────────────────────────────────────
 const fieldStyles = {
   '& .MuiInputBase-input, & .MuiSelect-select': {
     padding: { xs: '8px', sm: '10px', md: '12px' },
   },
 };
 
-// ── Helper: build safe API base URL ─────────────────────────────────────────
 const getApiUrl = (): string => {
   const base = localStorage.getItem('baseUrl') || '';
   return base.startsWith('http') ? base : `https://${base}`;
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
-export const ExpenseCreatePage: React.FC = () => {
+export const ExpenseEditPage: React.FC = () => {
   const navigate = useNavigate();
+  // Get route id from params — e.g. /accounting/expense/:id
+  const { id } = useParams<{ id: string }>();
 
   useEffect(() => {
-    document.title = 'New Expense';
+    document.title = 'Edit Expense';
   }, []);
+
+  // ── Loading / error state for prefill ─────────────────────────────────────
+  const [prefillLoading, setPrefillLoading] = useState(true);
+  const [prefillError, setPrefillError] = useState<string | null>(null);
 
   // ── Mode ─────────────────────────────────────────────────────────────────
   const [isItemized, setIsItemized] = useState(false);
 
-  // ── Shared header fields (both modes) ────────────────────────────────────
+  // ── Shared header fields ──────────────────────────────────────────────────
   const [date, setDate] = useState('');
   const [paidThrough, setPaidThrough] = useState('');
   const [vendor, setVendor] = useState('');
@@ -153,10 +153,10 @@ export const ExpenseCreatePage: React.FC = () => {
   const [billedOn, setBilledOn] = useState(false);
   const [gstTreatment, setGstTreatment] = useState('');
   const [sourceOfSupply, setSourceOfSupply] = useState('');
-  const [destinationOfSupply, setDestinationOfSupply] = useState('Maharashtra'); // ✅ full name default
+  const [destinationOfSupply, setDestinationOfSupply] = useState('Maharashtra');
   const [reverseCharge, setReverseCharge] = useState(false);
-  const [invoiceNumber, setInvoiceNumber] = useState('');   // ✅ maps to reference_number
-  const [description, setDescription] = useState('');       // ✅ rendered in UI now
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [description, setDescription] = useState('');
 
   // ── Single-expense fields ─────────────────────────────────────────────────
   const [expenseAccount, setExpenseAccount] = useState('');
@@ -173,7 +173,7 @@ export const ExpenseCreatePage: React.FC = () => {
 
   // ── Itemized fields ───────────────────────────────────────────────────────
   const [lines, setLines] = useState<ExpenseLine[]>([EMPTY_LINE()]);
-  const [amountsAre, setAmountsAre] = useState<'inclusive' | 'exclusive'>('exclusive'); // ✅ separate state
+  const [amountsAre, setAmountsAre] = useState<'inclusive' | 'exclusive'>('exclusive');
   const [taxOverride, setTaxOverride] = useState<'transaction' | 'lineitem'>('transaction');
 
   // ── Receipts ──────────────────────────────────────────────────────────────
@@ -223,59 +223,31 @@ export const ExpenseCreatePage: React.FC = () => {
     g => String(g.id) === String(selectedGstDetailId)
   ) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
 
-  // ── Fetch account ledgers ─────────────────────────────────────────────────
+  // ── Fetch all dropdown data in parallel ───────────────────────────────────
   useEffect(() => {
-    const fetchAccountLedgers = async () => {
-      setLoadingAccounts(true);
-      try {
-        const apiUrl = getApiUrl();
-        const token = localStorage.getItem('token');
-        const lockAccountId = localStorage.getItem('lock_account_id');
-        const res = await fetch(
-          `${apiUrl}/lock_accounts/${lockAccountId}/lock_account_ledgers.json`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (res.ok) {
-          const data: AccountLedger[] = await res.json();
-          setAccountLedgers(data.filter(a => a.active));
-        }
-      } catch {
-        sonnerToast.error('Failed to load accounts');
-      } finally {
-        setLoadingAccounts(false);
-      }
-    };
-    fetchAccountLedgers();
-  }, []);
-
-  // ── Fetch vendors ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    const fetchVendors = async () => {
-      setLoadingVendors(true);
-      try {
-        const apiUrl = getApiUrl();
-        const token = localStorage.getItem('token');
-        const res = await fetch(
-          `${apiUrl}/pms/purchase_orders/get_suppliers.json?access_token=${token}`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          if (data.status === 'success') setVendors(data.suppliers || []);
-        }
-      } catch {
-        sonnerToast.error('Failed to load vendors');
-      } finally {
-        setLoadingVendors(false);
-      }
-    };
-    fetchVendors();
-  }, []);
-
-  // ── Fetch tax groups ──────────────────────────────────────────────────────
-  useEffect(() => {
-    const apiUrl = getApiUrl(); // ✅ safe URL helper used everywhere
+    const apiUrl = getApiUrl();
     const token = localStorage.getItem('token');
     const lockId = localStorage.getItem('lock_account_id');
+
+    // Accounts
+    setLoadingAccounts(true);
+    fetch(`${apiUrl}/lock_accounts/${lockId}/lock_account_ledgers.json`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.ok ? r.json() : [])
+      .then((data: AccountLedger[]) => setAccountLedgers(data.filter(a => a.active)))
+      .catch(() => sonnerToast.error('Failed to load accounts'))
+      .finally(() => setLoadingAccounts(false));
+
+    // Vendors
+    setLoadingVendors(true);
+    fetch(`${apiUrl}/pms/purchase_orders/get_suppliers.json?access_token=${token}`)
+      .then(r => r.ok ? r.json() : { suppliers: [] })
+      .then(data => { if (data.status === 'success') setVendors(data.suppliers || []); })
+      .catch(() => sonnerToast.error('Failed to load vendors'))
+      .finally(() => setLoadingVendors(false));
+
+    // Tax groups
     setLoadingTaxGroups(true);
     axios
       .get(`${apiUrl}/lock_accounts/${lockId}/tax_groups_view.json`, {
@@ -284,53 +256,147 @@ export const ExpenseCreatePage: React.FC = () => {
       .then(res => setTaxGroups(res.data || []))
       .catch(() => sonnerToast.error('Failed to load tax groups'))
       .finally(() => setLoadingTaxGroups(false));
-  }, []);
 
-  // ── Fetch exemptions ──────────────────────────────────────────────────────
-  useEffect(() => {
-    const apiUrl = getApiUrl();
-    const token = localStorage.getItem('token');
-    const lockId = localStorage.getItem('lock_account_id');
+    // Exemptions
     setLoadingExemptions(true);
     axios
-      .get(
-        `${apiUrl}/tax_exemptions.json?lock_account_id=${lockId}&q[exemption_type_eq]=item`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
+      .get(`${apiUrl}/tax_exemptions.json?lock_account_id=${lockId}&q[exemption_type_eq]=item`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
       .then(res => setExemptions(res.data || []))
       .catch(() => sonnerToast.error('Failed to load exemptions'))
       .finally(() => setLoadingExemptions(false));
-  }, []);
 
-  // ── Fetch customers ───────────────────────────────────────────────────────
-  useEffect(() => {
-    const apiUrl = getApiUrl();
-    const token = localStorage.getItem('token');
-    const lockAccountId = localStorage.getItem('lock_account_id');
+    // Customers
     setLoadingCustomers(true);
     axios
-      .get(`${apiUrl}/lock_account_customers.json?lock_account_id=${lockAccountId}`, {
+      .get(`${apiUrl}/lock_account_customers.json?lock_account_id=${lockId}`, {
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       })
-      .then(res => setCustomers(res.data || []))  // ✅ removed unnecessary detail fetch
+      .then(res => setCustomers(res.data || []))
       .catch(() => sonnerToast.error('Failed to load customers'))
       .finally(() => setLoadingCustomers(false));
   }, []);
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Prefill: fetch existing expense and populate form ─────────────────────
+  useEffect(() => {
+    console.log('ExpenseEditPage loaded id:', id);
+    if (!id) {
+      setPrefillLoading(false);
+      return;
+    }
+
+    const fetchExpense = async () => {
+      setPrefillLoading(true);
+      setPrefillError(null);
+      try {
+        const apiUrl = getApiUrl();
+        const token = localStorage.getItem('token');
+        const lockId = localStorage.getItem('lock_account_id');
+
+        const res = await fetch(
+          `${apiUrl}/expenses/${id}.json?lock_account_id=${lockId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+        const data = await res.json();
+
+        // The API may return { expense: {...} } or the object directly
+        const expense = data.expense || data;
+
+        // ── Map top-level fields ─────────────────────────────────────────
+        if (expense.date) setDate(expense.date);
+        if (expense.paid_through_account_id)
+          setPaidThrough(String(expense.paid_through_account_id));
+        if (expense.vendor_id) setVendor(String(expense.vendor_id));
+        if (expense.customer_id) setCustomer(String(expense.customer_id));
+        setBilledOn(!!expense.billable);
+        if (expense.gst_treatment) setGstTreatment(normalizeGstTreatment(expense.gst_treatment));
+        if (expense.source_of_supply) setSourceOfSupply(expense.source_of_supply);
+        if (expense.destination_of_supply) setDestinationOfSupply(expense.destination_of_supply);
+        setReverseCharge(!!expense.reverse_charge);
+        if (expense.reference_number) setInvoiceNumber(expense.reference_number);
+        if (expense.description) setDescription(expense.description);
+
+        const isInclusive = !!expense.is_inclusive_tax;
+        setAmountIs(isInclusive ? 'inclusive' : 'exclusive');
+        setAmountsAre(isInclusive ? 'inclusive' : 'exclusive');
+
+        // ── Expense accounts (lines) ─────────────────────────────────────
+        const expAccounts: any[] = expense.expense_accounts || expense.expense_accounts_attributes || [];
+
+        if (expAccounts.length > 1) {
+          // Itemized mode
+          setIsItemized(true);
+          setLines(
+            expAccounts.map((acc: any): ExpenseLine => {
+              const lineType = acc.tax_type || '';
+              const lineGroupId = acc.tax_group_id ?? null;
+              const lineExemptionId = acc.tax_exemption_id ?? null;
+              const acctType = acc.account_type === 'services' ? 'services' : 'goods';
+              return {
+                accountId: acc.lock_account_ledger_id ? String(acc.lock_account_ledger_id) : '',
+                accountType: acctType,
+                amount: acc.amount != null ? String(acc.amount) : '',
+                notes: acc.notes || '',
+                hsnSacCode: acc.hsn_sac_code || '',
+                hsnSacEditing: false,
+                taxType: lineType,
+                taxGroupId: lineGroupId,
+                taxExemptionId: lineExemptionId,
+              };
+            })
+          );
+        } else if (expAccounts.length === 1) {
+          // Single mode
+          const acc = expAccounts[0];
+          setExpenseAccount(acc.lock_account_ledger_id ? String(acc.lock_account_ledger_id) : '');
+          setAmount(acc.amount != null ? String(acc.amount) : '');
+          setExpenseType(acc.account_type === 'services' ? 'services' : 'goods');
+          const hsnSac = acc.hsn_sac_code || '';
+          if (acc.account_type === 'services') setSacCode(hsnSac);
+          else setHsnCode(hsnSac);
+          setTaxType(acc.tax_type || '');
+          setTaxGroupId(acc.tax_group_id ?? null);
+          setTaxExemptionId(acc.tax_exemption_id ?? null);
+          setNotes(acc.notes || '');
+        } else {
+          // Fallback: single mode from top-level fields
+          setAmount(expense.amount != null ? String(expense.amount) : '');
+          setNotes(expense.notes || '');
+        }
+
+        // ── Load vendor details if vendor present ─────────────────────────
+        if (expense.vendor_id) {
+          await fetchVendorDetail(String(expense.vendor_id));
+        }
+      } catch (err: any) {
+        console.error('Failed to load expense:', err);
+        setPrefillError('Failed to load expense details. Please try again.');
+        sonnerToast.error('Failed to load expense details');
+      } finally {
+        setPrefillLoading(false);
+      }
+    };
+
+    fetchExpense();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  // ── Helpers (identical to Create page) ───────────────────────────────────
   const calculateLineTax = (line: ExpenseLine) => {
     if (line.taxType !== 'tax_group' || !line.taxGroupId) return 0;
     const group = taxGroups.find(g => String(g.id) === String(line.taxGroupId));
-    const amount = parseFloat(line.amount) || 0;
+    const amt = parseFloat(line.amount) || 0;
     if (!group || !Array.isArray(group.tax_rates)) return 0;
     return group.tax_rates.reduce((sum: number, rate: any) => {
-      const pct = Number(rate.rate) || 0;
-      return sum + (amount * pct) / 100;
+      return sum + (amt * (Number(rate.rate) || 0)) / 100;
     }, 0);
   };
 
   const calculateTaxForAmount = (
-    amount: number,
+    amt: number,
     taxTypeVal: string,
     taxGroupIdVal: string | number | null
   ) => {
@@ -338,8 +404,7 @@ export const ExpenseCreatePage: React.FC = () => {
     const group = taxGroups.find(g => String(g.id) === String(taxGroupIdVal));
     if (!group || !Array.isArray(group.tax_rates)) return 0;
     return group.tax_rates.reduce((sum: number, rate: any) => {
-      const pct = Number(rate.rate) || 0;
-      return sum + (amount * pct) / 100;
+      return sum + (amt * (Number(rate.rate) || 0)) / 100;
     }, 0);
   };
 
@@ -353,28 +418,16 @@ export const ExpenseCreatePage: React.FC = () => {
 
   const getLedgerTaxDefaults = (ledger: AccountLedger | undefined) => {
     if (!ledger) return { taxType: '', taxGroupId: null, taxExemptionId: null };
-
     const pref = ledger.tax_preference;
     if (pref === 'non_taxable') {
-      return {
-        taxType: 'non_taxable',
-        taxGroupId: null,
-        taxExemptionId: ledger.tax_exemption_id ?? null,
-      };
+      return { taxType: 'non_taxable', taxGroupId: null, taxExemptionId: ledger.tax_exemption_id ?? null };
     }
-
     if (pref === 'taxable') {
-      return {
-        taxType: 'tax_group',
-        taxGroupId: ledger.tax_group_id ?? ledger.intra_state_tax_rate_id ?? null,
-        taxExemptionId: null,
-      };
+      return { taxType: 'tax_group', taxGroupId: ledger.tax_group_id ?? ledger.intra_state_tax_rate_id ?? null, taxExemptionId: null };
     }
-
     if (pref === 'out_of_scope' || pref === 'non_gst_supply') {
       return { taxType: 'non_taxable', taxGroupId: null, taxExemptionId: null };
     }
-
     return { taxType: '', taxGroupId: null, taxExemptionId: null };
   };
 
@@ -393,9 +446,7 @@ export const ExpenseCreatePage: React.FC = () => {
 
   const handleCustomerChange = (value: string) => {
     setCustomer(value);
-    if (!value) {
-      setBilledOn(false);
-    }
+    if (!value) setBilledOn(false);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -408,12 +459,10 @@ export const ExpenseCreatePage: React.FC = () => {
   const removeReceipt = (index: number) =>
     setReceipts(prev => prev.filter((_, i) => i !== index));
 
-  // ── Update a single line field ────────────────────────────────────────────
   const updateLine = (idx: number, patch: Partial<ExpenseLine>) => {
     setLines(prev => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
   };
 
-  // ── Tax select handler (shared by single view and each line) ──────────────
   const handleTaxChange = (
     val: string,
     setTT: (v: string) => void,
@@ -428,7 +477,7 @@ export const ExpenseCreatePage: React.FC = () => {
     }
   };
 
-  // ── Validation ────────────────────────────────────────────────────────────
+  // ── Validation (same as Create) ───────────────────────────────────────────
   const validate = (): boolean => {
     const e: Record<string, string> = {};
     if (!date) e.date = 'Date is required';
@@ -449,18 +498,14 @@ export const ExpenseCreatePage: React.FC = () => {
     }
 
     setErrors(e);
-
-    // Show toasts one by one with delay
     const errorMessages = Object.values(e);
     errorMessages.forEach((message, index) => {
-      setTimeout(() => {
-        sonnerToast.error(message);
-      }, index * 800); // 800ms gap between each toast
+      setTimeout(() => sonnerToast.error(message), index * 800);
     });
-
     return errorMessages.length === 0;
   };
 
+  // ── Vendor detail fetch (same as Create) ──────────────────────────────────
   const fetchVendorDetail = async (vendorId: string) => {
     if (!vendorId) {
       setVendorDetail(null);
@@ -487,61 +532,13 @@ export const ExpenseCreatePage: React.FC = () => {
         setSelectedGstDetailId(primaryGst.id ?? null);
         if (primaryGst.place_of_supply) setSourceOfSupply(primaryGst.place_of_supply);
       }
-    } catch (err) {
+    } catch {
       sonnerToast.error('Failed to load vendor details');
     } finally {
       setVendorDetailLoading(false);
     }
   };
 
-
-  // const fetchVendorDetail = async (vendorId: string) => {
-  //   if (!vendorId) {
-  //     setVendorDetail(null);
-  //     setGstDetails([]);
-  //     setSelectedGstDetailId(null);
-  //     setGstTreatment('');
-  //     setSourceOfSupply('');
-  //     return;
-  //   }
-  //   const apiUrl = getApiUrl();
-  //   const token = localStorage.getItem('token');
-  //   setVendorDetailLoading(true);
-  //   try {
-  //     const res = await axios.get(
-  //       `${apiUrl}/pms/suppliers/${vendorId}.json?access_token=${token}`
-  //     );
-
-  //     // ✅ ADD THESE LOGS:
-  //     console.log('🔍 Full API response:', res.data);
-  //     console.log('🔍 supplier object:', res.data?.supplier);
-  //     console.log('🔍 gst_preference raw:', res.data?.supplier?.gst_preference || res.data?.gst_preference);
-  //     console.log('🔍 gst_details:', res.data?.supplier?.gst_details || res.data?.gst_details);
-
-  //     const data = res.data?.supplier || res.data;
-
-  //     console.log('🔍 data after parse:', data);
-  //     console.log('🔍 data.gst_preference:', data.gst_preference);
-
-  //     setVendorDetail(data);
-  //     if (data.gst_preference) setGstTreatment(normalizeGstTreatment(data.gst_preference));
-
-  //     console.log('🔍 setGstTreatment called with:', data.gst_preference);
-
-  //     const nextGst: any[] = Array.isArray(data.gst_details) ? data.gst_details : [];
-  //     setGstDetails(nextGst);
-  //     const primaryGst = nextGst.find(g => g.primary) || nextGst[0] || data.primary_gst_detail || null;
-  //     if (primaryGst) {
-  //       setSelectedGstDetailId(primaryGst.id ?? null);
-  //       if (primaryGst.place_of_supply) setSourceOfSupply(primaryGst.place_of_supply);
-  //     }
-  //   } catch (err) {
-  //     console.error('❌ fetchVendorDetail error:', err);
-  //     sonnerToast.error('Failed to load vendor details');
-  //   } finally {
-  //     setVendorDetailLoading(false);
-  //   }
-  // };
   const handleVendorChange = (vendorId: string) => {
     setVendor(vendorId);
     fetchVendorDetail(vendorId);
@@ -584,12 +581,12 @@ export const ExpenseCreatePage: React.FC = () => {
       setGstManageModalOpen(false);
       sonnerToast.success('Tax information saved');
       await fetchVendorDetail(vendor);
-    } catch (err) {
+    } catch {
       sonnerToast.error('Failed to save tax information');
     }
   };
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
+  // ── Submit: PUT instead of POST ───────────────────────────────────────────
   const handleSubmit = async () => {
     if (!validate()) return;
     setIsSubmitting(true);
@@ -603,17 +600,15 @@ export const ExpenseCreatePage: React.FC = () => {
         ? calculateTaxTotal()
         : calculateTaxForAmount(parseFloat(amount) || 0, taxType, taxGroupId);
 
-      // ── Build expense_accounts_attributes ────────────────────────────────
       let expenseAccountsAttributes: any[];
 
       if (!isItemized) {
-        // Single line
         expenseAccountsAttributes = [
           {
             lock_account_ledger_id: parseInt(expenseAccount),
             account_type: expenseType,
             amount: parseFloat(amount),
-            notes: notes,
+            notes,
             hsn_sac_code: expenseType === 'goods' ? hsnCode : sacCode,
             tax_type: taxType,
             ...(taxType === 'tax_group' && { tax_group_id: taxGroupId }),
@@ -621,20 +616,18 @@ export const ExpenseCreatePage: React.FC = () => {
           },
         ];
       } else {
-        // Multiple lines — ✅ all fields correctly mapped
         expenseAccountsAttributes = lines.map(line => ({
           lock_account_ledger_id: parseInt(line.accountId),
           account_type: line.accountType,
-          amount: parseFloat(line.amount) || 0,          // ✅ fixed parseFloat
+          amount: parseFloat(line.amount) || 0,
           notes: line.notes,
-          hsn_sac_code: line.hsnSacCode,                 // ✅ now populated from table input
-          tax_type: line.taxType,                        // ✅ 'tax_group' | 'non_taxable' | ''
+          hsn_sac_code: line.hsnSacCode,
+          tax_type: line.taxType,
           ...(line.taxType === 'tax_group' && { tax_group_id: line.taxGroupId }),
           ...(line.taxType === 'non_taxable' && { tax_exemption_id: line.taxExemptionId }),
         }));
       }
 
-      // ── Build top-level payload ───────────────────────────────────────────
       const payload = {
         expense: {
           paid_through_account_id: parseInt(paidThrough),
@@ -642,10 +635,10 @@ export const ExpenseCreatePage: React.FC = () => {
           ...(customer && { customer_id: parseInt(customer) }),
           date,
           amount: isItemized
-            ? lines.reduce((sum, l) => sum + (parseFloat(l.amount) || 0), 0) // ✅ fixed
+            ? lines.reduce((sum, l) => sum + (parseFloat(l.amount) || 0), 0)
             : parseFloat(amount),
-          reference_number: invoiceNumber,               // ✅ was always "" before — now correct
-          description,                                   // ✅ now has UI field
+          reference_number: invoiceNumber,
+          description,
           is_inclusive_tax: reverseCharge
             ? false
             : (isItemized ? amountsAre : amountIs) === 'inclusive',
@@ -659,10 +652,11 @@ export const ExpenseCreatePage: React.FC = () => {
         },
       };
 
+      // ── PUT request for update ────────────────────────────────────────────
       const res = await fetch(
-        `${apiUrl}/expenses.json?lock_account_id=${lockAccountId}`,
+        `${apiUrl}/expenses/${id}.json?lock_account_id=${lockAccountId}`,
         {
-          method: 'POST',
+          method: 'PUT',
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -672,21 +666,22 @@ export const ExpenseCreatePage: React.FC = () => {
       );
 
       if (res.ok) {
-        sonnerToast.success('Expense created successfully!');
-        navigate('/accounting/expense');
+        sonnerToast.success('Expense updated successfully!');
+        // Navigate back to expense details or list
+        navigate(`/accounting/expense/${id}`);
       } else {
         const err = await res.json();
-        sonnerToast.error(err.message || 'Failed to create expense');
+        sonnerToast.error(err.message || 'Failed to update expense');
       }
     } catch (err) {
-      console.error('Error creating expense:', err);
+      console.error('Error updating expense:', err);
       sonnerToast.error('Network error. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ── Shared GST block (used in both views) ─────────────────────────────────
+  // ── Shared GST block ──────────────────────────────────────────────────────
   const GstFields = () => (
     <>
       <div>
@@ -789,19 +784,44 @@ export const ExpenseCreatePage: React.FC = () => {
     </>
   );
 
+  // ── Loading / error screens ───────────────────────────────────────────────
+  if (prefillLoading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <CircularProgress />
+          <p className="text-sm text-muted-foreground">Loading expense details…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (prefillError) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <p className="text-red-600 font-medium">{prefillError}</p>
+          <Button variant="outlined" onClick={() => navigate(-1)}>Go Back</Button>
+        </div>
+      </div>
+    );
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="p-6 space-y-6 relative">
       {isSubmitting && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg shadow-xl">Creating expense...</div>
+          <div className="bg-white p-8 rounded-lg shadow-xl">Updating expense…</div>
         </div>
       )}
 
       <header className="sticky top-0 bg-background z-10 pb-4">
         <div>
-          <h1 className="text-2xl font-bold">New Expense</h1>
-          <p className="text-sm text-muted-foreground mt-1">Create a new expense record</p>
+          <h1 className="text-2xl font-bold">Edit Expense</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Update expense #{id}
+          </p>
         </div>
       </header>
 
@@ -835,14 +855,13 @@ export const ExpenseCreatePage: React.FC = () => {
                       onChange={e => {
                         const val = e.target.value;
                         setExpenseAccount(val);
-
                         const selected = accountLedgers.find(acc => acc.id.toString() === String(val));
                         applyLedgerTaxPreferences(selected, setTaxType, setTaxGroupId, setTaxExemptionId);
                       }}
                       displayEmpty sx={fieldStyles} disabled={loadingAccounts}
                     >
                       <MenuItem value="" disabled>
-                        {loadingAccounts ? 'Loading...' : 'Select an account'}
+                        {loadingAccounts ? 'Loading…' : 'Select an account'}
                       </MenuItem>
                       {accountLedgers.map(acc => (
                         <MenuItem key={acc.id} value={acc.id.toString()}>
@@ -873,8 +892,7 @@ export const ExpenseCreatePage: React.FC = () => {
                   fullWidth type="number" value={amount}
                   onChange={e => {
                     const parsed = parseFloat(e.target.value);
-                    const safeAmount = isNaN(parsed) ? '' : Math.max(0, parsed).toString();
-                    setAmount(safeAmount);
+                    setAmount(isNaN(parsed) ? '' : Math.max(0, parsed).toString());
                   }}
                   error={!!errors.amount} helperText={errors.amount}
                   sx={fieldStyles}
@@ -904,7 +922,7 @@ export const ExpenseCreatePage: React.FC = () => {
                     displayEmpty sx={fieldStyles} disabled={loadingAccounts}
                   >
                     <MenuItem value="" disabled>
-                      {loadingAccounts ? 'Loading...' : 'Select an account'}
+                      {loadingAccounts ? 'Loading…' : 'Select an account'}
                     </MenuItem>
                     {accountLedgers.map(acc => (
                       <MenuItem key={acc.id} value={acc.id.toString()}>
@@ -926,7 +944,6 @@ export const ExpenseCreatePage: React.FC = () => {
                 </RadioGroup>
               </div>
 
-              {/* HSN / SAC */}
               {expenseType === 'goods' && (
                 <div>
                   <label className="block text-sm font-medium mb-2">HSN Code</label>
@@ -944,10 +961,9 @@ export const ExpenseCreatePage: React.FC = () => {
                 </div>
               )}
 
-              {/* GST fields - always show vendor dropdown */}
               <GstFields />
 
-              {/* Vendor GST Details Card - show when vendor is selected */}
+              {/* Vendor GST Details Card */}
               {vendorDetail && (
                 <div className="md:col-span-2">
                   <div className="border border-gray-200 rounded-lg bg-gray-50 px-4 py-4 space-y-3">
@@ -955,7 +971,6 @@ export const ExpenseCreatePage: React.FC = () => {
                       Vendor GST Details
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-
                       <div className="flex items-center gap-2">
                         <span className="text-gray-500 min-w-[120px]">GSTIN:</span>
                         <span className="text-gray-800 font-medium">
@@ -966,7 +981,6 @@ export const ExpenseCreatePage: React.FC = () => {
                         </IconButton>
                       </div>
                     </div>
-
                   </div>
                 </div>
               )}
@@ -977,17 +991,11 @@ export const ExpenseCreatePage: React.FC = () => {
                 <FormControl fullWidth>
                   <Select
                     value={taxType === 'tax_group' ? (taxGroupId ?? '') : (taxType || '')}
-                    onChange={e =>
-                      handleTaxChange(
-                        e.target.value as string,
-                        setTaxType,
-                        setTaxGroupId
-                      )
-                    }
+                    onChange={e => handleTaxChange(e.target.value as string, setTaxType, setTaxGroupId)}
                     displayEmpty sx={fieldStyles} disabled={loadingTaxGroups}
                   >
                     <MenuItem value="" disabled>
-                      {loadingTaxGroups ? 'Loading...' : 'Select a Tax'}
+                      {loadingTaxGroups ? 'Loading…' : 'Select a Tax'}
                     </MenuItem>
                     <MenuItem value="non_taxable">Non-Taxable</MenuItem>
                     <MenuItem disabled>── Tax Groups ──</MenuItem>
@@ -1007,7 +1015,7 @@ export const ExpenseCreatePage: React.FC = () => {
                         sx={fieldStyles} disabled={loadingExemptions}
                       >
                         <MenuItem value="" disabled>
-                          {loadingExemptions ? 'Loading...' : 'Select Reason'}
+                          {loadingExemptions ? 'Loading…' : 'Select Reason'}
                         </MenuItem>
                         {exemptions.map(ex => (
                           <MenuItem key={ex.id} value={ex.id}>{ex.reason}</MenuItem>
@@ -1018,7 +1026,6 @@ export const ExpenseCreatePage: React.FC = () => {
                 )}
               </div>
 
-              {/* Amount Is — hidden when reverse charge is active (matches Zoho behaviour) */}
               {!reverseCharge && (
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium mb-2">Amount Is</label>
@@ -1043,17 +1050,6 @@ export const ExpenseCreatePage: React.FC = () => {
                 />
               </div>
 
-              {/* Description ✅ now has UI field */}
-              {/* <div>
-                <label className="block text-sm font-medium mb-2">Description</label>
-                <TextField
-                  fullWidth value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder="Enter description"
-                  sx={fieldStyles}
-                />
-              </div> */}
-
               {/* Notes */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-2">Notes</label>
@@ -1061,24 +1057,10 @@ export const ExpenseCreatePage: React.FC = () => {
                   fullWidth multiline rows={3} value={notes}
                   onChange={e => setNotes(e.target.value)}
                   placeholder="Max. 500 characters"
-                  // sx={fieldStyles}
                   sx={{
-                    "& .MuiOutlinedInput-root": {
-                      height: "auto !important",
-                      padding: "2px !important",
-                      display: "flex",
-                    },
-                    "& .MuiInputBase-input[aria-hidden='true']": {
-                      flex: 0,
-                      width: 0,
-                      height: 0,
-                      padding: "0 !important",
-                      margin: 0,
-                      display: "none",
-                    },
-                    "& .MuiInputBase-input": {
-                      resize: "none !important",
-                    },
+                    "& .MuiOutlinedInput-root": { height: "auto !important", padding: "2px !important", display: "flex" },
+                    "& .MuiInputBase-input[aria-hidden='true']": { flex: 0, width: 0, height: 0, padding: "0 !important", margin: 0, display: "none" },
+                    "& .MuiInputBase-input": { resize: "none !important" },
                   }}
                 />
               </div>
@@ -1098,7 +1080,7 @@ export const ExpenseCreatePage: React.FC = () => {
                       }
                     >
                       <MenuItem value="">
-                        {loadingCustomers ? 'Loading...' : 'Select a customer'}
+                        {loadingCustomers ? 'Loading…' : 'Select a customer'}
                       </MenuItem>
                       {customers.map(c => (
                         <MenuItem key={c.id} value={c.id.toString()}>{c.name}</MenuItem>
@@ -1107,25 +1089,15 @@ export const ExpenseCreatePage: React.FC = () => {
                   </FormControl>
                   {customer && (
                     <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={billedOn}
-                          onChange={e => setBilledOn(e.target.checked)}
-                          size="small"
-                        />
-                      }
-                      label="billed"
-                      className="mt-2"
+                      control={<Checkbox checked={billedOn} onChange={e => setBilledOn(e.target.checked)} size="small" />}
+                      label="billed" className="mt-2"
                     />
                   )}
                 </div>
                 <div className="flex flex-col">
                   <label className="block text-sm font-medium mb-2">Reporting Tags</label>
-                  <button
-                    type="button"
-                    className="text-sm text-primary hover:underline"
-                    onClick={() => setShowTagModal(true)}
-                  >
+                  <button type="button" className="text-sm text-primary hover:underline"
+                    onClick={() => setShowTagModal(true)}>
                     Associate Tags
                   </button>
                 </div>
@@ -1157,7 +1129,7 @@ export const ExpenseCreatePage: React.FC = () => {
                       displayEmpty sx={fieldStyles} disabled={loadingAccounts}
                     >
                       <MenuItem value="" disabled>
-                        {loadingAccounts ? 'Loading...' : 'Select an account'}
+                        {loadingAccounts ? 'Loading…' : 'Select an account'}
                       </MenuItem>
                       {accountLedgers.map(acc => (
                         <MenuItem key={acc.id} value={acc.id.toString()}>
@@ -1166,18 +1138,16 @@ export const ExpenseCreatePage: React.FC = () => {
                       ))}
                     </Select>
                   </FormControl>
-                  {errors.paidThrough && (
-                    <p className="text-xs text-red-500 mt-1">{errors.paidThrough}</p>
-                  )}
+                  {errors.paidThrough && <p className="text-xs text-red-500 mt-1">{errors.paidThrough}</p>}
                 </div>
               </div>
 
-              {/* GST block - always show vendor dropdown */}
+              {/* GST block */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <GstFields />
               </div>
 
-              {/* Vendor GST Details Card - show when vendor is selected */}
+              {/* Vendor GST Details Card */}
               {vendorDetail && (
                 <div className="md:col-span-2">
                   <div className="border border-gray-200 rounded-lg bg-gray-50 px-4 py-4 space-y-3">
@@ -1205,9 +1175,9 @@ export const ExpenseCreatePage: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 pt-1">
-                      <input type="checkbox" id="reverseCharge" checked={reverseCharge}
+                      <input type="checkbox" id="reverseChargeItemized" checked={reverseCharge}
                         onChange={e => { const checked = e.target.checked; setReverseCharge(checked); if (checked) { setAmountIs('exclusive'); setAmountsAre('exclusive'); } }} />
-                      <label htmlFor="reverseCharge" className="text-sm text-gray-700">
+                      <label htmlFor="reverseChargeItemized" className="text-sm text-gray-700">
                         This transaction is applicable for reverse charge
                       </label>
                     </div>
@@ -1227,14 +1197,12 @@ export const ExpenseCreatePage: React.FC = () => {
                     <span className="text-sm font-medium w-28 shrink-0">Amounts are</span>
                     <label className="flex items-center gap-2 text-sm">
                       <input type="radio" name="amountsAre" value="inclusive"
-                        checked={amountsAre === 'inclusive'}
-                        onChange={() => setAmountsAre('inclusive')} />
+                        checked={amountsAre === 'inclusive'} onChange={() => setAmountsAre('inclusive')} />
                       Tax Inclusive
                     </label>
                     <label className="flex items-center gap-2 text-sm">
                       <input type="radio" name="amountsAre" value="exclusive"
-                        checked={amountsAre === 'exclusive'}
-                        onChange={() => setAmountsAre('exclusive')} />
+                        checked={amountsAre === 'exclusive'} onChange={() => setAmountsAre('exclusive')} />
                       Tax Exclusive
                     </label>
                   </div>
@@ -1243,51 +1211,34 @@ export const ExpenseCreatePage: React.FC = () => {
                   <span className="text-sm font-medium w-28 shrink-0">Tax Override</span>
                   <label className="flex items-center gap-2 text-sm">
                     <input type="radio" name="taxOverride" value="transaction"
-                      checked={taxOverride === 'transaction'}
-                      onChange={() => setTaxOverride('transaction')} />
+                      checked={taxOverride === 'transaction'} onChange={() => setTaxOverride('transaction')} />
                     At Transaction Level
                   </label>
                   <label className="flex items-center gap-2 text-sm">
                     <input type="radio" name="taxOverride" value="lineitem"
-                      checked={taxOverride === 'lineitem'}
-                      onChange={() => setTaxOverride('lineitem')} />
+                      checked={taxOverride === 'lineitem'} onChange={() => setTaxOverride('lineitem')} />
                     At Line Item Level
                   </label>
                 </div>
               </div>
 
-              {/* ── Itemized Table ── */}
+              {/* Itemized Table */}
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-56">
-                        Expense Account
-                      </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                        Notes
-                      </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-44">
-                        Tax
-                      </th>
-                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-32">
-                        Amount (₹)
-                      </th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-56">Expense Account</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Notes</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-44">Tax</th>
+                      <th className="px-3 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider w-32">Amount (₹)</th>
                       <th className="px-3 py-3 w-10" />
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {lines.map((line, idx) => (
                       <tr key={idx}>
-
-                        {/* ── Expense Account cell ──
-                            - Account dropdown
-                            - Goods / Services dropdown below it
-                            - HSN Code / SAC inline "Update" link (Zoho-style)
-                        */}
                         <td className="px-3 py-3 align-middle">
                           <div className="flex flex-col gap-1">
-                            {/* Account selector */}
                             <FormControl fullWidth size="small" error={!!errors[`line_${idx}_account`]}>
                               <Select
                                 value={line.accountId}
@@ -1295,12 +1246,7 @@ export const ExpenseCreatePage: React.FC = () => {
                                   const value = e.target.value;
                                   const selectedLedger = accountLedgers.find(acc => acc.id.toString() === String(value));
                                   const defaults = getLedgerTaxDefaults(selectedLedger);
-                                  updateLine(idx, {
-                                    accountId: value,
-                                    taxType: defaults.taxType,
-                                    taxGroupId: defaults.taxGroupId,
-                                    taxExemptionId: defaults.taxExemptionId,
-                                  });
+                                  updateLine(idx, { accountId: value, taxType: defaults.taxType, taxGroupId: defaults.taxGroupId, taxExemptionId: defaults.taxExemptionId });
                                 }}
                                 displayEmpty
                               >
@@ -1315,38 +1261,23 @@ export const ExpenseCreatePage: React.FC = () => {
                             {errors[`line_${idx}_account`] && (
                               <p className="text-xs text-red-500">{errors[`line_${idx}_account`]}</p>
                             )}
-
-                            {/* Goods / Services dropdown */}
                             <FormControl size="small" sx={{ width: 'fit-content', minWidth: 110 }}>
                               <Select
                                 value={line.accountType}
-                                onChange={e => {
-                                  updateLine(idx, {
-                                    accountType: e.target.value as 'goods' | 'services',
-                                    hsnSacCode: '',       // reset code when type changes
-                                    hsnSacEditing: false, // collapse input on type change
-                                  });
-                                }}
+                                onChange={e => updateLine(idx, { accountType: e.target.value as 'goods' | 'services', hsnSacCode: '', hsnSacEditing: false })}
                               >
                                 <MenuItem value="goods">Goods</MenuItem>
                                 <MenuItem value="services">Services</MenuItem>
                               </Select>
                             </FormControl>
-
-                            {/* HSN / SAC inline — Zoho-style "label: ✏️ Update" link */}
                             {!line.hsnSacEditing ? (
                               <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
                                 <span className="font-medium text-gray-600">
                                   {line.accountType === 'goods' ? 'HSN Code:' : 'SAC:'}
                                 </span>
-                                {line.hsnSacCode && (
-                                  <span className="text-gray-700">{line.hsnSacCode}</span>
-                                )}
-                                <button
-                                  type="button"
-                                  className="flex items-center gap-0.5 text-blue-500 hover:text-blue-700 ml-1"
-                                  onClick={() => updateLine(idx, { hsnSacEditing: true })}
-                                >
+                                {line.hsnSacCode && <span className="text-gray-700">{line.hsnSacCode}</span>}
+                                <button type="button" className="flex items-center gap-0.5 text-blue-500 hover:text-blue-700 ml-1"
+                                  onClick={() => updateLine(idx, { hsnSacEditing: true })}>
                                   <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor">
                                     <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-2.5-2.5zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z" />
                                   </svg>
@@ -1354,63 +1285,38 @@ export const ExpenseCreatePage: React.FC = () => {
                                 </button>
                               </div>
                             ) : (
-                              /* Expanded input when editing */
                               <div className="flex items-center gap-1 mt-0.5">
                                 <TextField
-                                  size="small"
-                                  value={line.hsnSacCode}
+                                  size="small" value={line.hsnSacCode}
                                   onChange={e => updateLine(idx, { hsnSacCode: e.target.value })}
                                   placeholder={line.accountType === 'goods' ? 'Enter HSN code' : 'Enter SAC code'}
                                   autoFocus
                                   sx={{ width: 150, '& .MuiInputBase-input': { fontSize: 12, py: '5px', px: '8px' } }}
                                   onBlur={() => updateLine(idx, { hsnSacEditing: false })}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Enter' || e.key === 'Escape')
-                                      updateLine(idx, { hsnSacEditing: false });
-                                  }}
+                                  onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') updateLine(idx, { hsnSacEditing: false }); }}
                                 />
                               </div>
                             )}
                           </div>
                         </td>
 
-                        {/* Notes */}
                         <td className="px-3 py-3 align-middle">
                           <TextField
                             fullWidth size="small" multiline minRows={2}
-                            value={line.notes}
-                            onChange={e => updateLine(idx, { notes: e.target.value })}
+                            value={line.notes} onChange={e => updateLine(idx, { notes: e.target.value })}
                             placeholder="Max. 500 characters"
                             sx={{
-                              "& .MuiOutlinedInput-root": {
-                                height: "auto !important",
-                                padding: "2px !important",
-                                display: "flex",
-                              },
-                              "& .MuiInputBase-input[aria-hidden='true']": {
-                                flex: 0,
-                                width: 0,
-                                height: 0,
-                                padding: "0 !important",
-                                margin: 0,
-                                display: "none",
-                              },
-                              "& .MuiInputBase-input": {
-                                resize: "none !important",
-                              },
+                              "& .MuiOutlinedInput-root": { height: "auto !important", padding: "2px !important", display: "flex" },
+                              "& .MuiInputBase-input[aria-hidden='true']": { flex: 0, width: 0, height: 0, padding: "0 !important", margin: 0, display: "none" },
+                              "& .MuiInputBase-input": { resize: "none !important" },
                             }}
                           />
                         </td>
 
-                        {/* Tax */}
                         <td className="px-3 py-3 align-middle">
                           <FormControl fullWidth size="small">
                             <Select
-                              value={
-                                line.taxType === 'tax_group'
-                                  ? (line.taxGroupId ?? '')
-                                  : (line.taxType || '')
-                              }
+                              value={line.taxType === 'tax_group' ? (line.taxGroupId ?? '') : (line.taxType || '')}
                               onChange={e => {
                                 const val = e.target.value as string;
                                 if (val === 'non_taxable' || val === '') {
@@ -1429,19 +1335,15 @@ export const ExpenseCreatePage: React.FC = () => {
                               ))}
                             </Select>
                           </FormControl>
-
-                          {/* Exemption reason for non-taxable lines */}
                           {line.taxType === 'non_taxable' && (
                             <FormControl fullWidth size="small" sx={{ mt: 1 }}>
                               <Select
                                 value={line.taxExemptionId || ''}
-                                onChange={e =>
-                                  updateLine(idx, { taxExemptionId: e.target.value || null })
-                                }
+                                onChange={e => updateLine(idx, { taxExemptionId: e.target.value || null })}
                                 displayEmpty
                               >
                                 <MenuItem value="" disabled>
-                                  {loadingExemptions ? 'Loading...' : 'Exemption Reason'}
+                                  {loadingExemptions ? 'Loading…' : 'Exemption Reason'}
                                 </MenuItem>
                                 {exemptions.map(ex => (
                                   <MenuItem key={ex.id} value={ex.id}>{ex.reason}</MenuItem>
@@ -1451,15 +1353,12 @@ export const ExpenseCreatePage: React.FC = () => {
                           )}
                         </td>
 
-                        {/* Amount */}
                         <td className="px-3 py-3 align-middle">
                           <TextField
-                            fullWidth size="small" type="number"
-                            value={line.amount}
+                            fullWidth size="small" type="number" value={line.amount}
                             onChange={e => {
                               const parsed = parseFloat(e.target.value);
-                              const safeAmount = isNaN(parsed) ? '' : Math.max(0, parsed).toString();
-                              updateLine(idx, { amount: safeAmount });
+                              updateLine(idx, { amount: isNaN(parsed) ? '' : Math.max(0, parsed).toString() });
                             }}
                             error={!!errors[`line_${idx}_amount`]}
                             helperText={errors[`line_${idx}_amount`]}
@@ -1467,13 +1366,9 @@ export const ExpenseCreatePage: React.FC = () => {
                           />
                         </td>
 
-                        {/* Remove row */}
                         <td className="px-3 py-3 align-middle">
                           {lines.length > 1 && (
-                            <IconButton
-                              size="small"
-                              onClick={() => setLines(lines.filter((_, i) => i !== idx))}
-                            >
+                            <IconButton size="small" onClick={() => setLines(lines.filter((_, i) => i !== idx))}>
                               <Close fontSize="small" />
                             </IconButton>
                           )}
@@ -1485,34 +1380,22 @@ export const ExpenseCreatePage: React.FC = () => {
               </div>
 
               <div className="flex justify-between items-center mt-2">
-                <Button
-                  variant="outlined"
-                  onClick={() => setLines(prev => [...prev, EMPTY_LINE()])}
-                >
+                <Button variant="outlined" onClick={() => setLines(prev => [...prev, EMPTY_LINE()])}>
                   + Add New Row
                 </Button>
                 <div className="text-right space-y-1">
-                  <div className="text-sm text-muted-foreground">
-                    Subtotal: ₹{calculateSubtotal().toFixed(2)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Tax: ₹{calculateTaxTotal().toFixed(2)}
-                  </div>
-                  <div className="text-base font-semibold">
-                    Total: ₹{calculateGrandTotal().toFixed(2)}
-                  </div>
+                  <div className="text-sm text-muted-foreground">Subtotal: ₹{calculateSubtotal().toFixed(2)}</div>
+                  <div className="text-sm text-muted-foreground">Tax: ₹{calculateTaxTotal().toFixed(2)}</div>
+                  <div className="text-base font-semibold">Total: ₹{calculateGrandTotal().toFixed(2)}</div>
                 </div>
               </div>
 
-              <button
-                type="button"
-                className="text-blue-600 hover:underline text-sm"
-                onClick={() => setIsItemized(false)}
-              >
+              <button type="button" className="text-blue-600 hover:underline text-sm"
+                onClick={() => setIsItemized(false)}>
                 ← Back to single expense view
               </button>
 
-              {/* Invoice # + Description + Customer (itemized footer) */}
+              {/* Invoice # + Customer (itemized footer) */}
               <div className="border-t pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -1525,16 +1408,6 @@ export const ExpenseCreatePage: React.FC = () => {
                     sx={fieldStyles}
                   />
                 </div>
-
-                {/* <div>
-                  <label className="block text-sm font-medium mb-2">Description</label>
-                  <TextField
-                    fullWidth value={description}
-                    onChange={e => setDescription(e.target.value)}
-                    placeholder="Enter description"
-                    sx={fieldStyles}
-                  />
-                </div> */}
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Customer Name</label>
@@ -1549,7 +1422,7 @@ export const ExpenseCreatePage: React.FC = () => {
                       }
                     >
                       <MenuItem value="">
-                        {loadingCustomers ? 'Loading...' : 'Select a customer'}
+                        {loadingCustomers ? 'Loading…' : 'Select a customer'}
                       </MenuItem>
                       {customers.map(c => (
                         <MenuItem key={c.id} value={c.id.toString()}>{c.name}</MenuItem>
@@ -1558,29 +1431,11 @@ export const ExpenseCreatePage: React.FC = () => {
                   </FormControl>
                   {customer && (
                     <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={billedOn}
-                          onChange={e => setBilledOn(e.target.checked)}
-                          size="small"
-                        />
-                      }
-                      label="billed"
-                      className="mt-2"
+                      control={<Checkbox checked={billedOn} onChange={e => setBilledOn(e.target.checked)} size="small" />}
+                      label="billed" className="mt-2"
                     />
                   )}
                 </div>
-
-                {/* <div className="flex flex-col">
-                  <label className="block text-sm font-medium mb-2">Reporting Tags</label>
-                  <button
-                    type="button"
-                    className="text-sm text-primary hover:underline mt-1"
-                    onClick={() => setShowTagModal(true)}
-                  >
-                    Associate Tags
-                  </button>
-                </div> */}
               </div>
 
               {/* Attachments (itemized) */}
@@ -1594,10 +1449,7 @@ export const ExpenseCreatePage: React.FC = () => {
                       <p className="text-xs text-gray-500 mt-1">Maximum file size allowed is 10MB</p>
                     </div>
                     <label className="cursor-pointer">
-                      <input
-                        type="file" multiple accept="image/*,.pdf"
-                        onChange={handleFileUpload} className="hidden"
-                      />
+                      <input type="file" multiple accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" />
                       <span className="inline-flex items-center px-4 py-2 border border-gray-300 rounded shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                         Upload your Files
                       </span>
@@ -1639,10 +1491,7 @@ export const ExpenseCreatePage: React.FC = () => {
                     <p className="text-sm text-gray-500 mt-1">Maximum file size allowed is 10MB</p>
                   </div>
                   <label className="cursor-pointer">
-                    <input
-                      type="file" multiple accept="image/*,.pdf"
-                      onChange={handleFileUpload} className="hidden"
-                    />
+                    <input type="file" multiple accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" />
                     <span className="inline-flex items-center px-5 py-2.5 border border-gray-300 rounded shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                       Upload your Files
                     </span>
@@ -1674,13 +1523,15 @@ export const ExpenseCreatePage: React.FC = () => {
 
       {/* Action Buttons */}
       <div className="flex justify-end gap-3 pt-6 border-t">
-        <Button variant="outlined" onClick={() => navigate('/accounting/expense')}>
+        <Button variant="outlined" onClick={() => navigate(-1)}>
           Cancel
         </Button>
         <Button variant="contained" onClick={handleSubmit} disabled={isSubmitting}>
-          Save
+          {isSubmitting ? 'Updating…' : 'Update'}
         </Button>
       </div>
+
+      {/* ── Modals (identical to Create page) ─────────────────────────────── */}
 
       {/* GST Treatment Edit Modal */}
       <Dialog open={gstModalOpen} onClose={() => setGstModalOpen(false)} maxWidth="xs" fullWidth>
@@ -1695,7 +1546,11 @@ export const ExpenseCreatePage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button variant="contained"
-            onClick={() => { setGstTreatment(gstTreatmentDraft); setVendorDetail((prev: any) => prev ? { ...prev, gst_preference: gstTreatmentDraft } : prev); setGstModalOpen(false); }}
+            onClick={() => {
+              setGstTreatment(gstTreatmentDraft);
+              setVendorDetail((prev: any) => prev ? { ...prev, gst_preference: gstTreatmentDraft } : prev);
+              setGstModalOpen(false);
+            }}
             sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
             Update
           </Button>
@@ -1724,7 +1579,13 @@ export const ExpenseCreatePage: React.FC = () => {
           </div>
           <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
             <button type="button" className="text-blue-600 text-sm"
-              onClick={() => { setGstPickerModalOpen(false); setShowNewGstForm(false); setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setGstManageModalOpen(true); }}>
+              onClick={() => {
+                setGstPickerModalOpen(false);
+                setShowNewGstForm(false);
+                setEditingGstDetailId(null);
+                setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' });
+                setGstManageModalOpen(true);
+              }}>
               ⚙ Manage Tax Informations
             </button>
           </div>
@@ -1787,7 +1648,12 @@ export const ExpenseCreatePage: React.FC = () => {
                     <div>{gst.business_legal_name || '—'}</div>
                     <div className="flex justify-end gap-1">
                       {!gst.primary && (
-                        <IconButton size="small" onClick={e => { e.stopPropagation(); setEditingGstDetailId(gst.id); setNewGstForm({ gstin: gst.gstin, place_of_supply: gst.place_of_supply, business_legal_name: gst.business_legal_name || '', business_trade_name: gst.business_trade_name || '' }); setShowNewGstForm(true); }}>
+                        <IconButton size="small" onClick={e => {
+                          e.stopPropagation();
+                          setEditingGstDetailId(gst.id);
+                          setNewGstForm({ gstin: gst.gstin, place_of_supply: gst.place_of_supply, business_legal_name: gst.business_legal_name || '', business_trade_name: gst.business_trade_name || '' });
+                          setShowNewGstForm(true);
+                        }}>
                           <EditOutlined fontSize="small" />
                         </IconButton>
                       )}
@@ -1843,79 +1709,26 @@ export const ExpenseCreatePage: React.FC = () => {
       </Dialog>
 
       {/* Reporting Tags Modal */}
-      {/* <Dialog open={showTagModal} onClose={() => setShowTagModal(false)} maxWidth="xs" fullWidth>
-        <DialogTitle className="flex justify-between items-center" padding={2}>
+      <Dialog open={showTagModal} onClose={() => setShowTagModal(false)} maxWidth="xs" fullWidth>
+        <DialogTitle className="flex justify-between items-center border-b">
           Associate Tags
           <IconButton onClick={() => setShowTagModal(false)}><Close /></IconButton>
         </DialogTitle>
-        <DialogContent>
-          <FormControl fullWidth>
-            <InputLabel>Accounts</InputLabel>
-            <Select
-              value={reportingTagAccount}
-              label="Accounts"
-              onChange={e => setReportingTagAccount(e.target.value)}
-            >
-              <MenuItem value="">None</MenuItem>
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowTagModal(false)}>Cancel</Button>
-          <Button variant="contained" onClick={() => setShowTagModal(false)}>Save</Button>
-        </DialogActions>
-      </Dialog> */}
-
-      <Dialog
-        open={showTagModal}
-        onClose={() => setShowTagModal(false)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle className="flex justify-between items-center border-b">
-          Associate Tags
-          <IconButton onClick={() => setShowTagModal(false)}>
-            <Close />
-          </IconButton>
-        </DialogTitle>
-
         <DialogContent sx={{ py: 3 }}>
-
-          {/* ✅ Row Layout */}
           <div className="flex items-center justify-between gap-4">
-
-            {/* Left Label */}
-            <span className="text-sm text-gray-700 min-w-[100px]">
-              Accounts
-            </span>
-
-            {/* Right Dropdown */}
+            <span className="text-sm text-gray-700 min-w-[100px]">Accounts</span>
             <FormControl size="small" className="w-full">
-              <Select
-                value={reportingTagAccount}
-                displayEmpty
-                onChange={(e) => setReportingTagAccount(e.target.value)}
-                className="bg-white"
-              >
-                <MenuItem value="">
-                  <em>None</em>
-                </MenuItem>
+              <Select value={reportingTagAccount} displayEmpty onChange={e => setReportingTagAccount(e.target.value)} className="bg-white">
+                <MenuItem value=""><em>None</em></MenuItem>
                 <MenuItem value="account1">Account 1</MenuItem>
                 <MenuItem value="account2">Account 2</MenuItem>
               </Select>
             </FormControl>
-
           </div>
-
         </DialogContent>
-
         <DialogActions className="px-6 pb-4">
-          <Button variant="contained" onClick={() => setShowTagModal(false)}>
-            Save
-          </Button>
-          <Button onClick={() => setShowTagModal(false)}>
-            Cancel
-          </Button>
+          <Button variant="contained" onClick={() => setShowTagModal(false)}>Save</Button>
+          <Button onClick={() => setShowTagModal(false)}>Cancel</Button>
         </DialogActions>
       </Dialog>
     </div>

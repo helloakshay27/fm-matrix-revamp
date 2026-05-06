@@ -352,6 +352,12 @@ export const RecurringBillDetails = () => {
     navigate("/accounting/sales-order/create");
   };
 
+  const handleConvertToBill = () => {
+    navigate(`/accounting/bills/create?recurring_bill_id=${id}`, {
+      state: { recurringBillId: id },
+    });
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -385,7 +391,14 @@ export const RecurringBillDetails = () => {
     }
   });
   const taxRows = Object.entries(taxBreakdown);
+const formatDate = (date?: string | null) => {
+  if (!date || date === "null" || date === "0000-00-00") return "-";
 
+  const d = new Date(date);
+  if (isNaN(d.getTime()) || d.getTime() === 0) return "-";
+
+  return d.toLocaleDateString("en-IN");
+};
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -427,6 +440,14 @@ export const RecurringBillDetails = () => {
                 Approval Log
               </Button>
             )}
+            <Button
+              size="sm"
+              onClick={handleConvertToBill}
+              className="gap-2"
+            >
+              <CirclePlus className="h-4 w-4" />
+              Convert to Bill
+            </Button>
           </div>
         </div>
 
@@ -593,9 +614,10 @@ export const RecurringBillDetails = () => {
                         Bill Date
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {new Date(salesOrder?.bill_date).toLocaleDateString(
+                        {/* {new Date(salesOrder?.bill_date).toLocaleDateString(
                           "en-IN"
-                        )}
+                        )} */}
+                        {formatDate(salesOrder?.bill_date)}
                       </p>
                     </div>
                     <div>
@@ -603,9 +625,10 @@ export const RecurringBillDetails = () => {
                         Due Date
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {new Date(salesOrder?.due_date).toLocaleDateString(
+                        {/* {new Date(salesOrder?.due_date).toLocaleDateString(
                           "en-IN"
-                        )}
+                        )} */}
+                        {formatDate(salesOrder?.due_date)}
                       </p>
                     </div>
                     <div>

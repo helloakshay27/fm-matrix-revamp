@@ -1303,6 +1303,7 @@ import HSNCodeSetup from "./pages/HSNCodeSetup";
 import DashboardUI from "./pages/DashboardUI";
 import OrganisationMaster from "./pages/ClubManagement/OrganisationMaster";
 import MyInboxPage from "./features/inbox/MyInboxPage.tsx";
+import { ExpenseEditPage } from "./pages/ExpenseEditPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -3438,7 +3439,7 @@ function App() {
                         />
                         <Route
                           path="/accounting/expense/edit/:id"
-                          element={<ExpenseCreatePage />}
+                          element={<ExpenseEditPage />}
                         />
                         <Route
                           path="/accounting/section"

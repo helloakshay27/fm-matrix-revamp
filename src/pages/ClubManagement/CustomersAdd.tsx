@@ -1003,7 +1003,7 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
     const addRow = () => {
         setOpeningBalances([
             ...openingBalances,
-            { bill_no: "", date: "", due_date: "", amount: "" }
+            { bill_no: "", date: new Date().toISOString().split('T')[0], due_date: "", amount: "" }
         ]);
     };
 
@@ -1042,6 +1042,7 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
                         onChange={(e) => handleChange(index, "due_date", e.target.value)}
                         InputLabelProps={{ shrink: true }}
                         fullWidth
+                        inputProps={{ min: new Date().toISOString().split('T')[0] }}
                     />
 
                     <TextField
@@ -1407,7 +1408,7 @@ const CustomersAdd = () => {
     const [openingBalances, setOpeningBalances] = useState([
         {
             bill_no: "",
-            date: "",
+            date: new Date().toISOString().split('T')[0],
             due_date: "",
             amount: ""
         }
