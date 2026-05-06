@@ -13,7 +13,6 @@ import { ticketManagementAPI, CategoryResponse, SubCategoryResponse } from '@/se
 import { getUser } from '@/utils/auth';
 import { useToast } from '@/hooks/use-toast';
 import { co } from 'node_modules/@fullcalendar/core/internal-common';
-// import { result } from 'lodash';
 
 const CATEGORY_ICON_LIST = [Sparkles, Wrench, Monitor, ShieldCheck, Wifi, Zap, Wind, Droplets];
 const PRIORITY_OPTIONS = [
@@ -355,7 +354,6 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const user = getUser();
-  let result
 
   // Extract site_id from URL or use default
   const siteIdParam = searchParams.get('site_id');
@@ -385,6 +383,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [subcategories, setSubcategories] = useState<SubCategoryResponse[]>([]);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachmentPreviews, setAttachmentPreviews] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingSubcategories, setLoadingSubcategories] = useState(false);
@@ -592,11 +591,31 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
   const handleFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    setAttachments(prev => {
-      const slots = 5 - prev.length;
-      return [...prev, ...files.slice(0, slots)];
+    const slots = 5 - attachments.length;
+    const newFiles = files.slice(0, slots);
+    
+    setAttachments(prev => [...prev, ...newFiles]);
+    
+    // Generate previews for image files
+    newFiles.forEach(file => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setAttachmentPreviews(prev => [...prev, event.target?.result as string]);
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // For non-image files, use a placeholder
+        setAttachmentPreviews(prev => [...prev, '']);
+      }
     });
+    
     e.target.value = '';
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index));
+    setAttachmentPreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
@@ -623,24 +642,13 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         return acc;
       }, {} as Record<string, { remarks: string; qtype: string }>);
 
-      // const ticketData = {
-      //   of_phase: 'pms',
-      //   site_id: siteId,
-      //   on_behalf_of: 'admin',
-      //   complaint_type: 'request',
-      //   category_type_id: parseInt(formData.category),
-      //   heading: formData.description || formData.categoryName,
-      //   complaint_mode_id: 75,
-      //   room_id: 1,
-      //   wing_id: 1,
-      //   area_id: 1,
-      //   floor_id: 1,
-      //   priority: 'P3',
-      //   society_staff_type: 'User',
-      //   proactive_reactive: 'reactive',
-      //   ...(user?.id && { id_user: user.id }),
-      //   ...(formData.subCategory && { sub_category_id: parseInt(formData.subCategory) }),
-      // };
+      // Prepare attachments - convert to base64 format
+      const attachmentsData = attachments.map((file, index) => ({
+        data: attachmentPreviews[index] || '',
+        file_name: file.name,
+        file_type: file.type,
+      })).filter(att => att.data !== ''); // Only include files with data
+
       const ticketData = {
         site_id: siteId,
         on_behalf_of: 'self',
@@ -689,7 +697,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
           }),
         },
 
-        attachments: [],
+        attachments: attachmentsData,
 
         basic_fields: basicFields,
       };
@@ -697,6 +705,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
       console.log('📤 Submitting ticket:', ticketData);
 
       // Try using the dynamic site domain, fallback to ticketManagementAPI
+      let ticketResponse: any;
       try {
         // const submitUrl = `${siteDomain}/pms/admin/helpdesk_request/create.json`;
         const submitUrl = `https://${siteDomain}/pms/admin/complaints/create_site_ticket.json`;
@@ -708,7 +717,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
           },
           body: JSON.stringify(ticketData),
         });
-        result = await response.json();
+        ticketResponse = await response.json();
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -718,18 +727,18 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
       } catch (dynamicError) {
         console.warn('⚠️ Dynamic submission failed, trying ticketManagementAPI:', dynamicError);
         // await ticketManagementAPI.createTicket(ticketData, attachments);
-        // result = await ticketManagementAPI.createTicket(ticketData, attachments);
+        // ticketResponse = await ticketManagementAPI.createTicket(ticketData, attachments);
         console.error('❌ Error submitting ticket via dynamic domain:', dynamicError);
 
       }
-
+      
 
       // toast({ title: 'Success', description: 'Ticket submitted successfully!' });
       // onSuccess();
-      console.log('✅ Ticket submission result:', result);
+      console.log('✅ Ticket submission result:', ticketResponse);
       setSuccessData({
-        ticketId: String(result.complaint_id),
-        message: result.message || 'Ticket created successfully',
+        ticketId: String(ticketResponse.complaint_id),
+        message: ticketResponse.message || 'Ticket created successfully',
       });
 
 
@@ -868,56 +877,56 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
             style={{ color: '#6b7280' }}
           >
             Your request has been received and assigned to the team.
-            You'll be notified when work begins.
+            You'll be notified when work is completed.
           </p>
 
           <div
-            className="rounded-3xl px-6 py-6 shadow-lg"
-            style={{ backgroundColor: '#1f3d99' }}
-          >
-            <p
-              className="text-xs font-semibold tracking-widest mb-3"
-              style={{ color: 'rgba(255,255,255,0.7)' }}
-            >
-              TICKET ID
-            </p>
+  className="rounded-3xl px-6 py-6 shadow-lg relative"
+  style={{ backgroundColor: 'rgb(218, 119, 86)' }}
+>
+  <button
+    onClick={handleCopyTicketId}
+    className="absolute top-4 right-4 w-5 h-5 rounded-2xl flex items-center justify-center"
+    style={{ backgroundColor: 'rgba(255,255,255,0.16)' }}
+  >
+    <svg
+      width="15"
+      height="15"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#ffffff"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="9" y="9" width="13" height="13" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  </button>
 
-            <div className="flex items-center justify-between gap-3">
-              <div
-                className="text-3xl font-bold"
-                style={{ color: '#ffffff' }}
-              >
-                {successData.ticketId}
-              </div>
+  <div className="flex items-center gap-3 pr-12">
+    <p
+      className="text-sm font-semibold tracking-widest whitespace-nowrap"
+      style={{ color: 'rgba(255,255,255,0.7)' }}
+    >
+      TICKET ID :
+    </p>
 
-              <button
-                onClick={handleCopyTicketId}
-                className="w-12 h-12 rounded-2xl flex items-center justify-center"
-                style={{ backgroundColor: 'rgba(255,255,255,0.16)' }}
-              >
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#ffffff"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="9" y="9" width="13" height="13" rx="2" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-              </button>
-            </div>
+    <div
+      className="text-xl font-bold leading-none"
+      style={{ color: '#ffffff' }}
+    >
+      {successData.ticketId}
+    </div>
+  </div>
 
-            <p
-              className="text-sm mt-4"
-              style={{ color: 'rgba(255,255,255,0.8)' }}
-            >
-              Save this ID to track your request status
-            </p>
-          </div>
+  <p
+    className="text-sm mt-4"
+    style={{ color: 'rgba(255,255,255,0.8)' }}
+  >
+    Save this ID to track your request status
+  </p>
+</div>
 
           {/* <button
           onClick={onSuccess}
@@ -936,7 +945,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
      * Desktop : normal page flow, content capped at max-w-3xl, centred
      */
     <div
-      className="flex flex-col h-screen md:h-auto md:min-h-screen"
+      className="flex flex-col h-screen md:h-auto md:min-h-screen [&_input::placeholder]:text-gray-300 [&_textarea::placeholder]:text-gray-300"
       style={{ backgroundColor: '#f6f4ee' }}
     >
       {/* ── Header ─────────────────────────────────────────────── */}
@@ -1265,14 +1274,27 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
               {attachments.map((file, i) => (
                 <div
                   key={i}
-                  className="relative w-16 h-16 rounded-lg border flex items-center justify-center"
+                  className="relative w-20 h-20 rounded-lg border flex items-center justify-center overflow-hidden group"
                   style={{ borderColor: '#c4b89d', backgroundColor: '#f6f4ee' }}
                 >
-                  <span className="text-xs text-center px-1 line-clamp-2 break-all" style={{ color: '#2c2c2c' }}>
-                    {file.name.length > 8 ? file.name.slice(0, 7) + '…' : file.name}
-                  </span>
+                  {attachmentPreviews[i] ? (
+                    <img
+                      src={attachmentPreviews[i]}
+                      alt={file.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center w-full h-full">
+                      <svg className="w-6 h-6 mb-1" style={{ color: '#888780' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="text-xs text-center px-1" style={{ color: '#2c2c2c' }}>
+                        {file.name.length > 10 ? file.name.slice(0, 9) + '…' : file.name}
+                      </span>
+                    </div>
+                  )}
                   <button
-                    onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))}
+                    onClick={() => handleRemoveAttachment(i)}
                     className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center"
                     style={{ backgroundColor: '#da7756' }}
                   >
@@ -1283,7 +1305,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
               {attachments.length < 5 && (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-16 h-16 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 active:bg-gray-50 hover:bg-gray-50"
+                  className="w-20 h-20 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 active:bg-gray-50 hover:bg-gray-50 transition-colors"
                   style={{ borderColor: '#c4b89d' }}
                 >
                   <Plus className="h-5 w-5" style={{ color: '#888780' }} />
@@ -1295,9 +1317,10 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".jpg,.jpeg,.png,.pdf"
+              accept=".jpg,.jpeg,.png,.pdf,image/*,application/pdf"
               onChange={handleFileAdd}
               className="hidden"
+              capture="environment"
             />
             <p className="text-xs mt-2" style={{ color: '#888780' }}>
               JPEG, PNG, PDF up to 10MB each · Max 5 files
@@ -1354,33 +1377,6 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
-                    Floor
-                  </label>
-
-                  <Select
-                    value={formData.floor}
-                    onValueChange={handleFloorChange}
-                    disabled={!formData.building}
-                  >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Floor" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {floors.map((item) => (
-                        <SelectItem key={item.id} value={String(item.id)}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="md:col-span-2">
                   <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
                     Area
@@ -1397,6 +1393,33 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
                     <SelectContent>
                       {areas.map((item) => (
+                        <SelectItem key={item.id} value={String(item.id)}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="md:col-span-2">
+                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                    Floor
+                  </label>
+
+                  <Select
+                    value={formData.floor}
+                    onValueChange={handleFloorChange}
+                    disabled={!formData.building}
+                  >
+                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                      <SelectValue placeholder="Select Floor" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {floors.map((item) => (
                         <SelectItem key={item.id} value={String(item.id)}>
                           {item.name}
                         </SelectItem>
