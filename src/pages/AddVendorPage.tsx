@@ -1041,7 +1041,7 @@ export const AddVendorPage = () => {
                         }}
                         sx={{ flex: 1 }}
                       />
-                      <TextField
+                      {/* <TextField
                         label="Bill Date"
                         type="date"
                         size="small"
@@ -1053,7 +1053,39 @@ export const AddVendorPage = () => {
                         }}
                         InputLabelProps={{ shrink: true }}
                         sx={{ flex: 1 }}
+                      /> */}
+                      <TextField
+                        label="Bill Date"
+                        type="date"
+                        size="small"
+                        value={row.date}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].date = e.target.value;
+                          if (updated[index].dueDate && updated[index].dueDate <= e.target.value) {
+                            updated[index].dueDate = '';
+                          }
+                          setOpeningBalances(updated);
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{
+                          min: new Date().toISOString().split('T')[0],
+                        }}
+                        sx={{ flex: 1 }}
                       />
+                      {/* <TextField
+                        label="Due Date"
+                        type="date"
+                        size="small"
+                        value={row.dueDate}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].dueDate = e.target.value;
+                          setOpeningBalances(updated);
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ flex: 1 }}
+                      /> */}
                       <TextField
                         label="Due Date"
                         type="date"
@@ -1065,6 +1097,11 @@ export const AddVendorPage = () => {
                           setOpeningBalances(updated);
                         }}
                         InputLabelProps={{ shrink: true }}
+                        inputProps={{
+                          min: row.date
+                            ? row.date
+                            : new Date().toISOString().split('T')[0],
+                        }}
                         sx={{ flex: 1 }}
                       />
                       <TextField
