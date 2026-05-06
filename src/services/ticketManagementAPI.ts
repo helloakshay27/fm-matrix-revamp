@@ -781,8 +781,10 @@ export const ticketManagementAPI = {
     return response.data;
   },
 
-  async getSubCategories() {
-    const response = await apiClient.get('/pms/admin/get_all_helpdesk_sub_categories.json');
+  async getSubCategories(page: number = 1, perPage: number = 20, search: string = '') {
+    const searchParam = search ? `&search=${encodeURIComponent(search)}` : '';
+    const url = `/pms/admin/get_all_helpdesk_sub_categories.json?page=${page}&per_page=${perPage}${searchParam}`;
+    const response = await apiClient.get(url);
     return response.data;
   },
 
