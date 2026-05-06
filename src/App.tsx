@@ -2339,7 +2339,7 @@ function App() {
                         />
                         {/* Settings Asset Setup Routes */}
                         <Route
-                          path="/settings/asset-setup/approval-matrix"
+                          path="/accounting/asset-setup/approval-matrix"
                           element={<InvoiceApprovalsPage />}
                         />
                         <Route

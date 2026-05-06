@@ -345,7 +345,7 @@ const modulesByPackage = {
         },
         {
           name: " Approval Matrix",
-           href: "/settings/asset-setup/approval-matrix",
+           href: "/accounting/asset-setup/approval-matrix",
          
 
           
