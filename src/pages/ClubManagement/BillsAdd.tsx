@@ -41,6 +41,78 @@ function mapPurchaseOrderToBill(poData, customers, itemOptions) {
         // Add more mappings as needed
     };
 }
+
+function mapRecurringBillToBill(recurringBill, customers, itemOptions) {
+    const toDateInputValue = (value) => {
+        if (!value) return '';
+        return String(value).slice(0, 10);
+    };
+    const supplierId =
+        recurringBill?.pms_supplier_id ||
+        recurringBill?.supplier?.id ||
+        recurringBill?.vendor?.id;
+    const vendor = customers.find(c => String(c.id) === String(supplierId));
+    const recurringItems =
+        recurringBill?.item_details ||
+        recurringBill?.lock_account_bill_charges ||
+        recurringBill?.lock_account_bill_charges_attributes ||
+        [];
+    const mappedItems = Array.isArray(recurringItems)
+        ? recurringItems.map((item, index) => {
+            const itemId =
+                item.lock_account_item_id ||
+                item.item_id ||
+                item.lock_account_item?.id;
+            const matchedItem = itemOptions.find(opt => String(opt.id) === String(itemId));
+            const quantity = Number(item.quantity || 1);
+            const rate = Number(item.rate || 0);
+            const amount = Number(item.total_amount ?? item.amount ?? quantity * rate);
+
+            return {
+                id: String(itemId || item.id || `${Date.now()}-${index}`),
+                name: matchedItem?.name || item.item_name || item.name || '',
+                description: item.description || item.name || '',
+                quantity,
+                rate,
+                discount: Number(item.discount || 0),
+                discountType: 'percentage' as const,
+                tax: item.tax_group?.name || '',
+                taxRate: Number(item.tax_group?.rate || 0),
+                amount,
+                customer: String(item.lock_account_customer_id || ''),
+                account: String(item.lock_account_ledger_id || matchedItem?.account || ''),
+                item_id: itemId ? String(itemId) : '',
+                item_tax_type: item.tax_type || item.item_tax_type || '',
+                tax_group_id: item.tax_group_id || item.tax_group?.id || null,
+                tax_exemption_id: item.tax_exemption_id || null,
+            };
+        })
+        : [];
+
+    return {
+        vendor,
+        items: mappedItems,
+        referenceNumber: recurringBill?.order_number || recurringBill?.reference_number || recurringBill?.bill_number || "",
+        subject: recurringBill?.subject || '',
+        salesOrderDate: toDateInputValue(recurringBill?.bill_date || recurringBill?.date),
+        expectedShipmentDate: toDateInputValue(recurringBill?.due_date || recurringBill?.recurring_detail?.end_date),
+        selectedTerm: recurringBill?.payment_term_id ? String(recurringBill.payment_term_id) : '',
+        billingAddress: recurringBill?.billing_address?.formatted_address || recurringBill?.supplier?.formatted_address || '',
+        shippingAddress: recurringBill?.shipping_address?.formatted_address || '',
+        sourceOfSupply: recurringBill?.source_of_supply ,
+        // || recurringBill?.billing_address?.state || recurringBill?.supplier?.state || '',
+        destinationOfSupply: recurringBill?.destination_of_supply ,
+        // || recurringBill?.shipping_address?.state || '',
+        customerNotes: recurringBill?.notes || recurringBill?.customer_notes || '',
+        termsAndConditions: recurringBill?.terms_and_conditions || '',
+        discountOnTotal: Number(recurringBill?.discount_per ?? recurringBill?.discount_amount ?? 0),
+        discountTypeOnTotal: recurringBill?.discount_per ? 'percentage' : 'amount',
+        adjustment: Number(recurringBill?.charge_amount || 0),
+        adjustmentLabel: recurringBill?.charge_name || 'Adjustment',
+        taxType: recurringBill?.tax_type ? String(recurringBill.tax_type).toUpperCase() : '',
+        selectedTax: recurringBill?.lock_account_tax_id ? String(recurringBill.lock_account_tax_id) : '',
+    };
+}
 import {
     TextField,
     // Button,
@@ -203,9 +275,13 @@ export const BillsAdd: React.FC = () => {
         location.state?.saleOrderId ||
         location.state?.purchaseOrderId ||
         searchParams.get('po_id');
+    const recurringBillId =
+        location.state?.recurringBillId ||
+        searchParams.get('recurring_bill_id');
 
     // Prefill state
     const [poPrefill, setPoPrefill] = useState<any>(null);
+    const [recurringBillPrefill, setRecurringBillPrefill] = useState<any>(null);
     const [subject, setSubject] = useState('');
     // Fetch item list from API
     const lock_account_id = localStorage.getItem("lock_account_id");
@@ -664,7 +740,17 @@ export const BillsAdd: React.FC = () => {
     });
 
     // Dropdowns data
-    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
+    const [itemOptions, setItemOptions] = useState<{
+        id: string;
+        name: string;
+        rate: number;
+        description?: string;
+        account?: string | number;
+        tax_preference?: string;
+        tax_exemption_id?: number | string | null;
+        tax_group_id?: number | string | null;
+        inter_state_tax_rate_id?: number | string | null;
+    }[]>([]);
     const [salespersons, setSalespersons] = useState<{ id: string; name: string }[]>([]);
     // const [taxOptions, setTaxOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
     const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
@@ -822,11 +908,42 @@ export const BillsAdd: React.FC = () => {
         }
     };
 
+    const fetchAndPrefillRecurringBill = async (billId, customersList, itemsList) => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lockAccountId = localStorage.getItem('lock_account_id');
+
+        try {
+            const res = await axios.get(
+                `https://${baseUrl}/lock_account_bills/${billId}.json?q[recurring_eq]=true&lock_account_id=${lockAccountId}&show=true`,
+                {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            const recurringBill = res.data?.lock_account_bill || res.data;
+            if (recurringBill?.id) {
+                const mapped = mapRecurringBillToBill(recurringBill, customersList, itemsList || itemOptions);
+                setRecurringBillPrefill(mapped);
+            }
+        } catch (err) {
+            toast.error('Failed to fetch recurring bill details');
+        }
+    };
+
     useEffect(() => {
         if (!purchaseOrderId || customers.length === 0) return;
         fetchAndPrefillPO(purchaseOrderId, customers, itemOptions);
         // eslint-disable-next-line
     }, [purchaseOrderId, customers, itemOptions]);
+
+    useEffect(() => {
+        if (!recurringBillId || customers.length === 0) return;
+        fetchAndPrefillRecurringBill(recurringBillId, customers, itemOptions);
+        // eslint-disable-next-line
+    }, [recurringBillId, customers, itemOptions]);
 
     // When PO prefill data is ready, set fields
     useEffect(() => {
@@ -842,6 +959,33 @@ export const BillsAdd: React.FC = () => {
         }
         // eslint-disable-next-line
     }, [poPrefill]);
+
+    useEffect(() => {
+        if (recurringBillPrefill) {
+            if (recurringBillPrefill.vendor) setSelectedCustomer(recurringBillPrefill.vendor);
+            if (recurringBillPrefill.items && recurringBillPrefill.items.length > 0) setItems(recurringBillPrefill.items);
+            if (recurringBillPrefill.referenceNumber) setReferenceNumber(recurringBillPrefill.referenceNumber);
+            if (recurringBillPrefill.subject) setSubject(recurringBillPrefill.subject);
+            if (recurringBillPrefill.salesOrderDate) setSalesOrderDate(recurringBillPrefill.salesOrderDate);
+            if (recurringBillPrefill.expectedShipmentDate) setExpectedShipmentDate(recurringBillPrefill.expectedShipmentDate);
+            if (recurringBillPrefill.selectedTerm) setSelectedTerm(recurringBillPrefill.selectedTerm);
+            if (recurringBillPrefill.billingAddress) setBillingAddress(recurringBillPrefill.billingAddress);
+            if (recurringBillPrefill.shippingAddress) setShippingAddress(recurringBillPrefill.shippingAddress);
+            if (recurringBillPrefill.sourceOfSupply) setSourceOfSupply(recurringBillPrefill.sourceOfSupply);
+            if (recurringBillPrefill.destinationOfSupply) setDestinationOfSupply(recurringBillPrefill.destinationOfSupply);
+            if (recurringBillPrefill.customerNotes) setCustomerNotes(recurringBillPrefill.customerNotes);
+            if (recurringBillPrefill.termsAndConditions) setTermsAndConditions(recurringBillPrefill.termsAndConditions);
+            setDiscountOnTotal(recurringBillPrefill.discountOnTotal || 0);
+            setDiscountTypeOnTotal(recurringBillPrefill.discountTypeOnTotal || 'percentage');
+            setAdjustment(recurringBillPrefill.adjustment || 0);
+            setAdjustmentLabel(recurringBillPrefill.adjustmentLabel || 'Adjustment');
+            if (recurringBillPrefill.taxType === 'TDS' || recurringBillPrefill.taxType === 'TCS') {
+                setTaxType(recurringBillPrefill.taxType);
+            }
+            if (recurringBillPrefill.selectedTax) setSelectedTax(recurringBillPrefill.selectedTax);
+        }
+        // eslint-disable-next-line
+    }, [recurringBillPrefill]);
 
 
     // Fetch customers on mount
@@ -921,7 +1065,7 @@ export const BillsAdd: React.FC = () => {
             fetchSupplierDetails(selectedCustomer.id);
             fetchSupplierAddresses(
                 selectedCustomer.id,
-                Boolean(purchaseOrderId || billingAddress || shippingAddress)
+                Boolean(purchaseOrderId || recurringBillId || billingAddress || shippingAddress)
             );
             setPaymentTerms(selectedCustomer.paymentTerms || selectedCustomer.payment_terms || '');
         } else {

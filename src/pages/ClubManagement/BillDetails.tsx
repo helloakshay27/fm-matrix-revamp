@@ -441,18 +441,43 @@ export const BillDetails = () => {
   const selectedSupplier = supplierList.find(
     (supplier) => String(supplier.id) === String(selectedSupplierId)
   );
-  const isBillOverdue = String(salesOrder?.status || "")
+  // const isBillOverdue = String(salesOrder?.status || "")
+  //   .trim()
+  //   .toLowerCase()
+  //   .startsWith("overdue");
+  // const formatBillDate = (date?: string | null) => {
+  //   if (!date) return "-";
+  //   const parsedDate = new Date(date);
+  //   if (Number.isNaN(parsedDate.getTime())) return "-";
+
+  //   return parsedDate.toLocaleDateString("en-IN");
+  // };
+
+
+  const status = String(salesOrder?.status || "")
     .trim()
-    .toLowerCase()
-    .startsWith("overdue");
+    .toLowerCase();
+
+  // ✅ Check for both "overdue" OR "open"
+  const isBillOverdue = ["overdue", "open"].some(s =>
+    status.startsWith(s)
+  );
+
+  // (Optional) If you still want separate flags
+  const isBillOverdue2 = status.startsWith("overdue");
+  const isBillOpen = status.startsWith("open");
+
+  // Date formatter (unchanged - already correct)
   const formatBillDate = (date?: string | null) => {
     if (!date) return "-";
+
     const parsedDate = new Date(date);
     if (Number.isNaN(parsedDate.getTime())) return "-";
 
     return parsedDate.toLocaleDateString("en-IN");
   };
 
+  console.log("overdue", { isBillOverdue, isBillOpen })
   useEffect(() => {
     if (!isBillOverdue && activeTab === "record-payment") {
       setActiveTab("order-details");
@@ -672,7 +697,7 @@ export const BillDetails = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading sales order...</p>
+          <p className="mt-4 text-muted-foreground">Loading ...</p>
         </div>
       </div>
     );
@@ -737,16 +762,16 @@ export const BillDetails = () => {
             </Badge>
             {(salesOrder as any)?.approval_status?.approval_levels?.length >
               0 && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowApprovalLog(true)}
-                className="gap-2"
-              >
-                <ClipboardList className="h-4 w-4" />
-                Approval Log
-              </Button>
-            )}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowApprovalLog(true)}
+                  className="gap-2"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  Approval Log
+                </Button>
+              )}
 
             {/* ── WITHOUT APPROVAL ── */}
             {!hasSaleOrderApproval && (
@@ -1090,7 +1115,7 @@ export const BillDetails = () => {
                             </TableCell>
                             <TableCell className="text-right">
                               {item.tax_type === "tax_group" ||
-                              item.tax_type === "tax_rate"
+                                item.tax_type === "tax_rate"
                                 ? (item.tax_group?.name ?? "-")
                                 : item.tax_type === "non_taxable"
                                   ? "Non Taxable"
@@ -1265,7 +1290,7 @@ export const BillDetails = () => {
                                   {rec.ledger_id ? (
                                     <span
                                       className="text-black-600 cursor-pointer hover:underline"
-                                      // onClick={() => navigate(`/accounting/reports/balance-sheet/details/${rec.ledger_id}`)}
+                                    // onClick={() => navigate(`/accounting/reports/balance-sheet/details/${rec.ledger_id}`)}
                                     >
                                       {rec.ledger_name}
                                     </span>
@@ -1322,7 +1347,7 @@ export const BillDetails = () => {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <DollarSign className="h-5 w-5 text-primary" />
-                    Payment for {salesOrder?.bill_number || "-"}
+                    Payment for : Bill {salesOrder?.bill_number || "-"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -1470,7 +1495,7 @@ export const BillDetails = () => {
                         sx={fieldStyles}
                       />
                     </div>
-                    <div>
+                    {/* <div>
                       <p className="text-sm font-medium mb-2">Notes</p>
                       <TextField
                         fullWidth
@@ -1479,6 +1504,28 @@ export const BillDetails = () => {
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                       />
+                    </div> */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Notes
+                      </label>
+
+                      <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        rows={3}
+                        maxLength={500}
+                        value={notes}
+                        onChange={(e) => {
+                          if (e.target.value.length <= 500) {
+                            setNotes(e.target.value);
+                          }
+                        }}
+                        placeholder="Enter any notes..."
+                      />
+
+                      <p className="text-xs text-gray-400 text-right mt-1">
+                        {notes.length}/500
+                      </p>
                     </div>
                   </div>
 
@@ -1678,7 +1725,7 @@ export const BillDetails = () => {
                 </CardHeader>
                 <CardContent>
                   {Array.isArray((salesOrder as any)?.activity_logs) &&
-                  (salesOrder as any).activity_logs.length > 0 ? (
+                    (salesOrder as any).activity_logs.length > 0 ? (
                     <div className="divide-y">
                       {(salesOrder as any).activity_logs.map(
                         (log: any, idx: number) => {
@@ -1815,9 +1862,9 @@ export const BillDetails = () => {
                     <TableCell className="text-sm">
                       {Array.isArray(lvl?.users)
                         ? lvl.users
-                            .map((u: any) => u?.name || u)
-                            .filter(Boolean)
-                            .join(", ")
+                          .map((u: any) => u?.name || u)
+                          .filter(Boolean)
+                          .join(", ")
                         : "—"}
                     </TableCell>
                   </TableRow>
