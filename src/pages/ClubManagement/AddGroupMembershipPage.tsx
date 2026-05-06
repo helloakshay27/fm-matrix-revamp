@@ -168,10 +168,41 @@ const REFERRED_BY_OPTIONS = [
     { value: 'Other', label: 'Other' }
 ];
 
+// Club Member API response interface
+interface ClubMemberResponse {
+    id: number;
+    user_id: number;
+    status: string;
+    membership_number: string;
+    user_name: string;
+    user_email: string;
+    user_mobile: string;
+    avatar: string | null;
+    identification_image: string | null;
+    society_flat_id: number | null;
+    referred_by: string;
+    emergency_contact_name: string;
+    access_card_enabled: boolean;
+    access_card_id: string | null;
+    snag_answers: any[];
+    user: {
+        id: number;
+        firstname: string;
+        lastname: string;
+        email: string;
+        mobile: string;
+        gender: string | null;
+        birth_date: string | null;
+        addresses: any[];
+    } | null;
+    house: { id: number; name: string } | null;
+    plan_details: { name: string; id: number; price: number } | null;
+}
+
 // Member interface for multi-member form
 interface MemberData {
     id: string;
-    userSelectionMode: 'select' | 'manual';
+    userSelectionMode: 'select' | 'manual' | 'created_member';
     selectedUser: string;
     selectedUserId: number | null;
     formData: {
@@ -446,6 +477,10 @@ export const AddGroupMembershipPage = () => {
     const [users, setUsers] = useState<OccupantUserResponse[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
 
+    // Club members dropdown data
+    const [clubMembers, setClubMembers] = useState<ClubMemberResponse[]>([]);
+    const [loadingClubMembers, setLoadingClubMembers] = useState(false);
+
     // Get site and company from localStorage
     const getSiteIdFromStorage = () => {
         return localStorage.getItem('selectedSiteId') ||
@@ -518,6 +553,7 @@ export const AddGroupMembershipPage = () => {
         loadUsers();
         loadMembershipPlans();
         loadAmenities();
+        loadClubMembers();
 
         // Load membership data if in edit mode
         if (isEditMode && id) {
@@ -951,6 +987,79 @@ export const AddGroupMembershipPage = () => {
         }
     };
 
+    // Load created club members from API
+    const loadClubMembers = async () => {
+        setLoadingClubMembers(true);
+        try {
+            const baseUrl = API_CONFIG.BASE_URL;
+            const token = API_CONFIG.TOKEN;
+            const url = new URL(`${baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`}/club_members.json`);
+            url.searchParams.append('access_token', token || '');
+
+            const response = await fetch(url.toString(), {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch club members');
+
+            const data = await response.json();
+            const members = data.club_members || [];
+            setClubMembers(members);
+        } catch (error) {
+            console.error('Error loading club members:', error);
+        } finally {
+            setLoadingClubMembers(false);
+        }
+    };
+
+    // Helper: parse snag_answers into member questionnaire fields
+    const parseSnagAnswersIntoMember = (snagAnswers: any[], memberToUpdate: MemberData): Partial<MemberData> => {
+        const updates: Partial<MemberData> = {};
+        if (!snagAnswers || !Array.isArray(snagAnswers)) return updates;
+
+        const snagByQ: { [key: number]: string[] } = {};
+        const snagCommentsByQ: { [key: number]: string } = {};
+        snagAnswers.forEach((a: any) => {
+            const q = Number(a.question_id);
+            if (!snagByQ[q]) snagByQ[q] = [];
+            if (a.ans_descr !== undefined && a.ans_descr !== null) {
+                snagByQ[q].push(String(a.ans_descr));
+            }
+            if (a.comments && a.comments.trim()) {
+                snagCommentsByQ[q] = a.comments;
+            }
+        });
+
+        if (snagByQ[1]?.length > 0) {
+            const val = snagByQ[1][0].toUpperCase();
+            updates.hasInjuries = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+            if (snagCommentsByQ[1]) updates.injuryDetails = snagCommentsByQ[1];
+        }
+        if (snagByQ[2]?.length > 0) {
+            const val = snagByQ[2][0].toUpperCase();
+            updates.hasPhysicalRestrictions = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+            if (snagCommentsByQ[2]) updates.physicalRestrictionsDetails = snagCommentsByQ[2];
+        }
+        if (snagByQ[3]?.length > 0) {
+            const val = snagByQ[3][0].toUpperCase();
+            updates.hasCurrentMedication = val === 'YES' ? 'yes' : val === 'NO' ? 'no' : '';
+            if (snagCommentsByQ[3]) updates.medicationDetails = snagCommentsByQ[3];
+        }
+        if (snagByQ[4]?.length > 0) updates.pilatesExperience = snagByQ[4][0] || '';
+        if (snagByQ[5]?.length > 0) updates.fitnessGoals = snagByQ[5];
+        if (snagByQ[6]?.length > 0) updates.interestedSessions = snagByQ[6];
+        if (snagByQ[7]?.length > 0) updates.heardAbout = snagByQ[7][0] || '';
+        if (snagByQ[8]?.length > 0) updates.motivations = snagByQ[8];
+        if (snagByQ[9]?.length > 0) updates.updatePreferences = snagByQ[9];
+        if (snagByQ[10]?.length > 0) updates.communicationChannel = snagByQ[10];
+        if (snagByQ[11]?.length > 0) updates.profession = snagByQ[11][0] || '';
+        if (snagByQ[12]?.length > 0) updates.companyName = snagByQ[12][0] || '';
+        if (snagByQ[13]?.length > 0) updates.companyAddress = snagByQ[13][0] || '';
+
+        return updates;
+    };
+
     // Handle user selection - now handled inline in JSX onChange handlers
 
     // Handle file uploads
@@ -1200,10 +1309,10 @@ export const AddGroupMembershipPage = () => {
             //     }
             // }
 
-            if (cardAllocated && !member.formData.accessCardId?.trim()) {
-                toast.error(`${memberLabel}: Access Card ID is required when Access Card Allocation is enabled`);
-                return;
-            }
+            // if (cardAllocated && !member.formData.accessCardId?.trim()) {
+            //     toast.error(`${memberLabel}: Access Card ID is required when Access Card Allocation is enabled`);
+            //     return;
+            // }
         }
 
         // Validate for duplicate Access Card IDs if cardAllocated is true
@@ -2136,7 +2245,7 @@ export const AddGroupMembershipPage = () => {
                                                         row
                                                         value={member.userSelectionMode}
                                                         onChange={(e) => {
-                                                            const mode = e.target.value as 'select' | 'manual';
+                                                            const mode = e.target.value as 'select' | 'manual' | 'created_member';
                                                             updateMember(member.id, {
                                                                 userSelectionMode: mode,
                                                                 selectedUser: '',
@@ -2149,15 +2258,43 @@ export const AddGroupMembershipPage = () => {
                                                                     mobile: '',
                                                                     dateOfBirth: '',
                                                                     gender: '',
-                                                                }
+                                                                    address: '',
+                                                                    address_line_two: '',
+                                                                    city: '',
+                                                                    state: '',
+                                                                    country: '',
+                                                                    pin_code: '',
+                                                                    houseId: '',
+                                                                },
+                                                                idCardPreview: null,
+                                                                residentPhotoPreview: null,
+                                                                hasInjuries: '',
+                                                                injuryDetails: '',
+                                                                hasPhysicalRestrictions: '',
+                                                                physicalRestrictionsDetails: '',
+                                                                hasCurrentMedication: '',
+                                                                medicationDetails: '',
+                                                                pilatesExperience: '',
+                                                                fitnessGoals: [],
+                                                                fitnessGoalsOther: '',
+                                                                interestedSessions: [],
+                                                                interestedSessionsOther: '',
+                                                                heardAbout: '',
+                                                                motivations: [],
+                                                                updatePreferences: [],
+                                                                communicationChannel: [],
+                                                                profession: '',
+                                                                companyName: '',
+                                                                companyAddress: '',
+                                                                corporateInterest: '',
                                                             });
                                                         }}
                                                     >
-                                                        {/* <FormControlLabel
-                                                        value="select"
-                                                        control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                                                        label="Select User"
-                                                    /> */}
+                                                        <FormControlLabel
+                                                            value="created_member"
+                                                            control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                                                            label="Select Created Member"
+                                                        />
                                                         <FormControlLabel
                                                             value="manual"
                                                             control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
@@ -2166,7 +2303,88 @@ export const AddGroupMembershipPage = () => {
                                                     </RadioGroup>
                                                 </div>
 
-                                                {/* User Selection Dropdown */}
+                                                {/* Created Club Members Dropdown */}
+                                                {member.userSelectionMode === 'created_member' && (
+                                                    <div className="mb-6">
+                                                        <FormControl fullWidth>
+                                                            <TextField
+                                                                select
+                                                                label="Select Member *"
+                                                                value={member.selectedUser}
+                                                                onChange={(e) => {
+                                                                    const memberId = e.target.value;
+
+                                                                    const cm = clubMembers.find(m => m.id.toString() === memberId);
+                                                                    if (!cm) return;
+
+                                                                    const userData = cm.user;
+                                                                    const address = userData?.addresses?.[0] || {};
+
+                                                                    // Parse snag answers into questionnaire fields
+                                                                    const snagUpdates = parseSnagAnswersIntoMember(cm.snag_answers || [], member);
+
+                                                                    // Resolve avatar URL
+                                                                    let avatarUrl: string | null = null;
+                                                                    if (cm.avatar) {
+                                                                        avatarUrl = cm.avatar.startsWith('%2F')
+                                                                            ? `https://${localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com'}${decodeURIComponent(cm.avatar)}`
+                                                                            : cm.avatar;
+                                                                    }
+
+                                                                    updateMember(member.id, {
+                                                                        selectedUser: memberId,
+                                                                        selectedUserId: cm.user_id,
+                                                                        formData: {
+                                                                            ...member.formData,
+                                                                            firstName: userData?.firstname || '',
+                                                                            lastName: userData?.lastname || '',
+                                                                            email: userData?.email || cm.user_email || '',
+                                                                            mobile: userData?.mobile || cm.user_mobile || '',
+                                                                            dateOfBirth: userData?.birth_date || '',
+                                                                            gender: userData?.gender || '',
+                                                                            address: address.address || '',
+                                                                            address_line_two: address.address_line_two || '',
+                                                                            city: address.city || '',
+                                                                            state: address.state || '',
+                                                                            country: address.country || '',
+                                                                            pin_code: address.pin_code || '',
+                                                                            address_type: address.address_type || 'residential',
+                                                                            houseId: cm.society_flat_id?.toString() || '',
+                                                                            emergencyContactName: cm.emergency_contact_name || '',
+                                                                            membershipNumber: cm.membership_number || '',
+                                                                            accessCardId: cm.access_card_id || '',
+                                                                            referredBy: cm.referred_by || '',
+                                                                        },
+                                                                        idCardPreview: cm.identification_image || null,
+                                                                        residentPhotoPreview: avatarUrl,
+                                                                        ...snagUpdates,
+                                                                    });
+                                                                }}
+                                                                sx={fieldStyles}
+                                                                disabled={loadingClubMembers}
+                                                            >
+                                                                {loadingClubMembers ? (
+                                                                    <MenuItem value="">Loading members...</MenuItem>
+                                                                ) : clubMembers.length === 0 ? (
+                                                                    <MenuItem value="">No created members found</MenuItem>
+                                                                ) : (
+                                                                    clubMembers.map((cm) => (
+                                                                        <MenuItem key={cm.id} value={cm.id.toString()}>
+                                                                            {cm.user_name?.trim()} — {cm.user_email} ({cm.membership_number})
+                                                                        </MenuItem>
+                                                                    ))
+                                                                )}
+                                                            </TextField>
+                                                        </FormControl>
+                                                        {member.selectedUser && (
+                                                            <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                                                                <span>✓</span> Member data has been auto-populated below. You can edit any fields.
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* Legacy occupant user dropdown - kept hidden but functional */}
                                                 {member.userSelectionMode === 'select' && (
                                                     <div className="mb-6">
                                                         <FormControl fullWidth>
@@ -2212,9 +2430,16 @@ export const AddGroupMembershipPage = () => {
                                                     </div>
                                                 )}
 
-                                                {/* Manual User Details */}
-                                                {member.userSelectionMode === 'manual' && (
-                                                    <div className="space-y-4">
+                                                {/* User Details Form - shown for both manual entry and created member selection */}
+                                                {(member.userSelectionMode === 'manual' || member.userSelectionMode === 'created_member') && (
+                                                    <div
+                                                        className="space-y-4"
+                                                        style={
+                                                            member.userSelectionMode === 'created_member' && !member.selectedUser
+                                                                ? { opacity: 0.45, pointerEvents: 'none', userSelect: 'none' }
+                                                                : {}
+                                                        }
+                                                    >
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                             <TextField
                                                                 label="First Name *"

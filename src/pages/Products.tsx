@@ -108,7 +108,7 @@ const productData: Product[] = [
     problemSolved:
       "Commercial tenants lack a single digital channel for building interactions, relying on WhatsApp, phone calls, and paper registers that cause delays, errors, and poor experience.",
     type: "Customer Portal",
-    isActive: false,
+    isActive: true,
   },
   {
     id: "5",
@@ -148,7 +148,7 @@ const productData: Product[] = [
   },
   {
     id: "7",
-    name: "Procurement / Contracts / Tendering*",
+    name: "Procurement/ Contracts/ Tendering",
     slug: "procurement",
     company: "Lockated",
     businessSPOC1: "Saba",
@@ -162,7 +162,7 @@ const productData: Product[] = [
     problemSolved:
       "Procurement runs on emails, Excel comparatives, and manual approvals, creating compliance risk, weak vendor accountability, and no audit trail for contract terms.",
     type: "Vendor Portal",
-    isActive: false,
+    isActive: true,
   },
   {
     id: "8",
@@ -234,7 +234,7 @@ const productData: Product[] = [
     problemSolved:
       "Paper permit workflows let high-risk work proceed with bypassed approvals, undocumented risk assessments, and no field-level compliance tracking, making regulatory proof and safety auditing difficult.",
     type: "Facility Management",
-    isActive: false,
+    isActive: true,
   },
   {
     id: "12",
@@ -414,7 +414,7 @@ const productData: Product[] = [
     problemSolved:
       "Gate operations depend on physical registers, WhatsApp visitor approvals, and manual vehicle verification, creating unauthorised access risk, no real-time visibility, compliance audit gaps, and no traceable digital incident record.",
     type: "Visitor Management",
-    isActive: false,
+    isActive: true,
   },
   {
     id: "22",
@@ -432,7 +432,7 @@ const productData: Product[] = [
     problemSolved:
       "Feedback is collected through untracked email surveys, WhatsApp polls, and physical forms, resulting in low response rates, unstructured data, no sentiment analysis, no trend tracking, and no actionable insight.",
     type: "Facility Management",
-    isActive: false,
+    isActive: true,
   },
   {
     id: "23",

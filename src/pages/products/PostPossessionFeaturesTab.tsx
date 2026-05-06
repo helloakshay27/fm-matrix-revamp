@@ -177,24 +177,27 @@ const PostPossessionFeaturesTab: React.FC = () => {
   };
 
   return (
-    <div className="w-full overflow-x-auto font-sans">
-      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756] mb-4">
-        <h2 className="text-xl font-bold uppercase tracking-wider">
-          POST POSSESSION — FULL FEATURE LIST
-        </h2>
+    <div className="w-full font-sans">
+      <div className="mb-6">
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+          <h2 className="text-xl font-bold uppercase tracking-wider">
+            POST POSSESSION — FULL FEATURE LIST
+          </h2>
+        </div>
       </div>
 
-      <table
-        style={{
-          borderCollapse: "collapse",
-          tableLayout: "fixed",
-          width: "100%",
-          minWidth: "1200px",
-          backgroundColor: "white",
-        }}
-        cellSpacing={0}
-        cellPadding={0}
-      >
+      <div className="overflow-x-auto">
+        <table
+          style={{
+            borderCollapse: "collapse",
+            tableLayout: "fixed",
+            width: "100%",
+            minWidth: "1200px",
+            backgroundColor: "white",
+          }}
+          cellSpacing={0}
+          cellPadding={0}
+        >
         <colgroup>
           <col style={{ width: "160px" }} />
           <col style={{ width: "190px" }} />
@@ -3083,6 +3086,7 @@ const PostPossessionFeaturesTab: React.FC = () => {
           </tr>
         </tbody>
       </table>
+    </div>
     </div>
   );
 };

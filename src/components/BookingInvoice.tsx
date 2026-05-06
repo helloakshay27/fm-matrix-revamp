@@ -156,11 +156,14 @@ const BookingInvoice = ({
                     " THOUSAND" +
                     (n % 1000 > 0 ? " " + convertLessThanSevenDigits(n % 1000) : "")
                 );
-            return (
-                convertLessThanSevenDigits(Math.floor(n / 100000)) +
-                " LAKH" +
-                (n % 100000 > 0 ? " " + convertLessThanSevenDigits(n % 100000) : "")
-            );
+            if (n < 10000000) // ✅ FIXED CONDITION
+                return (
+                    convertLessThanSevenDigits(Math.floor(n / 100000)) +
+                    " LAKH" +
+                    (n % 100000 > 0 ? " " + convertLessThanSevenDigits(n % 100000) : "")
+                );
+
+            return ""; // safety fallback
         };
 
         if (num === 0) return "ZERO";
@@ -336,7 +339,7 @@ const BookingInvoice = ({
                                 {/* Right: Invoice Title + Bill To Details */}
                                 <div className="text-right">
                                     <p className="text-[#1F5E2E] font-bold mb-4">
-                                        ORIGINAL FOR RECEPIENT
+                                        ORIGINAL FOR RECIPIENT
                                     </p>
                                     <p className="text-[#1F5E2E]">
                                         <span className="font-bold">
@@ -520,7 +523,7 @@ const BookingInvoice = ({
 
                             {/* Company Bank Details */}
                             <p className="text-[#1F5E2E] font-bold text-sm mb-1">
-                                CONFIRM BANK DETAILS
+                                BANK DETAILS
                             </p>
                             <p className="text-[#1F5E2E] text-sm mb-1">
                                 Account Name: PAUSE & PLAY MOVEMENT LABS PVT. LTD.

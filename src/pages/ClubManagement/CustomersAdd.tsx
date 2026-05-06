@@ -443,7 +443,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                 const groups = res.data.data || [];
                 const allLedgers = groups.flatMap((g: any) => g.ledgers || []).filter((l: any) => l.name === 'Accounts Receivable');
                 setLedgers(allLedgers);
-            } catch (err) {}
+            } catch (err) { }
         };
         fetchLedgers();
     }, []);
@@ -489,7 +489,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
         // console.log("Saving Payment Terms Payload:", paymentTermsPayload);
         const payload = {
             payment_terms: paymentTermsPayload,
-            lock_account_id:lock_account_id
+            lock_account_id: lock_account_id
         };
 
         await axios.post(
@@ -698,7 +698,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                     <MenuItem value="INR">INR - Indian Rupee</MenuItem>
                 </TextField> */}
 
-                
+
             <div className="col-span-2 mt-4">
                 <div className="font-medium mb-2">Tax Preference</div>
 
@@ -950,43 +950,127 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
     );
 };
 
-const OpeningBalanceTab = ({ form, handleChange }) => {
+// const OpeningBalanceTab = ({ form, handleChange }) => {
+//     return (
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//             <TextField
+//                 label="Bill No"
+//                 name="opening_balance_bill_no"
+//                 value={form.opening_balance_bill_no || ""}
+//                 onChange={handleChange}
+//                 fullWidth
+//                 placeholder="Enter bill no"
+//             />
+//             <TextField
+//                 label="Bill Date"
+//                 name="opening_balance_bill_date"
+//                 type="date"
+//                 value={form.opening_balance_bill_date || ""}
+//                 onChange={handleChange}
+//                 fullWidth
+//                 InputLabelProps={{ shrink: true }}
+//             />
+//             <TextField
+//                 label="Due Date"
+//                 name="opening_balance_due_date"
+//                 type="date"
+//                 value={form.opening_balance_due_date || ""}
+//                 onChange={handleChange}
+//                 fullWidth
+//                 InputLabelProps={{ shrink: true }}
+//             />
+//             <TextField
+//                 label="Amount"
+//                 name="opening_balance"
+//                 value={form.opening_balance}
+//                 onChange={handleChange}
+//                 fullWidth
+//                 placeholder="Enter amount"
+//             />
+//         </div>
+//     );
+// };
+
+
+const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
+
+    const handleChange = (index, field, value) => {
+        const updated = [...openingBalances];
+        updated[index][field] = value;
+        setOpeningBalances(updated);
+    };
+
+    const addRow = () => {
+        setOpeningBalances([
+            ...openingBalances,
+            { bill_no: "", date: new Date().toISOString().split('T')[0], due_date: "", amount: "" }
+        ]);
+    };
+
+    const removeRow = (index) => {
+        const updated = openingBalances.filter((_, i) => i !== index);
+        setOpeningBalances(updated);
+    };
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <TextField
-                label="Bill No"
-                name="opening_balance_bill_no"
-                value={form.opening_balance_bill_no || ""}
-                onChange={handleChange}
-                fullWidth
-                placeholder="Enter bill no"
-            />
-            <TextField
-                label="Bill Date"
-                name="opening_balance_bill_date"
-                type="date"
-                value={form.opening_balance_bill_date || ""}
-                onChange={handleChange}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-                label="Due Date"
-                name="opening_balance_due_date"
-                type="date"
-                value={form.opening_balance_due_date || ""}
-                onChange={handleChange}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-                label="Amount"
-                name="opening_balance"
-                value={form.opening_balance}
-                onChange={handleChange}
-                fullWidth
-                placeholder="Enter amount"
-            />
+        <div>
+            {openingBalances?.map((row, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-3">
+
+                    <TextField
+                        label="Bill No"
+                        value={row.bill_no}
+                        placeholder="Enter bill number"
+                        onChange={(e) => handleChange(index, "bill_no", e.target.value)}
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                    />
+
+                    <TextField
+                        label="Bill Date"
+                        type="date"
+                        value={row.date}
+                        onChange={(e) => handleChange(index, "date", e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                    />
+
+                    <TextField
+                        label="Due Date"
+                        type="date"
+                        value={row.due_date}
+                        onChange={(e) => handleChange(index, "due_date", e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                        inputProps={{ min: new Date().toISOString().split('T')[0] }}
+                    />
+
+                    <TextField
+                        label="Amount"
+                        placeholder="Enter amount"
+                        value={row.amount}
+                        onChange={(e) => handleChange(index, "amount", e.target.value)}
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                    />
+
+                    <div className="flex items-center gap-2">
+                        <Button onClick={addRow} className="bg-[#C72030] text-white">
+                            +
+                        </Button>
+
+                        {openingBalances.length > 1 && (
+                            <Button
+                                onClick={() => removeRow(index)}
+                                variant="outline"
+                                className="border-red-500 text-red-500"
+                            >
+                                -
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };
@@ -1277,13 +1361,13 @@ const CustomersAdd = () => {
 
 
 
-       
-  gst_preference: "",
-  tax_exemption_id: "",
-  gst_tds_enabled: false,
-  lock_account_ledger_id: "",
-//   department: "",
-//   designation: "",
+
+        gst_preference: "",
+        tax_exemption_id: "",
+        gst_tds_enabled: false,
+        lock_account_ledger_id: "",
+        //   department: "",
+        //   designation: "",
 
     });
 
@@ -1319,6 +1403,15 @@ const CustomersAdd = () => {
     // CONTACT PERSONS
     const [contactPersons, setContactPersons] = useState([
         { salutation: "", firstName: "", lastName: "", email: "", workPhone: "", mobile: "" }
+    ]);
+
+    const [openingBalances, setOpeningBalances] = useState([
+        {
+            bill_no: "",
+            date: new Date().toISOString().split('T')[0],
+            due_date: "",
+            amount: ""
+        }
     ]);
 
     // REMARKS
@@ -1504,7 +1597,7 @@ const CustomersAdd = () => {
             contact_person: billing.attention || ''
         };
 
-       
+
 
         const shippingPayload = {
             attention: shipping.attention || '',
@@ -1532,6 +1625,15 @@ const CustomersAdd = () => {
             work_phone: row.workPhone
         }));
 
+        const openingBalancePayload = openingBalances
+            .filter(row => row.bill_no || row.amount) // skip empty rows
+            .map(row => ({
+                bill_no: row.bill_no || null,
+                date: row.date || null,
+                due_date: row.due_date || null,
+                amount: row.amount ? Number(row.amount) : 0
+            }));
+
         // Use lifted remarks state
         const remarksPayload = remarks || '';
 
@@ -1551,9 +1653,11 @@ const CustomersAdd = () => {
                 language_code: 'en',
                 currency_code: 'INR',
                 opening_balance: form.opening_balance || 0,
-                opening_balance_bill_no: form.opening_balance_bill_no || null,
-                opening_balance_bill_date: form.opening_balance_bill_date || null,
-                opening_balance_due_date: form.opening_balance_due_date || null,
+                // opening_balance_bill_no: form.opening_balance_bill_no || null,
+                // opening_balance_bill_date: form.opening_balance_bill_date || null,
+                // opening_balance_due_date: form.opening_balance_due_date || null,
+
+                opening_balance_details_attributes: openingBalancePayload,
                 payment_term_id,
                 enable_portal: form.enable_portal || false,
                 lock_account_ledger_id: form.lock_account_ledger_id || null,
@@ -1561,7 +1665,7 @@ const CustomersAdd = () => {
                 // gstin: form.gstin || null,
                 gst_preference: form.gst_treatment || null,
                 tax_preference: form.tax_preference || null,
-                
+
                 tax_exemption_id:
                     form.tax_preference === "non_taxable"
                         ? form.tax_exemption_id || null
@@ -1586,27 +1690,27 @@ const CustomersAdd = () => {
 
                 remarks: remarksPayload,
                 default_billing_address_attributes: billingPayload,
-                 default_shipping_address_attributes: shippingPayload,
+                default_shipping_address_attributes: shippingPayload,
                 contact_persons_attributes: contactPersonsPayload,
 
-                 primary_gst_detail_attributes: {
-      gstin: form.gstin || null,
+                primary_gst_detail_attributes: {
+                    gstin: form.gstin || null,
 
-      business_legal_name:
-        form.gst_treatment === "registered_regular" ||
-        form.gst_treatment === "registered_composition"
-          ? form.business_legal_name || null
-          : null,
+                    business_legal_name:
+                        form.gst_treatment === "registered_regular" ||
+                            form.gst_treatment === "registered_composition"
+                            ? form.business_legal_name || null
+                            : null,
 
-          place_of_supply:
-                    form.gst_treatment === "overseas" ? null : form.place_of_supply || null,
+                    place_of_supply:
+                        form.gst_treatment === "overseas" ? null : form.place_of_supply || null,
 
-      business_trade_name:
-        form.gst_treatment === "registered_regular" ||
-        form.gst_treatment === "registered_composition"
-          ? form.business_trade_name || null
-          : null,
-    }
+                    business_trade_name:
+                        form.gst_treatment === "registered_regular" ||
+                            form.gst_treatment === "registered_composition"
+                            ? form.business_trade_name || null
+                            : null,
+                }
             }
         };
         // console.log("Submitting Customer Payload:", payload);
@@ -1779,17 +1883,33 @@ const CustomersAdd = () => {
                 {/* <div className="p-4"> */}
                 {/* Tabs Header */}
                 <div className="bg-white rounded-lg border p-6 mb-6">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 border-b mb-6">
+                    {/* <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 border-b mb-6"> */}
+                    <div className="flex flex-wrap md:flex-nowrap overflow-x-auto border-b mb-6">
                         {TABS.map((tab) => (
+                            //                 <button
+                            //                     key={tab.key}
+                            //                     type="button"
+                            //                     onClick={() => setActiveTab(tab.key)}
+                            //                     className={`px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors
+                            //     ${activeTab === tab.key
+                            //                             ? "text-[#C72030] border-b-2 border-[#C72030] bg-[#f9f7f2]/50"
+                            //                             : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}
+                            //   `}
+                            //                 >
+                            //                     {tab.label}
+                            //                 </button>
+
+
                             <button
                                 key={tab.key}
                                 type="button"
                                 onClick={() => setActiveTab(tab.key)}
-                                className={`px-4 py-3 text-sm font-semibold transition-colors
-                ${activeTab === tab.key
+                                className={`flex-1 text-center px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors
+    ${activeTab === tab.key
                                         ? "text-[#C72030] border-b-2 border-[#C72030] bg-[#f9f7f2]/50"
-                                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}
-              `}
+                                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                    }
+  `}
                             >
                                 {tab.label}
                             </button>
@@ -1822,8 +1942,14 @@ const CustomersAdd = () => {
                         />
                     )}
 
-                    {activeTab === "opening-balance" && (
+                    {/* {activeTab === "opening-balance" && (
                         <OpeningBalanceTab form={form} handleChange={handleChange} />
+                    )} */}
+                    {activeTab === "opening-balance" && (
+                        <OpeningBalanceTab
+                            openingBalances={openingBalances}
+                            setOpeningBalances={setOpeningBalances}
+                        />
                     )}
 
                     {activeTab === "address" && (

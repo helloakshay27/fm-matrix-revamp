@@ -529,7 +529,7 @@ const ProjectCreateModal = ({
                         <MenuItem value="">
                           <em>Select Owner</em>
                         </MenuItem>
-                        {owners.map((owner) => (
+                        {owners?.map((owner) => (
                           <MenuItem key={owner.id} value={owner.id}>
                             {owner.full_name}
                           </MenuItem>

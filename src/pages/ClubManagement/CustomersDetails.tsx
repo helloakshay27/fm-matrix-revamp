@@ -131,14 +131,14 @@ export const CustomersDetails = () => {
     const fetchCustomerDetails = async () => {
         setLoading(true);
         try {
-                // Use provided API endpoint
-                const apiUrl = `https://${baseUrl}/lock_account_customers/${id}.json`;
-                const response = await axios.get(apiUrl, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-                setCustomerData(response.data);
+            // Use provided API endpoint
+            const apiUrl = `https://${baseUrl}/lock_account_customers/${id}.json`;
+            const response = await axios.get(apiUrl, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            setCustomerData(response.data);
         } catch (error) {
             console.error("Error fetching customer details:", error);
             toast.error("Failed to fetch customer details");
@@ -204,158 +204,204 @@ export const CustomersDetails = () => {
                     </div>
                 </div>
 
-                        <div className="space-y-6">
-                            {/* Customer Overview Section */}
-                            <div className="bg-white rounded-lg border-2 p-6 space-y-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
-                                        <User className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                                            Customer Details
-                                        </h3>
-                                    </div>
+                <div className="space-y-6">
+                    {/* Customer Overview Section */}
+                    <div className="bg-white rounded-lg border-2 p-6 space-y-6">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                <User className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
+                                    Customer Details
+                                </h3>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">Customer Type</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium capitalize">
+                                        {customerData.customer_type || "-"}
+                                    </span>
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">Customer Type</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-gray-900 font-medium capitalize">
-                                                {customerData.customer_type || "-"}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">Company Name</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {customerData.company_name || "-"}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">Display Name</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {customerData.name || "-"}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">First Name</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {customerData.first_name || "-"}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">Last Name</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {customerData.last_name || "-"}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">PAN</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {customerData.pan || "-"}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">Email</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-blue-600 font-medium">
-                                                <a href={`mailto:${customerData.email}`}>
-                                                    {customerData.email || "-"}
-                                                </a>
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">Work Phone</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {customerData.work_phone || "-"}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">Mobile</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {customerData.mobile || "-"}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">Language</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {customerData.language_code || "-"}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">Currency</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {customerData.currency_code || "-"}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">Account Receivable</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {customerData.account_receivable || "-"}
-                                            </span>
-                                        </div>
-                                    </div>
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">Company Name</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {customerData.company_name || "-"}
+                                    </span>
                                 </div>
 
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4 pt-4 border-t">
-                                    <div className="flex items-start">
-                                        <span className="text-gray-500 min-w-[140px]">Portal Access</span>
-                                        <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">
-                                            {customerData.enable_portal ? "Enabled" : "Disabled"}
-                                        </span>
-                                    </div>
-
-                                    <div className="flex items-start">
-                                        <span className="text-gray-500 min-w-[140px]">Created On</span>
-                                        <span className="text-gray-500 mx-2">:</span>
-                                        <span className="text-gray-900 font-medium">
-                                            {customerData.created_at
-                                                ? new Date(customerData.created_at).toLocaleDateString("en-GB")
-                                                : "-"}
-                                        </span>
-                                    </div>
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">Display Name</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {customerData.name || "-"}
+                                    </span>
                                 </div>
 
-                                {customerData.remarks && (
-                                    <div className="mt-4 pt-4 border-t">
-                                        <div className="flex items-start">
-                                            <span className="text-gray-500 min-w-[140px]">Remarks</span>
-                                            <span className="text-gray-500 mx-2">:</span>
-                                            <span className="text-gray-900 font-medium">
-                                                {customerData.remarks}
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">First Name</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {customerData.first_name || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">Last Name</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {customerData.last_name || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">PAN</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {customerData.pan || "-"}
+                                    </span>
+                                </div>
                             </div>
 
-                            {customerData.billing_address && (
+                            <div className="space-y-4">
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">Email</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-blue-600 font-medium">
+                                        <a href={`mailto:${customerData.email}`}>
+                                            {customerData.email || "-"}
+                                        </a>
+                                    </span>
+                                </div>
+
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">Work Phone</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {customerData.work_phone || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">Mobile</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {customerData.mobile || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">Language</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {customerData.language_code || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">Currency</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {customerData.currency_code || "-"}
+                                    </span>
+                                </div>
+
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">Account Receivable</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {customerData.account_receivable || "-"}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4 pt-4 border-t">
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Portal Access</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {customerData.enable_portal ? "Enabled" : "Disabled"}
+                                </span>
+                            </div>
+
+                            <div className="flex items-start">
+                                <span className="text-gray-500 min-w-[140px]">Created On</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-medium">
+                                    {customerData.created_at
+                                        ? new Date(customerData.created_at).toLocaleDateString("en-GB")
+                                        : "-"}
+                                </span>
+                            </div>
+                        </div>
+
+                        {customerData.remarks && (
+                            <div className="mt-4 pt-4 border-t">
+                                <div className="flex items-start">
+                                    <span className="text-gray-500 min-w-[140px]">Remarks</span>
+                                    <span className="text-gray-500 mx-2">:</span>
+                                    <span className="text-gray-900 font-medium">
+                                        {customerData.remarks}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+
+                    {customerData?.opening_balances && customerData?.opening_balances.length > 0 && (
+                        <div className="bg-white rounded-lg border-2 p-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                    ₹
+                                </div>
+                                <h3 className="text-lg font-semibold text-[#1A1A1A]">
+                                    Opening Balances
+                                </h3>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-separate border-spacing-y-1">
+                                    <thead>
+                                        <tr className="bg-[#E5E0D3] text-[#1A1A1A] text-sm">
+                                            <th className="px-3 py-2 text-left rounded-l-lg">Bill No</th>
+                                            <th className="px-3 py-2 text-left">Bill Date</th>
+                                            <th className="px-3 py-2 text-left">Due Date</th>
+                                            <th className="px-3 py-2 text-left rounded-r-lg">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {customerData.opening_balances.map((item, idx) => (
+                                            <tr key={idx} className="bg-white text-sm border-t border-gray-200">
+                                                <td className="px-3 py-2">{item.bill_no || "-"}</td>
+                                                <td className="px-3 py-2">
+                                                    {item.date
+                                                        ? new Date(item.date).toLocaleDateString("en-GB")
+                                                        : "-"}
+                                                </td>
+                                                <td className="px-3 py-2">
+                                                    {item.due_date
+                                                        ? new Date(item.due_date).toLocaleDateString("en-GB")
+                                                        : "-"}
+                                                </td>
+                                                <td className="px-3 py-2 font-medium">
+                                                    ₹ {item.amount || 0}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+                    {customerData.billing_address && (
                         <div className="bg-white rounded-lg border-2 p-6">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -464,9 +510,9 @@ export const CustomersDetails = () => {
                                 </div>
                             </div>
                         </div>
-                            )}
+                    )}
 
-                            {customerData.shipping_address && (
+                    {customerData.shipping_address && (
                         <div className="bg-white rounded-lg border-2 p-6">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -575,9 +621,9 @@ export const CustomersDetails = () => {
                                 </div>
                             </div>
                         </div>
-                            )}
+                    )}
 
-                            {customerData.contact_persons && customerData.contact_persons.length > 0 && (
+                    {customerData.contact_persons && customerData.contact_persons.length > 0 && (
                         <div className="bg-white rounded-lg border-2 p-6">
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
@@ -619,8 +665,8 @@ export const CustomersDetails = () => {
                                 </table>
                             </div>
                         </div>
-                            )}
-                        </div>
+                    )}
+                </div>
             </div>
         </ThemeProvider>
     );

@@ -271,9 +271,9 @@ export const ServicePRDetailsPage = () => {
         });
         // Set external API calls if available
         console.log("response.page", response.page.api_responses);
-        if (response.api_calls && Array.isArray(response.api_calls)) {
-          setExternalApiCalls(response.api_calls);
-          console.log("API Calls set in state:", response.api_calls);
+        if (response.page?.api_responses && Array.isArray(response.page.api_responses)) {
+          setExternalApiCalls(response.page.api_responses);
+          console.log("API Calls set in state:", response.page.api_responses);
         }
         // Initialize updatedWbsCodes with current WBS codes
         const initialWbsCodes = response.page?.inventories?.reduce(

@@ -163,11 +163,14 @@ const BookingReceipt = ({
                     " THOUSAND" +
                     (n % 1000 > 0 ? " " + convertLessThanSevenDigits(n % 1000) : "")
                 );
-            return (
-                convertLessThanSevenDigits(Math.floor(n / 100000)) +
-                " LAKH" +
-                (n % 100000 > 0 ? " " + convertLessThanSevenDigits(n % 100000) : "")
-            );
+            if (n < 10000000) // ✅ FIXED CONDITION
+                return (
+                    convertLessThanSevenDigits(Math.floor(n / 100000)) +
+                    " LAKH" +
+                    (n % 100000 > 0 ? " " + convertLessThanSevenDigits(n % 100000) : "")
+                );
+
+            return ""; // safety fallback
         };
 
         if (num === 0) return "ZERO";
@@ -343,7 +346,7 @@ const BookingReceipt = ({
                                 {/* Right: Invoice Title + Bill To Details */}
                                 <div className="text-right">
                                     <p className="text-[#1F5E2E] font-bold mb-4 text-sm">
-                                        ORIGINAL FOR RECEPIENT
+                                        ORIGINAL FOR RECIPIENT
                                     </p>
                                     <p className="text-[#1F5E2E] text-sm">
                                         <span className="font-bold">

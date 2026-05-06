@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -11,6 +11,15 @@ import { editFacilityBookingSetup } from "@/store/slices/facilityBookingsSlice";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 
 interface BookingSetup {
   id: string;
@@ -25,6 +34,8 @@ interface BookingSetup {
   status: boolean;
 }
 
+const BOOKING_PER_PAGE = 10;
+
 export const BookingSetupDashboard = () => {
   const dispatch = useAppDispatch();
   const baseUrl = localStorage.getItem("baseUrl");
@@ -35,6 +46,12 @@ export const BookingSetupDashboard = () => {
   const [bookingData, setBookingData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showActionPanel, setShowActionPanel] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
 
   const handleFilterApply = (filters: any) => {
     console.log("Applied booking setup filters:", filters);
@@ -62,11 +79,11 @@ export const BookingSetupDashboard = () => {
     }
   };
 
-  // Fetch booking setup data from API
-  const fetchBookingSetupData = async () => {
+  // Fetch booking setup data from API with pagination
+  const fetchBookingSetupData = async (page: number = 1) => {
     try {
       setLoading(true);
-      const response = await apiClient.get("/pms/admin/facility_setups.json");
+      const response = await apiClient.get(`/pms/admin/facility_setups.json?page=${page}&per_page=${BOOKING_PER_PAGE}`);
       setBookingData(response.data.facility_setups);
       if (response.data && response.data.facility_setups) {
         const formattedData = response.data.facility_setups.map(
@@ -84,6 +101,9 @@ export const BookingSetupDashboard = () => {
           })
         );
         setBookingSetupData(formattedData);
+        if (response.data.pagination) {
+          setPagination(response.data.pagination);
+        }
       }
     } catch (error) {
       console.error("Error fetching booking setup data:", error);
@@ -94,8 +114,8 @@ export const BookingSetupDashboard = () => {
   };
 
   useEffect(() => {
-    fetchBookingSetupData();
-  }, []);
+    fetchBookingSetupData(currentPage);
+  }, [currentPage]);
 
   const handleAddBooking = () => {
     navigate("/settings/vas/booking/setup/add");
@@ -270,6 +290,36 @@ export const BookingSetupDashboard = () => {
     </div>
   );
 
+  const paginationItems = useMemo(() => {
+    const items: Array<number | 'ellipsis'> = [];
+    const totalPages = pagination.total_pages || 1;
+    const current = currentPage;
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) items.push(i);
+      return items;
+    }
+
+    items.push(1);
+
+    const start = Math.max(2, current - 1);
+    const end = Math.min(totalPages - 1, current + 1);
+
+    if (start > 2) items.push('ellipsis');
+    for (let i = start; i <= end; i++) items.push(i);
+    if (end < totalPages - 1) items.push('ellipsis');
+
+    items.push(totalPages);
+    return items;
+  }, [pagination.total_pages, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    if (page < 1) return;
+    const totalPages = pagination.total_pages || 1;
+    if (page > totalPages) return;
+    setCurrentPage(page);
+  };
+
   const leftActions = (
     <div className="flex items-center gap-2">
       <Button
@@ -313,9 +363,44 @@ export const BookingSetupDashboard = () => {
           // onFilterClick={() => setIsFilterOpen(true)}
           enableSelection={false}
           hideTableExport={true}
-          pagination={true}
-          pageSize={10}
+          pagination={false}
         />
+
+        {(pagination.total_pages || 1) > 1 && (
+          <Pagination className="mt-6">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+
+              {paginationItems.map((p, idx) => (
+                <PaginationItem key={`${p}-${idx}`}>
+                  {p === 'ellipsis' ? (
+                    <PaginationEllipsis />
+                  ) : (
+                    <PaginationLink
+                      className="cursor-pointer"
+                      isActive={currentPage === p}
+                      onClick={() => handlePageChange(p)}
+                    >
+                      {p}
+                    </PaginationLink>
+                  )}
+                </PaginationItem>
+              ))}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  className={currentPage === (pagination.total_pages || 1) ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
 
         <BookingSetupFilterModal
           open={isFilterOpen}

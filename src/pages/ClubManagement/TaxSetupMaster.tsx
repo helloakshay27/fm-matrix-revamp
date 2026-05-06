@@ -435,7 +435,7 @@ export const TaxSetupMaster: React.FC = () => {
           }
         }}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl bg-white data-[state=open]:animate-in">
           <DialogHeader>
             <DialogTitle>New {addForm.tax_type.toUpperCase()}</DialogTitle>
           </DialogHeader>
@@ -682,7 +682,7 @@ export const TaxSetupMaster: React.FC = () => {
           }
         }}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl bg-white data-[state=open]:animate-in">
           <DialogHeader>
             <DialogTitle>Edit {editForm.tax_type.toUpperCase()}</DialogTitle>
           </DialogHeader>

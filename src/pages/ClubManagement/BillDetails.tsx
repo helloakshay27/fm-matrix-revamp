@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { format } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +30,7 @@ import {
   Copy,
   Share2,
   ShoppingCart,
+  DollarSign,
   CirclePlus,
   ClipboardList,
   Eye,
@@ -45,11 +47,12 @@ import { toast as sonnerToast } from "sonner";
 import {
   TextField,
   FormControl,
-  InputLabel,
   Select as MuiSelect,
   MenuItem,
+  InputAdornment,
 } from "@mui/material";
 import axios from "axios";
+import { CloudUpload } from "@mui/icons-material";
 // Types
 interface SalesOrderItem {
   id: number;
@@ -83,6 +86,18 @@ interface LockAccountTransaction {
   transaction_type: string;
   description: string;
   transaction_records: TransactionRecord[];
+}
+
+interface Supplier {
+  id: number;
+  name?: string;
+  company_name?: string;
+  pan_number?: string;
+}
+
+interface Ledger {
+  id: number;
+  name: string;
 }
 
 // interface SalesOrder {
@@ -137,6 +152,20 @@ interface SalesOrder {
   status: string;
   customer_notes: string;
   terms_and_conditions: string;
+  pms_supplier_id?: number;
+  supplier_id?: number;
+  vendor_id?: number;
+  vendor_name?: string;
+  bill_number?: string;
+  bill_date?: string;
+  due_date?: string;
+  order_number?: string;
+  source_of_supply?: string;
+  destination_of_supply?: string;
+  payment_term?: string;
+  subject?: string;
+  note?: string;
+  balance_due?: number;
   created_at: string;
   updated_at: string;
   item_details: {
@@ -231,47 +260,119 @@ export const BillDetails = () => {
   const [hasSaleOrderApproval, setHasSaleOrderApproval] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [showConvertMenu, setShowConvertMenu] = useState(false);
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
+  const [supplierList, setSupplierList] = useState<Supplier[]>([]);
+  const [ledgerList, setLedgerList] = useState<Ledger[]>([]);
+  const [selectedSupplierId, setSelectedSupplierId] = useState("");
+  const [paymentDate, setPaymentDate] = useState(
+    format(new Date(), "yyyy-MM-dd")
+  );
+  const [paymentNumber, setPaymentNumber] = useState("");
+  const [paidAmount, setPaidAmount] = useState("");
+  const [paymentMode, setPaymentMode] = useState("Cash");
+  const [paidFromLedgerId, setPaidFromLedgerId] = useState("");
+  const [reference, setReference] = useState("");
+  const [notes, setNotes] = useState("");
+  const [paymentAttachments, setPaymentAttachments] = useState<File[]>([]);
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
-  useEffect(() => {
-    const fetchSalesOrder = async () => {
-      setLoading(true);
-      try {
-        const baseUrl = localStorage.getItem("baseUrl");
-        const token = localStorage.getItem("token");
-        const lock_account_id = localStorage.getItem("lock_account_id");
-        const apiUrl = `https://${baseUrl}/lock_account_bills/${id}.json?lock_account_id=${lock_account_id}&show=true`;
-        const response = await axios.get(apiUrl, {
-          headers: {
-            Authorization: token ? `Bearer ${token}` : undefined,
-          },
-        });
-        setSalesOrder(response.data);
+  const lock_account_id = localStorage.getItem("lock_account_id");
 
-        // Extract transaction_records from lock_account_transactions
-        if (response.data?.lock_account_transactions?.length > 0) {
-          const allRecords = response.data.lock_account_transactions.flatMap(
-            (txn: LockAccountTransaction) => txn.transaction_records || []
-          );
-          setTransactionRecords(allRecords);
-        }
-      } catch (error) {
-        sonnerToast.error("Failed to fetch sales order details");
-      } finally {
-        setLoading(false);
+  const PAYMENT_MODES = [
+    "Bank Remittance",
+    "Bank Transfer",
+    "Cash",
+    "Cheque",
+    "Credit Card",
+    "UPI",
+  ];
+
+  const fetchSalesOrder = useCallback(async () => {
+    setLoading(true);
+    try {
+      const apiUrl = `https://${baseUrl}/lock_account_bills/${id}.json?lock_account_id=${lock_account_id}&show=true`;
+      const response = await axios.get(apiUrl, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+      });
+      setSalesOrder(response.data);
+
+      if (response.data?.lock_account_transactions?.length > 0) {
+        const allRecords = response.data.lock_account_transactions.flatMap(
+          (txn: LockAccountTransaction) => txn.transaction_records || []
+        );
+        setTransactionRecords(allRecords);
+      } else {
+        setTransactionRecords([]);
       }
-    };
+    } catch (error) {
+      sonnerToast.error("Failed to fetch bill details");
+    } finally {
+      setLoading(false);
+    }
+  }, [baseUrl, id, lock_account_id, token]);
+
+  useEffect(() => {
     if (id) fetchSalesOrder();
-  }, [id]);
+  }, [id, fetchSalesOrder]);
+
+  useEffect(() => {
+    if (!baseUrl || !token || !lock_account_id) return;
+    const headers = { Authorization: `Bearer ${token}` };
+
+    axios
+      .get(`https://${baseUrl}/pms/suppliers.json`, { headers })
+      .then((res) => {
+        const data = res.data;
+        setSupplierList(
+          Array.isArray(data)
+            ? data
+            : (data?.suppliers ?? data?.pms_suppliers ?? [])
+        );
+      })
+      .catch(() => setSupplierList([]));
+
+    axios
+      .get(
+        `https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_ledgers.json`,
+        { headers }
+      )
+      .then((res) => setLedgerList(res.data?.data || res.data || []))
+      .catch(() => setLedgerList([]));
+  }, [baseUrl, token, lock_account_id]);
+
+  useEffect(() => {
+    if (!salesOrder) return;
+    const supplierId =
+      salesOrder.pms_supplier_id ||
+      salesOrder.supplier_id ||
+      salesOrder.vendor_id ||
+      "";
+    setSelectedSupplierId(String(supplierId || ""));
+    setPaymentNumber(
+      String(salesOrder.order_number || salesOrder.bill_number || "")
+    );
+    setPaidAmount(
+      Number(salesOrder.balance_due ?? salesOrder.total_amount ?? 0).toFixed(2)
+    );
+    setReference(String(salesOrder.order_number || ""));
+  }, [salesOrder]);
 
   useEffect(() => {
     const fetchLockAccount = async () => {
       try {
-        const response = await axios.get(`https://${baseUrl}/get_lock_account.json`, {
-          headers: { Authorization: token ? `Bearer ${token}` : undefined },
-        });
-        const hasApproval = Array.isArray(response.data?.approvals) &&
-          response.data.approvals.some((a: any) => a.approval_type === "bill" && a.active);
+        const response = await axios.get(
+          `https://${baseUrl}/get_lock_account.json`,
+          {
+            headers: { Authorization: token ? `Bearer ${token}` : undefined },
+          }
+        );
+        const hasApproval =
+          Array.isArray(response.data?.approvals) &&
+          response.data.approvals.some(
+            (a: any) => a.approval_type === "bill" && a.active
+          );
         setHasSaleOrderApproval(hasApproval);
       } catch (e) {
         console.error("Failed to fetch lock account", e);
@@ -293,17 +394,23 @@ export const BillDetails = () => {
       const response = await axios.patch(
         `https://${baseUrl}/lock_account_bills/${id}.json`,
         { lock_account_bill: { status } },
-        { headers: { Authorization: token ? `Bearer ${token}` : undefined }, validateStatus: () => true }
+        {
+          headers: { Authorization: token ? `Bearer ${token}` : undefined },
+          validateStatus: () => true,
+        }
       );
       if (response.status === 422) {
         const { message, errors } = response.data;
-        const msg = Array.isArray(errors) && errors.length > 0
-          ? errors.map((e: any) => `${e.id}: ${e.message}`).join(", ")
-          : message || "Failed to update status";
+        const msg =
+          Array.isArray(errors) && errors.length > 0
+            ? errors.map((e: any) => `${e.id}: ${e.message}`).join(", ")
+            : message || "Failed to update status";
         sonnerToast.error(msg);
         return;
       }
-      sonnerToast.success(`Sales order ${status.replace("_", " ")} successfully`);
+      sonnerToast.success(
+        `Sales order ${status.replace("_", " ")} successfully`
+      );
       fetchSalesOrder();
     } catch (error) {
       sonnerToast.error("Failed to update status");
@@ -320,7 +427,9 @@ export const BillDetails = () => {
         { status, comment: "" },
         { headers: { Authorization: token ? `Bearer ${token}` : undefined } }
       );
-      sonnerToast.success(`Sales order ${status.replace("_", " ")} successfully`);
+      sonnerToast.success(
+        `Sales order ${status.replace("_", " ")} successfully`
+      );
       fetchSalesOrder();
     } catch (error) {
       sonnerToast.error("Failed to update approval status");
@@ -329,6 +438,165 @@ export const BillDetails = () => {
     }
   };
 
+  const selectedSupplier = supplierList.find(
+    (supplier) => String(supplier.id) === String(selectedSupplierId)
+  );
+  // const isBillOverdue = String(salesOrder?.status || "")
+  //   .trim()
+  //   .toLowerCase()
+  //   .startsWith("overdue");
+  // const formatBillDate = (date?: string | null) => {
+  //   if (!date) return "-";
+  //   const parsedDate = new Date(date);
+  //   if (Number.isNaN(parsedDate.getTime())) return "-";
+
+  //   return parsedDate.toLocaleDateString("en-IN");
+  // };
+
+
+  const status = String(salesOrder?.status || "")
+    .trim()
+    .toLowerCase();
+
+  // ✅ Check for both "overdue" OR "open"
+  const isBillOverdue = ["overdue", "open"].some(s =>
+    status.startsWith(s)
+  );
+
+  // (Optional) If you still want separate flags
+  const isBillOverdue2 = status.startsWith("overdue");
+  const isBillOpen = status.startsWith("open");
+
+  // Date formatter (unchanged - already correct)
+  const formatBillDate = (date?: string | null) => {
+    if (!date) return "-";
+
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) return "-";
+
+    return parsedDate.toLocaleDateString("en-IN");
+  };
+
+  console.log("overdue", { isBillOverdue, isBillOpen })
+  useEffect(() => {
+    if (!isBillOverdue && activeTab === "record-payment") {
+      setActiveTab("order-details");
+    }
+  }, [activeTab, isBillOverdue]);
+
+  const handleRecordPayment = async () => {
+    if (!isBillOverdue) {
+      sonnerToast.error("Payment can be recorded only for overdue bills.");
+      return;
+    }
+    if (!selectedSupplierId) {
+      sonnerToast.error("Supplier is not available for this bill.");
+      return;
+    }
+    if (!paidAmount || Number(paidAmount) <= 0) {
+      sonnerToast.error("Paid amount should be greater than 0.");
+      return;
+    }
+    if (!paymentMode) {
+      sonnerToast.error("Please select payment mode.");
+      return;
+    }
+    if (!paidFromLedgerId) {
+      sonnerToast.error("Please select Paid From ledger.");
+      return;
+    }
+
+    setPaymentSubmitting(true);
+    try {
+      const formattedPaymentDate = format(new Date(paymentDate), "dd/MM/yyyy");
+      const payload = {
+        payment_of: "Pms::Supplier",
+        payment_of_id: Number(selectedSupplierId),
+        paid_amount: Number(paidAmount) || 0,
+        payment_date: formattedPaymentDate,
+        payment_mode: paymentMode,
+        paid_from_ledger_id: Number(paidFromLedgerId),
+        order_number: reference || paymentNumber || "",
+        notes,
+        payment_made: true,
+        payment_status: "paid",
+        lock_bill_payments_attributes: [
+          {
+            resource_id: Number(id),
+            resource_type: "LockAccountBill",
+            amount: Number(paidAmount) || 0,
+            payment_date: formattedPaymentDate,
+          },
+        ],
+      };
+      const formData = new FormData();
+      formData.append("lock_payment[payment_of]", payload.payment_of);
+      formData.append(
+        "lock_payment[payment_of_id]",
+        String(payload.payment_of_id)
+      );
+      formData.append("lock_payment[paid_amount]", String(payload.paid_amount));
+      formData.append("lock_payment[payment_date]", payload.payment_date);
+      formData.append("lock_payment[payment_mode]", payload.payment_mode);
+      formData.append(
+        "lock_payment[paid_from_ledger_id]",
+        String(payload.paid_from_ledger_id)
+      );
+      formData.append("lock_payment[order_number]", payload.order_number);
+      formData.append("lock_payment[notes]", payload.notes || "");
+      formData.append(
+        "lock_payment[payment_made]",
+        String(payload.payment_made)
+      );
+      formData.append("lock_payment[payment_status]", payload.payment_status);
+      payload.lock_bill_payments_attributes.forEach((row, index) => {
+        formData.append(
+          `lock_payment[lock_bill_payments_attributes][${index}][resource_id]`,
+          String(row.resource_id)
+        );
+        formData.append(
+          `lock_payment[lock_bill_payments_attributes][${index}][resource_type]`,
+          row.resource_type
+        );
+        formData.append(
+          `lock_payment[lock_bill_payments_attributes][${index}][amount]`,
+          String(row.amount)
+        );
+        formData.append(
+          `lock_payment[lock_bill_payments_attributes][${index}][payment_date]`,
+          row.payment_date
+        );
+      });
+      paymentAttachments.forEach((file, index) => {
+        formData.append(
+          `lock_payment[attachments_attributes][${index}][document]`,
+          file,
+          file.name
+        );
+        formData.append(
+          `lock_payment[attachments_attributes][${index}][active]`,
+          "true"
+        );
+      });
+
+      await axios.post(
+        `https://${baseUrl}/lock_payments.json?lock_account_id=${lock_account_id}`,
+        formData,
+        {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : undefined,
+          },
+        }
+      );
+      sonnerToast.success("Payment recorded successfully.");
+      setActiveTab("order-details");
+      fetchSalesOrder();
+    } catch (error) {
+      sonnerToast.error("Failed to record payment.");
+    } finally {
+      setPaymentSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -429,7 +697,7 @@ export const BillDetails = () => {
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading sales order...</p>
+          <p className="mt-4 text-muted-foreground">Loading ...</p>
         </div>
       </div>
     );
@@ -459,6 +727,88 @@ export const BillDetails = () => {
   });
   const taxRows = Object.entries(taxBreakdown);
 
+
+  // const reverseChargeData = salesOrder?.item_details?.map((item: any) => {
+  //   const rate = item?.tax_group?.rate || 0;
+  //   const name = item?.tax_group?.name || "Tax";
+
+  //   const taxAmount = (item.total_amount * rate) / 100;
+
+  //   return {
+  //     name,
+  //     rate,
+  //     amount: taxAmount,
+  //   };
+  // }) || [];
+
+  // const groupedReverseTax: any[] = [];
+
+  // reverseChargeData.forEach((tax) => {
+  //   const existing = groupedReverseTax.find(t => t.name === tax.name);
+
+  //   if (existing) {
+  //     existing.amount += tax.amount;
+  //   } else {
+  //     groupedReverseTax.push({ ...tax });
+  //   }
+  // });
+  // const totalReverseTax = groupedReverseTax.reduce(
+  //   (sum, t) => sum + t.amount,
+  //   0
+  // );
+
+
+  const reverseChargeData: any[] = [];
+
+salesOrder?.item_details?.forEach((item: any) => {
+
+  // ✅ Case 1: Maharashtra → tax_group with multiple tax_rates
+  if (item.tax_type === "tax_group" && item.tax_group?.tax_rates) {
+    item.tax_group.tax_rates.forEach((tax: any) => {
+      const taxAmount = (item.total_amount * tax.rate) / 100;
+
+      reverseChargeData.push({
+        name: tax.name,
+        rate: tax.rate,
+        amount: taxAmount,
+      });
+    });
+  }
+
+  // ✅ Case 2: Inter-state → single tax rate (IGST)
+  else if (item.tax_type === "tax_rate" && item.tax_group) {
+    const rate = item.tax_group.rate || 0;
+    const name = item.tax_group.name || "Tax";
+
+    const taxAmount = (item.total_amount * rate) / 100;
+
+    reverseChargeData.push({
+      name,
+      rate,
+      amount: taxAmount,
+    });
+  }
+});
+
+ 
+
+  const groupedReverseTax: any[] = [];
+
+reverseChargeData.forEach((tax) => {
+  const existing = groupedReverseTax.find(t => t.name === tax.name);
+
+  if (existing) {
+    existing.amount += tax.amount;
+  } else {
+    groupedReverseTax.push({ ...tax });
+  }
+});
+
+// ✅ ADD THIS HERE
+const totalReverseTax = groupedReverseTax.reduce(
+  (sum, t) => sum + t.amount,
+  0
+);
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -472,6 +822,7 @@ export const BillDetails = () => {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
+
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-3">
                 <ShoppingCart className="h-6 w-6 text-primary" />
@@ -492,18 +843,18 @@ export const BillDetails = () => {
             <Badge className={`${getStatusColor(salesOrder.status)} border`}>
               {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
             </Badge>
-            {(salesOrder as any)?.approval_status?.approval_levels?.length > 0 && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setShowApprovalLog(true)}
-                className="gap-2"
-              >
-                <ClipboardList className="h-4 w-4" />
-                Approval Log
-              </Button>
-            )}
-
+            {(salesOrder as any)?.approval_status?.approval_levels?.length >
+              0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowApprovalLog(true)}
+                  className="gap-2"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  Approval Log
+                </Button>
+              )}
 
             {/* ── WITHOUT APPROVAL ── */}
             {!hasSaleOrderApproval && (
@@ -550,26 +901,27 @@ export const BillDetails = () => {
                 )}
 
                 {/* Pending Approval + can_approve → Approve / Reject */}
-                {salesOrder.status === "pending_approval" && (salesOrder as any).can_approve && (
-                  <>
-                    <Button
-                      size="sm"
-                      className="bg-green-600 text-white hover:bg-green-700"
-                      disabled={actionLoading}
-                      onClick={() => updateApprovalStatus("approved")}
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="bg-red-600 text-white hover:bg-red-700"
-                      disabled={actionLoading}
-                      onClick={() => updateApprovalStatus("rejected")}
-                    >
-                      Reject
-                    </Button>
-                  </>
-                )}
+                {salesOrder.status === "pending_approval" &&
+                  (salesOrder as any).can_approve && (
+                    <>
+                      <Button
+                        size="sm"
+                        className="bg-green-600 text-white hover:bg-green-700"
+                        disabled={actionLoading}
+                        onClick={() => updateApprovalStatus("approved")}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-red-600 text-white hover:bg-red-700"
+                        disabled={actionLoading}
+                        onClick={() => updateApprovalStatus("rejected")}
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  )}
 
                 {/* Approved → Mark as Confirmed */}
                 {salesOrder.status === "approved" && (
@@ -668,6 +1020,9 @@ export const BillDetails = () => {
             >
               {[
                 { label: "Bill Details", value: "order-details" },
+                ...(isBillOverdue
+                  ? [{ label: "Record Payment", value: "record-payment" }]
+                  : []),
                 { label: "Vendor Info", value: "customer-info" },
                 { label: "History", value: "history" },
                 { label: "Activity Logs", value: "activity-logs" },
@@ -706,6 +1061,44 @@ export const BillDetails = () => {
               className="p-3 sm:p-6 space-y-6"
               style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
             >
+
+              {salesOrder?.reverse_charge && groupedReverseTax.length > 0 && (
+                <div className="mt-6 border rounded-md overflow-hidden">
+
+                  <div className="bg-gray-100 px-4 py-2 font-semibold">
+                    Reverse Charge Summary
+                  </div>
+
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 text-gray-600">
+                      <tr>
+                        <th className="text-left px-4 py-2">Reverse Charge Rate</th>
+                        <th className="text-right px-4 py-2">Tax Amount</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {groupedReverseTax.map((tax, index) => (
+                        <tr key={index} className="border-t">
+                          <td className="px-4 py-2">
+                            {tax.name} ({tax.rate}%)
+                          </td>
+                          <td className="px-4 py-2 text-right">
+                            ₹{tax.amount.toFixed(2)}
+                          </td>
+                        </tr>
+                      ))}
+
+                      <tr className="border-t font-semibold bg-gray-50">
+                        <td className="px-4 py-2">Total</td>
+                        <td className="px-4 py-2 text-right">
+                          ₹{totalReverseTax.toFixed(2)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              )}
               {/* Order Information */}
               <Card>
                 <CardHeader>
@@ -762,9 +1155,7 @@ export const BillDetails = () => {
                         Bill Date
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {new Date(salesOrder?.bill_date).toLocaleDateString(
-                          "en-IN"
-                        )}
+                        {formatBillDate(salesOrder?.bill_date)}
                       </p>
                     </div>
                     <div>
@@ -772,9 +1163,7 @@ export const BillDetails = () => {
                         Due Date
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {new Date(salesOrder?.due_date).toLocaleDateString(
-                          "en-IN"
-                        )}
+                        {formatBillDate(salesOrder?.due_date)}
                       </p>
                     </div>
                     <div>
@@ -796,6 +1185,21 @@ export const BillDetails = () => {
                       <p className="text-base font-semibold mt-1">
                         {salesOrder?.subject}
                       </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={
+                          salesOrder?.reverse_charge === true ||
+                          salesOrder?.reverse_charge === "true"
+                        }
+                        readOnly
+                        className="h-4 w-4 accent-[#bf213e] cursor-not-allowed"
+                      />
+                      <span className="text-sm font-medium text-muted-foreground">
+                        This transaction is applicable for reverse charge
+                      </span>
                     </div>
                   </div>
                 </CardContent>
@@ -846,8 +1250,9 @@ export const BillDetails = () => {
                               ₹{Number(item.rate).toFixed(2)}
                             </TableCell>
                             <TableCell className="text-right">
-                              {(item.tax_type === "tax_group" || item.tax_type === "tax_rate")
-                                ? item.tax_group?.name ?? "-"
+                              {item.tax_type === "tax_group" ||
+                                item.tax_type === "tax_rate"
+                                ? (item.tax_group?.name ?? "-")
                                 : item.tax_type === "non_taxable"
                                   ? "Non Taxable"
                                   : item.tax_type === "out_of_scope"
@@ -884,7 +1289,7 @@ export const BillDetails = () => {
                           -₹{salesOrder?.discount_amount?.toFixed(2)}
                         </span>
                       </div>
-                      {taxRows.map(([name, tax], index) => (
+                      {/* {taxRows.map(([name, tax], index) => (
                         <div
                           key={index}
                           className="flex justify-between items-center py-2"
@@ -896,7 +1301,26 @@ export const BillDetails = () => {
                             ₹{tax.amount.toFixed(2)}
                           </span>
                         </div>
-                      ))}
+                      ))} */}
+
+                      {!(
+                        salesOrder?.reverse_charge === true ||
+                        salesOrder?.reverse_charge === "true"
+                      ) &&
+                        taxRows.map(([name, tax], index) => (
+                          <div
+                            key={index}
+                            className="flex justify-between items-center py-2"
+                          >
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {name} ({tax.rate}%)
+                            </span>
+                            <span className="font-semibold text-base">
+                              ₹{tax.amount.toFixed(2)}
+                            </span>
+                          </div>
+                        ))
+                      }
                       <div className="flex justify-between items-center py-2">
                         <span className="text-sm font-medium text-muted-foreground">
                           {salesOrder?.tax_type?.toUpperCase()}
@@ -1069,6 +1493,257 @@ export const BillDetails = () => {
               )}
             </TabsContent>
 
+            <TabsContent
+              value="record-payment"
+              className="p-3 sm:p-6 space-y-6"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-primary" />
+                    Payment for : Bill {salesOrder?.bill_number || "-"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-sm font-medium mb-2">
+                        Vendor Name<span className="text-red-500">*</span>
+                      </p>
+                      <FormControl fullWidth>
+                        <MuiSelect
+                          value={selectedSupplierId}
+                          disabled
+                          displayEmpty
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
+                        >
+                          <MenuItem value="" disabled>
+                            {salesOrder?.vendor_name || "Vendor not available"}
+                          </MenuItem>
+                          {(selectedSupplier || selectedSupplierId) && (
+                            <MenuItem value={selectedSupplierId}>
+                              {selectedSupplier?.company_name ||
+                                selectedSupplier?.name ||
+                                salesOrder?.vendor_name ||
+                                selectedSupplierId}
+                            </MenuItem>
+                          )}
+                        </MuiSelect>
+                      </FormControl>
+                      {selectedSupplier?.pan_number && (
+                        <p className="text-xs text-muted-foreground mt-2">
+                          PAN:{" "}
+                          <span className="text-blue-600">
+                            {selectedSupplier.pan_number}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium mb-2">Payment #</p>
+                      <TextField
+                        fullWidth
+                        value={paymentNumber}
+                        onChange={(e) => setPaymentNumber(e.target.value)}
+                        sx={fieldStyles}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-sm font-medium mb-2">
+                        Paid Amount (INR)<span className="text-red-500">*</span>
+                      </p>
+                      <TextField
+                        fullWidth
+                        type="number"
+                        value={paidAmount}
+                        onChange={(e) => setPaidAmount(e.target.value)}
+                        sx={fieldStyles}
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              INR
+                            </InputAdornment>
+                          ),
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium mb-2">
+                        Payment Date<span className="text-red-500">*</span>
+                      </p>
+                      <TextField
+                        fullWidth
+                        type="date"
+                        value={paymentDate}
+                        onChange={(e) => setPaymentDate(e.target.value)}
+                        sx={fieldStyles}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-sm font-medium mb-2">Payment Mode</p>
+                      <FormControl fullWidth>
+                        <MuiSelect
+                          value={paymentMode}
+                          onChange={(e) =>
+                            setPaymentMode(String(e.target.value))
+                          }
+                          displayEmpty
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
+                        >
+                          <MenuItem value="" disabled>
+                            Select payment mode
+                          </MenuItem>
+                          {PAYMENT_MODES.map((mode) => (
+                            <MenuItem key={mode} value={mode}>
+                              {mode}
+                            </MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium mb-2">
+                        Paid From<span className="text-red-500">*</span>
+                      </p>
+                      <FormControl fullWidth>
+                        <MuiSelect
+                          value={paidFromLedgerId}
+                          onChange={(e) =>
+                            setPaidFromLedgerId(String(e.target.value))
+                          }
+                          displayEmpty
+                          sx={fieldStyles}
+                          MenuProps={selectMenuProps}
+                        >
+                          <MenuItem value="" disabled>
+                            Select ledger
+                          </MenuItem>
+                          {ledgerList.map((ledger) => (
+                            <MenuItem key={ledger.id} value={String(ledger.id)}>
+                              {ledger.name}
+                            </MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <p className="text-sm font-medium mb-2">Order Number</p>
+                      <TextField
+                        fullWidth
+                        value={reference}
+                        onChange={(e) => setReference(e.target.value)}
+                        sx={fieldStyles}
+                      />
+                    </div>
+                    {/* <div>
+                      <p className="text-sm font-medium mb-2">Notes</p>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={3}
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                      />
+                    </div> */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Notes
+                      </label>
+
+                      <textarea
+                        className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                        rows={3}
+                        maxLength={500}
+                        value={notes}
+                        onChange={(e) => {
+                          if (e.target.value.length <= 500) {
+                            setNotes(e.target.value);
+                          }
+                        }}
+                        placeholder="Enter any notes..."
+                      />
+
+                      <p className="text-xs text-gray-400 text-right mt-1">
+                        {notes.length}/500
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Attachments</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="gap-2"
+                      onClick={() =>
+                        document
+                          .getElementById("bill-payment-attachments")
+                          ?.click()
+                      }
+                    >
+                      <CloudUpload fontSize="small" />
+                      Upload File
+                    </Button>
+                    <input
+                      id="bill-payment-attachments"
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        const files = e.target.files
+                          ? Array.from(e.target.files)
+                          : [];
+                        setPaymentAttachments(files.slice(0, 5));
+                      }}
+                    />
+                    {paymentAttachments.length > 0 && (
+                      <div className="space-y-1">
+                        {paymentAttachments.map((file, idx) => (
+                          <p
+                            key={`${file.name}-${idx}`}
+                            className="text-sm text-muted-foreground"
+                          >
+                            {file.name}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => setActiveTab("order-details")}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleRecordPayment}
+                      disabled={paymentSubmitting}
+                      className="bg-[#C72030] hover:bg-[#a81a28]"
+                    >
+                      {paymentSubmitting ? "Saving..." : "Save as Paid"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
             {/* Customer Info Tab */}
             <TabsContent
               value="customer-info"
@@ -1207,45 +1882,62 @@ export const BillDetails = () => {
                   {Array.isArray((salesOrder as any)?.activity_logs) &&
                     (salesOrder as any).activity_logs.length > 0 ? (
                     <div className="divide-y">
-                      {(salesOrder as any).activity_logs.map((log: any, idx: number) => {
-                        const key = `${log?.date || ""}-${log?.time || ""}-${idx}`;
-                        const hint = `${log?.action || ""} ${log?.message || ""}`.toLowerCase();
-                        const isConverted = hint.includes("convert");
-                        const isCreated = hint.includes("create");
-                        const isAccepted = hint.includes("accept");
-                        const isSent = hint.includes("sent");
-                        const Icon = isConverted || isCreated ? CirclePlus : (isAccepted || isSent ? Eye : FileText);
-                        const iconWrapClass =
-                          isConverted || isCreated
-                            ? "bg-green-50 text-green-600 border-green-100"
-                            : isAccepted || isSent
-                              ? "bg-sky-50 text-sky-600 border-sky-100"
-                              : "bg-gray-50 text-gray-500 border-gray-100";
+                      {(salesOrder as any).activity_logs.map(
+                        (log: any, idx: number) => {
+                          const key = `${log?.date || ""}-${log?.time || ""}-${idx}`;
+                          const hint =
+                            `${log?.action || ""} ${log?.message || ""}`.toLowerCase();
+                          const isConverted = hint.includes("convert");
+                          const isCreated = hint.includes("create");
+                          const isAccepted = hint.includes("accept");
+                          const isSent = hint.includes("sent");
+                          const Icon =
+                            isConverted || isCreated
+                              ? CirclePlus
+                              : isAccepted || isSent
+                                ? Eye
+                                : FileText;
+                          const iconWrapClass =
+                            isConverted || isCreated
+                              ? "bg-green-50 text-green-600 border-green-100"
+                              : isAccepted || isSent
+                                ? "bg-sky-50 text-sky-600 border-sky-100"
+                                : "bg-gray-50 text-gray-500 border-gray-100";
 
-                        return (
-                          <div key={key} className="flex gap-6 py-5">
-                            <div className="min-w-[170px] text-sm text-muted-foreground">
-                              <div>{log?.date || "—"} {log?.time || ""}</div>
-                            </div>
-
-                            <div className={`w-9 h-9 rounded-full border flex items-center justify-center ${iconWrapClass}`}>
-                              <Icon className="h-5 w-5" />
-                            </div>
-
-                            <div className="flex-1">
-                              <div className="text-sm font-medium text-foreground">
-                                {log?.message || "—"}
+                          return (
+                            <div key={key} className="flex gap-6 py-5">
+                              <div className="min-w-[170px] text-sm text-muted-foreground">
+                                <div>
+                                  {log?.date || "—"} {log?.time || ""}
+                                </div>
                               </div>
-                              <div className="text-sm text-muted-foreground">
-                                by <span className="font-medium text-foreground">{log?.user || "—"}</span>
+
+                              <div
+                                className={`w-9 h-9 rounded-full border flex items-center justify-center ${iconWrapClass}`}
+                              >
+                                <Icon className="h-5 w-5" />
+                              </div>
+
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-foreground">
+                                  {log?.message || "—"}
+                                </div>
+                                <div className="text-sm text-muted-foreground">
+                                  by{" "}
+                                  <span className="font-medium text-foreground">
+                                    {log?.user || "—"}
+                                  </span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        }
+                      )}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">No activity logs found.</p>
+                    <p className="text-sm text-muted-foreground">
+                      No activity logs found.
+                    </p>
                   )}
                 </CardContent>
               </Card>
@@ -1274,29 +1966,62 @@ export const BillDetails = () => {
             <Table>
               <TableHeader>
                 <TableRow className="bg-[#7a0c0c] hover:bg-[#7a0c0c] [&>th]:!text-white [&>th]:!opacity-100">
-                  <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">Sr.No.</TableHead>
-                  <TableHead className="!text-white !opacity-100 font-semibold">Approval Level</TableHead>
-                  <TableHead className="!text-white !opacity-100 font-semibold">Approved By</TableHead>
-                  <TableHead className="!text-white !opacity-100 font-semibold">Date</TableHead>
-                  <TableHead className="!text-white !opacity-100 font-semibold">Status</TableHead>
-                  <TableHead className="!text-white !opacity-100 font-semibold">Remark</TableHead>
-                  <TableHead className="!text-white !opacity-100 font-semibold">Users</TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold w-[70px]">
+                    Sr.No.
+                  </TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">
+                    Approval Level
+                  </TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">
+                    Approved By
+                  </TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">
+                    Date
+                  </TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">
+                    Status
+                  </TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">
+                    Remark
+                  </TableHead>
+                  <TableHead className="!text-white !opacity-100 font-semibold">
+                    Users
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {((salesOrder as any)?.approval_status?.approval_levels || []).map((lvl: any, index: number) => (
+                {(
+                  (salesOrder as any)?.approval_status?.approval_levels || []
+                ).map((lvl: any, index: number) => (
                   <TableRow key={lvl?.id ?? index}>
                     <TableCell className="font-medium">{index + 1}</TableCell>
-                    <TableCell className="font-medium">{lvl?.name || "—"}</TableCell>
-                    <TableCell className="font-medium">{lvl?.approved_by || "—"}</TableCell>
-                    <TableCell className="font-medium">{lvl?.approved_at || "—"}</TableCell>
+                    <TableCell className="font-medium">
+                      {lvl?.name || "—"}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {lvl?.approved_by || "—"}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {lvl?.approved_at || "—"}
+                    </TableCell>
                     <TableCell>
-                      <span className={`px-3 py-1 rounded text-xs font-semibold ${getApprovalStatusBadge(lvl?.status)}`}>
+                      <span
+                        className={`px-3 py-1 rounded text-xs font-semibold ${getApprovalStatusBadge(lvl?.status)}`}
+                      >
                         {String(lvl?.status || "pending").toUpperCase()}
                       </span>
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{lvl?.rejection_reason || "—"}</TableCell>
-                    <TableCell className="text-sm">{Array.isArray(lvl?.users) ? lvl.users.map((u: any) => u?.name || u).filter(Boolean).join(", ") : "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {lvl?.rejection_reason || "—"}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {Array.isArray(lvl?.users)
+                        ? lvl.users
+                          .map((u: any) => u?.name || u)
+                          .filter(Boolean)
+                          .join(", ")
+                        : "—"}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

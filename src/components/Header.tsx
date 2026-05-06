@@ -217,7 +217,9 @@ export const Header = () => {
     if (selectedCompany) {
       // setCompany(selectedCompany.name)
       localStorage.setItem("selectedCompany", selectedCompany.name);
-      localStorage.setItem("selectedCompanyId", selectedCompany.id.toString());
+      if (selectedCompany.id) {
+        localStorage.setItem("selectedCompanyId", selectedCompany.id.toString());
+      }
     }
   }, [selectedCompany]);
 

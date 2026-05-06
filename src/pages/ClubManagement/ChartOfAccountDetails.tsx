@@ -10,7 +10,7 @@ export const ChartOfAccountDetails = () => {
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
-     const lock_account_id = localStorage.getItem("lock_account_id");
+    const lock_account_id = localStorage.getItem("lock_account_id");
 
     const [loading, setLoading] = useState(false);
     const [ledgerLoading, setLedgerLoading] = useState(false);
@@ -51,6 +51,7 @@ export const ChartOfAccountDetails = () => {
                     ledger_name: r.ledger_name,
                     created_at: r.created_at, // 👈 store date
                     tr_type: r.tr_type, // dr / cr
+                    transaction_type: r.transaction_type,
                     debit: r.tr_type === "dr" ? r.amount : 0,
                     credit: r.tr_type === "cr" ? r.amount : 0,
                 }))
@@ -232,6 +233,9 @@ export const ChartOfAccountDetails = () => {
                                     Transaction Details
                                 </th>
                                 <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
+                                    Transaction Type
+                                </th>
+                                <th className="border border-gray-300 px-4 py-3 text-left font-semibold">
                                     Type
                                 </th>
                                 <th className="border border-gray-300 px-4 py-3 text-right font-semibold">
@@ -252,6 +256,9 @@ export const ChartOfAccountDetails = () => {
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3 text-gray-500">
                                             {t.ledger_name || "--"}
+                                        </td>
+                                        <td className="border border-gray-300 px-4 py-3">
+                                            {t.transaction_type || "--"}
                                         </td>
                                         <td className="border border-gray-300 px-4 py-3">
                                             {t.tr_type === "dr" ? "Debit" : "Credit"}

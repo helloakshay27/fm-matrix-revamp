@@ -397,6 +397,9 @@ import LeaseManagementPage from "./pages/products/lease-management/LeaseManageme
 import LifeCompassPage from "./pages/products/LifeCompassPage";
 import BusinessCompassPage from "./pages/products/BusinessCompassPage";
 import GateManagementPage from "./pages/products/GateManagementPage";
+import SurveyManagementPage from "./pages/products/SurveyManagementPage";
+import PTWManagementPage from "./pages/products/PTWManagementPage";
+import TenantManagementPage from "./pages/products/TenantManagementPage";
 import SurveysPage from "./pages/products/SurveysPage";
 import LMSSalesCRMPage from "./pages/products/LMSSalesCRMPage";
 import SupportCRMPage from "./pages/products/SupportCRMPage";
@@ -741,6 +744,7 @@ import { EmailRuleSetupPage } from "./pages/maintenance/EmailRuleSetupPage";
 import { TaskEscalationPage } from "./pages/maintenance/TaskEscalationPage";
 import { TicketManagementSetupPage } from "./pages/maintenance/TicketManagementSetupPage";
 import { MobileTicketsPage } from "./pages/mobile/MobileTicketsPage";
+import { MobileNewTicketPage } from "./pages/mobile/MobileNewTicketPage";
 import { TicketListPage } from "./pages/TicketListPage";
 import { MobileRestaurantPage } from "./pages/mobile/MobileRestaurantPage";
 import { MobileAssetPage } from "./pages/mobile/MobileAssetPage";
@@ -818,6 +822,7 @@ import DetailsVendorPage from "./pages/DetailsVendorPage";
 import { EditPODashboard } from "./pages/EditPODashboard";
 import { EditWODashboard } from "./pages/EditWODashboard";
 import GateNumberPage from "./pages/master/GateNumberPage";
+import FieldsSetupPage from "./pages/master/FieldsSetupPage";
 import GatePassTypePage from "./pages/master/GatePassTypePage";
 import InventoryTypePage from "./pages/master/InventoryTypePage";
 import InventorySubTypePage from "./pages/master/InventorySubTypePage";
@@ -1298,6 +1303,7 @@ import HSNCodeSetup from "./pages/HSNCodeSetup";
 import DashboardUI from "./pages/DashboardUI";
 import OrganisationMaster from "./pages/ClubManagement/OrganisationMaster";
 import MyInboxPage from "./features/inbox/MyInboxPage.tsx";
+import { ExpenseEditPage } from "./pages/ExpenseEditPage.tsx";
 
 const queryClient = new QueryClient();
 
@@ -1474,7 +1480,7 @@ function App() {
         ).unwrap()) as Array<{ currency?: string; symbol?: string }>;
         const currency =
           Array.isArray(response) &&
-          (response[0]?.currency as string | undefined)
+            (response[0]?.currency as string | undefined)
             ? response[0].currency
             : "INR";
         const currencySymbol =
@@ -2503,6 +2509,10 @@ function App() {
                             path="/master/plant-detail"
                             element={<PlantDetailSetupPage />}
                           />
+                          <Route
+                            path="/master/fields-setup"
+                            element={<FieldsSetupPage />}
+                          />
                           {/* CRM Routes */}
                           <Route
                             path="/crm/campaign"
@@ -3475,7 +3485,7 @@ function App() {
                           />
                           <Route
                             path="/accounting/expense/edit/:id"
-                            element={<ExpenseCreatePage />}
+                            element={<ExpenseEditPage />}
                           />
                           <Route
                             path="/accounting/section"
@@ -5744,11 +5754,11 @@ function App() {
                             path="/product/club-management"
                             element={<ClubManagementPage />}
                           />
-                          <Route
+                          {/* <Route
                             path="/product/gophygital-tenants"
                             element={<GoPhygitalTenantsPage />}
-                          />
-                          <Route path="/product/ptw" element={<PTWPage />} />
+                          /> */}
+                          {/* <Route path="/product/ptw" element={<PTWPage />} /> */}
                           <Route
                             path="/product/parking"
                             element={<ParkingPage />}
@@ -5783,8 +5793,20 @@ function App() {
                           />
                           <Route
                             path="/product/surveys"
-                            element={<SurveysPage />}
+                            element={<SurveyManagementPage />}
                           />
+                          <Route
+                            path="/product/ptw"
+                            element={<PTWManagementPage />}
+                          />
+                          <Route
+                            path="/product/gophygital-tenants"
+                            element={<TenantManagementPage />}
+                          />
+                          {/* <Route
+                            path="/product/surveys"
+                            element={<SurveysPage />}
+                          /> */}
                           <Route
                             path="/product/lms-sales-crm"
                             element={<LMSSalesCRMPage />}
@@ -6456,6 +6478,10 @@ function App() {
                         <Route
                           path="/mobile/tickets"
                           element={<MobileTicketsPage />}
+                        />
+                        <Route
+                          path="/mobile/tickets/new"
+                          element={<MobileNewTicketPage />}
                         />
                         <Route
                           path="/mobile/orders"

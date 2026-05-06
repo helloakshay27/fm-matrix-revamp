@@ -211,7 +211,7 @@ const IssueFilterModal = ({
         selected: string[],
         setSelected: (selected: string[]) => void
     ) => {
-        if (selected.includes(value)) {
+        if (selected?.includes(value)) {
             setSelected(selected.filter((v) => v !== value));
         } else {
             setSelected([...selected, value]);
@@ -232,8 +232,8 @@ const IssueFilterModal = ({
     ) => {
         const filtered = options.filter((opt) =>
             typeof opt === "string"
-                ? opt.toLowerCase().includes(searchTerm.toLowerCase())
-                : opt.label?.toLowerCase().includes(searchTerm?.toLowerCase())
+                ? opt.toLowerCase()?.includes(searchTerm.toLowerCase())
+                : opt.label?.toLowerCase()?.includes(searchTerm?.toLowerCase())
         );
 
         return (
@@ -250,7 +250,7 @@ const IssueFilterModal = ({
                             <div className="flex items-center gap-2">
                                 <input
                                     type="checkbox"
-                                    checked={selected.includes(value)}
+                                    checked={selected?.includes(value)}
                                     onChange={() => toggleOption(value, selected, setSelected)}
                                 />
                                 <span>{label}</span>

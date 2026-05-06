@@ -82,7 +82,7 @@ const AllContent = () => {
 
     const logoElement = useMemo(() => {
         if (typeof window === 'undefined') {
-            return   <DEFAULT_LOGO_CODE />;
+            return <DEFAULT_LOGO_CODE />;
             //  <OIG_LOGO_CODE />
             //  <DEFAULT_LOGO_CODE />;
         }
@@ -280,7 +280,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = `/ratings/feedback_dashboard${dateQuery}`;
+                const endpoint = `/api/pms/reports/customer_experience_feedback${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });

@@ -295,10 +295,12 @@ export const AddBookingSetupClubPage = () => {
     } else if (!formData.facilityBookedTimes) {
       toast.error("Please enter how many times facility can be booked per day");
       return false;
-    } else if (!formData.termsConditions) {
-      toast.error("Please enter Terms and Conditions");
-      return false;
-    } else if (!formData.cancellationText) {
+    }
+    // else if (!formData.termsConditions) {
+    //   toast.error("Please enter Terms and Conditions");
+    //   return false;
+    // }
+    else if (!formData.cancellationText) {
       toast.error("Please enter Cancellation Policies");
       return false;
     }
@@ -1134,7 +1136,7 @@ export const AddBookingSetupClubPage = () => {
               <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                 <CalendarDays className="w-4 h-4" />
               </div>
-              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE SLOT</h3>
+              <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Facility Operational Timings & Booking</h3>
             </div>
 
             <div>
@@ -1986,7 +1988,7 @@ export const AddBookingSetupClubPage = () => {
                 <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                   <ReceiptText className="w-4 h-4" />
                 </div>
-                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">TERMS & CONDITIONS*</h3>
+                <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">TERMS & CONDITIONS</h3>
               </div>
 
               <div>

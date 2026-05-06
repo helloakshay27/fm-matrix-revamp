@@ -891,7 +891,7 @@ const modulesByPackage = {
       icon: FileText,
       href: "/utility/utility-request",
     },
-    // { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
+    { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
     { name: "EV Consumption", icon: Car, href: "/utility/ev-consumption" },
     { name: "Solar Generator", icon: Sun, href: "/utility/solar-generator" },
   ],
