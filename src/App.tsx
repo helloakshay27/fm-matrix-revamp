@@ -1304,6 +1304,7 @@ import DashboardUI from "./pages/DashboardUI";
 import OrganisationMaster from "./pages/ClubManagement/OrganisationMaster";
 import MyInboxPage from "./features/inbox/MyInboxPage.tsx";
 import { ExpenseEditPage } from "./pages/ExpenseEditPage.tsx";
+import TaxSetupTabView from "./pages/ClubManagement/TaxSetupTabView.tsx";
 
 const queryClient = new QueryClient();
 
@@ -2810,6 +2811,10 @@ function App() {
                           <Route
                             path="/accounting/tax-setup"
                             element={<TaxSetup />}
+                          />
+                           <Route
+                            path="/accounting/tax-setup-tab"
+                            element={<TaxSetupTabView />}
                           />
                           <Route
                             path="/accounting/charge-setup"
