@@ -99,6 +99,7 @@ export const BookingSetupDashboard = () => {
             createdOn: item.created_at.split(" ")[0],
             createdBy: item.create_by_user || "",
             status: item.active || false,
+            location: item.location || "",
           })
         );
         setBookingSetupData(formattedData);
@@ -230,7 +231,7 @@ export const BookingSetupDashboard = () => {
       case 'type':
         return item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : '';
       case 'location':
-        return item.location || 'All';
+        return item?.location;
       case 'bookBy':
         return item.bookBy || '';
       case 'bookBefore':
