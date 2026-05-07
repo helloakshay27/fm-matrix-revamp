@@ -52,7 +52,7 @@ const getBaseApiDomain = (): string => {
   const hostname = window.location.hostname;
 
   if (hostname === 'localhost' || hostname.includes('127.0.0.1')) {
-    return 'https://fm-uat-api.lockated.com';
+    return 'https://oig-api.gophygital.work';
   }
 
   if (hostname === 'oig.gophygital.work' || hostname.includes('oig.gophygital.work')) {
@@ -74,6 +74,7 @@ interface SnagQuestion {
   id: number;
   descr: string;
   qtype: 'text' | 'email' | 'number' | 'date' | 'textarea';
+  quest_mandatory: boolean;
 }
 interface ComplaintCustomField {
   id: number;
@@ -99,7 +100,7 @@ const dynamicSiteService = {
   /**
    * Get the site base URL from the organizations API
    */
-  async getSiteBaseUrl(siteId: number): Promise<{ base_url: string, site_name: string }> {
+  async getSiteBaseUrl(siteId: number): Promise<{ base_url: string, site_name: string, company_logo: string }> {
     try {
       const baseApiDomain = getBaseApiDomain();
       const url = `${baseApiDomain}/organizations/site_base_url?site_id=${siteId}`;
@@ -119,7 +120,7 @@ const dynamicSiteService = {
 
       const data = await response.json();
       console.log('✅ Site base URL response:', data);
-      return data || { base_url: '', site_name: "Unknown Site" };
+      return data || { base_url: '', site_name: "Unknown Site", company_logo: "" };
 
 
     } catch (error) {
@@ -391,6 +392,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   const [loadingComplaintFields, setLoadingComplaintFields] = useState(false);
   const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<number, string>>({});
   const [site_name, setSiteName] = useState('Unknown Site');
+  const [companyLogo, setCompanyLogo] = useState('');
   const [customFieldConfig, setCustomFieldConfig] = useState<Record<string, boolean>>({});
   const [checklistId, setChecklistId] = useState<number | null>(null);
   const [buildings, setBuildings] = useState<any[]>([]);
@@ -398,6 +400,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   const [areas, setAreas] = useState<any[]>([]);
   const [floors, setFloors] = useState<any[]>([]);
   const [rooms, setRooms] = useState<any[]>([]);
+  const dynamicFieldRefs = useRef<Record<number, HTMLElement | null>>({});
   const [successData, setSuccessData] = useState<{
     ticketId: string;
     message: string;
@@ -416,6 +419,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         const siteUrlResponse = await dynamicSiteService.getSiteBaseUrl(siteId);
         const domain = siteUrlResponse.base_url;
         const siteName = siteUrlResponse.site_name || 'Unknown Site';
+        const companyLogo = siteUrlResponse.company_logo || '';
 
         if (!domain) {
           throw new Error('No domain returned from site base URL API');
@@ -426,8 +430,23 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
         setSiteDomain(domain);
         setSiteName(siteName);
+        setCompanyLogo(companyLogo);
         const buildingsData = await dynamicSiteService.getBuildings(domain, siteId);
         setBuildings(buildingsData);
+
+        const buildingId = buildingsData[0]?.id
+          ? String(buildingsData[0].id)
+          : '';
+
+        console.log('✅ Default building selected:', buildingId);
+
+        if (buildingId) {
+          // set default building
+          field('building', buildingId);
+
+          // load dependent location data
+          await handleBuildingChange(buildingId);
+        }
 
         // Step 2: Fetch categories
         const categoriesData = await dynamicSiteService.getCategories(domain, siteId);
@@ -593,12 +612,12 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
     const files = Array.from(e.target.files || []);
     const slots = 5 - attachments.length;
     const newFiles = files.slice(0, slots);
-    
+
     setAttachments(prev => [...prev, ...newFiles]);
 
     console.log("attachments", newFiles);
 
-    
+
     // Generate previews for image files
     newFiles.forEach(file => {
       if (file.type.startsWith('image/')) {
@@ -612,7 +631,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         setAttachmentPreviews(prev => [...prev, '']);
       }
     });
-    
+
     e.target.value = '';
   };
 
@@ -623,7 +642,47 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
   const handleSubmit = async () => {
     if (!formData.category) {
-      toast({ title: 'Validation Error', description: 'Please select a category', variant: 'destructive' });
+      toast({
+        title: 'Validation Error',
+        description: 'Please select a category',
+        variant: 'destructive',
+        className: 'bg-red-50 border border-red-300 text-red-700',
+      });
+      return;
+    }
+    const missingRequiredFields = complaintFields.filter((question) => {
+      if (!question.quest_mandatory) return false;
+
+      const value = dynamicFieldValues[question.id];
+      return !value || !String(value).trim();
+    });
+
+    if (missingRequiredFields.length > 0) {
+      const missingField = missingRequiredFields[0];
+
+      toast({
+        title: 'Validation Error',
+        description: `Please fill required field: ${missingField.descr}`,
+        className: 'bg-red-50 border border-red-300 text-red-700',
+      });
+
+      const fieldElement = dynamicFieldRefs.current[missingField.id];
+
+      if (fieldElement) {
+        fieldElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+
+        const input = fieldElement.querySelector(
+          'input, textarea, select'
+        ) as HTMLElement | null;
+
+        setTimeout(() => {
+          input?.focus();
+        }, 250);
+      }
+
       return;
     }
 
@@ -707,45 +766,45 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
       const payload = new FormData();
 
-payload.append('site_id', String(ticketData.site_id));
-payload.append('on_behalf_of', ticketData.on_behalf_of);
+      payload.append('site_id', String(ticketData.site_id));
+      payload.append('on_behalf_of', ticketData.on_behalf_of);
 
-if (ticketData.sel_id_user !== null) {
-  payload.append('sel_id_user', String(ticketData.sel_id_user));
-}
+      if (ticketData.sel_id_user !== null) {
+        payload.append('sel_id_user', String(ticketData.sel_id_user));
+      }
 
-if (ticketData.fm_user_id !== null) {
-  payload.append('fm_user_id', String(ticketData.fm_user_id));
-}
+      if (ticketData.fm_user_id !== null) {
+        payload.append('fm_user_id', String(ticketData.fm_user_id));
+      }
 
-if (ticketData.checklist_id !== null) {
-  payload.append('checklist_id', String(ticketData.checklist_id));
-}
+      if (ticketData.checklist_id !== null) {
+        payload.append('checklist_id', String(ticketData.checklist_id));
+      }
 
-// complaint
-Object.entries(ticketData.complaint).forEach(([key, value]) => {
-  if (value !== undefined && value !== null && value !== '') {
-    payload.append(`complaint[${key}]`, String(value));
-  }
-});
+      // complaint
+      Object.entries(ticketData.complaint).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          payload.append(`complaint[${key}]`, String(value));
+        }
+      });
 
-// attachments (real file objects, not base64)
-attachments.forEach((file) => {
-  payload.append('attachments[]', file);
-});
+      // attachments (real file objects, not base64)
+      attachments.forEach((file) => {
+        payload.append('attachments[]', file);
+      });
 
-// basic_fields
-Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
-  payload.append(
-    `basic_fields[${fieldId}][remarks]`,
-    fieldData.remarks
-  );
+      // basic_fields
+      Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
+        payload.append(
+          `basic_fields[${fieldId}][remarks]`,
+          fieldData.remarks
+        );
 
-  payload.append(
-    `basic_fields[${fieldId}][qtype]`,
-    fieldData.qtype
-  );
-});
+        payload.append(
+          `basic_fields[${fieldId}][qtype]`,
+          fieldData.qtype
+        );
+      });
 
       console.log('📤 Submitting ticket:', ticketData);
 
@@ -774,7 +833,7 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
         console.error('❌ Error submitting ticket via dynamic domain:', dynamicError);
 
       }
-      
+
 
       // toast({ title: 'Success', description: 'Ticket submitted successfully!' });
       // onSuccess();
@@ -788,7 +847,7 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
       return;
     } catch (error) {
       console.error('❌ Submit error:', error);
-      toast({ title: 'Error', description: 'Failed to submit ticket. Please try again.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to submit ticket. Please try again.', className: 'bg-red-50 border border-red-300 text-red-700' });
     } finally {
       setLoading(false);
     }
@@ -812,6 +871,7 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
           <Input
             key={field.id}
             type="email"
+            required={field.quest_mandatory}
             placeholder={`e.g. ${field.descr.toLowerCase()}@example.com`}
             value={value}
             onChange={e => handleChange(e.target.value)}
@@ -824,6 +884,7 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
           <Input
             key={field.id}
             type="number"
+            required={field.quest_mandatory}
             placeholder={`Enter ${field.descr.toLowerCase()}`}
             value={value}
             onChange={e => handleChange(e.target.value)}
@@ -837,6 +898,7 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
             key={field.id}
             type="date"
             value={value}
+            required={field.quest_mandatory}
             onChange={e => handleChange(e.target.value)}
             className="h-10 rounded-lg text-sm md:h-11"
             style={{ borderColor: '#d3d1c7' }}
@@ -848,11 +910,13 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
             key={field.id}
             placeholder={`Enter ${field.descr.toLowerCase()}`}
             value={value}
+            required={field.quest_mandatory}
             onChange={e => handleChange(e.target.value)}
             rows={3}
             className="resize-none rounded-lg text-sm"
             style={{ borderColor: '#d3d1c7' }}
           />
+
         );
       case 'text':
       default:
@@ -862,6 +926,7 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
             type="text"
             placeholder={`Enter ${field.descr.toLowerCase()}`}
             value={value}
+            required={field.quest_mandatory}
             onChange={e => handleChange(e.target.value)}
             className="h-10 rounded-lg text-sm md:h-11"
             style={{ borderColor: '#d3d1c7' }}
@@ -887,7 +952,7 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
         style={{ backgroundColor: '#f6f4ee' }}
       >
         <div className="w-full max-w-md text-center">
-          <div
+          {/* <div
             className="mx-auto mb-6 w-24 h-24 rounded-full flex items-center justify-center border-4"
             style={{
               borderColor: '#18b26a',
@@ -906,8 +971,36 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
             >
               <polyline points="20 6 9 17 4 12" />
             </svg>
-          </div>
+          </div> */}
 
+          <div
+            className="mx-auto mb-6 w-24 h-24 rounded-full flex items-center justify-center border-4 overflow-hidden"
+            style={{
+              borderColor: '#18b26a',
+              backgroundColor: 'rgba(24,178,106,0.08)',
+            }}
+          >
+            {companyLogo ? (
+              <img
+                src={companyLogo}
+                alt="Company Logo"
+                className="w-12 h-12 object-contain"
+              />
+            ) : (
+              <svg
+                width="34"
+                height="34"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#18b26a"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+          </div>
           <h2
             className="text-3xl font-bold mb-3"
             style={{ color: '#111827' }}
@@ -920,56 +1013,56 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
             style={{ color: '#6b7280' }}
           >
             Your request has been received and assigned to the team.
-            You'll be notified when work is completed.
+            The team will get in touch with you shortly.
           </p>
 
           <div
-  className="rounded-3xl px-6 py-6 shadow-lg relative"
-  style={{ backgroundColor: 'rgb(218, 119, 86)' }}
->
-  <button
-    onClick={handleCopyTicketId}
-    className="absolute top-4 right-4 w-5 h-5 rounded-2xl flex items-center justify-center"
-    style={{ backgroundColor: 'rgba(255,255,255,0.16)' }}
-  >
-    <svg
-      width="15"
-      height="15"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="#ffffff"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="9" y="9" width="13" height="13" rx="2" />
-      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-    </svg>
-  </button>
+            className="rounded-3xl px-6 py-6 shadow-lg relative"
+            style={{ backgroundColor: 'rgb(218, 119, 86)' }}
+          >
+            <button
+              onClick={handleCopyTicketId}
+              className="absolute top-4 right-4 w-5 h-5 rounded-2xl flex items-center justify-center"
+              style={{ backgroundColor: 'rgba(255,255,255,0.16)' }}
+            >
+              <svg
+                width="15"
+                height="15"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#ffffff"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+            </button>
 
-  <div className="flex items-center gap-3 pr-12">
-    <p
-      className="text-sm font-semibold tracking-widest whitespace-nowrap"
-      style={{ color: 'rgba(255,255,255,0.7)' }}
-    >
-      TICKET ID :
-    </p>
+            <div className="flex items-center gap-3 pr-12">
+              <p
+                className="text-sm font-semibold tracking-widest whitespace-nowrap"
+                style={{ color: 'rgba(255,255,255,0.7)' }}
+              >
+                TICKET ID :
+              </p>
 
-    <div
-      className="text-xl font-bold leading-none"
-      style={{ color: '#ffffff' }}
-    >
-      {successData.ticketId}
-    </div>
-  </div>
+              <div
+                className="text-xl font-bold leading-none"
+                style={{ color: '#ffffff' }}
+              >
+                {successData.ticketId}
+              </div>
+            </div>
 
-  <p
-    className="text-sm mt-4"
-    style={{ color: 'rgba(255,255,255,0.8)' }}
-  >
-    Save this ID to track your request status
-  </p>
-</div>
+            <p
+              className="text-sm mt-4"
+              style={{ color: 'rgba(255,255,255,0.8)' }}
+            >
+              Save this ID to track your request status
+            </p>
+          </div>
 
           {/* <button
           onClick={onSuccess}
@@ -992,11 +1085,11 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
       style={{ backgroundColor: '#f6f4ee' }}
     >
       {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-3 bg-white shadow-sm flex-shrink-0 md:sticky md:top-0 md:z-10 md:px-8">
-        <button onClick={onBack} className="p-1 rounded-lg active:bg-gray-100">
-          <ArrowLeft className="h-6 w-6" style={{ color: '#2c2c2c' }} />
-        </button>
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center px-4 py-3 bg-white shadow-sm flex-shrink-0 md:sticky md:top-0 md:z-10 md:px-8">
+        {/* <button onClick={onBack} className="p-1 rounded-lg active:bg-gray-100"> */}
+        {/* <ArrowLeft className="h-6 w-6" style={{ color: '#2c2c2c' }} /> */}
+        {/* </button> */}
+        <div className="flex justify-center gap-2">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center"
             style={{ backgroundColor: '#da7756' }}
@@ -1005,9 +1098,9 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
           </div>
           <h1 className="text-lg font-semibold" style={{ color: '#2c2c2c' }}>New Ticket</h1>
         </div>
-        <button className="p-1 rounded-lg active:bg-gray-100">
-          <Settings className="h-6 w-6" style={{ color: '#2c2c2c' }} />
-        </button>
+        {/* <button className="p-1 rounded-lg active:bg-gray-100"> */}
+        {/* <Settings className="h-6 w-6" style={{ color: '#2c2c2c' }} /> */}
+        {/* </button> */}
       </div>
 
       {/* ── Scrollable body ────────────────────────────────────── */}
@@ -1026,9 +1119,22 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
           >
             <div
               className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: '#da7756' }}
+              style={{ backgroundColor: '#ffffff' }}
             >
-              <QrCode className="h-5 w-5 text-white" />
+
+              {/* <QrCode className="h-5 w-5 text-white" /> */}
+              {companyLogo ? (
+                <img
+                  src={companyLogo}
+                  alt="Company Logo"
+                  width={28}
+                  height={28}
+                  className="object-contain"
+                />
+              ) : (
+                <QrCode className="h-5 w-5 text-white" />
+              )}
+
             </div>
             <div>
               <p className="text-xs font-medium" style={{ color: '#5a7a9a' }}>Scanned Location</p>
@@ -1064,12 +1170,146 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
                       {question.descr}
                     </label>
 
-                    {renderDynamicField(question)}
+                    {/* {renderDynamicField(question)} */}
+                    <div
+                      ref={(el) => {
+                        dynamicFieldRefs.current[question.id] = el;
+                      }}
+                    >
+                      {renderDynamicField(question)}
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
+          {isFieldEnabled('location_enabled') && (
+            <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
+              <p className="text-base font-semibold mb-3" style={{ color: '#2c2c2c' }}>
+                Location <span style={{ color: '#da7756' }}>*</span>
+              </p>
+
+              <div className="mb-3">
+                <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                  Building
+                </label>
+
+                <Select value={formData.building} onValueChange={handleBuildingChange}>
+                  <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                    <SelectValue placeholder="Select Building" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {buildings.map((item) => (
+                      <SelectItem key={item.id} value={String(item.id)}>
+                        {item.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                    Wing
+                  </label>
+
+                  <Select
+                    value={formData.wing}
+                    onValueChange={handleWingChange}
+                    disabled={!formData.building}
+                  >
+                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                      <SelectValue placeholder="Select Wing" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {wings.map((item) => (
+                        <SelectItem key={item.id} value={String(item.id)}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                    Area
+                  </label>
+
+                  <Select
+                    value={formData.area}
+                    onValueChange={handleAreaChange}
+                    disabled={!formData.building}
+                  >
+                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                      <SelectValue placeholder="Select Area" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {areas.map((item) => (
+                        <SelectItem key={item.id} value={String(item.id)}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                    Floor
+                  </label>
+
+                  <Select
+                    value={formData.floor}
+                    onValueChange={handleFloorChange}
+                    disabled={!formData.building}
+                  >
+                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                      <SelectValue placeholder="Select Floor" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {floors.map((item) => (
+                        <SelectItem key={item.id} value={String(item.id)}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                    Room
+                  </label>
+
+                  <Select
+                    value={formData.room}
+                    onValueChange={(val) => field('room', val)}
+                    disabled={!formData.floor}
+                  >
+                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                      <SelectValue placeholder="Select Room" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {rooms.map((item) => (
+                        <SelectItem key={item.id} value={String(item.id)}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
 
           {isFieldEnabled('category_enabled') && (
             <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
@@ -1109,7 +1349,7 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {categories.map((cat, idx) => {
-                    const Icon = getCategoryIcon(cat.name, idx);
+                    const Icon = cat?.icon_url
                     const selected = formData.category === cat.id.toString();
 
                     return (
@@ -1126,13 +1366,22 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
                             : '#fff',
                         }}
                       >
-                        <Icon
-                          className="h-7 w-7"
-                          style={{
-                            color: selected ? '#da7756' : '#888780',
-                          }}
-                        />
-
+                        {cat.icon_url ? (
+                          <img
+                            src={cat.icon_url}
+                            alt={cat.name}
+                            width={28}
+                            height={28}
+                            className="object-contain"
+                          />
+                        ) : Icon ? (
+                          React.createElement(Icon, {
+                            className: "h-7 w-7",
+                            style: {
+                              color: selected ? '#da7756' : '#888780',
+                            },
+                          })
+                        ) : null}
                         <span
                           className="text-xs font-medium text-center leading-tight"
                           style={{
@@ -1370,133 +1619,7 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
             </p>
           </div>
 
-          {isFieldEnabled('location_enabled') && (
-            <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
-              <p className="text-base font-semibold mb-3" style={{ color: '#2c2c2c' }}>
-                Location <span style={{ color: '#da7756' }}>*</span>
-              </p>
 
-              <div className="mb-3">
-                <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
-                  Building
-                </label>
-
-                <Select value={formData.building} onValueChange={handleBuildingChange}>
-                  <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    {buildings.map((item) => (
-                      <SelectItem key={item.id} value={String(item.id)}>
-                        {item.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
-                    Wing
-                  </label>
-
-                  <Select
-                    value={formData.wing}
-                    onValueChange={handleWingChange}
-                    disabled={!formData.building}
-                  >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Wing" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {wings.map((item) => (
-                        <SelectItem key={item.id} value={String(item.id)}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
-                    Area
-                  </label>
-
-                  <Select
-                    value={formData.area}
-                    onValueChange={handleAreaChange}
-                    disabled={!formData.building}
-                  >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Area" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {areas.map((item) => (
-                        <SelectItem key={item.id} value={String(item.id)}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
-                    Floor
-                  </label>
-
-                  <Select
-                    value={formData.floor}
-                    onValueChange={handleFloorChange}
-                    disabled={!formData.building}
-                  >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Floor" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {floors.map((item) => (
-                        <SelectItem key={item.id} value={String(item.id)}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
-                    Room
-                  </label>
-
-                  <Select
-                    value={formData.room}
-                    onValueChange={(val) => field('room', val)}
-                    disabled={!formData.floor}
-                  >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Room" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {rooms.map((item) => (
-                        <SelectItem key={item.id} value={String(item.id)}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          )}
 
           <p className="mx-4 mt-3 md:mx-0 text-xs" style={{ color: '#888780' }}>* Required fields</p>
 
