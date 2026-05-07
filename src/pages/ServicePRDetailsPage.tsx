@@ -404,6 +404,27 @@ export const ServicePRDetailsPage = () => {
         }
       );
       toast.success(response.data.message);
+       // Fetch updated details after successful test run
+      try {
+        const detailsResponse = await axios.get(
+          `https://${baseUrl}/pms/work_orders/${id}.json`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (detailsResponse.data?.page) {
+          setServicePR(detailsResponse.data.page);
+          // Update external API calls if available
+          if (detailsResponse.data.page?.api_responses && Array.isArray(detailsResponse.data.page.api_responses)) {
+            setExternalApiCalls(detailsResponse.data.page.api_responses);
+            console.log("API Calls updated after test run:", detailsResponse.data.page.api_responses);
+          }
+          toast.success("Data refreshed after test run");
+        }
+      } catch (detailsError) {
+        console.error("Error fetching updated details:", detailsError);
+        toast.error("Failed to refresh data after test run");
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to send to SAP");
     }
@@ -427,6 +448,28 @@ export const ServicePRDetailsPage = () => {
         }
       );
       toast.success(response.data.message || "Test run completed successfully");
+
+      // Fetch updated details after successful test run
+      try {
+        const detailsResponse = await axios.get(
+          `https://${baseUrl}/pms/work_orders/${id}.json`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (detailsResponse.data?.page) {
+          setServicePR(detailsResponse.data.page);
+          // Update external API calls if available
+          if (detailsResponse.data.page?.api_responses && Array.isArray(detailsResponse.data.page.api_responses)) {
+            setExternalApiCalls(detailsResponse.data.page.api_responses);
+            console.log("API Calls updated after test run:", detailsResponse.data.page.api_responses);
+          }
+          toast.success("Data refreshed after test run");
+        }
+      } catch (detailsError) {
+        console.error("Error fetching updated details:", detailsError);
+        toast.error("Failed to refresh data after test run");
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to run test run");
     } finally {
