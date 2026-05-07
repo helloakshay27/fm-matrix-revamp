@@ -1294,10 +1294,15 @@ export const BookingSetupDetailClubPage = () => {
               <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">DESCRIPTION</h3>
             </div>
             <div>
-              <Textarea
+              {/* <Textarea
                 value={formData.description}
                 className="min-h-[100px]"
                 readOnly
+              /> */}
+
+              <div
+                className="prose prose-sm max-w-none quill-content"
+                dangerouslySetInnerHTML={{ __html: formData.description || "<p className='text-gray-500'>No description provided</p>" }}
               />
             </div>
           </div>
@@ -1312,10 +1317,15 @@ export const BookingSetupDetailClubPage = () => {
                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">TERMS & CONDITIONS*</h3>
               </div>
               <div>
-                <Textarea
+                {/* <Textarea
                   value={formData.termsConditions}
                   className="min-h-[100px]"
                   readOnly
+                /> */}
+
+                <div
+                  className="prose prose-sm max-w-none quill-content"
+                  dangerouslySetInnerHTML={{ __html: formData.termsConditions || "<p className='text-gray-500'>No terms and conditions provided</p>" }}
                 />
               </div>
             </div>
@@ -1414,11 +1424,16 @@ export const BookingSetupDetailClubPage = () => {
               <div className="font-medium text-gray-700">
                 Cancellation Policy<span>*</span>
               </div>
-              <Textarea
+              {/* <Textarea
                 placeholder="Enter cancellation text"
                 value={formData.cancellationText}
                 disabled
                 className="min-h-[100px]"
+              /> */}
+
+              <div
+                className="prose prose-sm max-w-none quill-content"
+                dangerouslySetInnerHTML={{ __html: formData.cancellationText || "<p className='text-gray-500'>No cancellation policy provided</p>" }}
               />
             </div>
           </div>

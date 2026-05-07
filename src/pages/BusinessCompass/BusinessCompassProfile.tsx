@@ -1051,7 +1051,7 @@ useEffect(() => {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="flex items-center gap-2 text-lg font-bold text-green-700">
             <Star size={20} className="fill-green-500 text-green-500" />
-            My Objectives (KPIs & KRAs)
+            My Objectives (KPIs)
           </CardTitle>
           <Badge className="bg-green-100 text-green-700 border-green-200 px-3 h-6 rounded-full font-bold">
             0 Active
