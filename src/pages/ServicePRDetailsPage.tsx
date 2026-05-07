@@ -388,94 +388,120 @@ export const ServicePRDetailsPage = () => {
   }, [id]);
 
   // Handle send to SAP
-  const handleSendToSap = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
-    if (!baseUrl || !token || !id) {
-      toast.error("Missing required configuration");
-      return;
-    }
+ const handleSendToSap = useCallback(async () => {
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
 
-    try {
-      const response = await axios.get<{ message: string }>(
-        `https://${baseUrl}/pms/work_orders/${id}.json?send_sap=yes`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      toast.success(response.data.message);
-       // Fetch updated details after successful test run
-      try {
-        const detailsResponse = await axios.get(
-          `https://${baseUrl}/pms/work_orders/${id}.json`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (detailsResponse.data?.page) {
-          setServicePR(detailsResponse.data.page);
-          // Update external API calls if available
-          if (detailsResponse.data.page?.api_responses && Array.isArray(detailsResponse.data.page.api_responses)) {
-            setExternalApiCalls(detailsResponse.data.page.api_responses);
-            console.log("API Calls updated after test run:", detailsResponse.data.page.api_responses);
-          }
-          toast.success("Data refreshed after test run");
-        }
-      } catch (detailsError) {
-        console.error("Error fetching updated details:", detailsError);
-        toast.error("Failed to refresh data after test run");
+  if (!baseUrl || !token || !id) {
+    toast.error("Missing required configuration");
+    return;
+  }
+
+  try {
+    const response = await axios.get<{ message: string }>(
+      `https://${baseUrl}/pms/work_orders/${id}.json?send_sap=yes`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to send to SAP");
+    );
+
+    toast.success(response.data.message || "Sent to SAP successfully");
+
+    // wait for server-side processing
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const detailsResponse = await axios.get(
+      `https://${baseUrl}/pms/work_orders/${id}.json`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (detailsResponse.data?.page) {
+      setServicePR(detailsResponse.data.page);
+
+      if (
+        detailsResponse.data.page?.api_responses &&
+        Array.isArray(detailsResponse.data.page.api_responses)
+      ) {
+        setExternalApiCalls(detailsResponse.data.page.api_responses);
+        console.log(
+          "API Calls updated after send to SAP:",
+          detailsResponse.data.page.api_responses
+        );
+      }
+
+      toast.success("Data refreshed after send to SAP");
     }
-  }, [id]);
+  } catch (error: any) {
+    console.error("Send to SAP error:", error);
+
+    toast.error(
+      error?.response?.data?.message ||
+        error.message ||
+        "Failed to send to SAP"
+    );
+  }
+}, [id]);
 
   // Handle test run
-  const handleTestRun = useCallback(async () => {
-    const token = localStorage.getItem("token");
-    const baseUrl = localStorage.getItem("baseUrl");
-    if (!baseUrl || !token || !id) {
-      toast.error("Missing required configuration");
-      return;
-    }
+const handleTestRun = useCallback(async () => {
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
 
-    try {
-      setTestRunLoading(true);
-      const response = await axios.get<{ message: string }>(
-        `https://${baseUrl}/pms/work_orders/test_run?id=${id}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      toast.success(response.data.message || "Test run completed successfully");
+  if (!baseUrl || !token || !id) {
+    toast.error("Missing required configuration");
+    return;
+  }
 
-      // Fetch updated details after successful test run
-      try {
-        const detailsResponse = await axios.get(
-          `https://${baseUrl}/pms/work_orders/${id}.json`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (detailsResponse.data?.page) {
-          setServicePR(detailsResponse.data.page);
-          // Update external API calls if available
-          if (detailsResponse.data.page?.api_responses && Array.isArray(detailsResponse.data.page.api_responses)) {
-            setExternalApiCalls(detailsResponse.data.page.api_responses);
-            console.log("API Calls updated after test run:", detailsResponse.data.page.api_responses);
-          }
-          toast.success("Data refreshed after test run");
-        }
-      } catch (detailsError) {
-        console.error("Error fetching updated details:", detailsError);
-        toast.error("Failed to refresh data after test run");
+  try {
+    setTestRunLoading(true);
+
+    const response = await axios.get<{ message: string }>(
+      `https://${baseUrl}/pms/work_orders/test_run?id=${id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to run test run");
-    } finally {
-      setTestRunLoading(false);
+    );
+
+    toast.success(
+      response.data.message || "Test run completed successfully"
+    );
+
+    // wait for server-side processing
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const detailsResponse = await axios.get(
+      `https://${baseUrl}/pms/work_orders/${id}.json`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (detailsResponse.data?.page) {
+      setServicePR(detailsResponse.data.page);
+
+      if (
+        detailsResponse.data.page?.api_responses &&
+        Array.isArray(detailsResponse.data.page.api_responses)
+      ) {
+        setExternalApiCalls(detailsResponse.data.page.api_responses);
+      }
+
+      toast.success("Data refreshed after test run");
     }
-  }, [id]);
+  } catch (error: any) {
+    console.error("Test run error:", error);
+
+    toast.error(
+      error?.response?.data?.message ||
+        error.message ||
+        "Failed to run test run"
+    );
+  } finally {
+    setTestRunLoading(false);
+  }
+}, [id]);
 
   const handleApproveDeletionRequest = async () => {
     const payload = {
