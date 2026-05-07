@@ -327,13 +327,13 @@ export const BillListPage: React.FC = () => {
         >
           <Eye className="w-4 h-4" />
         </button>
-        {/* <button
+        <button
                     onClick={() => handleEdit(bill.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
                 >
                     <Edit className="w-4 h-4" />
-                </button> */}
+                </button>
         {/* <button
                     onClick={() => handleDelete(bill.id)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
