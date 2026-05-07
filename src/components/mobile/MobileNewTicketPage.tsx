@@ -52,7 +52,7 @@ const getBaseApiDomain = (): string => {
   const hostname = window.location.hostname;
 
   if (hostname === 'localhost' || hostname.includes('127.0.0.1')) {
-    return 'https://fm-uat-api.lockated.com';
+    return 'https://oig-api.gophygital.work';
   }
 
   if (hostname === 'oig.gophygital.work' || hostname.includes('oig.gophygital.work')) {
@@ -427,7 +427,21 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         setSiteDomain(domain);
         setSiteName(siteName);
         const buildingsData = await dynamicSiteService.getBuildings(domain, siteId);
-        setBuildings(buildingsData);
+       setBuildings(buildingsData);
+
+const buildingId = buildingsData[0]?.id
+  ? String(buildingsData[0].id)
+  : '';
+
+console.log('✅ Default building selected:', buildingId);
+
+if (buildingId) {
+  // set default building
+  field('building', buildingId);
+
+  // load dependent location data
+  await handleBuildingChange(buildingId);
+}
 
         // Step 2: Fetch categories
         const categoriesData = await dynamicSiteService.getCategories(domain, siteId);
@@ -1070,6 +1084,133 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
               </div>
             )}
           </div>
+             {isFieldEnabled('location_enabled') && (
+            <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
+              <p className="text-base font-semibold mb-3" style={{ color: '#2c2c2c' }}>
+                Location <span style={{ color: '#da7756' }}>*</span>
+              </p>
+
+              <div className="mb-3">
+                <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                  Building
+                </label>
+
+                <Select value={formData.building} onValueChange={handleBuildingChange}>
+                  <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                    <SelectValue placeholder="Select Building" />
+                  </SelectTrigger>
+
+                  <SelectContent>
+                    {buildings.map((item) => (
+                      <SelectItem key={item.id} value={String(item.id)}>
+                        {item.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                    Wing
+                  </label>
+
+                  <Select
+                    value={formData.wing}
+                    onValueChange={handleWingChange}
+                    disabled={!formData.building}
+                  >
+                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                      <SelectValue placeholder="Select Wing" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {wings.map((item) => (
+                        <SelectItem key={item.id} value={String(item.id)}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                    Area
+                  </label>
+
+                  <Select
+                    value={formData.area}
+                    onValueChange={handleAreaChange}
+                    disabled={!formData.building}
+                  >
+                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                      <SelectValue placeholder="Select Area" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {areas.map((item) => (
+                        <SelectItem key={item.id} value={String(item.id)}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="md:col-span-2">
+                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                    Floor
+                  </label>
+
+                  <Select
+                    value={formData.floor}
+                    onValueChange={handleFloorChange}
+                    disabled={!formData.building}
+                  >
+                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                      <SelectValue placeholder="Select Floor" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {floors.map((item) => (
+                        <SelectItem key={item.id} value={String(item.id)}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
+                    Room
+                  </label>
+
+                  <Select
+                    value={formData.room}
+                    onValueChange={(val) => field('room', val)}
+                    disabled={!formData.floor}
+                  >
+                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
+                      <SelectValue placeholder="Select Room" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {rooms.map((item) => (
+                        <SelectItem key={item.id} value={String(item.id)}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
 
           {isFieldEnabled('category_enabled') && (
             <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
@@ -1109,7 +1250,7 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   {categories.map((cat, idx) => {
-                    const Icon = getCategoryIcon(cat.name, idx);
+                    const Icon = cat?.icon_url
                     const selected = formData.category === cat.id.toString();
 
                     return (
@@ -1126,13 +1267,22 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
                             : '#fff',
                         }}
                       >
-                        <Icon
-                          className="h-7 w-7"
-                          style={{
-                            color: selected ? '#da7756' : '#888780',
-                          }}
-                        />
-
+                       {cat.icon_url ? (
+  <img
+    src={cat.icon_url}
+    alt={cat.name}
+    width={28}
+    height={28}
+    className="object-contain"
+  />
+) : Icon ? (
+  React.createElement(Icon, {
+    className: "h-7 w-7",
+    style: {
+      color: selected ? '#da7756' : '#888780',
+    },
+  })
+) : null}
                         <span
                           className="text-xs font-medium text-center leading-tight"
                           style={{
@@ -1370,133 +1520,7 @@ Object.entries(ticketData.basic_fields).forEach(([fieldId, fieldData]) => {
             </p>
           </div>
 
-          {isFieldEnabled('location_enabled') && (
-            <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
-              <p className="text-base font-semibold mb-3" style={{ color: '#2c2c2c' }}>
-                Location <span style={{ color: '#da7756' }}>*</span>
-              </p>
-
-              <div className="mb-3">
-                <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
-                  Building
-                </label>
-
-                <Select value={formData.building} onValueChange={handleBuildingChange}>
-                  <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                    <SelectValue placeholder="Select Building" />
-                  </SelectTrigger>
-
-                  <SelectContent>
-                    {buildings.map((item) => (
-                      <SelectItem key={item.id} value={String(item.id)}>
-                        {item.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
-                    Wing
-                  </label>
-
-                  <Select
-                    value={formData.wing}
-                    onValueChange={handleWingChange}
-                    disabled={!formData.building}
-                  >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Wing" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {wings.map((item) => (
-                        <SelectItem key={item.id} value={String(item.id)}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
-                    Area
-                  </label>
-
-                  <Select
-                    value={formData.area}
-                    onValueChange={handleAreaChange}
-                    disabled={!formData.building}
-                  >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Area" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {areas.map((item) => (
-                        <SelectItem key={item.id} value={String(item.id)}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
-                    Floor
-                  </label>
-
-                  <Select
-                    value={formData.floor}
-                    onValueChange={handleFloorChange}
-                    disabled={!formData.building}
-                  >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Floor" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {floors.map((item) => (
-                        <SelectItem key={item.id} value={String(item.id)}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
-                    Room
-                  </label>
-
-                  <Select
-                    value={formData.room}
-                    onValueChange={(val) => field('room', val)}
-                    disabled={!formData.floor}
-                  >
-                    <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Room" />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {rooms.map((item) => (
-                        <SelectItem key={item.id} value={String(item.id)}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-          )}
+       
 
           <p className="mx-4 mt-3 md:mx-0 text-xs" style={{ color: '#888780' }}>* Required fields</p>
 

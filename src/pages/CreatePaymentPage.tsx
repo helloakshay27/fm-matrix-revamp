@@ -4,12 +4,17 @@ import { toast as sonnerToast } from "sonner";
 import { API_CONFIG } from "@/config/apiConfig";
 
 // Bill shape from lock_account_bill.json
+type AmountValue = number | string | null | undefined;
+
 interface LockAccountBill {
   id: number;
   bill_number: string;
   bill_date: string;
   due_date: string;
-  total_amount: number;
+  total_amount: AmountValue;
+  balance_due?: AmountValue;
+  amount_due?: AmountValue;
+  due_amount?: AmountValue;
   order_number: string;
   status: string;
   vendor_name: string;
@@ -134,7 +139,25 @@ import {
 
 export const CreatePaymentPage: React.FC = () => {
   const navigate = useNavigate();
-            const lock_account_id = localStorage.getItem("lock_account_id");
+  const [lockAccountId, setLockAccountId] = useState(
+    () => localStorage.getItem("lock_account_id") || ""
+  );
+  const authToken = API_CONFIG.TOKEN || localStorage.getItem("token") || "";
+  const parseAmountValue = useCallback((value: AmountValue) => {
+    if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+    if (typeof value === "string") {
+      const normalized = value.replace(/[^0-9.-]/g, "");
+      const parsed = parseFloat(normalized);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+  }, []);
+
+  const formatAmountValue = useCallback(
+    (value: AmountValue) => parseAmountValue(value).toFixed(2),
+    [parseAmountValue]
+  );
+
   // PMS axios instance — uses the dynamic session base URL (fm-uat-api.lockated.com)
   const pmsClient = React.useMemo(
     () =>
@@ -142,11 +165,11 @@ export const CreatePaymentPage: React.FC = () => {
         baseURL: API_CONFIG.BASE_URL || "https://fm-uat-api.lockated.com",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${API_CONFIG.TOKEN}`,
+          Authorization: `Bearer ${authToken}`,
         },
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [API_CONFIG.BASE_URL, API_CONFIG.TOKEN]
+    [API_CONFIG.BASE_URL, authToken]
   );
 
   // Accounting axios instance — always hits club-uat-api.lockated.com
@@ -156,12 +179,42 @@ export const CreatePaymentPage: React.FC = () => {
         baseURL: "https://club-uat-api.lockated.com",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${API_CONFIG.TOKEN}`,
+          Authorization: `Bearer ${authToken}`,
         },
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [API_CONFIG.TOKEN]
+    [authToken]
   );
+
+  const ensureLockAccountId = useCallback(async () => {
+    const cachedId = localStorage.getItem("lock_account_id") || lockAccountId;
+    if (cachedId) {
+      if (cachedId !== lockAccountId) setLockAccountId(cachedId);
+      return cachedId;
+    }
+
+    if (!authToken) return "";
+
+    try {
+      const res = await pmsClient.get("/get_lock_account.json", {
+        timeout: 30000,
+      });
+      const id =
+        res.data?.lock_account?.id ??
+        res.data?.lock_account_id ??
+        res.data?.id;
+
+      if (id) {
+        const nextId = String(id);
+        localStorage.setItem("lock_account_id", nextId);
+        setLockAccountId(nextId);
+        return nextId;
+      }
+    } catch (err) {
+      console.error("Failed to fetch lock account:", err);
+    }
+
+    return "";
+  }, [authToken, lockAccountId, pmsClient]);
 
   // State
   const [activeSheetTab, setActiveSheetTab] = useState("details");
@@ -197,6 +250,7 @@ export const CreatePaymentPage: React.FC = () => {
     }
   }, [isConfigModalOpen, paymentConfig]);
   const [amount, setAmount] = useState("");
+  const [payFullAmount, setPayFullAmount] = useState(false);
   const [paymentMode, setPaymentMode] = useState("Cash");
   const [paidThrough, setPaidThrough] = useState("");
   const [reference, setReference] = useState("");
@@ -235,6 +289,7 @@ export const CreatePaymentPage: React.FC = () => {
   // Bills fetched from API after vendor selection
   const [bills, setBills] = useState<LockAccountBill[]>([]);
   const [billsLoading, setBillsLoading] = useState(false);
+  const [billsError, setBillsError] = useState("");
   const [appliedAmounts, setAppliedAmounts] = useState<Record<number, string>>(
     {}
   );
@@ -246,7 +301,7 @@ export const CreatePaymentPage: React.FC = () => {
   const [suppliersLoading, setSuppliersLoading] = useState(false);
 
   const fetchSuppliers = useCallback(async () => {
-    if (!API_CONFIG.TOKEN) return;
+    if (!authToken) return;
     setSuppliersLoading(true);
     try {
       const res = await pmsClient.get("/pms/suppliers.json");
@@ -261,7 +316,7 @@ export const CreatePaymentPage: React.FC = () => {
     } finally {
       setSuppliersLoading(false);
     }
-  }, [pmsClient]);
+  }, [authToken, pmsClient]);
 
   useEffect(() => {
     fetchSuppliers();
@@ -341,11 +396,13 @@ export const CreatePaymentPage: React.FC = () => {
 
   useEffect(() => {
     const fetchAccountGroups = async () => {
-      if (!API_CONFIG.TOKEN || !lock_account_id) return;
+      if (!authToken) return;
+      const accountId = await ensureLockAccountId();
+      if (!accountId) return;
       setLoadingAccounts(true);
       try {
         const res = await pmsClient.get(
-          `/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`
+          `/lock_accounts/${accountId}/lock_account_groups?format=flat`
         );
         setAccountGroups(res.data.data || []);
       } catch (err) {
@@ -356,18 +413,35 @@ export const CreatePaymentPage: React.FC = () => {
       }
     };
     fetchAccountGroups();
-  }, [pmsClient, lock_account_id]);
+  }, [authToken, ensureLockAccountId, pmsClient]);
 
   const fetchBills = useCallback(
     async (vendorId: string) => {
-      if (!API_CONFIG.TOKEN) return;
+      if (!authToken) {
+        setBills([]);
+        setAppliedAmounts({});
+        setBillsError("Authentication token is missing. Please log in again.");
+        setBillsLoading(false);
+        return;
+      }
+
+      const accountId = await ensureLockAccountId();
+      if (!accountId) {
+        setBills([]);
+        setAppliedAmounts({});
+        setBillsError("Could not find lock account for this session. Please reselect your company/site.");
+        setBillsLoading(false);
+        return;
+      }
 
       setBillsLoading(true);
       setBills([]);
       setAppliedAmounts({});
+      setBillsError("");
       try {
         const res = await accountingClient.get("/lock_account_bills.json", {
-          params: { lock_account_id: lock_account_id },
+          params: { lock_account_id: accountId },
+          timeout: 30000,
         });
         const raw = res.data;
         const allBills: LockAccountBill[] = Array.isArray(raw)
@@ -377,20 +451,23 @@ export const CreatePaymentPage: React.FC = () => {
             : Array.isArray(raw?.data)
               ? raw.data
               : [];
-        console.log("allBills", allBills);
         const vendorBills = allBills.filter(
           (b) => String(b.pms_supplier_id) === String(vendorId)
         );
-        console.log("vendorBills", vendorBills);
         setBills(vendorBills);
       } catch (err) {
         console.error("Failed to fetch bills:", err);
-        sonnerToast.error("Could not load bills for this vendor.");
+        const message =
+          axios.isAxiosError(err) && err.code === "ERR_NETWORK_CHANGED"
+            ? "Network changed while loading bills. Please retry."
+            : "Could not load bills for this vendor.";
+        setBillsError(message);
+        sonnerToast.error(message);
       } finally {
         setBillsLoading(false);
       }
     },
-    [accountingClient]
+    [accountingClient, authToken, ensureLockAccountId]
   );
 
   // Convert a File to base64 string
@@ -415,8 +492,13 @@ export const CreatePaymentPage: React.FC = () => {
       sonnerToast.error("Please select an account in 'Paid Through'.");
       return;
     }
-    if (!API_CONFIG.TOKEN) {
+    if (!authToken) {
       sonnerToast.error("API not configured. Please log in.");
+      return;
+    }
+    const accountId = await ensureLockAccountId();
+    if (!accountId) {
+      sonnerToast.error("Could not find lock account for this session.");
       return;
     }
 
@@ -456,7 +538,7 @@ export const CreatePaymentPage: React.FC = () => {
 
       const payload = {
         lock_payment: {
-          lock_account_id: lock_account_id,
+          lock_account_id: accountId,
           payment_of: "Pms::Supplier",
           payment_of_id: parseInt(selectedVendor, 10),
           paid_amount: paidAmount,
@@ -492,7 +574,7 @@ export const CreatePaymentPage: React.FC = () => {
       console.error("[handleSave] payload:", JSON.stringify(payload, null, 2));
 
       const res = await accountingClient.post(
-        `/lock_payments.json?lock_account_id=${lock_account_id}`,
+        `/lock_payments.json?lock_account_id=${accountId}`,
         payload
       );
       sonnerToast.success("Payment saved successfully!");
@@ -521,13 +603,16 @@ export const CreatePaymentPage: React.FC = () => {
   const handleVendorSelect = async (vendorId: string) => {
     setSelectedVendor(vendorId);
     setIsVendorOpen(false);
-    fetchBills(vendorId);
+    setPayFullAmount(false);
+    setBillsError("");
 
     // Auto-set Payment # = (number of existing payments for this vendor) + 1
     try {
+      const accountId = await ensureLockAccountId();
+      if (!accountId) throw new Error("Lock account id is missing.");
       const res = await accountingClient.get("/lock_payments.json", {
         params: {
-          lock_account_id: lock_account_id,
+          lock_account_id: accountId,
           per_page: 9999, // fetch all to count accurately
         },
       });
@@ -561,16 +646,67 @@ export const CreatePaymentPage: React.FC = () => {
   useEffect(() => {
     if (activeTab === "bill_payment" && selectedVendor) {
       fetchBills(selectedVendor);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
+
+    if (activeTab !== "bill_payment") {
+      setPayFullAmount(false);
+      setBills([]);
+      setBillsError("");
+      setAppliedAmounts({});
+    }
+  }, [activeTab, fetchBills, selectedVendor]);
 
   // Total applied across all bill rows
   const totalApplied = Object.values(appliedAmounts).reduce(
     (sum, v) => sum + (parseFloat(v) || 0),
     0
   );
+  const getBillAmountDue = useCallback(
+    (bill: LockAccountBill) =>
+      parseAmountValue(
+        bill.balance_due ?? bill.amount_due ?? bill.due_amount ?? bill.total_amount
+      ),
+    [parseAmountValue]
+  );
+  const vendorAmountDue = bills.reduce(
+    (sum, bill) => sum + getBillAmountDue(bill),
+    0
+  );
   const amountInExcess = Math.max(0, (parseFloat(amount) || 0) - totalApplied);
+
+  const applyFullPaymentAmount = useCallback(
+    (checked: boolean) => {
+      setPayFullAmount(checked);
+
+      if (!checked) {
+        setAmount("");
+        setAppliedAmounts({});
+        return;
+      }
+
+      setAmount(vendorAmountDue.toFixed(2));
+      setAppliedAmounts(
+        bills.reduce<Record<number, string>>((acc, bill) => {
+          acc[bill.id] = getBillAmountDue(bill).toFixed(2);
+          return acc;
+        }, {})
+      );
+    },
+    [bills, getBillAmountDue, vendorAmountDue]
+  );
+
+  useEffect(() => {
+    if (payFullAmount) {
+      setAmount(vendorAmountDue.toFixed(2));
+      setAppliedAmounts(
+        bills.reduce<Record<number, string>>((acc, bill) => {
+          acc[bill.id] = getBillAmountDue(bill).toFixed(2);
+          return acc;
+        }, {})
+      );
+    }
+  }, [bills, getBillAmountDue, payFullAmount, vendorAmountDue]);
 
   // TDS deduction: amount × (selectedTds percentage / 100)
   const selectedTdsOption = tdsOptions.find((opt) => String(opt.id) === selectedTds);
@@ -627,7 +763,9 @@ export const CreatePaymentPage: React.FC = () => {
                       handleVendorSelect(vendorId);
                     } else {
                       setSelectedVendor(null);
+                      setPayFullAmount(false);
                       setBills([]);
+                      setBillsError("");
                       setAppliedAmounts({});
                     }
                   }}
@@ -825,10 +963,27 @@ export const CreatePaymentPage: React.FC = () => {
                         </span>
                         <input
                           value={amount}
-                          onChange={(e) => setAmount(e.target.value)}
+                          onChange={(e) => {
+                            setAmount(e.target.value);
+                            setPayFullAmount(false);
+                          }}
                           className="flex-1 w-full outline-none text-sm bg-transparent"
                         />
                       </div>
+                      {activeTab === "bill_payment" && (
+                        <label className="mt-2 flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            checked={payFullAmount}
+                            disabled={!selectedVendor || billsLoading || vendorAmountDue <= 0}
+                            onChange={(e) => applyFullPaymentAmount(e.target.checked)}
+                          />
+                          <span>
+                            Pay full amount (₹{vendorAmountDue.toFixed(2)})
+                          </span>
+                        </label>
+                      )}
                       {/* Net amount after TDS — shown only in vendor_advance */}
                       {activeTab === "vendor_advance" && tdsAmount > 0 && (
                         <p className="mt-1.5 text-xs text-gray-500">
@@ -1126,7 +1281,10 @@ export const CreatePaymentPage: React.FC = () => {
                       <button
                         type="button"
                         className="text-blue-500 text-xs hover:underline"
-                        onClick={() => setAppliedAmounts({})}
+                        onClick={() => {
+                          setAppliedAmounts({});
+                          setPayFullAmount(false);
+                        }}
                       >
                         Clear Applied Amount
                       </button>
@@ -1151,8 +1309,23 @@ export const CreatePaymentPage: React.FC = () => {
                       </div>
                     )}
 
+                    {!billsLoading && billsError && (
+                      <div className="py-10 text-center text-sm text-gray-700 border-b border-gray-200">
+                        <div>{billsError}</div>
+                        {selectedVendor && (
+                          <button
+                            type="button"
+                            className="mt-3 text-blue-500 text-xs hover:underline"
+                            onClick={() => fetchBills(selectedVendor)}
+                          >
+                            Retry
+                          </button>
+                        )}
+                      </div>
+                    )}
+
                     {/* Empty State */}
-                    {!billsLoading && bills.length === 0 && (
+                    {!billsLoading && !billsError && bills.length === 0 && (
                       <div className="py-12 text-center text-gray-800 text-sm border-b border-gray-200">
                         {selectedVendor
                           ? "There are no bills for this vendor."
@@ -1162,6 +1335,7 @@ export const CreatePaymentPage: React.FC = () => {
 
                     {/* Bill Rows */}
                     {!billsLoading &&
+                      !billsError &&
                       bills.map((bill) => (
                         <div
                           key={bill.id}
@@ -1188,25 +1362,26 @@ export const CreatePaymentPage: React.FC = () => {
                             {bill.order_number || "-"}
                           </div>
                           <div className="col-span-2 text-right text-gray-800 text-xs font-medium">
-                            ₹{bill.total_amount.toFixed(2)}
+                            ₹{formatAmountValue(bill.total_amount)}
                           </div>
                           <div className="col-span-2 text-right text-gray-800 text-xs">
-                            ₹{bill.total_amount.toFixed(2)}
+                            ₹{getBillAmountDue(bill).toFixed(2)}
                           </div>
                           <div className="col-span-2 flex justify-end">
                             <input
                               type="number"
                               min="0"
-                              max={bill.total_amount}
+                              max={getBillAmountDue(bill)}
                               step="0.01"
                               placeholder="0.00"
                               value={appliedAmounts[bill.id] ?? ""}
-                              onChange={(e) =>
+                              onChange={(e) => {
+                                setPayFullAmount(false);
                                 setAppliedAmounts((prev) => ({
                                   ...prev,
                                   [bill.id]: e.target.value,
-                                }))
-                              }
+                                }));
+                              }}
                               className="w-24 text-right border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white"
                             />
                           </div>

@@ -1305,6 +1305,7 @@ import OrganisationMaster from "./pages/ClubManagement/OrganisationMaster";
 import MyInboxPage from "./features/inbox/MyInboxPage.tsx";
 import { ExpenseEditPage } from "./pages/ExpenseEditPage.tsx";
 import TaxSetupTabView from "./pages/ClubManagement/TaxSetupTabView.tsx";
+import { BillEdit } from "./pages/ClubManagement/BillEdit.tsx";
 
 const queryClient = new QueryClient();
 
@@ -3402,7 +3403,7 @@ function App() {
                         />
                         <Route
                           path="/accounting/bills/edit/:id"
-                          element={<BillCreatePage />}
+                          element={<BillEdit />}
                         />
                         {/* Recurring Bills Routes */}
                         <Route
