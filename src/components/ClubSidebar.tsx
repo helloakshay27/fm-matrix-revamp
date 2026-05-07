@@ -310,7 +310,7 @@ const modulesByPackage = {
         { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
         { name: "Opening Balance", href: "/accounting/opening-balance" },
         // { name: "Budget", href: "/accounting/budget" },
-        { name: "Tax Setup", href: "/accounting/tax-setup" },
+        { name: "Tax Setup", href: "/accounting/tax-setup-tab" },
       ],
     },
 
@@ -326,19 +326,19 @@ const modulesByPackage = {
           name: "Payment Terms",
           href: "/accounting/payment-terms",
         },
-        {
-          name: "Tax Sections",
-          href: "/accounting/section",
-        },
+        // {
+        //   name: "Tax Sections",
+        //   href: "/accounting/section",
+        // },
 
-        {
-          name: "Direct Taxes",
-          href: "/accounting/tax-setup-master",
-        },
-        {
-          name: "Tax Rates Setup",
-          href: "/accounting/tax-rates-setup",
-        },
+        // {
+        //   name: "Direct Taxes",
+        //   href: "/accounting/tax-setup-master",
+        // },
+        // {
+        //   name: "Tax Rates Setup",
+        //   href: "/accounting/tax-rates-setup",
+        // },
         {
           name: "Default Tax Preferences",
           href: "/accounting/default-tax-preferences",
@@ -409,6 +409,36 @@ const modulesByPackage = {
             // },
           ],
         },
+                {
+          name: "Account",
+          subItems: [
+            // {
+            //   name: "Account Transactions",
+            //   href: "/accounting/reports/account-transactions",
+            // },
+            // {
+            //   name: "Day Book",
+            //   href: "/accounting/reports/day-book",
+            // },
+            // {
+            //   name: "Journal Report",
+            //   href: "/accounting/reports/journal-report",
+            // },
+            // {
+            //   name: "General Ledger",
+            //   href: "/accounting/reports/general-ledger",
+            // },
+            // {
+            //   name: "Detailed General Ledger",
+            //   href: "/accounting/reports/detailed-general-ledger",
+            // },
+            {
+              name: "Trial Balance",
+              href: "/accounting/reports/trial-balance",
+            },
+          ],
+        },
+
         {
           name: "Sales Reports",
           subItems: [
@@ -771,35 +801,6 @@ const modulesByPackage = {
         //   ],
         // },
 
-        {
-          name: "Account",
-          subItems: [
-            // {
-            //   name: "Account Transactions",
-            //   href: "/accounting/reports/account-transactions",
-            // },
-            // {
-            //   name: "Day Book",
-            //   href: "/accounting/reports/day-book",
-            // },
-            // {
-            //   name: "Journal Report",
-            //   href: "/accounting/reports/journal-report",
-            // },
-            // {
-            //   name: "General Ledger",
-            //   href: "/accounting/reports/general-ledger",
-            // },
-            // {
-            //   name: "Detailed General Ledger",
-            //   href: "/accounting/reports/detailed-general-ledger",
-            // },
-            {
-              name: "Trial Balance",
-              href: "/accounting/reports/trial-balance",
-            },
-          ],
-        },
 
         // {
         //   name: "Fixed Asset",

@@ -318,7 +318,11 @@ const TaxRatesTable: React.FC = () => {
   });
 
   return (
-    <div className="relative">
+    <div className="relative  pb-8 pt-4 space-y-4">
+      {/* <h1 className="text-lg font-semibold mb-2">Tax Rate List</h1> */}
+       <header className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Tax Rate List </h1>
+      </header>
       <EnhancedTaskTable
         data={paginated}
         columns={columns}
@@ -716,7 +720,10 @@ const GroupTaxTab: React.FC = () => {
   });
 
   return (
-    <div className="relative px-6 pb-8 pt-4 space-y-4">
+    <div className="relative px-2 pb-8 pt-4 space-y-4">
+      <header className="flex items-center justify-between mb-3">
+        <h1 className="text-2xl font-bold">Tax Group List </h1>
+      </header>
       <EnhancedTaskTable
         data={paginated}
         columns={columns}
@@ -891,7 +898,7 @@ const TaxRateSetupPage: React.FC = () => (
             <line x1="16" y1="17" x2="8" y2="17" />
             <polyline points="10 9 9 9 8 9" />
           </svg>
-          Tax Setup
+          Tax Rate Setup
         </TabsTrigger>
 
         {/* Tab 2 – Group Tax */}
