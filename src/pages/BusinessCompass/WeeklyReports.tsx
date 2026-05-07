@@ -50,6 +50,14 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { AddTaskOrIssueDialog } from "@/components/BusinessCompass/AddTaskOrIssueDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -211,6 +219,22 @@ const normalizeToString = (w: any): string => {
     return String(w ?? "");
 };
 
+const SOP_STATUS_OPTIONS = ["To Start", "Broken", "Running"] as const;
+
+const normalizeSopStatus = (status: any) =>
+    String(status || "")
+        .toLowerCase()
+        .replace(/\s+/g, "_");
+
+const getSopStatusValue = (status: any) => {
+    const normalizedStatus = normalizeSopStatus(status);
+    if (normalizedStatus === "running") return "Running";
+    if (normalizedStatus === "broken") return "Broken";
+    return "To Start";
+};
+
+const roundScore = (score: number) => Number(score.toFixed(2));
+
 const WeeklyReports = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -284,6 +308,15 @@ const WeeklyReports = () => {
         []
     );
     const [selectedWeekOffset, setSelectedWeekOffset] = React.useState(0);
+    const [systemSops, setSystemSops] = React.useState<any[]>([]);
+    const [isLoadingSops, setIsLoadingSops] = React.useState(false);
+    const [sopsError, setSopsError] = React.useState<string | null>(null);
+    const [updatingSopStatus, setUpdatingSopStatus] = React.useState<
+        Record<number, boolean>
+    >({});
+    const [updatingSopHealth, setUpdatingSopHealth] = React.useState<
+        Record<number, boolean>
+    >({});
     const refDate = React.useMemo(() => new Date(), []);
 
     const currentWeekStart = React.useMemo(
@@ -308,7 +341,8 @@ const WeeklyReports = () => {
         typeof localStorage !== "undefined"
             ? JSON.parse(localStorage.getItem("user") || "{}")
             : {};
-    const userId = user?.id;
+    const userId =
+        localStorage.getItem("userId") || localStorage.getItem("user_id") || user?.id;
 
     const myIssuesFilter = `
       q[status_in][]=open
@@ -495,6 +529,51 @@ const WeeklyReports = () => {
 
     const currentUser = getUser();
 
+    const sopMetrics = React.useMemo(() => {
+        const total = systemSops.length;
+        const healthValues = systemSops
+            .map((sop) => Number(sop.health_score ?? sop.healthPercent ?? sop.health ?? 0))
+            .filter((value) => Number.isFinite(value));
+        const averageHealth =
+            healthValues.length > 0
+                ? healthValues.reduce((sum, value) => sum + value, 0) / healthValues.length
+                : 0;
+        const totalHealth = healthValues.reduce((sum, value) => sum + value, 0);
+        const healthScore = Math.min((totalHealth / 100) * 10, 10);
+        const runningCount = systemSops.filter(
+            (sop) => String(sop.status || "").toLowerCase() === "running"
+        ).length;
+        const runningRatio = total > 0 ? runningCount / total : 0;
+        const totalStatusScore = systemSops.reduce((score, sop) => {
+            const normalizedStatus = normalizeSopStatus(sop.status);
+
+            if (normalizedStatus === "running") return score + 5;
+            if (normalizedStatus === "broken") return score - 5;
+            if (normalizedStatus === "to_start") return score - 2;
+
+            return score;
+        }, 0);
+        const statusScore = Math.min(Math.max(totalStatusScore, 0), 10);
+        const status =
+            total === 0
+                ? "No SOPs"
+                : runningCount === total
+                    ? "Running"
+                    : runningCount > 0
+                        ? "Partially Running"
+                        : "Needs Attention";
+
+        return {
+            total,
+            averageHealth: Math.round(averageHealth),
+            healthScore: roundScore(healthScore),
+            runningCount,
+            runningRatio,
+            statusScore: roundScore(statusScore),
+            status,
+        };
+    }, [systemSops]);
+
     // ─── Automated Score Calculation ──────────────────────────────────────────
     const weeklyScore = React.useMemo(() => {
         // 1. Weekly KPI Achievement (Max 20 points)
@@ -551,11 +630,9 @@ const WeeklyReports = () => {
         );
 
         // 5. SOPs Health & Status (Max 20 points)
-        const sopHealth = 100; // Placeholder
-        const sopStatus = "Running"; // Placeholder
-        let sopScore = (sopHealth / 100) * 10;
-        if (sopStatus === "Running") sopScore += 5;
+        let sopScore = sopMetrics.healthScore + sopMetrics.statusScore;
         sopScore = Math.min(Math.max(sopScore, 0), 20);
+        sopScore = roundScore(sopScore);
 
         // 6. Items Planned for Coming Week (Max 20 points)
         const totalPlanned = Object.values(dayPlans).reduce((acc, tasks) => {
@@ -611,7 +688,7 @@ const WeeklyReports = () => {
                 remarks: remarksScore,
             },
         };
-    }, [kpis, kpiEntries, dailyKpiSummary, starredWins, mergedTasksIssues, dayPlans, remarksList]);
+    }, [kpis, kpiEntries, dailyKpiSummary, starredWins, mergedTasksIssues, sopMetrics, dayPlans, remarksList]);
 
     const closureFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -776,6 +853,53 @@ const WeeklyReports = () => {
         }
         return labels;
     }, [weekEnd]);
+
+    useEffect(() => {
+        const fetchSystemSops = async () => {
+            const assignedUserIds = new Set(
+                [
+                    localStorage.getItem("userId"),
+                    localStorage.getItem("user_id"),
+                    userId,
+                ]
+                    .filter((id) => id !== null && id !== undefined && String(id).trim() !== "")
+                    .map((id) => String(id).trim())
+            );
+
+            if (assignedUserIds.size === 0) {
+                setSystemSops([]);
+                setSopsError("User id not found");
+                return;
+            }
+
+            try {
+                setIsLoadingSops(true);
+                setSopsError(null);
+                const response = await apiClient.get("/system_sops.json");
+                const payload = response.data;
+                const records = Array.isArray(payload)
+                    ? payload
+                    : Array.isArray(payload?.data?.system_sops)
+                        ? payload.data.system_sops
+                        : Array.isArray(payload?.data)
+                            ? payload.data
+                            : payload?.system_sops || [];
+                const assignedSops = records.filter(
+                    (sop: any) => assignedUserIds.has(String(sop.assignee_id).trim())
+                );
+
+                setSystemSops(assignedSops);
+            } catch (error) {
+                console.error("Failed to fetch SOPs:", error);
+                setSystemSops([]);
+                setSopsError("Failed to load SOPs");
+            } finally {
+                setIsLoadingSops(false);
+            }
+        };
+
+        fetchSystemSops();
+    }, [userId]);
 
     useEffect(() => {
         const fetchKpis = async () => {
@@ -995,6 +1119,104 @@ const WeeklyReports = () => {
         const newWins = [...wins];
         newWins[index] = value;
         setWins(newWins);
+    };
+
+    const buildSopUpdatePayload = (sop: any, updates: Record<string, any>) => ({
+        system_sop: {
+            system_name: updates.system_name ?? sop.system_name ?? "",
+            status: updates.status ?? getSopStatusValue(sop.status),
+            priority: updates.priority ?? sop.priority ?? "",
+            health_score: Number(updates.health_score ?? sop.health_score ?? 0),
+            documentation_url:
+                updates.documentation_url ?? sop.documentation_url ?? null,
+            kpis: Array.isArray(updates.kpis)
+                ? updates.kpis
+                : Array.isArray(sop.kpis)
+                    ? sop.kpis
+                    : [],
+        },
+    });
+
+    const handleSopStatusChange = async (sop: any, nextStatus: string) => {
+        if (!sop?.id) return;
+
+        setUpdatingSopStatus((prev) => ({ ...prev, [sop.id]: true }));
+        try {
+            const response = await apiClient.put(
+                `/system_sops/${sop.id}.json`,
+                buildSopUpdatePayload(sop, { status: nextStatus })
+            );
+            const updatedSop =
+                response.data?.data?.system_sop ||
+                response.data?.data ||
+                response.data?.system_sop ||
+                null;
+
+            setSystemSops((prev) =>
+                prev.map((item) =>
+                    item.id === sop.id
+                        ? {
+                            ...item,
+                            ...(updatedSop && typeof updatedSop === "object"
+                                ? updatedSop
+                                : {}),
+                            status: nextStatus,
+                        }
+                        : item
+                )
+            );
+            toast.success("SOP status updated");
+        } catch (error) {
+            console.error("Failed to update SOP status:", error);
+            toast.error("Failed to update SOP status");
+        } finally {
+            setUpdatingSopStatus((prev) => ({ ...prev, [sop.id]: false }));
+        }
+    };
+
+    const handleSopHealthPreview = (sopId: number, nextHealth: number) => {
+        setSystemSops((prev) =>
+            prev.map((item) =>
+                item.id === sopId ? { ...item, health_score: nextHealth } : item
+            )
+        );
+    };
+
+    const handleSopHealthCommit = async (sop: any, nextHealth: number) => {
+        if (!sop?.id) return;
+
+        setUpdatingSopHealth((prev) => ({ ...prev, [sop.id]: true }));
+        try {
+            const response = await apiClient.put(
+                `/system_sops/${sop.id}.json`,
+                buildSopUpdatePayload(sop, { health_score: nextHealth })
+            );
+            const updatedSop =
+                response.data?.data?.system_sop ||
+                response.data?.data ||
+                response.data?.system_sop ||
+                null;
+
+            setSystemSops((prev) =>
+                prev.map((item) =>
+                    item.id === sop.id
+                        ? {
+                            ...item,
+                            ...(updatedSop && typeof updatedSop === "object"
+                                ? updatedSop
+                                : {}),
+                            health_score: nextHealth,
+                        }
+                        : item
+                )
+            );
+            toast.success("SOP health updated");
+        } catch (error) {
+            console.error("Failed to update SOP health:", error);
+            toast.error("Failed to update SOP health");
+        } finally {
+            setUpdatingSopHealth((prev) => ({ ...prev, [sop.id]: false }));
+        }
     };
 
     // --- MODIFIED: Remove carried forward achievements from the current list ---
@@ -2150,11 +2372,119 @@ const WeeklyReports = () => {
                                     {weeklyScore.breakdown.sop}/20 pts
                                 </Badge>
                             </div>
-                            <div className="flex flex-col items-center justify-center px-6 py-8 text-center">
-                                <p className="text-sm text-neutral-400">
-                                    SOP performance metrics will be automatically fetched and
-                                    displayed here.
-                                </p>
+                            <div className="px-6 py-6">
+                                {isLoadingSops ? (
+                                    <div className="flex items-center justify-center gap-2 py-4 text-sm text-neutral-500">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Loading SOP status...
+                                    </div>
+                                ) : sopsError ? (
+                                    <p className="py-4 text-center text-sm text-red-500">
+                                        {sopsError}
+                                    </p>
+                                ) : systemSops.length === 0 ? (
+                                    <p className="py-4 text-center text-sm text-neutral-500">
+                                        No SOPs assigned to you.
+                                    </p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="grid gap-3 sm:grid-cols-3">
+                                            <div className="rounded-xl border border-neutral-200 bg-white p-4 text-center">
+                                                <p className="text-xs font-semibold uppercase text-neutral-500">
+                                                    Health
+                                                </p>
+                                                <p className="mt-1 text-2xl font-bold text-neutral-900">
+                                                    {sopMetrics.averageHealth}%
+                                                </p>
+                                            </div>
+                                            <div className="rounded-xl border border-neutral-200 bg-white p-4 text-center">
+                                                <p className="text-xs font-semibold uppercase text-neutral-500">
+                                                    Status
+                                                </p>
+                                                <p className="mt-1 text-sm font-bold text-neutral-900">
+                                                    {sopMetrics.status}
+                                                </p>
+                                            </div>
+                                            <div className="rounded-xl border border-neutral-200 bg-white p-4 text-center">
+                                                <p className="text-xs font-semibold uppercase text-neutral-500">
+                                                    SOPs
+                                                </p>
+                                                <p className="mt-1 text-2xl font-bold text-neutral-900">
+                                                    {sopMetrics.total}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {systemSops.map((sop) => (
+                                                <div
+                                                    key={sop.id}
+                                                    className="rounded-xl border border-neutral-200 bg-white p-3"
+                                                >
+                                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                        <div className="min-w-0">
+                                                            <p className="truncate text-sm font-bold text-neutral-900">
+                                                                {sop.system_name || "Untitled SOP"}
+                                                            </p>
+                                                            <p className="text-xs text-neutral-500">
+                                                                {sop.department_name || "No department"}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-xs font-semibold">
+                                                            <Select
+                                                                value={getSopStatusValue(sop.status)}
+                                                                disabled={!!updatingSopStatus[sop.id]}
+                                                                onValueChange={(value) =>
+                                                                    handleSopStatusChange(sop, value)
+                                                                }
+                                                            >
+                                                                <SelectTrigger className="h-9 w-[120px] rounded-lg border-neutral-200 bg-white text-xs font-bold text-neutral-700 focus:ring-[#DA7756]/25">
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent className="rounded-xl border-neutral-200">
+                                                                    {SOP_STATUS_OPTIONS.map((status) => (
+                                                                        <SelectItem key={status} value={status}>
+                                                                            {status}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            {updatingSopStatus[sop.id] && (
+                                                                <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="mt-3 space-y-2">
+                                                        <div className="flex items-center justify-between text-xs font-semibold text-neutral-600">
+                                                            <span>Health</span>
+                                                            <span className="text-neutral-800">
+                                                                {Number(sop.health_score ?? 0)}%
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <Slider
+                                                                min={0}
+                                                                max={100}
+                                                                step={1}
+                                                                value={[Number(sop.health_score ?? 0)]}
+                                                                disabled={!!updatingSopHealth[sop.id]}
+                                                                onValueChange={(value) =>
+                                                                    handleSopHealthPreview(sop.id, value[0] ?? 0)
+                                                                }
+                                                                onValueCommit={(value) =>
+                                                                    handleSopHealthCommit(sop, value[0] ?? 0)
+                                                                }
+                                                                className="[&>span:first-child]:bg-neutral-200 [&>span:first-child>span]:bg-[#DA7756] [&_[role=slider]]:border-[#DA7756] [&_[role=slider]]:bg-white"
+                                                            />
+                                                            {updatingSopHealth[sop.id] && (
+                                                                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-neutral-400" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </Card>
 
