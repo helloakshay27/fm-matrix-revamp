@@ -336,14 +336,14 @@ export const WorkOrderAddPage: React.FC = () => {
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = event.target.files ? Array.from(event.target.files) as File[] : [];
-    const validFileTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const validFileTypes = ['application/pdf'];
     const maxFileSizeBytes = 12 * 1024 * 1024; // 12 MB
     const validFiles: File[] = [];
 
     selectedFiles.forEach((file) => {
       // Validate file type
       if (!validFileTypes.includes(file.type)) {
-        toast.error(`Invalid file type: ${file.name}. Accepted formats: JPG, PNG, PDF, XLS, XLSX, DOC, DOCX`);
+        toast.error(`Invalid file type: ${file.name}. Only PDF files are accepted.`);
         return;
       }
 
@@ -1753,7 +1753,7 @@ export const WorkOrderAddPage: React.FC = () => {
               </div>
               <div className="text-xs text-gray-500 mt-3 space-y-1">
                 <p>Accepts up to 12 MB files</p>
-                <p>Supported formats: JPG, PNG, PDF, XLS, XLSX, DOC, DOCX</p>
+                <p>Supported formats: PDF</p>
               </div>
             </div>
 

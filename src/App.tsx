@@ -1304,6 +1304,8 @@ import DashboardUI from "./pages/DashboardUI";
 import OrganisationMaster from "./pages/ClubManagement/OrganisationMaster";
 import MyInboxPage from "./features/inbox/MyInboxPage.tsx";
 import { ExpenseEditPage } from "./pages/ExpenseEditPage.tsx";
+import TaxSetupTabView from "./pages/ClubManagement/TaxSetupTabView.tsx";
+import { BillEdit } from "./pages/ClubManagement/BillEdit.tsx";
 
 const queryClient = new QueryClient();
 
@@ -2811,6 +2813,10 @@ function App() {
                             path="/accounting/tax-setup"
                             element={<TaxSetup />}
                           />
+                           <Route
+                            path="/accounting/tax-setup-tab"
+                            element={<TaxSetupTabView />}
+                          />
                           <Route
                             path="/accounting/charge-setup"
                             element={<ChargeSetupDashboard />}
@@ -3443,7 +3449,7 @@ function App() {
                           />
                           <Route
                             path="/accounting/bills/edit/:id"
-                            element={<BillCreatePage />}
+                            element={<BillEdit />}
                           />
                           {/* Recurring Bills Routes */}
                           <Route

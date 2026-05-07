@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, useParams, useSearchParams } from 'react-router-dom';
 // Utility to map PO API response to bill fields
 function mapPurchaseOrderToBill(poData, customers, itemOptions) {
     // Find the vendor/customer by ID
@@ -111,6 +111,80 @@ function mapRecurringBillToBill(recurringBill, customers, itemOptions) {
         adjustmentLabel: recurringBill?.charge_name || 'Adjustment',
         taxType: recurringBill?.tax_type ? String(recurringBill.tax_type).toUpperCase() : '',
         selectedTax: recurringBill?.lock_account_tax_id ? String(recurringBill.lock_account_tax_id) : '',
+    };
+}
+
+function mapLockAccountBillToBill(bill, customers, itemOptions) {
+    const toDateInputValue = (value) => {
+        if (!value) return '';
+        return String(value).slice(0, 10);
+    };
+
+    const supplierId =
+        bill?.pms_supplier_id ||
+        bill?.supplier_id ||
+        bill?.vendor_id ||
+        bill?.supplier?.id;
+    const vendor = customers.find(c => String(c.id) === String(supplierId));
+    const billItems =
+        bill?.item_details ||
+        bill?.lock_account_bill_charges ||
+        bill?.lock_account_bill_charges_attributes ||
+        [];
+    const mappedItems = Array.isArray(billItems)
+        ? billItems.map((item, index) => {
+            const itemId =
+                item.lock_account_item_id ||
+                item.item_id ||
+                item.lock_account_item?.id;
+            const matchedItem = itemOptions.find(opt => String(opt.id) === String(itemId));
+            const quantity = Number(item.quantity || 1);
+            const rate = Number(item.rate || 0);
+            const amount = Number(item.total_amount ?? item.amount ?? quantity * rate);
+
+            return {
+                id: String(item.id || itemId || `${Date.now()}-${index}`),
+                charge_id: item.id ? String(item.id) : undefined,
+                name: matchedItem?.name || item.item_name || item.name || '',
+                description: item.description || item.name || '',
+                quantity,
+                rate,
+                discount: Number(item.discount || 0),
+                discountType: 'percentage' as const,
+                tax: item.tax_group?.name || '',
+                taxRate: Number(item.tax_group?.rate || item.tax_group?.percentage || 0),
+                amount,
+                customer: String(item.lock_account_customer_id || ''),
+                account: String(item.lock_account_ledger_id || matchedItem?.account || ''),
+                item_id: itemId ? String(itemId) : '',
+                item_tax_type: item.tax_type || item.item_tax_type || '',
+                tax_group_id: item.tax_group_id || item.tax_group?.id || null,
+                tax_exemption_id: item.tax_exemption_id || null,
+            };
+        })
+        : [];
+
+    return {
+        vendor,
+        items: mappedItems,
+        referenceNumber: bill?.order_number || bill?.reference_number || '',
+        subject: bill?.subject || '',
+        salesOrderDate: toDateInputValue(bill?.bill_date || bill?.date),
+        expectedShipmentDate: toDateInputValue(bill?.due_date),
+        selectedTerm: bill?.payment_term_id ? String(bill.payment_term_id) : '',
+        billingAddress: bill?.billing_address?.formatted_address || bill?.supplier?.formatted_address || '',
+        shippingAddress: bill?.shipping_address?.formatted_address || '',
+        sourceOfSupply: bill?.source_of_supply || '',
+        destinationOfSupply: bill?.destination_of_supply || '',
+        customerNotes: bill?.notes || bill?.customer_notes || '',
+        termsAndConditions: bill?.terms_and_conditions || '',
+        discountOnTotal: Number(bill?.discount_per ?? bill?.discount_amount ?? 0),
+        discountTypeOnTotal: bill?.discount_per ? 'percentage' : 'amount',
+        adjustment: Number(bill?.charge_amount || 0),
+        adjustmentLabel: bill?.charge_name || 'Adjustment',
+        taxType: bill?.tax_type ? String(bill.tax_type).toUpperCase() : '',
+        selectedTax: bill?.lock_account_tax_id ? String(bill.lock_account_tax_id) : '',
+        reverseCharge: bill?.reverse_charge === true || bill?.reverse_charge === 'true',
     };
 }
 import {
@@ -261,6 +335,7 @@ interface Item {
     tax_group_id?: number | null
     tax_exemption_id?: number | null
     item_id?: string | null
+    charge_id?: string | null
 }
 
 interface ExternalUser {
@@ -268,8 +343,9 @@ interface ExternalUser {
     email: string;
 }
 
-export const BillsAdd: React.FC = () => {
+export const BillEdit: React.FC = () => {
     const location = useLocation();
+    const { id: billId } = useParams();
     const [searchParams] = useSearchParams();
     const purchaseOrderId =
         location.state?.saleOrderId ||
@@ -282,7 +358,8 @@ export const BillsAdd: React.FC = () => {
     // Prefill state
     const [poPrefill, setPoPrefill] = useState<any>(null);
     const [recurringBillPrefill, setRecurringBillPrefill] = useState<any>(null);
-    const shouldPreserveRecurringSupply = useRef(false);
+    const [billPrefill, setBillPrefill] = useState<any>(null);
+    const shouldPreserveBillSupply = useRef(false);
     const [subject, setSubject] = useState('');
 
     const [reverseCharge, setReverseCharge] = useState(false);
@@ -431,7 +508,7 @@ export const BillsAdd: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        document.title = 'New Bill';
+        document.title = 'Edit Bill';
     }, []);
 
     // Customer data
@@ -766,7 +843,7 @@ export const BillsAdd: React.FC = () => {
     const [taxOptions, setTaxOptions] = useState<any[]>([]);
     const [selectedTax, setSelectedTax] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [isRecurringPrefillLoading, setIsRecurringPrefillLoading] = useState(Boolean(recurringBillId));
+    const [isBillPrefillLoading, setIsBillPrefillLoading] = useState(Boolean(billId));
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [customerOptions, setCustomerOptions] = useState<CustomerOptions[]>([]);
     const fieldStyles = {
@@ -923,7 +1000,6 @@ export const BillsAdd: React.FC = () => {
         const token = localStorage.getItem('token');
         const lockAccountId = localStorage.getItem('lock_account_id');
 
-        setIsRecurringPrefillLoading(true);
         try {
             const res = await axios.get(
                 `https://${baseUrl}/lock_account_bills/${billId}.json?q[recurring_eq]=true&lock_account_id=${lockAccountId}&show=true`,
@@ -941,7 +1017,33 @@ export const BillsAdd: React.FC = () => {
             }
         } catch (err) {
             toast.error('Failed to fetch recurring bill details');
-            setIsRecurringPrefillLoading(false);
+        }
+    };
+
+    const fetchAndPrefillBill = async (id, customersList, itemsList) => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lockAccountId = localStorage.getItem('lock_account_id');
+
+        setIsBillPrefillLoading(true);
+        try {
+            const res = await axios.get(
+                `https://${baseUrl}/lock_account_bills/${id}.json?lock_account_id=${lockAccountId}&show=true`,
+                {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            const bill = res.data?.lock_account_bill || res.data;
+            if (bill?.id) {
+                const mapped = mapLockAccountBillToBill(bill, customersList, itemsList || itemOptions);
+                setBillPrefill(mapped);
+            }
+        } catch (err) {
+            toast.error('Failed to fetch bill details');
+            setIsBillPrefillLoading(false);
         }
     };
 
@@ -952,17 +1054,23 @@ export const BillsAdd: React.FC = () => {
     }, [purchaseOrderId, customers, itemOptions]);
 
     useEffect(() => {
-        if (!recurringBillId) {
-            setIsRecurringPrefillLoading(false);
-            return;
-        }
-        if (customers.length === 0) {
-            setIsRecurringPrefillLoading(true);
-            return;
-        }
+        if (!recurringBillId || customers.length === 0) return;
         fetchAndPrefillRecurringBill(recurringBillId, customers, itemOptions);
         // eslint-disable-next-line
     }, [recurringBillId, customers, itemOptions]);
+
+    useEffect(() => {
+        if (!billId) {
+            setIsBillPrefillLoading(false);
+            return;
+        }
+        if (customers.length === 0) {
+            setIsBillPrefillLoading(true);
+            return;
+        }
+        fetchAndPrefillBill(billId, customers, itemOptions);
+        // eslint-disable-next-line
+    }, [billId, customers, itemOptions]);
 
     // When PO prefill data is ready, set fields
     useEffect(() => {
@@ -981,7 +1089,6 @@ export const BillsAdd: React.FC = () => {
 
     useEffect(() => {
         if (recurringBillPrefill) {
-            shouldPreserveRecurringSupply.current = true;
             if (recurringBillPrefill.vendor) setSelectedCustomer(recurringBillPrefill.vendor);
             if (recurringBillPrefill.items && recurringBillPrefill.items.length > 0) setItems(recurringBillPrefill.items);
             if (recurringBillPrefill.referenceNumber) setReferenceNumber(recurringBillPrefill.referenceNumber);
@@ -991,8 +1098,8 @@ export const BillsAdd: React.FC = () => {
             if (recurringBillPrefill.selectedTerm) setSelectedTerm(recurringBillPrefill.selectedTerm);
             if (recurringBillPrefill.billingAddress) setBillingAddress(recurringBillPrefill.billingAddress);
             if (recurringBillPrefill.shippingAddress) setShippingAddress(recurringBillPrefill.shippingAddress);
-            if (recurringBillPrefill.sourceOfSupply) setSourceOfSupply(normalizeIndianState(recurringBillPrefill.sourceOfSupply));
-            if (recurringBillPrefill.destinationOfSupply) setDestinationOfSupply(normalizeIndianState(recurringBillPrefill.destinationOfSupply));
+            if (recurringBillPrefill.sourceOfSupply) setSourceOfSupply(recurringBillPrefill.sourceOfSupply);
+            if (recurringBillPrefill.destinationOfSupply) setDestinationOfSupply(recurringBillPrefill.destinationOfSupply);
             if (recurringBillPrefill.customerNotes) setCustomerNotes(recurringBillPrefill.customerNotes);
             if (recurringBillPrefill.termsAndConditions) setTermsAndConditions(recurringBillPrefill.termsAndConditions);
             setDiscountOnTotal(recurringBillPrefill.discountOnTotal || 0);
@@ -1003,10 +1110,39 @@ export const BillsAdd: React.FC = () => {
                 setTaxType(recurringBillPrefill.taxType);
             }
             if (recurringBillPrefill.selectedTax) setSelectedTax(recurringBillPrefill.selectedTax);
-            setIsRecurringPrefillLoading(false);
         }
         // eslint-disable-next-line
     }, [recurringBillPrefill]);
+
+    useEffect(() => {
+        if (billPrefill) {
+            shouldPreserveBillSupply.current = true;
+            if (billPrefill.vendor) setSelectedCustomer(billPrefill.vendor);
+            if (billPrefill.items && billPrefill.items.length > 0) setItems(billPrefill.items);
+            setReferenceNumber(billPrefill.referenceNumber || '');
+            setSubject(billPrefill.subject || '');
+            setSalesOrderDate(billPrefill.salesOrderDate || '');
+            setExpectedShipmentDate(billPrefill.expectedShipmentDate || '');
+            setSelectedTerm(billPrefill.selectedTerm || '');
+            setBillingAddress(billPrefill.billingAddress || '');
+            setShippingAddress(billPrefill.shippingAddress || '');
+            setSourceOfSupply(normalizeIndianState(billPrefill.sourceOfSupply));
+            setDestinationOfSupply(normalizeIndianState(billPrefill.destinationOfSupply));
+            setCustomerNotes(billPrefill.customerNotes || '');
+            setTermsAndConditions(billPrefill.termsAndConditions || '');
+            setDiscountOnTotal(billPrefill.discountOnTotal || 0);
+            setDiscountTypeOnTotal(billPrefill.discountTypeOnTotal || 'percentage');
+            setAdjustment(billPrefill.adjustment || 0);
+            setAdjustmentLabel(billPrefill.adjustmentLabel || 'Adjustment');
+            setReverseCharge(Boolean(billPrefill.reverseCharge));
+            if (billPrefill.taxType === 'TDS' || billPrefill.taxType === 'TCS') {
+                setTaxType(billPrefill.taxType);
+            }
+            if (billPrefill.selectedTax) setSelectedTax(billPrefill.selectedTax);
+            setIsBillPrefillLoading(false);
+        }
+        // eslint-disable-next-line
+    }, [billPrefill]);
 
 
     // Fetch customers on mount
@@ -1086,7 +1222,7 @@ export const BillsAdd: React.FC = () => {
             fetchSupplierDetails(selectedCustomer.id);
             fetchSupplierAddresses(
                 selectedCustomer.id,
-                Boolean(purchaseOrderId || recurringBillId || billingAddress || shippingAddress)
+                Boolean(purchaseOrderId || recurringBillId || billId || billingAddress || shippingAddress)
             );
             setPaymentTerms(selectedCustomer.paymentTerms || selectedCustomer.payment_terms || '');
         } else {
@@ -1109,14 +1245,14 @@ export const BillsAdd: React.FC = () => {
     useEffect(() => {
         if (selectedBillingAddress) {
             setBillingAddress(formatAddressText(selectedBillingAddress));
-            if (!shouldPreserveRecurringSupply.current && selectedBillingAddress.state) setSourceOfSupply(selectedBillingAddress.state);
+            if (!shouldPreserveBillSupply.current && selectedBillingAddress.state) setSourceOfSupply(selectedBillingAddress.state);
         }
         // eslint-disable-next-line
     }, [selectedBillingAddressId, billingAddressBook.length]);
     useEffect(() => {
         if (!sameAsBilling && selectedShippingAddress) {
             setShippingAddress(formatAddressText(selectedShippingAddress));
-            if (!shouldPreserveRecurringSupply.current && selectedShippingAddress.state) setDestinationOfSupply(selectedShippingAddress.state);
+            if (!shouldPreserveBillSupply.current && selectedShippingAddress.state) setDestinationOfSupply(selectedShippingAddress.state);
         }
         // eslint-disable-next-line
     }, [selectedShippingAddressId, shippingAddressBook.length, sameAsBilling]);
@@ -1512,8 +1648,13 @@ export const BillsAdd: React.FC = () => {
     console.log('Sale Order Payload:', saleOrderPayload2);
     console.log("items:", items)
     // Handle submit
-    const handleSubmit = async (saveAsDraft: boolean = false) => {
+    const handleSubmit = async () => {
         if (!validate()) {
+            return;
+        }
+
+        if (!billId) {
+            alert('Bill id is missing');
             return;
         }
 
@@ -1553,11 +1694,6 @@ export const BillsAdd: React.FC = () => {
             // formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
             formData.append('lock_account_bill[notes]', customerNotes);
             // formData.append('lock_account_bill[terms_and_conditions]', termsAndConditions);
-            // formData.append('lock_account_bill[status]', 'draft');
-            formData.append(
-                'lock_account_bill[status]',
-                saveAsDraft ? 'draft' : 'open'
-            );
             formData.append('lock_account_bill[subject]', subject || '');
             formData.append(
                 'lock_account_bill[reverse_charge]',
@@ -1583,6 +1719,9 @@ export const BillsAdd: React.FC = () => {
             // Sale order items
             items.forEach((item, idx) => {
                 const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
+                if (item.charge_id) {
+                    formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][id]`, String(item.charge_id));
+                }
                 if (resolvedId) {
                     formData.append(`lock_account_bill[lock_account_bill_charges_attributes][${idx}][lock_account_item_id]`, String(resolvedId));
                 } else {
@@ -1612,8 +1751,8 @@ export const BillsAdd: React.FC = () => {
                 formData.append(`lock_account_bill[attachments_attributes][${idx}][active]`, 'true');
             });
 
-            await fetch(`https://${baseUrl}/lock_account_bills.json?lock_account_id=${lock_account_id}`, {
-                method: 'POST',
+            await fetch(`https://${baseUrl}/lock_account_bills/${billId}.json?lock_account_id=${lock_account_id}`, {
+                method: 'PUT',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined
                     // Do NOT set Content-Type, browser will set it for FormData
@@ -1621,11 +1760,11 @@ export const BillsAdd: React.FC = () => {
                 body: formData
             });
 
-            alert(`Bill ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+            alert('Bill updated successfully!');
             navigate('/accounting/bills');
         } catch (error) {
             console.error('Error submitting sales order:', error);
-            alert('Failed to create Bill');
+            alert('Failed to update Bill');
         } finally {
             setIsSubmitting(false);
         }
@@ -1659,7 +1798,6 @@ export const BillsAdd: React.FC = () => {
             }
         };
         fetchTaxSections();
-        setSelectedTax('');
     }, [taxType]);
 
 
@@ -1667,7 +1805,7 @@ export const BillsAdd: React.FC = () => {
 
     // Update taxAmount using percentage from selected tax option
     useEffect(() => {
-        const selected = taxOptions.find(t => t.name === selectedTax);
+        const selected = taxOptions.find(t => String(t.id) === String(selectedTax) || t.name === selectedTax);
         // Use percentage key for calculation
         if (selected && typeof selected.percentage === 'number') {
             // Calculate tax on afterDiscount
@@ -1765,7 +1903,7 @@ export const BillsAdd: React.FC = () => {
 }, [afterDiscount, totalTax, taxAmount2, adjustment, reverseCharge]);
     console.log('Tax Options:', taxOptions);
 
-    if (isRecurringPrefillLoading) {
+    if (isBillPrefillLoading) {
         return (
             <div className="flex items-center justify-center h-screen">
                 <div className="text-center">
@@ -1779,7 +1917,7 @@ export const BillsAdd: React.FC = () => {
     return (
         <div className="p-6 space-y-6 relative">
             {isSubmitting && (
-                <div className="absolute inset-0 bg-white/80 flex flex-col gap-3 items-center justify-center z-20 rounded-lg">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <CircularProgress size={60} />
                 </div>
             )}
@@ -1811,7 +1949,7 @@ export const BillsAdd: React.FC = () => {
 
                 {/* Title - Below */}
                 <h1 className="text-2xl font-bold text-black">
-                    New Bill
+                    Edit Bill
                 </h1>
 
             </header>
@@ -1830,7 +1968,7 @@ export const BillsAdd: React.FC = () => {
                                         value={selectedCustomer?.id || ''}
                                         onChange={(e) => {
                                             const customer = customers.find(c => c.id === e.target.value);
-                                            shouldPreserveRecurringSupply.current = false;
+                                            shouldPreserveBillSupply.current = false;
                                             setBillingAddress('');
                                             setShippingAddress('');
                                             setSelectedBillingAddressId(null);
@@ -2652,7 +2790,10 @@ export const BillsAdd: React.FC = () => {
                                 <RadioGroup
                                     row
                                     value={taxType}
-                                    onChange={(e) => setTaxType(e.target.value as 'TDS' | 'TCS')}
+                                    onChange={(e) => {
+                                        setTaxType(e.target.value as 'TDS' | 'TCS');
+                                        setSelectedTax('');
+                                    }}
                                 >
                                     <FormControlLabel
                                         value="TDS"
@@ -2685,7 +2826,7 @@ export const BillsAdd: React.FC = () => {
                                     >
                                         <MenuItem value="">Select a Tax</MenuItem>
                                         {taxOptions.map(tax => (
-                                            <MenuItem key={tax.id || tax.name} value={tax.name}>{tax.name}
+                                            <MenuItem key={tax.id || tax.name} value={String(tax.id || tax.name)}>{tax.name}
                                                 {/* {typeof tax.percentage === 'number' ? `(${tax.percentage}%)` : ''} */}
                                             </MenuItem>
                                         ))}
@@ -2898,15 +3039,13 @@ export const BillsAdd: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 justify-center pt-2">
-                <Button variant="outline" onClick={() => navigate('/accounting/bills')} disabled={isSubmitting || isRecurringPrefillLoading}>
+                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit()} disabled={isSubmitting}>
+                    {isSubmitting ? 'Updating...' : 'Update'}
+                </Button>
+                <Button variant="outline" onClick={() => navigate('/accounting/bills')} disabled={isSubmitting}>
                     Cancel
                 </Button>
-                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit(true)} disabled={isSubmitting || isRecurringPrefillLoading}>
-                    {isSubmitting ? 'Saving...' : 'Save as Draft'}
-                </Button>
-                <Button className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded" onClick={() => handleSubmit(false)} disabled={isSubmitting || isRecurringPrefillLoading}>
-                    {isSubmitting ? 'Saving...' : 'Save as Open'}
-                </Button>
+                
             </div>
 
             <Dialog open={addressListModalOpen} onClose={() => setAddressListModalOpen(false)} maxWidth="sm" fullWidth>
