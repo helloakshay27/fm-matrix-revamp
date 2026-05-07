@@ -234,7 +234,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "tested4@gmail.com" ||
       userEmail === "tested3@gmail.com" ||
       userEmail === "testtwo@gmail.com" ||
-      userEmail === "ps1@gophygital.work" ||
+      // userEmail === "ps1@gophygital.work" ||
       userEmail === "ps@gophygital.work" ||
       userEmail === "abdul.g@gophygital.work"
     ) {
@@ -335,7 +335,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "tested4@gmail.com" ||
       userEmail === "tested3@gmail.com" ||
       userEmail === "testtwo@gmail.com" ||
-      userEmail === "ps1@gophygital.work" ||
+      // userEmail === "ps1@gophygital.work" ||
       userEmail === "ps@gophygital.work" ||
       userEmail === "abdul.g@gophygital.work"
     ) {
