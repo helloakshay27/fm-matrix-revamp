@@ -231,6 +231,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "deveshjain928@gmail.com" ||
       userEmail === "abdul.ghaffar@lockated.com" ||
       userEmail === "mailroom2@zs.com" ||
+      userEmail === "tested4@gmail.com" ||
+      userEmail === "tested3@gmail.com" ||
+      userEmail === "testtwo@gmail.com" ||
+      userEmail === "ps1@gophygital.work" ||
+      userEmail === "ps@gophygital.work" ||
       userEmail === "abdul.g@gophygital.work"
     ) {
       console.log("✅ Rendering ActionSidebar (company-specific)");
@@ -327,6 +332,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       userEmail === "deveshjain928@gmail.com" ||
       userEmail === "abdul.ghaffar@lockated.com" ||
       userEmail === "mailroom2@zs.com" ||
+      userEmail === "tested4@gmail.com" ||
+      userEmail === "tested3@gmail.com" ||
+      userEmail === "testtwo@gmail.com" ||
+      userEmail === "ps1@gophygital.work" ||
+      userEmail === "ps@gophygital.work" ||
       userEmail === "abdul.g@gophygital.work"
     ) {
       return <ActionHeader />;
@@ -452,8 +462,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         selectedCompany?.id === 298 ||
         selectedCompany?.id === 199 ||
         org_id === "90" ||
-        org_id === "1" ||
-        org_id === "84" ||
         org_id === "1" ||
         userEmail === "ubaid.hashmat@lockated.com" ||
         userEmail === "besis69240@azeriom.com" ||
