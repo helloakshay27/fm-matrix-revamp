@@ -2069,11 +2069,16 @@ export const AddFacilityBookingClubPage = () => {
               <DialogTitle>Cancellation Policy</DialogTitle>
               <DialogContent>
                 <div className="space-y-4">
-                  {
+                  {/* {
                     selectedFacility && typeof selectedFacility === 'object'
                       ? selectedFacility.cancellation_policy || 'No cancellation policy available'
                       : 'No cancellation policy available'
-                  }
+                  } */}
+
+                  <div
+                    className="prose prose-sm max-w-none quill-content"
+                    dangerouslySetInnerHTML={{ __html: selectedFacility.cancellation_policy || "<p className='text-gray-500'>No cancellation policy provided</p>" }}
+                  />
                 </div>
               </DialogContent>
               <DialogActions>
@@ -2096,11 +2101,16 @@ export const AddFacilityBookingClubPage = () => {
               <DialogTitle>Terms & Conditions</DialogTitle>
               <DialogContent>
                 <div className="space-y-4">
-                  {
+                  {/* {
                     selectedFacility && typeof selectedFacility === 'object'
                       ? selectedFacility.terms || 'No terms and conditions available'
                       : 'No terms and conditions available'
-                  }
+                  } */}
+
+                  <div
+                    className="prose prose-sm max-w-none quill-content"
+                    dangerouslySetInnerHTML={{ __html: selectedFacility.terms || "<p className='text-gray-500'>No terms and conditions provided</p>" }}
+                  />
                 </div>
               </DialogContent>
               <DialogActions>
