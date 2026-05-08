@@ -2007,7 +2007,7 @@ export const AddServicePRDashboard = () => {
         <div className="flex items-center justify-center gap-4 mt-8">
           <Button
             onClick={handleSubmit}
-            className="bg-red-600 hover:bg-red-700 text-white px-8"
+            className="bg-[#C72030] hover:bg-[#C72030] text-white"
             disabled={submitting}
           >
             Save Service PR
