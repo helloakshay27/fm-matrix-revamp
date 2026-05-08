@@ -94,7 +94,7 @@ function mapRecurringBillToBill(recurringBill, customers, itemOptions) {
         items: mappedItems,
         referenceNumber: recurringBill?.order_number || recurringBill?.reference_number || recurringBill?.bill_number || "",
         subject: recurringBill?.subject || '',
-        salesOrderDate: toDateInputValue(recurringBill?.bill_date || recurringBill?.date),
+        salesOrderDate: toDateInputValue(recurringBill?.bill_date || recurringBill?.recurring_detail?.start_date),
         expectedShipmentDate: toDateInputValue(recurringBill?.due_date || recurringBill?.recurring_detail?.end_date),
         selectedTerm: recurringBill?.payment_term_id ? String(recurringBill.payment_term_id) : '',
         billingAddress: recurringBill?.billing_address?.formatted_address || recurringBill?.supplier?.formatted_address || '',

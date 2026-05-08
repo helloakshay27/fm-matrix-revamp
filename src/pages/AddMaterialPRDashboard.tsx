@@ -1126,7 +1126,7 @@ export const AddMaterialPRDashboard = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
-                  {overallWbs && (
+                  {/* {overallWbs && (
                     <Button
                       variant="ghost"
                       type="button"
@@ -1139,7 +1139,7 @@ export const AddMaterialPRDashboard = () => {
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                  )}
+                  )} */}
                 </div>
               )}
 
@@ -1467,7 +1467,7 @@ export const AddMaterialPRDashboard = () => {
                 </div>
                 <div className="text-xs text-gray-500 mt-3 space-y-1">
                   <p>Accepts up to 12 MB files</p>
-                  <p>Supported formats: PDF</p>
+                  <p>Supported formats: PDF </p>
                 </div>
               </div>
 
