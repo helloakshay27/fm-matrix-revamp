@@ -229,9 +229,11 @@ export const ServicePRDetailsPage = () => {
   const [wbsCodes, setWbsCodes] = useState([]);
   const [openDeletionModal, setOpenDeletionModal] = useState(false)
   const [printing, setPrinting] = useState(false)
+  const [testRunLoading, setTestRunLoading] = useState(false)
+  const [sapPushDisabled, setSapPushDisabled] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
-  }>({});
+  }>({})
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
     editWbsCode: false,
@@ -272,6 +274,7 @@ export const ServicePRDetailsPage = () => {
         console.log("response.page", response.page.api_responses);
         if (response.page?.api_responses && Array.isArray(response.page.api_responses)) {
           setExternalApiCalls(response.page.api_responses);
+          console.log("API Calls set in state:", response.page.api_responses);
         }
         // Initialize updatedWbsCodes with current WBS codes
         const initialWbsCodes = response.page?.inventories?.reduce(
@@ -389,6 +392,7 @@ export const ServicePRDetailsPage = () => {
   const handleSendToSap = useCallback(async () => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
+
     if (!baseUrl || !token || !id) {
       toast.error("Missing required configuration");
       return;
@@ -401,9 +405,105 @@ export const ServicePRDetailsPage = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      toast.success(response.data.message);
+
+      toast.success(response.data.message || "Sent to SAP successfully");
+
+      // wait for server-side processing
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const detailsResponse = await axios.get(
+        `https://${baseUrl}/pms/work_orders/${id}.json`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (detailsResponse.data?.page) {
+        setServicePR(detailsResponse.data.page);
+
+        if (
+          detailsResponse.data.page?.api_responses &&
+          Array.isArray(detailsResponse.data.page.api_responses)
+        ) {
+          setExternalApiCalls(detailsResponse.data.page.api_responses);
+          console.log(
+            "API Calls updated after send to SAP:",
+            detailsResponse.data.page.api_responses
+          );
+        }
+
+        toast.success("Data refreshed after send to SAP");
+      }
+
+      // Disable the button after successful push
+      setSapPushDisabled(true);
     } catch (error: any) {
-      toast.error(error.message || "Failed to send to SAP");
+      console.error("Send to SAP error:", error);
+
+      toast.error(
+        error?.response?.data?.message ||
+        error.message ||
+        "Failed to send to SAP"
+      );
+    }
+  }, [id]);
+
+  // Handle test run
+  const handleTestRun = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+
+    if (!baseUrl || !token || !id) {
+      toast.error("Missing required configuration");
+      return;
+    }
+
+    try {
+      setTestRunLoading(true);
+
+      const response = await axios.get<{ message: string }>(
+        `https://${baseUrl}/pms/work_orders/test_run?id=${id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      toast.success(
+        response.data.message || "Test run completed successfully"
+      );
+
+      // wait for server-side processing
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const detailsResponse = await axios.get(
+        `https://${baseUrl}/pms/work_orders/${id}.json`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (detailsResponse.data?.page) {
+        setServicePR(detailsResponse.data.page);
+
+        if (
+          detailsResponse.data.page?.api_responses &&
+          Array.isArray(detailsResponse.data.page.api_responses)
+        ) {
+          setExternalApiCalls(detailsResponse.data.page.api_responses);
+        }
+
+        toast.success("Data refreshed after test run");
+      }
+    } catch (error: any) {
+      console.error("Test run error:", error);
+
+      toast.error(
+        error?.response?.data?.message ||
+        error.message ||
+        "Failed to run test run"
+      );
+    } finally {
+      setTestRunLoading(false);
     }
   }, [id]);
 
@@ -629,14 +729,31 @@ export const ServicePRDetailsPage = () => {
             </>
           ) : (
             <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 bg-blue-600 text-white"
+                onClick={handleTestRun}
+                disabled={testRunLoading}
+              >
+                {testRunLoading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Running...
+                  </>
+                ) : (
+                  "Test Run"
+                )}
+              </Button>
               {buttonCondition.showSap && (
                 <Button
                   size="sm"
                   variant="outline"
                   className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                   onClick={handleSendToSap}
+                  disabled={sapPushDisabled}
                 >
-                  Send To SAP Team
+                  Push To SAP
                 </Button>
               )}
 
@@ -1387,16 +1504,16 @@ export const ServicePRDetailsPage = () => {
                     <div className="md:col-span-2">
                       <p className="text-sm text-gray-600 font-semibold">Message</p>
                       <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
-                        {apiCall.eval_status && apiCall.eval_status.trim()
-                          ? apiCall.eval_status
-                          : (apiCall.response_string ? JSON.stringify(JSON.parse(apiCall.response_string), null, 2) : '-')}
+                        {apiCall.message || '-'}
                       </p>
                     </div>
-                    <div className="md:col-span-2">
-                      <p className="text-xs text-gray-500">
-                        Created: {apiCall.created_at ? new Date(apiCall.created_at).toLocaleString() : '-'}
-                      </p>
-                    </div>
+                    {apiCall.created_at && (
+                      <div className="md:col-span-2">
+                        <p className="text-xs text-gray-500">
+                          Created: {new Date(apiCall.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
