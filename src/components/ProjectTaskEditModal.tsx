@@ -240,7 +240,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
 
   const getTags = useCallback(async () => {
     try {
-      const response = await dispatch(fetchProjectsTags()).unwrap();
+      const response = await dispatch(fetchProjectsTags({ active: true })).unwrap();
       setTags(response);
     } catch (error) {
       console.error(error);

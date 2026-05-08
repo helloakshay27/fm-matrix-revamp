@@ -58,7 +58,7 @@ const ProjectTags = () => {
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        dispatch(fetchProjectsTags());
+        dispatch(fetchProjectsTags({ active: true }));
     }, [dispatch]);
 
     const openAddDialog = () => {
@@ -109,11 +109,11 @@ const ProjectTags = () => {
 
             if (isEditMode && editingId) {
                 await dispatch(updateProjectsTags({ id: editingId, data: payload })).unwrap();
-                dispatch(fetchProjectsTags());
+                dispatch(fetchProjectsTags({ active: true }));
                 toast.success('Tag updated successfully');
             } else {
                 await dispatch(createProjectsTags(payload)).unwrap();
-                dispatch(fetchProjectsTags());
+                dispatch(fetchProjectsTags({ active: true }));
                 toast.success('Tag created successfully');
             }
 
@@ -149,7 +149,7 @@ const ProjectTags = () => {
 
         try {
             await dispatch(updateProjectsTags({ id, data: payload })).unwrap();
-            dispatch(fetchProjectsTags());
+            dispatch(fetchProjectsTags({ active: true }));
         } catch (error) {
             console.error("Failed to toggle status", error);
         }
