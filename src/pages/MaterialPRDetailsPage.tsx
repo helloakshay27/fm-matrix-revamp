@@ -463,7 +463,7 @@ export const MaterialPRDetailsPage = () => {
       toast.error("Missing required configuration");
       return;
     }
-
+    setSapPushDisabled(true);
     try {
       // Step 1: Push to SAP
       const response = await axios.get<{ message: string }>(
@@ -497,7 +497,7 @@ export const MaterialPRDetailsPage = () => {
       }
 
       // Disable the button after successful push
-      setSapPushDisabled(true);
+      
     } catch (error: any) {
       toast.error(error.message || "Failed to push to SAP");
     }

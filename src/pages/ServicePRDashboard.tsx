@@ -46,6 +46,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "po_number",
+    label: "PO Number",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "reference_number",
     label: "Reference No.",
     sortable: true,
