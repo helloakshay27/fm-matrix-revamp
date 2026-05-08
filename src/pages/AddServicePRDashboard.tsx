@@ -433,29 +433,29 @@ export const AddServicePRDashboard = () => {
         toast.success("Auto saved successfully");
         
         // Refetch details API immediately after successful auto-save
-        try {
-          const servicesResponse = await dispatch(
-            getServices({ baseUrl, token })
-          ).unwrap();
-          setServices(servicesResponse.services || []);
+        // try {
+        //   const servicesResponse = await dispatch(
+        //     getServices({ baseUrl, token })
+        //   ).unwrap();
+        //   setServices(servicesResponse.services || []);
           
-          const suppliersResponse = await dispatch(
-            getSuppliers({ baseUrl, token })
-          ).unwrap();
-          setSuppliers(suppliersResponse.suppliers || []);
+        //   const suppliersResponse = await dispatch(
+        //     getSuppliers({ baseUrl, token })
+        //   ).unwrap();
+        //   setSuppliers(suppliersResponse.suppliers || []);
           
-          const plantDetailsResponse = await dispatch(
-            getPlantDetails({ baseUrl, token })
-          ).unwrap();
-          setPlantDetails(plantDetailsResponse.plant_details || []);
+        //   const plantDetailsResponse = await dispatch(
+        //     getPlantDetails({ baseUrl, token })
+        //   ).unwrap();
+        //   setPlantDetails(plantDetailsResponse.plant_details || []);
           
-          const addressesResponse = await dispatch(
-            getAddresses({ baseUrl, token })
-          ).unwrap();
-          setAddresses(addressesResponse.addresses || []);
-        } catch (error) {
-          console.error("Error refetching details API:", error);
-        }
+        //   const addressesResponse = await dispatch(
+        //     getAddresses({ baseUrl, token })
+        //   ).unwrap();
+        //   setAddresses(addressesResponse.addresses || []);
+        // } catch (error) {
+        //   console.error("Error refetching details API:", error);
+        // }
       } catch (error) {
         console.error("Error updating system log:", error);
       }
@@ -1290,7 +1290,7 @@ export const AddServicePRDashboard = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
-                  {overallWbs && (
+                  {/* {overallWbs && (
                     <Button
                       variant="ghost"
                       type="button"
@@ -1303,7 +1303,7 @@ export const AddServicePRDashboard = () => {
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                  )}
+                  )} */}
                 </div>
               )}
 

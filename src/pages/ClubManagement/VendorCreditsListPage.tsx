@@ -238,13 +238,13 @@ export const VendorCreditsListPage: React.FC = () => {
                 >
                     <Eye className="w-4 h-4" />
                 </button>
-                {/* <button
+                <button
                     onClick={() => navigate(`/accounting/vendor-credits/edit/${vc.id}`)}
                     className="p-1 text-black hover:bg-gray-100 rounded"
                     title="Edit"
                 >
                     <Edit className="w-4 h-4" />
-                </button> */}
+                </button>
                 {/* <button
                     onClick={() => {
                         if (confirm('Are you sure you want to delete this vendor credit?')) {

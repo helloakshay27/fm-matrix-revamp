@@ -143,7 +143,7 @@ export const EditEventPage = () => {
           const event = await dispatch(fetchEventById({ id, baseUrl, token })).unwrap();
           setIsActive(event.active);
           if (event.documents && event.documents.length > 0) {
-            setExistingAttachments([event.documents[event.documents.length - 1]]);
+            setExistingAttachments(event.documents);
           } else {
             setExistingAttachments([]);
           }
@@ -192,7 +192,7 @@ export const EditEventPage = () => {
           }
 
           if (event.documents && event.documents.length > 0) {
-            setExistingAttachments([event.documents[event.documents.length - 1]]);
+            setExistingAttachments(event.documents);
           } else {
             setExistingAttachments([]);
           }

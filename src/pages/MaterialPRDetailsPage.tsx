@@ -225,9 +225,10 @@ export const MaterialPRDetailsPage = () => {
   const [openDeletionModal, setOpenDeletionModal] = useState(false)
   const [printing, setPrinting] = useState(false)
   const [testRunLoading, setTestRunLoading] = useState(false)
+  const [sapPushDisabled, setSapPushDisabled] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
-  }>({});
+  }>({})
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
     editWbsCode: false,
@@ -464,6 +465,7 @@ export const MaterialPRDetailsPage = () => {
     }
 
     try {
+      // Step 1: Push to SAP
       const response = await axios.get<{ message: string }>(
         `https://${baseUrl}/pms/purchase_orders/${id}.json?send_sap=yes`,
         {
@@ -471,10 +473,35 @@ export const MaterialPRDetailsPage = () => {
         }
       );
       toast.success(response.data.message);
+
+      // Wait for SAP to process
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Step 2: Fetch the updated details after SAP push
+      try {
+        const detailsResponse = await dispatch(
+          getMaterialPRById({ baseUrl, token, id })
+        ).unwrap();
+        setPR(detailsResponse);
+        setButtonCondition({
+          showSap: detailsResponse.show_send_sap_yes,
+          editWbsCode: detailsResponse.can_edit_wbs_codes,
+        });
+        if (detailsResponse.api_calls && Array.isArray(detailsResponse.api_calls)) {
+          setExternalApiCalls(detailsResponse.api_calls);
+        }
+        toast.info("Details updated successfully");
+      } catch (detailsError) {
+        console.error("Error loading updated details:", detailsError);
+        toast.error("Failed to load updated details");
+      }
+
+      // Disable the button after successful push
+      setSapPushDisabled(true);
     } catch (error: any) {
-      toast.error(error.message || "Failed to w SAP");
+      toast.error(error.message || "Failed to push to SAP");
     }
-  }, [id]);
+  }, [id, baseUrl, token, dispatch]);
 
   // Handle test run
   const handleTestRun = useCallback(async () => {
@@ -485,6 +512,7 @@ export const MaterialPRDetailsPage = () => {
 
     try {
       setTestRunLoading(true);
+      // Step 1: Run the test
       const response = await axios.get<{ message: string }>(
         `https://${baseUrl}/pms/purchase_orders/test_run.json?id=${id}`,
         {
@@ -492,12 +520,49 @@ export const MaterialPRDetailsPage = () => {
         }
       );
       toast.success(response.data.message || "test run completed successfully");
+
+      // Wait for results to be ready
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Step 2: Fetch the updated details after test run
+      try {
+        const detailsResponse = await dispatch(
+          getMaterialPRById({ baseUrl, token, id })
+        ).unwrap();
+        setPR(detailsResponse);
+        setButtonCondition({
+          showSap: detailsResponse.show_send_sap_yes,
+          editWbsCode: detailsResponse.can_edit_wbs_codes,
+        });
+        if (detailsResponse.api_calls && Array.isArray(detailsResponse.api_calls)) {
+          setExternalApiCalls(detailsResponse.api_calls);
+        }
+        toast.info("Test results loaded successfully");
+      } catch (detailsError) {
+        console.error("Error loading test results:", detailsError);
+        toast.error("Failed to load test results");
+      }
+
+      // Step 3: Push to SAP
+      try {
+        const sapResponse = await axios.get<{ message: string }>(
+          `https://${baseUrl}/pms/purchase_orders/${id}.json?send_sap=yes`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        toast.success(sapResponse.data.message || "Pushed to SAP successfully");
+      } catch (sapError: any) {
+        console.error("Error pushing to SAP:", sapError);
+        toast.error(sapError.message || "Failed to push to SAP");
+      }
+
     } catch (error: any) {
       toast.error(error.message || "Failed to run test run");
     } finally {
       setTestRunLoading(false);
     }
-  }, [id, baseUrl, token]);
+  }, [id, baseUrl, token, dispatch]);
 
   const handleDelete = async () => {
     const payload = {
@@ -673,6 +738,7 @@ export const MaterialPRDetailsPage = () => {
                     variant="outline"
                     className="border-gray-300 bg-purple-600 text-white"
                     onClick={handleSendToSap}
+                    disabled={sapPushDisabled}
                   >
                     Push To SAP
                   </Button>

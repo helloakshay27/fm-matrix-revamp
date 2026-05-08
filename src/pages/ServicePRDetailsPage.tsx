@@ -230,9 +230,10 @@ export const ServicePRDetailsPage = () => {
   const [openDeletionModal, setOpenDeletionModal] = useState(false)
   const [printing, setPrinting] = useState(false)
   const [testRunLoading, setTestRunLoading] = useState(false)
+  const [sapPushDisabled, setSapPushDisabled] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
-  }>({});
+  }>({})
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
     editWbsCode: false,
@@ -433,6 +434,9 @@ export const ServicePRDetailsPage = () => {
 
       toast.success("Data refreshed after send to SAP");
     }
+
+    // Disable the button after successful push
+    setSapPushDisabled(true);
   } catch (error: any) {
     console.error("Send to SAP error:", error);
 
@@ -747,6 +751,7 @@ const handleTestRun = useCallback(async () => {
                   variant="outline"
                   className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                   onClick={handleSendToSap}
+                  disabled={sapPushDisabled}
                 >
                   Push To SAP 
                 </Button>
