@@ -392,12 +392,13 @@ export const ServicePRDetailsPage = () => {
  const handleSendToSap = useCallback(async () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  
 
   if (!baseUrl || !token || !id) {
     toast.error("Missing required configuration");
     return;
   }
-
+  setSapPushDisabled(true);
   try {
     const response = await axios.get<{ message: string }>(
       `https://${baseUrl}/pms/work_orders/${id}.json?send_sap=yes`,
@@ -436,7 +437,7 @@ export const ServicePRDetailsPage = () => {
     }
 
     // Disable the button after successful push
-    setSapPushDisabled(true);
+    
   } catch (error: any) {
     console.error("Send to SAP error:", error);
 

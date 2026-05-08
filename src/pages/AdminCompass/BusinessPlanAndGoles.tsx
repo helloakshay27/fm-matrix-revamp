@@ -334,10 +334,29 @@ const saveCoreValuesToApi = async (
 // ─────────────────────────────────────────────
 //  Overview Media API helpers
 // ─────────────────────────────────────────────
-interface OverviewMedia {
-  images: string[];
-  videos: string[];
+interface OverviewMediaItem {
+  id: number | null;
+  url: string;
 }
+
+interface OverviewMedia {
+  images: OverviewMediaItem[];
+  videos: OverviewMediaItem[];
+}
+
+const normalizeImageUrl = (url: string): string => {
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    const directImageUrl = parsed.searchParams.get("imgurl");
+    if (parsed.hostname.includes("google.") && directImageUrl) {
+      return directImageUrl;
+    }
+  } catch {
+    return url;
+  }
+  return url;
+};
 
 const fetchOverviewMediaFromApi = async (): Promise<OverviewMedia> => {
   const url = `${BASE_URL}/business_compass/overview_media`;
@@ -350,13 +369,18 @@ const fetchOverviewMediaFromApi = async (): Promise<OverviewMedia> => {
   } catch {
     json = {};
   }
-  const parseUrlArray = (arr: any[]): string[] =>
+  const parseMediaArray = (arr: any[]): OverviewMediaItem[] =>
     arr
-      .map((item) => (typeof item === "string" ? item : (item?.url ?? "")))
-      .filter(Boolean);
+      .map((item) =>
+        typeof item === "string"
+          ? { id: null, url: item }
+          : { id: item?.id ?? null, url: item?.url ?? "" }
+      )
+      .map((item) => ({ ...item, url: normalizeImageUrl(item.url) }))
+      .filter((item) => Boolean(item.url));
   return {
-    images: Array.isArray(json?.images) ? parseUrlArray(json.images) : [],
-    videos: Array.isArray(json?.videos) ? parseUrlArray(json.videos) : [],
+    images: Array.isArray(json?.images) ? parseMediaArray(json.images) : [],
+    videos: Array.isArray(json?.videos) ? parseMediaArray(json.videos) : [],
   };
 };
 
@@ -1473,8 +1497,12 @@ const BusinessPlanAndGoles = () => {
   const [dragBrandOverIdx, setDragBrandOverIdx] = useState<number | null>(null);
 
   // Overview Media
-  const [overviewImages, setOverviewImages] = useState<string[]>([]);
-  const [overviewVideos, setOverviewVideos] = useState<string[]>([]);
+  const [overviewImages, setOverviewImages] = useState<OverviewMediaItem[]>(
+    []
+  );
+  const [overviewVideos, setOverviewVideos] = useState<OverviewMediaItem[]>(
+    []
+  );
   const [isFetchingMedia, setIsFetchingMedia] = useState(false);
   const [mediaFetchError, setMediaFetchError] = useState<string | null>(null);
   const [newImageUrl, setNewImageUrl] = useState("");
@@ -1857,15 +1885,18 @@ const BusinessPlanAndGoles = () => {
 
   // ── Overview Media Handlers ──
   const handleAddImage = async () => {
-    const trimmed = newImageUrl.trim();
+    const trimmed = normalizeImageUrl(newImageUrl.trim());
     if (!trimmed) return;
     setIsSavingImages(true);
     setMediaSaveError(null);
     try {
-      const updated = [...(overviewImages || []), trimmed];
+      const updated = [
+        ...(overviewImages || []).map((item) => item.url),
+        trimmed,
+      ];
       await saveOverviewImagesApi(updated);
-      setOverviewImages(updated);
       setNewImageUrl("");
+      await loadOverviewMedia();
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to save image.");
     } finally {
@@ -1874,12 +1905,19 @@ const BusinessPlanAndGoles = () => {
   };
 
   const handleDeleteImage = async (index: number) => {
-    const updated = (overviewImages || []).filter((_, i) => i !== index);
+    const media = (overviewImages || [])[index];
     setIsSavingImages(true);
     setMediaSaveError(null);
     try {
-      await saveOverviewImagesApi(updated);
-      setOverviewImages(updated);
+      if (media?.id) {
+        await deleteExtraFieldFromApi(media.id);
+      } else {
+        const updated = (overviewImages || [])
+          .filter((_, i) => i !== index)
+          .map((item) => item.url);
+        await saveOverviewImagesApi(updated);
+      }
+      setOverviewImages((prev) => prev.filter((_, i) => i !== index));
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to delete image.");
     } finally {
@@ -1893,10 +1931,13 @@ const BusinessPlanAndGoles = () => {
     setIsSavingVideos(true);
     setMediaSaveError(null);
     try {
-      const updated = [...(overviewVideos || []), trimmed];
+      const updated = [
+        ...(overviewVideos || []).map((item) => item.url),
+        trimmed,
+      ];
       await saveOverviewVideosApi(updated);
-      setOverviewVideos(updated);
       setNewVideoUrl("");
+      await loadOverviewMedia();
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to save video.");
     } finally {
@@ -1905,12 +1946,19 @@ const BusinessPlanAndGoles = () => {
   };
 
   const handleDeleteVideo = async (index: number) => {
-    const updated = (overviewVideos || []).filter((_, i) => i !== index);
+    const media = (overviewVideos || [])[index];
     setIsSavingVideos(true);
     setMediaSaveError(null);
     try {
-      await saveOverviewVideosApi(updated);
-      setOverviewVideos(updated);
+      if (media?.id) {
+        await deleteExtraFieldFromApi(media.id);
+      } else {
+        const updated = (overviewVideos || [])
+          .filter((_, i) => i !== index)
+          .map((item) => item.url);
+        await saveOverviewVideosApi(updated);
+      }
+      setOverviewVideos((prev) => prev.filter((_, i) => i !== index));
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to delete video.");
     } finally {
@@ -2498,7 +2546,7 @@ const BusinessPlanAndGoles = () => {
                       </div>
                     ) : (
                       <InlineImageSlider
-                        images={overviewImages}
+                        images={(overviewImages || []).map((item) => item.url)}
                         onDelete={handleDeleteImage}
                         isSaving={isSavingImages}
                       />
@@ -2596,7 +2644,7 @@ const BusinessPlanAndGoles = () => {
                       </div>
                     ) : (
                       <InlineVideoPlayer
-                        videos={overviewVideos}
+                        videos={(overviewVideos || []).map((item) => item.url)}
                         onDelete={handleDeleteVideo}
                         isSaving={isSavingVideos}
                       />
