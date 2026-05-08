@@ -695,7 +695,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
               <div className="flex items-center justify-between gap-3 mb-4 mt-4">
                 <div className="w-full">
                   <FormControl fullWidth variant="outlined" size="small" sx={fieldStyles}>
-                    <InputLabel id="project-select-label">Project *</InputLabel>
+                    <InputLabel id="project-select-label">Project</InputLabel>
                     <Select
                       labelId="project-select-label"
                       id="project-select"
@@ -709,7 +709,7 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                           getMilestones(projectId);
                         }
                       }}
-                      label="Project *"
+                      label="Project"
                     >
                       <MenuItem value="">Select a project</MenuItem>
                       {projects.map((proj) => (
@@ -722,13 +722,13 @@ const ProjectTaskEditModal = ({ taskId, onCloseModal }) => {
                 </div>
                 <div className="w-full">
                   <FormControl fullWidth variant="outlined" size="small" sx={fieldStyles} disabled={!selectedProjectId}>
-                    <InputLabel id="milestone-select-label">Milestone *</InputLabel>
+                    <InputLabel id="milestone-select-label">Milestone</InputLabel>
                     <Select
                       labelId="milestone-select-label"
                       id="milestone-select"
                       value={selectedMilestoneId}
                       onChange={(e) => setSelectedMilestoneId(e.target.value)}
-                      label="Milestone *"
+                      label="Milestone"
                     >
                       <MenuItem value="">Select a milestone</MenuItem>
                       {milestones.map((ms) => (
