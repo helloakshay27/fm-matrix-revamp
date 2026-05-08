@@ -1440,13 +1440,30 @@ const ProjectTaskCreateModal = ({
     formDatatoSend.append("task_management[milestone_id]", mid || formData.milestone);
     formDatatoSend.append("task_management[active]", "true");
     formDatatoSend.append("task_management[estimated_hour]", totalWorkingHours.toString());
-    dateWiseHours.forEach((item, index) => {
+
+    // Build task allocation times attributes with proper structure
+    let taskAllocationTimesAttributes: any[] = [];
+    if (Array.isArray(dateWiseHours) && dateWiseHours.length > 0) {
+      taskAllocationTimesAttributes = dateWiseHours.map((item) => ({
+        date: item.date,
+        hours: item.hours,
+        minutes: item.minutes || 0,
+        id: item.id || null,
+        _destroy: false,
+      }));
+    }
+
+    // Append allocation times
+    taskAllocationTimesAttributes.forEach((item, index) => {
       if (item.id) {
         formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][id]`, item.id);
       }
       formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][date]`, item.date);
       formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][hours]`, item.hours);
+      formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][minutes]`, item.minutes);
+      formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][_destroy]`, item._destroy);
     });
+
     if (opportunityId) {
       formDatatoSend.append("task_management[opportunity_id]", opportunityId);
     }

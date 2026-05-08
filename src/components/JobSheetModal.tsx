@@ -45,7 +45,7 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
 
   const handleJobSheetUpdate = async () => {
     if (!taskId) return;
-    
+
     if (!jobSheetComments.trim()) {
       sonnerToast.error('Please enter a comment before updating');
       return;
@@ -56,16 +56,16 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
     });
 
     setIsUpdating(true);
-    
+
     try {
       await taskService.updateTaskComments(taskId, jobSheetComments);
-      
+
       sonnerToast.dismiss(loadingToastId);
       sonnerToast.success('Comments updated successfully!');
-      
+
       // Clear the comment field
       setJobSheetComments('');
-      
+
       // Reload the job sheet data if onRefresh is provided
       if (onRefresh) {
         await onRefresh();
@@ -81,7 +81,7 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
 
   const handleDownloadPDF = async () => {
     if (!taskDetails || !jobSheetData) return;
-    
+
     setIsDownloading(true);
     try {
       // Pass the correct data structure to PDF generator
@@ -208,18 +208,18 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2">
-                      <input 
-                        type="radio" 
-                        disabled 
-                        checked={(jobSheetData?.data?.job_sheet?.metadata?.checklist_for || jobSheetData?.job_sheet?.metadata?.checklist_for)?.includes('Asset')} 
+                      <input
+                        type="radio"
+                        disabled
+                        checked={(jobSheetData?.data?.job_sheet?.metadata?.checklist_for || jobSheetData?.job_sheet?.metadata?.checklist_for)?.includes('Asset')}
                       />
                       <label className="text-sm">Assets</label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <input 
-                        type="radio" 
-                        disabled 
-                        checked={(jobSheetData?.data?.job_sheet?.metadata?.checklist_for || jobSheetData?.job_sheet?.metadata?.checklist_for)?.includes('Service')} 
+                      <input
+                        type="radio"
+                        disabled
+                        checked={(jobSheetData?.data?.job_sheet?.metadata?.checklist_for || jobSheetData?.job_sheet?.metadata?.checklist_for)?.includes('Service')}
                       />
                       <label className="text-sm">Services</label>
                     </div>
@@ -231,18 +231,18 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                   <div className="flex items-center gap-4">
                     <label className="text-sm">Breakdown:</label>
                     <div className="flex items-center gap-2">
-                      <input 
-                        type="radio" 
-                        disabled 
-                        checked={(jobSheetData?.data?.job_sheet?.basic_info?.breakdown_status || jobSheetData?.job_sheet?.basic_info?.breakdown_status) === 'Yes'} 
+                      <input
+                        type="radio"
+                        disabled
+                        checked={(jobSheetData?.data?.job_sheet?.basic_info?.breakdown_status || jobSheetData?.job_sheet?.basic_info?.breakdown_status) === 'Yes'}
                       />
                       <label className="text-sm">Yes</label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <input 
-                        type="radio" 
-                        disabled 
-                        checked={(jobSheetData?.data?.job_sheet?.basic_info?.breakdown_status || jobSheetData?.job_sheet?.basic_info?.breakdown_status) === 'No'} 
+                      <input
+                        type="radio"
+                        disabled
+                        checked={(jobSheetData?.data?.job_sheet?.basic_info?.breakdown_status || jobSheetData?.job_sheet?.basic_info?.breakdown_status) === 'No'}
                       />
                       <label className="text-sm">No</label>
                     </div>
@@ -277,7 +277,7 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
               <div className="space-y-6">
                 {(() => {
                   const responses = jobSheetData?.data?.job_sheet?.checklist_responses || jobSheetData?.job_sheet?.checklist_responses || [];
-                  
+
                   if (responses.length === 0) {
                     return (
                       <div className="border rounded-lg p-8 text-center text-gray-500">
@@ -292,7 +292,7 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                     const groupId = response.group_id || 'ungrouped';
                     const subGroupId = response.sub_group_id || 'ungrouped';
                     const key = `${groupId}_${subGroupId}`;
-                    
+
                     if (!grouped[key]) {
                       grouped[key] = [];
                     }
@@ -347,103 +347,159 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                             </thead>
                             <tbody>
                               {section.responses.map((response: any, index: number) => {
-                          const files = response.attachments || [];
-                          
-                          // Display input value or "-" if null/empty
-                          const displayValue = response.input_value || '-';
-                          
-                          // Determine badge color based on the activity result
-                          const getBadgeColorForValue = (value: string) => {
-                            if (value === 'Yes' || value === 'OK' || value === 'Pass') {
-                              return 'bg-green-100 text-green-800';
-                            } else if (value === 'No' || value === 'Not OK' || value === 'Fail') {
-                              return 'bg-red-100 text-red-800';
-                            }
-                            return 'bg-gray-100 text-gray-800';
-                          };
-                          
-                          return (
-                            <tr key={index} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
-                              <td className="p-3 border-b border-r">{response.help_text || '-'}</td>
-                              <td className="p-3 border-b border-r">{response.activity || '-'}</td>
-                              <td className="p-3 border-b border-r">
-                                {displayValue !== '-' ? (
-                                  <Badge className={getBadgeColorForValue(displayValue)}>
-                                    {displayValue}
-                                  </Badge>
-                                ) : (
-                                  <span className="text-gray-500">-</span>
-                                )}
-                              </td>
-                              <td className="p-3 border-b border-r">{response.comments || '-'}</td>
-                              <td className="p-3 border-b border-r">{response.weightage || '-'}</td>
-                              <td className="p-3 border-b border-r">
-                                {response.rating !== undefined && response.rating !== null ? 
-                                  `${response.rating}/${response.max_rating || 5}` : '-'
-                                }
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                {response.score !== undefined && response.score !== null ? 
-                                  `${response.score}/${response.max_possible_score || 0}` : '-'
-                                }
-                              </td>
-                              <td className="p-3 border-b border-r">
-                                <Badge className={getStatusColor(
-                                  jobSheetData?.data?.job_sheet?.task_details?.task_status || 
-                                  jobSheetData?.job_sheet?.task_details?.task_status
-                                )}>
-                                  {jobSheetData?.data?.job_sheet?.task_details?.task_status || 
-                                   jobSheetData?.job_sheet?.task_details?.task_status || 'Pending'}
-                                </Badge>
-                              </td>
-                              <td className="p-3 border-b">
-                                {files.length > 0 ? (
-                                  <div className="flex flex-wrap gap-2">
-                                    {files.map((file: any, fileIndex: number) => {
-                                      // Handle both string URLs and object formats
-                                      const fileUrl = typeof file === 'string' ? file : (file.url || file.file_url);
-                                      const fileName = typeof file === 'string' 
-                                        ? `Attachment ${fileIndex + 1}` 
-                                        : (file.filename || file.name || `Attachment ${fileIndex + 1}`);
-                                      
-                                      return (
-                                        <div key={fileIndex} className="flex items-center gap-1">
-                                          <a
-                                            href={fileUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="hover:opacity-80 transition-opacity"
-                                            title={fileName}
+                                const files = response.attachments || [];
+
+                                // Display input value or "-" if null/empty
+                                const displayValue = response.input_value || '-';
+
+                                // Determine badge color based on the activity result
+                                const getBadgeColorForValue = (value: string) => {
+                                  if (value === 'Yes' || value === 'OK' || value === 'Pass') {
+                                    return 'bg-green-100 text-green-800';
+                                  } else if (value === 'No' || value === 'Not OK' || value === 'Fail') {
+                                    return 'bg-red-100 text-red-800';
+                                  }
+                                  return 'bg-gray-100 text-gray-800';
+                                };
+
+                                return (
+                                  <tr key={index} className={index % 2 === 0 ? 'bg-blue-50' : 'bg-white'}>
+                                    <td className="p-3 border-b border-r">{response.help_text || '-'}</td>
+                                    <td className="p-3 border-b border-r">{response.activity || '-'}</td>
+                                    <td className="p-3 border-b border-r">
+                                      {(() => {
+                                        // Handle radio-group type with color coding
+                                        if (response.type === "radio-group" && response.values && Array.isArray(response.values)) {
+                                          const selectedValue = response.input_value || response.userData?.[0] || "-";
+                                          if (selectedValue !== "-" && selectedValue) {
+                                            // Find the value object to get its type (positive/negative)
+                                            const valueObj = response.values.find((v: any) => v.value === selectedValue || v.label === selectedValue);
+                                            const valueType = valueObj?.type || "neutral";
+
+                                            // Determine badge color based on value type
+                                            let badgeColor = "bg-gray-100 text-gray-800";
+                                            if (valueType === "positive" || selectedValue === "Yes" || selectedValue === "OK" || selectedValue === "Pass") {
+                                              badgeColor = "bg-green-100 text-green-800";
+                                            } else if (valueType === "negative" || selectedValue === "No" || selectedValue === "Not OK" || selectedValue === "Fail") {
+                                              badgeColor = "bg-red-100 text-red-800";
+                                            }
+
+                                            return (
+                                              <Badge className={badgeColor}>
+                                                {selectedValue}
+                                              </Badge>
+                                            );
+                                          }
+                                          return <span className="text-sm text-gray-500">-</span>;
+                                        }
+
+                                        let inputText = "-";
+
+                                        // Handle array inputs with paired values
+                                        if (Array.isArray(response.input_value) && response.input_value.length > 0) {
+                                          // Check if we have values array to pair with input_value
+                                          if (response.values && Array.isArray(response.values) && response.values.length > 0) {
+                                            // Pair each value with corresponding input_value
+                                            inputText = response.input_value
+                                              .map((data: string, index: number) => {
+                                                if (!data || data === "-") return null;
+                                                const valueObj = response.values[index];
+                                                // Handle both string and object values
+                                                const key = typeof valueObj === "string"
+                                                  ? valueObj
+                                                  : (valueObj?.label || valueObj?.value || `Item ${index + 1}`);
+                                                return `${key}: ${data}`;
+                                              })
+                                              .filter((text: string | null) => text !== null)
+                                              .join(" | ") || "-";
+                                          } else {
+                                            // Fallback: just join input data with comma
+                                            inputText = response.input_value.filter((val: string) => val && val !== "-").join(", ") || "-";
+                                          }
+                                        } else if (response.input_value && response.input_value !== "-") {
+                                          // Single value case
+                                          inputText = response.input_value;
+                                        }
+
+                                        return (
+                                          <span
+                                            className="text-xs cursor-help truncate max-w-[200px] block"
+                                            title={inputText}
                                           >
-                                            <img 
-                                              src={fileUrl} 
-                                              alt={fileName} 
-                                              className="w-12 h-12 object-cover rounded border border-gray-200"
-                                              onError={(e) => {
-                                                const target = e.target as HTMLImageElement;
-                                                target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZTwvdGV4dD48L3N2Zz4=';
-                                              }}
-                                            />
-                                          </a>
+                                            {inputText}
+                                          </span>
+                                        );
+                                      })()}
+                                    </td>
+                                    <td className="p-3 border-b border-r">{response.comments || '-'}</td>
+                                    <td className="p-3 border-b border-r">{response.weightage || '-'}</td>
+                                    <td className="p-3 border-b border-r">
+                                      {response.rating !== undefined && response.rating !== null ?
+                                        `${response.rating}/${response.max_rating || 5}` : '-'
+                                      }
+                                    </td>
+                                    <td className="p-3 border-b border-r">
+                                      {response.score !== undefined && response.score !== null ?
+                                        `${response.score}/${response.max_possible_score || 0}` : '-'
+                                      }
+                                    </td>
+                                    <td className="p-3 border-b border-r">
+                                      <Badge className={getStatusColor(
+                                        jobSheetData?.data?.job_sheet?.task_details?.task_status ||
+                                        jobSheetData?.job_sheet?.task_details?.task_status
+                                      )}>
+                                        {jobSheetData?.data?.job_sheet?.task_details?.task_status ||
+                                          jobSheetData?.job_sheet?.task_details?.task_status || 'Pending'}
+                                      </Badge>
+                                    </td>
+                                    <td className="p-3 border-b">
+                                      {files.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                          {files.map((file: any, fileIndex: number) => {
+                                            // Handle both string URLs and object formats
+                                            const fileUrl = typeof file === 'string' ? file : (file.url || file.file_url);
+                                            const fileName = typeof file === 'string'
+                                              ? `Attachment ${fileIndex + 1}`
+                                              : (file.filename || file.name || `Attachment ${fileIndex + 1}`);
+
+                                            return (
+                                              <div key={fileIndex} className="flex items-center gap-1">
+                                                <a
+                                                  href={fileUrl}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="hover:opacity-80 transition-opacity"
+                                                  title={fileName}
+                                                >
+                                                  <img
+                                                    src={fileUrl}
+                                                    alt={fileName}
+                                                    className="w-12 h-12 object-cover rounded border border-gray-200"
+                                                    onError={(e) => {
+                                                      const target = e.target as HTMLImageElement;
+                                                      target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTAiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZTwvdGV4dD48L3N2Zz4=';
+                                                    }}
+                                                  />
+                                                </a>
+                                              </div>
+                                            );
+                                          })}
                                         </div>
-                                      );
-                                    })}
-                                  </div>
-                                ) : (
-                                  <span className="text-sm text-gray-500">No attachments</span>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                                      ) : (
+                                        <span className="text-sm text-gray-500">No attachments</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  ));
+                })()}
               </div>
-            ));
-          })()}
-        </div>
 
               {/* Existing Task Comments Display */}
               {(jobSheetData?.data?.job_sheet?.task_details?.task_comments || jobSheetData?.job_sheet?.task_details?.task_comments) && (
@@ -501,23 +557,23 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
                 <div>
                   <label className="text-sm text-gray-600">Performed By</label>
                   <p className="font-medium">
-                    {jobSheetData?.data?.job_sheet?.personnel?.performed_by?.full_name || 
-                     jobSheetData?.job_sheet?.personnel?.performed_by?.full_name || 'Not specified'}
+                    {jobSheetData?.data?.job_sheet?.personnel?.performed_by?.full_name ||
+                      jobSheetData?.job_sheet?.personnel?.performed_by?.full_name || 'Not specified'}
                   </p>
                   <p className="text-sm text-gray-500">
-                    {jobSheetData?.data?.job_sheet?.personnel?.performed_by?.type || 
-                     jobSheetData?.job_sheet?.personnel?.performed_by?.type || ''}
+                    {jobSheetData?.data?.job_sheet?.personnel?.performed_by?.type ||
+                      jobSheetData?.job_sheet?.personnel?.performed_by?.type || ''}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-600">Task Status</label>
                   <p className="font-medium">
-                    {jobSheetData?.data?.job_sheet?.summary?.task_completion_status || 
-                     jobSheetData?.job_sheet?.summary?.task_completion_status || 'Pending'}
+                    {jobSheetData?.data?.job_sheet?.summary?.task_completion_status ||
+                      jobSheetData?.job_sheet?.summary?.task_completion_status || 'Pending'}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Completion: {jobSheetData?.data?.job_sheet?.metadata?.completion_percentage || 
-                                 jobSheetData?.job_sheet?.metadata?.completion_percentage || 0}%
+                    Completion: {jobSheetData?.data?.job_sheet?.metadata?.completion_percentage ||
+                      jobSheetData?.job_sheet?.metadata?.completion_percentage || 0}%
                   </p>
                 </div>
               </div>

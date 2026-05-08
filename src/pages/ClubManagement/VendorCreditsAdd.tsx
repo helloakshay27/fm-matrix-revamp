@@ -36,7 +36,7 @@ import {
     ChevronRight,
     EditOutlined
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -1293,13 +1293,13 @@ export const VendorCreditsAdd: React.FC = () => {
             formData.append('lock_account_supplier_credit[destination_of_supply]', destinationOfSupply || '');
             formData.append('lock_account_supplier_credit[status]', saveAsDraft ? 'draft' : 'confirmed');
             formData.append('lock_account_supplier_credit[total_amount]', String(totalAmount2));
-             formData.append('lock_account_supplier_credit[tax_type]', taxType.toLowerCase());
+            formData.append('lock_account_supplier_credit[tax_type]', taxType.toLowerCase());
             formData.append(
                 'lock_account_supplier_credit[reverse_charge]',
                 reverseCharge ? 'true' : 'false'
             );
 
-              formData.append(
+            formData.append(
                 'lock_account_supplier_credit[sub_total_amount]',
                 String(subTotal)
             );
@@ -1315,7 +1315,7 @@ export const VendorCreditsAdd: React.FC = () => {
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][lock_account_ledger_id]`, item.account || '');
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
-                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
+                formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_type]`, item.item_tax_type || '');
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id || ''));
                 formData.append(`lock_account_supplier_credit[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id || ''));
@@ -1491,8 +1491,26 @@ export const VendorCreditsAdd: React.FC = () => {
                 </div>
             )}
 
-            <header className="flex items-center justify-between">
+            {/* <header className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">New Vendor Credits</h1>
+            </header> */}
+            <header className="mb-4">
+
+                {/* Back Button - Top */}
+                <button
+                    type="button"
+                    onClick={() => navigate('/accounting/vendor-credits')}
+                    className="flex items-center gap-2 text-black font-medium mb-2"
+                >
+                    <ArrowLeft className="h-4 w-4 text-black" />
+                    Back to Vendor Credits List
+                </button>
+
+                {/* Title - Below */}
+                <h1 className="text-2xl font-bold text-black">
+                    New Vendor Credits
+                </h1>
+
             </header>
 
             <div className="space-y-6">

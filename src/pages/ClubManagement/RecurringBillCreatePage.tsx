@@ -1246,6 +1246,7 @@ if (!profileName || profileName.trim() === "") {
         'recurring_detail[never_expires]',
         neverExpires ? 'true' : 'false'
       );
+      
       // Invoice items
       items.forEach((item, idx) => {
         const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;

@@ -379,7 +379,7 @@ export const RecurringBillDetails = () => {
         }
         taxBreakdown[tax.name].amount += taxAmount;
       });
-    }else if (item.tax_type === "tax_rate" && item.tax_group) {
+    } else if (item.tax_type === "tax_rate" && item.tax_group) {
       // Non-Maharashtra: tax_group is actually a single tax rate object
       const rate = item.tax_group.rate ?? 0;
       const name = item.tax_group.name ?? "Tax";
@@ -391,14 +391,14 @@ export const RecurringBillDetails = () => {
     }
   });
   const taxRows = Object.entries(taxBreakdown);
-const formatDate = (date?: string | null) => {
-  if (!date || date === "null" || date === "0000-00-00") return "-";
+  const formatDate = (date?: string | null) => {
+    if (!date || date === "null" || date === "0000-00-00") return "-";
 
-  const d = new Date(date);
-  if (isNaN(d.getTime()) || d.getTime() === 0) return "-";
+    const d = new Date(date);
+    if (isNaN(d.getTime()) || d.getTime() === 0) return "-";
 
-  return d.toLocaleDateString("en-IN");
-};
+    return d.toLocaleDateString("en-IN");
+  };
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -576,7 +576,7 @@ const formatDate = (date?: string | null) => {
                         {salesOrder?.vendor_name}
                       </p>
                     </div>
-                     <div>
+                    <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Source of Supply
                       </p>
@@ -584,7 +584,7 @@ const formatDate = (date?: string | null) => {
                         {salesOrder?.source_of_supply}
                       </p>
                     </div>
-                     <div>
+                    <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Destination of Supply
                       </p>
@@ -611,26 +611,57 @@ const formatDate = (date?: string | null) => {
 
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
-                        Bill Date
+                        Start On
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {/* {new Date(salesOrder?.bill_date).toLocaleDateString(
-                          "en-IN"
-                        )} */}
-                        {formatDate(salesOrder?.bill_date)}
+                        {formatDate(salesOrder?.recurring_detail?.start_date)}
                       </p>
                     </div>
+
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
-                        Due Date
+                        Ends On
                       </p>
                       <p className="text-base font-semibold mt-1">
-                        {/* {new Date(salesOrder?.due_date).toLocaleDateString(
-                          "en-IN"
-                        )} */}
-                        {formatDate(salesOrder?.due_date)}
+                        {formatDate(salesOrder?.recurring_detail?.end_date)}
                       </p>
                     </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Repeat Value
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {salesOrder?.recurring_detail?.repeat_value}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Repeat Type
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {salesOrder?.recurring_detail?.repeat_type}
+                      </p>
+                    </div>
+
+
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Never Expires
+                      </p>
+                      <p className="text-base font-semibold mt-1">
+                        {salesOrder?.recurring_detail?.never_expires ? "Yes" : "No"}
+                      </p>
+                    </div>
+
+
+
+
+
+
+
+
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">
                         Payment Terms
@@ -1048,7 +1079,7 @@ const formatDate = (date?: string | null) => {
                 </CardHeader>
                 <CardContent>
                   {Array.isArray((salesOrder as any)?.activity_logs) &&
-                  (salesOrder as any).activity_logs.length > 0 ? (
+                    (salesOrder as any).activity_logs.length > 0 ? (
                     <div className="divide-y">
                       {(salesOrder as any).activity_logs.map((log: any, idx: number) => {
                         const key = `${log?.date || ""}-${log?.time || ""}-${idx}`;
