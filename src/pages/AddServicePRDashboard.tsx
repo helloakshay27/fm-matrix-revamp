@@ -1222,7 +1222,7 @@ export const AddServicePRDashboard = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
-                  {overallWbs && (
+                  {/* {overallWbs && (
                     <Button
                       variant="ghost"
                       type="button"
@@ -1235,7 +1235,7 @@ export const AddServicePRDashboard = () => {
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                  )}
+                  )} */}
                 </div>
               )}
 
