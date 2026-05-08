@@ -225,9 +225,10 @@ export const MaterialPRDetailsPage = () => {
   const [openDeletionModal, setOpenDeletionModal] = useState(false)
   const [printing, setPrinting] = useState(false)
   const [testRunLoading, setTestRunLoading] = useState(false)
+  const [sapPushDisabled, setSapPushDisabled] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
-  }>({});
+  }>({})
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
     editWbsCode: false,
@@ -494,6 +495,9 @@ export const MaterialPRDetailsPage = () => {
         console.error("Error loading updated details:", detailsError);
         toast.error("Failed to load updated details");
       }
+
+      // Disable the button after successful push
+      setSapPushDisabled(true);
     } catch (error: any) {
       toast.error(error.message || "Failed to push to SAP");
     }
@@ -734,6 +738,7 @@ export const MaterialPRDetailsPage = () => {
                     variant="outline"
                     className="border-gray-300 bg-purple-600 text-white"
                     onClick={handleSendToSap}
+                    disabled={sapPushDisabled}
                   >
                     Push To SAP
                   </Button>
