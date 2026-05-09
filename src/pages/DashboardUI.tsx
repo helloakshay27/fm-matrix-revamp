@@ -109,6 +109,11 @@ const REPORT_CHART_OPTIONS = [
     description: "Completed vs balance tasks",
   },
   {
+    id: "issueWiseProgress",
+    label: "Issue Wise Progress",
+    description: "Issue status breakdown",
+  },
+  {
     id: "milestoneActivityProgress",
     label: "Milestone Activity Wise Progress",
     description: "Milestone-wise completion",
@@ -133,6 +138,7 @@ const REPORT_CHART_KEYS = REPORT_CHART_OPTIONS.map((o) => o.id);
 
 const MILESTONE_COLORS = ["#AF8260", "#E5E7EB"];
 const TASK_COLORS = ["#AF8260", "#E5E7EB"];
+const ISSUE_COLORS = ["#E8806B", "#F5A899", "#C94A2B", "#AF8260", "#2E7D9E", "#D4A5A5"];
 
 // ─────────────────────────────────────────────────────────
 // ── INTERFACES & HELPERS ──
@@ -192,6 +198,15 @@ interface ReportMilestoneItem {
 interface ReportTaskSummary {
   average_completion: number;
   balance: number;
+}
+interface ReportIssueSummary {
+  total: number;
+  open: number;
+  in_progress: number;
+  on_hold: number;
+  completed: number;
+  closed: number;
+  reopened: number;
 }
 interface ReportTaskItem {
   id: number;
@@ -445,7 +460,8 @@ const DonutChartCard: React.FC<{
   data: { name: string; value: number }[];
   colors: string[];
   loading?: boolean;
-}> = ({ title, data, colors, loading }) => (
+  total?: number;
+}> = ({ title, data, colors, loading, total }) => (
   <ChartCard title={title}>
     <div className="flex flex-col items-center justify-center h-full">
       {loading ? (
@@ -454,7 +470,7 @@ const DonutChartCard: React.FC<{
         </div>
       ) : (
         <>
-          <div className="w-full px-6">
+          <div className="w-full px-6 relative">
             <ResponsiveContainer width="100%" height={240}>
               <PieChart margin={{ top: 20, right: 60, bottom: 20, left: 60 }}>
                 <Pie
@@ -486,6 +502,14 @@ const DonutChartCard: React.FC<{
                 />
               </PieChart>
             </ResponsiveContainer>
+            {total !== undefined && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-gray-900">{total}</div>
+                  <div className="text-xs text-gray-500 font-medium">Total</div>
+                </div>
+              </div>
+            )}
           </div>
           <div className="flex items-center justify-center gap-5 mt-2 flex-wrap">
             {data.map((d, i) => (
@@ -630,6 +654,8 @@ const DashboardUI: React.FC = () => {
   const [reportTaskSummary, setReportTaskSummary] =
     useState<ReportTaskSummary | null>(null);
   const [reportTasks, setReportTasks] = useState<ReportTaskItem[]>([]);
+  const [reportIssueSummary, setReportIssueSummary] =
+    useState<ReportIssueSummary | null>(null);
   const [reportIssues, setReportIssues] = useState<ReportIssueItem[]>([]);
   const [reportPriorities, setReportPriorities] = useState<
     ReportPriorityBreakdown[]
@@ -644,35 +670,95 @@ const DashboardUI: React.FC = () => {
   // ── Derived report data ──
   const raMilestoneChart = reportMilestoneSummary
     ? [
-        {
-          name: "Completed",
-          value: Number(reportMilestoneSummary.average_completion.toFixed(1)),
-        },
-        {
-          name: "Balance",
-          value: Number(reportMilestoneSummary.balance.toFixed(1)),
-        },
-      ]
+      {
+        name: "Completed",
+        value: Number(reportMilestoneSummary.average_completion.toFixed(1)),
+      },
+      {
+        name: "Balance",
+        value: Number(reportMilestoneSummary.balance.toFixed(1)),
+      },
+    ]
     : [
-        { name: "Completed", value: 0 },
-        { name: "Balance", value: 100 },
-      ];
+      { name: "Completed", value: 0 },
+      { name: "Balance", value: 100 },
+    ];
 
   const raTaskChart = reportTaskSummary
     ? [
-        {
-          name: "Completed",
-          value: Number(reportTaskSummary.average_completion.toFixed(1)),
-        },
-        {
-          name: "Balance",
-          value: Number(reportTaskSummary.balance.toFixed(1)),
-        },
-      ]
+      {
+        name: "Completed",
+        value: Number(reportTaskSummary.average_completion.toFixed(1)),
+      },
+      {
+        name: "Balance",
+        value: Number(reportTaskSummary.balance.toFixed(1)),
+      },
+    ]
     : [
-        { name: "Completed", value: 0 },
-        { name: "Balance", value: 100 },
-      ];
+      { name: "Completed", value: 0 },
+      { name: "Balance", value: 100 },
+    ];
+
+  const raIssueChart = reportIssueSummary
+    ? [
+      {
+        name: "Open",
+        value: Math.round(
+          ((reportIssueSummary.open || 0) /
+            (reportIssueSummary.total || 1)) *
+          100
+        ),
+      },
+      {
+        name: "In Progress",
+        value: Math.round(
+          ((reportIssueSummary.in_progress || 0) /
+            (reportIssueSummary.total || 1)) *
+          100
+        ),
+      },
+      {
+        name: "On Hold",
+        value: Math.round(
+          ((reportIssueSummary.on_hold || 0) /
+            (reportIssueSummary.total || 1)) *
+          100
+        ),
+      },
+      {
+        name: "Completed",
+        value: Math.round(
+          ((reportIssueSummary.completed || 0) /
+            (reportIssueSummary.total || 1)) *
+          100
+        ),
+      },
+      {
+        name: "Closed",
+        value: Math.round(
+          ((reportIssueSummary.closed || 0) /
+            (reportIssueSummary.total || 1)) *
+          100
+        ),
+      },
+      {
+        name: "Reopened",
+        value: Math.round(
+          ((reportIssueSummary.reopened || 0) /
+            (reportIssueSummary.total || 1)) *
+          100
+        ),
+      },
+    ]
+    : [
+      { name: "Open", value: 0 },
+      { name: "In Progress", value: 0 },
+      { name: "On Hold", value: 0 },
+      { name: "Completed", value: 0 },
+      { name: "Closed", value: 0 },
+      { name: "Reopened", value: 0 },
+    ];
 
   const milestoneTableData = reportMilestones.map((m) => ({
     id: String(m.id),
@@ -779,8 +865,11 @@ const DashboardUI: React.FC = () => {
         setReportTaskSummary(d.task_summary || null);
         setReportTasks(d.tasks || []);
       }
-      if (isJson.success && isJson.data?.[0])
-        setReportIssues(isJson.data[0].issues || []);
+      if (isJson.success && isJson.data?.[0]) {
+        const d = isJson.data[0];
+        setReportIssueSummary(d.issue_summary || null);
+        setReportIssues(d.issues || []);
+      }
       if (pbJson.success && pbJson.data?.[0])
         setReportPriorities(pbJson.data[0].priorities || []);
     } catch (err) {
@@ -812,10 +901,39 @@ const DashboardUI: React.FC = () => {
       });
       let y = MARGIN;
 
+      // ── Load logo ──
+      const logoUrl = "/panchshil.png";
+      let logoData: string | undefined;
+      try {
+        const logoResponse = await fetch(logoUrl);
+        const logoBlob = await logoResponse.blob();
+        logoData = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(logoBlob);
+        });
+      } catch (err) {
+        console.warn("Failed to load logo:", err);
+      }
+
       const checkPage = (needed: number) => {
         if (y + needed > A4_H - MARGIN) {
           pdf.addPage();
           y = MARGIN;
+        }
+      };
+
+      const addLogoToPage = () => {
+        if (logoData) {
+          const logoW = 40;
+          const logoH = 40;
+          const logoX = A4_W - MARGIN - logoW;
+          const logoY = MARGIN - 5;
+          try {
+            pdf.addImage(logoData, "PNG", logoX, logoY, logoW, logoH);
+          } catch (err) {
+            console.warn("Failed to add logo to page:", err);
+          }
         }
       };
 
@@ -1052,6 +1170,9 @@ const DashboardUI: React.FC = () => {
       const orderedVisible = REPORT_CHART_KEYS.filter((k) =>
         reportSelectedCharts.includes(k)
       );
+
+      // ── Add logo to first page ──
+      addLogoToPage();
 
       // ── Report header ──
       pdf.setFontSize(8);
@@ -1525,107 +1646,107 @@ const DashboardUI: React.FC = () => {
 
   const milestoneCards = kpis
     ? [
-        {
-          title: "Total Milestones",
-          value: fmt(kpis.milestones.total),
-          icon: <FileText className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "Open Milestones",
-          value: fmt(kpis.milestones.open),
-          icon: <FolderOpen className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "Completed Milestones",
-          value: fmt(kpis.milestones.completed),
-          icon: <CheckCircle className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "In Progress Milestones",
-          value: fmt(kpis.milestones.in_progress),
-          icon: <Clock className="w-6 h-6 text-[#C72030]" />,
-        },
-      ]
+      {
+        title: "Total Milestones",
+        value: fmt(kpis.milestones.total),
+        icon: <FileText className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "Open Milestones",
+        value: fmt(kpis.milestones.open),
+        icon: <FolderOpen className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "Completed Milestones",
+        value: fmt(kpis.milestones.completed),
+        icon: <CheckCircle className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "In Progress Milestones",
+        value: fmt(kpis.milestones.in_progress),
+        icon: <Clock className="w-6 h-6 text-[#C72030]" />,
+      },
+    ]
     : [];
 
   const taskCards = kpis
     ? [
-        {
-          title: "Total Tasks",
-          value: fmt(kpis.tasks.total),
-          icon: <ClipboardList className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "Open Tasks",
-          value: fmt(kpis.tasks.open),
-          icon: <FolderOpen className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "In Progress Tasks",
-          value: fmt(kpis.tasks.in_progress),
-          icon: <Clock className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "Completed Tasks",
-          value: fmt(kpis.tasks.completed),
-          icon: <CheckCircle className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "On Hold Tasks",
-          value: fmt(kpis.tasks.on_hold),
-          icon: <PauseCircle className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "Overdue Tasks",
-          value: fmt(kpis.tasks.overdue),
-          icon: <AlertCircle className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "Aborted Tasks",
-          value: fmt(kpis.tasks.aborted),
-          icon: <XCircle className="w-6 h-6 text-[#C72030]" />,
-        },
-      ]
+      {
+        title: "Total Tasks",
+        value: fmt(kpis.tasks.total),
+        icon: <ClipboardList className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "Open Tasks",
+        value: fmt(kpis.tasks.open),
+        icon: <FolderOpen className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "In Progress Tasks",
+        value: fmt(kpis.tasks.in_progress),
+        icon: <Clock className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "Completed Tasks",
+        value: fmt(kpis.tasks.completed),
+        icon: <CheckCircle className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "On Hold Tasks",
+        value: fmt(kpis.tasks.on_hold),
+        icon: <PauseCircle className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "Overdue Tasks",
+        value: fmt(kpis.tasks.overdue),
+        icon: <AlertCircle className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "Aborted Tasks",
+        value: fmt(kpis.tasks.aborted),
+        icon: <XCircle className="w-6 h-6 text-[#C72030]" />,
+      },
+    ]
     : [];
 
   const issueCards = kpis
     ? [
-        {
-          title: "Total Issues",
-          value: fmt(kpis.issues.total),
-          icon: <AlertCircle className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "Open Issues",
-          value: fmt(kpis.issues.open),
-          icon: <FolderOpen className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "In Progress Issues",
-          value: fmt(kpis.issues.in_progress),
-          icon: <Clock className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "On Hold Issues",
-          value: fmt(kpis.issues.on_hold),
-          icon: <PauseCircle className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "Completed Issues",
-          value: fmt(kpis.issues.completed),
-          icon: <CheckCircle className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "Closed Issues",
-          value: fmt(kpis.issues.closed),
-          icon: <XCircle className="w-6 h-6 text-[#C72030]" />,
-        },
-        {
-          title: "Reopened Issues",
-          value: fmt(kpis.issues.reopened),
-          icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
-        },
-      ]
+      {
+        title: "Total Issues",
+        value: fmt(kpis.issues.total),
+        icon: <AlertCircle className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "Open Issues",
+        value: fmt(kpis.issues.open),
+        icon: <FolderOpen className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "In Progress Issues",
+        value: fmt(kpis.issues.in_progress),
+        icon: <Clock className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "On Hold Issues",
+        value: fmt(kpis.issues.on_hold),
+        icon: <PauseCircle className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "Completed Issues",
+        value: fmt(kpis.issues.completed),
+        icon: <CheckCircle className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "Closed Issues",
+        value: fmt(kpis.issues.closed),
+        icon: <XCircle className="w-6 h-6 text-[#C72030]" />,
+      },
+      {
+        title: "Reopened Issues",
+        value: fmt(kpis.issues.reopened),
+        icon: <RefreshCw className="w-6 h-6 text-[#C72030]" />,
+      },
+    ]
     : [];
 
   // ── Search bar helpers ──
@@ -2060,8 +2181,8 @@ const DashboardUI: React.FC = () => {
                         {projectsLoading
                           ? "Loading..."
                           : projectsList.find(
-                              (p) => String(p.id) === reportProjectId
-                            )?.title || "Select a project"}
+                            (p) => String(p.id) === reportProjectId
+                          )?.title || "Select a project"}
                       </span>
                     </div>
                     <ChevronDown className="w-4 h-4 text-[#C72030] shrink-0" />
@@ -2236,9 +2357,9 @@ const DashboardUI: React.FC = () => {
                 )}
 
                 {/* Charts grid — same layout as ReportAnalytics */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {reportSelectedCharts.includes("milestoneProgress") && (
-                    <div className="col-span-1 lg:col-span-1 xl:col-span-2">
+                    <div className="col-span-1">
                       <DonutChartCard
                         title="Milestone Progress"
                         data={raMilestoneChart}
@@ -2249,7 +2370,7 @@ const DashboardUI: React.FC = () => {
                   )}
 
                   {reportSelectedCharts.includes("taskWiseProgress") && (
-                    <div className="col-span-1 lg:col-span-1 xl:col-span-2">
+                    <div className="col-span-1">
                       <DonutChartCard
                         title="Task Wise Progress"
                         data={raTaskChart}
@@ -2259,53 +2380,65 @@ const DashboardUI: React.FC = () => {
                     </div>
                   )}
 
+                  {reportSelectedCharts.includes("issueWiseProgress") && (
+                    <div className="col-span-1">
+                      <DonutChartCard
+                        title="Issue Wise Progress"
+                        data={raIssueChart}
+                        colors={ISSUE_COLORS}
+                        loading={reportLoading}
+                        total={reportIssueSummary?.total}
+                      />
+                    </div>
+                  )}
+
                   {reportSelectedCharts.includes(
                     "milestoneActivityProgress"
                   ) && (
-                    <div className="col-span-1 lg:col-span-2 xl:col-span-4">
-                      <ChartCard
-                        title="Milestone Activity Wise Progress"
-                        action={
-                          <SearchInput
-                            placeholder="Search by milestone"
-                            value={milestoneSearch}
-                            onChange={setMilestoneSearch}
-                          />
-                        }
-                      >
-                        <div className="max-h-[400px] overflow-y-auto pr-2">
-                          <EnhancedTable
-                            data={filteredMilestoneTableData}
-                            columns={MILESTONE_ACTIVITY_COLUMNS}
-                            renderCell={(item, columnKey) => {
-                              if (columnKey === "status") {
-                                const n = (item.status as string)?.replace(
-                                  /_/g,
-                                  " "
-                                );
+                      <div className="col-span-1 lg:col-span-2 xl:col-span-4">
+                        <ChartCard
+                          title="Milestone Activity Wise Progress"
+                          action={
+                            <SearchInput
+                              placeholder="Search by milestone"
+                              value={milestoneSearch}
+                              onChange={setMilestoneSearch}
+                            />
+                          }
+                        >
+                          <div className="max-h-[400px] overflow-y-auto pr-2">
+                            <EnhancedTable
+                              data={filteredMilestoneTableData}
+                              columns={MILESTONE_ACTIVITY_COLUMNS}
+                              renderCell={(item, columnKey) => {
+                                if (columnKey === "status") {
+                                  const n = (item.status as string)?.replace(
+                                    /_/g,
+                                    " "
+                                  );
+                                  return (
+                                    <span
+                                      className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize leading-none ${STATUS_STYLES[item.status as string] ?? "bg-gray-100 text-gray-600"}`}
+                                    >
+                                      {n}
+                                    </span>
+                                  );
+                                }
                                 return (
-                                  <span
-                                    className={`inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize leading-none ${STATUS_STYLES[item.status as string] ?? "bg-gray-100 text-gray-600"}`}
-                                  >
-                                    {n}
-                                  </span>
+                                  <div className="flex items-center h-full py-1 text-xs text-gray-600 whitespace-normal break-words">
+                                    {item[columnKey] as string}
+                                  </div>
                                 );
-                              }
-                              return (
-                                <div className="flex items-center h-full py-1 text-xs text-gray-600 whitespace-normal break-words">
-                                  {item[columnKey] as string}
-                                </div>
-                              );
-                            }}
-                            hideTableSearch
-                            hideTableExport
-                            hideColumnsButton
-                            storageKey="ra-modal-milestone-activity"
-                          />
-                        </div>
-                      </ChartCard>
-                    </div>
-                  )}
+                              }}
+                              hideTableSearch
+                              hideTableExport
+                              hideColumnsButton
+                              storageKey="ra-modal-milestone-activity"
+                            />
+                          </div>
+                        </ChartCard>
+                      </div>
+                    )}
 
                   {reportSelectedCharts.includes("activityCompletion") && (
                     <div className="col-span-1 lg:col-span-2 xl:col-span-4">
