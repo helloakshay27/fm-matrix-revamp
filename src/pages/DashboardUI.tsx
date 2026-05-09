@@ -883,6 +883,18 @@ const DashboardUI: React.FC = () => {
     if (reportOpen && reportProjectId) fetchReportData(reportProjectId);
   }, [reportOpen, reportProjectId, fetchReportData]);
 
+  // ── Helper: Convert hex color to RGB tuple ──
+  const hexToRgb = (hex: string): [number, number, number] => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16),
+      ]
+      : [0, 0, 0];
+  };
+
   // ─────────────────────────────────────────────────────────
   // ── jsPDF DOWNLOAD (matches ReportAnalytics exactly) ──
   // ─────────────────────────────────────────────────────────
@@ -1156,14 +1168,14 @@ const DashboardUI: React.FC = () => {
 
         pdf.addImage(imgData, "PNG", imgX, imgY, imgW, imgH);
         const legendX = imgX + imgW + 12;
-        const legendStartY = imgY + imgH / 2 - (data.length * 18) / 2;
+        const legendStartY = imgY + imgH / 2 - (data.length * 14) / 2;
         data.forEach((d, i) => {
-          const lly = legendStartY + i * 20;
+          const lly = legendStartY + i * 16;
           drawRect(legendX, lly, 10, 10, colors[i % colors.length]);
-          pdf.setFontSize(8);
+          pdf.setFontSize(6.5);
           pdf.setFont("helvetica", "normal");
           pdf.setTextColor(55, 65, 81);
-          pdf.text(`${d.name}: ${d.value}%`, legendX + 13, lly + 8);
+          pdf.text(`${d.name}: ${d.value}%`, legendX + 13, lly + 7);
         });
       };
 
@@ -1263,52 +1275,118 @@ const DashboardUI: React.FC = () => {
       // ── Donut charts row ──
       const showMilestone = orderedVisible.includes("milestoneProgress");
       const showTask = orderedVisible.includes("taskWiseProgress");
-      if (showMilestone || showTask) {
+      const showIssue = orderedVisible.includes("issueWiseProgress");
+      if (showMilestone || showTask || showIssue) {
         checkPage(160);
-        const HALF_W = CONTENT_W / 2 - 6;
-        if (showMilestone && showTask) {
-          drawDonutPanel(
-            "Milestone Progress",
-            raMilestoneChart,
-            [
-              [175, 130, 96],
-              [229, 231, 235],
-            ],
-            0,
-            HALF_W
-          );
-          drawDonutPanel(
-            "Task Wise Progress",
-            raTaskChart,
-            [
-              [175, 130, 96],
-              [229, 231, 235],
-            ],
-            HALF_W + 12,
-            HALF_W
-          );
-        } else if (showMilestone) {
-          drawDonutPanel(
-            "Milestone Progress",
-            raMilestoneChart,
-            [
-              [175, 130, 96],
-              [229, 231, 235],
-            ],
-            0,
-            CONTENT_W
-          );
-        } else if (showTask) {
-          drawDonutPanel(
-            "Task Wise Progress",
-            raTaskChart,
-            [
-              [175, 130, 96],
-              [229, 231, 235],
-            ],
-            0,
-            CONTENT_W
-          );
+        const numCharts = [showMilestone, showTask, showIssue].filter(Boolean).length;
+
+        if (numCharts === 1) {
+          const FULL_W = CONTENT_W;
+          if (showMilestone) {
+            drawDonutPanel(
+              "Milestone Progress",
+              raMilestoneChart,
+              [
+                [175, 130, 96],
+                [229, 231, 235],
+              ],
+              0,
+              FULL_W
+            );
+          } else if (showTask) {
+            drawDonutPanel(
+              "Task Wise Progress",
+              raTaskChart,
+              [
+                [175, 130, 96],
+                [229, 231, 235],
+              ],
+              0,
+              FULL_W
+            );
+          } else if (showIssue) {
+            drawDonutPanel(
+              "Issue Wise Progress",
+              raIssueChart,
+              ISSUE_COLORS.map(hexToRgb),
+              0,
+              FULL_W
+            );
+          }
+        } else if (numCharts === 2) {
+          const HALF_W = CONTENT_W / 2 - 6;
+          let offsetX = 0;
+          if (showMilestone) {
+            drawDonutPanel(
+              "Milestone Progress",
+              raMilestoneChart,
+              [
+                [175, 130, 96],
+                [229, 231, 235],
+              ],
+              offsetX,
+              HALF_W
+            );
+            offsetX += HALF_W + 12;
+          }
+          if (showTask) {
+            drawDonutPanel(
+              "Task Wise Progress",
+              raTaskChart,
+              [
+                [175, 130, 96],
+                [229, 231, 235],
+              ],
+              offsetX,
+              HALF_W
+            );
+            offsetX += HALF_W + 12;
+          }
+          if (showIssue) {
+            drawDonutPanel(
+              "Issue Wise Progress",
+              raIssueChart,
+              ISSUE_COLORS.map(hexToRgb),
+              offsetX,
+              HALF_W
+            );
+          }
+        } else {
+          // numCharts === 3
+          const THIRD_W = CONTENT_W / 3 - 8;
+          if (showMilestone) {
+            drawDonutPanel(
+              "Milestone Progress",
+              raMilestoneChart,
+              [
+                [175, 130, 96],
+                [229, 231, 235],
+              ],
+              0,
+              THIRD_W
+            );
+          }
+          if (showTask) {
+            drawDonutPanel(
+              "Task Wise Progress",
+              raTaskChart,
+              [
+                [175, 130, 96],
+                [229, 231, 235],
+              ],
+              THIRD_W + 12,
+              THIRD_W
+            );
+          }
+          if (showIssue) {
+            drawDonutPanel(
+              "Issue Wise Progress",
+              raIssueChart,
+              ISSUE_COLORS.map(hexToRgb),
+              2 * (THIRD_W + 12),
+              THIRD_W
+            );
+          }
         }
         y += 116;
       }
