@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -206,6 +207,7 @@ import CompanySetup from "./pages/CompanySetup";
 import EmployeeOfTheMonthSetup from "./pages/EmployeeOfTheMonthSetup";
 import AnnouncementsSetup from "./pages/AnnouncementsSetup";
 import TeamSetup from "./pages/settings/company-hub/team-setup";
+import FaceAuthenticationSetup from "./pages/settings/company-hub/FaceAuthenticationSetup";
 import JobsPage from "./pages/CompanyHub/JobsPage";
 import { EditPermitPage } from "./pages/EditPermitPage";
 
@@ -413,6 +415,7 @@ import OfficeAlternativePage from "./pages/products/OfficeAlternativePage";
 import BudgetingWBSPage from "./pages/products/BudgetingWBSPage";
 import LiquidtextPage from "./pages/products/LiquidtextPage";
 import ViMilesPage from "./pages/products/ViMilesPage";
+import ProductLandingPage from "./pages/products/ProductLandingPage";
 import HRPolicies from "./pages/HRPolicies";
 import Directory from "./pages/Directory";
 import EmployeeFAQ from "./pages/EmployeeFAQ";
@@ -1433,6 +1436,28 @@ const WebSocketNotificationInitializer: React.FC<{
   return <>{children}</>;
 };
 
+const ProductLandingButton: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isProductDetailPath = /^\/product\/[^/]+\/?$/.test(location.pathname);
+
+  if (!isProductDetailPath) {
+    return null;
+  }
+
+  const productPath = location.pathname.replace(/\/$/, "");
+
+  return (
+    <button
+      type="button"
+      onClick={() => navigate(`${productPath}/landing`)}
+      className="fixed right-6 top-28 z-50 rounded-full border border-[#DA7756]/30 bg-[#DA7756] px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-[#DA7756]/20 transition-all hover:bg-[#C9684B] focus:outline-none focus:ring-2 focus:ring-[#DA7756]/30"
+    >
+      Landing Page
+    </button>
+  );
+};
+
 function App() {
   const dispatch = useAppDispatch();
   const [baseUrl, setBaseUrl] = useState(localStorage.getItem("baseUrl"));
@@ -1597,6 +1622,7 @@ function App() {
                 <SpeechProvider>
                   <ActionLayoutProvider>
                     <WebSocketNotificationInitializer>
+                      <ProductLandingButton />
                       <Routes>
                         {/* Public Routes - No Authentication Required */}
                         <Route
@@ -5631,6 +5657,10 @@ function App() {
                             element={<TeamSetup />}
                           />
                           <Route
+                            path="/settings/company-hub/face-authentication"
+                            element={<FaceAuthenticationSetup />}
+                          />
+                          <Route
                             path="/settings/company-hub/jobs"
                             element={<JobsPage />}
                           />
@@ -5854,6 +5884,10 @@ function App() {
                           <Route
                             path="/product/vi-miles"
                             element={<ViMilesPage />}
+                          />
+                          <Route
+                            path="/product/:productSlug/landing"
+                            element={<ProductLandingPage />}
                           />
                           <Route path="*" element={<NotFound />} />
                         </Route>

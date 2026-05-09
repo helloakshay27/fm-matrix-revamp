@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Camera, ShieldAlert, Lock } from "lucide-react";
+import { Camera, ShieldAlert, Lock, RefreshCw, UserCheck } from "lucide-react";
 import { SecurityState } from "./useProductSecurity";
 
 interface SecurityOverlaysProps {
   security: SecurityState;
 }
 
-// ─── STUB EXPORTS (kept so existing imports don't break) ─────────────────────
-// State screens are now overlays inside SecurityOverlays — not early returns.
+// STUB EXPORTS (kept so existing imports don't break)
+// State screens are now overlays inside SecurityOverlays, not early returns.
 // Pages should just render <SecurityOverlays> and their content; no guards needed.
 export const CameraPermissionPending: React.FC = () => null;
 export const CameraPermissionDenied: React.FC = () => null;
@@ -33,6 +33,11 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
     dismissBlackout,
     videoRef,
     previewVideoRef,
+    faceAuthStatus,
+    faceAuthMessage,
+    registeringFace,
+    registerFace,
+    refreshFaceProfile,
   } = security;
 
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -80,10 +85,40 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
   }, [isDragging]);
 
   const showBadge = cameraPermission === "granted" && !modelLoading;
+  const blankTitle =
+    faceAuthStatus === "rejected"
+      ? "Face Not Recognized"
+      : faceAuthStatus === "multiple_faces"
+        ? "Multiple Faces Detected"
+        : faceAuthStatus === "unconfigured"
+          ? "Face Profile Required"
+          : faceAuthStatus === "api_unavailable"
+            ? "Face Service Unavailable"
+            : "User Not Detected";
+  const blankCopy =
+    faceAuthMessage ||
+    "Please position yourself in front of the camera to view this content.";
+  const badgeLabel = isBlurred
+    ? faceAuthStatus === "rejected"
+      ? "UNKNOWN"
+      : faceAuthStatus === "multiple_faces"
+        ? "MULTI FACE"
+        : "NO FACE"
+    : faceAuthStatus === "verified"
+      ? "VERIFIED"
+      : faceAuthStatus === "unconfigured"
+        ? "SETUP FACE"
+        : faceAuthStatus === "api_unavailable"
+          ? "FACE ONLY"
+          : "SECURE";
+  const canRegisterFace = showBadge && faceAuthStatus === "unconfigured";
+  const canRetryFaceCheck =
+    showBadge &&
+    (faceAuthStatus === "api_unavailable" || faceAuthStatus === "error");
 
   return (
     <>
-      {/* ── ALWAYS IN DOM: hidden detection feed (videoRef) ─────────────────
+      {/* ALWAYS IN DOM: hidden detection feed (videoRef)
           MUST stay unconditional so videoRef.current is never null when
           the stream assignment effect runs. width/height attrs = real size
           so face-api.js can read the video frames correctly.            */}
@@ -106,7 +141,7 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
         }}
       />
 
-      {/* ── CAMERA PERMISSION PENDING ───────────────────────────────────── */}
+      {/* CAMERA PERMISSION PENDING */}
       {cameraPermission === "pending" && (
         <div className="fixed inset-0 z-[99990] bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
           <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-300/30 flex items-center justify-center mb-6 animate-pulse">
@@ -121,12 +156,12 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
             identity.
           </p>
           <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-5 py-2.5 text-xs text-white/40">
-            <Lock className="w-3.5 h-3.5" /> Waiting for camera permission…
+            <Lock className="w-3.5 h-3.5" /> Waiting for camera permission...
           </div>
         </div>
       )}
 
-      {/* ── CAMERA PERMISSION DENIED ────────────────────────────────────── */}
+      {/* CAMERA PERMISSION DENIED */}
       {cameraPermission === "denied" && (
         <div className="fixed inset-0 z-[99990] bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
           <div className="w-20 h-20 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mb-6">
@@ -148,7 +183,7 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
         </div>
       )}
 
-      {/* ── MODEL LOADING ───────────────────────────────────────────────── */}
+      {/* MODEL LOADING */}
       {modelLoading && cameraPermission !== "denied" && (
         <div className="fixed inset-0 z-[99990] bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
           <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-300/30 flex items-center justify-center mb-6 animate-pulse">
@@ -163,21 +198,18 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
         </div>
       )}
 
-      {/* ── NO FACE DETECTED ────────────────────────────────────────────── */}
+      {/* NO FACE DETECTED */}
       {showBlankScreen && (
         <div className="fixed inset-0 z-[9998] bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
           <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-300/30 flex items-center justify-center mb-6">
             <Camera className="w-10 h-10 text-gray-700" />
           </div>
-          <h1 className="text-2xl font-semibold mb-3">User Not Detected</h1>
-          <p className="text-white/50 text-sm max-w-md">
-            Please position yourself in front of the camera to view this
-            content.
-          </p>
+          <h1 className="text-2xl font-semibold mb-3">{blankTitle}</h1>
+          <p className="text-white/50 text-sm max-w-md">{blankCopy}</p>
         </div>
       )}
 
-      {/* ── SCREENSHOT BLANK ────────────────────────────────────────────── */}
+      {/* SCREENSHOT BLANK */}
       {screenshotBlank && (
         <div
           className="fixed inset-0 z-[99999] bg-white flex flex-col items-center justify-center"
@@ -185,12 +217,12 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
         >
           <Lock className="w-10 h-10 text-gray-700 mb-3 opacity-30" />
           <p className="text-gray-700/30 text-xs font-mono tracking-widest">
-            CONFIDENTIAL · FM MATRIX
+            CONFIDENTIAL - FM MATRIX
           </p>
         </div>
       )}
 
-      {/* ── BLACKOUT OVERLAY ────────────────────────────────────────────── */}
+      {/* BLACKOUT OVERLAY */}
       {showBlackout && (
         <div className="fixed inset-0 bg-black z-[9999] flex flex-col items-center justify-center text-white text-center p-10 animate-in fade-in duration-200">
           <div
@@ -203,7 +235,7 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
           <ShieldAlert className="w-20 h-20 text-red-500 mb-6 animate-pulse relative z-10" />
           <div className="relative z-10 space-y-3 mb-8">
             <div className="text-red-400 text-xs font-mono tracking-[0.3em] uppercase mb-2">
-              ⚠ Security Alert
+              Security Alert
             </div>
             <h1 className="text-3xl font-bold uppercase tracking-wider">
               {blackoutReason}
@@ -214,25 +246,25 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
           </div>
           <div className="relative z-10 flex flex-col items-center gap-4">
             <div className="text-white/30 font-mono text-xs">
-              Session: {sessionId} · Incident logged at {incidentTime}
+              Session: {sessionId} - Incident logged at {incidentTime}
             </div>
             {countdown > 0 ? (
               <div className="text-white/40 text-xs">
-                Dismiss available in {countdown}s…
+                Dismiss available in {countdown}s...
               </div>
             ) : (
               <button
                 onClick={dismissBlackout}
                 className="mt-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white text-sm font-semibold px-8 py-2.5 rounded-full transition-all"
               >
-                I Understand — Dismiss
+                I Understand - Dismiss
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* ── SESSION WATERMARK ───────────────────────────────────────────── */}
+      {/* SESSION WATERMARK */}
       <div
         aria-hidden="true"
         className="pointer-events-none fixed inset-0 z-[9990] overflow-hidden select-none"
@@ -252,13 +284,13 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
               fontSize: "11px",
             }}
           >
-            CONFIDENTIAL · FM MATRIX · {sessionId} · CONFIDENTIAL · FM MATRIX ·{" "}
-            {sessionId} · CONFIDENTIAL · FM MATRIX ·
+            CONFIDENTIAL - FM MATRIX - {sessionId} - CONFIDENTIAL - FM MATRIX -{" "}
+            {sessionId} - CONFIDENTIAL - FM MATRIX -
           </div>
         ))}
       </div>
 
-      {/* ── LIVE CAMERA BADGE (draggable) — only shown when fully active ── */}
+      {/* LIVE CAMERA BADGE (draggable) - only shown when fully active */}
       {showBadge && (
         <div
           className="fixed z-[9992] flex flex-col items-center gap-1.5 select-none cursor-grab active:cursor-grabbing touch-none"
@@ -318,12 +350,53 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
           </div>
           <div className="bg-black/90 border border-white/10 rounded-full px-2.5 py-0.5 flex flex-col items-center gap-0">
             <span className="text-[9px] font-mono text-white/80 tracking-widest uppercase">
-              {isBlurred ? "⚠ NO FACE" : "✓ SECURE"}
+              {badgeLabel}
             </span>
             <span className="text-[7px] font-mono text-white/30 tracking-wider">
               {sessionId}
             </span>
           </div>
+          {(canRegisterFace || canRetryFaceCheck) && (
+            <div className="flex items-center gap-1 rounded-full bg-black/90 border border-white/10 px-1.5 py-1">
+              {canRetryFaceCheck && (
+                <button
+                  type="button"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    refreshFaceProfile();
+                  }}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                  aria-label="Retry face profile service"
+                  title="Retry face profile service"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {canRegisterFace && (
+                <button
+                  type="button"
+                  disabled={registeringFace}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    registerFace();
+                  }}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:cursor-wait disabled:opacity-50"
+                  aria-label="Add face profile"
+                  title="Add face profile"
+                >
+                  {registeringFace ? (
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <UserCheck className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
     </>
