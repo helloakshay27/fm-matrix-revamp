@@ -106,6 +106,10 @@ const navigationStructure = {
             href: "/settings/company-hub/team-setup",
           },
           {
+            name: "Face Authentication",
+            href: "/settings/company-hub/face-authentication",
+          },
+          {
             name: "Jobs",
             href: "/settings/company-hub/jobs",
           },
@@ -891,7 +895,11 @@ const modulesByPackage = {
       icon: FileText,
       href: "/utility/utility-request",
     },
-    { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
+    {
+      name: "Utility Consumption",
+      icon: BarChart3,
+      href: "/utility/utility-consumption",
+    },
     { name: "EV Consumption", icon: Car, href: "/utility/ev-consumption" },
     { name: "Solar Generator", icon: Sun, href: "/utility/solar-generator" },
   ],
@@ -1524,6 +1532,10 @@ const modulesByPackage = {
         {
           name: "Team Setup",
           href: "/settings/company-hub/team-setup",
+        },
+        {
+          name: "Face Authentication",
+          href: "/settings/company-hub/face-authentication",
         },
         {
           name: "Jobs",

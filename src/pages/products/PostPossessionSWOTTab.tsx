@@ -1,401 +1,310 @@
 import React from "react";
 
-const swotData = {
-  strengths: [
-    {
-      id: "S1",
-      title: "White-label + data sovereignty",
-      detail: "White-label + data sovereignty is a unique global combination. No competitor offers both. Critical for GDPR (UK/EU), PDPL (GCC), and DPDP (India) compliance. This is a structural moat — not a feature."
-    },
-    {
-      id: "S2",
-      title: "Proven social proof",
-      detail: "5+ years of production deployment with India's top developers (Godrej, Piramal, Runwal, Panchshil). This is social proof that eliminates 'unproven startup' objection in enterprise sales."
-    },
-    {
-      id: "S3",
-      title: "Revenue-enabling modules",
-      detail: "Developer-side engagement module (referral, loyalty, new project marketing) is a category no competitor occupies. It repositions the product from 'cost' to 'revenue enabler' in the developer's P&L."
-    },
-    {
-      id: "S4",
-      title: "FM operations depth",
-      detail: "FM operations depth (PPM, CAPA, 5-layer escalation, permit-to-work, vendor evaluation) matches or exceeds standalone FM tools — while being bundled with community and security. No rival offers this combination at one price point."
-    },
-    {
-      id: "S5",
-      title: "Visitor management breadth",
-      detail: "Visitor management breadth (25+ features including offline mode, child safety, voice command, e-intercom) is best-in-class globally at this price point."
-    },
-    {
-      id: "S6",
-      title: "Lownd-cost CV & ANPR",
-      detail: "Computer vision and ANPR integration at community-level pricing is a significant differentiator — these capabilities are typically priced 3–5x higher in standalone security platforms."
-    },
-    {
-      id: "S7",
-      title: "Integrated accounting & billing",
-      detail: "Integrated accounting module with GST, ERP export, and direct bank settlement eliminates a separate billing tool. Most competitors require Tally/SAP alongside their platform."
-    },
-    {
-      id: "S8",
-      title: "Proven ROI metrics",
-      detail: "Proven ROI metrics: ~50% CP cost reduction, ~20% support cost reduction. These are quantified commercial outcomes that convert budget conversations from IT spend to business ROI."
-    },
-    {
-      id: "S9",
-      title: "PropTech 2.0 readiness",
-      detail: "IoT/OPC/Historian integration capability positions the product for smart building and PropTech 2.0 conversations that most community apps cannot enter."
-    },
-    {
-      id: "S10",
-      title: "Single-platform architecture",
-      detail: "Single-platform architecture replacing 6–10 fragmented tools reduces vendor management overhead for developers — a compelling enterprise procurement argument."
-    },
-    {
-      id: "S11",
-      title: "Operational offline resilience",
-      detail: "Guard app offline mode is a unique operational feature critical for basement parking, perimeter zones, and low-connectivity sites — frequently cited as a pain point by FM managers."
-    },
-    {
-      id: "S12",
-      title: "Cross-sell potential",
-      detail: "Part of Lockated B2B SaaS suite — potential for cross-sell to workplace management, hot-desking, and corporate FM clients expanding into residential mixed-use."
-    }
-  ],
-  weaknesses: [
-    {
-      id: "W1",
-      title: "UI/UX design polish",
-      detail: "UI/UX design quality is functional but below consumer-grade standards expected in UK, US, and GCC luxury markets. This creates first-impression disadvantage against newer competitors with polished interfaces."
-    },
-    {
-      id: "W2",
-      title: "Multi-language gap",
-      detail: "Multi-language support (Arabic for GCC, Bahasa for SE Asia, Thai for Thailand, French for Europe) is not confirmed as a standard feature — a critical gap for international expansion."
-    },
-    {
-      id: "W3",
-      title: "Closed ecosystem perception",
-      detail: "No public integration marketplace or API documentation portal. Enterprise buyers and system integrators expect a published connector library. Absence creates perception of a closed, inflexible system."
-    },
-    {
-      id: "W4",
-      title: "High-touch sales model",
-      detail: "Sales motion is likely enterprise direct — no self-serve onboarding or freemium tier exists. This limits reach into mid-market communities where a lower-touch model could capture volume."
-    },
-    {
-      id: "W5",
-      title: "International brand awareness",
-      detail: "Brand awareness outside India is near-zero. International expansion requires significant investment in brand building, localisation, and regional partnerships before pipeline materialises."
-    },
-    {
-      id: "W6",
-      title: "Implementation complexity",
-      detail: "Product complexity (130+ features across 40+ modules) creates long implementation timelines and high onboarding friction — risk of deals stalling post-signature."
-    },
-    {
-      id: "W7",
-      title: "Developer activation dependency",
-      detail: "Dependency on developer clients for resident activation — if a developer deploys the app poorly (low communication, no incentive), resident adoption suffers and product value is undermined."
-    },
-    {
-      id: "W8",
-      title: "Lack of published ROI benchmarks",
-      detail: "No verified published case studies with quantified ROI benchmarks (e.g., 'Piramal reduced CP costs by 48% in 12 months'). These are needed to shorten enterprise sales cycles."
-    },
-    {
-      id: "W9",
-      title: "Module-segment mismatch",
-      detail: "F&B module and some advanced modules (transport, space management) appear better suited to township/co-living than standard gated communities — unclear if these add confusion in core sales motion."
-    },
-    {
-      id: "W10",
-      title: "Outcome execution risk",
-      detail: "Referral and loyalty module effectiveness depends on developer adoption quality. If developers don't promote the program to residents, the commercial differentiation does not materialise."
-    },
-    {
-      id: "W11",
-      title: "Opaque pricing",
-      detail: "Pricing structure not publicly documented — likely requires custom quoting for most deals. This slows mid-market sales and makes digital demand generation harder."
-    },
-    {
-      id: "W12",
-      title: "Support & success function",
-      detail: "No mention of a customer success or onboarding function — large feature sets with poor post-sale support lead to churn and negative word of mouth."
-    }
-  ],
-  opportunities: [
-    {
-      id: "O1",
-      title: "India DPDP Act 2023",
-      detail: "Enforcement of data protection law in India forces developers to auditPropTech stacks. Post Possession's client-server architecture is a compliance-ready rip-and-replace opportunity."
-    },
-    {
-      id: "O2",
-      title: "GCC PropTech boom",
-      detail: "Expansion in UAE, Qatar, and Saudi requires digital maintenance records. Entry now, before US/EU PropTech localises, is a first-mover opportunity."
-    },
-    {
-      id: "O3",
-      title: "UK Build-to-Rent growth",
-      detail: "BTR sector in UK projected to double by 2030. Operators need GDPR-compliant, white-label resident experience platforms. Post Possession is structurally positioned to win."
-    },
-    {
-      id: "O4",
-      title: "CP cost reduction focus",
-      detail: "As Indian real estate market tightens and CP costs rise, a referral platform saving ₹3–10 lakh per conversion becomes a commercial mandate."
-    },
-    {
-      id: "O5",
-      title: "Smart building convergence",
-      detail: "IoT/ANPR capabilities position it as the front-end of a smart building stack — a segment growing at 25%+ CAGR globally."
-    },
-    {
-      id: "O6",
-      title: "Senior living expansion",
-      detail: "Golden Ticket, health features, and wellness programs are purpose-built for the growing senior living market in India and GCC."
-    },
-    {
-      id: "O7",
-      title: "Township development boom",
-      detail: "Mixed-use developments (5,000+ units) need F&B, transport, and loyalty modules — segments no current competitor serves effectively."
-    },
-    {
-      id: "O8",
-      title: "SE Asia management boom",
-      detail: "Co-living and managed housing boom in Singapore/Vietnam. Partnership with regional operators could unlock the market rapidly."
-    },
-    {
-      id: "O9",
-      title: "Performance-based pricing",
-      detail: "Introducing a pay-per-converted-lead model transforms the commercial conversation and unlocks sales budgets, being near-impossible for others to replicate."
-    },
-    {
-      id: "O10",
-      title: "PropTech consolidation winner",
-      detail: "As smaller players exit or are acquired, enterprise developers will consolidate onto stable, deep platforms like Post Possession."
-    },
-    {
-      id: "O11",
-      title: "AI-powered FM automation",
-      detail: "Predictive maintenance and NLP complaint classification create a defensible AI-enabled FM layer that simple community apps cannot match."
-    },
-    {
-      id: "O12",
-      title: "Marketplace GMV revenue",
-      detail: "A 5–10% take rate on in-app household services (cleaning, laundry) creates a recurring, scaling non-SaaS revenue stream."
-    }
-  ],
-  threats: [
-    {
-      id: "T1",
-      title: "MyGate developer entry",
-      detail: "If MyGate launches a white-label or referral product, their distribution advantage is massive. Mitigation: Move faster on loyalty/sovereignty features they cannot offer."
-    },
-    {
-      id: "T2",
-      title: "Yardi/AppFolio localization",
-      detail: "If global enterprise players localise for India (GST, banking), they bring massive credibility. Mitigation: Deepen developer relationships and publish case studies now."
-    },
-    {
-      id: "T3",
-      title: "US PropTech international expansion",
-      detail: "US platforms (Knock, Amenify) with superior UX and massive funding could win design-sensitive luxury segments. Mitigation: Accelerate UI/UX investment."
-    },
-    {
-      id: "T4",
-      title: "In-house developer builds",
-      detail: "Large developers might build proprietary apps. Mitigation: Demonstrate that TCO of building + maintaining exceeds ₹5–15Cr vs SaaS cost."
-    },
-    {
-      id: "T5",
-      title: "ERP player consolidation",
-      detail: "Salesforce or SAP acquiring a PropTech player would give them a single-vendor IT argument. Mitigation: Proactively integrate to become a complement."
-    },
-    {
-      id: "T6",
-      title: "Free tier price erosion",
-      detail: "Freemium apps (NoBrokerHood) anchor price expectations low. Mitigation: Never compete on price; always sell measurable outcomes like CP savings."
-    },
-    {
-      id: "T7",
-      title: "Sovereignty as a double-edged sword",
-      detail: "Client-server architecture creates deployment complexity. Mitigation: Offer hybrid cloud options that preserve sovereignty without hardware requirements."
-    },
-    {
-      id: "T8",
-      title: "Resident app fatigue",
-      detail: "Multiple app touchpoints cause fatigue. Mitigation: Invest in gamification and rewards that drive daily habit formation."
-    },
-    {
-      id: "T9",
-      title: "GCC localization mandates",
-      detail: "Saudi/UAE data mandates are evolving. Mitigation: Build compliance roadmap with local legal partners and monitor Saudi PDPL/UAE PDPA."
-    },
-    {
-      id: "T10",
-      title: "R&D gap vs US competitors",
-      detail: "Venture-funded US players have massive velocity. Mitigation: Focus R&D on areas like local compliance where budget matters less than domain expertise."
-    },
-    {
-      id: "T11",
-      title: "PE-backed price compression",
-      detail: "Aggressive pricing from PE-backed players to gain share. Mitigation: Deepen integration and customer success to raise switching costs."
-    },
-    {
-      id: "T12",
-      title: "AI replacement of manual workflows",
-      detail: "Predictive AI making manual checklists/escalations obsolete. Mitigation: Build AI into the FM module ahead of the technology shift."
-    }
-  ]
+type SWOTItem = {
+  id: string;
+  title: string;
+  detail: string;
 };
+
+type SWOTQuadrant = {
+  key: string;
+  title: string;
+  items: SWOTItem[];
+  tone: {
+    header: string;
+    panel: string;
+    border: string;
+    badge: string;
+    title: string;
+  };
+};
+
+const splitItem = (id: string, value: string): SWOTItem => {
+  const [title, ...detailParts] = value.split(": ");
+
+  return {
+    id,
+    title,
+    detail: detailParts.join(": "),
+  };
+};
+
+const swotQuadrants: SWOTQuadrant[] = [
+  {
+    key: "strengths",
+    title: "Strengths",
+    tone: {
+      header: "bg-[#E8F5E9] text-[#1B5E20]",
+      panel: "bg-[#F7FCF8]",
+      border: "border-[#B7D9BC]",
+      badge: "bg-[#1B5E20] text-white",
+      title: "text-[#1B5E20]",
+    },
+    items: [
+      splitItem(
+        "S1",
+        "Data Sovereignty Architecture: The only community management platform in India where all resident data is stored exclusively on the client's own servers - an absolute competitive moat that no competitor can replicate without rebuilding their infrastructure."
+      ),
+      splitItem(
+        "S2",
+        "White-Label App Exclusivity: Genuine white-label Android and iOS apps carrying the developer's brand. No India competitor offers white-label at equivalent feature depth. This is a RFP-winning differentiator in every enterprise developer tender."
+      ),
+      splitItem(
+        "S3",
+        "Goods Movement Tracing Module: A unique feature with no equivalent in any competing platform. Digital inward and outward goods tracking with item-level records is a premium community differentiator that creates strong demo moments."
+      ),
+      splitItem(
+        "S4",
+        "Permit-to-Work Module: PTW capability is available only in enterprise FM platforms at 5-10x our price. Our inclusion at community management pricing opens the FM compliance market that generic community platforms cannot address."
+      ),
+      splitItem(
+        "S5",
+        "End-to-End Operational Coverage: Gate management through billing through community engagement in one platform. Replacing 6-10 tools simultaneously is a cost and complexity reduction story that resonates with IFM operations directors."
+      ),
+      splitItem(
+        "S6",
+        "Full CAM Billing with Accounting Structure: Group, subgroup, and ledger-level accounting with ERP export, GST compliance, defaulter flagging, and automated invoice generation at a price point that basic billing tools cannot match."
+      ),
+      splitItem(
+        "S7",
+        "Fitout Workflow Digitisation: A unique module covering the critical 3-12 month period between possession and occupation when developer-resident interactions are highest. Replaces entirely manual processes with a digital audit trail."
+      ),
+      splitItem(
+        "S8",
+        "Guard Patrolling with QR Checkpoints: Security operations capability that is absent from all consumer-grade community platforms. Enables us to replace security-specific software in addition to community management tools."
+      ),
+      splitItem(
+        "S9",
+        "Household Staff Management Depth: Community-wide blacklist, background check facilitation hooks, selfie attendance, and daily pay recording at a depth that exceeds even MyGate's household staff offering."
+      ),
+      splitItem(
+        "S10",
+        "Self-Hosted DPDP Act Compliance Story: In the context of DPDP Act 2023 enforcement from 2025, our architecture converts a product feature into a legal compliance solution. No amount of marketing spend can replicate regulatory urgency as a sales catalyst."
+      ),
+    ],
+  },
+  {
+    key: "weaknesses",
+    title: "Weaknesses",
+    tone: {
+      header: "bg-[#FFEBEE] text-[#B71C1C]",
+      panel: "bg-[#FFF8F9]",
+      border: "border-[#F0B9C0]",
+      badge: "bg-[#B71C1C] text-white",
+      title: "text-[#B71C1C]",
+    },
+    items: [
+      splitItem(
+        "W1",
+        "No Native Developer Leadership Dashboard: The single most cited gap in enterprise RFPs. Developer CXOs and board members want a community health score per property. Absence costs us 40-60% of enterprise deals in current pipeline."
+      ),
+      splitItem(
+        "W2",
+        "No Standard ANPR Integration at Tier Pricing: ANPR is a deal-closing requirement for premium gated communities. NoBrokerHood bundles hardware. Our absence of a standard ANPR offering costs us premium community deals every quarter."
+      ),
+      splitItem(
+        "W3",
+        "No AI Predictive Maintenance: First mover opportunity not yet captured. Competitors are beginning to signal AI roadmaps. Window to be first in India category is 12-18 months before a well-funded competitor launches."
+      ),
+      splitItem(
+        "W4",
+        "No Freemium or Self-Service Entry Path: All community onboarding requires implementation support. Cannot scale to smaller communities (under 200 units) without a cost-prohibitive CAC relative to deal value."
+      ),
+      splitItem(
+        "W5",
+        "No Multi-Language Support: English-only interface locks us out of Tier 2 and Tier 3 India markets, affordable housing projects, and government housing contracts where Hindi and regional language support is mandatory."
+      ),
+      splitItem(
+        "W6",
+        "No Dedicated Biometric Attendance Integration: Government housing and REIT contracts increasingly require biometric proof of FM staff hours. Selfie-based attendance is insufficient for regulated contracts."
+      ),
+      splitItem(
+        "W7",
+        "No Resident-Facing Vendor Marketplace: MyGate's most-praised feature is absent. High-frequency resident service discovery happens through the competing platform, not ours. This reduces daily active usage in service-heavy communities."
+      ),
+      splitItem(
+        "W8",
+        "Implementation-Heavy Go-Live Process: Each new community requires significant setup time. Without a self-service onboarding flow, sales and implementation capacity becomes the growth bottleneck above 50+ communities."
+      ),
+      splitItem(
+        "W9",
+        "Brand Awareness Below MyGate and NoBrokerHood: In the RWA and mid-market segment, resident-driven platform selection often defaults to brands they recognise from peers. Low consumer brand awareness is a barrier in non-developer-led sales."
+      ),
+      splitItem(
+        "W10",
+        "Dependency on Client IT Infrastructure for Self-Hosting: Self-hosted architecture is our moat but also our friction point. Some smaller developers lack the IT capability to set up and maintain their own server environment, adding implementation complexity."
+      ),
+    ],
+  },
+  {
+    key: "opportunities",
+    title: "Opportunities",
+    tone: {
+      header: "bg-[#FFF3E0] text-[#E65100]",
+      panel: "bg-[#FFFCF7]",
+      border: "border-[#F3C28A]",
+      badge: "bg-[#E65100] text-white",
+      title: "text-[#E65100]",
+    },
+    items: [
+      splitItem(
+        "O1",
+        "DPDP Act 2023 Enforcement from 2025: First significant Indian data privacy law with meaningful penalties for data fiduciaries. Creates externally driven urgency for developer clients to move off third-party-hosted platforms. This is the largest single market catalyst available to us."
+      ),
+      splitItem(
+        "O2",
+        "8,500+ Active Residential Developers Without Structured Post-Possession Platform: The addressable market in India is almost entirely unserved. Even capturing 1% of 4.2 million units delivered in 5 years generates INR 34-100 crore ARR at our pricing."
+      ),
+      splitItem(
+        "O3",
+        "IFM Channel Multiplier: 3 national IFM company partnerships each managing 30-50 properties would deploy Post Possession across 15,000-25,000 additional units without proportional sales headcount increase."
+      ),
+      splitItem(
+        "O4",
+        "REIT ESG Reporting Mandate Under SEBI BRSR: Listed REITs and developer companies now face mandatory ESG disclosures. Post Possession's meter management, waste tracking, and compliance modules position us as the only community management platform with native ESG data collection."
+      ),
+      splitItem(
+        "O5",
+        "UAE and UK Market Entry via PDPL and GDPR Compliance: Indian developer groups have cross-border portfolios in UAE (PDPL active 2024) and UK (GDPR). One DPDP Act-compliant architecture with localised variants opens both markets without a ground-up rebuild."
+      ),
+      splitItem(
+        "O6",
+        "Co-Living and Senior Living Growth in India: Co-living occupancy in India grew 28% in 2024 (JLL India). Senior living pipeline is 50,000+ units planned through 2027. Both segments have high resident turnover that makes automated onboarding and billing critical."
+      ),
+      splitItem(
+        "O7",
+        "Developer Premium on Resident Retention Data: Developers who understand LTV are beginning to invest in post-possession engagement to increase repeat purchases and referrals. Post Possession converts the resident app into a sales and marketing channel for new launches."
+      ),
+      splitItem(
+        "O8",
+        "Competitor Data Scandal Risk: Any major data breach at MyGate, ApnaComplex, or NoBrokerHood would accelerate enterprise developer migration to self-hosted platforms. We should be the ready alternative when this moment occurs."
+      ),
+      splitItem(
+        "O9",
+        "Government Smart City and PMAY Digital Layer Requirements: Smart City Mission and Affordable Housing projects increasingly specify digital community management in tender documents. A government-approved deployment record would open a massive tender-driven segment."
+      ),
+      splitItem(
+        "O10",
+        "Fragmented Global Community Management Market: No single platform dominates the global residential community management category. Our self-hosted, white-label, full-stack architecture would be differentiated in Singapore, Malaysia, and GCC markets without major product changes."
+      ),
+    ],
+  },
+  {
+    key: "threats",
+    title: "Threats",
+    tone: {
+      header: "bg-[#FFF8E1] text-[#E65100]",
+      panel: "bg-[#FFFDF5]",
+      border: "border-[#EAD487]",
+      badge: "bg-[#E65100] text-white",
+      title: "text-[#E65100]",
+    },
+    items: [
+      splitItem(
+        "T1",
+        "MyGate Enterprise Expansion (2024): MyGate launched a direct enterprise offering targeting large developer groups with centralised portfolio dashboards. They are moving up-market aggressively with VC backing and an established resident base. This is the most acute near-term competitive threat."
+      ),
+      splitItem(
+        "T2",
+        "ApnaComplex + NoBroker Post-Acquisition Integration: NoBroker's acquisition of ApnaComplex creates a platform with combined resident reach of 15M+ users, financial services integration, and potential cross-sell of property transaction data. The combined entity has capital to improve product depth rapidly."
+      ),
+      splitItem(
+        "T3",
+        "NoBrokerHood Shield Hardware Bundling: NoBrokerHood's CCTV + ANPR hardware bundle (2024) is creating an expectation in premium communities that the community management platform includes security hardware. Without an ANPR integration standard offer, we risk losing premium community deals."
+      ),
+      splitItem(
+        "T4",
+        "DPDP Act Enforcement Delay Risk: If DPDP Act enforcement is delayed or weakened through 2025-2026, the primary urgency driver for our compliance-led enterprise sales motion weakens. Our entire sales narrative is partly contingent on regulatory enforcement timing."
+      ),
+      splitItem(
+        "T5",
+        "Tata Crest Entering Competitive Pricing Territory: Tata Crest is expanding from Tata group projects to third-party developer clients, signalling pricing pressure. Their brand credibility with large listed developers could displace us in enterprise deals where procurement risk aversion is high."
+      ),
+      splitItem(
+        "T6",
+        "Free Google Workspace Tools as Functional Substitute: For RWAs and small IFM companies, Google Forms, Google Sheets, and Google Meet already provide a zero-cost alternative for basic community management. Price-sensitive RWAs may never upgrade to paid platforms."
+      ),
+      splitItem(
+        "T7",
+        "Smartly.io and Global PropTech AI Features: Singapore-based Smartly.io and global PropTech players are deploying AI community insights and predictive maintenance 18-24 months ahead of India-specific platforms. If they enter India directly, they enter with a feature lead."
+      ),
+      splitItem(
+        "T8",
+        "Developer Consolidation Reducing Addressable Market: India's top 50 developers now account for 60%+ of new supply. If 3-4 of these large developers develop proprietary platforms (as Tata did with Tata Crest), the enterprise segment could partially close to third-party platforms."
+      ),
+      splitItem(
+        "T9",
+        "Implementation Complexity Limiting Growth Velocity: Each new community deployment requires significant implementation resources. If implementation throughput cannot scale with sales velocity, we create a backlog that leads to delayed go-lives and client satisfaction risk."
+      ),
+      splitItem(
+        "T10",
+        "Macroeconomic Slowdown in India Real Estate: A sustained housing market correction would reduce new possession deliveries, compress developer budgets for post-possession technology, and increase price sensitivity in RWA renewal conversations. External macro risk to revenue growth."
+      ),
+    ],
+  },
+];
 
 const PostPossessionSWOTTab: React.FC = () => {
   return (
-    <div className="space-y-12 animate-fade-in font-poppins">
-      {/* Header */}
-      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
-        <h2 className="text-xl font-bold uppercase tracking-wider">
-          Post Possession — SWOT Analysis
+    <div className="animate-fade-in space-y-8 font-poppins">
+      <div className="border-l-4 border-l-[#DA7756] bg-white p-6 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#DA7756]">
+          Post Possession
+        </p>
+        <h2 className="mt-2 text-2xl font-bold text-[#2C2C2C]">
+          SWOT Analysis
         </h2>
+        <p className="mt-2 text-sm text-[#6B6257]">
+          10 items per quadrant, aligned from the sheet into direct columns.
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        {/* STRENGTHS */}
-        <div className="space-y-4">
-          <div className="bg-[#2e7d32] text-white px-4 py-3 rounded-lg text-[13px] font-bold tracking-widest uppercase shadow-sm flex items-center justify-between">
-            <span>STRENGTHS (Internal / Positive)</span>
-            <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded">12 Points</span>
-          </div>
-          <div className="overflow-hidden border border-[#D3D1C7] rounded-xl bg-white shadow-sm">
-            <table className="w-full border-collapse text-[11px] leading-relaxed">
-              <thead>
-                <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7]">
-                  <th className="p-3 text-center w-[12%]">#</th>
-                  <th className="p-3 text-left">Strength — Detail & Market Relevance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {swotData.strengths.map((item) => (
-                  <tr key={item.id} className="border-b border-[#D3D1C7] last:border-0 hover:bg-green-50/10">
-                    <td className="p-3 text-center font-bold text-[#2e7d32] bg-green-50/20">{item.id}</td>
-                    <td className="p-3 text-gray-700 font-medium">
-                      <span className="text-[#DA7756] font-bold block mb-0.5">{item.title}</span>
-                      {item.detail}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {swotQuadrants.map((quadrant) => (
+          <section
+            key={quadrant.key}
+            className={`overflow-hidden border bg-white shadow-sm ${quadrant.tone.border}`}
+          >
+            <div
+              className={`flex items-center justify-between gap-4 px-5 py-4 ${quadrant.tone.header}`}
+            >
+              <h3 className="text-sm font-bold uppercase tracking-[0.16em]">
+                {quadrant.title}
+              </h3>
+              <span className="text-xs font-semibold">
+                {quadrant.items.length} points
+              </span>
+            </div>
 
-        {/* WEAKNESSES */}
-        <div className="space-y-4">
-          <div className="bg-[#c62828] text-white px-4 py-3 rounded-lg text-[13px] font-bold tracking-widest uppercase shadow-sm flex items-center justify-between">
-            <span>WEAKNESSES (Internal / Negative)</span>
-            <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded">12 Points</span>
-          </div>
-          <div className="overflow-hidden border border-[#D3D1C7] rounded-xl bg-white shadow-sm">
-            <table className="w-full border-collapse text-[11px] leading-relaxed">
-              <thead>
-                <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7]">
-                  <th className="p-3 text-center w-[12%]">#</th>
-                  <th className="p-3 text-left">Weakness — Detail & Market Relevance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {swotData.weaknesses.map((item) => (
-                  <tr key={item.id} className="border-b border-[#D3D1C7] last:border-0 hover:bg-red-50/10">
-                    <td className="p-3 text-center font-bold text-[#c62828] bg-red-50/20">{item.id}</td>
-                    <td className="p-3 text-gray-700 font-medium">
-                      <span className="text-[#DA7756] font-bold block mb-0.5">{item.title}</span>
+            <div className={`divide-y ${quadrant.tone.border}`}>
+              {quadrant.items.map((item) => (
+                <div
+                  key={item.id}
+                  className={`grid grid-cols-[52px_minmax(0,1fr)] ${quadrant.tone.panel}`}
+                >
+                  <div className="flex items-start justify-center border-r border-black/10 px-2 py-4">
+                    <span
+                      className={`inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-xs font-bold ${quadrant.tone.badge}`}
+                    >
+                      {item.id}
+                    </span>
+                  </div>
+                  <div className="px-4 py-4">
+                    <h4 className={`text-sm font-bold ${quadrant.tone.title}`}>
+                      {item.title}
+                    </h4>
+                    <p className="mt-1 text-[13px] leading-6 text-[#2C2C2C]">
                       {item.detail}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* OPPORTUNITIES */}
-        <div className="space-y-4 lg:mt-6">
-          <div className="bg-[#1565c0] text-white px-4 py-3 rounded-lg text-[13px] font-bold tracking-widest uppercase shadow-sm flex items-center justify-between">
-            <span>OPPORTUNITIES (External / Positive)</span>
-            <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded">12 Points</span>
-          </div>
-          <div className="overflow-hidden border border-[#D3D1C7] rounded-xl bg-white shadow-sm">
-            <table className="w-full border-collapse text-[11px] leading-relaxed">
-              <thead>
-                <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7]">
-                  <th className="p-3 text-center w-[12%]">#</th>
-                  <th className="p-3 text-left">Opportunity — Detail & How to Exploit</th>
-                </tr>
-              </thead>
-              <tbody>
-                {swotData.opportunities.map((item) => (
-                  <tr key={item.id} className="border-b border-[#D3D1C7] last:border-0 hover:bg-blue-50/10">
-                    <td className="p-3 text-center font-bold text-[#1565c0] bg-blue-50/20">{item.id}</td>
-                    <td className="p-3 text-gray-700 font-medium">
-                      <span className="text-[#DA7756] font-bold block mb-0.5">{item.title}</span>
-                      {item.detail}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* THREATS */}
-        <div className="space-y-4 lg:mt-6">
-          <div className="bg-[#e65100] text-white px-4 py-3 rounded-lg text-[13px] font-bold tracking-widest uppercase shadow-sm flex items-center justify-between">
-            <span>THREATS (External / Negative)</span>
-            <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded">12 Points</span>
-          </div>
-          <div className="overflow-hidden border border-[#D3D1C7] rounded-xl bg-white shadow-sm">
-            <table className="w-full border-collapse text-[11px] leading-relaxed">
-              <thead>
-                <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7]">
-                  <th className="p-3 text-center w-[12%]">#</th>
-                  <th className="p-3 text-left">Threat — Detail & Mitigation</th>
-                </tr>
-              </thead>
-              <tbody>
-                {swotData.threats.map((item) => (
-                  <tr key={item.id} className="border-b border-[#D3D1C7] last:border-0 hover:bg-orange-50/10">
-                    <td className="p-3 text-center font-bold text-[#e65100] bg-orange-50/20">{item.id}</td>
-                    <td className="p-3 text-gray-700 font-medium">
-                      <span className="text-[#DA7756] font-bold block mb-0.5">{item.title}</span>
-                      {item.detail}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* Strategic Footer Card */}
-      <div className="bg-white border-2 border-[#D3D1C7] rounded-2xl p-6 shadow-md mt-12">
-        <div className="flex flex-col md:flex-row gap-6 items-center text-center md:text-left">
-          <div className="bg-[#DA7756] text-white p-4 rounded-xl font-bold text-center min-w-[140px]">
-            <div className="text-[10px] uppercase tracking-widest opacity-80 mb-1">Strategic Moat</div>
-            <div className="text-xl">DATA SOVEREIGNTY</div>
-          </div>
-          <div className="flex-1">
-            <p className="text-[13px] text-gray-700 leading-relaxed italic">
-              "Post Possession holds a unique globally defensible position by being the only platform that combines white-label developer branding with full data sovereignty. As global privacy laws tighten, this structural advantage becomes the primary driver for enterprise rip-and-replace deals."
-            </p>
-          </div>
-        </div>
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   );
 };
 
 export default PostPossessionSWOTTab;
-

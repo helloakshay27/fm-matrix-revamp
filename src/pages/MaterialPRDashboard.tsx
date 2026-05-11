@@ -36,6 +36,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "po_number",
+    label: "PO Number",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "referenceNo",
     label: "Reference No.",
     sortable: true,
@@ -125,6 +132,7 @@ export const MaterialPRDashboard = () => {
       const formatedResponse = response.purchase_orders.map((item: any) => ({
         id: item.id,
         prNo: item.external_id,
+        po_number: item.po_number,
         referenceNo: item.reference_number,
         supplierName: item.supplier?.company_name,
         createdBy: item.user.full_name,

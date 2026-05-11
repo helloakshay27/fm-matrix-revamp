@@ -47,7 +47,7 @@ export const AddTagModal = ({ isOpen, onClose, onTagCreated }: AddTagModalProps)
             // Assuming there's a create tag API
             await dispatch(createProjectsTags(payload)).unwrap();
             toast.success('Tag created successfully');
-            await dispatch(fetchProjectsTags()).unwrap();
+            await dispatch(fetchProjectsTags({ active: true })).unwrap();
             if (onTagCreated) {
                 onTagCreated();
             }
