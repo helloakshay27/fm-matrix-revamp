@@ -1,371 +1,649 @@
 import React from "react";
 
-const metricsData = {
-  clientImpact: [
+type ClientImpactMetric = {
+  id: string;
+  metricName: string;
+  measures: string;
+  impactRange: string;
+  feature: string;
+  cause: string;
+  claim: string;
+};
+
+type LaunchMetric = {
+  id: string;
+  metric: string;
+  measures: string;
+  activationDefinition: string;
+  current30Day: string;
+  phase130Day: string;
+  current3Month: string;
+  phase13Month: string;
+  whyItMatters: string;
+  successSignal: string;
+  phase1UpliftReason: string;
+};
+
+type LabelValue = {
+  label: string;
+  value: string;
+};
+
+const metricsMeta = {
+  title: "Post Possession - Metrics",
+  subtitle:
+    "Section 1: Client impact metrics (landing page proof points) | Section 2: Product launch tracking (30-day and 3-month, with and without Phase 1 roadmap)",
+};
+
+const clientImpactSection = {
+  title:
+    "SECTION 1 - CLIENT IMPACT METRICS (What to track after go-live - Landing page proof points)",
+  description:
+    "These 10 metrics measure real-world business impact at client companies. Track from Day 30 with every client. Use the best results as landing page social proof and enterprise RFP evidence.",
+  columns: [
+    "#",
+    "Metric Name",
+    "What it measures",
+    "Impact range",
+    "Feature driving the impact",
+    "How the impact is caused",
+    "Example landing page claim",
+  ],
+  rows: [
     {
-      id: 1,
-      name: "Referral Lead Conversion Rate",
-      measures: "% of resident referrals that convert to a site visit or booking at a new developer project",
-      impact: "3–8% conversion (vs 1–2% for cold marketing); 2–4x improvement vs non-referral channels",
-      feature: "Referral Marketing module; Loyalty Program; Resident engagement score",
-      how: "Engaged residents receive personalised referral prompts via app; one-click WhatsApp share with tracked UTM; payout automation closes the loop, motivating repeat referrals",
-      claim: "Developers using Post Possession generate 3–4x more qualified leads per resident than traditional channel partners — at zero commission cost.",
+      id: "1",
+      metricName: "Maintenance Collection Cycle Reduction",
+      measures:
+        "Reduction in average days from invoice generation to full payment receipt per billing cycle",
+      impactRange: "30-50% reduction in days to collect",
+      feature:
+        "Automated Invoice and Receipt Generation + Resident Bill Payment (UPI/Card)",
+      cause:
+        "Automated invoice delivery with direct UPI payment link removes 3-4 steps (manual invoice, bank account lookup, NEFT transfer, confirmation) from the payment process",
+      claim:
+        "Communities using Post Possession reduce their maintenance collection cycle by 35% in the first 60 days.",
     },
     {
-      id: 2,
-      name: "Channel Partner (CP) Cost Reduction",
-      measures: "Reduction in % of property value paid as CP commission due to shift to referral-sourced leads",
-      impact: "30–50% reduction in CP-sourced deal % within 18 months of platform deployment",
-      feature: "Referral engine, lead tracking dashboard, developer sales integration",
-      how: "Platform formalises and incentivises resident referrals, creating a warm inbound pipeline that displaces CP-sourced leads over time; developer sales team prioritises referral leads due to higher close rate",
-      claim: "Post Possession clients reduce channel partner acquisition costs by up to 50%, saving ₹3–10 lakh per converted referral sale.",
+      id: "2",
+      metricName: "Helpdesk Ticket Resolution Time",
+      measures:
+        "Average hours from ticket creation by resident to ticket closure confirmation",
+      impactRange: "35-50% reduction in average resolution time",
+      feature:
+        "Ticket Creation and Complaint Management + TAT Configuration + Auto-Assignment",
+      cause:
+        "Auto-assignment routes tickets to the correct service engineer immediately. TAT alerts escalate overdue tickets before they breach SLA. No manual routing or follow-up needed.",
+      claim:
+        "Facility teams resolve resident complaints 40% faster after moving from WhatsApp to our helpdesk.",
     },
     {
-      id: 3,
-      name: "Helpdesk Ticket Resolution Time (TAT)",
-      measures: "Average time from ticket creation to verified resolution across all complaint categories",
-      impact: "30–50% reduction in average TAT within 90 days of full FM module activation",
-      feature: "5-layer escalation matrix, auto ticket routing, PPM checklists, TAT configuration",
-      how: "Auto-routing eliminates wrong-assignment delays; escalation matrix prevents tickets from sitting idle; TAT dashboard creates visible accountability for FM team",
-      claim: "Communities on Post Possession resolve maintenance complaints 40% faster — with automated escalation ensuring no ticket goes unanswered beyond defined SLA.",
+      id: "3",
+      metricName: "Gate Processing Time per Visitor",
+      measures:
+        "Average minutes from visitor arrival at gate to entry completion",
+      impactRange:
+        "3-5 minutes reduced to under 60 seconds for pre-registered visitors",
+      feature: "Visitor Management + Digital Gate Pass + OTP/Push Approval",
+      cause:
+        "Pre-registered visitors get a digital gate pass the resident creates in advance. Guard scans the pass on arrival. Approval is instant, not a phone call to the resident.",
+      claim:
+        "Pre-registered visitors enter the community in under 60 seconds. No phone call to the resident, no paper log.",
     },
     {
-      id: 4,
-      name: "CAM Collection Rate",
-      measures: "% of total billed Common Area Maintenance charges collected within 30 days of billing",
-      impact: "Improvement from industry baseline 60–75% to 85–92% within 6 months",
-      feature: "Auto invoice generation, WhatsApp payment reminders, in-app payment gateway, defaulter blocking",
-      how: "Automated reminders sent at defined intervals; multiple payment options reduce friction; defaulter blocking creates social/functional incentive to pay on time",
-      claim: "CAM collection rates on Post Possession communities reach 88%+ — up from an industry average of 65%, reducing FM budget shortfalls by millions annually.",
+      id: "4",
+      metricName: "Resident App Monthly Active Rate",
+      measures:
+        "Percentage of registered residents who use the app at least once per month (MAR%)",
+      impactRange:
+        "60-80% MAR within 90 days of go-live in well-onboarded communities",
+      feature:
+        "Visitor Management + Resident Bill Payment + Club Facility Booking + Notice Board",
+      cause:
+        "Visitor approval push notifications create daily app opens. Bill payment reminders create monthly engagement. Facility booking drives weekly usage in active communities.",
+      claim:
+        "8 out of 10 registered residents actively use the app within 90 days of possession.",
     },
     {
-      id: 5,
-      name: "Resident App Monthly Active Rate",
-      measures: "% of registered residents who open and use the app at least once in a calendar month",
-      impact: "Target: 55–75% MAR; industry baseline for society apps: 25–35% MAR",
-      feature: "Visitor management (daily driver), notifications, helpdesk, F&B, facility booking, offers",
-      how: "Visitor approval push notifications force daily app opens even for passive users; helpdesk and billing provide non-negotiable utility; F&B and services drive habitual use",
-      claim: "Residents on Post Possession communities open their app 3.2x per week on average — making it the most-used community app in its category.",
+      id: "5",
+      metricName: "Tool Consolidation Score",
+      measures:
+        "Number of previously separate operational tools replaced by Post Possession at the FM team level",
+      impactRange: "Average 6-10 tools replaced per property",
+      feature:
+        "All FM modules: Helpdesk, Gate Management, CAM Billing, Checklist, Asset Management, Audit, Compliance Tracker",
+      cause:
+        "Single platform covers all FM operational functions previously handled by separate tools: ticketing software, visitor register, billing app, Excel attendance, paper checklists, compliance calendar.",
+      claim:
+        "One platform replaces an average of 8 disconnected tools at every property we deploy.",
     },
     {
-      id: 6,
-      name: "Security Incident Response Time",
-      measures: "Average time from security event trigger (panic button, child safety alert, overstay alert) to guard acknowledgement",
-      impact: "Target: <90 seconds for P0 alerts; industry baseline: 3–8 minutes via radio/phone",
-      feature: "Panic button, child safety alert, guard app push notification, 2-tier security alert system",
-      how: "Digital alerts reach all guards simultaneously vs radio chains; guard app shows exact alert type and location; GPS-linked patrol logs show which guard is nearest",
-      claim: "Security response time in Post Possession communities averages under 90 seconds for critical alerts — 4x faster than radio-based security protocols.",
+      id: "6",
+      metricName: "Referral Lead Capture Rate",
+      measures:
+        "Number of qualified leads submitted by residents per 1,000 residents per quarter via Referral Marketing module",
+      impactRange:
+        "3-8 referral leads per 1,000 residents per quarter in active communities",
+      feature: "Referral Marketing + New Lead Generation + Marketing Analytics",
+      cause:
+        "Referral campaign push notifications prompt residents to submit contact details of interested buyers. Each referral is tracked with source attribution. Developer sales team receives structured lead data, not informal WhatsApp messages.",
+      claim:
+        "Developers using our referral module capture 5 qualified resident referrals per 1,000 units every quarter.",
     },
     {
-      id: 7,
-      name: "FM Compliance Score",
-      measures: "% of scheduled PPM tasks, AMC deadlines, and compliance checkpoints completed on time within a reporting period",
-      impact: "Target: >90% compliance score; baseline in manual FM environments: 55–70%",
-      feature: "PPM digital checklists, compliance tracker, automated AMC alerts, permit-to-work, vendor evaluation",
-      how: "Digital checklists eliminate 'completed on paper, not in reality' gaps; automated alerts prevent missed deadlines; QR/NFC dual-control verifies physical task completion",
-      claim: "FM teams on Post Possession achieve 91%+ scheduled compliance scores — audit-ready, with full digital trail for every task executed.",
+      id: "7",
+      metricName: "Compliance Deadline Miss Rate",
+      measures:
+        "Percentage of scheduled compliance deadlines (AMC, PPM, statutory inspections) missed per quarter",
+      impactRange: "15-30% miss rate reduced to under 3% in first 6 months",
+      feature:
+        "Compliance Tracker + Digital Checklist + Automated Compliance Alerts",
+      cause:
+        "Automated alerts sent to FM team, vendors, and AMC partners 30/14/7 days before each compliance deadline. Checklist task auto-assignment ensures responsible owner is assigned before deadline approaches.",
+      claim:
+        "Our compliance tracker reduces missed FM deadlines from 1 in 5 to fewer than 1 in 30.",
     },
     {
-      id: 8,
-      name: "Resident NPS (Net Promoter Score)",
-      measures: "Likelihood of resident to recommend their community to friends/family, linked to platform engagement",
-      impact: "Expected improvement of +15–25 NPS points within 12 months of active platform use vs baseline",
-      feature: "Helpdesk (fast resolution), community engagement, visitor management (convenience), billing (transparency)",
-      how: "Faster issue resolution, transparent billing, and frictionless daily living drive resident satisfaction; in-app survey triggered post-ticket resolution and post-event captures real-time NPS signal",
-      claim: "Communities managed on Post Possession report NPS scores 20+ points higher than industry average — driven by faster maintenance resolution and transparent billing.",
+      id: "8",
+      metricName: "Defaulter Recovery Rate",
+      measures:
+        "Percentage of defaulter accounts that clear outstanding dues within 30 days of defaulter status being triggered",
+      impactRange:
+        "60-70% of defaulters clear dues within 30 days when service restriction is active",
+      feature:
+        "Defaulter Status and Service Restriction + Payment Reminders + Resident Bill Payment",
+      cause:
+        "Defaulter flag triggers automated payment reminders. Service restriction on facility booking creates a direct consequence for non-payment. UPI payment link in reminder message removes friction from the payment action.",
+      claim:
+        "6 out of 10 maintenance defaulters clear their dues within 30 days when our automated reminder and restriction system is activated.",
     },
     {
-      id: 9,
-      name: "Visitor Processing Time at Gate",
-      measures: "Average time from visitor arrival at gate to entry approval and gate open",
-      impact: "Target: <45 seconds for pre-authorised visitors; <120 seconds for unexpected visitors",
-      feature: "Pre-authorised visitor flow, OTP authentication, IVR/push approval, digital gate pass, offline guard mode",
-      how: "Pre-authorised visitors enter with a single QR scan (no phone call to resident needed); unexpected visitor push/IVR approval is resolved by resident in real time from anywhere",
-      claim: "Gate entry time for pre-approved visitors drops to under 45 seconds on Post Possession — eliminating peak-hour queues and improving resident experience from the moment they arrive home.",
+      id: "9",
+      metricName: "Security Traceability Coverage",
+      measures:
+        "Percentage of gate entry and exit events that have a digital audit record with timestamp, identity, and approver",
+      impactRange:
+        "100% digital audit coverage from Day 1 of go-live (vs. 0% with paper registers)",
+      feature:
+        "Visitor Management + Vehicle Entry / Exit Management + Goods In / Out Movement Tracing + Staff Attendance",
+      cause:
+        "Every visitor, vehicle, and goods movement is logged in the guard app with timestamp and resident approval record. Paper register has no recovery mechanism if a page is lost or damaged.",
+      claim:
+        "Every entry and exit at your gate is digitally logged with a timestamp and resident approval from Day 1.",
     },
     {
-      id: 10,
-      name: "FM Labour Cost per Ticket",
-      measures: "Average cost of FM staff time to resolve one helpdesk ticket, including dispatch, travel, and resolution time",
-      impact: "15–25% reduction within 12 months via auto-routing, staff roster optimisation, and vendor assignment",
-      feature: "Rule-based auto ticket assignment, staff roster management, vendor assignment, mobile ticket update",
-      how: "Auto-routing eliminates manual dispatch overhead; technicians update ticket status from mobile app eliminating admin rework; vendor assignment concentrates repeat-category work to specialists improving speed",
-      claim: "Post Possession reduces per-ticket FM resolution cost by 20% through automated dispatch and mobile-first technician workflows — freeing FM budgets for planned maintenance.",
+      id: "10",
+      metricName: "Post-Ticket Resident CSAT Score Improvement",
+      measures:
+        "Resident satisfaction score after ticket closure (star rating out of 5) compared to pre-platform baseline",
+      impactRange:
+        "Average CSAT improvement of 0.8-1.2 stars out of 5 within 90 days",
+      feature:
+        "Ticket Reopen and Feedback + Notification and Escalation Matrix + CAPA Module",
+      cause:
+        "Residents receive push notifications at every ticket status change, eliminating the 'no update' frustration. Escalation matrix prevents tickets from going cold. CAPA reduces repeat complaints. All three reduce resident frustration.",
+      claim:
+        "Resident satisfaction scores for maintenance requests improve by over 30% in the first 90 days after deployment.",
     },
   ],
-  launchTracking: {
-    thirtyDay: [
-      {
-        metric: "New Community Sign-Ups",
-        definition: "Contracts signed (not just demos given) in first 30 days of GTM launch",
-        withoutPhase1: "3–5 new contracts (India only; slower due to longer sales cycle without ROI proof)",
-        withPhase1: "6–10 new contracts (India + GCC early pipeline; ROI calculator shortens cycle by est. 30%)",
-        why: "ROI calculator + case study = faster CFO sign-off; Arabic UI = GCC deals unblocked",
-      },
-      {
-        metric: "Activated Users (Residents)",
-        definition: "% of residents in newly onboarded communities who complete profile + perform action",
-        withoutPhase1: "35–45% activation (without guided onboarding playbook)",
-        withPhase1: "55–65% activation (with 90-day CS onboarding playbook + developer CRM activation campaign)",
-        why: "Structured onboarding drives 20–30% higher activation; referral payout visibility motivates registration",
-      },
-      {
-        metric: "Paid Conversions (Pilot to Full)",
-        definition: "% of pilot/trial communities that convert to paid full contract within 30 days",
-        withoutPhase1: "40–50% (without strong CS and ROI proof)",
-        withPhase1: "65–75% (with published case study + ROI calculator + proactive CS)",
-        why: "Buyers who see their own ROI numbers convert faster; CS reduces post-pilot churn risk",
-      },
-      {
-        metric: "Feature Adoption % — Core Modules",
-        definition: "% of activated communities actively using 3+ core module groups within 30 days",
-        withoutPhase1: "50–60% (training-heavy onboarding needed without playbook)",
-        withPhase1: "70–80% (guided activation playbook drives structured module-by-module adoption)",
-        why: "Playbook ensures FM team and resident app are both activated in Week 1; not left to chance",
-      },
-      {
-        metric: "NPS Proxy — Developer Satisfaction",
-        definition: "Post-go-live survey to developer admin team on a 0–10 scale",
-        withoutPhase1: "NPS 30–40 (without polished UI; admin console friction creates early frustration)",
-        withPhase1: "NPS 50–65 (with UI overhaul; cleaner admin console reduces implementation friction)",
-        why: "UI quality directly correlates with early admin NPS; poor UI causes implementation complaints",
-      },
-      {
-        metric: "Support Ticket Volume per Community",
-        definition: "Average number of support tickets raised by FM/admin team to Lockated support",
-        withoutPhase1: "8–12 tickets/community (without streamlined onboarding)",
-        withPhase1: "3–5 tickets/community (with onboarding playbook + in-app help guides)",
-        why: "Structured onboarding pre-empts the top 10 configuration questions",
-      },
-      {
-        metric: "Churn Rate (30-day)",
-        definition: "% of signed communities that request to exit or pause within first 30 days",
-        withoutPhase1: "5–8% (high without proactive CS; implementation issues cause early exits)",
-        withPhase1: "1–2% (with dedicated CS + 45-day go-live guarantee + implementation playbook)",
-        why: "Early churn is almost always an implementation failure, not product failure",
-      },
-      {
-        metric: "North Star Metric: Visitor Transactions",
-        definition: "Total visitor approvals processed — proxy for platform engagement depth",
-        withoutPhase1: "500–1,000 visitor transactions in Month 1",
-        withPhase1: "1,500–3,000 visitor transactions (higher activation drives more transactions)",
-        why: "Visitor management is the daily-driver feature and direct measure of resident adoption",
-      },
-    ],
-    threeMonth: [
-      {
-        metric: "Cumulative New Community Sign-Ups",
-        definition: "Total contracted communities by end of Month 3",
-        withoutPhase1: "8–12 communities (India only; no GCC or UK without upgrade)",
-        withPhase1: "18–25 communities (India enterprise + GCC early + UK pilot underway)",
-        why: "Phase 1 features (Arabic, UI, API docs) unlock 2 international market tracks simultaneously",
-      },
-      {
-        metric: "Resident Monthly Active Rate (MAR)",
-        definition: "% of all registered residents who use app ≥1 time in Month 3",
-        withoutPhase1: "38–48% MAR (declining from Month 1 activation if no engagement features active)",
-        withPhase1: "58–68% MAR (referral payout + wellness + offers drive habitual return)",
-        why: "Referral payout automation gives residents a financial reason to stay engaged",
-      },
-      {
-        metric: "Paid Conversion Rate (Pilot to Annual)",
-        definition: "% of all trial/pilot communities converted by end of Month 3",
-        withoutPhase1: "45–55% (without ROI proof + CS playbook)",
-        withPhase1: "70–80% (with ROI calculator + published case studies + proactive CS QBR at Day 60)",
-        why: "Day 60 QBR with ROI data presented to CFO is the single highest-leverage conversion action",
-      },
-      {
-        metric: "Feature Adoption % — Developer Engagement",
-        definition: "% of communities where developer activated referral and/or loyalty by Month 3",
-        withoutPhase1: "25–35% (without referral payout automation)",
-        withPhase1: "55–65% (with automated UPI payout; confidence is higher)",
-        why: "Referral module activation is blocked by payout friction more than any other factor",
-      },
-      {
-        metric: "NPS Proxy — Developer + Resident",
-        definition: "Developer admin NPS + resident NPS sampled via in-app survey",
-        withoutPhase1: "Developer NPS: 35–45; Resident NPS: 20–30 (UI friction drags both down)",
-        withPhase1: "Developer NPS: 55–65; Resident NPS: 40–55 (UI overhaul removes top friction point)",
-        why: "UI/UX quality is the #1 NPS driver in months 1–3",
-      },
-      {
-        metric: "Support Ticket Volume Trend",
-        definition: "Week-on-week change in support tickets per community",
-        withoutPhase1: "Flat or slightly declining (without self-serve help)",
-        withPhase1: "Declining 15–20% per month (in-app help guides + onboarding playbook)",
-        why: "In-app contextual help reduces repeat queries; playbook pre-empts questions",
-      },
-      {
-        metric: "Churn Rate (3-month cohort)",
-        definition: "% of signed communities churned or paused by end of Month 3",
-        withoutPhase1: "8–12% churn (without strong CS)",
-        withPhase1: "2–4% churn (with proactive CS + monthly health score)",
-        why: "Month 2 is peak churn risk; proactive CS intervention at Day 45 prevents 70% of churn",
-      },
-      {
-        metric: "North Star Metric: Referral Value",
-        definition: "₹ property value attributed to referrals across all clients by end of Month 3",
-        withoutPhase1: "₹0–5 Cr attributed referral value (module inactive or untracked)",
-        withPhase1: "₹20–50 Cr attributed referral value (payout active + average ₹1–2 Cr property)",
-        why: "This is the headline commercial metric. Phase 1 referral payout automation is the unlock.",
-      },
-    ],
-  },
-  summary: {
-    northStar: "Referral Transactions Processed (₹ property value attributed to Post Possession referrals annually). This proves value to CFO, CRM Head, and Sales Director simultaneously.",
-    keyIndicators: [
-      { label: "Resident MAR > 55%", detail: "Below this, residents aren't using the app daily and the referral engine has no fuel." },
-      { label: "Module Adoption > 5/8", detail: "If lower, the platform is under-deployed and vulnerable to cheaper single-purpose tools." },
-      { label: "FM Compliance Score > 85%", detail: "Below this, the operations head is dissatisfied regardless of CRM outcomes." }
-    ],
-    paybackLogic: "Phase 1 investment (₹1.5–2.5 Cr) pays back within 12 months through 10 additional enterprise contracts unblocked by UI/Arabic/ROI proof."
-  }
+} as {
+  title: string;
+  description: string;
+  columns: string[];
+  rows: ClientImpactMetric[];
 };
+
+const launchTrackingSection = {
+  title: "SECTION 2 - PRODUCT LAUNCH TRACKING METRICS (North Star + Top 10)",
+  northStarTitle: "NORTH STAR METRIC",
+  northStarName: {
+    label: "North Star Metric Name:",
+    value:
+      "Monthly Active Residents per Deployed Community (MAR%) - Percentage of all registered residents who open and interact with the app at least once in a 30-day period",
+  },
+  northStarWhy: {
+    label: "Why this is the North Star:",
+    value:
+      "MAR% is the single number that predicts everything else: resident engagement, platform stickiness, referral lead quality, billing collection efficiency, and contract renewal probability. If MAR% is above 65%, the platform is embedded in resident daily life and churn risk is minimal. If MAR% falls below 40%, no other module performance metric matters - the platform is at risk of abandonment. Target: 65%+ by Day 90 post go-live at every deployed community.",
+  },
+  columns: [
+    "#",
+    "Metric",
+    "What it measures",
+    "Activation definition",
+    "30-day target - current",
+    "30-day target - Phase 1",
+    "3-month target - current",
+    "3-month target - Phase 1",
+    "Why it matters",
+    "Success signal",
+    "Phase 1 uplift reason",
+  ],
+  rows: [
+    {
+      id: "1",
+      metric: "New Community Signups",
+      measures:
+        "Number of new communities (projects) go-live per month. Counts from first resident login at the community.",
+      activationDefinition:
+        "First resident OTP login at a new community project",
+      current30Day: "2-3 new communities per month",
+      phase130Day:
+        "3-5 new communities per month (analytics dashboard accelerates enterprise deal close)",
+      current3Month: "8-12 communities total",
+      phase13Month: "15-20 communities total",
+      whyItMatters:
+        "Top-line growth metric. Rate of new community go-lives predicts ARR trajectory.",
+      successSignal:
+        "3+ new go-lives per month sustained for 2 consecutive months",
+      phase1UpliftReason:
+        "Analytics dashboard removes last deal-blocker for enterprise accounts, increasing close rate.",
+    },
+    {
+      id: "2",
+      metric: "Activated Residents per Community",
+      measures:
+        "Percentage of residents who complete first meaningful action: create first helpdesk ticket, approve first visitor, or complete first bill payment within 7 days of app download",
+      activationDefinition:
+        "First meaningful action completed within 7 days of OTP login: ticket created, visitor approved, or bill paid",
+      current30Day: "45% activated within Day 7 of go-live",
+      phase130Day:
+        "55% activated within Day 7 (better onboarding with dashboard-driven community manager review)",
+      current3Month: "65% activated by Day 30",
+      phase13Month: "75% activated by Day 30",
+      whyItMatters:
+        "Activation predicts long-term MAR%. Low Day-7 activation means the onboarding sequence needs improvement.",
+      successSignal:
+        "55%+ activation by Day 7 across 3 consecutive communities",
+      phase1UpliftReason:
+        "Phase 1 dashboard gives community manager real-time activation visibility to intervene on low-activation units.",
+    },
+    {
+      id: "3",
+      metric: "Monthly Active Residents (MAR%) - North Star",
+      measures:
+        "Percentage of registered residents interacting with app monthly",
+      activationDefinition:
+        "At least 1 app session per month (visitor approval, bill payment, ticket, or booking)",
+      current30Day: "50% MAR at Day 30",
+      phase130Day:
+        "55% MAR at Day 30 (ANPR integration increases gate app opens)",
+      current3Month: "65% MAR at Day 90",
+      phase13Month: "72% MAR at Day 90",
+      whyItMatters:
+        "The North Star. Predicts churn, referral quality, and contract renewal probability.",
+      successSignal: "65%+ MAR at Day 90 across all live communities",
+      phase1UpliftReason:
+        "ANPR integration drives gate-related daily opens. AI maintenance alerts create new notification-driven opens.",
+    },
+    {
+      id: "4",
+      metric: "Billing Collection Rate",
+      measures:
+        "Percentage of invoices fully paid within 30 days of generation",
+      activationDefinition:
+        "Invoice generated + resident payment confirmed within 30 days",
+      current30Day: "72% collection within 30 days at launch",
+      phase130Day:
+        "75% collection (same - billing module unchanged in Phase 1)",
+      current3Month: "82% collection by Month 3",
+      phase13Month: "85% collection by Month 3",
+      whyItMatters:
+        "Primary FM team KPI. Developer and RWA clients measure success by collection rate improvement.",
+      successSignal:
+        "85%+ collection rate within 90 days across all billed communities",
+      phase1UpliftReason:
+        "No Phase 1 change to billing module. Improvement driven by increased MAR% and resident payment habit formation.",
+    },
+    {
+      id: "5",
+      metric: "Helpdesk SLA Compliance Rate",
+      measures: "Percentage of tickets resolved within configured SLA window",
+      activationDefinition:
+        "Ticket closed within defined response + resolution TAT",
+      current30Day:
+        "70% within SLA at launch (baseline from manual process replacement)",
+      phase130Day: "73% within SLA",
+      current3Month: "82% within SLA by Month 3",
+      phase13Month: "88% within SLA with AI routing (Phase 2)",
+      whyItMatters:
+        "IFM contract SLA performance metric. Below 80% creates contract renewal risk.",
+      successSignal: "85%+ SLA compliance at all IFM-managed communities",
+      phase1UpliftReason:
+        "Phase 1 does not include AI ticket routing. Phase 2 AI routing improvement estimated at +8-12% SLA compliance.",
+    },
+    {
+      id: "6",
+      metric: "Feature Adoption - Visitor Management",
+      measures:
+        "Percentage of resident profiles with at least 1 visitor pre-registration completed in the first 30 days",
+      activationDefinition:
+        "At least 1 expected visitor pre-registered by resident in first 30 days",
+      current30Day: "55% resident visitor pre-registration by Day 30",
+      phase130Day:
+        "60% (ANPR integration makes gate experience faster, motivating visitor pre-registration)",
+      current3Month: "75% by Month 3",
+      phase13Month: "80% by Month 3",
+      whyItMatters:
+        "Visitor management daily active use is the primary driver of MAR%. If visitor pre-registration is not adopted, MAR% will not reach 65%.",
+      successSignal: "75%+ resident visitor pre-registration rate by Day 90",
+      phase1UpliftReason:
+        "ANPR integration makes the value of pre-registration tangible - faster gate entry - increasing motivation to adopt.",
+    },
+    {
+      id: "7",
+      metric: "NPS Proxy - Post-Ticket Resident CSAT",
+      measures:
+        "Average resident CSAT score (1-5 stars) collected at ticket closure across all active communities",
+      activationDefinition: "Any completed CSAT response after ticket closure",
+      current30Day: "3.4/5 average CSAT at launch (baseline from first cohort)",
+      phase130Day: "3.5/5 (same - no helpdesk change in Phase 1)",
+      current3Month:
+        "4.0/5 by Month 3 (improvement as teams learn SLA management)",
+      phase13Month: "4.1/5 with AI-prioritised escalation (Phase 2)",
+      whyItMatters:
+        "Resident experience quality indicator. Below 3.5 signals onboarding or FM team training problem.",
+      successSignal:
+        "4.0+ average CSAT across all communities for 2 consecutive months",
+      phase1UpliftReason:
+        "Phase 2 AI ticket routing and escalation prediction improve resolution quality, driving CSAT above 4.0.",
+    },
+    {
+      id: "8",
+      metric: "Support Ticket Volume (Platform Onboarding Friction)",
+      measures:
+        "Number of support tickets raised by client admin teams to Lockated support team per community per month",
+      activationDefinition:
+        "Any support ticket raised to Lockated technical or customer success team",
+      current30Day:
+        "15-25 tickets per community in Month 1 (high during onboarding)",
+      phase130Day:
+        "12-18 tickets (analytics dashboard reduces admin confusion about where to view data)",
+      current3Month: "Under 8 tickets per community per month by Month 3",
+      phase13Month: "Under 6 tickets per month by Month 3 with Phase 1",
+      whyItMatters:
+        "Measures platform complexity and onboarding quality. High ticket volume signals training or UX improvement needed.",
+      successSignal:
+        "Under 8 support tickets per community per month sustained from Month 2 onwards",
+      phase1UpliftReason:
+        "Community health dashboard reduces admin navigation confusion - primary driver of onboarding support tickets.",
+    },
+    {
+      id: "9",
+      metric: "Monthly Churn Rate (Community Level)",
+      measures:
+        "Percentage of deployed communities that do not renew their annual contract",
+      activationDefinition: "Contract non-renewal or cancellation request",
+      current30Day:
+        "Target under 2% monthly churn from Month 4 onwards (0% in first 12 months due to annual contracts)",
+      phase130Day:
+        "Target under 1.5% monthly churn (analytics dashboard creates executive-level stickiness at developer accounts)",
+      current3Month: "Under 2% annualised churn by end of Month 12",
+      phase13Month:
+        "Under 1.5% annualised churn with Phase 1 (executive dashboard creates board-level buy-in)",
+      whyItMatters:
+        "Retention metric. Community-level churn above 5% annually signals product-market fit issue or competitive displacement risk.",
+      successSignal:
+        "Under 2% annualised community churn through first 18 months of operation",
+      phase1UpliftReason:
+        "Executive dashboard creates a second buyer persona (developer CXO) who is sticky regardless of FM team change.",
+    },
+    {
+      id: "10",
+      metric: "Referral Lead Conversion Rate",
+      measures:
+        "Percentage of resident-submitted referral leads that convert to a sales-qualified lead (SQL) in the developer's pipeline",
+      activationDefinition:
+        "Referral lead submitted in app + developer sales team confirms contact made within 7 days",
+      current30Day:
+        "3-5 referrals per 1,000 residents per quarter; 15-20% SQL conversion rate",
+      phase130Day:
+        "4-6 referrals per 1,000 (loyalty module in Phase 2 will increase referral motivation)",
+      current3Month: "5-8 referrals per 1,000 by Month 3; 20% SQL conversion",
+      phase13Month:
+        "8-12 referrals per 1,000 with loyalty module (Phase 2); 25% SQL conversion",
+      whyItMatters:
+        "Revenue-generating metric for developer clients. Quantifies the ROI of Post Possession as a sales channel, not just an operations tool.",
+      successSignal:
+        "Developer sales team books 5+ meetings per quarter from resident referral leads",
+      phase1UpliftReason:
+        "Phase 2 loyalty engine creates incentive-backed referral campaigns that increase referral submission rate by 40-60%.",
+    },
+  ],
+  note: {
+    label: "Note:",
+    value:
+      "White columns = current product without Phase 1 roadmap | Blue-shaded Phase 1 columns = projections after analytics dashboard, ANPR integration, and AI predictive maintenance delivery | All ranges are realistic targets, not guarantees - actual results depend on community size, resident demographics, and implementation quality.",
+  },
+} as {
+  title: string;
+  northStarTitle: string;
+  northStarName: LabelValue;
+  northStarWhy: LabelValue;
+  columns: string[];
+  rows: LaunchMetric[];
+  note: LabelValue;
+};
+
+const summarySection = {
+  title: "METRICS SUMMARY - KEY TAKEAWAYS FOR LEADERSHIP REVIEW",
+  rows: [
+    {
+      label: "THE NORTH STAR METRIC:",
+      value:
+        "Monthly Active Residents per Deployed Community (MAR%) - Target 65%+ by Day 90. This is the only metric that predicts platform health, churn risk, and referral quality simultaneously. Every other metric is downstream of MAR%.",
+    },
+    {
+      label: "THE THREE LEADING INDICATORS OF PLATFORM HEALTH:",
+      value:
+        "1. Day-7 Activation Rate (target 55%+) - predicts whether the community will reach 65% MAR by Day 90. 2. Billing Collection Rate (target 82%+ by Month 3) - developer and RWA clients' primary commercial metric. 3. Helpdesk SLA Compliance Rate (target 82%+ by Month 3) - IFM client contract renewal metric.",
+    },
+    {
+      label: "THE PHASE 1 INVESTMENT PAYBACK LOGIC:",
+      value:
+        "Expected return: Phase 1 delivery (community health dashboard, ANPR integration, AI maintenance alerting) unlocks 40-60% of blocked enterprise pipeline. At INR 1,600-2,400 per unit per year and average deal size of 1,000+ units, each unblocked enterprise deal generates INR 16-24 lakh in new ARR. Phase 1 investment payback at 3 unlocked enterprise deals = INR 50-70 lakh new ARR vs. estimated Phase 1 build cost of INR 40-60 lakh. Net positive within 6 months of delivery.",
+    },
+  ],
+} as {
+  title: string;
+  rows: LabelValue[];
+};
+
+const impactGridTemplate =
+  "56px minmax(190px, 0.9fr) minmax(220px, 1fr) minmax(180px, 0.8fr) minmax(230px, 1fr) minmax(320px, 1.35fr) minmax(320px, 1.35fr)";
+const launchGridTemplate =
+  "56px minmax(190px, 0.85fr) minmax(230px, 1fr) minmax(230px, 1fr) minmax(190px, 0.85fr) minmax(230px, 1fr) minmax(190px, 0.85fr) minmax(220px, 1fr) minmax(260px, 1.1fr) minmax(240px, 1fr) minmax(280px, 1.15fr)";
 
 const PostPossessionMetricsTab: React.FC = () => {
   return (
-    <div className="space-y-12 animate-fade-in font-poppins">
-      {/* Header */}
-      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+    <div className="space-y-10 animate-fade-in font-poppins text-[#2C2C2C]">
+      <section className="rounded-t-xl border border-[#C4B89D] border-l-4 border-l-[#DA7756] bg-white p-6">
         <h2 className="text-xl font-bold uppercase tracking-wider">
-          Post Possession — Performance & Impact Metrics
+          {metricsMeta.title}
         </h2>
-      </div>
+        <p className="mt-2 text-sm italic leading-relaxed text-[#4f4a43]">
+          {metricsMeta.subtitle}
+        </p>
+      </section>
 
-      {/* Section 1: Client Impact Metrics */}
-      <div className="space-y-4">
-        <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
-          Section 1 — Client Impact Metrics (Proof Points)
+      <section className="overflow-hidden rounded-xl border border-[#D3D1C7] bg-white shadow-sm">
+        <div className="border-b border-[#D3D1C7] bg-[#DA7756] px-4 py-3 text-white">
+          <h3 className="text-sm font-bold uppercase tracking-wide">
+            {clientImpactSection.title}
+          </h3>
         </div>
+        <p className="border-b border-[#D3D1C7] bg-[#FFF7F1] px-4 py-3 text-[12px] font-medium leading-relaxed text-[#1A1A2E]">
+          {clientImpactSection.description}
+        </p>
 
-        <div className="overflow-hidden border border-[#D3D1C7] rounded-xl shadow-sm bg-white">
-          <table className="w-full border-collapse table-fixed text-[12px] leading-relaxed">
-            <thead>
-              <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px]">
-                <th className="border border-[#D3D1C7] px-3 py-3 text-center w-[4%]">#</th>
-                <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[14%]">Metric Name</th>
-                <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[18%]">Expected Impact</th>
-                <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[18%]">Feature Driver</th>
-                <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[21%]">How Impact is Caused</th>
-                <th className="border border-[#D3D1C7] px-3 py-3 text-left w-[25%] font-bold text-[#DA7756] bg-blue-50/50">Landing Page Claim</th>
-              </tr>
-            </thead>
-            <tbody>
-              {metricsData.clientImpact.map((m) => (
-                <tr key={m.id} className="align-top hover:bg-gray-50/50 transition-colors">
-                  <td className="border border-[#D3D1C7] px-3 py-4 text-center font-bold text-gray-400">{m.id}</td>
-                  <td className="border border-[#D3D1C7] px-3 py-4 font-bold text-[#DA7756]">{m.name}</td>
-                  <td className="border border-[#D3D1C7] px-3 py-4 text-[#2C2C2C] font-medium italic">{m.impact}</td>
-                  <td className="border border-[#D3D1C7] px-3 py-4 text-[#2C2C2C]/80 text-[11px]">{m.feature}</td>
-                  <td className="border border-[#D3D1C7] px-3 py-4 text-gray-600 text-[11px] leading-relaxed">{m.how}</td>
-                  <td className="border border-[#D3D1C7] px-3 py-4 text-[#1a1a2e] font-semibold text-[11px] bg-blue-50/20 leading-relaxed italic">
-                    "{m.claim}"
-                  </td>
-                </tr>
+        <div className="overflow-x-auto">
+          <div className="min-w-[1680px] text-[12px] leading-relaxed">
+            <div
+              className="grid bg-[#A24A2A] text-left text-[11px] font-bold uppercase tracking-wide text-white"
+              style={{ gridTemplateColumns: impactGridTemplate }}
+            >
+              {clientImpactSection.columns.map((column) => (
+                <div key={column} className="border border-[#D3D1C7] px-3 py-3">
+                  {column}
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </div>
 
-      {/* Section 2: Launch Tracking */}
-      <div className="space-y-8 mt-12">
-        <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
-          Section 2 — Product Launch Tracking (Speed-to-Value)
-        </div>
-
-        {/* 30-Day Targets */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold text-[#A52A1A] uppercase tracking-[0.2em] border-b border-red-100 pb-2">
-            30-Day Post-Launch Targets
-          </h3>
-          <div className="overflow-hidden border border-[#D3D1C7] rounded-xl bg-white shadow-sm">
-            <table className="w-full border-collapse table-fixed text-[11px] leading-relaxed">
-              <thead>
-                <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7] italic">
-                  <th className="p-3 text-left w-[15%]">Metric</th>
-                  <th className="p-3 text-left w-[20%]">Without Phase 1</th>
-                  <th className="p-3 text-left w-[20%] bg-[#fce4d6]/30 text-red-900">WITH Phase 1 Upgrade</th>
-                  <th className="p-3 text-left w-[45%]">Why the Difference (The Unlock)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {metricsData.launchTracking.thirtyDay.map((row, idx) => (
-                  <tr key={idx} className="border-b border-[#D3D1C7] last:border-0 hover:bg-gray-50/30">
-                    <td className="p-3 font-bold text-[#DA7756]">{row.metric}</td>
-                    <td className="p-3 text-gray-500 italic">{row.withoutPhase1}</td>
-                    <td className="p-3 font-semibold text-green-700 bg-green-50/10">{row.withPhase1}</td>
-                    <td className="p-3 text-gray-600 leading-relaxed font-medium">{row.why}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* 3-Month Targets */}
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold text-[#DA7756] uppercase tracking-[0.2em] border-b border-blue-100 pb-2">
-            3-Month Post-Launch Targets
-          </h3>
-          <div className="overflow-hidden border border-[#D3D1C7] rounded-xl bg-white shadow-sm">
-            <table className="w-full border-collapse table-fixed text-[11px] leading-relaxed">
-              <thead>
-                <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[9px] border-b border-[#D3D1C7] italic">
-                  <th className="p-3 text-left w-[15%]">Metric</th>
-                  <th className="p-3 text-left w-[20%]">Without Phase 1</th>
-                  <th className="p-3 text-left w-[20%] bg-[#F6F4EE]/30 text-[#DA7756]">WITH Phase 1 Upgrade</th>
-                  <th className="p-3 text-left w-[45%]">Why the Difference (The Unlock)</th>
-                </tr>
-              </thead>
-              <tbody>
-                {metricsData.launchTracking.threeMonth.map((row, idx) => (
-                  <tr key={idx} className="border-b border-[#D3D1C7] last:border-0 hover:bg-gray-50/30">
-                    <td className="p-3 font-bold text-[#DA7756]">{row.metric}</td>
-                    <td className="p-3 text-gray-500 italic">{row.withoutPhase1}</td>
-                    <td className="p-3 font-semibold text-blue-700 bg-blue-50/10">{row.withPhase1}</td>
-                    <td className="p-3 text-gray-600 leading-relaxed font-medium">{row.why}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {/* Summary Box */}
-      <div className="bg-[#DA7756] text-white rounded-2xl p-8 shadow-xl mt-12 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 sm:block hidden"></div>
-        <div className="relative z-10 space-y-8">
-          <div>
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-blue-300 mb-4 px-2 border-l-2 border-blue-400">
-              North Star Metric
-            </h4>
-            <p className="text-xl sm:text-2xl font-bold leading-tight">
-              {metricsData.summary.northStar}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {metricsData.summary.keyIndicators.map((indicator, idx) => (
-              <div key={idx} className="bg-white/10 p-4 rounded-xl border border-white/10 hover:bg-white/15 transition-colors">
-                <span className="text-sm font-black text-blue-200 block mb-1">{indicator.label}</span>
-                <p className="text-[11px] text-gray-300 leading-relaxed italic">{indicator.detail}</p>
+            {clientImpactSection.rows.map((row, index) => (
+              <div
+                key={row.id}
+                className={
+                  "grid " + (index % 2 === 0 ? "bg-[#FFF7F1]" : "bg-white")
+                }
+                style={{ gridTemplateColumns: impactGridTemplate }}
+              >
+                <div className="border border-[#D3D1C7] px-3 py-3 text-right font-bold text-[#7A3A20]">
+                  {row.id}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#7A3A20]">
+                  {row.metricName}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 text-[#1A1A2E]">
+                  {row.measures}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 font-semibold text-[#1A1A2E]">
+                  {row.impactRange}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 text-[#1A1A2E]">
+                  {row.feature}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 text-[#1A1A2E]">
+                  {row.cause}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 font-semibold italic text-[#1A1A2E]">
+                  {row.claim}
+                </div>
               </div>
             ))}
           </div>
+        </div>
+      </section>
 
-          <div className="pt-6 border-t border-white/10">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.3em] text-blue-300 mb-2">Investment Payback Logic</h4>
-            <p className="text-[12px] text-gray-300 leading-relaxed font-medium">
-              {metricsData.summary.paybackLogic}
-            </p>
+      <section className="overflow-hidden rounded-xl border border-[#D3D1C7] bg-white shadow-sm">
+        <div className="border-b border-[#D3D1C7] bg-[#DA7756] px-4 py-3 text-white">
+          <h3 className="text-sm font-bold uppercase tracking-wide">
+            {launchTrackingSection.title}
+          </h3>
+        </div>
+
+        <div className="border-b border-[#D3D1C7] bg-[#FFF7F1] p-4">
+          <h4 className="mb-3 inline-block bg-[#A24A2A] px-3 py-2 text-[12px] font-bold uppercase tracking-wide text-white">
+            {launchTrackingSection.northStarTitle}
+          </h4>
+          <div className="grid gap-3 md:grid-cols-[220px_minmax(0,1fr)]">
+            <div className="border border-[#D3D1C7] bg-white px-4 py-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[#7A3A20]">
+              {launchTrackingSection.northStarName.label}
+            </div>
+            <div className="border border-[#D3D1C7] bg-white px-4 py-3 text-[14px] font-bold leading-relaxed text-[#1A1A2E]">
+              {launchTrackingSection.northStarName.value}
+            </div>
+            <div className="border border-[#D3D1C7] bg-white px-4 py-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[#7A3A20]">
+              {launchTrackingSection.northStarWhy.label}
+            </div>
+            <div className="border border-[#D3D1C7] bg-white px-4 py-3 text-[13px] font-medium leading-relaxed text-[#1A1A2E]">
+              {launchTrackingSection.northStarWhy.value}
+            </div>
           </div>
         </div>
-      </div>
+
+        <div className="overflow-x-auto">
+          <div className="min-w-[2300px] text-[12px] leading-relaxed">
+            <div
+              className="grid bg-[#A24A2A] text-left text-[11px] font-bold uppercase tracking-wide text-white"
+              style={{ gridTemplateColumns: launchGridTemplate }}
+            >
+              {launchTrackingSection.columns.map((column) => (
+                <div key={column} className="border border-[#D3D1C7] px-3 py-3">
+                  {column}
+                </div>
+              ))}
+            </div>
+
+            {launchTrackingSection.rows.map((row, index) => (
+              <div
+                key={row.id}
+                className={
+                  "grid " + (index % 2 === 0 ? "bg-[#FFF7F1]" : "bg-white")
+                }
+                style={{ gridTemplateColumns: launchGridTemplate }}
+              >
+                <div className="border border-[#D3D1C7] px-3 py-3 text-right font-bold text-[#7A3A20]">
+                  {row.id}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 font-bold text-[#7A3A20]">
+                  {row.metric}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 text-[#1A1A2E]">
+                  {row.measures}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 text-[#1A1A2E]">
+                  {row.activationDefinition}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 text-[#1A1A2E]">
+                  {row.current30Day}
+                </div>
+                <div className="border border-[#D3D1C7] bg-[#FFF1E8] px-3 py-3 font-semibold text-[#7A3A20]">
+                  {row.phase130Day}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 text-[#1A1A2E]">
+                  {row.current3Month}
+                </div>
+                <div className="border border-[#D3D1C7] bg-[#FFF1E8] px-3 py-3 font-semibold text-[#7A3A20]">
+                  {row.phase13Month}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 text-[#1A1A2E]">
+                  {row.whyItMatters}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 font-medium text-[#1A1A2E]">
+                  {row.successSignal}
+                </div>
+                <div className="border border-[#D3D1C7] px-3 py-3 text-[#1A1A2E]">
+                  {row.phase1UpliftReason}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid border-t border-[#D3D1C7] bg-white md:grid-cols-[180px_minmax(0,1fr)]">
+          <div className="border-r border-[#D3D1C7] bg-[#FFF7F1] px-4 py-3 text-[11px] font-bold uppercase tracking-[0.12em] text-[#7A3A20]">
+            {launchTrackingSection.note.label}
+          </div>
+          <div className="px-4 py-3 text-[12px] font-medium leading-relaxed text-[#1A1A2E]">
+            {launchTrackingSection.note.value}
+          </div>
+        </div>
+      </section>
+
+      <section className="overflow-hidden rounded-xl border border-[#D3D1C7] bg-white shadow-sm">
+        <h3 className="border-b border-[#D3D1C7] bg-[#DA7756] px-4 py-3 text-sm font-bold uppercase tracking-wide text-white">
+          {summarySection.title}
+        </h3>
+        <div>
+          {summarySection.rows.map((row, index) => (
+            <div
+              key={row.label}
+              className={
+                "grid border-b border-[#D3D1C7] last:border-b-0 md:grid-cols-[260px_minmax(0,1fr)] " +
+                (index % 2 === 0 ? "bg-[#FFF7F1]" : "bg-white")
+              }
+            >
+              <div className="border-r border-[#D3D1C7] px-4 py-4 text-[11px] font-bold uppercase tracking-[0.12em] text-[#7A3A20]">
+                {row.label}
+              </div>
+              <div className="px-4 py-4 text-[13px] font-medium leading-relaxed text-[#1A1A2E]">
+                {row.value}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 };
 
 export default PostPossessionMetricsTab;
-

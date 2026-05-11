@@ -619,41 +619,47 @@ export const TeamPerformance = () => {
                               (e.currentTarget.style.background = "transparent")
                             }
                           >
-                            <td className="px-3 py-3 text-center">
-                              <div
-                                className={`inline-flex h-8 min-w-8 items-center justify-center rounded-lg px-2 text-xs font-black ${member.score >= 40 ? "bg-emerald-100 text-emerald-700" : member.score >= 20 ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"}`}
-                              >
-                                {member.score}
-                              </div>
-                            </td>
                             <td className="px-3 py-3">
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-black text-white ${["bg-blue-500", "bg-purple-500", "bg-pink-500", "bg-green-500", "bg-orange-500", "bg-red-500", "bg-indigo-500", "bg-cyan-500"][index % 8]}`}
-                                >
-                                  {member.name
-                                    .split(" ")
-                                    .map((n) => n[0])
-                                    .join("")
-                                    .toUpperCase()
-                                    .slice(0, 2)}
-                                </div>
-                                <div>
-                                  <p
-                                    className="font-black text-xs"
-                                    style={{ color: C.textMain }}
-                                  >
-                                    {member.name}
-                                  </p>
-                                  <p
-                                    className="text-[11px]"
-                                    style={{ color: C.textMuted }}
-                                  >
-                                    {member.email}
-                                  </p>
-                                </div>
-                              </div>
-                            </td>
+  <div className="flex items-center gap-2">
+    <div
+      className="shrink-0 rounded-full"
+      style={{
+        width: "32px",
+        height: "32px",
+        backgroundColor: ["#3b82f6","#a855f7","#ec4899","#22c55e","#f97316","#ef4444","#6366f1","#06b6d4"][index % 8],
+        position: "relative",
+      }}
+    >
+      <span
+        style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          fontSize: "11px",
+          fontWeight: "900",
+          color: "white",
+          lineHeight: 1,
+        }}
+      >
+        {member.name
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2)}
+      </span>
+    </div>
+    <div>
+      <p className="font-black text-xs" style={{ color: C.textMain }}>
+        {member.name}
+      </p>
+      <p className="text-[11px]" style={{ color: C.textMuted }}>
+        {member.email}
+      </p>
+    </div>
+  </div>
+</td>
                             <td
                               className="px-3 py-3 text-center text-xs font-semibold"
                               style={{ color: C.textMuted }}
