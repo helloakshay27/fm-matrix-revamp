@@ -57,7 +57,10 @@ const compileMeetingNotes = (historyData: any): string => {
     ) ||
     memberReports.find((r: any) => r.status === "submitted");
 
-  const meetingNotesData = headMemberReport?.report_data?.meeting_notes || {};
+  const meetingNotesData =
+    historyData.report_data?.meeting_notes ||
+    headMemberReport?.report_data?.meeting_notes ||
+    {};
   let rawDiscussionPoints = "";
 
   // Get missed members directly from root data structure
@@ -218,20 +221,13 @@ const hasMeetingDataForDate = (historyData: any, selectedDate: string) => {
   if (!historyData) return false;
 
   const memberReports: any[] = historyData.member_reports || [];
-  const selectedDateStatus = historyData.date_row?.find(
-    (row: any) => row.full_date === selectedDate
-  )?.status;
+  const rootMeetingNotes = historyData.report_data?.meeting_notes;
 
   return (
-    ["done", "submitted", "completed", "fill"].includes(
-      String(selectedDateStatus || historyData.status || "").toLowerCase()
-    ) ||
-    Number(historyData.submitted || 0) > 0 ||
+    !!rootMeetingNotes ||
     memberReports.some(
       (report: any) =>
-        report.status === "submitted" ||
-        !!report.report_data ||
-        !!report.daily_report
+        !!report.report_data?.meeting_notes
     )
   );
 };

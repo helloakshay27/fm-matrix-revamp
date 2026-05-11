@@ -1149,35 +1149,33 @@ function DiscProfileReport({
                       className="bg-white hover:bg-[#FFF9F6] transition-colors"
                     >
                       <td className="px-5 py-4">
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 12,
-                            fontWeight: 600,
-                            color: "#1f2937",
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 40,
-                              height: 40,
-                              minWidth: 40,
-                              borderRadius: "50%",
-                              background: circleBg[sType],
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              fontSize: 16,
-                              fontWeight: 800,
-                              color: "#ffffff",
-                              lineHeight: "40px",
-                              textAlign: "center",
-                            }}
+                        <div className="flex items-center gap-3 font-semibold text-neutral-800">
+                          <svg
+                            width="40"
+                            height="40"
+                            viewBox="0 0 40 40"
+                            style={{ display: "block", margin: 0, padding: 0 }}
                           >
-                            {sType}
-                          </span>
-                          {row.label}
+                            <circle
+                              cx="20"
+                              cy="20"
+                              r="20"
+                              fill={circleBg[sType]}
+                            />
+                            <text
+                              x="20"
+                              y="20"
+                              textAnchor="middle"
+                              dominantBaseline="central"
+                              fill="#ffffff"
+                              fontSize="18"
+                              fontWeight="900"
+                              fontFamily="inherit"
+                            >
+                              {sType}
+                            </text>
+                          </svg>
+                          <span>{row.label}</span>
                         </div>
                       </td>
                       <td className="px-5 py-4 text-neutral-600 leading-relaxed text-sm">
