@@ -55,21 +55,19 @@ const TeamMembersTable = ({
     if (score >= 20) return "bg-amber-100 text-amber-700";
     return "bg-rose-100 text-rose-700";
   };
-
-  const getAvatarColor = (index: number) => {
-    const colors = [
-      "bg-blue-500",
-      "bg-purple-500",
-      "bg-pink-500",
-      "bg-green-500",
-      "bg-orange-500",
-      "bg-red-500",
-      "bg-indigo-500",
-      "bg-cyan-500",
-    ];
-    return colors[index % colors.length];
-  };
-
+const getAvatarColor = (index: number) => {
+  const colors = [
+    "#3b82f6", // blue
+    "#a855f7", // purple
+    "#ec4899", // pink
+    "#22c55e", // green
+    "#f97316", // orange
+    "#ef4444", // red
+    "#6366f1", // indigo
+    "#06b6d4", // cyan
+  ];
+  return colors[index % colors.length];
+};
   // Generate pagination pages with ellipsis
   const getPaginationPages = () => {
     const pages: (number | string)[] = [];
@@ -234,10 +232,29 @@ const TeamMembersTable = ({
                     <td className="px-3 py-3 text-center">
                       <div className="flex items-center justify-center gap-3">
                         <div
-                          className={`flex h-9 w-9 items-center justify-center rounded-full ${getAvatarColor(index)} text-xs font-bold text-white`}
-                        >
-                          {getInitials(member.name)}
-                        </div>
+  className="shrink-0 rounded-full"
+  style={{
+    width: "36px",
+    height: "36px",
+    backgroundColor: getAvatarColor(index),
+    position: "relative",
+  }}
+>
+  <span
+    style={{
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      fontSize: "12px",
+      fontWeight: "bold",
+      color: "white",
+      lineHeight: 1,
+    }}
+  >
+    {getInitials(member.name)}
+  </span>
+</div>
                         <div className="text-left">
                           <p className="font-medium text-neutral-900">
                             {member.name}

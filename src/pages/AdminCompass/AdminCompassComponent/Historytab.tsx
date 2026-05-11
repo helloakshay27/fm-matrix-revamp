@@ -214,6 +214,28 @@ const compileMeetingNotes = (historyData: any): string => {
   return text.trim();
 };
 
+const hasMeetingDataForDate = (historyData: any, selectedDate: string) => {
+  if (!historyData) return false;
+
+  const memberReports: any[] = historyData.member_reports || [];
+  const selectedDateStatus = historyData.date_row?.find(
+    (row: any) => row.full_date === selectedDate
+  )?.status;
+
+  return (
+    ["done", "submitted", "completed", "fill"].includes(
+      String(selectedDateStatus || historyData.status || "").toLowerCase()
+    ) ||
+    Number(historyData.submitted || 0) > 0 ||
+    memberReports.some(
+      (report: any) =>
+        report.status === "submitted" ||
+        !!report.report_data ||
+        !!report.daily_report
+    )
+  );
+};
+
 // ── CUSTOM SELECT ──
 const CustomSelect = ({
   value,
@@ -573,7 +595,7 @@ const MeetingCard = ({
     }
   };
 
-  if (!localData || submittedCount === 0) return null;
+  if (!hasMeetingDataForDate(localData, selectedDate)) return null;
 
   return (
     <>
@@ -853,11 +875,7 @@ const AllMeetingsView = ({
 
         if (isDeleted) return null;
 
-        const memberReports: any[] = data?.member_reports || [];
-        const submittedCount = memberReports.filter(
-          (r: any) => r.status === "submitted"
-        ).length;
-        const hasData = submittedCount > 0;
+        const hasData = hasMeetingDataForDate(data, selectedDate);
 
         return (
           <div key={id}>
@@ -995,11 +1013,7 @@ const HistoryTab = ({ initialDate }: { initialDate?: string }) => {
     : (meetings.find((m) => String(m.id) === String(selectedMeetingId))?.name ??
       "Meeting");
 
-  const memberReports: any[] = historyData?.member_reports || [];
-  const submittedCount = memberReports.filter(
-    (r: any) => r.status === "submitted"
-  ).length;
-  const hasSubmissions = submittedCount > 0;
+  const hasSubmissions = hasMeetingDataForDate(historyData, selectedDate);
 
   const meetingOptions = [
     { value: "all", label: "All Meetings" },
