@@ -1309,6 +1309,7 @@ import MyInboxPage from "./features/inbox/MyInboxPage.tsx";
 import { ExpenseEditPage } from "./pages/ExpenseEditPage.tsx";
 import TaxSetupTabView from "./pages/ClubManagement/TaxSetupTabView.tsx";
 import { BillEdit } from "./pages/ClubManagement/BillEdit.tsx";
+import { RecurringBillEdit } from "./pages/ClubManagement/RecurringBillEdit.tsx";
 
 const queryClient = new QueryClient();
 
@@ -3489,6 +3490,10 @@ function App() {
                           <Route
                             path="/accounting/recurring-bills/details/:id"
                             element={<RecurringBillDetails />}
+                          />
+                          <Route
+                            path="/accounting/recurring-bills/edit/:id"
+                            element={<RecurringBillEdit />}
                           />
                           <Route
                             path="/accounting/recurring-expenses"
