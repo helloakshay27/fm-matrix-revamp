@@ -68,6 +68,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginLoading, setLoginLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [captchaText, setCaptchaText] = useState("");
+  const [captchaInput, setCaptchaInput] = useState("");
 
   const hostname = window.location.hostname;
 
@@ -149,6 +151,40 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
   };
 
+  // Smart validator — accepts a valid email OR a mobile number (7-15 digits, optional leading +)
+  const validateEmailOrMobile = (
+    value: string
+  ): { isValid: boolean; message: string } => {
+    const trimmed = value.trim();
+    if (!trimmed)
+      return {
+        isValid: false,
+        message: "Please enter your email or mobile number.",
+      };
+
+    const looksLikeEmail = trimmed.includes("@");
+    if (looksLikeEmail) {
+      const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
+      return valid
+        ? { isValid: true, message: "" }
+        : {
+            isValid: false,
+            message:
+              "Please enter a valid email address (e.g. name@example.com).",
+          };
+    }
+
+    // Treat as mobile: strip spaces/dashes, allow optional leading +
+    const digits = trimmed.replace(/[\s\-().]/g, "");
+    const valid = /^\+?[0-9]{7,15}$/.test(digits);
+    return valid
+      ? { isValid: true, message: "" }
+      : {
+          isValid: false,
+          message: "Please enter a valid mobile number (7–15 digits).",
+        };
+  };
+
   const validatePassword = (password: string) => {
     // Password must be at least 8 characters long
     if (password.length < 8) {
@@ -194,39 +230,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     return { isValid: true, message: "Password is valid." };
   };
 
-  const validateEmailOrMobile = (
-    value: string
-  ): { isValid: boolean; message: string } => {
-    const trimmed = value.trim();
-    if (!trimmed)
-      return {
-        isValid: false,
-        message: "Please enter your email or mobile number.",
-      };
-
-    const looksLikeEmail = trimmed.includes("@");
-    if (looksLikeEmail) {
-      const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
-      return valid
-        ? { isValid: true, message: "" }
-        : {
-          isValid: false,
-          message:
-            "Please enter a valid email address (e.g. name@example.com).",
-        };
-    }
-
-    // Treat as mobile: strip spaces/dashes, allow optional leading +
-    const digits = trimmed.replace(/[\s\-().]/g, "");
-    const valid = /^\+?[0-9]{7,15}$/.test(digits);
-    return valid
-      ? { isValid: true, message: "" }
-      : {
-        isValid: false,
-        message: "Please enter a valid mobile number (7–15 digits).",
-      };
-  };
-
   const handleEmailSubmit = async () => {
     const validation = validateEmailOrMobile(email);
     if (!validation.isValid) {
@@ -249,6 +252,16 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     }
   };
 
+  const generateCaptcha = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    let result = "";
+    for (let i = 0; i < 6; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setCaptchaText(result);
+    setCaptchaInput("");
+  };
+
   const handleOrganizationSelect = (org: Organization) => {
     const baseUrl = `${org.sub_domain}.${org.domain}`;
 
@@ -267,6 +280,20 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     setBaseUrl(baseUrl);
     setSelectedOrganization(org);
     setCurrentStep(3);
+
+    // Generate CAPTCHA for Vodafone Idea
+    if (org.name === "Vodafone Idea") {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+      let result = "";
+      for (let i = 0; i < 6; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      setCaptchaText(result);
+      setCaptchaInput("");
+    } else {
+      setCaptchaText("");
+      setCaptchaInput("");
+    }
   };
 
   const handleLogin = async () => {
@@ -291,11 +318,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         baseUrl,
         organizationId
       );
-
-      if (!response.is_login) {
-        toast.error("You are not approved to login.");
-        return;
-      }
 
       if (!response || !response.access_token) {
         throw new Error("Invalid response received from server");
@@ -468,6 +490,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           return;
         }
 
+        if (isPulseSite) {
+          navigate("/", { replace: true });
+          return;
+        }
+
         // PRIORITY 3: Company ID-based routing for specific companies
         if (
           response.company_id === 300 ||
@@ -493,8 +520,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           navigate("/dashboard");
         } else if (isViSite) {
           navigate("/safety/m-safe/internal");
-        } else if (isPulseSite) {
-          navigate("/maintenance/ticket");
         } else {
           navigate(from, { replace: true });
         }
@@ -542,12 +567,13 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         {[1, 2, 3].map((step) => (
           <div
             key={step}
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${step === currentStep
-              ? "bg-[#C72030] text-white shadow-lg scale-110"
-              : step < currentStep
-                ? "bg-green-500 text-white"
-                : "bg-gray-100 text-gray-400"
-              }`}
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all transform ${
+              step === currentStep
+                ? "bg-[#C72030] text-white shadow-lg scale-110"
+                : step < currentStep
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-100 text-gray-400"
+            }`}
           >
             {step < currentStep ? (
               <Check className="w-5 h-5 stroke-[2.5]" />
@@ -559,16 +585,19 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       </div>
       <div className="flex justify-center items-center gap-2">
         <div
-          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"
-            }`}
+          className={`h-1 w-16 rounded-full transition-all ${
+            currentStep >= 1 ? "bg-[#C72030]" : "bg-gray-200"
+          }`}
         ></div>
         <div
-          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"
-            }`}
+          className={`h-1 w-16 rounded-full transition-all ${
+            currentStep >= 2 ? "bg-[#C72030]" : "bg-gray-200"
+          }`}
         ></div>
         <div
-          className={`h-1 w-16 rounded-full transition-all ${currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"
-            }`}
+          className={`h-1 w-16 rounded-full transition-all ${
+            currentStep >= 3 ? "bg-[#C72030]" : "bg-gray-200"
+          }`}
         ></div>
       </div>
       <p className="text-gray-400 text-sm mt-3 font-medium">
@@ -660,7 +689,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         )}
       </div>
       <p className="text-grey-300 text-sm mb-6 ">
-        Email: <span className="text-grey-500 font-bold">{email}</span>
+        Email / Mobile: <span className="text-grey-500 font-bold">{email}</span>
       </p>
 
       <p className="text-gray-500 text-sm">
@@ -776,8 +805,74 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         }}
       />
 
+
+  {/* CAPTCHA — shown only for Vodafone Idea */}
+      {selectedOrganization?.name === "Vodafone Idea" && (
+        <div className="mb-6">
+          <p className="text-gray-700 font-medium text-sm mb-2">Please enter the CAPTCHA below</p>
+          {/* CAPTCHA display box */}
+          <div
+            style={{
+              background: "linear-gradient(135deg,#f0f0f0 0%,#d8d8d8 100%)",
+              border: "1px solid #ccc",
+              borderRadius: "8px",
+              padding: "10px 16px",
+              fontFamily: "'Courier New', monospace",
+              fontSize: "22px",
+              fontWeight: 700,
+              letterSpacing: "8px",
+              color: "#333",
+              userSelect: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "8px",
+            }}
+          >
+            <span style={{ textDecoration: "line-through" }}>{captchaText}</span>
+            <button
+              type="button"
+              onClick={generateCaptcha}
+              style={{
+                background: "none",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "18px",
+                color: "#C72030",
+                padding: "0 4px",
+              }}
+              title="Refresh CAPTCHA"
+            >
+              &#x21BB;
+            </button>
+          </div>
+          {/* CAPTCHA input */}
+          <input
+            type="text"
+            placeholder="Type the CAPTCHA here"
+            value={captchaInput}
+            onChange={(e) => setCaptchaInput(e.target.value)}
+            style={{
+              width: "100%",
+              height: "44px",
+              border: "1px solid #e2e8f0",
+              borderRadius: "8px",
+              padding: "0 14px",
+              fontSize: "15px",
+              boxSizing: "border-box",
+              outline: "none",
+            }}
+          />
+          {captchaInput.length > 0 && captchaInput !== captchaText && (
+            <p style={{ color: "#C72030", fontSize: "12px", marginTop: "4px" }}>
+              CAPTCHA does not match. Please try again.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Terms and Privacy */}
-      <div className="text-center text-sm text-gray-300 mb-6">
+      <div className="text-center text-sm text-gray-300 mb-4">
         By clicking Log in you are accepting our{" "}
         <span className="text-blue-300 hover:underline cursor-pointer">
           Privacy Policy
@@ -789,10 +884,16 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         .
       </div>
 
+    
       {/* Login Button */}
       <Button
         onClick={handleLogin}
-        disabled={!password || loginLoading}
+        disabled={
+          !password ||
+          loginLoading ||
+          (selectedOrganization?.name === "Vodafone Idea" &&
+            captchaInput !== captchaText)
+        }
         className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-semibold rounded-lg text-base transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loginLoading ? (
@@ -838,8 +939,9 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           <div className=" rounded-2xl  p-8 sm:p-10 relative z-10 animate-fade-in">
             {/* Logo */}
             <div
-              className={`text-center mb-5 flex flex-col items-center space-y-2 ${isViSite ? "-mt-4" : ""
-                }`}
+              className={`text-center mb-5 flex flex-col items-center space-y-2 ${
+                isViSite ? "-mt-4" : ""
+              }`}
             >
               {isOmanSite ? (
                 <svg
@@ -965,10 +1067,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
               )}
 
               <p
-                className={`${isViSite
-                  ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
-                  : "text-gray-600 text-sm font-medium"
-                  }`}
+                className={`${
+                  isViSite
+                    ? "text-gray-800 text-base sm:text-lg font-semibold tracking-tight"
+                    : "text-gray-600 text-sm font-medium"
+                }`}
               >
                 Sign in to your account
               </p>
