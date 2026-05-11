@@ -51,6 +51,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     getLayoutByCompanyId,
     currentSection,
     setCurrentSection,
+    isMobileSidebarOpen,
+    setIsMobileSidebarOpen,
   } = useLayout();
   const { isActionSidebarVisible } = useActionLayout();
   const { selectedCompany } = useSelector((state: RootState) => state.project);
@@ -441,6 +443,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   }, [location.search]);
 
+  // Close mobile sidebar on navigation
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
+  }, [location.pathname, setIsMobileSidebarOpen]);
+
   const [activeNavMenu, setActiveNavMenu] = useState<string | null>(null);
   const isNewEmpHubRoute = location.pathname === "/employee/company-hub-new";
 
@@ -487,6 +494,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <Header />
       )}
 
+      {/* Mobile overlay backdrop - closes sidebar when tapping outside */}
+      {isMobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
+
       {renderSidebar()}
       {renderDynamicHeader()}
 
@@ -505,15 +520,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 location.pathname.includes("/business-compass") ||
                 location.pathname.includes("/admin-compass")
                 ? isSidebarCollapsed
-                  ? "ml-16"
-                  : "ml-64"
+                  ? "ml-0 md:ml-16"
+                  : "ml-0 md:ml-64"
                 : "ml-0" // No margin for other modules
               : // For action sidebar, add extra top padding and adjust left margin
                 isActionSidebarVisible
-                ? "ml-64 pt-28" // ActionSidebar is visible (fixed width 64)
+                ? "ml-0 md:ml-64 pt-28"
                 : isSidebarCollapsed
-                  ? "ml-16"
-                  : "ml-64"
+                  ? "ml-0 md:ml-16"
+                  : "ml-0 md:ml-64"
         } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? (!isNewEmpHubRoute ? "pt-16" : "pt-6") : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />

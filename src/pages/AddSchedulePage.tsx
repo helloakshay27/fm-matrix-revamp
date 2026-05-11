@@ -2268,26 +2268,76 @@ export const AddSchedulePage = () => {
   };
 
   // Validation functions for each section - updated for field-level errors
+  // const validateBasicConfiguration = async (): Promise<string[]> => {
+  //   const errors: { [key: string]: string } = {};
+
+  //   if (!formData.type) {
+  //     errors['type'] = 'Type selection is required';
+  //   }
+  //   if (!formData.activityName.trim()) {
+  //     errors['activityName'] = 'Activity Name is required';
+  //   } else {
+  //     // Check for duplicate activity names
+  //     const isUnique = await validateActivityName(formData.activityName);
+  //     if (!isUnique) {
+  //       errors['activityName'] = 'Activity name already exists';
+  //     }
+  //   }
+
+  //   // Attachment validation
+  // if (!attachments || attachments.length === 0) {
+  //   // errors["attachments"] = "At least one attachment is required";
+  //   toast.error("Please upload at least one attachment.");
+  // }
+
+
+  //   // Update field errors
+  //   setFieldErrors(prev => ({
+  //     ...prev,
+  //     ...errors
+  //   }));
+
+  //   return Object.values(errors);
+  // };
+
+
   const validateBasicConfiguration = async (): Promise<string[]> => {
     const errors: { [key: string]: string } = {};
 
     if (!formData.type) {
-      errors['type'] = 'Type selection is required';
+      errors["type"] = "Type selection is required";
     }
+
     if (!formData.activityName.trim()) {
-      errors['activityName'] = 'Activity Name is required';
+      errors["activityName"] = "Activity Name is required";
     } else {
-      // Check for duplicate activity names
+      // Check duplicate activity name
       const isUnique = await validateActivityName(formData.activityName);
+
       if (!isUnique) {
-        errors['activityName'] = 'Activity name already exists';
+        errors["activityName"] = "Activity name already exists";
       }
     }
 
+    // Attachment validation
+    if (!attachments || attachments.length === 0) {
+      errors["attachments"] = "At least one attachment is required";
+      // toast.error("Please upload at least one attachment.");
+      //    toast.error("Please upload at least one attachment.", {
+      //   position: "top-right",
+      //   duration: 4000,
+      //   style: {
+      //     background: "#fff",
+      //     color: "black",
+      //     border: "none",
+      //   },
+      // });
+    }
+
     // Update field errors
-    setFieldErrors(prev => ({
+    setFieldErrors((prev) => ({
       ...prev,
-      ...errors
+      ...errors,
     }));
 
     return Object.values(errors);
@@ -2602,6 +2652,11 @@ export const AddSchedulePage = () => {
         return;
       }
     } else {
+      // const isValid = await validateCurrentStep();
+
+      // if (!isValid) {
+      //   return;
+      // }
       if (!(await validateCurrentStep())) {
         toast.error("Please fill all required fields before proceeding.", {
           position: 'top-right',
@@ -2698,6 +2753,13 @@ export const AddSchedulePage = () => {
         return;
       }
     } else {
+
+
+      //       const isValid = await validateCurrentStep();
+
+      // if (!isValid) {
+      //   return;
+      // }
       if (!(await validateCurrentStep())) {
         toast.error("Please fill all required fields before proceeding.", {
           position: 'top-right',
@@ -3034,12 +3096,12 @@ export const AddSchedulePage = () => {
     // Build custom_form object
     const customForm: any = {};
     let taskCounter = 1; // Counter for individual tasks with help text attachments
-    
+
     questionSections.forEach((section) => {
       // Get tasks with help text attachments
       const sectionTasks = section.tasks.filter(task => task.task.trim());
       const helpTextTasks = sectionTasks.filter(task => task.helpText);
-      
+
       helpTextTasks.forEach(task => {
         // Validation: All helpText tasks must have helpTextValue and helpTextAttachments
         if (!task.helpTextValue || !task.helpTextValue.trim()) {
@@ -3048,14 +3110,14 @@ export const AddSchedulePage = () => {
         if (!task.helpTextAttachments || task.helpTextAttachments.length === 0) {
           throw new Error('Please attach a help file for all tasks where Help Text is checked.');
         }
-        
+
         // Create individual question_for_{taskCounter} for each task with help text
         customForm[`question_for_${taskCounter}`] = task.helpTextAttachments.map(attachment => ({
           filename: attachment.name,
           content: attachment.content,
           content_type: attachment.content_type
         }));
-        
+
         taskCounter++;
       });
     });
@@ -3319,14 +3381,14 @@ export const AddSchedulePage = () => {
               onChange={async (e) => {
                 const value = e.target.value;
                 setFormData({ ...formData, activityName: value });
-                
+
                 // Clear previous validation result and errors
                 setActivityNameValidationResult(null);
                 setFieldErrors(prev => {
                   const { activityName, ...rest } = prev;
                   return rest;
                 });
-                
+
                 // Real-time validation with debouncing
                 if (value.trim().length > 2) {
                   setIsValidatingActivityName(true);
@@ -3341,16 +3403,16 @@ export const AddSchedulePage = () => {
               }}
               error={!!fieldErrors.activityName}
               helperText={
-                fieldErrors.activityName || 
-                (isValidatingActivityName ? 'Checking availability...' : 
-                 (activityNameValidationResult === true ? '✓ Activity name is available' : ''))
+                fieldErrors.activityName ||
+                (isValidatingActivityName ? 'Checking availability...' :
+                  (activityNameValidationResult === true ? '✓ Activity name is available' : ''))
               }
-              sx={{ 
+              sx={{
                 mb: 3,
                 '& .MuiFormHelperText-root': {
-                  color: fieldErrors.activityName ? '#d32f2f' : 
-                         (isValidatingActivityName ? '#ed6c02' : 
-                          (activityNameValidationResult === true ? '#2e7d32' : 'rgba(0, 0, 0, 0.6)'))
+                  color: fieldErrors.activityName ? '#d32f2f' :
+                    (isValidatingActivityName ? '#ed6c02' :
+                      (activityNameValidationResult === true ? '#2e7d32' : 'rgba(0, 0, 0, 0.6)'))
                 }
               }}
             />
@@ -3478,7 +3540,7 @@ export const AddSchedulePage = () => {
               )}
 
               {/* Add Attachment Button */}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <MuiButton
                   variant="outlined"
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
@@ -3498,8 +3560,51 @@ export const AddSchedulePage = () => {
                     },
                   }}
                 >
-                  Add Attachment
+                  Add Attachment*
                 </MuiButton>
+              </Box> */}
+
+
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
+                }}
+              >
+                <MuiButton
+                  variant="outlined"
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                  onClick={addAttachment}
+                  sx={{
+                    borderColor: '#C72030',
+                    color: '#C72030',
+                    textTransform: 'none',
+                    fontFamily: 'Work Sans, sans-serif',
+                    fontWeight: 500,
+                    borderRadius: '0',
+                    padding: '8px 16px',
+                    '&:hover': {
+                      borderColor: '#B8252F',
+                      backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                    },
+                  }}
+                >
+                  Add Attachment*
+                </MuiButton>
+
+                {fieldErrors.attachments && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#d32f2f',
+                      fontSize: '12px',
+                      mt: 0.5
+                    }}
+                  >
+                    {fieldErrors.attachments}
+                  </Typography>
+                )}
               </Box>
             </Box>
           </SectionCard>
@@ -3867,7 +3972,7 @@ export const AddSchedulePage = () => {
                     {/* Asset Sub-Group Dropdown - Show when Asset Group is selected */}
                     {selectedAssetGroup && (
                       <Box sx={{ minWidth: 0 }}>
-                        <FormControl 
+                        <FormControl
                           fullWidth
                           variant="outlined"
                           error={!!fieldErrors.assetSubGroup}

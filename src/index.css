@@ -1557,6 +1557,325 @@ button.text-blue-600 {
 }
 
 /* ===========================================
+   GLOBAL MOBILE RESPONSIVENESS
+   Applied app-wide — mobile-first defaults,
+   desktop overrides via min-width queries.
+   =========================================== */
+
+/* 1. Base resets */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* prevent horizontal scroll on all devices */
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: hidden;
+  /* safe area for iOS notch / home bar */
+  padding-env: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* 2. Page content wrapper — used inside <main> on every page */
+.page-content {
+  width: 100%;
+  padding: 12px;
+}
+
+@media (min-width: 640px) {
+  .page-content {
+    padding: 16px;
+  }
+}
+
+@media (min-width: 768px) {
+  .page-content {
+    padding: 20px 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-content {
+    padding: 24px 32px;
+  }
+}
+
+/* 3. Make all data tables horizontally scrollable on mobile */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Auto-wrap any standalone <table> not inside a scroll container */
+@media (max-width: 767px) {
+  table:not(.no-responsive) {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+}
+
+/* 4. Minimum touch target for all interactive elements */
+@media (max-width: 767px) {
+  button,
+  a,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 36px;
+  }
+
+  /* Inputs full-width on mobile */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    width: 100%;
+    max-width: 100%;
+    font-size: 16px; /* prevent iOS zoom on focus */
+  }
+}
+
+/* 5. Responsive typography scale */
+@media (max-width: 639px) {
+  h1,
+  .text-2xl,
+  .text-3xl,
+  .text-4xl {
+    font-size: 1.25rem !important;
+  }
+  h2,
+  .text-xl {
+    font-size: 1.1rem !important;
+  }
+  h3 {
+    font-size: 1rem !important;
+  }
+}
+
+/* 6. Page header bar (title + action buttons row used on most dashboards) */
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 640px) {
+  .page-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+/* Action button group in page headers — stack on mobile, row on desktop */
+.page-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* 7. Filter / search bar rows — common pattern across all dashboards */
+.filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+@media (min-width: 640px) {
+  .filter-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+}
+
+/* 8. Stats / metric card grids */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 640px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .stats-grid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* 9. Generic form grid — 2 columns on md+, 1 column on mobile */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  .form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .form-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 10. Modal / dialog responsive width */
+@media (max-width: 639px) {
+  [role="dialog"] {
+    max-width: 100vw !important;
+    width: 100% !important;
+    margin: 0 !important;
+    border-radius: 12px 12px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    top: auto !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+  }
+}
+
+/* 11. Figma card — responsive padding */
+@media (max-width: 639px) {
+  .figma-card-header {
+    padding: 10px 12px !important;
+  }
+  .figma-card-content {
+    padding: 12px !important;
+  }
+  .figma-card-title {
+    font-size: 13px !important;
+  }
+}
+
+/* 12. Pagination row — center on mobile */
+@media (max-width: 639px) {
+  .pagination-row,
+  .flex.items-center.justify-between:has(button[aria-label*="page"]),
+  .flex.items-center.justify-between:has(button[aria-label*="previous"]) {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+}
+
+/* 13. Prevent fixed-width containers from overflowing on mobile */
+@media (max-width: 767px) {
+  .w-\[1200px\],
+  .w-\[1000px\],
+  .w-\[900px\],
+  .w-\[800px\],
+  .min-w-\[800px\],
+  .min-w-\[900px\] {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+/* 14. Dropdown menus — constrain on very small screens */
+@media (max-width: 400px) {
+  [data-radix-dropdown-menu-content],
+  [data-radix-select-content],
+  [data-radix-popover-content] {
+    max-width: calc(100vw - 16px) !important;
+  }
+}
+
+/* ===========================================
+   SELECTION PANEL — global responsive styles
+   Desktop: fixed bottom-center bar (sidebar-aware)
+   Mobile (<640px): full-width bottom sheet
+   =========================================== */
+
+/* ── Desktop base (640px+) ── */
+.selection-panel {
+  position: fixed !important;
+  bottom: 1.5rem !important;
+  /* Center inside content area (sidebar 256px) */
+  left: calc(256px + ((100vw - 256px) / 2)) !important;
+  transform: translateX(-50%) !important;
+  top: auto !important;
+  width: auto !important;
+  min-width: 560px;
+  max-width: calc(100vw - 320px);
+  height: 105px !important;
+  border-radius: 8px !important;
+  border: 1px solid #e5e7eb !important;
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.16) !important;
+  z-index: 50;
+  background: #fff !important;
+  overflow: visible;
+}
+
+/* Collapsed sidebar (64px) */
+.sidebar-collapsed .selection-panel {
+  left: calc(64px + ((100vw - 64px) / 2)) !important;
+}
+
+/* ── Mobile (<640px): full-width bottom sheet ── */
+@media (max-width: 639px) {
+  .selection-panel {
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 80px;
+    max-height: 60vh;
+    border-radius: 12px 12px 0 0 !important;
+    border: none !important;
+    border-top: 2px solid #c4b89d !important;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.18) !important;
+    overflow-y: auto;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Inner flex row — wrap on mobile */
+  .selection-panel > div:first-child {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    padding: 12px !important;
+    gap: 8px;
+    align-items: flex-start !important;
+  }
+
+  /* Action buttons row — full row */
+  .selection-panel .flex.items-center.ml-8,
+  .selection-panel .flex.items-center.ml-10 {
+    margin-left: 0 !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    width: 100% !important;
+    justify-content: flex-start;
+  }
+}
+
+/* ===========================================
    GLOBAL FIX: Force opaque backgrounds on all
    Radix / Shadcn floating UI (dropdowns, popovers,
    dialogs, sheets, selects, command palettes).

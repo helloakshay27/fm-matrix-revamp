@@ -363,8 +363,7 @@ const modulesByPackage = {
         },
       ],
     },
-   
-  
+
     // {
     //   name: 'Inventory Sub Type',
     //   icon: PackagePlus,
@@ -549,7 +548,6 @@ const modulesByPackage = {
     //   href: "/maintenance/sprint"
     // }
 
-
     // {
     //   name: "Msafe Report",
     //   icon: Download,
@@ -578,12 +576,13 @@ const modulesByPackage = {
           href: "/safety/permit/pending-approvals",
           color: "text-[#1a1a1a]",
         },
-        { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
+        {
+          name: "Permit Checklist",
+          href: "/safety/permit/checklist",
+          color: "text-[#1a1a1a]",
+        },
       ],
     },
-
-
-
 
     {
       name: "M-Safe",
@@ -611,12 +610,20 @@ const modulesByPackage = {
       ],
     },
     {
-      name: 'Report',
+      name: "Report",
       icon: Download,
-      href: '/safety/report',
+      href: "/safety/report",
       subItems: [
-        { name: 'Msafe User Report', icon: Download, href: '/safety/report/msafe-report' },
-        { name: 'Msafe Detail Report', icon: Download, href: '/safety/report/msafe-detail-report' },
+        {
+          name: "Msafe User Report",
+          icon: Download,
+          href: "/safety/report/msafe-report",
+        },
+        {
+          name: "Msafe Detail Report",
+          icon: Download,
+          href: "/safety/report/msafe-detail-report",
+        },
       ],
     },
     // {
@@ -752,11 +759,7 @@ const modulesByPackage = {
     { name: "EV Consumption", icon: Car, href: "/utility/ev-consumption" },
     { name: "Solar Generator", icon: Sun, href: "/utility/solar-generator" },
   ],
-  Security: [
-
-    { name: "Visitor", icon: Users, href: "/security/visitor" },
-
-  ],
+  Security: [{ name: "Visitor", icon: Users, href: "/security/visitor" }],
   "Value Added Services": [
     { name: "F&B", icon: Coffee, href: "/vas/fnb" },
     {
@@ -886,8 +889,8 @@ const modulesByPackage = {
           href: "/vas/channels/tasks",
           color: "text-[#1a1a1a]",
         },
-      ]
-    }
+      ],
+    },
   ],
   "Market Place": [
     {
@@ -985,7 +988,6 @@ const modulesByPackage = {
         },
       ],
     },
-
   ],
 };
 
@@ -997,6 +999,7 @@ export const PrimeSupportSidebar = () => {
     setCurrentSection,
     isSidebarCollapsed,
     setIsSidebarCollapsed,
+    isMobileSidebarOpen,
   } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [selectedDepartment, setSelectedRole] = useState("");
@@ -1081,7 +1084,7 @@ export const PrimeSupportSidebar = () => {
     const currentPath = location.pathname;
     const exactMatch = currentPath === href;
     const prefixMatch = currentPath.startsWith(href + "/");
-    const isActive = mode === "prefix" ? (exactMatch || prefixMatch) : exactMatch;
+    const isActive = mode === "prefix" ? exactMatch || prefixMatch : exactMatch;
 
     // Debug logging for Services
     if (href === "/maintenance/service") {
@@ -1187,9 +1190,10 @@ export const PrimeSupportSidebar = () => {
                         onClick={() => toggleExpanded(subItem.name)}
                         className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
                       >
-                        {subItem.href && isActiveRoute(subItem.href, "exact") && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
-                        )}
+                        {subItem.href &&
+                          isActiveRoute(subItem.href, "exact") && (
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
+                          )}
                         <span>{subItem.name}</span>
                         {expandedItems.includes(subItem.name) ? (
                           <ChevronDown className="w-4 h-4" />
@@ -1203,8 +1207,9 @@ export const PrimeSupportSidebar = () => {
                             <button
                               key={nestedItem.name}
                               onClick={() => handleNavigation(nestedItem.href)}
-                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || "text-[#1a1a1a]"
-                                }`}
+                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
+                                nestedItem.color || "text-[#1a1a1a]"
+                              }`}
                             >
                               {isActiveRoute(nestedItem.href, "exact") && (
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -1220,8 +1225,9 @@ export const PrimeSupportSidebar = () => {
                       onClick={() =>
                         handleNavigation(subItem.href, currentSection)
                       }
-                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
-                        }`}
+                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+                        subItem.color || "text-[#1a1a1a]"
+                      }`}
                     >
                       {isActiveRoute(subItem.href, "exact") && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -1243,8 +1249,9 @@ export const PrimeSupportSidebar = () => {
           onClick={() =>
             item.href && handleNavigation(item.href, currentSection)
           }
-          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
-            }`}
+          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+            item.color || "text-[#1a1a1a]"
+          }`}
         >
           {level === 0 && (
             <>
@@ -1323,10 +1330,11 @@ export const PrimeSupportSidebar = () => {
               handleNavigation(module.href, currentSection);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
-            ? "bg-[#f0e8dc] shadow-inner"
-            : "hover:bg-[#DBC2A9]"
-            }`}
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+            active || isExpanded
+              ? "bg-[#f0e8dc] shadow-inner"
+              : "hover:bg-[#DBC2A9]"
+          }`}
           title={module.name}
         >
           {(active || isExpanded) && (
@@ -1334,13 +1342,15 @@ export const PrimeSupportSidebar = () => {
           )}
           {level === 0 ? (
             <module.icon
-              className={`w-5 h-5 ${active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
-                }`}
+              className={`w-5 h-5 ${
+                active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
+              }`}
             />
           ) : (
             <div
-              className={`w-${3 - level} h-${3 - level
-                } rounded-full bg-[#1a1a1a]`}
+              className={`w-${3 - level} h-${
+                3 - level
+              } rounded-full bg-[#1a1a1a]`}
             ></div>
           )}
         </button>
@@ -1359,8 +1369,11 @@ export const PrimeSupportSidebar = () => {
 
   return (
     <div
-      className={`${isSidebarCollapsed ? "w-16" : "w-64"
-        } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${
+        isSidebarCollapsed ? "w-16" : "w-64"
+      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${
+        isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      } md:translate-x-0`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -1382,8 +1395,9 @@ export const PrimeSupportSidebar = () => {
         {currentSection && (
           <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
             <h3
-              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
-                }`}
+              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${
+                isSidebarCollapsed ? "text-center" : "tracking-wide"
+              }`}
             >
               {isSidebarCollapsed ? "" : currentSection}
             </h3>
@@ -1419,20 +1433,22 @@ export const PrimeSupportSidebar = () => {
                       handleNavigation(module.href, currentSection);
                     }
                   }}
-                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href, "prefix")
-                    ? "bg-[#f0e8dc] shadow-inner"
-                    : "hover:bg-[#DBC2A9]"
-                    }`}
+                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+                    isActiveRoute(module.href, "prefix")
+                      ? "bg-[#f0e8dc] shadow-inner"
+                      : "hover:bg-[#DBC2A9]"
+                  }`}
                   title={module.name}
                 >
                   {isActiveRoute(module.href, "prefix") && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                   )}
                   <module.icon
-                    className={`w-5 h-5 ${isActiveRoute(module.href, "prefix")
-                      ? "text-[#C72030]"
-                      : "text-[#1a1a1a]"
-                      }`}
+                    className={`w-5 h-5 ${
+                      isActiveRoute(module.href, "prefix")
+                        ? "text-[#C72030]"
+                        : "text-[#1a1a1a]"
+                    }`}
                   />
                 </button>
               ))}

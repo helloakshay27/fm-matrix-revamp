@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/button';
-import { X, MoveRight, QrCode, Download, Trash2, Loader2 } from 'lucide-react';
-import { getFullUrl, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "./ui/button";
+import { X, MoveRight, QrCode, Download, Trash2, Loader2 } from "lucide-react";
+import { getFullUrl, getAuthHeader, ENDPOINTS } from "@/config/apiConfig";
+import { useToast } from "@/hooks/use-toast";
 
 interface LocationObject {
   site_name: string;
@@ -28,7 +28,7 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
   onPrintQR,
   onDownload,
   onDispose,
-  onClearSelection
+  onClearSelection,
 }) => {
   const navigate = useNavigate();
   const [isMoveLoading, setIsMoveLoading] = useState(false);
@@ -46,7 +46,7 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
       toast({
         title: "No locations selected",
         description: "Please select locations to print QR codes.",
-        variant: "destructive"
+        variant: "destructive",
       });
       return;
     }
@@ -59,15 +59,17 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
 
     setIsPrintLoading(true);
     try {
-      const surveyMappingIds = selectedLocations.join(',');
-      const apiUrl = getFullUrl(`/survey_mappings/print_qr_codes?survey_mapping_ids=${surveyMappingIds}`);
+      const surveyMappingIds = selectedLocations.join(",");
+      const apiUrl = getFullUrl(
+        `/survey_mappings/print_qr_codes?survey_mapping_ids=${surveyMappingIds}`
+      );
 
       const response = await fetch(apiUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json'
-        }
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
       });
 
       if (!response.ok) {
@@ -81,7 +83,7 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
       const url = window.URL.createObjectURL(blob);
 
       // Create a temporary link element and trigger download
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
       link.download = `qr_codes_${surveyMappingIds}.pdf`; // or whatever format the API returns
       document.body.appendChild(link);
@@ -95,13 +97,12 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
         title: "QR Codes Generated",
         description: `Successfully generated QR codes for ${selectedLocations.length} location(s).`,
       });
-
     } catch (error) {
-      console.error('Error printing QR codes:', error);
+      console.error("Error printing QR codes:", error);
       toast({
         title: "Error",
         description: "Failed to generate QR codes. Please try again.",
-        variant: "destructive"
+        variant: "destructive",
       });
     } finally {
       setIsPrintLoading(false);
@@ -121,30 +122,34 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
   }
 
   return (
-    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px]">
+    <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px] selection-panel">
       {/* Beige left strip - 44px wide */}
       <div className="w-[44px] bg-[#C4B59A] rounded-l-lg flex flex-col items-center justify-center">
         <div className="text-[#C72030] font-bold text-lg">
           {selectedLocations.length}
         </div>
       </div>
-      
+
       {/* Main content */}
       <div className="flex items-center justify-between gap-4 px-6 flex-1">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-[#1a1a1a]">Selection</span>
+            <span className="text-sm font-medium text-[#1a1a1a]">
+              Selection
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-gray-600">
-              {selectedLocationObjects.slice(0, 2).map(loc => 
-                `${loc.site_name} - ${loc.building_name}`
-              ).join(', ')}
-              {selectedLocationObjects.length > 2 && ` +${selectedLocationObjects.length - 2} more`}
+              {selectedLocationObjects
+                .slice(0, 2)
+                .map((loc) => `${loc.site_name} - ${loc.building_name}`)
+                .join(", ")}
+              {selectedLocationObjects.length > 2 &&
+                ` +${selectedLocationObjects.length - 2} more`}
             </span>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-2">
           {/* <Button
             onClick={handleMoveAssets}
@@ -160,7 +165,7 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
             )}
             <span className="text-xs text-gray-600">Move Assets</span>
           </Button> */}
-          
+
           <Button
             onClick={handlePrintQR}
             disabled={isPrintLoading}
@@ -175,7 +180,7 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
             )}
             <span className="text-xs text-gray-600">Print QR</span>
           </Button>
-          
+
           {/* <Button
             onClick={handleDownload}
             disabled={isDownloadLoading}
@@ -207,7 +212,7 @@ export const LocationSelectionPanel: React.FC<LocationSelectionPanelProps> = ({
           </Button> */}
         </div>
       </div>
-      
+
       {/* Cross button - 44px wide */}
       <div className="w-[44px] flex items-center justify-center border-l border-gray-200">
         <button

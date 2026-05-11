@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
-import { X, Plus, FileText, Upload, Loader2 } from 'lucide-react';
-import { useLayout } from '@/contexts/LayoutContext';
+import React, { useRef } from "react";
+import { X, Plus, FileText, Upload, Loader2 } from "lucide-react";
+import { useLayout } from "@/contexts/LayoutContext";
 
 interface InventorySelectionPanelProps {
   selectedIds: string[];
@@ -13,7 +13,9 @@ interface InventorySelectionPanelProps {
 }
 
 // Inventory specific panel replicating PannelTab styling, restricted to Add Consumable & Print QR
-export const InventorySelectionPanel: React.FC<InventorySelectionPanelProps> = ({
+export const InventorySelectionPanel: React.FC<
+  InventorySelectionPanelProps
+> = ({
   selectedIds,
   onAddConsumable,
   onPrintQR,
@@ -27,7 +29,7 @@ export const InventorySelectionPanel: React.FC<InventorySelectionPanelProps> = (
 
   return (
     <div
-      className={`fixed z-50 flex items-end justify-center pb-8 sm:pb-[16rem] pointer-events-none transition-all duration-300 ${isSidebarCollapsed ? 'left-16' : 'left-64'} right-0 bottom-0`}
+      className={`fixed z-50 flex items-end justify-center pb-4 sm:pb-8 pointer-events-none transition-all duration-300 left-0 md:${isSidebarCollapsed ? "left-16" : "left-64"} right-0 bottom-0`}
     >
       {/* Container replicating original SelectionPanel layout */}
       <div className="flex max-w-full pointer-events-auto bg-white border border-gray-200 rounded-lg shadow-lg mx-4 overflow-hidden">
@@ -54,7 +56,9 @@ export const InventorySelectionPanel: React.FC<InventorySelectionPanelProps> = (
                     className="flex flex-col items-center justify-center cursor-pointer text-[#374151] hover:text-black w-16 sm:w-auto"
                   >
                     <Upload className="w-6 h-6 mb-1" />
-                    <span className="text-sm font-medium text-center">Import</span>
+                    <span className="text-sm font-medium text-center">
+                      Import
+                    </span>
                   </button>
                 )}
               </>
@@ -66,7 +70,9 @@ export const InventorySelectionPanel: React.FC<InventorySelectionPanelProps> = (
                 className="flex flex-col items-center justify-center cursor-pointer text-[#374151] hover:text-black w-16 sm:w-auto"
               >
                 <Plus className="w-6 h-6 mb-1" />
-                <span className="text-sm font-medium text-center">Add Consumable</span>
+                <span className="text-sm font-medium text-center">
+                  Add Consumable
+                </span>
               </button>
             )}
             {/* Print QR */}
@@ -81,7 +87,9 @@ export const InventorySelectionPanel: React.FC<InventorySelectionPanelProps> = (
                 ) : (
                   <FileText className="w-6 h-6 mb-1" />
                 )}
-                <span className="text-sm font-medium text-center">{printing ? 'Generating…' : 'Print QR'}</span>
+                <span className="text-sm font-medium text-center">
+                  {printing ? "Generating…" : "Print QR"}
+                </span>
               </button>
             )}
             {/* Divider */}
