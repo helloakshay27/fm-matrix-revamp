@@ -1,39 +1,38 @@
 import React from "react";
 import { useLayout } from "../contexts/LayoutContext";
 
-const clubPackages = ["Club Management","Accounting","Master", "Settings", ];
+const clubPackages = ["Club Management", "Accounting", "Master", "Settings"];
 
 export const ClubDynamicHeader = () => {
-    const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
+  const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
 
-    return (
-        <div
-            className={`h-12 border-b border-[#D5DbDB] fixed top-16 right-0 ${isSidebarCollapsed ? "left-16" : "left-64"
-                } z-20 transition-all duration-300`}
-            style={{ backgroundColor: "#f6f4ee" }}
-        >
-            <div className="flex items-center h-full px-4 overflow-x-auto">
-                <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
-                    {/* Mobile & Tablet: scroll + spacing; Desktop: full width and justify-between */}
-                    <div className="flex w-full justify-between whitespace-nowrap">
-                        {clubPackages.map((packageName) => (
-                            <button
-                                key={packageName}
-                                onClick={() => setCurrentSection(packageName)}
-                                className={`pb-3 text-sm transition-colors whitespace-nowrap flex-shrink-0 ${currentSection === packageName
-                                    ? "text-[#C72030] border-b-2 border-[#C72030] font-medium"
-                                    : "text-[#1a1a1a] opacity-70 hover:opacity-100"
-                                    }`}
-                            >
-                                {packageName}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </div>
+  return (
+    <div
+      className={`h-12 border-b border-[#D5DbDB] fixed top-16 right-0 ${isSidebarCollapsed ? "left-0 md:left-16" : "left-0 md:left-64"} z-20 transition-all duration-300`}
+      style={{ backgroundColor: "#f6f4ee" }}
+    >
+      <div className="flex items-center h-full px-4 overflow-x-auto">
+        <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
+          {/* Mobile & Tablet: scroll + spacing; Desktop: full width and justify-between */}
+          <div className="flex w-full justify-between whitespace-nowrap">
+            {clubPackages.map((packageName) => (
+              <button
+                key={packageName}
+                onClick={() => setCurrentSection(packageName)}
+                className={`pb-3 text-sm transition-colors whitespace-nowrap flex-shrink-0 ${
+                  currentSection === packageName
+                    ? "text-[#C72030] border-b-2 border-[#C72030] font-medium"
+                    : "text-[#1a1a1a] opacity-70 hover:opacity-100"
+                }`}
+              >
+                {packageName}
+              </button>
+            ))}
+          </div>
         </div>
-        
-    );
+      </div>
+    </div>
+  );
 };
 
 export default ClubDynamicHeader;

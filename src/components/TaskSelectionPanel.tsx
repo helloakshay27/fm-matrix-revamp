@@ -64,7 +64,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
 
   // Add custom CSS for multi-select dropdown
   useEffect(() => {
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.innerHTML = `
       .css-1ng61k7-MuiNativeSelect-root-MuiSelect-select-MuiInputBase-input-MuiOutlinedInput-input.MuiSelect-select {
         height: 16px;
@@ -75,7 +75,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
       }
     `;
     document.head.appendChild(style);
-    
+
     return () => {
       document.head.removeChild(style);
     };
@@ -319,7 +319,9 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
     try {
       const payload = {
         task_occurrence_ids: selectedTasks.map((task) => parseInt(task.id)),
-        backup_assigned_to_id: reassignData.assignedUserIds.map((id) => parseInt(id)),
+        backup_assigned_to_id: reassignData.assignedUserIds.map((id) =>
+          parseInt(id)
+        ),
         type: reassignData.type,
       };
 
@@ -371,21 +373,20 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
   );
 
   // Check if any selected task has "In Progress" or "Work In Progress" status
-  const hasInProgressTasks = selectedTasks.some(
-    (task) => {
-      const status = task.status?.toLowerCase().replace(/\s+/g, '');
-      return status === "inprogress" || status === "workinprogress";
-    }
-  );
+  const hasInProgressTasks = selectedTasks.some((task) => {
+    const status = task.status?.toLowerCase().replace(/\s+/g, "");
+    return status === "inprogress" || status === "workinprogress";
+  });
 
   // Determine button visibility
   const showReassignButton = !hasClosedTasks && !hasInProgressTasks; // Hide if any task is closed or in progress
-  const showRescheduleButton = !hasClosedTasks && !hasOverdueTasks && !hasInProgressTasks; // Hide if any task is closed, overdue or in progress
+  const showRescheduleButton =
+    !hasClosedTasks && !hasOverdueTasks && !hasInProgressTasks; // Hide if any task is closed, overdue or in progress
 
   return (
     <>
       <div
-        className="fixed bg-white border border-gray-200 rounded-sm shadow-lg z-50"
+        className="selection-panel bg-white"
         style={{ top: "50%", left: "30%", width: "703px", height: "105px" }}
       >
         <div className="flex items-center justify-between w-full h-full pr-6">
@@ -479,8 +480,13 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
             {(!showReassignButton || !showRescheduleButton) && (
               <div className="text-xs text-gray-500 italic mr-5 max-w-[200px]">
                 {hasClosedTasks && "Actions unavailable for closed tasks"}
-                {!hasClosedTasks && hasInProgressTasks && "Actions unavailable for in-progress tasks"}
-                {!hasClosedTasks && !hasInProgressTasks && hasOverdueTasks && "Reschedule unavailable for overdue tasks"}
+                {!hasClosedTasks &&
+                  hasInProgressTasks &&
+                  "Actions unavailable for in-progress tasks"}
+                {!hasClosedTasks &&
+                  !hasInProgressTasks &&
+                  hasOverdueTasks &&
+                  "Reschedule unavailable for overdue tasks"}
               </div>
             )}
 
@@ -534,11 +540,11 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                   fullWidth
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ 
+                  InputProps={{
                     sx: fieldStyles,
-                    inputProps: { 
-                      min: new Date().toISOString().split("T")[0] 
-                    }
+                    inputProps: {
+                      min: new Date().toISOString().split("T")[0],
+                    },
                   }}
                   sx={{ mt: 1 }}
                   required
@@ -587,10 +593,10 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <Button
                 onClick={handleBulkReschedule}
-                style={{ backgroundColor: '#C72030' }}
+                style={{ backgroundColor: "#C72030" }}
                 className="text-white hover:bg-[#C72030]/90 flex-1 h-11"
               >
-                Reschedule 
+                Reschedule
               </Button>
               <Button
                 variant="outline"
@@ -640,7 +646,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                       }))
                     }
                     className="w-4 h-4 cursor-pointer accent-[#C72030]"
-                    style={{ accentColor: '#C72030' }}
+                    style={{ accentColor: "#C72030" }}
                   />
                   <label
                     htmlFor="type-checklist"
@@ -663,7 +669,7 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                       }))
                     }
                     className="w-4 h-4 cursor-pointer accent-[#C72030]"
-                    style={{ accentColor: '#C72030' }}
+                    style={{ accentColor: "#C72030" }}
                   />
                   <label
                     htmlFor="type-task"
@@ -687,7 +693,10 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                   onChange={(e) =>
                     setReassignData((prev) => ({
                       ...prev,
-                      assignedUserIds: typeof e.target.value === 'string' ? [e.target.value] : e.target.value,
+                      assignedUserIds:
+                        typeof e.target.value === "string"
+                          ? [e.target.value]
+                          : e.target.value,
                     }))
                   }
                   label="Assigned To"
@@ -715,8 +724,10 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
                   ) : (
                     users.map((user) => (
                       <MenuItem key={user.id} value={user.id}>
-                        <Checkbox 
-                          checked={reassignData.assignedUserIds.includes(user.id)}
+                        <Checkbox
+                          checked={reassignData.assignedUserIds.includes(
+                            user.id
+                          )}
                           className="mr-2"
                         />
                         {user.full_name}
@@ -730,11 +741,13 @@ export const TaskSelectionPanel: React.FC<TaskSelectionPanelProps> = ({
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
               <Button
                 onClick={handleBulkReassign}
-                style={{ backgroundColor: '#C72030' }}
+                style={{ backgroundColor: "#C72030" }}
                 className="text-white hover:bg-[#C72030]/90 flex-1 h-11"
-                disabled={reassignData.assignedUserIds.length === 0 || loadingUsers}
+                disabled={
+                  reassignData.assignedUserIds.length === 0 || loadingUsers
+                }
               >
-                Reassign 
+                Reassign
               </Button>
               <Button
                 variant="outline"

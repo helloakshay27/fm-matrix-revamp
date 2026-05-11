@@ -1,11 +1,37 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog';
-import { X, User, Edit, Download, QrCode, Loader2, HandCoins, UserCheck, UserX, UserPlus, Shield, RotateCcw, Ban, Flag } from 'lucide-react';
-import { getFullUrl, getAuthHeader, ENDPOINTS, API_CONFIG } from '@/config/apiConfig';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "./ui/dialog";
+import {
+  X,
+  User,
+  Edit,
+  Download,
+  QrCode,
+  Loader2,
+  HandCoins,
+  UserCheck,
+  UserX,
+  UserPlus,
+  Shield,
+  RotateCcw,
+  Ban,
+  Flag,
+} from "lucide-react";
+import {
+  getFullUrl,
+  getAuthHeader,
+  ENDPOINTS,
+  API_CONFIG,
+} from "@/config/apiConfig";
+import { toast } from "sonner";
 
 interface VisitorObject {
   id: number;
@@ -45,7 +71,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   onBlacklist,
   onFlag,
   onExport,
-  onClearSelection
+  onClearSelection,
 }) => {
   const navigate = useNavigate();
   const [isCheckInLoading, setIsCheckInLoading] = useState(false);
@@ -59,20 +85,25 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   const [resendOtpDisabled, setResendOtpDisabled] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
   const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
-  const [otpValue, setOtpValue] = useState('');
+  const [otpValue, setOtpValue] = useState("");
   const [isOtpVerifying, setIsOtpVerifying] = useState(false);
 
   const handleCheckIn = async () => {
-    console.log('VisitorSelectionPanel - Bulk check in clicked for visitors:', selectedVisitors);
+    console.log(
+      "VisitorSelectionPanel - Bulk check in clicked for visitors:",
+      selectedVisitors
+    );
     setIsCheckInLoading(true);
     try {
       if (onCheckIn) {
         await onCheckIn();
-        toast.success(`Successfully checked in ${selectedVisitors.length} visitor(s).`);
+        toast.success(
+          `Successfully checked in ${selectedVisitors.length} visitor(s).`
+        );
         fetchVisitorHistory();
       }
     } catch (error) {
-      console.error('Failed to check in visitors:', error);
+      console.error("Failed to check in visitors:", error);
       toast.error("Failed to check in visitors. Please try again.");
     } finally {
       setIsCheckInLoading(false);
@@ -80,13 +111,16 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   };
 
   const handleCheckOut = async () => {
-    console.log('VisitorSelectionPanel - Bulk check out clicked for visitors:', selectedVisitors);
+    console.log(
+      "VisitorSelectionPanel - Bulk check out clicked for visitors:",
+      selectedVisitors
+    );
     setIsCheckOutLoading(true);
     try {
       await onCheckOut();
       fetchVisitorHistory();
     } catch (error) {
-      console.error('Failed to check out visitors:', error);
+      console.error("Failed to check out visitors:", error);
       toast.error("Failed to check out visitors. Please try again.");
     } finally {
       setIsCheckOutLoading(false);
@@ -94,13 +128,18 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   };
 
   const handleApprove = async () => {
-    console.log('VisitorSelectionPanel - Bulk approve clicked for visitors:', selectedVisitors);
+    console.log(
+      "VisitorSelectionPanel - Bulk approve clicked for visitors:",
+      selectedVisitors
+    );
     setIsApproveLoading(true);
     try {
       await onApprove();
-      toast.success(`Successfully approved ${selectedVisitors.length} visitor(s).`);
+      toast.success(
+        `Successfully approved ${selectedVisitors.length} visitor(s).`
+      );
     } catch (error) {
-      console.error('Failed to approve visitors:', error);
+      console.error("Failed to approve visitors:", error);
       toast.error("Failed to approve visitors. Please try again.");
     } finally {
       setIsApproveLoading(false);
@@ -108,7 +147,10 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   };
 
   const handleVerifyOtp = async () => {
-    console.log('VisitorSelectionPanel - Verify OTP clicked for visitors:', selectedVisitors);
+    console.log(
+      "VisitorSelectionPanel - Verify OTP clicked for visitors:",
+      selectedVisitors
+    );
     // Open the OTP modal instead of directly calling the API
     setIsOtpModalOpen(true);
   };
@@ -119,7 +161,12 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
       return;
     }
 
-    console.log('VisitorSelectionPanel - OTP submitted:', otpValue, 'for visitors:', selectedVisitors);
+    console.log(
+      "VisitorSelectionPanel - OTP submitted:",
+      otpValue,
+      "for visitors:",
+      selectedVisitors
+    );
     setIsOtpVerifying(true);
 
     try {
@@ -129,29 +176,35 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
       // Process each visitor individually for OTP verification
       for (const visitorId of selectedVisitors) {
         try {
-          console.log('🔐 Verifying OTP for visitor ID:', visitorId);
+          console.log("🔐 Verifying OTP for visitor ID:", visitorId);
 
           // Construct the API URL for OTP verification
-          const url = getFullUrl('/pms/visitors/verify_otp.json');
+          const url = getFullUrl("/pms/visitors/verify_otp.json");
           const urlWithParams = new URL(url);
 
           // Add query parameters
-          urlWithParams.searchParams.append('otp', otpValue.trim());
-          urlWithParams.searchParams.append('gatekeeper_id', visitorId.toString());
+          urlWithParams.searchParams.append("otp", otpValue.trim());
+          urlWithParams.searchParams.append(
+            "gatekeeper_id",
+            visitorId.toString()
+          );
 
           // Add access token if available
           if (API_CONFIG.TOKEN) {
-            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+            urlWithParams.searchParams.append("access_token", API_CONFIG.TOKEN);
           }
 
-          console.log('🚀 Calling OTP verification API:', urlWithParams.toString());
+          console.log(
+            "🚀 Calling OTP verification API:",
+            urlWithParams.toString()
+          );
 
           const response = await fetch(urlWithParams.toString(), {
-            method: 'GET',
+            method: "GET",
             headers: {
-              'Authorization': getAuthHeader(),
-              'Content-Type': 'application/json',
-            }
+              Authorization: getAuthHeader(),
+              "Content-Type": "application/json",
+            },
           });
 
           // Parse the response data first
@@ -161,39 +214,63 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
             const errorText = JSON.stringify(data);
 
             if (response.status === 401) {
-              throw new Error('Authentication failed. Please check your access token and try again.');
-            } else if (response.status === 404 && data.message === "OTP Verification failed") {
-              throw new Error('Invalid OTP');
+              throw new Error(
+                "Authentication failed. Please check your access token and try again."
+              );
+            } else if (
+              response.status === 404 &&
+              data.message === "OTP Verification failed"
+            ) {
+              throw new Error("Invalid OTP");
             } else if (response.status === 404) {
-              throw new Error('Visitor not found or OTP expired.');
+              throw new Error("Visitor not found or OTP expired.");
             } else if (response.status === 400) {
-              throw new Error('Invalid OTP code. Please check and try again.');
+              throw new Error("Invalid OTP code. Please check and try again.");
             } else {
-              throw new Error(`OTP verification failed: ${response.status} ${response.statusText}`);
+              throw new Error(
+                `OTP verification failed: ${response.status} ${response.statusText}`
+              );
             }
           }
 
           // Check for error messages in successful responses (200 OK but with error content)
           if (data.code === 404 && data.message === "OTP Verification failed") {
-            console.error('OTP Verification failed in 200 response for visitor', visitorId, ':', data);
-            throw new Error('Invalid OTP');
+            console.error(
+              "OTP Verification failed in 200 response for visitor",
+              visitorId,
+              ":",
+              data
+            );
+            throw new Error("Invalid OTP");
           }
 
           // Check if OTP verification was actually successful
           if (data.otp_verified === 0 || data.otp_verified === "0") {
-            console.error('OTP not verified for visitor', visitorId, ':', data);
-            throw new Error('Invalid OTP');
+            console.error("OTP not verified for visitor", visitorId, ":", data);
+            throw new Error("Invalid OTP");
           }
 
-          console.log('✅ OTP verified successfully for visitor', visitorId, ':', data);
+          console.log(
+            "✅ OTP verified successfully for visitor",
+            visitorId,
+            ":",
+            data
+          );
           successCount++;
-
         } catch (visitorError) {
-          console.error('❌ Error verifying OTP for visitor', visitorId, ':', visitorError);
+          console.error(
+            "❌ Error verifying OTP for visitor",
+            visitorId,
+            ":",
+            visitorError
+          );
           errorCount++;
 
           // Show specific error message for invalid OTP
-          if (visitorError instanceof Error && visitorError.message === 'Invalid OTP') {
+          if (
+            visitorError instanceof Error &&
+            visitorError.message === "Invalid OTP"
+          ) {
             toast.error(`Invalid OTP for visitor ${visitorId}`);
           }
         }
@@ -201,9 +278,11 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
 
       // Show success/error summary
       if (successCount > 0) {
-        toast.success(`Successfully verified OTP for ${successCount} visitor(s).`);
+        toast.success(
+          `Successfully verified OTP for ${successCount} visitor(s).`
+        );
         setIsOtpModalOpen(false);
-        setOtpValue('');
+        setOtpValue("");
 
         // Call the parent component's onVerifyOtp if provided for additional handling
         if (onVerifyOtp) {
@@ -215,7 +294,9 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
 
       if (errorCount > 0 && successCount === 0) {
         // If all failed, show specific error message
-        toast.error(`OTP verification failed for all ${errorCount} visitor(s). Please check the OTP and try again.`);
+        toast.error(
+          `OTP verification failed for all ${errorCount} visitor(s). Please check the OTP and try again.`
+        );
       } else if (errorCount > 0) {
         // If some failed, show partial failure message
         toast.error(`Failed to verify OTP for ${errorCount} visitor(s).`);
@@ -223,13 +304,12 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
 
       // If all failed, keep modal open for retry
       if (successCount === 0) {
-        setOtpValue(''); // Clear the OTP field for retry
+        setOtpValue(""); // Clear the OTP field for retry
       }
-
     } catch (error) {
-      console.error('❌ Failed to verify OTP:', error);
+      console.error("❌ Failed to verify OTP:", error);
       toast.error("Failed to verify OTP. Please check the code and try again.");
-      setOtpValue(''); // Clear the OTP field for retry
+      setOtpValue(""); // Clear the OTP field for retry
     } finally {
       setIsOtpVerifying(false);
     }
@@ -237,11 +317,14 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
 
   const handleOtpModalClose = () => {
     setIsOtpModalOpen(false);
-    setOtpValue('');
+    setOtpValue("");
   };
 
   const handleResendOtp = async () => {
-    console.log('VisitorSelectionPanel - Resend OTP clicked for visitors:', selectedVisitors);
+    console.log(
+      "VisitorSelectionPanel - Resend OTP clicked for visitors:",
+      selectedVisitors
+    );
     setIsResendOtpLoading(true);
 
     try {
@@ -254,47 +337,65 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
 
       for (const visitorId of selectedVisitors) {
         try {
-          console.log('🚀 Sending OTP for visitor ID:', visitorId);
+          console.log("🚀 Sending OTP for visitor ID:", visitorId);
 
           // Construct the API URL using the correct endpoint from ENDPOINTS
           const url = getFullUrl(ENDPOINTS.RESEND_OTP);
           const urlWithParams = new URL(url);
 
           // Add query parameters
-          urlWithParams.searchParams.append('id', visitorId.toString());
+          urlWithParams.searchParams.append("id", visitorId.toString());
 
           // Add access token if available
           if (API_CONFIG.TOKEN) {
-            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+            urlWithParams.searchParams.append("access_token", API_CONFIG.TOKEN);
           }
 
-          console.log('🚀 Calling resend OTP API:', urlWithParams.toString());
+          console.log("🚀 Calling resend OTP API:", urlWithParams.toString());
 
           const response = await fetch(urlWithParams.toString(), {
-            method: 'GET',
+            method: "GET",
             headers: {
-              'Authorization': getAuthHeader(),
-              'Content-Type': 'application/json',
-            }
+              Authorization: getAuthHeader(),
+              "Content-Type": "application/json",
+            },
           });
 
           if (!response.ok) {
             const errorText = await response.text();
-            console.error('API Error Response for visitor', visitorId, ':', errorText);
+            console.error(
+              "API Error Response for visitor",
+              visitorId,
+              ":",
+              errorText
+            );
 
             if (response.status === 401) {
-              throw new Error('Authentication failed. Please check your access token and try again.');
+              throw new Error(
+                "Authentication failed. Please check your access token and try again."
+              );
             } else {
-              throw new Error(`Failed to resend OTP for visitor ${visitorId}: ${response.status} ${response.statusText}`);
+              throw new Error(
+                `Failed to resend OTP for visitor ${visitorId}: ${response.status} ${response.statusText}`
+              );
             }
           }
 
           const data = await response.json();
-          console.log('✅ OTP sent successfully for visitor', visitorId, ':', data);
+          console.log(
+            "✅ OTP sent successfully for visitor",
+            visitorId,
+            ":",
+            data
+          );
           successCount++;
-
         } catch (visitorError) {
-          console.error('❌ Error sending OTP for visitor', visitorId, ':', visitorError);
+          console.error(
+            "❌ Error sending OTP for visitor",
+            visitorId,
+            ":",
+            visitorError
+          );
           errorCount++;
         }
       }
@@ -324,9 +425,8 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
           });
         }, 1000);
       }
-
     } catch (error) {
-      console.error('❌ Failed to resend OTP:', error);
+      console.error("❌ Failed to resend OTP:", error);
       toast.error("Failed to resend OTP. Please try again.");
     } finally {
       setIsResendOtpLoading(false);
@@ -334,15 +434,20 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   };
 
   const handleBlacklist = async () => {
-    console.log('VisitorSelectionPanel - Blacklist clicked for visitors:', selectedVisitors);
+    console.log(
+      "VisitorSelectionPanel - Blacklist clicked for visitors:",
+      selectedVisitors
+    );
     setIsBlacklistLoading(true);
     try {
       if (onBlacklist) {
         await onBlacklist();
-        toast.success(`Successfully blacklisted ${selectedVisitors.length} visitor(s).`);
+        toast.success(
+          `Successfully blacklisted ${selectedVisitors.length} visitor(s).`
+        );
       }
     } catch (error) {
-      console.error('Failed to blacklist visitors:', error);
+      console.error("Failed to blacklist visitors:", error);
       toast.error("Failed to blacklist visitors. Please try again.");
     } finally {
       setIsBlacklistLoading(false);
@@ -350,15 +455,20 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   };
 
   const handleFlag = async () => {
-    console.log('VisitorSelectionPanel - Flag clicked for visitors:', selectedVisitors);
+    console.log(
+      "VisitorSelectionPanel - Flag clicked for visitors:",
+      selectedVisitors
+    );
     setIsFlagLoading(true);
     try {
       if (onFlag) {
         await onFlag();
-        toast.success(`Successfully flagged ${selectedVisitors.length} visitor(s).`);
+        toast.success(
+          `Successfully flagged ${selectedVisitors.length} visitor(s).`
+        );
       }
     } catch (error) {
-      console.error('Failed to flag visitors:', error);
+      console.error("Failed to flag visitors:", error);
       toast.error("Failed to flag visitors. Please try again.");
     } finally {
       setIsFlagLoading(false);
@@ -366,15 +476,21 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   };
 
   const handleEdit = () => {
-    console.log('VisitorSelectionPanel - Edit clicked for visitors:', selectedVisitors);
+    console.log(
+      "VisitorSelectionPanel - Edit clicked for visitors:",
+      selectedVisitors
+    );
     // Navigate to bulk edit page or show edit modal
-    navigate('/visitors/bulk-edit', {
-      state: { selectedVisitors: selectedVisitorObjects }
+    navigate("/visitors/bulk-edit", {
+      state: { selectedVisitors: selectedVisitorObjects },
     });
   };
 
   const handleExport = async () => {
-    console.log('VisitorSelectionPanel - Export clicked for visitors:', selectedVisitors);
+    console.log(
+      "VisitorSelectionPanel - Export clicked for visitors:",
+      selectedVisitors
+    );
 
     if (selectedVisitors.length === 0) {
       toast.error("Please select visitors to export.");
@@ -385,35 +501,41 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
 
     try {
       // Create the visitor IDs query parameters
-      const visitorParams = selectedVisitors.map(id => `q[id_in][]=${id}`).join('&');
-      console.log('📥 Exporting visitors with IDs:', selectedVisitors);
-      console.log('📥 Generated visitor parameters:', visitorParams);
+      const visitorParams = selectedVisitors
+        .map((id) => `q[id_in][]=${id}`)
+        .join("&");
+      console.log("📥 Exporting visitors with IDs:", selectedVisitors);
+      console.log("📥 Generated visitor parameters:", visitorParams);
 
       // Build the export URL with selected visitor IDs
       const exportEndpoint = `/pms/admin/visitors/visitors_history.xlsx?${visitorParams}`;
       const exportUrl = getFullUrl(exportEndpoint);
 
-      console.log('📥 Export endpoint:', exportEndpoint);
-      console.log('📥 Full export URL:', exportUrl);
+      console.log("📥 Export endpoint:", exportEndpoint);
+      console.log("📥 Full export URL:", exportUrl);
 
       // Make the API call to get the Excel file
       const response = await fetch(exportUrl, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': getAuthHeader(),
+          Authorization: getAuthHeader(),
         },
       });
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Export API error response:', errorText);
+        console.error("❌ Export API error response:", errorText);
 
         if (response.status === 401) {
-          console.error('401 Authentication failed during export - invalid or expired token');
-          throw new Error('Authentication failed. Please login again.');
+          console.error(
+            "401 Authentication failed during export - invalid or expired token"
+          );
+          throw new Error("Authentication failed. Please login again.");
         }
 
-        throw new Error(`Export failed: ${response.status} ${response.statusText} - ${errorText}`);
+        throw new Error(
+          `Export failed: ${response.status} ${response.statusText} - ${errorText}`
+        );
       }
 
       // Get the file blob
@@ -421,7 +543,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
 
       // Create download link
       const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
 
       // Generate filename with timestamp
@@ -436,53 +558,64 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
       // Clean up the blob URL
       window.URL.revokeObjectURL(downloadUrl);
 
-      console.log('Export completed successfully');
-      toast.success(`Successfully exported ${selectedVisitors.length} visitor(s).`);
-
+      console.log("Export completed successfully");
+      toast.success(
+        `Successfully exported ${selectedVisitors.length} visitor(s).`
+      );
     } catch (error) {
-      console.error('❌ Export failed:', error);
+      console.error("❌ Export failed:", error);
 
       // Handle authentication errors specifically
-      if (error instanceof Error && error.message.includes('Authentication failed')) {
+      if (
+        error instanceof Error &&
+        error.message.includes("Authentication failed")
+      ) {
         toast.error("Your session has expired. Please login again.");
         return;
       }
 
-      toast.error(`Failed to export visitors: ${error.message || 'Unknown error'}`);
+      toast.error(
+        `Failed to export visitors: ${error.message || "Unknown error"}`
+      );
     } finally {
       setIsExportLoading(false);
     }
   };
 
   const handleClearSelection = () => {
-    console.log('VisitorSelectionPanel - Clear selection clicked');
+    console.log("VisitorSelectionPanel - Clear selection clicked");
     onClearSelection();
   };
 
   if (selectedVisitors.length === 0) {
-    console.log('VisitorSelectionPanel - No visitors selected, hiding panel');
+    console.log("VisitorSelectionPanel - No visitors selected, hiding panel");
     return null;
   }
 
-  console.log('VisitorSelectionPanel - Rendering with selected visitors:', selectedVisitors);
+  console.log(
+    "VisitorSelectionPanel - Rendering with selected visitors:",
+    selectedVisitors
+  );
 
   // Check if any selected visitor is already checked in
-  const hasCheckedInVisitors = selectedVisitorObjects.some(visitor =>
-    visitor.is_checked_in === true ||
-    visitor.status === 'checked_in' ||
-    visitor.check_in_time
+  const hasCheckedInVisitors = selectedVisitorObjects.some(
+    (visitor) =>
+      visitor.is_checked_in === true ||
+      visitor.status === "checked_in" ||
+      visitor.check_in_time
   );
 
   // Check if any selected visitor is not checked in
-  const hasNotCheckedInVisitors = selectedVisitorObjects.some(visitor =>
-    visitor.is_checked_in === false ||
-    visitor.status !== 'checked_in' ||
-    !visitor.check_in_time
+  const hasNotCheckedInVisitors = selectedVisitorObjects.some(
+    (visitor) =>
+      visitor.is_checked_in === false ||
+      visitor.status !== "checked_in" ||
+      !visitor.check_in_time
   );
 
   return (
     <>
-      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px]">
+      <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px] selection-panel">
         {/* Beige left strip - 44px wide */}
         <div className="w-[44px] bg-[#C4B59A] rounded-l-lg flex flex-col items-center justify-center">
           <div className="text-[#C72030] font-bold text-lg">
@@ -494,16 +627,28 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
         <div className="flex items-center justify-between gap-4 px-6 flex-1">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-[#1a1a1a]">Selection</span>
+              <span className="text-sm font-medium text-[#1a1a1a]">
+                Selection
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-600">
-                {selectedVisitorObjects.slice(0, 2).map(visitor => {
-                  const displayName = visitor.guest_name || visitor.name || visitor.visitor_name || `Visitor ${visitor.id}`;
-                  const displayNumber = visitor.guest_number ? ` (${visitor.guest_number})` : '';
-                  return `${displayName}${displayNumber}`;
-                }).join(', ')}
-                {selectedVisitorObjects.length > 2 && ` +${selectedVisitorObjects.length - 2} more`}
+                {selectedVisitorObjects
+                  .slice(0, 2)
+                  .map((visitor) => {
+                    const displayName =
+                      visitor.guest_name ||
+                      visitor.name ||
+                      visitor.visitor_name ||
+                      `Visitor ${visitor.id}`;
+                    const displayNumber = visitor.guest_number
+                      ? ` (${visitor.guest_number})`
+                      : "";
+                    return `${displayName}${displayNumber}`;
+                  })
+                  .join(", ")}
+                {selectedVisitorObjects.length > 2 &&
+                  ` +${selectedVisitorObjects.length - 2} more`}
               </span>
             </div>
           </div>
@@ -538,7 +683,9 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
                     <RotateCcw className="w-6 h-6 text-black" />
                   )}
                   <span className="text-xs text-gray-600">
-                    {resendOtpDisabled ? `Resend (${resendCountdown}s)` : 'Resend OTP'}
+                    {resendOtpDisabled
+                      ? `Resend (${resendCountdown}s)`
+                      : "Resend OTP"}
                   </span>
                 </Button>
               </>
@@ -674,13 +821,21 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
           <div className="space-y-4">
             <div>
               <p className="text-sm text-gray-600 mb-4">
-                Enter the OTP code to verify {selectedVisitors.length} selected visitor(s):
+                Enter the OTP code to verify {selectedVisitors.length} selected
+                visitor(s):
               </p>
               <div className="space-y-2 max-h-32 overflow-y-auto">
                 {selectedVisitorObjects.slice(0, 5).map((visitor, index) => (
-                  <div key={visitor.id} className="text-xs text-gray-500 flex justify-between">
+                  <div
+                    key={visitor.id}
+                    className="text-xs text-gray-500 flex justify-between"
+                  >
                     <span>
-                      • {visitor.guest_name || visitor.name || visitor.visitor_name || `Visitor ${visitor.id}`}
+                      •{" "}
+                      {visitor.guest_name ||
+                        visitor.name ||
+                        visitor.visitor_name ||
+                        `Visitor ${visitor.id}`}
                       {visitor.guest_number && ` (${visitor.guest_number})`}
                     </span>
                     <span className="text-gray-400">ID: {visitor.id}</span>
@@ -694,7 +849,10 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
               </div>
             </div>
             <div>
-              <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="otp"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 OTP Code
               </label>
               <Input
@@ -702,12 +860,14 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
                 type="text"
                 placeholder="Enter 5-digit OTP"
                 value={otpValue}
-                onChange={(e) => setOtpValue(e.target.value.replace(/\D/g, '').slice(0, 5))}
+                onChange={(e) =>
+                  setOtpValue(e.target.value.replace(/\D/g, "").slice(0, 5))
+                }
                 maxLength={6}
                 className="text-center text-lg tracking-widest"
                 autoFocus
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && otpValue.trim().length >= 4) {
+                  if (e.key === "Enter" && otpValue.trim().length >= 4) {
                     handleOtpSubmit();
                   }
                 }}
@@ -736,7 +896,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
                   Verifying...
                 </>
               ) : (
-                'Verify OTP'
+                "Verify OTP"
               )}
             </Button>
           </DialogFooter>
