@@ -1327,6 +1327,18 @@ const DailyLogTab = () => {
 
       // Show anyone who has submitted OR has a draft — exclude only pure pending (no draft at all)
       const allReports = data?.member_reports || data?.reports || [];
+      const hasMeetingNotes =
+        !!data?.report_data?.meeting_notes ||
+        allReports.some((report) => !!report.report_data?.meeting_notes);
+
+      if (!hasMeetingNotes) {
+        setApiLogs([]);
+        setGroupedApiLogs({});
+        setMetaSubmitted(0);
+        setMetaExpected(data?.total_members ?? 0);
+        return;
+      }
+
       const submittedReports = allReports.filter(
         (r) => r.status !== "pending" || !!r.daily_report
       );
@@ -1359,6 +1371,37 @@ const DailyLogTab = () => {
           _raw: report,
         };
       });
+
+      const rootDetailedReports =
+        data?.report_data?.meeting_notes?.detailed_reports || [];
+
+      if (logsArray.length === 0 && Array.isArray(rootDetailedReports)) {
+        logsArray = rootDetailedReports.map((report) => {
+          const accomplishments = Array.isArray(report.accomplishments)
+            ? report.accomplishments
+            : [];
+          const tasksIssues = Array.isArray(report.tasks_issues)
+            ? report.tasks_issues
+            : [];
+
+          return {
+            id: report.user_id || report.name || selectedDate,
+            user: report.name || "",
+            email: "",
+            score: Number(String(report.self_rating || "0").split("/")[0]) || 0,
+            dept: "",
+            highlights:
+              accomplishments.length > 0 || tasksIssues.length > 0
+                ? `Acc: ${accomplishments.length} | Chal: ${tasksIssues.length}`
+                : "",
+            submittedAt: "—",
+            status: "submitted",
+            date: selectedDate,
+            userId: report.user_id,
+            _raw: { report_data: report, status: "submitted" },
+          };
+        });
+      }
 
       // Dept filter
       if (selectedDeptId) {

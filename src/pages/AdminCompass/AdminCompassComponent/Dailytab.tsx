@@ -482,7 +482,9 @@ const DailyTab = ({
           if (meetingJournalReport) {
             let savedDiscussion = DEFAULT_DISCUSSION;
 
-            const notesData = meetingJournalReport?.report_data?.meeting_notes;
+            const notesData =
+              json.data?.report_data?.meeting_notes ||
+              meetingJournalReport?.report_data?.meeting_notes;
             if (notesData) {
               if (Array.isArray(notesData)) {
                 savedDiscussion =

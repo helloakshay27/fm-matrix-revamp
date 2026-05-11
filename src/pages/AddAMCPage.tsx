@@ -543,7 +543,30 @@ export const AddAMCPage = () => {
         isValid = false;
       }
     }
-    // Steps 2 and 3 (Schedule and Attachments) are optional for validation
+    // Step 3: Attachments validation
+    // if (step === 3) {
+    //   if (!attachments.contracts || attachments.contracts.length === 0) {
+    //     isValid = false;
+    //     toast.error('Please upload at least one AMC Contract.');
+    //   }
+    //   if (!attachments.invoices || attachments.invoices.length === 0) {
+    //     isValid = false;
+    //     toast.error('Please upload at least one AMC Invoice.');
+    //   }
+    // }
+
+    if (step === 3) {
+  if (!attachments.contracts || attachments.contracts.length === 0) {
+    isValid = false;
+    toast.error("Please upload at least one AMC Contract.");
+  } else if (
+    !attachments.invoices ||
+    attachments.invoices.length === 0
+  ) {
+    isValid = false;
+    toast.error("Please upload at least one AMC Invoice.");
+  }
+}
 
     setErrors(newErrors);
     return isValid;
@@ -666,9 +689,10 @@ export const AddAMCPage = () => {
       } else {
         toast.error("Please fill all required fields in the AMC Details step.");
       }
-    } else {
-      toast.error("Please fill all required fields in the current step.");
-    }
+    } 
+    // else {
+    //   toast.error("Please fill all required fields in the current step.");
+    // }
   };
 
   const ensureCurrentStepValidWithToast = () => {
@@ -2334,7 +2358,7 @@ export const AddAMCPage = () => {
                 <CardContent className="p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
-                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts</label>
+                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts <span style={{ color: 'red' }}>*</span></label>
                       <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 min-h-[200px]">
                         {attachments.contracts.length > 0 ? (
                           <div className="flex flex-wrap gap-3">
@@ -2389,7 +2413,7 @@ export const AddAMCPage = () => {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoices</label>
+                      <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoices <span style={{ color: 'red' }}>*</span></label>
                       <div className="border-2 border-dashed border-[#D9D9D9] rounded-lg p-6 min-h-[200px]">
                         {attachments.invoices.length > 0 ? (
                           <div className="flex flex-wrap gap-3">
@@ -3102,7 +3126,7 @@ export const AddAMCPage = () => {
               <CardContent className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div>
-                    <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts</label>
+                    <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Contracts<span style={{ color: 'red' }}>*</span></label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
                       <input
                         type="file"
@@ -3178,7 +3202,7 @@ export const AddAMCPage = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoice</label>
+                    <label className="block text-sm font-semibold mb-4 text-[#1a1a1a]">AMC Invoice <span style={{ color: 'red' }}>*</span></label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center flex flex-col items-center justify-center bg-white">
                       <input
                         type="file"
