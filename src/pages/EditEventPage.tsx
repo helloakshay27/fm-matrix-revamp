@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
+import Cropper from "react-easy-crop";
 import {
   TextField,
   FormControl,
@@ -12,7 +13,7 @@ import {
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Calendar, Share2, File, Info, XCircle, ArrowLeft, Pencil } from "lucide-react";
+import { Calendar, Share2, File as FileIcon, Info, XCircle, ArrowLeft, Pencil } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -66,6 +67,15 @@ export const EditEventPage = () => {
 
   const [newAttachments, setNewAttachments] = useState<Array<{ file: File, preview: string | null }>>([]);
   const [isActive, setIsActive] = useState(true);
+
+  // Cropper state
+  const [cropperOpen, setCropperOpen] = useState(false);
+  const [rawImageSrc, setRawImageSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  // Ref so handleCropConfirm always reads the latest value (avoids stale closure)
+  const croppedAreaPixelsRef = useRef<any>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [existingAttachments, setExistingAttachments] = useState<any[]>([]);
 
@@ -331,14 +341,17 @@ export const EditEventPage = () => {
         return;
       }
 
-      // Create preview for image files
+      // Open cropper immediately after selecting
       const reader = new FileReader();
       reader.onloadend = () => {
-        setNewAttachments(prev => [...prev, { file, preview: reader.result as string }]);
+        setRawImageSrc(reader.result as string);
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+        setCropperOpen(true);
       };
       reader.readAsDataURL(file);
     }
-    // Reset the input
+    // Reset the input so same file can be re-selected
     if (attachmentInputRef.current) {
       attachmentInputRef.current.value = "";
     }
@@ -353,6 +366,64 @@ export const EditEventPage = () => {
       e.stopPropagation();
     }
     setNewAttachments(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const onCropComplete = useCallback((_: any, croppedPixels: any) => {
+    setCroppedAreaPixels(croppedPixels);
+    croppedAreaPixelsRef.current = croppedPixels;
+  }, []);
+
+  const getCroppedImg = (imageSrc: string, pixelCrop: any): Promise<globalThis.File> => {
+    return new Promise((resolve, reject) => {
+      const image = new Image();
+      image.crossOrigin = 'anonymous';
+      image.addEventListener('load', () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = pixelCrop.width;
+        canvas.height = pixelCrop.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('No canvas context')); return; }
+        ctx.drawImage(
+          image,
+          pixelCrop.x, pixelCrop.y,
+          pixelCrop.width, pixelCrop.height,
+          0, 0,
+          pixelCrop.width, pixelCrop.height
+        );
+        canvas.toBlob((blob) => {
+          if (!blob) { reject(new Error('Canvas toBlob failed')); return; }
+          const croppedFile = new globalThis.File([blob], `cropped_${Date.now()}.jpg`, { type: 'image/jpeg' });
+          resolve(croppedFile);
+        }, 'image/jpeg', 0.92);
+      });
+      image.addEventListener('error', (err) => reject(err));
+      image.src = imageSrc;
+    });
+  };
+
+  const handleCropConfirm = async () => {
+    const pixels = croppedAreaPixelsRef.current;
+    if (!rawImageSrc || !pixels) {
+      toast.error('Please adjust the crop area first.');
+      return;
+    }
+    try {
+      const croppedFile = await getCroppedImg(rawImageSrc, pixels);
+      const previewUrl = URL.createObjectURL(croppedFile);
+      setNewAttachments(prev => [...prev, { file: croppedFile, preview: previewUrl }]);
+      setCropperOpen(false);
+      setRawImageSrc(null);
+      croppedAreaPixelsRef.current = null;
+    } catch (err) {
+      console.error('Crop error:', err);
+      toast.error('Failed to crop image. Please try again.');
+    }
+  };
+
+  const handleCropCancel = () => {
+    setCropperOpen(false);
+    setRawImageSrc(null);
+    croppedAreaPixelsRef.current = null;
   };
 
   const handleRemoveExistingAttachment = async (attachmentId: number) => {
@@ -1041,7 +1112,7 @@ export const EditEventPage = () => {
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           <div className="bg-[#F6F4EE] p-4 flex items-center gap-3 border-b border-gray-200">
             <div className="w-8 h-8 rounded-full bg-[#E5E0D3] flex items-center justify-center text-[#C72030]">
-              <File size={16} />
+              <FileIcon size={16} />
             </div>
             <span className="font-semibold text-lg text-gray-800">Attachment</span>
           </div>
@@ -1096,7 +1167,7 @@ export const EditEventPage = () => {
                           className="w-20 h-20 object-contain mt-6"
                         />
                       ) : (
-                        <File size={40} className="text-gray-400 mt-6" />
+                        <FileIcon size={40} className="text-gray-400 mt-6" />
                       )}
                     </div>
                   ))}
@@ -1113,7 +1184,7 @@ export const EditEventPage = () => {
                             <Info size={18} />
                           </TooltipTrigger>
                           <TooltipContent className="bg-white text-black border border-gray-200 shadow-md max-w-[200px] text-xs">
-                            <p>Upload a document or image.</p>
+                            <p>Upload a document or image. Image will be cropped to 16:9 ratio.</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -1208,6 +1279,107 @@ export const EditEventPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Image Cropper Modal — 16:9 aspect ratio */}
+      {cropperOpen && rawImageSrc && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: 'rgba(0,0,0,0.75)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: '12px',
+              width: '90vw',
+              maxWidth: '700px',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}
+          >
+            <h2 style={{ fontWeight: 700, fontSize: '18px', color: '#1a1a1a', margin: 0 }}>
+              Crop Image
+              <span style={{ fontWeight: 400, fontSize: '13px', color: '#666', marginLeft: '8px' }}>
+                (16:9)
+              </span>
+            </h2>
+
+            {/* Crop area */}
+            <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', background: '#f0f0f0', borderRadius: '8px', overflow: 'hidden' }}>
+              <Cropper
+                image={rawImageSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={16 / 9}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+              />
+            </div>
+
+            {/* Zoom slider */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '13px', color: '#555', whiteSpace: 'nowrap' }}>Zoom</span>
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.05}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                style={{ flex: 1, accentColor: '#C72030' }}
+              />
+              <span style={{ fontSize: '13px', color: '#555', minWidth: '36px', textAlign: 'right' }}>
+                {zoom.toFixed(1)}x
+              </span>
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button
+                type="button"
+                onClick={handleCropCancel}
+                style={{
+                  padding: '8px 24px',
+                  borderRadius: '6px',
+                  border: '1px solid #C72030',
+                  color: '#C72030',
+                  background: '#fff',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleCropConfirm}
+                style={{
+                  padding: '8px 24px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: '#C72030',
+                  color: '#fff',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}
+              >
+                Crop &amp; Add
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

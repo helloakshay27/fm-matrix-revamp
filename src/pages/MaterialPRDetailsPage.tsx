@@ -411,7 +411,7 @@ export const MaterialPRDetailsPage = () => {
         await dispatch(
           approvePO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
-        toast.success("PO approved successfully");
+        toast.success("PR approved successfully");
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
         toast.error(error.message || "Failed to approve PO");
@@ -497,7 +497,7 @@ export const MaterialPRDetailsPage = () => {
       }
 
       // Disable the button after successful push
-      
+
     } catch (error: any) {
       toast.error(error.message || "Failed to push to SAP");
     }
@@ -712,26 +712,26 @@ export const MaterialPRDetailsPage = () => {
                 </Button>
               </>
             ) : (
-              
+
               <>
-              {!buttonCondition.showSap && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 bg-blue-600 text-white"
-                  onClick={handleTestRun}
-                  disabled={testRunLoading}
-                >
-                  {testRunLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Running...
-                    </>
-                  ) : (
-                    "Test run"
-                  )}
-                </Button>
-              )}
+                {!buttonCondition.showSap && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-300 bg-blue-600 text-white"
+                    onClick={handleTestRun}
+                    disabled={testRunLoading}
+                  >
+                    {testRunLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Running...
+                      </>
+                    ) : (
+                      "Test run"
+                    )}
+                  </Button>
+                )}
                 {buttonCondition.showSap && (
                   <Button
                     size="sm"
@@ -1348,7 +1348,7 @@ export const MaterialPRDetailsPage = () => {
                         {apiCall.message || '-'}
                       </p>
                     </div>
-                    
+
                     {apiCall.created_at && (
                       <div className="md:col-span-2">
                         <p className="text-xs text-gray-500">
