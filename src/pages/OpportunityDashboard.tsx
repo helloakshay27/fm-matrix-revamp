@@ -387,7 +387,7 @@ const OpportunityDashboard = () => {
                 <Plus className="w-4 h-4" /> Add Opportunity
             </Button>
             <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
-                <span className="text-gray-700 font-medium text-sm">Total Tasks:</span>
+                <span className="text-gray-700 font-medium text-sm">Total Opportunities:</span>
                 <span className="text-lg font-bold text-[#C72030]">
                     {opportunities.length}
                 </span>
