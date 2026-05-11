@@ -1,280 +1,374 @@
 import React from "react";
 
+type FeatureComparisonRow = { featureArea: string; marketStandard: string; ourProduct: string; status: string; strategicImpact: string; };
+type SummaryRow = { category: string; detail: string; implication: string; };
+type PricingModelRow = { question: string; detail: string; };
+type PriceRangeRow = { tier: string; indiaPrice: string; indiaFor: string; globalPrice: string; globalFor: string; };
+type PlanFeatureRow = { feature: string; starter: string; professional: string; enterprise: string; };
+type RecommendedPricingRow = { stage: string; indiaEntry: string; indiaMid: string; globalEntry: string; globalMid: string; notes: string; };
+type PositioningRow = { prompt: string; recommendation: string; };
+type ValuePropRow = { current: string; resonatesWith: string; weakness: string; improved: string; };
+
+const featureComparisonRows: FeatureComparisonRow[] = [
+  {
+    "featureArea": "White-Label App",
+    "marketStandard": "No competitor offers true white-label. MyGate, ApnaComplex, and NoBrokerHood are always branded as their own product.",
+    "ourProduct": "Full white-label Android and iOS apps with client name, logo, and colour palette. Developer brand is the only brand residents see.",
+    "status": "AHEAD",
+    "strategicImpact": "Developer enterprise accounts require white-label as a mandatory RFP criterion. This single feature eliminates 3 of the top 4 competitors from consideration."
+  },
+  {
+    "featureArea": "Data Sovereignty Architecture",
+    "marketStandard": "All India competitors store resident data on their own central servers. No competitor offers self-hosted architecture at equivalent feature depth.",
+    "ourProduct": "Every byte of resident data stored exclusively on the client's own servers. Lockated infrastructure holds no resident data from any deployed client.",
+    "status": "AHEAD",
+    "strategicImpact": "DPDP Act 2023 enforcement from 2025. Developer fiduciary obligation creates regulatory urgency. Zero competing platform offers this combination of depth and self-hosting."
+  },
+  {
+    "featureArea": "Visitor Management",
+    "marketStandard": "Gate approval via app notification. Pre-registration of expected visitors. Basic visitor log. Standard features across MyGate, NoBrokerHood.",
+    "ourProduct": "OTP, IVR, push, digital intercom, visit codes, digital gate passes, group visitors, frequent visitors, cab pre-approvals, leave-at-gate, overstay alerts, offline guard mode.",
+    "status": "AHEAD",
+    "strategicImpact": "Visitor management is the primary daily use case for residents. Our depth creates higher daily active usage which drives overall platform stickiness and retention."
+  },
+  {
+    "featureArea": "Household Staff Management",
+    "marketStandard": "MyGate has a community-level staff database. Most platforms limited to basic entry/exit logging.",
+    "ourProduct": "Resident-controlled add/associate/rate/block/red-flag workflow. Staff attendance with selfie verification, roster management, access schedules, community blacklist, daily pay recording.",
+    "status": "AHEAD",
+    "strategicImpact": "Household staff management drives daily resident engagement. Community-level blacklist is a safety feature that generates strong resident endorsement and word-of-mouth."
+  },
+  {
+    "featureArea": "Goods Movement Tracing",
+    "marketStandard": "No competitor has a dedicated goods movement module. Usually handled via visitor management or a paper-based process.",
+    "ourProduct": "Full inward and outward goods movement tracking with item-level descriptions, images, approval workflows, registered/guest goods classification, and complete digital audit trail.",
+    "status": "AHEAD",
+    "strategicImpact": "Unique feature with no equivalent in competing platforms. Appeals to premium communities and IFM companies managing move-in/move-out workflows. Strong demo moment."
+  },
+  {
+    "featureArea": "CAM Billing and Accounting",
+    "marketStandard": "ApnaComplex has strong billing. MyGate billing is basic. Most platforms offer invoice generation and online payment but not full accounting ledger management.",
+    "ourProduct": "Full accounting structure with group, subgroup, ledger creation, CAM charge configuration, automated invoice generation, GST compliance, ERP export, defaulter flagging, and service restriction controls.",
+    "status": "AHEAD",
+    "strategicImpact": "Billing is the primary reason RWAs and IFM companies switch platforms. Full accounting capability in one platform removes the need for a separate accounting tool."
+  },
+  {
+    "featureArea": "Fitout Workflow Management",
+    "marketStandard": "No competitor has a dedicated digital fitout workflow module. Handled via email or WhatsApp by most developers.",
+    "ourProduct": "Resident-initiated fitout requests with admin approval, deviation tracking, SOP and manual storage, labour entry management, and deposit payment integration.",
+    "status": "AHEAD",
+    "strategicImpact": "Unique feature for post-possession developers. Significant time period between possession and occupation generates high fitout activity. Digitalising fitout reduces FM team overhead and creates a developer-controlled audit trail."
+  },
+  {
+    "featureArea": "Permit to Work (PTW)",
+    "marketStandard": "No consumer-grade community management platform has a PTW module. PTW is only available in enterprise FM platforms at 5-10x the price.",
+    "ourProduct": "Full PTW workflow including hazardous area configuration, work type definition, scope and risk capture, multi-level authorization, supervisor and worker assignment, and training confirmation.",
+    "status": "AHEAD",
+    "strategicImpact": "Safety compliance differentiator for IFM companies and REIT-grade properties. PTW capability allows us to serve the FM operations layer, not just the resident experience layer."
+  },
+  {
+    "featureArea": "Native Analytics Dashboard for Developer Leadership",
+    "marketStandard": "MyGate and ApnaComplex have basic reporting. NoBrokerHood has some dashboard views. None offer a developer portfolio-level community health score dashboard.",
+    "ourProduct": "Function-wise BI reports with chart views and data download exist. A native, real-time community health score dashboard for developer management teams is not yet available.",
+    "status": "GAP",
+    "strategicImpact": "Largest single gap cited in developer enterprise RFPs. Developer leadership teams want a single-number community health score per property without going into operational reports."
+  },
+  {
+    "featureArea": "ANPR / Automatic Number Plate Recognition Integration",
+    "marketStandard": "NoBrokerHood bundles camera hardware with ANPR. MyGate integrates with ANPR on request. Both competitors have this as a standard enterprise offering.",
+    "ourProduct": "API integration with access control systems exists. Dedicated ANPR camera integration at standard tier pricing is not yet available out-of-the-box.",
+    "status": "GAP",
+    "strategicImpact": "ANPR is a deal-closing requirement for premium gated communities and township developers. Absence of standard ANPR integration costs us deals in the premium residential segment."
+  },
+  {
+    "featureArea": "AI Predictive Maintenance Alerts",
+    "marketStandard": "No India competitor has deployed AI predictive maintenance. This is a global gap across the community management category.",
+    "ourProduct": "Asset maintenance scheduling and checklist management exist. AI-driven anomaly detection and predictive maintenance alerting based on consumption and maintenance patterns is not yet built.",
+    "status": "GAP",
+    "strategicImpact": "First mover opportunity in India. Predictive maintenance reduces emergency repair costs by 20-30% in managed communities. A compelling ROI story for IFM clients."
+  },
+  {
+    "featureArea": "Facility Booking",
+    "marketStandard": "MyGate has basic facility booking. ApnaComplex has a similar level. Standard booking with slot selection and payment.",
+    "ourProduct": "Full facility booking with instant or request-based booking, capacity management, sub-facility structures, club membership management, usage-based automated charges, and multiple payment modes.",
+    "status": "AHEAD",
+    "strategicImpact": "Facility booking drives daily resident app opens. Deep booking configuration enables revenue generation for premium facilities."
+  },
+  {
+    "featureArea": "Guard Patrolling and Security Audits",
+    "marketStandard": "No consumer community management platform has a QR-based guard patrolling module. This capability exists only in enterprise security management platforms.",
+    "ourProduct": "Full QR-based patrolling with scheduled checkpoints, digital completion logs, parking audits, no-honking zone audits, vehicle movement audits, and exception reporting.",
+    "status": "AHEAD",
+    "strategicImpact": "Security capability differentiates us from resident experience-only platforms. Enables us to replace security-specific software in addition to community management tools."
+  },
+  {
+    "featureArea": "Operational Audit and Compliance Tracker",
+    "marketStandard": "Basic checklists available in MyGate and ApnaComplex. Full operational audit management with approval workflows is absent in all direct competitors.",
+    "ourProduct": "Full operational audit setup, scheduling, assignment, completion, approval, and report download. Compliance tracker with automated deadline alerts for AMC, PPM, and statutory compliance.",
+    "status": "AHEAD",
+    "strategicImpact": "IFM companies and REIT-grade properties require auditable compliance records. This feature opens the FM compliance market that generic community platforms cannot address."
+  },
+  {
+    "featureArea": "Concierge and Service Booking",
+    "marketStandard": "MyGate has a services marketplace. ApnaComplex has basic service directory. Both require third-party integration for fulfilment.",
+    "ourProduct": "Full concierge booking module with service configuration, slot scheduling, cancellation rules, payment options, service reminders, invoice download, and feedback. F&B restaurant management with table booking and food ordering.",
+    "status": "AHEAD",
+    "strategicImpact": "Revenue-generating feature for developers who want to monetise community services. Resident stickiness driver when high-quality services are available within the app."
+  }
+];
+const competitiveSummaryRows: SummaryRow[] = [
+  {
+    "category": "WHERE WE ARE AHEAD OF THE MARKET",
+    "detail": "White-label app, data sovereignty architecture, goods movement tracing, household staff management, PTW module, fitout workflow, guard patrolling, full CAM billing with ERP export, operational audit and compliance tracker",
+    "implication": "8 of 15 features are AHEAD of the market standard. Data sovereignty and white-label are absolute moats - no competitor can offer them without rebuilding their architecture. These two features alone justify price premium and win enterprise RFPs where compliance is the primary criterion."
+  },
+  {
+    "category": "WHERE WE ARE AT PAR",
+    "detail": "Facility booking, concierge services, community communication, events and polls, BI reporting with data download",
+    "implication": "Core resident experience features are competitive. Investment should maintain parity rather than chase differentiation here. These features are table stakes that prevent deal loss but do not win deals on their own."
+  },
+  {
+    "category": "WHERE WE HAVE GAPS THAT WILL COST US DEALS",
+    "detail": "Native developer leadership dashboard with community health scores, ANPR camera integration at standard tier, AI predictive maintenance alerting",
+    "implication": "These 3 gaps are cited in 40-60% of enterprise RFPs. Each gap costs approximately 2-5 enterprise deals per year. Priority investment in Q1-Q2 roadmap should close all three before the next CREDAI enterprise sales cycle."
+  }
+];
+const pricingModelRows: PricingModelRow[] = [
+  {
+    "question": "What pricing models are standard in this category?",
+    "detail": "Per-unit per-year (dominant in India - INR 600-3,600 depending on tier and module set). Per-unit per-month (dominant globally - USD 0.80-8). Flat community fee (used by some India platforms for small communities under 100 units). Managed service fee including platform plus operations team (Strata model - INR 150-300 per unit per month). Hardware plus SaaS hybrid (Envision, NoBrokerHood - hardware bundled at INR 3,000-8,000 per unit plus recurring SaaS fee). Freemium (none of the primary competitors use freemium successfully in this category - community management requires onboarding support that cannot scale with self-serve)."
+  },
+  {
+    "question": "Which model dominates at entry level?",
+    "detail": "Per-unit per-year at INR 600-1,200 with a core module bundle covering visitor management, helpdesk, communication, and basic billing. Entry-level deals are typically RWA-driven or small IFM contracts (under 500 units). Annual billing is preferred over monthly billing in India due to long sales cycles and high implementation effort relative to deal size."
+  },
+  {
+    "question": "Which model dominates at enterprise level?",
+    "detail": "Per-unit per-year negotiated enterprise pricing with a comprehensive module bundle. Enterprise deals (1,000+ units) include an implementation fee, a customisation budget, dedicated support SLA, and a data migration commitment. Enterprise pricing ranges from INR 1,800-3,600 per unit per year for full-stack deployments. Multi-property enterprise contracts carry a volume discount of 15-25% off list pricing."
+  }
+];
+const priceRangeRows: PriceRangeRow[] = [
+  {
+    "tier": "Free / Freemium",
+    "indiaPrice": "Not applicable in this category",
+    "indiaFor": "No major India platform operates a sustainable freemium tier. Basic community WhatsApp groups substitute for free-tier adoption.",
+    "globalPrice": "Not applicable",
+    "globalFor": "Self-managed tools like Google Forms and WhatsApp Business serve as de facto freemium substitutes globally."
+  },
+  {
+    "tier": "Entry / Starter",
+    "indiaPrice": "INR 600-1,200",
+    "indiaFor": "RWAs under 500 units, small IFM contracts, pilot deployments. Core modules only: visitor management, communication, basic helpdesk, simple billing.",
+    "globalPrice": "USD 0.80-1.50 / unit / month",
+    "globalFor": "Small property management companies in US and UK managing under 200 residential units. Core maintenance request and payment features."
+  },
+  {
+    "tier": "Mid / Professional",
+    "indiaPrice": "INR 1,200-2,400",
+    "indiaFor": "Mid-market developers (200-1,000 units per project), IFM companies managing 10-50 properties, RWAs above 500 units with active operations team. Full module set including gate management, full billing, club booking.",
+    "globalPrice": "USD 2-5 / unit / month",
+    "globalFor": "Property management companies and residential REITs managing 200-2,000 units. Full resident lifecycle management, accounting integration, compliance tools."
+  },
+  {
+    "tier": "Enterprise",
+    "indiaPrice": "INR 2,400-3,600+",
+    "indiaFor": "Large developers with 1,000+ units per project, multi-property IFM portfolios, REIT-grade residential assets. Full module set plus white-label, self-hosting, custom integrations, enterprise SLA.",
+    "globalPrice": "USD 5-12 / unit / month",
+    "globalFor": "Institutional residential operators, global REITs, large IFM companies. Custom API integrations, BI dashboard, portfolio-level reporting, dedicated support."
+  }
+];
+const planFeatureRows: PlanFeatureRow[] = [
+  {
+    "feature": "Visitor Management - Basic Gate Approval",
+    "starter": "Yes (MyGate, NoBrokerHood)",
+    "professional": "Yes",
+    "enterprise": "Yes"
+  },
+  {
+    "feature": "Household Staff Management",
+    "starter": "Basic (MyGate community DB)",
+    "professional": "Full (most competitors)",
+    "enterprise": "Full + API integrations"
+  },
+  {
+    "feature": "Club Facility Booking",
+    "starter": "Limited or not included",
+    "professional": "Full booking with payment",
+    "enterprise": "Full + membership management"
+  },
+  {
+    "feature": "CAM Billing - Invoice Generation",
+    "starter": "Not included in entry tier",
+    "professional": "Basic invoice + online payment",
+    "enterprise": "Full accounting + ERP export + GST"
+  },
+  {
+    "feature": "Helpdesk / Ticketing",
+    "starter": "Basic ticket creation",
+    "professional": "SLA tracking + escalation",
+    "enterprise": "Full CAPA + root cause + role-based access"
+  },
+  {
+    "feature": "White-Label App",
+    "starter": "Not available at any tier (competitors)",
+    "professional": "Not available at any tier (competitors)",
+    "enterprise": "Our platform only - available at all tiers"
+  },
+  {
+    "feature": "Data Sovereignty / Self-Hosted",
+    "starter": "Not available at any tier (competitors)",
+    "professional": "Not available at any tier (competitors)",
+    "enterprise": "Our platform only - available at all tiers"
+  },
+  {
+    "feature": "Guard Patrolling and Audit",
+    "starter": "Not available (competitors)",
+    "professional": "Not available (competitors)",
+    "enterprise": "Our platform - available from professional tier"
+  },
+  {
+    "feature": "Permit to Work",
+    "starter": "Not available in community platforms",
+    "professional": "Not available in community platforms",
+    "enterprise": "Our platform only - available at enterprise tier"
+  },
+  {
+    "feature": "BI Reporting with Download",
+    "starter": "Basic stats only",
+    "professional": "Module-wise reports",
+    "enterprise": "Full BI with chart views, data download, management reporting"
+  },
+  {
+    "feature": "IoT / Access Control Integration",
+    "starter": "Not included",
+    "professional": "API integration on request",
+    "enterprise": "Full integration package as standard"
+  },
+  {
+    "feature": "Community Communication + Events + Polls",
+    "starter": "Yes (all competitors)",
+    "professional": "Yes with delivery reports",
+    "enterprise": "Yes with targeted group messaging and analytics"
+  }
+];
+const recommendedPricingRows: RecommendedPricingRow[] = [
+  {
+    "stage": "Now - Launch Pricing",
+    "indiaEntry": "INR 800-1,200 per unit per year (core modules: visitor, helpdesk, communication, basic billing)",
+    "indiaMid": "INR 1,600-2,400 per unit per year (full module set including gate management, club booking, full billing)",
+    "globalEntry": "USD 1.20-2.00 per unit per month (core modules)",
+    "globalMid": "USD 2.50-4.00 per unit per month (full module set)",
+    "notes": "Launch pricing should be below market to build reference clients. Minimum 3 referenceable clients before raising to market rate."
+  },
+  {
+    "stage": "6 Months",
+    "indiaEntry": "INR 1,000-1,500 per unit per year (add analytics dashboard to entry module set after roadmap delivery)",
+    "indiaMid": "INR 2,000-2,800 per unit per year (add ANPR integration and community health score dashboard to mid-market tier)",
+    "globalEntry": "USD 1.50-2.50 per unit per month",
+    "globalMid": "USD 3.00-5.00 per unit per month",
+    "notes": "Price increase justified by analytics dashboard and ANPR integration delivery. Position as a feature upgrade, not a price increase."
+  },
+  {
+    "stage": "18 Months - Market Leadership Play",
+    "indiaEntry": "INR 1,200-1,800 per unit per year (expand entry to include loyalty module and AI maintenance alerts)",
+    "indiaMid": "INR 2,400-3,600 per unit per year (full stack with AI predictive maintenance, advanced ESG reporting, Salesforce MCP integration)",
+    "globalEntry": "USD 2.00-3.50 per unit per month",
+    "globalMid": "USD 4.00-7.00 per unit per month",
+    "notes": "18-month pricing reflects market leadership positioning. At this tier our pricing should be 10-20% below Tata Crest while offering superior feature depth and data sovereignty."
+  }
+];
+const positioningRows: PositioningRow[] = [
+  {
+    "prompt": "Our single most defensible position right now",
+    "recommendation": "The only self-hosted, white-label community management platform in India - meaning your brand, your data, your control."
+  },
+  {
+    "prompt": "The 2-3 customer segments to prioritise this year and why",
+    "recommendation": "1. Enterprise real estate developers (1,000+ units) - DPDP Act urgency, large deal size, referenceable clients create sales flywheel. 2. IFM companies managing 10+ properties - platform replaces 6-10 tools simultaneously, deal size multiplied by portfolio scale. 3. REIT-grade residential asset managers - ESG and compliance reporting requirements create urgency that generic platforms cannot address."
+  },
+  {
+    "prompt": "The one competitor we should be displacing most aggressively and how",
+    "recommendation": "MyGate. Approach: Lead with a DPDP Act compliance audit showing that MyGate's data storage makes the developer legally liable as a data fiduciary with zero control. Follow with white-label demonstration. Close with data migration commitment showing the developer exactly how historical data will be preserved during transition. MyGate's zero white-label and centralized data are permanent weaknesses they cannot fix without rebuilding their architecture."
+  },
+  {
+    "prompt": "What we should STOP saying or doing",
+    "recommendation": "Stop competing on price against MyGate and ApnaComplex in the RWA segment. Stop leading with feature lists in demos. Stop using the word 'platform' in sales conversations - it is abstract. Start saying 'your branded resident app' and 'your data on your servers' in every conversation."
+  },
+  {
+    "prompt": "Recommended GTM motion for Year 1",
+    "recommendation": "Direct enterprise sales to large developers (INR 1,000+ unit projects) led by a DPDP Act compliance conversation. Parallel IFM channel partnership with 2-3 national IFM companies who become resellers. Developer client referrals to expand within their portfolio and to peer developers. Events: CREDAI and NAREDCO annual conferences as primary lead generation channels."
+  }
+];
+const valuePropRows: ValuePropRow[] = [
+  {
+    "current": "We are a white-label community management platform",
+    "resonatesWith": "Developer VPs who already know they need white-label",
+    "weakness": "Too feature-led. Does not explain why white-label matters or what outcome it creates for the developer.",
+    "improved": "Residents will know your brand for the 20 years they live in your home, not ours. Every notification, every bill, every visitor approval carries your identity."
+  },
+  {
+    "current": "We are the only self-hosted platform in this category",
+    "resonatesWith": "CTOs and compliance officers who understand data sovereignty",
+    "weakness": "Too technical for business decision-makers. Most developer VPs do not know what self-hosted means.",
+    "improved": "Under DPDP Act 2023, you are legally responsible for your residents' data. If you use MyGate or ApnaComplex, their servers hold your data and you have no control. Our platform stores everything on your servers. Your data fiduciary obligation is actually fulfilled."
+  },
+  {
+    "current": "One platform replacing 6-10 disconnected tools",
+    "resonatesWith": "IFM operations directors looking to reduce tool sprawl",
+    "weakness": "Claim is generic - every platform says this. Needs specificity.",
+    "improved": "Your FM team today runs: a paper visitor register, a WhatsApp complaints group, Excel billing sheets, a separate booking app, and a physical staff register. We replace all five with one app your residents and team already know how to use."
+  },
+  {
+    "current": "Full community management from gate to billing in one stack",
+    "resonatesWith": "Facility managers and finance teams",
+    "weakness": "Too broad. Does not name the pain point it solves or the outcome it creates.",
+    "improved": "Your maintenance billing currently takes 30-45 days to collect because invoices are manual and payments are by bank transfer. Our platform generates invoices automatically and collects UPI payment from residents in under 72 hours."
+  },
+  {
+    "current": "Trusted by developers across India",
+    "resonatesWith": "Prospects evaluating credibility",
+    "weakness": "Vague without numbers. 'Trusted' is claimed by every B2B SaaS vendor.",
+    "improved": "Deployed across [X] communities managing [Y] lakh sq ft of residential space. Ask us for a 30-minute call with one of our deployed clients before you make any decision."
+  }
+];
+
 const PostPossessionPricingTab: React.FC = () => {
+  const styles: Record<string, React.CSSProperties> = {
+    section: { backgroundColor: "#DA7756", color: "#ffffff", fontFamily: "inherit", fontSize: "11pt", fontWeight: "bold", letterSpacing: "0.05em", padding: "12px 12px", textAlign: "left", textTransform: "uppercase", verticalAlign: "middle", whiteSpace: "normal" },
+    subSection: { backgroundColor: "#F6F4EE", borderBottom: "2px solid #DA7756", color: "#DA7756", fontFamily: "inherit", fontSize: "12pt", fontWeight: "bold", padding: "16px 12px", textAlign: "left", verticalAlign: "middle", whiteSpace: "normal" },
+    headerCell: { backgroundColor: "#F6F4EE", borderBottom: "2px solid #C4B89D", borderRight: "1px solid rgba(196,184,157,0.5)", color: "#1f1f1f", fontFamily: "inherit", fontSize: "10pt", fontWeight: "bold", letterSpacing: "0.05em", padding: "12px 8px", textAlign: "left", textTransform: "uppercase", verticalAlign: "middle", whiteSpace: "normal" },
+    cell: { backgroundColor: "#ffffff", borderBottom: "1px solid rgba(196,184,157,0.35)", borderRight: "1px solid rgba(196,184,157,0.35)", color: "#1f1f1f", fontFamily: "inherit", fontSize: "10pt", lineHeight: 1.55, padding: "12px 8px", textAlign: "left", verticalAlign: "top", whiteSpace: "normal", wordWrap: "break-word" },
+    altCell: { backgroundColor: "#F6F4EE", borderBottom: "1px solid rgba(196,184,157,0.35)", borderRight: "1px solid rgba(196,184,157,0.35)", color: "#1f1f1f", fontFamily: "inherit", fontSize: "10pt", lineHeight: 1.55, padding: "12px 8px", textAlign: "left", verticalAlign: "top", whiteSpace: "normal", wordWrap: "break-word" },
+    statusAhead: { backgroundColor: "#F6F4EE", borderBottom: "1px solid rgba(196,184,157,0.35)", borderRight: "1px solid rgba(196,184,157,0.35)", color: "#217346", fontFamily: "inherit", fontSize: "10pt", fontWeight: "bold", lineHeight: 1.55, padding: "12px 8px", textAlign: "left", verticalAlign: "top" },
+    statusGap: { backgroundColor: "#FCE4D6", borderBottom: "1px solid rgba(196,184,157,0.35)", borderRight: "1px solid rgba(196,184,157,0.35)", color: "#9b1c1c", fontFamily: "inherit", fontSize: "10pt", fontWeight: "bold", lineHeight: 1.55, padding: "12px 8px", textAlign: "left", verticalAlign: "top" },
+  };
+
+  const getCellStyle = (index: number) => (index % 2 === 0 ? styles.altCell : styles.cell);
+  const statusStyle = (status: string) => (status === "GAP" ? styles.statusGap : styles.statusAhead);
+  const renderCells = (values: string[], index: number) => values.map((value, valueIndex) => (
+    <td key={valueIndex} style={{ ...getCellStyle(index), fontWeight: valueIndex === 0 ? "bold" : "normal", color: valueIndex === 0 ? "#DA7756" : "#1f1f1f" }}>{value}</td>
+  ));
+
   return (
-    <div className="space-y-12 animate-fade-in font-poppins pb-10">
-      {/* Header */}
-      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
-        <h2 className="text-xl font-bold uppercase tracking-wider">
-          Post Possession — Features & Pricing
-        </h2>
+    <div className="w-full font-sans">
+      <div className="mb-6">
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+          <h2 className="text-xl font-bold uppercase tracking-wider">POST POSSESSION - FEATURES AND PRICING</h2>
+          <p className="text-xs opacity-70 italic mt-2 font-medium">Section 1: Feature comparison vs market standard | Section 2: Pricing landscape | Section 3: Positioning | Section 4: Value propositions</p>
+        </div>
       </div>
-
-      {/* Part A: Competitive Features vs Market */}
-      <section className="space-y-4">
-        <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
-          Part A — Current Features vs Market Standard
-        </div>
-        <div className="overflow-x-auto border border-[#D3D1C7] rounded-lg bg-white shadow-sm">
-          <table className="w-full text-left text-[11px] leading-relaxed border-collapse">
-            <thead className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px]">
-              <tr>
-                <th className="p-3 border border-[#E5E7EB] w-[20%]">Feature Area</th>
-                <th className="p-3 border border-[#E5E7EB] w-[25%]">Market Standard (Most Products Offer)</th>
-                <th className="p-3 border border-[#E5E7EB] w-[30%]">Our Product (Have / Roadmap / Gap)</th>
-                <th className="p-3 border border-[#E5E7EB] w-[25%]">Verdict: Ahead / At Par / Gap</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { area: "Visitor Management", market: "Basic guest log, digital gate pass, OTP entry; limited to 3–5 features", ours: "HAVE: 25+ visitor features including IVR/push approval, child safety, panic button, overstay alerts, offline guard mode, voice command, e-intercom, group entry, cab pre-auth", verdict: "✅ AHEAD — depth of visitor management is best-in-class globally; offline mode is unique", tone: "bg-[#F6F4EE]" },
-                { area: "Security & Access Control", market: "Basic CCTV integration; boom barrier API in premium tiers; RFID support in enterprise", ours: "HAVE: Boom barrier/flap barrier API, ANPR, computer vision (tailgating, face mask, heat mapping, social distancing), guard patrolling with QR checkpoints", verdict: "✅ AHEAD — Computer vision and ANPR at this price point is rare; most competitors offer it only at 3–5x price", tone: "bg-[#F6F4EE]" },
-                { area: "Helpdesk / Ticket Management", market: "Ticket raise + status tracking; basic escalation (1–2 levels); vendor assignment", ours: "HAVE: 5-layer escalation matrix, CAPA reporting, root cause analysis, Golden Ticket (vulnerable residents), TAT calculation by operational hours, rule-based auto-assignment, multi-mode ticket raising", verdict: "✅ AHEAD — 5-layer escalation and CAPA are enterprise-grade; competitors offer max 2–3 level escalation", tone: "bg-[#F6F4EE]" },
-                { area: "Accounting & Billing", market: "CAM invoice generation, payment gateway, basic ledger; ERP export in enterprise tier", ours: "HAVE: Full accounting module — GST/tax config, chart of accounts, part/full payment, offline reconciliation, ERP export, defaulter blocking, prepaid meter integration, assets & liabilities", verdict: "✅ AHEAD in India context — full accounting module at community level is rare; most charge extra for it", tone: "bg-[#F6F4EE]" },
-                { area: "FM Operations (PPM, Asset, Checklists)", market: "Basic work order; limited asset register; no PPM checklists in most community apps", ours: "HAVE: Full FM suite — PPM/AMC digital checklists with QR/NFC dual-control, asset tagging, warranty alerts, soft services scheduling, compliance tracker, permit to work, operational audit, vendor evaluation", verdict: "✅ AHEAD — FM operations depth exceeds most community apps; competitive with standalone FM tools", tone: "bg-[#F6F4EE]" },
-                { area: "Developer / Owner Engagement", market: "Not offered by any community management app; entirely absent from market", ours: "HAVE: White-label app, referral marketing, loyalty program, new project updates, lead generation, rolling banners, marketing analytics", verdict: "✅ STRONGLY AHEAD — Unique category; no competitor offers developer-side engagement + community + FM in one platform", tone: "bg-[#e2efda]" },
-                { area: "Community Engagement", market: "Notices, events, polls; basic gallery; some apps offer chat", ours: "HAVE: All standard features + wellness programs, collaboration (chat + video), MoM with auto tasks, offers/coupons, QR-based survey, community news", verdict: "✅ AHEAD — MoM-to-task automation and wellness programs are differentiators", tone: "bg-[#F6F4EE]" },
-                { area: "Facility Booking", market: "Slot-based booking; basic payment; some apps offer sub-facility management", ours: "HAVE: Bookable vs requestable config, sub-facility management, club membership with expiry alerts, automated usage-based charges, unique resident QR code for access", verdict: "✅ AHEAD — Automated usage-based billing and membership lifecycle management are not standard", tone: "bg-[#F6F4EE]" },
-                { area: "Resident Convenience / Marketplace", market: "Basic directory; some apps offer third-party grocery integration; food ordering in premium", ours: "HAVE: On-premise services marketplace, F&B module, hyper-local directory, e-commerce integration, B2B health/grocery partnerships", verdict: "⚠️ AT PAR — marketplace is solid but not differentiated; third-party integration depth could be stronger", tone: "bg-[#fff2cc]" },
-                { area: "White-Label Capability", market: "Very few offer white-label; those that do charge significant premium; most are SaaS multi-tenant", ours: "HAVE: Full white-label Android + iOS + rolling banners; data on client's own servers (not Lockated's)", verdict: "✅ STRONGLY AHEAD — Data sovereignty + white-label is unique globally; no direct competitor offers both", tone: "bg-[#e2efda]" },
-                { area: "BI Reporting & Analytics", market: "Basic operational dashboards; underlying data export in enterprise tier only", ours: "HAVE: Detailed BI reports per module; underlying data view/download in multiple formats; multi-format chart views", verdict: "✅ AHEAD — Module-level BI for every function is not standard; most offer only summary dashboards", tone: "bg-[#F6F4EE]" },
-                { area: "IoT / IT Integration", market: "API-based integrations for boom barriers and RFID; some offer BMS integration", ours: "HAVE: API/ERP/OPC/Historian integration; customised IoT on project basis; ANPR; computer vision", verdict: "✅ AHEAD — OPC and Historian integration (industrial IoT) is unique; positions well for smart building segment", tone: "bg-[#F6F4EE]" },
-                { area: "Mobile App (Resident-Facing)", market: "iOS and Android apps; push notifications; basic profile management", ours: "HAVE: Full resident app with all modules; QR code for amenity access; switch-flat feature; family/tenant member addition; in-app calling", verdict: "✅ AHEAD — Switch-flat and in-app calling (resident-to-resident without sharing numbers) are notable differentiators", tone: "bg-[#F6F4EE]" },
-                { area: "Inventory Management", market: "Basic stock tracking; PO management in enterprise FM tools only", ours: "HAVE: PO/WO management, GRN/GDN tracking, spares/consumables, insufficient stock alerts, procurement approval workflow", verdict: "✅ AHEAD vs community apps; AT PAR vs dedicated FM/CMMS tools", tone: "bg-[#F6F4EE]" },
-                { area: "Lease Management", market: "Not offered by community management apps; available in enterprise PM tools (Yardi, AppFolio)", ours: "HAVE: Full lease module — analytics, operations, accounting, management, data management", verdict: "⚠️ AT PAR vs enterprise PM tools; AHEAD vs community app competitors", tone: "bg-[#F6F4EE]" },
-                { area: "Space & Transport Management", market: "Rarely offered in community apps; co-working/office-focused products offer seat management", ours: "HAVE: Full space management (floor plan, seat booking, colleague finder) and transport management (booking, tracking, billing, policies)", verdict: "⚠️ AT PAR vs specialised tools; relevant for mixed-use or co-living only", tone: "bg-[#fff2cc]" },
-                { area: "GDPR / Data Compliance", market: "US/UK platforms typically host data on their own cloud; GDPR compliance claimed but data leaves client control", ours: "HAVE: Data hosted exclusively on client's own servers — Lockated holds zero client data", verdict: "✅ STRONGLY AHEAD — Unique architecture; critical differentiator for UK, Europe, and GCC regulatory contexts", tone: "bg-[#e2efda]" },
-                { area: "UI/UX & Mobile Design", market: "Newer US/UK competitors (Spike Living, Engrain) have consumer-grade UI; Indian apps lag on design polish", ours: "GAP: UI/UX requires investment to match consumer-grade design standards expected in UK/US/GCC luxury markets", verdict: "❌ GAP — Design quality is functional but below consumer-grade standard; this will cost deals in UK/US luxury segment", tone: "bg-[#fce4d6]" },
-                { area: "API / Integration Marketplace", market: "Leading PM tools (Yardi, AppFolio) offer 100+ third-party integrations via marketplace", ours: "GAP: Integrations are available but not published as a formal marketplace; discovery requires custom scoping", verdict: "❌ GAP — No public integration marketplace; reduces perception of openness and scalability for enterprise buyers", tone: "bg-[#fce4d6]" },
-                { area: "Multi-Language Support", market: "English + regional language in most Indian apps; Arabic in GCC-specific tools", ours: "GAP: Full multi-language support (Arabic, Bahasa, Thai, French) not yet confirmed as standard feature", verdict: "❌ GAP — Critical for GCC (Arabic) and SE Asia (Bahasa, Thai) expansion; will cost deals in those geographies", tone: "bg-[#fce4d6]" },
-              ].map((item, idx) => (
-                <tr key={idx} className={item.tone}>
-                  <td className="p-3 border border-gray-200 font-bold">{item.area}</td>
-                  <td className="p-3 border border-gray-200 text-gray-700">{item.market}</td>
-                  <td className="p-3 border border-gray-200 font-medium text-[#DA7756]">{item.ours}</td>
-                  <td className="p-3 border border-gray-200 font-semibold">{item.verdict}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Summary Section */}
-      <section className="space-y-4">
-        <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
-          Summary: Competitive Position & Pricing Model Impact
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-[#e2efda] p-4 rounded-lg border border-green-200">
-            <h3 className="font-bold text-green-800 text-xs mb-2 uppercase tracking-tighter italic border-b border-green-300 pb-1">Where We Are Ahead</h3>
-            <p className="text-[10px] leading-relaxed text-gray-800">
-              Visitor management depth, FM operations completeness (PPM/CAPA/vendor eval), developer-side engagement (referral/loyalty), white-label + data sovereignty, 5-layer escalation, computer vision at accessible price point, IoT/OPC integration.
-            </p>
-            <div className="mt-3 text-[10px] bg-white/50 p-2 rounded">
-              <span className="font-bold">Implication:</span> These are the features to lead with in every demo and proposal. They justify premium pricing vs MyGate/NoBrokerHood.
-            </div>
-          </div>
-
-          <div className="bg-[#F6F4EE] p-4 rounded-lg border border-blue-200">
-            <h3 className="font-bold text-blue-800 text-xs mb-2 uppercase tracking-tighter italic border-b border-blue-300 pb-1">Where We Are At Par</h3>
-            <p className="text-[10px] leading-relaxed text-gray-800">
-              Resident convenience marketplace, lease management, space/transport management, BI reporting.
-            </p>
-            <div className="mt-3 text-[10px] bg-white/50 p-2 rounded">
-              <span className="font-bold">Implication:</span> Solid parity — these should not be the reason we lose deals. Ensure demos cover these adequately to remove doubt.
-            </div>
-          </div>
-
-          <div className="bg-[#fce4d6] p-4 rounded-lg border border-orange-200">
-            <h3 className="font-bold text-orange-800 text-xs mb-2 uppercase tracking-tighter italic border-b border-orange-300 pb-1">Gaps That Will Cost Us Deals</h3>
-            <p className="text-[10px] leading-relaxed text-gray-800">
-              1. UI/UX polish — will cost deals in UK, US, Dubai luxury segment.<br />
-              2. Multi-language (Arabic, Bahasa, Thai) — will block GCC and SE Asia expansion.<br />
-              3. No public integration marketplace — enterprise buyers expect published API docs and a connector library.
-            </p>
-            <div className="mt-3 text-[10px] bg-white/50 p-2 rounded">
-              <span className="font-bold">Action:</span> Prioritise for 6–12 month roadmap to protect international expansion. These are table-stakes for the UK and US markets.
-            </div>
-          </div>
-
-          <div className="bg-[#fff2cc] p-4 rounded-lg border border-yellow-200">
-            <h3 className="font-bold text-yellow-800 text-xs mb-2 uppercase tracking-tighter italic border-b border-yellow-300 pb-1">Pricing Model Impact</h3>
-            <p className="text-[10px] leading-relaxed text-gray-800 italic">Currently: Likely per-unit/per-month SaaS model.</p>
-            <div className="mt-2 text-[10px] space-y-2">
-              <p><strong>Usage-based:</strong> Charge per active visitor scan, per ticket raised, per transaction. Benefit: Aligns cost to value.</p>
-              <p><strong>Performance-based:</strong> Base fee + success fee on referrals/collection. Benefit: ROI-demonstrable investment.</p>
-              <p className="font-bold text-yellow-900 border-t border-yellow-300 pt-1">Recommend: Hybrid Model (Base + Performance Uplift)</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Part B: Market Pricing */}
-      <section className="space-y-4">
-        <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
-          Part B — Current Pricing Market
-        </div>
-        <div className="overflow-x-auto border border-[#D3D1C7] rounded-lg bg-white shadow-sm">
-          <table className="w-full text-left text-[11px] leading-relaxed border-collapse">
-            <thead className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px]">
-              <tr>
-                <th className="p-3 border border-[#E5E7EB] w-[20%]">Pricing Dimension</th>
-                <th className="p-3 border border-[#E5E7EB] w-[25%]">India</th>
-                <th className="p-3 border border-[#E5E7EB] w-[25%]">GCC (UAE/Saudi/Qatar)</th>
-                <th className="p-3 border border-[#E5E7EB] w-[30%]">Notes / Recommendation</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="bg-[#F6F4EE]">
-                <td className="p-3 border border-gray-200 font-bold">Standard Models</td>
-                <td className="p-3 border border-gray-200">SaaS per unit/month; Setup + AMC; Per-project licence</td>
-                <td className="p-3 border border-gray-200">SaaS per unit/month; Annual licence for portfolios</td>
-                <td className="p-3 border border-gray-200 font-medium">Usage/Performance models are emerging; first-mover advantage available</td>
-              </tr>
-              <tr>
-                <td className="p-3 border border-gray-200 font-bold">Entry Tier</td>
-                <td className="p-3 border border-gray-200">₹2–5/unit/month; ₹15–25K/project/month</td>
-                <td className="p-3 border border-gray-200">AED 3–8/unit/month</td>
-                <td className="p-3 border border-gray-200">Do not compete here; it commoditises the product.</td>
-              </tr>
-              <tr className="bg-[#F6F4EE]">
-                <td className="p-3 border border-gray-200 font-bold">Mid Tier</td>
-                <td className="p-3 border border-gray-200">₹8–15/unit/month; ₹50–120K/project/month</td>
-                <td className="p-3 border border-gray-200">AED 12–20/unit/month</td>
-                <td className="p-3 border border-gray-200 font-medium italic">Likely current positioning. Justify via FM depth.</td>
-              </tr>
-              <tr>
-                <td className="p-3 border border-gray-200 font-bold">Enterprise Tier</td>
-                <td className="p-3 border border-gray-200">₹18–35/unit/month; ₹2–8L/project/month</td>
-                <td className="p-3 border border-gray-200">AED 25–50/unit/month</td>
-                <td className="p-3 border border-gray-200">White-label + loyalty + data sovereignty justifies this.</td>
-              </tr>
-              <tr className="bg-[#F6F4EE]">
-                <td className="p-3 border border-gray-200 font-bold">Competitor Tiering</td>
-                <td className="p-3 border border-gray-200">Security → Paid (Accounting, Messaging, Staff)</td>
-                <td className="p-3 border border-gray-200">Yardi: Voyager + RENTCafé sold separately</td>
-                <td className="p-3 border border-gray-200 font-medium italic">Recommend 4th tier: Developer Engagement (Unique)</td>
-              </tr>
-              <tr className="bg-[#e2efda]">
-                <td className="p-3 border border-gray-200 font-bold">Recommended: NOW</td>
-                <td className="p-3 border border-gray-200 font-bold">₹12–18/unit (mid); ₹25–35 (enterprise)</td>
-                <td className="p-3 border border-gray-200 font-bold">AED 18–25 (std); AED 35–55 (enterprise)</td>
-                <td className="p-3 border border-gray-200">Onboarding fee: ₹1-2.5L / AED 15-40K per project.</td>
-              </tr>
-              <tr className="bg-[#F6F4EE]">
-                <td className="p-3 border border-gray-200 font-bold">Recommended: 6MO</td>
-                <td className="p-3 border border-gray-200">Add referral performance tier: + ₹500-1,500 per lead</td>
-                <td className="p-3 border border-gray-200">Introduce module add-ons (CV, IoT) @ AED 3-8/unit</td>
-                <td className="p-3 border border-gray-200">Performance tier unlocks developer sales budget.</td>
-              </tr>
-              <tr className="bg-[#fff2cc]">
-                <td className="p-3 border border-gray-200 font-bold">Recommended: 18MO</td>
-                <td className="p-3 border border-gray-200 font-black">Starter / Pro / Enterprise + Marketplace share</td>
-                <td className="p-3 border border-gray-200 font-black">AED 15 / 28 / 50 per unit + Compliance add-on</td>
-                <td className="p-3 border border-gray-200 italic leading-tight">Marketplace GMV revenue creates non-SaaS stream.</td>
-              </tr>
-              <tr className="bg-[#fce4d6]">
-                <td className="p-3 border border-gray-200 font-bold uppercase text-[9px]">The Risks</td>
-                <td className="p-3 border border-gray-200 leading-tight">MyGate freemium erodes willingness to pay; mid-market pressure</td>
-                <td className="p-3 border border-gray-200 leading-tight">Benchmark vs Yardi enterprise; scope creep on contracts</td>
-                <td className="p-3 border border-gray-200 font-bold text-red-800 uppercase italic">Mitigation: Feature fencing & ROI Calculators</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      {/* Part C: Positioning */}
-      <section className="space-y-4">
-        <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
-          Part C — Positioning
-        </div>
-        <div className="grid grid-cols-1 gap-4">
-          <div className="bg-[#e2efda] p-6 rounded-xl border-l-8 border-l-green-600 shadow-sm">
-            <h3 className="text-[#DA7756] font-black text-sm uppercase mb-3">Single Most Defensible Position (NOW)</h3>
-            <p className="text-sm font-medium italic text-gray-800 leading-relaxed max-w-4xl">
-              "The only white-label, data-sovereign community management platform that covers the entire resident lifecycle — from post-possession daily living through FM operations to developer referral and loyalty — in a single app, on the developer's own servers."
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div className="bg-[#F6F4EE] p-5 rounded-xl border-l-8 border-l-blue-600">
-              <h3 className="text-[#DA7756] font-bold text-[10px] uppercase mb-2">Priority Segments</h3>
-              <ul className="text-[11px] space-y-2 text-gray-700">
-                <li><span className="font-bold">INDIA:</span> Large/Mid-market residential (Tier-1). godrej/piramal validated.</li>
-                <li><span className="font-bold">GCC:</span> UAE (Dubai/Abu Dhabi). High ROI on referral + data sovereignty.</li>
-                <li><span className="font-bold">UK:</span> Build-to-Rent (BTR) operators. GDPR pressure + no white-label alternative.</li>
-              </ul>
-            </div>
-            <div className="bg-[#fce9d5] p-5 rounded-xl border-l-8 border-l-orange-400">
-              <h3 className="text-orange-900 font-bold text-[10px] uppercase mb-2 italic">Competitive Displacement</h3>
-              <p className="text-[11px] font-bold text-orange-950 mb-1 inline-block border-b border-orange-300 pb-0.5">Target: MyGate</p>
-              <p className="text-[11px] leading-relaxed text-gray-800 mt-1">
-                Attack at developer procurement level. Messaging: 'MyGate is a resident's app. Post Possession is a developer's platform. One makes your community safe. The other makes your brand immortal.'
-              </p>
-            </div>
-          </div>
-
-          <div className="bg-[#fce4d6] p-5 rounded-xl border border-red-100 border-dashed">
-            <h3 className="text-red-900 font-bold text-[10px] uppercase mb-2">What To Stop Doing / Saying</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { title: "No Feature Lists", desc: "Don't drown buyers in 130 features. Lead with outcomes." },
-                { title: "No 'Society App'", desc: "Don't call it that; it commoditises to MyGate level." },
-                { title: "No Small RWAs", desc: "Too complex/expensive for them; dilutes enterprise value." },
-                { title: "Don't sell to IT", desc: "Target CRM/Sales Heads who own referral budget." },
-              ].map((stop, i) => (
-                <div key={i}>
-                  <p className="text-[9px] font-black text-red-700 uppercase mb-1">{stop.title}</p>
-                  <p className="text-[10px] text-gray-600 leading-tight">{stop.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Part D: Value Props */}
-      <section className="space-y-4">
-        <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
-          Part D — Value Propositions & Improvements
-        </div>
-        <div className="overflow-x-auto border border-[#D3D1C7] rounded-lg bg-white shadow-sm">
-          <table className="w-full text-left text-[11px] leading-relaxed border-collapse">
-            <thead className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px]">
-              <tr>
-                <th className="p-3 border border-[#E5E7EB] w-[20%]">Current Value Proposition</th>
-                <th className="p-3 border border-[#E5E7EB] w-[15%]">Who Resonates</th>
-                <th className="p-3 border border-[#E5E7EB] w-[35%]">Sharpened / Expanded Version</th>
-                <th className="p-3 border border-[#E5E7EB] w-[30%]">Why This Works Better</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { current: "White-labelled community app", who: "Marketing/Branding", sharp: "'Your brand. Your data. Your community.' — Only platform where residents see your name/logo.", reason: "Shifts from feature to emotional outcome (brand ownership).", tone: "bg-white" },
-                { current: "Integrated Platform", who: "FM Head, Ops Director", sharp: "'Replace 7 apps with 1. Run entire community from a single screen.'", reason: "The '7 to 1' framing makes the pain tangible.", tone: "bg-[#F6F4EE]" },
-                { current: "Reduce CP cost by 50%", who: "Sales Director, CFO", sharp: "'Turn residents into salespeople. Every referral saves ₹3–10L in fees.'", reason: "Anchors value in specific rupee amount. Must-have for CFOs.", tone: "bg-white" },
-                { current: "Reduce support cost by 20%", who: "FM Head, Ops Director", sharp: "'Cut maintenance overhead in half. Automated ticket routing + 5-layer escalation.'", reason: "Quantified and specific. Supported by reference data.", tone: "bg-[#F6F4EE]" },
-                { current: "Lifecycle management", who: "CRM Head, CEO", sharp: "'Relationship doesn't end at possession. It starts there. Keep every referral tracked.'", reason: "Reframes from 'ops tool' to 'long-term commercial asset'.", tone: "bg-white" },
-                { current: "Zero unauthorised vendors", who: "Legal/Risk, FM Head", sharp: "'Curated marketplace. Every provider vetted by you. Your ecosystem, your revenue.'", reason: "Adds safety AND revenue angle.", tone: "bg-[#F6F4EE]" },
-                { current: "Data sovereignty", who: "CIO, Legal, CFO", sharp: "'Residents' data never leaves your servers. Full sovereignty — GDPR/PDPA compliant.'", reason: "Critical differentiator for international regulatory contexts.", tone: "bg-white" },
-                { current: "Operational efficiency", who: "FM Head, FM Team", sharp: "'From reactive to proactive. PPM, digital audits, compliance alerts — stop chasing paperwork.'", reason: "Speaks directly to daily frustration of FM managers.", tone: "bg-[#F6F4EE]" },
-              ].map((row, r) => (
-                <tr key={r} className={`${row.tone} hover:bg-gray-100 transition-colors`}>
-                  <td className="p-3 border border-gray-100 font-bold">{row.current}</td>
-                  <td className="p-3 border border-gray-100 text-gray-500 font-medium">{row.who}</td>
-                  <td className="p-3 border border-gray-100 font-bold text-[#DA7756]">{row.sharp}</td>
-                  <td className="p-3 border border-gray-100 italic">{row.reason}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <div className="space-y-8">
+        <section className="overflow-x-auto"><table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: "1450px", backgroundColor: "white" }} cellSpacing={0} cellPadding={0}><colgroup><col style={{ width: "220px" }} /><col style={{ width: "330px" }} /><col style={{ width: "330px" }} /><col style={{ width: "130px" }} /><col style={{ width: "390px" }} /></colgroup><tbody><tr><td style={styles.section} colSpan={5}>Section 1 - Current Features vs Market Standard</td></tr><tr>{["Feature Area", "Market Standard (what most products offer)", "Our Product - What we offer", "Status", "Why it matters to target revenue / strategy"].map((header) => <td key={header} style={styles.headerCell}>{header}</td>)}</tr>{featureComparisonRows.map((row, index) => <tr key={row.featureArea} className="align-top"><td style={{ ...getCellStyle(index), fontWeight: "bold", color: "#DA7756" }}>{row.featureArea}</td><td style={getCellStyle(index)}>{row.marketStandard}</td><td style={getCellStyle(index)}>{row.ourProduct}</td><td style={statusStyle(row.status)}>{row.status}</td><td style={getCellStyle(index)}>{row.strategicImpact}</td></tr>)}</tbody></table></section>
+        <section className="overflow-x-auto"><table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: "1200px", backgroundColor: "white" }} cellSpacing={0} cellPadding={0}><colgroup><col style={{ width: "280px" }} /><col style={{ width: "430px" }} /><col style={{ width: "490px" }} /></colgroup><tbody><tr><td style={styles.section} colSpan={3}>Summary - Competitive Position and Pricing Model Impact</td></tr><tr>{["Category", "Detail", "Implication"].map((header) => <td key={header} style={styles.headerCell}>{header}</td>)}</tr>{competitiveSummaryRows.map((row, index) => <tr key={row.category} className="align-top">{renderCells([row.category, row.detail, row.implication], index)}</tr>)}</tbody></table></section>
+        <section className="overflow-x-auto"><table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: "1100px", backgroundColor: "white" }} cellSpacing={0} cellPadding={0}><colgroup><col style={{ width: "300px" }} /><col style={{ width: "780px" }} /></colgroup><tbody><tr><td style={styles.section} colSpan={2}>Section 2 - Pricing Landscape and Recommended Pricing</td></tr><tr><td style={styles.subSection} colSpan={2}>2A - Standard Pricing Models in This Category</td></tr>{pricingModelRows.map((row, index) => <tr key={row.question} className="align-top">{renderCells([row.question, row.detail], index)}</tr>)}</tbody></table></section>
+        <section className="overflow-x-auto"><table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: "1400px", backgroundColor: "white" }} cellSpacing={0} cellPadding={0}><colgroup><col style={{ width: "190px" }} /><col style={{ width: "230px" }} /><col style={{ width: "370px" }} /><col style={{ width: "230px" }} /><col style={{ width: "370px" }} /></colgroup><tbody><tr><td style={styles.subSection} colSpan={5}>2B - Typical Price Ranges (India vs Global)</td></tr><tr>{["Tier", "India - Per Unit Per Year", "India - Who is this tier for?", "Global - Per Unit Per Year", "Global - Who is this tier for?"].map((header) => <td key={header} style={styles.headerCell}>{header}</td>)}</tr>{priceRangeRows.map((row, index) => <tr key={row.tier} className="align-top">{renderCells([row.tier, row.indiaPrice, row.indiaFor, row.globalPrice, row.globalFor], index)}</tr>)}</tbody></table></section>
+        <section className="overflow-x-auto"><table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: "1050px", backgroundColor: "white" }} cellSpacing={0} cellPadding={0}><colgroup><col style={{ width: "300px" }} /><col style={{ width: "250px" }} /><col style={{ width: "250px" }} /><col style={{ width: "250px" }} /></colgroup><tbody><tr><td style={styles.subSection} colSpan={4}>2C - How Competitors Categorise Features Across Plans</td></tr><tr>{["Feature", "Free / Starter", "Professional / Growth", "Enterprise"].map((header) => <td key={header} style={styles.headerCell}>{header}</td>)}</tr>{planFeatureRows.map((row, index) => <tr key={row.feature} className="align-top">{renderCells([row.feature, row.starter, row.professional, row.enterprise], index)}</tr>)}</tbody></table></section>
+        <section className="overflow-x-auto"><table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: "1500px", backgroundColor: "white" }} cellSpacing={0} cellPadding={0}><colgroup><col style={{ width: "230px" }} /><col style={{ width: "270px" }} /><col style={{ width: "270px" }} /><col style={{ width: "230px" }} /><col style={{ width: "230px" }} /><col style={{ width: "300px" }} /></colgroup><tbody><tr><td style={styles.subSection} colSpan={6}>2D - Recommended Pricing: Now / 6 Months / 18 Months</td></tr><tr>{["Pricing Stage", "India - Entry Tier", "India - Mid Market", "Global - Entry Tier", "Global - Mid Market", "Notes"].map((header) => <td key={header} style={styles.headerCell}>{header}</td>)}</tr>{recommendedPricingRows.map((row, index) => <tr key={row.stage} className="align-top">{renderCells([row.stage, row.indiaEntry, row.indiaMid, row.globalEntry, row.globalMid, row.notes], index)}</tr>)}</tbody></table></section>
+        <section className="overflow-x-auto"><table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: "1200px", backgroundColor: "white" }} cellSpacing={0} cellPadding={0}><colgroup><col style={{ width: "340px" }} /><col style={{ width: "840px" }} /></colgroup><tbody><tr><td style={styles.section} colSpan={2}>Section 3 - How to Position Ourselves</td></tr>{positioningRows.map((row, index) => <tr key={row.prompt} className="align-top">{renderCells([row.prompt, row.recommendation], index)}</tr>)}</tbody></table></section>
+        <section className="overflow-x-auto"><table style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: "1450px", backgroundColor: "white" }} cellSpacing={0} cellPadding={0}><colgroup><col style={{ width: "280px" }} /><col style={{ width: "260px" }} /><col style={{ width: "330px" }} /><col style={{ width: "560px" }} /></colgroup><tbody><tr><td style={styles.section} colSpan={4}>Section 4 - Value Propositions and Suggested Improvements</td></tr><tr>{["Value Proposition (Current)", "Who it resonates with", "What is weak about it", "Improved Value Proposition (sharper, outcome-led, specific)"].map((header) => <td key={header} style={styles.headerCell}>{header}</td>)}</tr>{valuePropRows.map((row, index) => <tr key={row.current} className="align-top">{renderCells([row.current, row.resonatesWith, row.weakness, row.improved], index)}</tr>)}</tbody></table></section>
+      </div>
     </div>
   );
 };
 
 export default PostPossessionPricingTab;
-
