@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import {
   Search,
   RefreshCw,
@@ -48,9 +49,15 @@ interface LockedUser {
   designation?: string;
 }
 
+interface PaginationData {
+  current_page: number;
+  total_count: number;
+  total_pages: number;
+}
+
 interface LockedUsersResponse {
   locked_users: LockedUser[];
-  total_count: number;
+  pagination: PaginationData;
 }
 
 export const LockedUsersDashboard = () => {
@@ -64,13 +71,23 @@ export const LockedUsersDashboard = () => {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkUnlocking, setBulkUnlocking] = useState(false);
   const [bulkUnlockDialogOpen, setBulkUnlockDialogOpen] = useState(false);
+  const [pagination, setPagination] = useState<PaginationData>({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
 
   // Fetch locked users
-  const fetchLockedUsers = async () => {
+  const fetchLockedUsers = async (page: number = 1) => {
     setLoading(true);
     try {
+      const baseUrl = location.pathname.startsWith("/master")
+        ? "/pms/users/locked_users.json?selected_site_wise=true"
+        : "/pms/users/locked_users.json";
+      const url = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}page=${page}`;
+
       const response = await fetch(
-        getFullUrl(`${location.pathname.startsWith("/master") ? "/pms/users/locked_users.json?selected_site_wise=true" : "/pms/users/locked_users.json"}`),
+        getFullUrl(url),
         {
           method: "GET",
           headers: {
@@ -87,6 +104,10 @@ export const LockedUsersDashboard = () => {
       const data: LockedUsersResponse = await response.json();
       setLockedUsers(data.locked_users || []);
       setFilteredUsers(data.locked_users || []);
+
+      if (data.pagination) {
+        setPagination(data.pagination);
+      }
 
       if (data.locked_users?.length === 0) {
         toast.info("No locked users found");
@@ -259,6 +280,142 @@ export const LockedUsersDashboard = () => {
     }
   };
 
+  const handlePageChange = async (page: number) => {
+    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
+      return;
+    }
+
+    try {
+      setPagination((prev) => ({ ...prev, current_page: page }));
+      await fetchLockedUsers(page);
+    } catch (error) {
+      console.error("Error changing page:", error);
+      toast.error("Failed to load page data. Please try again.");
+    }
+  };
+
+  const renderPaginationItems = () => {
+    if (!pagination.total_pages || pagination.total_pages <= 0) {
+      return null;
+    }
+    const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPage = pagination.current_page;
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      items.push(
+        <PaginationItem key={1} className="cursor-pointer">
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+            aria-disabled={loading}
+            className={loading ? "pointer-events-none opacity-50" : ""}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                aria-disabled={loading}
+                className={loading ? "pointer-events-none opacity-50" : ""}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                aria-disabled={loading}
+                className={loading ? "pointer-events-none opacity-50" : ""}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find((item) => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i} className="cursor-pointer">
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                  aria-disabled={loading}
+                  className={loading ? "pointer-events-none opacity-50" : ""}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages} className="cursor-pointer">
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+              aria-disabled={loading}
+              className={loading ? "pointer-events-none opacity-50" : ""}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i} className="cursor-pointer">
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+              aria-disabled={loading}
+              className={loading ? "pointer-events-none opacity-50" : ""}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
@@ -281,7 +438,10 @@ export const LockedUsersDashboard = () => {
             </Button>
           )}
           <Button
-            onClick={fetchLockedUsers}
+            onClick={() => {
+              setPagination((prev) => ({ ...prev, current_page: 1 }));
+              fetchLockedUsers(1);
+            }}
             disabled={loading}
             className="bg-[#C72030] hover:bg-[#a81c29] text-white"
           >
@@ -302,7 +462,7 @@ export const LockedUsersDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              {lockedUsers.length}
+              {pagination.total_count}
             </div>
           </CardContent>
         </Card>
@@ -477,6 +637,26 @@ export const LockedUsersDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            {renderPaginationItems()}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
 
       {/* Unlock Confirmation Dialog */}
       <Dialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>

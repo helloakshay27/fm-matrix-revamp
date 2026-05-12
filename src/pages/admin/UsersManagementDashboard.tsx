@@ -111,20 +111,20 @@ const columns: ColumnConfig[] = [
     hideable: true,
     draggable: true,
   },
-  // {
-  //   key: "user_company_name",
-  //   label: "Company",
-  //   sortable: true,
-  //   hideable: true,
-  //   draggable: true,
-  // },
-  // {
-  //   key: "site_name",
-  //   label: "Site",
-  //   sortable: true,
-  //   hideable: true,
-  //   draggable: true,
-  // },
+  {
+    key: "user_company_name",
+    label: "Company",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
+  {
+    key: "site_name",
+    label: "Sites",
+    sortable: true,
+    hideable: true,
+    draggable: true,
+  },
   {
     key: "user_type",
     label: "User Type",
@@ -320,8 +320,8 @@ export const UsersManagementDashboard = () => {
         </button>
       </div>
     ),
-    fullname: user.firstname && user.lastname 
-      ? `${user.firstname} ${user.lastname}` 
+    fullname: user.firstname && user.lastname
+      ? `${user.firstname} ${user.lastname}`
       : user.firstname || user.lastname || user.email,
     email: (
       <a
@@ -332,9 +332,16 @@ export const UsersManagementDashboard = () => {
       </a>
     ),
     mobile: user.mobile ? `+${user.country_code} ${user.mobile}` : "-",
-    user_organization_name: user.company_name || "-",
-    user_company_name: user.company_name || "-",
-    site_name: "-",
+    user_organization_name: user.organization?.name || "-",
+    user_company_name: user.company?.name || "-",
+    site_name: (
+      <span
+        title={user.sites.map((site: any) => site.name).join(", ")}
+        className="inline-block max-w-[200px] truncate cursor-pointer"
+      >
+        {user.sites.map((site: any) => site.name).join(", ") || "-"}
+      </span>
+    ),
     user_type: (
       <span className="text-sm text-gray-700">
         {getUserTypeLabel(user.user_type || "")}
@@ -348,13 +355,12 @@ export const UsersManagementDashboard = () => {
           className="data-[state=checked]:bg-[#C72030]"
         />
         <span
-          className={`text-sm ${
-            user.active === true
-              ? "text-green-600"
-              : user.active === false
-                ? "text-red-600"
-                : "text-gray-500"
-          }`}
+          className={`text-sm ${user.active === true
+            ? "text-green-600"
+            : user.active === false
+              ? "text-red-600"
+              : "text-gray-500"
+            }`}
         >
           {user.active === true
             ? "Active"
@@ -389,7 +395,7 @@ export const UsersManagementDashboard = () => {
             Manage organization admin users and their permissions
           </p>
         </div>
-        
+
       </div>
 
       {/* Search and Filters */}
