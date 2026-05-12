@@ -115,9 +115,10 @@ export const AddGuestUserPage: React.FC = () => {
 
   const handleInputChange = (field: string, value: string | string[]) => {
     if ((field === 'mobileNumber' || field === 'altMobileNumber') && typeof value === 'string') {
-      const numericValue = value.replace(/\D/g, '');
-      if (numericValue.length > 10) return;
-      setFormData((prev) => ({ ...prev, [field]: numericValue }));
+      // Allow numbers and special characters: +, -, (, ), space
+      const allowedValue = value.replace(/[^0-9+\-() ]/g, '');
+      if (allowedValue.length > 14) return;
+      setFormData((prev) => ({ ...prev, [field]: allowedValue }));
       return;
     }
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -150,7 +151,7 @@ export const AddGuestUserPage: React.FC = () => {
       firstName: !formData.firstName,
       lastName: !formData.lastName,
       email: !formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email),
-      mobileNumber: !formData.mobileNumber || !/^[0-9]{10}$/.test(formData.mobileNumber),
+      mobileNumber: !formData.mobileNumber || !/^[0-9+\-() ]{10,14}$/.test(formData.mobileNumber),
     };
 
     setErrors((prev) => ({ ...prev, ...newErrors }));
@@ -175,8 +176,8 @@ export const AddGuestUserPage: React.FC = () => {
       toast.error("Mobile Number is required.");
       return false;
     }
-    if (!/^[0-9]{10}$/.test(formData.mobileNumber)) {
-      toast.error("Mobile Number must be 10 digits.");
+    if (!/^[0-9+\-() ]{10,14}$/.test(formData.mobileNumber)) {
+      toast.error("Mobile Number must be 10-14 characters.");
       return false;
     }
 
@@ -339,7 +340,7 @@ export const AddGuestUserPage: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 error={errors.mobileNumber}
-                helperText={errors.mobileNumber ? (formData.mobileNumber ? 'Mobile Number must be 10 digits' : 'Mobile Number is required') : ''}
+                helperText={errors.mobileNumber ? (formData.mobileNumber ? 'Mobile Number must be 10-14 characters' : 'Mobile Number is required') : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
