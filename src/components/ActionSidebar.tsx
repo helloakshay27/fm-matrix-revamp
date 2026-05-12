@@ -416,6 +416,14 @@ export const ActionSidebar = () => {
     new Set()
   );
 
+  // Check if current organization is PANCHSHIL (via hostname or localStorage)
+  const hostname = window.location.hostname;
+  const isPanchshilOrg =
+    hostname.includes("panchshil.com") ||
+    (localStorage.getItem("selectedOrg") || "")
+      .toUpperCase()
+      .includes("PANCHSHIL");
+
   // Get module functions (safe to call even if no module)
   const moduleFunctions = currentModule
     ? getModuleFunctions(currentModule)
@@ -439,10 +447,23 @@ export const ActionSidebar = () => {
       return children.some((child) => hasActiveDescendant(child, allFunctions));
     };
 
+    const filteredModuleFunctions = isPanchshilOrg
+      ? moduleFunctions.filter((func) => {
+          const panchshilHiddenFunctions = [
+            "M-Safe",
+            "M-safe",
+            "Gate Pass",
+            "Visitor",
+            "Staff",
+          ];
+          return !panchshilHiddenFunctions.includes(func.function_name);
+        })
+      : moduleFunctions;
+
     const topLevel: any[] = [];
 
     // First pass: identify top-level functions (no parent)
-    moduleFunctions.forEach((func) => {
+    filteredModuleFunctions.forEach((func) => {
       if (!func.parent_function || func.parent_function === "") {
         topLevel.push({ ...func, children: [] });
       }
@@ -450,7 +471,7 @@ export const ActionSidebar = () => {
 
     // Second pass: recursively build children for each parent
     const buildChildren = (parent: any): void => {
-      const children = moduleFunctions.filter(
+      const children = filteredModuleFunctions.filter(
         (func) => func.parent_function === parent.action_name
       );
 
@@ -465,7 +486,7 @@ export const ActionSidebar = () => {
 
     // Filter: only include functions that are active OR have active descendants
     const filterInactive = (func: any): any | null => {
-      if (!hasActiveDescendant(func, moduleFunctions)) {
+      if (!hasActiveDescendant(func, filteredModuleFunctions)) {
         return null; // Exclude this branch entirely
       }
 
@@ -480,7 +501,7 @@ export const ActionSidebar = () => {
     return topLevel
       .map((func) => filterInactive(func))
       .filter((func) => func !== null);
-  }, [moduleFunctions]);
+  }, [moduleFunctions, isPanchshilOrg]);
 
   // Don't render if not visible or no module selected
   if (!isActionSidebarVisible || !currentModule) {

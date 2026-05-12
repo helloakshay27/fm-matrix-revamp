@@ -224,6 +224,7 @@ interface ReportIssueItem {
   title: string;
   description: string;
   priority: string;
+  status: string;
   name: string;
   related_to_milestone: string;
   related_to_task: string;
@@ -322,6 +323,7 @@ const ISSUE_DETAILS_COLUMNS = [
     sortable: true,
     defaultVisible: true,
   },
+  { key: "status", label: "Status", sortable: true, defaultVisible: true },
   { key: "priority", label: "Priority", sortable: true, defaultVisible: true },
   {
     key: "related_to_milestone",
@@ -786,6 +788,7 @@ const DashboardUI: React.FC = () => {
     id: String(iss.id),
     title: iss.title,
     description: iss.description?.replace(/<[^>]*>/g, "") || "—",
+    status: iss.status,
     priority: iss.priority,
     related_to_milestone: iss.related_to_milestone,
     related_to_task: iss.related_to_task,
@@ -960,22 +963,72 @@ const DashboardUI: React.FC = () => {
         pdf.rect(rx, ry, rw, rh, "F");
       };
 
-      const sectionHeader = (title: string) => {
-        checkPage(30);
-        drawRect(MARGIN, y, CONTENT_W, 20, [246, 244, 238]);
+      const formatStatusLabel = (status: string): string => {
+        return status
+          .replace(/_/g, " ")
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+      };
+
+      const sectionHeader = (
+        title: string,
+        headerColor?: [number, number, number],
+        statusCounts?: Record<string, number>,
+        total?: number
+      ) => {
+        const hasStatusCounts = statusCounts && Object.keys(statusCounts).length > 0;
+        const headerHeight = hasStatusCounts ? 36 : 20;
+        checkPage(hasStatusCounts ? 50 : 30);
+        const headerBg = headerColor || [246, 244, 238];
+        drawRect(MARGIN, y, CONTENT_W, headerHeight, headerBg);
+
+        // Draw title
         pdf.setFontSize(10);
         pdf.setTextColor(26, 26, 26);
         pdf.setFont("helvetica", "bold");
         pdf.text(title, MARGIN + 8, y + 13);
-        y += 28;
+
+        // Draw status counts below title
+        if (hasStatusCounts) {
+          const statusItems = Object.entries(statusCounts);
+          let statusX = MARGIN + 8;
+          const statusY = y + 24;
+
+          pdf.setFontSize(7.5);
+          pdf.setTextColor(55, 65, 81);
+          pdf.setFont("helvetica", "normal");
+
+          // Draw total count first if provided
+          if (total !== undefined) {
+            const totalText = `Total: ${total}`;
+            pdf.text(totalText, statusX, statusY);
+            statusX += pdf.getTextWidth(totalText) + 5;
+          }
+
+          statusItems.forEach(([status, count]) => {
+            const formattedStatus = formatStatusLabel(status);
+            const statusText = `${formattedStatus}: ${count}`;
+            const textWidth = pdf.getTextWidth(statusText);
+
+            // Draw text (no background)
+            pdf.text(statusText, statusX, statusY);
+
+            statusX += textWidth + 5;
+          });
+        }
+
+        y += headerHeight + 8;
       };
 
       const drawTable = (
         columns: { key: string; label: string; width: number }[],
-        rows: Record<string, unknown>[]
+        rows: Record<string, unknown>[],
+        headerColor?: [number, number, number]
       ) => {
         checkPage(20);
-        drawRect(MARGIN, y, CONTENT_W, 16, [243, 244, 246]);
+        const tableHeaderBg = headerColor || [243, 244, 246];
+        drawRect(MARGIN, y, CONTENT_W, 16, tableHeaderBg);
         let cx = MARGIN;
         pdf.setFontSize(7);
         pdf.setFont("helvetica", "bold");
@@ -1128,7 +1181,8 @@ const DashboardUI: React.FC = () => {
         data: { name: string; value: number }[],
         colors: [number, number, number][],
         offsetX: number,
-        panelW: number
+        panelW: number,
+        headerColor?: [number, number, number]
       ) => {
         const SIZE = 300;
         const canvas = document.createElement("canvas");
@@ -1160,7 +1214,8 @@ const DashboardUI: React.FC = () => {
         const imgX = MARGIN + offsetX + 8;
         const imgY = y + 26;
 
-        drawRect(MARGIN + offsetX, y, panelW, 20, [246, 244, 238]);
+        const headerBg = headerColor || [246, 244, 238];
+        drawRect(MARGIN + offsetX, y, panelW, 20, headerBg);
         pdf.setFontSize(9);
         pdf.setTextColor(26, 26, 26);
         pdf.setFont("helvetica", "bold");
@@ -1291,7 +1346,8 @@ const DashboardUI: React.FC = () => {
                 [229, 231, 235],
               ],
               0,
-              FULL_W
+              FULL_W,
+              hexToRgb("#e1fcbd")
             );
           } else if (showTask) {
             drawDonutPanel(
@@ -1302,7 +1358,8 @@ const DashboardUI: React.FC = () => {
                 [229, 231, 235],
               ],
               0,
-              FULL_W
+              FULL_W,
+              hexToRgb("#c7ffff")
             );
           } else if (showIssue) {
             drawDonutPanel(
@@ -1310,7 +1367,8 @@ const DashboardUI: React.FC = () => {
               raIssueChart,
               ISSUE_COLORS.map(hexToRgb),
               0,
-              FULL_W
+              FULL_W,
+              hexToRgb("#ffe1e0")
             );
           }
         } else if (numCharts === 2) {
@@ -1325,7 +1383,8 @@ const DashboardUI: React.FC = () => {
                 [229, 231, 235],
               ],
               offsetX,
-              HALF_W
+              HALF_W,
+              hexToRgb("#e1fcbd")
             );
             offsetX += HALF_W + 12;
           }
@@ -1338,7 +1397,8 @@ const DashboardUI: React.FC = () => {
                 [229, 231, 235],
               ],
               offsetX,
-              HALF_W
+              HALF_W,
+              hexToRgb("#c7ffff")
             );
             offsetX += HALF_W + 12;
           }
@@ -1348,7 +1408,8 @@ const DashboardUI: React.FC = () => {
               raIssueChart,
               ISSUE_COLORS.map(hexToRgb),
               offsetX,
-              HALF_W
+              HALF_W,
+              hexToRgb("#ffe1e0")
             );
           }
         } else {
@@ -1363,7 +1424,8 @@ const DashboardUI: React.FC = () => {
                 [229, 231, 235],
               ],
               0,
-              THIRD_W
+              THIRD_W,
+              hexToRgb("#e1fcbd")
             );
           }
           if (showTask) {
@@ -1375,7 +1437,8 @@ const DashboardUI: React.FC = () => {
                 [229, 231, 235],
               ],
               THIRD_W + 12,
-              THIRD_W
+              THIRD_W,
+              hexToRgb("#c7ffff")
             );
           }
           if (showIssue) {
@@ -1384,7 +1447,8 @@ const DashboardUI: React.FC = () => {
               raIssueChart,
               ISSUE_COLORS.map(hexToRgb),
               2 * (THIRD_W + 12),
-              THIRD_W
+              THIRD_W,
+              hexToRgb("#ffe1e0")
             );
           }
         }
@@ -1392,7 +1456,19 @@ const DashboardUI: React.FC = () => {
       }
 
       if (orderedVisible.includes("milestoneActivityProgress")) {
-        sectionHeader("Milestone Activity Wise Progress");
+        const milestoneCounts = reportMilestones.reduce(
+          (acc: Record<string, number>, m) => {
+            acc[m.status] = (acc[m.status] || 0) + 1;
+            return acc;
+          },
+          {}
+        );
+        sectionHeader(
+          "Milestone Activity Wise Progress",
+          hexToRgb("#e1fcbd"),
+          milestoneCounts,
+          reportMilestones.length
+        );
         drawTable(
           [
             { key: "title", label: "Milestone", width: CONTENT_W * 0.44 },
@@ -1404,23 +1480,46 @@ const DashboardUI: React.FC = () => {
             },
             { key: "balance", label: "% Balance", width: CONTENT_W * 0.18 },
           ],
-          filteredMilestoneTableData as Record<string, unknown>[]
+          filteredMilestoneTableData as Record<string, unknown>[],
+          // hexToRgb("#b0ed3e")
         );
       }
 
       if (orderedVisible.includes("activityCompletion")) {
-        sectionHeader("Activity % Completion");
+        const taskCounts = reportTasks.reduce(
+          (acc: Record<string, number>, t) => {
+            acc[t.status] = (acc[t.status] || 0) + 1;
+            return acc;
+          },
+          {}
+        );
+        sectionHeader(
+          "Activity % Completion"
+        );
         drawTable(
           [
             { key: "title", label: "Task", width: CONTENT_W * 0.6 },
             { key: "progress", label: "% Completion", width: CONTENT_W * 0.4 },
           ],
-          filteredActivityTableData as Record<string, unknown>[]
+          filteredActivityTableData as Record<string, unknown>[],
+          // hexToRgb("#3eeded")
         );
       }
 
       if (orderedVisible.includes("taskDetails")) {
-        sectionHeader("Task Details");
+        const taskDetailsCounts = reportTasks.reduce(
+          (acc: Record<string, number>, t) => {
+            acc[t.status] = (acc[t.status] || 0) + 1;
+            return acc;
+          },
+          {}
+        );
+        sectionHeader(
+          "Task Details",
+          hexToRgb("#c7ffff"),
+          taskDetailsCounts,
+          reportTasks.length
+        );
         drawTable(
           [
             { key: "title", label: "Task", width: CONTENT_W * 0.22 },
@@ -1443,34 +1542,50 @@ const DashboardUI: React.FC = () => {
             },
             { key: "balance", label: "% Bal", width: CONTENT_W * 0.1 },
           ],
-          filteredTaskDetailsData as Record<string, unknown>[]
+          filteredTaskDetailsData as Record<string, unknown>[],
+          // hexToRgb("#3eeded")
         );
       }
 
       if (orderedVisible.includes("issueDetails")) {
-        sectionHeader("Issue Details");
+        const issueCounts = reportIssueSummary ? {
+          open: reportIssueSummary.open,
+          in_progress: reportIssueSummary.in_progress,
+          on_hold: reportIssueSummary.on_hold,
+          completed: reportIssueSummary.completed,
+          closed: reportIssueSummary.closed,
+          reopened: reportIssueSummary.reopened,
+        } : {};
+        sectionHeader(
+          "Issue Details",
+          hexToRgb("#ffe1e0"),
+          issueCounts,
+          reportIssueSummary?.total
+        );
         drawTable(
           [
-            { key: "title", label: "Title", width: CONTENT_W * 0.2 },
+            { key: "title", label: "Title", width: CONTENT_W * 0.18 },
             {
               key: "description",
               label: "Description",
-              width: CONTENT_W * 0.25,
+              width: CONTENT_W * 0.22,
             },
+            { key: "status", label: "Status", width: CONTENT_W * 0.12 },
             { key: "priority", label: "Priority", width: CONTENT_W * 0.1 },
             {
               key: "related_to_milestone",
               label: "Milestone",
-              width: CONTENT_W * 0.18,
+              width: CONTENT_W * 0.16,
             },
-            { key: "related_to_task", label: "Task", width: CONTENT_W * 0.15 },
+            { key: "related_to_task", label: "Task", width: CONTENT_W * 0.12 },
             {
               key: "responsible_person",
               label: "Responsible",
-              width: CONTENT_W * 0.12,
+              width: CONTENT_W * 0.1,
             },
           ],
-          filteredIssueDetailsData as Record<string, unknown>[]
+          filteredIssueDetailsData as Record<string, unknown>[],
+          // hexToRgb("#f7a2a1")
         );
       }
 
