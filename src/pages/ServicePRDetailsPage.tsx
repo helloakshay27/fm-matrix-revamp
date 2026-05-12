@@ -114,6 +114,8 @@ interface ServiceItem {
   product_description: string;
   rate: number;
   wbs_code: string;
+  tax_code: string;
+  gl_account: string;
   cgst_rate: number;
   cgst_amount: number;
   sgst_rate: number;
@@ -234,9 +236,19 @@ export const ServicePRDetailsPage = () => {
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
   }>({})
+  const [updatedGlAccounts, setUpdatedGlAccounts] = useState<{
+    [key: string]: string;
+  }>({})
+  const [updatedTaxCodes, setUpdatedTaxCodes] = useState<{
+    [key: string]: string;
+  }>({})
+  const [updatedHsnCodes, setUpdatedHsnCodes] = useState<{
+    [key: string]: string;
+  }>({})
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
     editWbsCode: false,
+    canEditAll: false,
   });
   const [externalApiCalls, setExternalApiCalls] = useState<any[]>([]);
 
@@ -269,6 +281,7 @@ export const ServicePRDetailsPage = () => {
         setButtonCondition({
           showSap: response.show_send_sap_yes,
           editWbsCode: response.can_edit_wbs_codes,
+          canEditAll: response.can_edit,
         });
         // Set external API calls if available
         console.log("response.page", response.page.api_responses);
@@ -286,6 +299,25 @@ export const ServicePRDetailsPage = () => {
           {}
         );
         setUpdatedWbsCodes(initialWbsCodes || {});
+        const initialGlAccounts = response.page?.inventories?.reduce(
+          (acc: { [key: string]: string }, item: ServiceItem) => {
+            const key = item.id || item.sno.toString();
+            acc[key] = item.gl_account || "";
+            return acc;
+          },
+          {}
+        );
+
+        const initialTaxCodes = response.page?.inventories?.reduce(
+          (acc: { [key: string]: string }, item: ServiceItem) => {
+            const key = item.id || item.sno.toString();
+            acc[key] = item.tax_code || "";
+            return acc;
+          },
+          {}
+        );
+        setUpdatedGlAccounts(initialGlAccounts || {});
+        setUpdatedTaxCodes(initialTaxCodes || {});
       } catch (error: any) {
         toast.error(error.message || "Failed to fetch service PR");
       } finally {
@@ -309,6 +341,45 @@ export const ServicePRDetailsPage = () => {
   }, []);
 
   // Handle WBS code change
+  // Handle Tax Code change
+  const handleTaxCodeChange = useCallback((event, item: ServiceItem) => {
+    const newTaxCode = event.target.value as string;
+    const itemKey = (item.id || item.sno).toString();
+    setUpdatedTaxCodes((prev) => ({
+      ...prev,
+      [itemKey]: newTaxCode,
+    }));
+  }, []);
+
+  // Handle WBS code change with GL fetch
+  const handleWbsCodeChangeWithGlFetch = useCallback(async (event, item: ServiceItem) => {
+    const newWbsCode = event.target.value as string;
+    const itemKey = (item.id || item.sno).toString();
+
+    setUpdatedWbsCodes((prev) => ({
+      ...prev,
+      [itemKey]: newWbsCode,
+    }));
+
+    if (newWbsCode) {
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/wbs_costs/get_gl_code.json?wbs_code=${newWbsCode}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (response.data?.gl_code) {
+          setUpdatedGlAccounts((prev) => ({
+            ...prev,
+            [itemKey]: response.data.gl_code,
+          }));
+          toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
+        }
+      } catch (error) {
+        console.error("Error fetching GL code for WBS:", error);
+        toast.error("Failed to fetch GL code");
+      }
+    }
+  }, [baseUrl, token]);
   const handleWbsCodeChange = useCallback(
     (event, item: ServiceItem) => {
       const newWbsCode = event.target.value as string;
@@ -333,9 +404,11 @@ export const ServicePRDetailsPage = () => {
 
     try {
       const updates = {
-        pms_po_inventory_updates: Object.entries(updatedWbsCodes).map(([itemKey, wbsCode]) => ({
+        pms_po_inventory_updates: Object.entries(updatedWbsCodes).map(([itemKey]) => ({
           id: itemKey,
-          wbs_code: wbsCode
+          wbs_code: updatedWbsCodes[itemKey],
+          gl_account: updatedGlAccounts[itemKey],  // ← add this
+          tax_code: updatedTaxCodes[itemKey],       // ← add this
         }))
       }
 
@@ -352,7 +425,7 @@ export const ServicePRDetailsPage = () => {
     } catch (error: any) {
       toast.error(error.message || "Failed to update WBS Codes");
     }
-  }, [id, updatedWbsCodes]);
+  }, [id, updatedWbsCodes, updatedGlAccounts, updatedTaxCodes]); // ← add missing deps
 
   // Handle print
   const handlePrint = useCallback(async () => {
@@ -730,22 +803,24 @@ export const ServicePRDetailsPage = () => {
             </>
           ) : (
             <>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-gray-300 bg-blue-600 text-white"
-                onClick={handleTestRun}
-                disabled={testRunLoading}
-              >
-                {testRunLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Running...
-                  </>
-                ) : (
-                  "Test Run"
-                )}
-              </Button>
+              {(buttonCondition.canEditAll) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-blue-600 text-white"
+                  onClick={handleTestRun}
+                  disabled={testRunLoading}
+                >
+                  {testRunLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Running...
+                    </>
+                  ) : (
+                    "Test Run"
+                  )}
+                </Button>
+              )}
               {buttonCondition.showSap && (
                 <Button
                   size="sm"
@@ -758,7 +833,7 @@ export const ServicePRDetailsPage = () => {
                 </Button>
               )}
 
-              {servicePR?.all_level_approved === null && !shouldShowButtons && (
+              {servicePR?.all_level_approved === null && buttonCondition.canEditAll && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -810,7 +885,7 @@ export const ServicePRDetailsPage = () => {
                 Feeds
               </Button>
 
-              {servicePR?.all_level_approved && !shouldShowButtons && (
+              {(buttonCondition.canEditAll) && (
                 <>
                   <Button
                     size="sm"
@@ -820,14 +895,14 @@ export const ServicePRDetailsPage = () => {
                   >
                     Edit WBS Codes
                   </Button>
-                  <Button
+                  {/* <Button
                     size="sm"
                     variant="outline"
                     className="border-gray-300 btn-primary"
                     onClick={() => setOpenDeletionModal(true)}
                   >
                     Raise Deletion Request
-                  </Button>
+                  </Button> */}
                 </>
               )}
             </>
@@ -1405,27 +1480,82 @@ export const ServicePRDetailsPage = () => {
         >
           <DialogTitle>Edit WBS Codes</DialogTitle>
           <DialogContent>
-            <div className="space-y-4 mt-4">
+            <div className="space-y-6 mt-4">
+
               {servicePR.inventories?.map((item) => (
-                <FormControl fullWidth key={item.id || item.sno}>
-                  <InputLabel>
-                    WBS Code for {item.boq_details || `Item ${item.sno}`}
-                  </InputLabel>
-                  <Select
-                    value={updatedWbsCodes[(item.id || item.sno).toString()] || item.wbs_code}
-                    onChange={(e) => handleWbsCodeChange(e, item)}
-                    label={`WBS Code for ${item.boq_details || `Item ${item.sno}`}`}
-                  >
-                    <MenuItem value="">
-                      <em>Select WBS Code</em>
-                    </MenuItem>
-                    {wbsCodes.map((wbs: { wbs_code: string }) => (
-                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                        {wbs.wbs_code}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <div key={item.id || item.toString()} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="font-semibold text-gray-900 text-sm mb-4">
+                    {item.boq_details || `Item ${item.id}`}
+                  </div>
+
+                  {/* Grid for fields in rows */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormControl fullWidth key={item.id || item.sno}>
+                      <InputLabel>
+                        WBS Code for {item.boq_details || `Item ${item.sno}`}
+                      </InputLabel>
+                      <Select
+                        value={updatedWbsCodes[(item.id || item.sno).toString()] || item.wbs_code}
+                        onChange={(e) => handleWbsCodeChangeWithGlFetch(e, item)}   // ← changed
+                        label={`WBS Code for ${item.boq_details || `Item ${item.sno}`}`}
+                      >
+                        <MenuItem value="">
+                          <em>Select WBS Code</em>
+                        </MenuItem>
+                        {wbsCodes.map((wbs: { wbs_code: string }) => (
+                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                            {wbs.wbs_code}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+
+
+                    <TextField
+                      fullWidth
+                      label="GL Account"
+                      value={
+                        updatedGlAccounts[(item.id || item.sno).toString()] ||
+                        item.gl_account ||
+                        ""
+                      }
+                      disabled
+                      variant="outlined"
+                      size="small"
+                    />
+
+                    {/* Tax Code Dropdown */}
+                    <FormControl fullWidth>
+                      <InputLabel>Tax Code</InputLabel>
+                      <Select
+                        value={
+                          updatedTaxCodes[(item.id || item.sno).toString()] ||
+                          item.tax_code ||
+                          ""
+                        }
+                        onChange={(e) => handleTaxCodeChange(e, item)}
+
+                        label="Tax Code"
+                        size="small"
+                      >
+                        <MenuItem value="">
+                          <em>Select Tax Code</em>
+                        </MenuItem>
+                        <MenuItem value="V0">V0</MenuItem>
+                        <MenuItem value="V1">V1</MenuItem>
+                        <MenuItem value="V2">V2</MenuItem>
+                        <MenuItem value="V3">V3</MenuItem>
+                        <MenuItem value="V4">V4</MenuItem>
+                        <MenuItem value="V5">V5</MenuItem>
+                      </Select>
+                    </FormControl>
+
+
+
+                  </div>
+                </div>
+
               ))}
               {(!servicePR.inventories || servicePR.inventories.length === 0) && (
                 <p className="text-muted-foreground">No inventory items available</p>
@@ -1487,9 +1617,10 @@ export const ServicePRDetailsPage = () => {
               <Rss className="w-5 h-5" />
               External API Calls
             </h3>
-            <div className="space-y-4">
-              {externalApiCalls.map((apiCall, index) => (
-                <div key={apiCall.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+            {(() => {
+              const apiCall = externalApiCalls[externalApiCalls.length - 1];
+              return (
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600 font-semibold">Provider</p>
@@ -1497,8 +1628,7 @@ export const ServicePRDetailsPage = () => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
-                      <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                      <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'}`}>
                         {apiCall.response_status || '-'}
                       </p>
                     </div>
@@ -1517,8 +1647,8 @@ export const ServicePRDetailsPage = () => {
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </div>
         )}
       </div>
