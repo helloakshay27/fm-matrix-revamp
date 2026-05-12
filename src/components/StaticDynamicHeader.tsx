@@ -19,6 +19,21 @@ const packages = [
 export const StaticDynamicHeader = () => {
   const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
 
+  // Check if current organization is PANCHSHIL (via hostname or localStorage)
+  const hostname = window.location.hostname;
+  const isPanchshilOrg =
+    hostname.includes("panchshil.com") ||
+    (localStorage.getItem("selectedOrg") || "")
+      .toUpperCase()
+      .includes("PANCHSHIL");
+
+  // Modules to hide for PANCHSHIL organization
+  const panchshilHiddenModules = ["Transitioning", "Market Place", "Accounting"];
+
+  const visiblePackages = isPanchshilOrg
+    ? packages.filter((p) => !panchshilHiddenModules.includes(p))
+    : packages;
+
   // Note: Section is now automatically detected by LayoutProvider based on route
   // No need to manually set it here
 
@@ -31,7 +46,7 @@ export const StaticDynamicHeader = () => {
         <div className="w-full overflow-x-auto md:overflow-visible no-scrollbar">
           {/* Mobile & Tablet: scroll + spacing; Desktop: full width and justify-between */}
           <div className="flex w-max lg:w-full space-x-4 md:space-x-6 lg:space-x-0 md:justify-start lg:justify-between whitespace-nowrap">
-            {packages.map((packageName) => (
+            {visiblePackages.map((packageName) => (
               <button
                 key={packageName}
                 onClick={() => setCurrentSection(packageName)}
