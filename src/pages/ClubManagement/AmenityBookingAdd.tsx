@@ -179,6 +179,7 @@ export const AddFacilityBookingClubPage = () => {
     formated_end_minute: string;
     is_premium: boolean | null;
     premium_percentage: number | null;
+    is_booked: boolean;
   }>>([]);
   const [selectedSlots, setSelectedSlots] = useState<number[]>([]);
   const [bookingRuleData, setBookingRuleData] = useState<{
@@ -193,9 +194,14 @@ export const AddFacilityBookingClubPage = () => {
   // Helper: Max concurrent slots
   const maxConcurrentSlots = bookingRuleData && bookingRuleData.concurrent_slots ? bookingRuleData.concurrent_slots : 1;
 
-  // Helper: Check if a slot can be selected (enforce concurrent rule)
+  // Helper: Check if a slot can be selected (enforce concurrent rule and check if booked)
   const isSlotSelectable = (slotId: number) => {
     if (!canSelectSlots) return false;
+
+    // Check if slot is booked
+    const slot = slots.find(s => s.id === slotId);
+    if (slot && slot.is_booked) return false;
+
     if (selectedSlots.includes(slotId)) return true; // allow deselect
     if (selectedSlots.length >= maxSelectableSlots) return false;
     // Check concurrent rule: sort selected + candidate, check max consecutive
@@ -1379,8 +1385,9 @@ export const AddFacilityBookingClubPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   {slots.map((slot) => {
                     const disabled = !isSlotSelectable(slot.id);
+                    const isBooked = slot.is_booked;
                     return (
-                      <div key={slot.id} className={`flex items-center space-x-2 p-3 border rounded-lg ${disabled ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'}`}>
+                      <div key={slot.id} className={`flex items-center space-x-2 p-3 border rounded-lg ${isBooked ? 'bg-red-50 opacity-60 border-red-300' : disabled ? 'bg-gray-100 opacity-60' : 'hover:bg-gray-50'}`}>
                         <input
                           type="checkbox"
                           id={`slot-${slot.id}`}
@@ -1391,10 +1398,18 @@ export const AddFacilityBookingClubPage = () => {
                         />
                         <Label
                           htmlFor={`slot-${slot.id}`}
-                          className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${disabled ? 'text-gray-400' : ''}`}
+                          className={`cursor-pointer text-sm font-medium flex items-center gap-2 ${isBooked ? 'text-red-600' : disabled ? 'text-gray-400' : ''}`}
                         >
                           {slot.ampm}
-                          {slot.is_premium && slot.premium_percentage && (
+                          {isBooked && (
+                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-red-600">
+                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                                <path fillRule="evenodd" d="M5.47 5.47a.75.75 0 011.06 0L12 10.94l5.47-5.47a.75.75 0 111.06 1.06L13.06 12l5.47 5.47a.75.75 0 11-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 01-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 010-1.06z" clipRule="evenodd" />
+                              </svg>
+                              Booked
+                            </span>
+                          )}
+                          {slot.is_premium && slot.premium_percentage && !isBooked && (
                             <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600">
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
                                 <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clipRule="evenodd" />

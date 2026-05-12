@@ -136,6 +136,7 @@ export const EditBookingSetupClubPage = () => {
         seaterInfo: "Select a seater",
         floorInfo: "Select a floor",
         sharedContentInfo: "",
+        bookableSlotsPerDay: "",
         slots: [
             {
                 startTime: { hour: "", minute: "" },
@@ -284,6 +285,7 @@ export const EditBookingSetupClubPage = () => {
                 seaterInfo: responseData.seater_info,
                 floorInfo: responseData.location_info,
                 sharedContentInfo: responseData.shared_content,
+                bookableSlotsPerDay: responseData.bookable_slot_count || "",
                 slots: responseData.facility_slots?.map((slot) => ({
                     id: slot.facility_slot.id,
                     startTime: {
@@ -833,6 +835,11 @@ export const EditBookingSetupClubPage = () => {
                     "false"
                 );
             });
+
+            formDataToSend.append(
+                "facility_setup[bookable_slot_count]",
+                formData.bookableSlotsPerDay
+            )
 
             formDataToSend.append(
                 "facility_setup[multi_slot]",
@@ -1664,6 +1671,28 @@ export const EditBookingSetupClubPage = () => {
                                     /> */}
                                 </div>
                             ))}
+
+                            <div className="flex items-center gap-3 mt-4">
+                                <label className="text-sm font-medium text-gray-700">
+                                    Bookable Slots Per Day
+                                </label>
+                                <TextField
+                                    size="small"
+                                    value={formData.bookableSlotsPerDay}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        // Allow only positive integers (no decimals, no negatives)
+                                        if (value === '' || /^[1-9]\d*$/.test(value)) {
+                                            setFormData({
+                                                ...formData,
+                                                bookableSlotsPerDay: value,
+                                            });
+                                        }
+                                    }}
+                                    variant="outlined"
+                                />
+                            </div>
+
                             <div className="space-y-4 mt-4">
                                 <div>
                                     <label className="text-sm font-medium text-gray-700">
