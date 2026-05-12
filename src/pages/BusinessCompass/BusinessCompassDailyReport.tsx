@@ -52,6 +52,7 @@ import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
 import { TransitionProps } from "@mui/material/transitions";
 import AddIssueModal from "@/components/AddIssueModal";
 import AddToDoModal from "@/components/AddToDoModal";
+import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -189,6 +190,8 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [overdueItemId, setOverdueItemId] = useState<string | null>(null);
   const [isOverdueLoading, setIsOverdueLoading] = useState(false);
   const [overdueReason, setOverdueReason] = useState("");
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState<any>(null);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -2108,13 +2111,16 @@ const BusinessCompassDailyReport: React.FC = () => {
                             />
                             <button
                               onClick={() => {
-                                const detailsUrl =
-                                  item.type === "task"
-                                    ? `/vas/tasks/${item.originalData?.id}`
-                                    : item.type === "todo"
-                                      ? `/todos?selected=${item.originalData?.id}`
+                                if (item.type === "todo") {
+                                  setSelectedTodo(item.originalData);
+                                  setIsDetailsModalOpen(true);
+                                } else {
+                                  const detailsUrl =
+                                    item.type === "task"
+                                      ? `/vas/tasks/${item.originalData?.id}`
                                       : `/vas/issues/${item.originalData?.id}`;
-                                navigate(detailsUrl);
+                                  navigate(detailsUrl);
+                                }
                               }}
                               className="p-1.5 hover:bg-gray-200 rounded-[6px] transition-colors"
                               title={`View ${item.type} details`}
@@ -4124,6 +4130,17 @@ const BusinessCompassDailyReport: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Todo Details Modal */}
+      <TodoDetailsModal
+        isModalOpen={isDetailsModalOpen}
+        setIsModalOpen={setIsDetailsModalOpen}
+        todo={selectedTodo}
+        onEditClick={() => {
+          setIsDetailsModalOpen(false);
+          // Can add edit functionality here if needed
+        }}
+      />
     </div>
   );
 };
