@@ -179,6 +179,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     useState<null | HTMLElement>(null);
   const [planningMenuAnchor, setPlanningMenuAnchor] =
     useState<null | HTMLElement>(null);
+  const [preFillDate, setPreFillDate] = useState<string | null>(null);
   const [showClosureModal, setShowClosureModal] = useState(false);
   const [closureItem, setClosureItem] = useState<any>(null);
   const [closureRemarks, setClosureRemarks] = useState("");
@@ -3624,7 +3625,20 @@ const BusinessCompassDailyReport: React.FC = () => {
           <div className="flex-1 overflow-y-auto">
             <ProjectTaskCreateModal
               isEdit={false}
-              onCloseModal={() => setOpenTaskModal(false)}
+              onCloseModal={() => {
+                setOpenTaskModal(false);
+                setPreFillDate(null);
+              }}
+              prefillData={{
+                title: "",
+                description: "",
+                responsible_person: {
+                  id: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").id : "",
+                },
+                tags: [],
+                start_date: preFillDate,
+                target_date: preFillDate,
+              }}
             />
           </div>
         </DialogContent>
@@ -3632,14 +3646,39 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       <AddIssueModal
         openDialog={openIssueModal}
-        handleCloseDialog={() => setOpenIssueModal(false)}
+        handleCloseDialog={() => {
+          setOpenIssueModal(false);
+          setPreFillDate(null);
+        }}
+        prefillData={{
+          title: "",
+          description: "",
+          responsible_person: {
+            id: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").id : "",
+          },
+          tags: [],
+          start_date: preFillDate,
+          target_date: preFillDate,
+        }}
       />
 
 
       <AddToDoModal
         isModalOpen={openTodoModal}
-        setIsModalOpen={() => setOpenTodoModal(false)}
+        setIsModalOpen={() => {
+          setOpenTodoModal(false);
+          setPreFillDate(null);
+        }}
         getTodos={fetchTodos}
+        prefillData={{
+          title: "",
+          description: "",
+          responsible_person: {
+            id: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").id : "",
+          },
+          tags: [],
+          start_date: preFillDate,
+        }}
       />
 
       {/* Closure Remarks Modal */}
@@ -3940,6 +3979,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       >
         <MenuItem
           onClick={() => {
+            setPreFillDate(getNextDayDate());
             setOpenTaskModal(true);
             setPlanningMenuAnchor(null);
           }}
@@ -3968,6 +4008,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         </MenuItem>
         <MenuItem
           onClick={() => {
+            setPreFillDate(getNextDayDate());
             setOpenIssueModal(true);
             setPlanningMenuAnchor(null);
           }}
@@ -3996,6 +4037,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         </MenuItem>
         <MenuItem
           onClick={() => {
+            setPreFillDate(getNextDayDate());
             setOpenTodoModal(true);
             setPlanningMenuAnchor(null);
           }}

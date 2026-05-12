@@ -16,12 +16,16 @@ const Transition = forwardRef(function Transition(
     return <Slide direction="left" ref={ref} {...props} />;
 });
 
-const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = null, isEditMode = false }) => {
+const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = null, isEditMode = false, prefillData }) => {
+    console.log(prefillData)
     const baseURL = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState("")
-    const [date, setDate] = useState(null);
+    const [date, setDate] = useState(() => {
+        return prefillData?.start_date ? prefillData.start_date : null;
+    });
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [users, setUsers] = useState([]);
     const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
