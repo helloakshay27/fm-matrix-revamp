@@ -320,7 +320,7 @@ const TenantManagementPage: React.FC = () => {
             Residential · Commercial · Industrial · Hospitality
           </div>
           <h1 className="text-4xl font-semibold text-[#2C2C2C] mb-4 tracking-tight lg:text-5xl font-poppins">
-            Tenant Management
+            GoPhygital.work (Tenants Building)
           </h1>
           <p className="text-sm text-[#2C2C2C]/70 leading-relaxed max-w-3xl mx-auto font-poppins">
             End-to-end tenant lifecycle management — onboarding, lease tracking,

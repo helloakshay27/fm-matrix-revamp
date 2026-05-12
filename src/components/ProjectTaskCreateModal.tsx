@@ -1233,12 +1233,35 @@ const ProjectTaskCreateModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalWorkingHours, setTotalWorkingHours] = useState(0);
   const [dateWiseHours, setDateWiseHours] = useState([]);
-  const [startDate, setStartDate] = useState(null);
   const [recurringData, setRecurringData] = useState(null);
   const [isRecurring, setIsRecurring] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [startDate, setStartDate] = useState(() => {
+    const startDate = prefillData?.start_date;
+    if (!startDate) return null;
+
+    if (typeof startDate === "string") {
+      // Handle YYYY-MM-DD format manually to avoid timezone issues
+      const parts = startDate.split("-");
+      if (parts.length === 3) {
+        return {
+          year: parseInt(parts[0], 10),
+          month: parseInt(parts[1], 10) - 1,
+          date: parseInt(parts[2], 10),
+        };
+      }
+
+      const date = new Date(startDate);
+      return {
+        date: date.getDate(),
+        month: date.getMonth(),
+        year: date.getFullYear(),
+      };
+    }
+    return startDate;
+  });
   const [endDate, setEndDate] = useState(() => {
     const targetDate = prefillData?.target_date;
     if (!targetDate) return null;

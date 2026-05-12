@@ -28,7 +28,7 @@ const cleanDiscussionPoints = (rawText: string) => {
     return cleaned;
   }
   if (rawText.includes("---")) {
-    let cleaned = rawText.split("---")[0];
+    const cleaned = rawText.split("---")[0];
     return cleaned.trim();
   }
   return rawText.trim();
@@ -41,6 +41,39 @@ const stripMissedMembersPrefix = (text: string): string => {
   );
   if (missedHeaderMatch) return text.slice(missedHeaderMatch[0].length);
   return text;
+};
+
+const getReportDataSource = (report: any) => {
+  const reportData = report?.report_data || {};
+  const draftData = report?.daily_report?.report_data || {};
+  const hasReportData =
+    reportData &&
+    typeof reportData === "object" &&
+    Object.keys(reportData).length > 0;
+  const hasDraftData =
+    draftData &&
+    typeof draftData === "object" &&
+    Object.keys(draftData).length > 0;
+
+  if (hasReportData && hasDraftData) {
+    return {
+      ...draftData,
+      ...reportData,
+      tasks_issues: Array.isArray(reportData.tasks_issues)
+        ? reportData.tasks_issues
+        : draftData.tasks_issues || [],
+      tomorrow_plan: Array.isArray(reportData.tomorrow_plan)
+        ? reportData.tomorrow_plan
+        : draftData.tomorrow_plan || [],
+      accomplishments:
+        reportData.accomplishments?.items ||
+        (Array.isArray(reportData.accomplishments)
+          ? reportData.accomplishments
+          : draftData.accomplishments || []),
+    };
+  }
+
+  return hasReportData ? reportData : draftData;
 };
 
 const compileMeetingNotes = (historyData: any): string => {
@@ -64,7 +97,7 @@ const compileMeetingNotes = (historyData: any): string => {
   let rawDiscussionPoints = "";
 
   // Get missed members directly from root data structure
-  let missedMembers: any[] = historyData.missed_members || [];
+  const missedMembers: any[] = historyData.missed_members || [];
 
   if (Array.isArray(meetingNotesData)) {
     rawDiscussionPoints = meetingNotesData[0]?.key_discussion_points || "";
@@ -102,8 +135,7 @@ const compileMeetingNotes = (historyData: any): string => {
 
   submittedReports.forEach((report: any) => {
     // Check both submitted report_data and drafted daily_report.report_data
-    const rawSource =
-      report.report_data || report.daily_report?.report_data || {};
+    const rawSource = getReportDataSource(report);
 
     let accRaw: any[] = [];
     if (Array.isArray(rawSource.accomplishments))
@@ -227,7 +259,8 @@ const hasMeetingDataForDate = (historyData: any, selectedDate: string) => {
     !!rootMeetingNotes ||
     memberReports.some(
       (report: any) =>
-        !!report.report_data?.meeting_notes
+        !!report.report_data?.meeting_notes ||
+        !!report.journal_id
     )
   );
 };
