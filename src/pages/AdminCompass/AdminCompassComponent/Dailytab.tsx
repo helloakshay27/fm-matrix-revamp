@@ -287,6 +287,12 @@ const getItemStatus = (item: any): string => {
   return item.status || "open";
 };
 
+const formatSelfRating = (rating: any): string => {
+  if (rating === null || rating === undefined || rating === "") return "";
+  const ratingText = String(rating).trim();
+  return ratingText.includes("/") ? ratingText : `${ratingText}/10`;
+};
+
 // ── Strip missed-members prefix from textarea value before saving ──
 const stripMissedMembersPrefix = (text: string): string => {
   const missedHeaderMatch = text.match(
@@ -305,35 +311,49 @@ const resolveRawSource = (report: any) => {
   const hasDraft = !!report.daily_report;
   const hasReportData = rd && Object.keys(rd).length > 0;
 
+  const normalizeDraftRaw = (raw: any) => ({
+    ...raw,
+    accomplishments:
+      raw.accomplishments?.items ||
+      (Array.isArray(raw.accomplishments) ? raw.accomplishments : []),
+    self_rating:
+      raw.self_rating ?? raw.details?.self_rating ?? raw.sections?.self_rating ?? null,
+    total_score: raw.total_score ?? null,
+    is_absent: raw.details?.is_absent ?? raw.sections?.is_absent ?? null,
+  });
+
   if (!hasReportData && hasDraft) {
-    return {
-      ...draftRaw,
-      accomplishments:
-        draftRaw.accomplishments?.items ||
-        (Array.isArray(draftRaw.accomplishments)
-          ? draftRaw.accomplishments
-          : []),
-      self_rating:
-        draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? null,
-      total_score: draftRaw.total_score ?? null,
-      is_absent:
-        draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent ?? null,
-    };
+    return normalizeDraftRaw(draftRaw);
   }
 
   if (report.status === "pending" && hasDraft) {
+    return normalizeDraftRaw(draftRaw);
+  }
+
+  if (hasReportData && hasDraft) {
+    const normalizedDraft = normalizeDraftRaw(draftRaw);
+
     return {
-      ...draftRaw,
+      ...normalizedDraft,
+      ...rd,
+      tasks_issues: Array.isArray(rd.tasks_issues)
+        ? rd.tasks_issues
+        : normalizedDraft.tasks_issues || [],
+      tomorrow_plan: Array.isArray(rd.tomorrow_plan)
+        ? rd.tomorrow_plan
+        : normalizedDraft.tomorrow_plan || [],
       accomplishments:
-        draftRaw.accomplishments?.items ||
-        (Array.isArray(draftRaw.accomplishments)
-          ? draftRaw.accomplishments
-          : []),
-      self_rating:
-        draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? null,
-      total_score: draftRaw.total_score ?? null,
+        rd.accomplishments?.items ||
+        (Array.isArray(rd.accomplishments)
+          ? rd.accomplishments
+          : normalizedDraft.accomplishments || []),
+      self_rating: normalizedDraft.self_rating,
+      total_score:
+        rd.total_score ??
+        normalizedDraft.total_score,
       is_absent:
-        draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent ?? null,
+        rd.is_absent ??
+        normalizedDraft.is_absent,
     };
   }
 
@@ -1668,11 +1688,12 @@ const buildMeetingNotesObject = (
                         draftRaw?.details?.self_rating ??
                         draftRaw?.sections?.self_rating ??
                         null;
+                      const selfRatingText = formatSelfRating(selfRating);
 
                       const totalScoreStr = Math.round(
-                        report.score ??
-                          rawDisplayRd?.total_score ??
+                        rawDisplayRd?.total_score ??
                           draftRaw?.total_score ??
+                          report.score ??
                           0
                       );
 
@@ -1724,9 +1745,9 @@ const buildMeetingNotesObject = (
                                 <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
                                   {totalScoreStr}
                                 </div>
-                                {selfRating != null && (
+                                {selfRatingText && (
                                   <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-1.5 py-0.5 whitespace-nowrap">
-                                    ⭐ {selfRating}/10
+                                    ⭐ {selfRatingText}
                                   </span>
                                 )}
                               </div>
@@ -1849,11 +1870,11 @@ const buildMeetingNotesObject = (
                             <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
                               <div className="p-5 space-y-5">
                                 <div className="flex flex-wrap gap-3">
-                                  {selfRating != null && (
+                                  {selfRatingText && (
                                     <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
                                       <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                                       <span className="text-sm font-bold text-yellow-800">
-                                        Self Rating: {selfRating}/10
+                                        Self Rating: {selfRatingText}
                                       </span>
                                     </div>
                                   )}
