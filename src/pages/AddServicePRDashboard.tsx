@@ -47,7 +47,9 @@ export const AddServicePRDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const orgId = localStorage.getItem("org_id");
   const navigate = useNavigate();
+  const isPanchshilOrg = orgId === "63";
 
   const { data = [] } = useAppSelector((state) => state.changePlantDetails) as { data: any[] };
 
@@ -431,24 +433,24 @@ export const AddServicePRDashboard = () => {
           }
         );
         toast.success("Auto saved successfully");
-        
+
         // Refetch details API immediately after successful auto-save
         // try {
         //   const servicesResponse = await dispatch(
         //     getServices({ baseUrl, token })
         //   ).unwrap();
         //   setServices(servicesResponse.services || []);
-          
+
         //   const suppliersResponse = await dispatch(
         //     getSuppliers({ baseUrl, token })
         //   ).unwrap();
         //   setSuppliers(suppliersResponse.suppliers || []);
-          
+
         //   const plantDetailsResponse = await dispatch(
         //     getPlantDetails({ baseUrl, token })
         //   ).unwrap();
         //   setPlantDetails(plantDetailsResponse.plant_details || []);
-          
+
         //   const addressesResponse = await dispatch(
         //     getAddresses({ baseUrl, token })
         //   ).unwrap();
@@ -1584,69 +1586,77 @@ export const AddServicePRDashboard = () => {
                     sx={fieldStyles}
                   />
 
-                  <TextField
-                    label="CGST Rate"
-                    value={detailsData.cgstRate}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                        handleDetailsChange(detailsData.id, "cgstRate", value);
-                      }
-                    }}
-                    fullWidth
-                    variant="outlined"
-                    type="text"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="CGST Rate"
+                      value={detailsData.cgstRate}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                          handleDetailsChange(detailsData.id, "cgstRate", value);
+                        }
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      type="text"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  )}
 
-                  <TextField
-                    label="CGST Amt"
-                    value={detailsData.cgstAmt}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="CGST Amt"
+                      value={detailsData.cgstAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+                  )}
 
-                  <TextField
-                    label="SGST Rate"
-                    value={detailsData.sgstRate}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                        handleDetailsChange(detailsData.id, "sgstRate", value);
-                      }
-                    }}
-                    fullWidth
-                    variant="outlined"
-                    type="text"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="SGST Rate"
+                      value={detailsData.sgstRate}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                          handleDetailsChange(detailsData.id, "sgstRate", value);
+                        }
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      type="text"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  )}
 
-                  <TextField
-                    label="SGST Amt"
-                    value={detailsData.sgstAmt}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="SGST Amt"
+                      value={detailsData.sgstAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+                  )}
 
                   <TextField
                     label="IGST Rate"

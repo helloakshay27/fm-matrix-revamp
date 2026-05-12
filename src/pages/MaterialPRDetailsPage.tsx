@@ -80,6 +80,7 @@ interface Inventory {
 
 interface PRInventory {
   gl_account: string;
+  tax_code?: string; 
   id?: number;
   inventory?: Inventory;
   availability?: string;
@@ -222,6 +223,7 @@ export const MaterialPRDetailsPage = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [showEditWbsModal, setShowEditWbsModal] = useState(false);
   const [wbsCodes, setWbsCodes] = useState([]);
+  const [inventories, setInventories] = useState([]);
   const [openDeletionModal, setOpenDeletionModal] = useState(false)
   const [printing, setPrinting] = useState(false)
   const [testRunLoading, setTestRunLoading] = useState(false)
@@ -229,9 +231,19 @@ export const MaterialPRDetailsPage = () => {
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
   }>({})
+  const [updatedGlAccounts, setUpdatedGlAccounts] = useState<{
+    [key: string]: string;
+  }>({})
+  const [updatedTaxCodes, setUpdatedTaxCodes] = useState<{
+    [key: string]: string;
+  }>({})
+  const [updatedHsnCodes, setUpdatedHsnCodes] = useState<{
+    [key: string]: string;
+  }>({})
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
     editWbsCode: false,
+    canEditAll: false,
   });
   const [externalApiCalls, setExternalApiCalls] = useState<any[]>([]);
 
@@ -261,6 +273,7 @@ export const MaterialPRDetailsPage = () => {
         setButtonCondition({
           showSap: response.show_send_sap_yes,
           editWbsCode: response.can_edit_wbs_codes,
+          canEditAll: response.can_edit_all,
         });
         // Set external API calls if available
         if (response.api_calls && Array.isArray(response.api_calls)) {
@@ -268,7 +281,7 @@ export const MaterialPRDetailsPage = () => {
           console.log("API Calls set in state:", response.api_calls);
         }
         // Initialize updatedWbsCodes with current WBS codes
-        const initialWbsCodes = response.pms_pr_inventories?.reduce(
+        const initialWbsCodes = response.pms_po_inventories?.reduce(
           (acc: { [key: string]: string }, item: PRInventory) => {
             const key = item.id?.toString();
             acc[key] = item.wbs_code || "";
@@ -276,7 +289,36 @@ export const MaterialPRDetailsPage = () => {
           },
           {}
         );
+        // CORRECT - use pms_po_inventories which has gl_account and tax_code
+const initialGlAccounts = response.pms_po_inventories?.reduce(
+  (acc: { [key: string]: string }, item: PRInventory) => {
+    const key = item.id?.toString();
+    acc[key] = item.gl_account || "";
+    return acc;
+  },
+  {}
+);
+
+const initialTaxCodes = response.pms_po_inventories?.reduce(
+  (acc: { [key: string]: string }, item: PRInventory) => {
+    const key = item.id?.toString();
+    acc[key] = item.tax_code || "";
+    return acc;
+  },
+  {}
+);
+        const initialHsnCodes = response.pms_pr_inventories?.reduce(
+          (acc: { [key: string]: string }, item: PRInventory) => {
+            const key = item.id?.toString();
+            acc[key] = item.sac_hsn_code || "";
+            return acc;
+          },
+          {}
+        );
         setUpdatedWbsCodes(initialWbsCodes || {});
+        setUpdatedGlAccounts(initialGlAccounts || {});
+        setUpdatedTaxCodes(initialTaxCodes || {});
+        setUpdatedHsnCodes(initialHsnCodes || {});
       } catch (err) {
         console.error("Error fetching PR:", err);
         toast.error("Failed to fetch purchase request");
@@ -307,6 +349,30 @@ export const MaterialPRDetailsPage = () => {
     fetchData();
   }, [dispatch]);
 
+  // Fetch Inventories
+  useEffect(() => {
+    const fetchInventoriesData = async () => {
+      if (!baseUrl || !token) {
+        return;
+      }
+
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/pms/inventories/get_inventories_for_purchase_order.json`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (response.data.inventories && Array.isArray(response.data.inventories)) {
+          setInventories(response.data.inventories);
+        }
+      } catch (error) {
+        console.error("Error fetching inventories:", error);
+      }
+    };
+    fetchInventoriesData();
+  }, []);
+
   // Handle WBS code change
   const handleWbsCodeChange = useCallback((event, item: PRInventory) => {
     const newWbsCode = event.target.value as string;
@@ -316,6 +382,98 @@ export const MaterialPRDetailsPage = () => {
       [itemKey]: newWbsCode,
     }));
   }, []);
+
+  // Handle GL Account change
+  const handleGlAccountChange = useCallback((event, item: PRInventory) => {
+    const newGlAccount = event.target.value as string;
+    const itemKey = item.id?.toString() || item.toString();
+    setUpdatedGlAccounts((prev) => ({
+      ...prev,
+      [itemKey]: newGlAccount,
+    }));
+  }, []);
+
+  // Handle Tax Code change
+  const handleTaxCodeChange = useCallback((event, item: PRInventory) => {
+    const newTaxCode = event.target.value as string;
+    const itemKey = item.id?.toString() || item.toString();
+    setUpdatedTaxCodes((prev) => ({
+      ...prev,
+      [itemKey]: newTaxCode,
+    }));
+  }, []);
+
+  // Handle HSN Code change
+  const handleHsnCodeChange = useCallback((event, item: PRInventory) => {
+    const newHsnCode = event.target.value as string;
+    const itemKey = item.id?.toString() || item.toString();
+    setUpdatedHsnCodes((prev) => ({
+      ...prev,
+      [itemKey]: newHsnCode,
+    }));
+  }, []);
+
+  // Handle Material/Inventory change - fetch HSN code
+  const handleInventoryChange = useCallback(async (event, item: PRInventory) => {
+    const newInventoryId = event.target.value as string;
+    const itemKey = item.id?.toString() || item.toString();
+
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/${newInventoryId}/hsn_code_categories.json`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      // Update the item with fetched HSN code
+      if (response.data?.hsn) {
+        setUpdatedHsnCodes((prev) => ({
+          ...prev,
+          [itemKey]: response.data.hsn.code || "",
+        }));
+        toast.success("HSN code loaded successfully");
+      }
+    } catch (error) {
+      console.error("Error fetching HSN code for inventory:", error);
+      toast.error("Failed to fetch HSN code");
+    }
+  }, [baseUrl, token]);
+
+  // Handle WBS code change - fetch GL code
+  const handleWbsCodeChangeWithGlFetch = useCallback(async (event, item: PRInventory) => {
+    const newWbsCode = event.target.value as string;
+    const itemKey = item.id?.toString() || item.toString();
+
+    // Update WBS code
+    setUpdatedWbsCodes((prev) => ({
+      ...prev,
+      [itemKey]: newWbsCode,
+    }));
+
+    // Fetch GL code for the WBS
+    if (newWbsCode) {
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/wbs_costs/get_gl_code.json?wbs_code=${newWbsCode}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        if (response.data?.gl_code) {
+          setUpdatedGlAccounts((prev) => ({
+            ...prev,
+            [itemKey]: response.data.gl_code,
+          }));
+          toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
+        }
+      } catch (error) {
+        console.error("Error fetching GL code for WBS:", error);
+        toast.error("Failed to fetch GL code");
+      }
+    }
+  }, [baseUrl, token]);
 
   // Handle update WBS codes to backend
   const handleUpdateWbsCodes = useCallback(async () => {
@@ -327,10 +485,13 @@ export const MaterialPRDetailsPage = () => {
 
     try {
       const updates = {
-        pms_po_inventory_updates: Object.entries(updatedWbsCodes).map(([itemKey, wbsCode]) => ({
-          id: itemKey,
-          wbs_code: wbsCode
-        }))
+        pms_po_inventory_updates: Object.entries(updatedWbsCodes).map(([itemKey]) => ({
+        id: itemKey,
+        wbs_code: updatedWbsCodes[itemKey],
+        gl_account: updatedGlAccounts[itemKey],   // stale if not in deps
+        tax_code: updatedTaxCodes[itemKey],
+        sac_hsn_code: updatedHsnCodes[itemKey]
+      }))
       }
 
       await axios.patch(
@@ -341,12 +502,12 @@ export const MaterialPRDetailsPage = () => {
         }
       );
 
-      toast.success("WBS Codes updated successfully");
+      toast.success("Details updated successfully");
       setShowEditWbsModal(false);
     } catch (error: any) {
-      toast.error(error.message || "Failed to update WBS Codes");
+      toast.error(error.message || "Failed to update details");
     }
-  }, [id, updatedWbsCodes]);
+}, [id, updatedWbsCodes, updatedGlAccounts, updatedTaxCodes, updatedHsnCodes]); // ← add all state deps
 
   const handleApproveDeletionRequest = async () => {
     const payload = {
@@ -411,7 +572,7 @@ export const MaterialPRDetailsPage = () => {
         await dispatch(
           approvePO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
-        toast.success("PO approved successfully");
+        toast.success("PR approved successfully");
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
         toast.error(error.message || "Failed to approve PO");
@@ -486,6 +647,7 @@ export const MaterialPRDetailsPage = () => {
         setButtonCondition({
           showSap: detailsResponse.show_send_sap_yes,
           editWbsCode: detailsResponse.can_edit_wbs_codes,
+          canEditAll: detailsResponse.can_edit_all,
         });
         if (detailsResponse.api_calls && Array.isArray(detailsResponse.api_calls)) {
           setExternalApiCalls(detailsResponse.api_calls);
@@ -497,7 +659,7 @@ export const MaterialPRDetailsPage = () => {
       }
 
       // Disable the button after successful push
-      
+
     } catch (error: any) {
       toast.error(error.message || "Failed to push to SAP");
     }
@@ -533,6 +695,7 @@ export const MaterialPRDetailsPage = () => {
         setButtonCondition({
           showSap: detailsResponse.show_send_sap_yes,
           editWbsCode: detailsResponse.can_edit_wbs_codes,
+          canEditAll: detailsResponse.can_edit_all,
         });
         if (detailsResponse.api_calls && Array.isArray(detailsResponse.api_calls)) {
           setExternalApiCalls(detailsResponse.api_calls);
@@ -712,26 +875,26 @@ export const MaterialPRDetailsPage = () => {
                 </Button>
               </>
             ) : (
-              
+
               <>
-              {!buttonCondition.showSap && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 bg-blue-600 text-white"
-                  onClick={handleTestRun}
-                  disabled={testRunLoading}
-                >
-                  {testRunLoading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Running...
-                    </>
-                  ) : (
-                    "Test run"
-                  )}
-                </Button>
-              )}
+                {!buttonCondition.showSap && buttonCondition.canEditAll && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-gray-300 bg-blue-600 text-white"
+                    onClick={handleTestRun}
+                    disabled={testRunLoading}
+                  >
+                    {testRunLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Running...
+                      </>
+                    ) : (
+                      "Test run"
+                    )}
+                  </Button>
+                )}
                 {buttonCondition.showSap && (
                   <Button
                     size="sm"
@@ -744,15 +907,17 @@ export const MaterialPRDetailsPage = () => {
                   </Button>
                 )}
                 {
-                  pr.all_level_approved === null && !shouldShowButtons && <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-gray-300"
-                    onClick={() => navigate(`/finance/material-pr/edit/${id}`)}
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Edit
-                  </Button>
+                  (pr.all_level_approved === null || buttonCondition.canEditAll) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-gray-300"
+                      onClick={() => navigate(`/finance/material-pr/edit/${id}`)}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                  )
                 }
                 {
                   !shouldShowButtons && (
@@ -791,7 +956,7 @@ export const MaterialPRDetailsPage = () => {
                   <Rss className="w-4 h-4 mr-2" />
                   Feeds
                 </Button>
-                {pr.all_level_approved && !shouldShowButtons && (
+                {(buttonCondition.canEditAll) && (
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
@@ -799,9 +964,9 @@ export const MaterialPRDetailsPage = () => {
                       className="border-gray-300 btn-primary"
                       onClick={() => setShowEditWbsModal(true)}
                     >
-                      Edit WBS Codes
+                      Edit Material Details
                     </Button>
-
+                  {/* {( !shouldShowButtons) &&(
                     <Button
                       size="sm"
                       variant="outline"
@@ -810,6 +975,7 @@ export const MaterialPRDetailsPage = () => {
                     >
                       Raise Deletion Request
                     </Button>
+                  )} */}
                   </div>
                 )}
               </>
@@ -1233,36 +1399,117 @@ export const MaterialPRDetailsPage = () => {
         <Dialog
           open={showEditWbsModal}
           onClose={() => setShowEditWbsModal(false)}
-          maxWidth="sm"
+          maxWidth="md"
           fullWidth
         >
-          <DialogTitle>Edit WBS Codes</DialogTitle>
+          <DialogTitle>Edit Material Details</DialogTitle>
           <DialogContent>
-            <div className="space-y-4 mt-4">
+            <div className="space-y-6 mt-4">
               {pr.pms_pr_inventories?.map((item) => (
-                <FormControl fullWidth key={item.id || item.toString()}>
-                  <InputLabel>
-                    WBS Code for {item.inventory?.name || `Item ${item.id}`}
-                  </InputLabel>
-                  <Select
-                    value={
-                      updatedWbsCodes[item.id?.toString() || item.toString()] ||
-                      item.wbs_code
-                    }
-                    onChange={(e) => handleWbsCodeChange(e, item)}
-                    label={`WBS Code for ${item.inventory?.name || `Item ${item.id}`
-                      }`}
-                  >
-                    <MenuItem value="">
-                      <em>Select WBS Code</em>
-                    </MenuItem>
-                    {wbsCodes.map((wbs: { wbs_code: string }) => (
-                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                        {wbs.wbs_code}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <div key={item.id || item.toString()} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="font-semibold text-gray-900 text-sm mb-4">
+                    {item.inventory?.name || `Item ${item.id}`}
+                  </div>
+                  
+                  {/* Grid for fields in rows */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Material Dropdown (Editable) */}
+                    <FormControl fullWidth>
+                      <InputLabel>Material</InputLabel>
+                      <Select
+                        value={item.inventory?.id || ""}
+                        onChange={(e) => handleInventoryChange(e, item)}
+                        label="Material"
+                        disabled
+                      >
+                        <MenuItem value="">
+                          <em>Select Material</em>
+                        </MenuItem>
+                        {inventories.map((inv: any) => (
+                          <MenuItem key={inv.id} value={inv.id}>
+                            {inv.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    {/* WBS Code Dropdown */}
+                    <FormControl fullWidth>
+                      <InputLabel>WBS Code</InputLabel>
+                      <Select
+                        value={
+                          updatedWbsCodes[item.id?.toString() || item.toString()] ||
+                          item.wbs_code ||
+                          ""
+                        }
+                        onChange={(e) => handleWbsCodeChangeWithGlFetch(e, item)}
+                        label="WBS Code"
+                      >
+                        <MenuItem value="">
+                          <em>Select WBS Code</em>
+                        </MenuItem>
+                        {wbsCodes.map((wbs: { wbs_code: string }) => (
+                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                            {wbs.wbs_code}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    {/* GL Account TextInput (Auto-populated from WBS) */}
+                    <TextField
+                      fullWidth
+                      label="GL Account"
+                      value={
+                        updatedGlAccounts[item.id?.toString() || item.toString()] ||
+                        item.gl_account ||
+                        ""
+                      }
+                      disabled
+                      variant="outlined"
+                      size="small"
+                    />
+
+                    {/* Tax Code Dropdown */}
+                    <FormControl fullWidth>
+                      <InputLabel>Tax Code</InputLabel>
+                      <Select
+                        value={
+                          updatedTaxCodes[item.id?.toString() || item.toString()] ||
+                          item.tax_code ||
+                          ""
+                        }
+                        onChange={(e) => handleTaxCodeChange(e, item)}
+                        label="Tax Code"
+                        size="small"
+                      >
+                        <MenuItem value="">
+                          <em>Select Tax Code</em>
+                        </MenuItem>
+                        <MenuItem value="V0">V0</MenuItem>
+                        <MenuItem value="V1">V1</MenuItem>
+                        <MenuItem value="V2">V2</MenuItem>
+                        <MenuItem value="V3">V3</MenuItem>
+                        <MenuItem value="V4">V4</MenuItem>
+                        <MenuItem value="V5">V5</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    {/* HSN Code TextField (Auto-populated from Material) - Full width */}
+                    <TextField
+                      fullWidth
+                      label="HSN/SAC Code"
+                      value={
+                        updatedHsnCodes[item.id?.toString() || item.toString()] ||
+                        item.sac_hsn_code ||
+                        ""
+                      }
+                      disabled
+                      variant="outlined"
+                      size="small"
+                    />
+                  </div>
+                </div>
               ))}
               {(!pr.pms_pr_inventories ||
                 pr.pms_pr_inventories.length === 0) && (
@@ -1322,46 +1569,45 @@ export const MaterialPRDetailsPage = () => {
 
         {/* External API Calls Logs Section */}
         {externalApiCalls && externalApiCalls.length > 0 && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6 p-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Rss className="w-5 h-5" />
-              External API Calls
-            </h3>
-            <div className="space-y-4">
-              {externalApiCalls.map((apiCall, index) => (
-                <div key={apiCall.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600 font-semibold">Provider</p>
-                      <p className="text-sm font-medium">{apiCall.api_provider || '-'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
-                      <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                        {apiCall.response_status || '-'}
-                      </p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600 font-semibold">Message</p>
-                      <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
-                        {apiCall.message || '-'}
-                      </p>
-                    </div>
-                    
-                    {apiCall.created_at && (
-                      <div className="md:col-span-2">
-                        <p className="text-xs text-gray-500">
-                          Created: {new Date(apiCall.created_at).toLocaleString()}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+  <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6 p-6">
+    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+      <Rss className="w-5 h-5" />
+      External API Calls
+    </h3>
+    {(() => {
+      const apiCall = externalApiCalls[externalApiCalls.length - 1];
+      return (
+        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-600 font-semibold">Provider</p>
+              <p className="text-sm font-medium">{apiCall.api_provider || '-'}</p>
             </div>
+            <div>
+              <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
+              <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'}`}>
+                {apiCall.response_status || '-'}
+              </p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-sm text-gray-600 font-semibold">Message</p>
+              <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
+                {apiCall.message || '-'}
+              </p>
+            </div>
+            {apiCall.created_at && (
+              <div className="md:col-span-2">
+                <p className="text-xs text-gray-500">
+                  Created: {new Date(apiCall.created_at).toLocaleString()}
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+      );
+    })()}
+  </div>
+)}
       </div>
     </div>
   );

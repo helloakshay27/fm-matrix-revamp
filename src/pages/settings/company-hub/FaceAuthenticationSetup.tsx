@@ -181,15 +181,23 @@ const FaceAuthenticationSetup: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="overflow-hidden rounded-lg border border-[#C4B89D]/60 bg-black">
+        <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr] h-full">
+          <div className="relative flex flex-col overflow-hidden rounded-lg border border-[#C4B89D]/60 bg-[#F6F4EE] h-full">
+            {cameraPermission !== "granted" && (
+              <div className="flex flex-col items-center justify-center gap-3 bg-[#F6F4EE] text-[#2C2C2C]/50 h-full">
+                <Camera className="h-10 w-10 text-[#C4B89D]" />
+                <p className="text-xs font-medium">
+                  {cameraPermission === "denied" ? "Camera access denied" : "Starting camera…"}
+                </p>
+              </div>
+            )}
             <video
               ref={videoRef}
               autoPlay
               muted
               playsInline
-              className="aspect-video w-full object-cover"
-              style={{ transform: "scaleX(-1)" }}
+              className="h-full w-full object-cover"
+              style={{ transform: "scaleX(-1)", display: cameraPermission === "granted" ? "block" : "none" }}
             />
           </div>
 
@@ -201,6 +209,7 @@ const FaceAuthenticationSetup: React.FC = () => {
                 <UserCheck className="h-6 w-6" />
               )}
             </div>
+
 
             <div className="space-y-3 text-sm">
               <div>

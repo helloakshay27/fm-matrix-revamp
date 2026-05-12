@@ -131,6 +131,7 @@ export const AddBookingSetupClubPage = () => {
     seaterInfo: "Select a seater",
     floorInfo: "Select a floor",
     sharedContentInfo: "",
+    bookableSlotsPerDay: "",
     slots: [
       {
         startTime: { hour: "00", minute: "00" },
@@ -751,6 +752,11 @@ export const AddBookingSetupClubPage = () => {
       });
 
       formDataToSend.append(
+        "facility_setup[bookable_slot_count]",
+        formData.bookableSlotsPerDay
+      )
+
+      formDataToSend.append(
         "facility_setup[multi_slot]",
         formData.allowMultipleSlots ? "1" : "0"
       )
@@ -839,6 +845,7 @@ export const AddBookingSetupClubPage = () => {
       breakTimeEnd: { hour: "00", minute: "00" },
       endTime: { hour: "00", minute: "00" },
       concurrentSlots: "",
+      bookableSlotsPerDay: "",
       slotBy: 15,
       wrapTime: "",
     };
@@ -1511,6 +1518,26 @@ export const AddBookingSetupClubPage = () => {
                   </Button>
                 </div>
               ))}
+              <div className="flex items-center gap-3 mt-4">
+                <label className="text-sm font-medium text-gray-700">
+                  Bookable Slots Per Day
+                </label>
+                <TextField
+                  size="small"
+                  value={formData.bookableSlotsPerDay}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only positive integers (no decimals, no negatives)
+                    if (value === '' || /^[1-9]\d*$/.test(value)) {
+                      setFormData({
+                        ...formData,
+                        bookableSlotsPerDay: value,
+                      });
+                    }
+                  }}
+                  variant="outlined"
+                />
+              </div>
 
               <div className="space-y-4 mt-4">
                 <div>

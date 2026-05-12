@@ -1960,6 +1960,14 @@ export const StacticSidebar = () => {
   const [selectedDepartment, setSelectedRole] = useState("");
   const [selectedRole, setSelectedDepartment] = useState("");
 
+  // Check if current organization is PANCHSHIL (via hostname or localStorage)
+  const hostname = window.location.hostname;
+  const isPanchshilOrg =
+    hostname.includes("panchshil.com") ||
+    (localStorage.getItem("selectedOrg") || "")
+      .toUpperCase()
+      .includes("PANCHSHIL");
+
   // Helper function to find the deepest navigable sub-item
   const findDeepestNavigableItem = (item: any): string | null => {
     if (!item.subItems || item.subItems.length === 0) {
@@ -2080,9 +2088,36 @@ export const StacticSidebar = () => {
       });
   };
 
+  // Helper function to filter out Panchshil-restricted items
+  const filterPanchshilItems = (items: any[]): any[] => {
+    if (!isPanchshilOrg) return items;
+
+    const panchshilHiddenModules = ["M-Safe", "Gate Pass", "Visitor", "Staff"];
+
+    return items
+      .filter((item: any) => {
+        if (panchshilHiddenModules.includes(item.name)) {
+          return false;
+        }
+        return true;
+      })
+      .map((item: any) => {
+        if (item.subItems && Array.isArray(item.subItems)) {
+          return {
+            ...item,
+            subItems: filterPanchshilItems(item.subItems),
+          };
+        }
+        return item;
+      });
+  };
+
   let currentModules = modulesByPackage[currentSection] || [];
   if (assetRestricted) {
     currentModules = filterAssetItems(currentModules);
+  }
+  if (isPanchshilOrg) {
+    currentModules = filterPanchshilItems(currentModules);
   }
 
   const isActiveRoute = (href: string, mode: "exact" | "prefix" = "exact") => {
