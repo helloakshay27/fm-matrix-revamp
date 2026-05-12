@@ -17,14 +17,15 @@ const Transition = forwardRef(function Transition(
 });
 
 const AddToDoModal = ({ isModalOpen, setIsModalOpen, getTodos, editingTodo = null, isEditMode = false, prefillData }) => {
-    console.log(prefillData)
     const baseURL = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState("")
-    const [date, setDate] = useState(() => {
-        return prefillData?.start_date ? prefillData.start_date : null;
-    });
+    const [date, setDate] = useState(null);
+
+    useEffect(() => {
+        setDate(prefillData?.start_date || null);
+    }, [prefillData]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [users, setUsers] = useState([]);

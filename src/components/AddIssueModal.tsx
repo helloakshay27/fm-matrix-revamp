@@ -188,31 +188,6 @@ const AddIssueModal = ({
   console.log(prefillData)
   const [title, setTitle] = useState("");
   const [responsiblePerson, setResponsiblePerson] = useState("");
-  // const [endDate, setEndDate] = useState(() => {
-  //   const targetDate = prefillData?.target_date;
-  //   if (!targetDate) return null;
-
-  //   if (typeof targetDate === "string") {
-  //     // Handle YYYY-MM-DD format manually to avoid timezone issues
-  //     const parts = targetDate.split("-");
-  //     if (parts.length === 3) {
-  //       return {
-  //         year: parseInt(parts[0], 10),
-  //         month: parseInt(parts[1], 10) - 1,
-  //         date: parseInt(parts[2], 10),
-  //       };
-  //     }
-
-  //     const date = new Date(targetDate);
-  //     return {
-  //       date: date.getDate(),
-  //       month: date.getMonth(),
-  //       year: date.getFullYear(),
-  //     };
-  //   }
-  //   return targetDate;
-  // });
-
   const [endDate, setEndDate] = useState(null);
 
   useEffect(() => {
@@ -249,30 +224,67 @@ const AddIssueModal = ({
 
     setEndDate(targetDate);
   }, [prefillData]);
-  const [startDate, setStartDate] = useState(() => {
-    const startDate = prefillData?.start_date;
-    if (!startDate) return null;
 
-    if (typeof startDate === "string") {
-      // Handle YYYY-MM-DD format manually to avoid timezone issues
-      const parts = startDate.split("-");
+  const [startDate, setStartDate] = useState(null);
+
+  useEffect(() => {
+    const targetDate = prefillData?.target_date;
+
+    if (!targetDate) {
+      setStartDate(null);
+      return;
+    }
+
+    if (typeof targetDate === "string") {
+      // Handle YYYY-MM-DD format manually
+      const parts = targetDate.split("-");
+
       if (parts.length === 3) {
-        return {
+        setStartDate({
           year: parseInt(parts[0], 10),
           month: parseInt(parts[1], 10) - 1,
           date: parseInt(parts[2], 10),
-        };
+        });
+        return;
       }
 
-      const date = new Date(startDate);
-      return {
+      const date = new Date(targetDate);
+
+      setStartDate({
         date: date.getDate(),
         month: date.getMonth(),
         year: date.getFullYear(),
-      };
+      });
+
+      return;
     }
-    return startDate;
-  });
+
+    setStartDate(targetDate);
+  }, [prefillData]);
+  // const [startDate, setStartDate] = useState(() => {
+  //   const startDate = prefillData?.start_date;
+  //   if (!startDate) return null;
+
+  //   if (typeof startDate === "string") {
+  //     // Handle YYYY-MM-DD format manually to avoid timezone issues
+  //     const parts = startDate.split("-");
+  //     if (parts.length === 3) {
+  //       return {
+  //         year: parseInt(parts[0], 10),
+  //         month: parseInt(parts[1], 10) - 1,
+  //         date: parseInt(parts[2], 10),
+  //       };
+  //     }
+
+  //     const date = new Date(startDate);
+  //     return {
+  //       date: date.getDate(),
+  //       month: date.getMonth(),
+  //       year: date.getFullYear(),
+  //     };
+  //   }
+  //   return startDate;
+  // });
   const [type, setType] = useState("");
   const [priority, setPriority] = useState("");
   const [description, setDescription] = useState("");
