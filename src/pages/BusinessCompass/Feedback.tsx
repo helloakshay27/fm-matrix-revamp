@@ -12,6 +12,7 @@ import React, {
 } from "react";
 import axios, { AxiosError } from "axios";
 import { useSelector } from "react-redux";
+import { toast } from "sonner";
 import {
   useQuery,
   useMutation,
@@ -355,22 +356,35 @@ const FeedbackSchema = z.object({
   score: z.number().min(1).max(5).catch(1),
   recipient_name: z.string().optional().catch(undefined),
   rating_from_name: z.string().optional().catch(undefined),
+  resource_user_id: z.coerce.number().optional().catch(undefined),
+  user_id: z.coerce.number().optional().catch(undefined),
+  recipient_id: z.coerce.number().optional().catch(undefined),
+  rated_user_id: z.coerce.number().optional().catch(undefined),
   recipient: z
     .object({
       name: z.string().optional(),
       full_name: z.string().optional(),
       firstname: z.string().optional(),
       lastname: z.string().optional(),
+      user_id: z.coerce.number().optional(),
       id: z.coerce.number().optional(),
     })
     .optional()
     .catch(undefined),
   user: z
-    .object({ name: z.string().optional(), id: z.coerce.number().optional() })
+    .object({
+      name: z.string().optional(),
+      user_id: z.coerce.number().optional(),
+      id: z.coerce.number().optional(),
+    })
     .optional()
     .catch(undefined),
   resource: z
-    .object({ id: z.coerce.number().optional() })
+    .object({
+      user_id: z.coerce.number().optional(),
+      resource_id: z.coerce.number().optional(),
+      id: z.coerce.number().optional(),
+    })
     .optional()
     .catch(undefined),
   positive_opening: z.string().optional().catch(undefined),
@@ -411,6 +425,17 @@ const FeedbackSchema = z.object({
 
 type RawFeedback = z.infer<typeof FeedbackSchema>;
 
+const FeedbackSummarySchema = z
+  .object({
+    received: z.coerce.number().optional(),
+    given: z.coerce.number().optional(),
+    unread: z.coerce.number().optional(),
+    avg_rating: z.union([z.string(), z.number()]).optional(),
+    average_rating: z.union([z.string(), z.number()]).optional(),
+    feedback_points: z.coerce.number().optional(),
+  })
+  .passthrough();
+
 const FeedbackListSchema = z
   .union([
     z.array(FeedbackSchema),
@@ -447,6 +472,43 @@ const FeedbackListSchema = z
   ])
   .catch([]);
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function unwrapFeedbackListResponse(data: unknown): {
+  listSource: unknown;
+  summarySource?: unknown;
+} {
+  if (!isRecord(data)) {
+    return { listSource: data };
+  }
+
+  const nestedData = data.data;
+  if (isRecord(nestedData)) {
+    return {
+      listSource: nestedData,
+      summarySource: nestedData.summary ?? data.summary,
+    };
+  }
+
+  return { listSource: data, summarySource: data.summary };
+}
+
+function mapFeedbackSummary(summarySource: unknown): FeedbackSummary | undefined {
+  const parsed = FeedbackSummarySchema.safeParse(summarySource);
+  if (!parsed.success) return undefined;
+
+  const raw = parsed.data;
+  return {
+    received: raw.received ?? 0,
+    given: raw.given ?? 0,
+    unread: raw.unread ?? 0,
+    avgRating: String(raw.avg_rating ?? raw.average_rating ?? "0.0"),
+    feedbackPoints: raw.feedback_points ?? 0,
+  };
+}
+
 const TeamMemberSchema = z.object({
   id: z.coerce.number(),
   name: z.string().optional(),
@@ -476,6 +538,15 @@ const TeamMembersListSchema = z
       .object({ members: z.array(TeamMemberSchema) })
       .transform((d) => d.members),
     z.object({ data: z.array(TeamMemberSchema) }).transform((d) => d.data),
+    z
+      .object({ data: z.object({ users: z.array(TeamMemberSchema) }) })
+      .transform((d) => d.data.users),
+    z
+      .object({ data: z.object({ members: z.array(TeamMemberSchema) }) })
+      .transform((d) => d.data.members),
+    z
+      .object({ data: z.object({ team_members: z.array(TeamMemberSchema) }) })
+      .transform((d) => d.data.team_members),
   ])
   .catch([]);
 
@@ -509,6 +580,13 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
 
   const resourceId =
     raw.resource_id ||
+    raw.resource_user_id ||
+    raw.recipient_id ||
+    raw.rated_user_id ||
+    (recipient && "user_id" in recipient ? recipient.user_id : undefined) ||
+    (recipient && "resource_id" in recipient
+      ? recipient.resource_id
+      : undefined) ||
     (recipient && "id" in recipient ? recipient.id : undefined) ||
     undefined;
 
@@ -702,10 +780,38 @@ function getCurrentUserId(): number | null {
 
 // ─── API Constants ─────────────────────────────────────────────────────────────
 
+function getLocalStorageUserId(): number | null {
+  const id = Number(localStorage.getItem("userId") || "0");
+  return Number.isFinite(id) && id > 0 ? id : null;
+}
+
+function canModifyFeedback(item: FeedbackItem): boolean {
+  const localUserId = getLocalStorageUserId();
+  return !!localUserId && item.ratingFromId === localUserId;
+}
+
+function showFeedbackAccessDenied(): void {
+  toast.error("You don't have access");
+}
+
+function isForbiddenFeedbackError(error: AppError): boolean {
+  return (
+    error.kind === "forbidden" ||
+    error.status === 403 ||
+    error.message.toLowerCase() === "forbidden"
+  );
+}
+
 const TEAM_MEMBERS_ENDPOINT = "/pms/users/get_escalate_to_users.json";
-const RATINGS_COLLECTION_ENDPOINTS = ["/ratings.json", "/ratings"];
+const RATINGS_COLLECTION_ENDPOINTS = ["/ratings", "/ratings.json"];
 const LAST_SUCCESSFUL_FEEDBACK: Record<string, FeedbackItem[]> = {};
 const FEEDBACK_CACHE_PREFIX = "feedback-cache-v1";
+
+function normalizeHttpsBaseUrl(baseUrl: string): string {
+  const trimmed = baseUrl.trim().replace(/\/+$/, "");
+  if (!trimmed) return "";
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
 
 function getFeedbackCacheKey(
   direction: "given" | "received",
@@ -772,54 +878,34 @@ async function fetchFeedbackList(
         params,
       });
 
-      let summary: FeedbackSummary | undefined;
-      if (data && typeof data === "object" && "summary" in data) {
-        const rawSummary = data.summary as {
-          received: number;
-          given: number;
-          unread: number;
-          avg_rating: string;
-          feedback_points: number;
-        };
-        summary = {
-          received: rawSummary.received,
-          given: rawSummary.given,
-          unread: rawSummary.unread,
-          avgRating: rawSummary.avg_rating,
-          feedbackPoints: rawSummary.feedback_points,
-        };
-      }
+      const { listSource, summarySource } = unwrapFeedbackListResponse(data);
+      const summary = mapFeedbackSummary(summarySource);
 
-      const raw = FeedbackListSchema.parse(data);
+      const raw = FeedbackListSchema.parse(listSource);
       const mapped = raw.map(mapRawFeedback);
       const filtered = mapped.filter((item) => {
         if (!userId) return true;
         return direction === "given"
           ? item.ratingFromId === userId
-          : item.resourceId === userId;
+          : item.resourceId == null || item.resourceId === userId;
       });
 
-      const visibleItems =
-        userId && mapped.length > 0 && filtered.length === 0
-          ? mapped
-          : filtered;
+      const visibleItems = filtered;
 
       if (visibleItems.length > 0) {
         LAST_SUCCESSFUL_FEEDBACK[memoryKey] = visibleItems;
         writeFeedbackCache(direction, userId, visibleItems);
       }
 
-      if (
-        visibleItems.length === 0 &&
-        (LAST_SUCCESSFUL_FEEDBACK[memoryKey]?.length ?? 0) > 0
-      ) {
-        return { items: LAST_SUCCESSFUL_FEEDBACK[memoryKey], summary };
+      const isLastEndpoint =
+        endpoint === RATINGS_COLLECTION_ENDPOINTS[RATINGS_COLLECTION_ENDPOINTS.length - 1];
+      if (visibleItems.length === 0 && !isLastEndpoint) {
+        continue;
       }
 
-      const cachedItems = readFeedbackCache(direction, userId);
-      if (visibleItems.length === 0 && cachedItems.length > 0) {
-        LAST_SUCCESSFUL_FEEDBACK[memoryKey] = cachedItems;
-        return { items: cachedItems, summary };
+      if (visibleItems.length === 0) {
+        LAST_SUCCESSFUL_FEEDBACK[memoryKey] = [];
+        writeFeedbackCache(direction, userId, []);
       }
 
       return {
@@ -858,17 +944,13 @@ async function fetchFeedbackList(
 
 async function fetchTeamMembers(): Promise<TeamMemberOption[]> {
   // localStorage se base URL aur org_id nikalo
-  const baseUrl = (
+  const baseUrl = normalizeHttpsBaseUrl(
     localStorage.getItem("baseUrl") ||
     API_CONFIG.BASE_URL ||
     ""
-  ).replace(/\/+$/, "");
+  );
 
-  const orgId =
-    localStorage.getItem("organization_id") ||
-    localStorage.getItem("org_id") ||
-    localStorage.getItem("orgId") ||
-    getEmbeddedOrgId();
+  const orgId = localStorage.getItem("org_id");
 
   if (!baseUrl) {
     throw {
@@ -884,8 +966,11 @@ async function fetchTeamMembers(): Promise<TeamMemberOption[]> {
     } as AppError;
   }
 
-  const { data } = await axios.get(`${baseUrl}/api/users`, {
-    params: { organization_id: orgId },
+  const usersUrl = `${baseUrl}/api/users?organization_id=${encodeURIComponent(
+    String(orgId)
+  )}`;
+
+  const { data } = await axios.get(usersUrl, {
     headers: {
       Authorization:
         (apiClient.defaults.headers.Authorization as string) ||
@@ -1041,8 +1126,11 @@ function useFeedbackList(
 }
 
 function useTeamMembers() {
+  const baseUrl = localStorage.getItem("baseUrl") || "";
+  const orgId = localStorage.getItem("org_id") || "";
+
   return useQuery<TeamMemberOption[], AppError>({
-    queryKey: ["teamMembers"],
+    queryKey: ["teamMembers", baseUrl, orgId],
     queryFn: fetchTeamMembers,
     staleTime: 5 * 60_000,
     placeholderData: [],
@@ -1088,6 +1176,13 @@ function useCreateFeedback() {
 
       qc.invalidateQueries({ queryKey: ["feedback", "given"] });
       qc.invalidateQueries({ queryKey: ["feedback", "received"] });
+    },
+    onError: (error) => {
+      if (isForbiddenFeedbackError(error)) {
+        showFeedbackAccessDenied();
+        return;
+      }
+      toast.error(error.message || "Failed to update feedback");
     },
   });
 }
@@ -1232,6 +1327,13 @@ function useDeleteFeedback() {
         LAST_SUCCESSFUL_FEEDBACK[receivedMemoryKey]
       );
     },
+    onError: (error) => {
+      if (isForbiddenFeedbackError(error)) {
+        showFeedbackAccessDenied();
+        return;
+      }
+      toast.error(error.message || "Failed to delete feedback");
+    },
   });
 }
 
@@ -1239,9 +1341,7 @@ function useMarkAsRead() {
   const qc = useQueryClient();
   return useMutation<unknown, AppError, { id: string; readComment?: string }>({
     mutationFn: ({ id, readComment }) => markRatingAsRead(id, readComment),
-    onMutate: async (variables) => {
-      await qc.cancelQueries({ queryKey: ["feedback"] });
-
+    onSuccess: (_, variables) => {
       qc.setQueriesData<{ items: FeedbackItem[]; summary?: FeedbackSummary }>(
         { queryKey: ["feedback", "received"] },
         (old) => {
@@ -1259,6 +1359,15 @@ function useMarkAsRead() {
     },
     onError: (err) => {
       console.error("Mark as read failed:", err);
+      if (
+        err.kind === "forbidden" ||
+        err.status === 403 ||
+        err.message.toLowerCase() === "forbidden"
+      ) {
+        toast.error("You don't have access to mark as read");
+        return;
+      }
+      toast.error(err.message || "Failed to mark feedback as read");
     },
   });
 }
@@ -1889,29 +1998,23 @@ function GivenFeedbackList({
   );
 
   const avgRating =
-    summary?.avgRating ??
-    (filtered.length > 0
+    filtered.length > 0
       ? (filtered.reduce((s, i) => s + i.rating, 0) / filtered.length).toFixed(
           1
         )
-      : "0.0");
+      : "0.0";
   const avgRatingNum = Number(avgRating);
-  const totalFeedback =
-    direction === "to"
-      ? (summary?.given ?? filtered.length)
-      : (summary?.received ?? filtered.length);
-  const points =
-    summary?.feedbackPoints ??
-    (() => {
-      let calculatedPoints = 0;
-      filtered.forEach((item) => {
-        if (item.rating === 1) calculatedPoints -= 10;
-        else if (item.rating === 2) calculatedPoints -= 5;
-        else if (item.rating === 4) calculatedPoints += 5;
-        else if (item.rating === 5) calculatedPoints += 10;
-      });
-      return calculatedPoints;
-    })();
+  const totalFeedback = filtered.length;
+  const points = (() => {
+    let calculatedPoints = 0;
+    filtered.forEach((item) => {
+      if (item.rating === 1) calculatedPoints -= 10;
+      else if (item.rating === 2) calculatedPoints -= 5;
+      else if (item.rating === 4) calculatedPoints += 5;
+      else if (item.rating === 5) calculatedPoints += 10;
+    });
+    return calculatedPoints;
+  })();
 
   const allSelected =
     filtered.length > 0 && filtered.every((i) => selectedIds.has(i.id));
@@ -1999,14 +2102,24 @@ function GivenFeedbackList({
             <button
               type="button"
               onClick={() => {
+                const selectedItems = filtered.filter((item) =>
+                  selectedIds.has(item.id)
+                );
+                const hasBlockedItem = selectedItems.some(
+                  (item) => !canModifyFeedback(item)
+                );
+                if (hasBlockedItem) {
+                  showFeedbackAccessDenied();
+                  return;
+                }
                 if (
                   !window.confirm(
                     `Delete ${selectedIds.size} selected feedback item${selectedIds.size > 1 ? "s" : ""}?`
                   )
                 )
                   return;
-                Array.from(selectedIds).forEach((id) =>
-                  deleteMutation.mutate({ id })
+                selectedItems.forEach((item) =>
+                  deleteMutation.mutate({ id: item.id })
                 );
                 setSelectedIds(new Set());
               }}
@@ -2189,16 +2302,29 @@ function GivenFeedbackList({
                                   <button
                                     type="button"
                                     onClick={() => {
-                                      setLocalReadOverrides((prev) => ({
-                                        ...prev,
-                                        [item.id]: true,
-                                      }));
-                                      markAsReadMutation.mutate({
-                                        id: item.id,
-                                        readComment: notes[item.id]?.trim()
-                                          ? notes[item.id].trim()
-                                          : "Reviewed",
-                                      });
+                                      markAsReadMutation.mutate(
+                                        {
+                                          id: item.id,
+                                          readComment: notes[item.id]?.trim()
+                                            ? notes[item.id].trim()
+                                            : "Reviewed",
+                                        },
+                                        {
+                                          onSuccess: () => {
+                                            setLocalReadOverrides((prev) => ({
+                                              ...prev,
+                                              [item.id]: true,
+                                            }));
+                                          },
+                                          onError: () => {
+                                            setLocalReadOverrides((prev) => {
+                                              const next = { ...prev };
+                                              delete next[item.id];
+                                              return next;
+                                            });
+                                          },
+                                        }
+                                      );
                                     }}
                                     disabled={markAsReadMutation.isPending}
                                     className="inline-flex items-center gap-2 rounded-xl bg-[#10b981] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#059669] transition-colors shadow-sm disabled:opacity-50"
@@ -2255,6 +2381,10 @@ function GivenFeedbackList({
                           className="flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-sm transition-colors hover:bg-neutral-50 hover:border-neutral-300"
                           onClick={(e) => {
                             e.stopPropagation();
+                            if (!canModifyFeedback(item)) {
+                              showFeedbackAccessDenied();
+                              return;
+                            }
                             onEditFeedback(item);
                           }}
                         >
@@ -2271,6 +2401,10 @@ function GivenFeedbackList({
                           }
                           onClick={(e) => {
                             e.stopPropagation();
+                            if (!canModifyFeedback(item)) {
+                              showFeedbackAccessDenied();
+                              return;
+                            }
                             if (
                               window.confirm(
                                 "Are you sure you want to delete this feedback?"
@@ -2336,6 +2470,11 @@ function EditFeedbackModal({
   if (!isOpen || !feedbackItem) return null;
 
   const handleSubmit = () => {
+    if (!canModifyFeedback(feedbackItem)) {
+      showFeedbackAccessDenied();
+      return;
+    }
+
     if (rating === 0) {
       alert("Please select a star rating.");
       return;
@@ -2871,7 +3010,6 @@ function GiveFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 function FeedbackPage() {
-  const [bannerVisible, setBannerVisible] = useState(true);
   const [feedbackTab, setFeedbackTab] = useState("received");
   const [editingFeedback, setEditingFeedback] = useState<FeedbackItem | null>(
     null
@@ -2893,7 +3031,7 @@ function FeedbackPage() {
 
   const { data: givenFeedbackData = { items: [] } } = useFeedbackList(
     "given",
-    currentUserId
+    selectedReceivedUserId
   );
   const givenFeedback = givenFeedbackData.items;
   const givenSummary = givenFeedbackData.summary;
@@ -2913,8 +3051,7 @@ function FeedbackPage() {
   const receivedFeedback = selectedReceivedFeedback;
 
   // ── Count for badge: use selected user's actual feedback count ──
-  const receivedBadgeCount =
-    selectedReceivedSummary?.received ?? selectedReceivedFeedback.length;
+  const receivedBadgeCount = selectedReceivedFeedback.length;
 
   return (
     <div
@@ -2922,45 +3059,6 @@ function FeedbackPage() {
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       <div className="mx-auto max-w-6xl space-y-6">
-        {bannerVisible && (
-          <Card className="overflow-hidden rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white shadow-sm">
-            <div className="flex items-center gap-3 px-5 py-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#DA7756] shadow-sm">
-                <Lightbulb className="h-5 w-5 text-white" strokeWidth={2} />
-              </div>
-              <button
-                type="button"
-                className="min-w-0 flex-1 text-left"
-                onClick={() => {}}
-              >
-                <p className="text-[15px] font-bold text-neutral-900">
-                  Giving &amp; Receiving Feedback
-                </p>
-                <p className="text-xs text-neutral-500 font-medium">
-                  Click to view tips
-                </p>
-              </button>
-              <div className="flex shrink-0 items-center gap-1">
-                <button
-                  type="button"
-                  className="rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 transition-colors"
-                  aria-label="Expand tips"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-                <button
-                  type="button"
-                  className="rounded-lg p-2 text-neutral-400 hover:bg-red-50 hover:text-red-500 transition-colors"
-                  aria-label="Dismiss banner"
-                  onClick={() => setBannerVisible(false)}
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          </Card>
-        )}
-
         <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-5">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#DA7756] shadow-sm">
             <MessageSquare className="h-7 w-7 text-white" strokeWidth={2} />
@@ -3003,12 +3101,12 @@ function FeedbackPage() {
             >
               <Send className="mr-2 h-4 w-4" />
               Given
-              {(givenSummary?.given ?? givenFeedback.length) > 0 && (
+              {givenFeedback.length > 0 && (
                 <span
                   className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-extrabold text-white shadow-sm"
                   style={{ backgroundColor: BRAND.danger }}
                 >
-                  {givenSummary?.given ?? givenFeedback.length}
+                  {givenFeedback.length}
                 </span>
               )}
             </TabsTrigger>
@@ -3066,12 +3164,15 @@ function FeedbackPage() {
               <div className="p-5">
                 <AsyncBoundary>
                   <GivenFeedbackList
+                    key={`given-${receivedView}`}
                     onGiveFeedbackClick={() => setFeedbackTab("give")}
                     onEditFeedback={(item) => {
                       setEditingFeedback(item);
                       setIsEditModalOpen(true);
                     }}
                     direction="to"
+                    filterUserId={selectedReceivedUserId}
+                    itemsOverride={givenFeedback}
                   />
                 </AsyncBoundary>
               </div>

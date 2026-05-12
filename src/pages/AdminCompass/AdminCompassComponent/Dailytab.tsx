@@ -852,6 +852,14 @@ const buildMeetingNotesObject = (
     try {
       const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
+      const { selectedReportRows, selectedMissedMembers, selectedUserIds } =
+        getSelectedMeetingScope(allReports, allMissed);
+
+      if (!ensureSelectedMembersForPayload(selectedUserIds)) {
+        setIsSavingMeeting(false);
+        return;
+      }
+
       const {
         allAccomplishments,
         allTasksIssues,
@@ -859,11 +867,11 @@ const buildMeetingNotesObject = (
         combinedBigWin,
         avgSelfRating,
         combinedKpis,
-      } = buildCombinedData(allReports);
+      } = buildCombinedData(selectedReportRows);
 
       const meetingNotesObj = buildMeetingNotesObject(
-        allReports,
-        allMissed,
+        selectedReportRows,
+        selectedMissedMembers,
         meetingNotes
       );
 
@@ -899,6 +907,8 @@ const buildMeetingNotesObject = (
       const payload = {
         meeting_config_id: parseInt(selectedMeetingId, 10),
         report_date: activeDate,
+        user_ids: selectedUserIds,
+        member_ids: selectedUserIds,
         self_rating: avgSelfRating,
         is_absent: false,
         status: "submitted",
@@ -958,10 +968,17 @@ const buildMeetingNotesObject = (
     try {
       const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
+      const { selectedReportRows, selectedMissedMembers, selectedUserIds } =
+        getSelectedMeetingScope(allReports, allMissed);
+
+      if (!ensureSelectedMembersForPayload(selectedUserIds)) {
+        setIsSavingMeeting(false);
+        return;
+      }
 
       const meetingNotesObj = buildMeetingNotesObject(
-        allReports,
-        allMissed,
+        selectedReportRows,
+        selectedMissedMembers,
         meetingNotes
       );
 
@@ -972,6 +989,8 @@ const buildMeetingNotesObject = (
         )?.report_data || {};
 
       const payload = {
+        user_ids: selectedUserIds,
+        member_ids: selectedUserIds,
         report_data: {
           ...existingRd,
           meeting_notes: meetingNotesObj,
@@ -1016,6 +1035,14 @@ const buildMeetingNotesObject = (
     try {
       const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
+      const { selectedReportRows, selectedMissedMembers, selectedUserIds } =
+        getSelectedMeetingScope(allReports, allMissed);
+
+      if (!ensureSelectedMembersForPayload(selectedUserIds)) {
+        setIsSavingMeeting(false);
+        return;
+      }
+
       const {
         allAccomplishments,
         allTasksIssues,
@@ -1023,11 +1050,11 @@ const buildMeetingNotesObject = (
         combinedBigWin,
         avgSelfRating,
         combinedKpis,
-      } = buildCombinedData(allReports);
+      } = buildCombinedData(selectedReportRows);
 
       const meetingNotesObj = buildMeetingNotesObject(
-        allReports,
-        allMissed,
+        selectedReportRows,
+        selectedMissedMembers,
         meetingNotes
       );
 
@@ -1054,6 +1081,8 @@ const buildMeetingNotesObject = (
       };
 
       const payload = {
+        user_ids: selectedUserIds,
+        member_ids: selectedUserIds,
         self_rating: avgSelfRating,
         status: "submitted",
         report_data: reportDataPayload,
@@ -1115,6 +1144,35 @@ const buildMeetingNotesObject = (
     );
   }
 
+  const getReportSelectionKey = (report: any) =>
+    String(report?.journal_id || report?.user_id || "");
+
+  const getSelectedMeetingScope = (reports: any[], missedMembers: any[]) => {
+    const selectedKeys = new Set(selectedReports.map((id) => String(id)));
+    const selectedReportRows = reports.filter((report: any) =>
+      selectedKeys.has(getReportSelectionKey(report))
+    );
+    const selectedUserIds = Array.from(
+      new Set(
+        selectedReportRows
+          .map((report: any) => Number(report.user_id))
+          .filter((id: number) => Number.isFinite(id) && id > 0)
+      )
+    );
+    const selectedUserIdSet = new Set(selectedUserIds.map(String));
+    const selectedMissedMembers = missedMembers.filter((member: any) =>
+      selectedUserIdSet.has(String(member.id))
+    );
+
+    return { selectedReportRows, selectedMissedMembers, selectedUserIds };
+  };
+
+  const ensureSelectedMembersForPayload = (selectedUserIds: number[]) => {
+    if (selectedUserIds.length > 0) return true;
+    toast.error("Please select at least one user.");
+    return false;
+  };
+
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
       const allIds = memberReports.map((r: any) => r.journal_id || r.user_id);
@@ -1134,6 +1192,15 @@ const buildMeetingNotesObject = (
   const handleFeedback = () => {
     navigate("/admin-compass/feedback-dashboard");
   };
+
+  const visibleReportIds = memberReports.map((r: any) =>
+    String(r.journal_id || r.user_id)
+  );
+  const areAllVisibleReportsSelected =
+    visibleReportIds.length > 0 &&
+    visibleReportIds.every((id: string) =>
+      selectedReports.map((selectedId) => String(selectedId)).includes(id)
+    );
 
   const noMeetings = meetingsLoaded && meetingsList.length === 0;
 
@@ -1564,10 +1631,7 @@ const buildMeetingNotesObject = (
                     <label className="flex items-center gap-2 cursor-pointer select-none">
                       <input
                         type="checkbox"
-                        checked={
-                          memberReports.length > 0 &&
-                          selectedReports.length === memberReports.length
-                        }
+                        checked={areAllVisibleReportsSelected}
                         onChange={handleSelectAll}
                         className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
                       />
