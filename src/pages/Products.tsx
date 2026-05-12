@@ -112,7 +112,7 @@ const productData: Product[] = [
   },
   {
     id: "5",
-    name: "Project & Task PATM",
+    name: "Project & Task Manager",
     slug: "task-manager",
     company: "Lockated",
     businessSPOC1: "Gayatri",
@@ -418,7 +418,7 @@ const productData: Product[] = [
   },
   {
     id: "22",
-    name: "Surveys (Abdul OIG) *",
+    name: "Surveys",
     slug: "surveys",
     company: "GoPhygital",
     businessSPOC1: "Abdul",

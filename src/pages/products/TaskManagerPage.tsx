@@ -29,7 +29,7 @@ import {
  * ID: 10
  */
 const productData = {
-  name: "Project and Task Manager",
+  name: "Project & Task Manager",
   description:
     "An enterprise-grade work management solution designed for total data sovereignty and execution speed. Centralizes tasks, native MS Office documents, and meeting management into one secure platform.",
   brief:

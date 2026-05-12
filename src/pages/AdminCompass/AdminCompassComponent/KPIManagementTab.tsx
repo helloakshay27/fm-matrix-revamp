@@ -12,6 +12,8 @@ import {
   LayoutGrid,
   List,
   Loader2,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -19,6 +21,19 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { C, kpiClass } from "./Shared";
 import type { KPICardData } from "./kpiTypes";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 type FilterUser = {
   id: number;
@@ -324,6 +339,9 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
   );
   const [manageUserSearch, setManageUserSearch] = useState("");
   const [isSavingManageUsers, setIsSavingManageUsers] = useState(false);
+  const [deptFilterOpen, setDeptFilterOpen] = useState(false);
+  const [deptQuickOpen, setDeptQuickOpen] = useState(false);
+  const [userFilterOpen, setUserFilterOpen] = useState(false);
 
   const manageUsers = useMemo(() => {
     if (!manageKpi) return [] as FilterUser[];
@@ -617,15 +635,15 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
 
   return (
     <div className="space-y-5">
-      <div className="inline-flex rounded-lg border border-[rgba(218,119,86,0.2)] bg-[#eceae4] p-1">
+      <div className="inline-flex items-center gap-1 rounded-[14px] border border-[rgba(218,119,86,0.22)] bg-white p-[5px] shadow-[0_1px_4px_rgba(0,0,0,0.05)]">
         <button
           type="button"
           onClick={() => setView("cards")}
           className={cn(
-            "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-all",
+            "inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-xl px-4 text-[13px] font-semibold transition-all",
             view === "cards"
               ? "bg-[#DA7756] text-white shadow-sm"
-              : "text-neutral-600 hover:bg-[#fef6f4]/70 hover:text-[#1a1a1a]"
+              : "text-neutral-500 hover:bg-[rgba(218,119,86,0.06)] hover:text-[#DA7756]"
           )}
         >
           <LayoutGrid className="h-4 w-4" />
@@ -635,10 +653,10 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
           type="button"
           onClick={() => setView("list")}
           className={cn(
-            "inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-semibold transition-all",
+            "inline-flex h-9 items-center gap-2 whitespace-nowrap rounded-xl px-4 text-[13px] font-semibold transition-all",
             view === "list"
               ? "bg-[#DA7756] text-white shadow-sm"
-              : "text-neutral-600 hover:bg-[#fef6f4]/70 hover:text-[#1a1a1a]"
+              : "text-neutral-500 hover:bg-[rgba(218,119,86,0.06)] hover:text-[#DA7756]"
           )}
         >
           <List className="h-4 w-4" />
@@ -659,18 +677,50 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
             thresholds.
           </p>
         </div>
-        <select
-          className={cn(filterSelectClass, "min-w-[200px] shrink-0")}
-          value={selectedDepartment}
-          onChange={(e) => setSelectedDepartment(e.target.value)}
-        >
-          <option value="all">All Departments</option>
-          {departments.map((dept) => (
-            <option key={dept.id} value={String(dept.id)}>
-              {dept.name}
-            </option>
-          ))}
-        </select>
+        <Popover open={deptQuickOpen} onOpenChange={setDeptQuickOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              role="combobox"
+              aria-expanded={deptQuickOpen}
+              className={cn(
+                filterSelectClass,
+                "inline-flex min-w-[200px] shrink-0 items-center justify-between gap-2"
+              )}
+            >
+              <span>
+                {selectedDepartment === "all"
+                  ? "All Departments"
+                  : departments.find((d) => String(d.id) === selectedDepartment)?.name ?? "All Departments"}
+              </span>
+              <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-neutral-400" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-[220px]" align="start">
+            <Command>
+              <CommandInput placeholder="Search department..." />
+              <CommandList>
+                <CommandEmpty>No department found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem value="all" onSelect={() => { setSelectedDepartment("all"); setDeptQuickOpen(false); }}>
+                    <Check className={cn("mr-2 h-4 w-4", selectedDepartment === "all" ? "opacity-100 text-[#DA7756]" : "opacity-0")} />
+                    All Departments
+                  </CommandItem>
+                  {departments.map((dept) => (
+                    <CommandItem
+                      key={dept.id}
+                      value={dept.name}
+                      onSelect={() => { setSelectedDepartment(String(dept.id)); setDeptQuickOpen(false); }}
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", selectedDepartment === String(dept.id) ? "opacity-100 text-[#DA7756]" : "opacity-0")} />
+                      {dept.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="-mx-1 flex flex-nowrap items-center gap-2 overflow-x-auto px-1 pb-0.5 [scrollbar-width:thin]">
@@ -701,30 +751,94 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
             )}
           />
         </div>
-        <select
-          className={filterSelectCompactClass}
-          value={selectedDepartment}
-          onChange={(e) => setSelectedDepartment(e.target.value)}
-        >
-          <option value="all">All Departments</option>
-          {departments.map((dept) => (
-            <option key={dept.id} value={String(dept.id)}>
-              {dept.name}
-            </option>
-          ))}
-        </select>
-        <select
-          className={filterSelectCompactClass}
-          value={selectedUser}
-          onChange={(e) => setSelectedUser(e.target.value)}
-        >
-          <option value="all">All Users</option>
-          {users.map((u) => (
-            <option key={u.id} value={String(u.id)}>
-              {u.name}
-            </option>
-          ))}
-        </select>
+        <Popover open={deptFilterOpen} onOpenChange={setDeptFilterOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              role="combobox"
+              aria-expanded={deptFilterOpen}
+              className={cn(
+                filterSelectCompactClass,
+                "inline-flex items-center justify-between gap-1.5"
+              )}
+            >
+              <span className="truncate">
+                {selectedDepartment === "all"
+                  ? "All Departments"
+                  : departments.find((d) => String(d.id) === selectedDepartment)?.name ?? "All Departments"}
+              </span>
+              <ChevronsUpDown className="h-3 w-3 shrink-0 text-neutral-400" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-[200px]" align="start">
+            <Command>
+              <CommandInput placeholder="Search department..." />
+              <CommandList>
+                <CommandEmpty>No department found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem value="all" onSelect={() => { setSelectedDepartment("all"); setDeptFilterOpen(false); }}>
+                    <Check className={cn("mr-2 h-4 w-4", selectedDepartment === "all" ? "opacity-100 text-[#DA7756]" : "opacity-0")} />
+                    All Departments
+                  </CommandItem>
+                  {departments.map((dept) => (
+                    <CommandItem
+                      key={dept.id}
+                      value={dept.name}
+                      onSelect={() => { setSelectedDepartment(String(dept.id)); setDeptFilterOpen(false); }}
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", selectedDepartment === String(dept.id) ? "opacity-100 text-[#DA7756]" : "opacity-0")} />
+                      {dept.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        <Popover open={userFilterOpen} onOpenChange={setUserFilterOpen}>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              role="combobox"
+              aria-expanded={userFilterOpen}
+              className={cn(
+                filterSelectCompactClass,
+                "inline-flex items-center justify-between gap-1.5"
+              )}
+            >
+              <span className="truncate">
+                {selectedUser === "all"
+                  ? "All Users"
+                  : users.find((u) => String(u.id) === selectedUser)?.name ?? "All Users"}
+              </span>
+              <ChevronsUpDown className="h-3 w-3 shrink-0 text-neutral-400" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="p-0 w-[200px]" align="start">
+            <Command>
+              <CommandInput placeholder="Search user..." />
+              <CommandList>
+                <CommandEmpty>No user found.</CommandEmpty>
+                <CommandGroup>
+                  <CommandItem value="all" onSelect={() => { setSelectedUser("all"); setUserFilterOpen(false); }}>
+                    <Check className={cn("mr-2 h-4 w-4", selectedUser === "all" ? "opacity-100 text-[#DA7756]" : "opacity-0")} />
+                    All Users
+                  </CommandItem>
+                  {users.map((u) => (
+                    <CommandItem
+                      key={u.id}
+                      value={u.name}
+                      onSelect={() => { setSelectedUser(String(u.id)); setUserFilterOpen(false); }}
+                    >
+                      <Check className={cn("mr-2 h-4 w-4", selectedUser === String(u.id) ? "opacity-100 text-[#DA7756]" : "opacity-0")} />
+                      {u.name}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
         <select
           className={filterSelectCompactClass}
           value={selectedFrequency}

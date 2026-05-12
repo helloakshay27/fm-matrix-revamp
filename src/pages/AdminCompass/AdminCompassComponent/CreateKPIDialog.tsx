@@ -6,11 +6,14 @@ import {
   BarChart3,
   Building2,
   Calendar,
+  ChevronDown,
   LineChart,
   Users,
   Search,
   X,
   Loader2,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -28,6 +31,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import type { KPICardData } from "./kpiTypes";
 
 const DEFAULT_KPI_UNITS = [
@@ -97,6 +113,7 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
   const [assignees, setAssignees] = useState<Record<string, boolean>>({});
   const [assigneeSearchInput, setAssigneeSearchInput] = useState("");
   const [assigneeSearchTerm, setAssigneeSearchTerm] = useState("");
+  const [deptOpen, setDeptOpen] = useState(false);
 
   const departmentOptions =
     departments.length > 0
@@ -128,8 +145,9 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
   };
 
   const filteredUsers = users.filter((user) => {
-    if (!assigneeSearchTerm) return true;
-    return user.name.toLowerCase().includes(assigneeSearchTerm);
+    const term = assigneeSearchInput.trim().toLowerCase();
+    if (!term) return true;
+    return user.name.toLowerCase().includes(term);
   });
 
   const toIntegerString = (value: string) => value.replace(/\D/g, "");
@@ -271,18 +289,62 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
                   <Building2 className="h-4 w-4 text-[#DA7756]" strokeWidth={2} />
                   Department <span className="text-red-500">*</span>
                 </Label>
-                <Select value={department} onValueChange={setDepartment}>
-                  <SelectTrigger id="kpi-dept" className={selectTriggerClass}>
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departmentOptions.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>
-                        {d.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={deptOpen} onOpenChange={setDeptOpen} modal={false}>
+                  <PopoverTrigger asChild>
+                    <button
+                      id="kpi-dept"
+                      type="button"
+                      role="combobox"
+                      aria-expanded={deptOpen}
+                      className={cn(
+                        "flex h-11 w-full items-center justify-between rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-[#DA7756]/25 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      )}
+                    >
+                      <span className={cn("[&>span]:line-clamp-1", department ? "text-neutral-900" : "text-muted-foreground")}>
+                        {department
+                          ? departmentOptions.find((d) => d.id === department)?.name
+                          : "Select department"}
+                      </span>
+                      <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="p-0"
+                    style={{ width: "var(--radix-popover-trigger-width)" }}
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput placeholder="Search department..." />
+                      <CommandList
+                        className="max-h-[200px] overflow-y-auto"
+                        onWheel={(e) => e.stopPropagation()}
+                        onTouchMove={(e) => e.stopPropagation()}
+                      >
+                        <CommandEmpty>No department found.</CommandEmpty>
+                        <CommandGroup>
+                          {departmentOptions.map((d) => (
+                            <CommandItem
+                              key={d.id}
+                              value={d.name}
+                              onSelect={() => {
+                                setDepartment(d.id);
+                                setDeptOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  department === d.id ? "opacity-100 text-[#DA7756]" : "opacity-0"
+                                )}
+                              />
+                              {d.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-1.5 text-sm text-neutral-700">
@@ -372,28 +434,15 @@ const CreateKPIDialog: React.FC<CreateKPIDialogProps> = ({
                 Assign to Users (Optional)
               </span>
             </div>
-            <div className="mb-3 flex gap-2">
+            <div className="mb-3 relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
               <input
                 type="text"
                 value={assigneeSearchInput}
                 onChange={(e) => setAssigneeSearchInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleSearchUsers();
-                  }
-                }}
                 placeholder="Search user by name"
-                className={inputClass}
+                className={cn(inputClass, "pl-9")}
               />
-              <button
-                type="button"
-                onClick={handleSearchUsers}
-                className="inline-flex h-11 items-center gap-2 rounded-xl border border-[rgba(218,119,86,0.38)] bg-white px-4 text-sm font-semibold text-[#DA7756] transition-colors hover:bg-[#fef1ec]"
-              >
-                <Search className="h-4 w-4" />
-                Search
-              </button>
             </div>
             <div
               className={cn(
