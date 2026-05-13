@@ -29,6 +29,7 @@ import {
   Edit,
   Trash2,
   Eye,
+  Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,6 +51,8 @@ import { Dialog, DialogContent, Slide, Menu, MenuItem } from "@mui/material";
 import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
 import { TransitionProps } from "@mui/material/transitions";
 import AddIssueModal from "@/components/AddIssueModal";
+import AddToDoModal from "@/components/AddToDoModal";
+import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -130,6 +133,16 @@ interface AccomplishmentItem {
   fromYesterday?: boolean;
 }
 
+interface DailyReportDraft {
+  accomplishments?: AccomplishmentItem[];
+  planningItems?: { id: string; text: string; starred: boolean }[];
+  selfRating?: number[];
+  isAbsent?: boolean;
+  absenceReason?: string;
+  kpiEntries?: { [key: number]: string };
+  selectedTasksIssues?: { [key: string]: boolean };
+}
+
 const BusinessCompassDailyReport: React.FC = () => {
   const navigate = useNavigate();
   const now = new Date();
@@ -172,13 +185,23 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [openTaskModal, setOpenTaskModal] = useState(false);
   const [openIssueModal, setOpenIssueModal] = useState(false);
+  const [openTodoModal, setOpenTodoModal] = useState(false);
   const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] =
     useState<null | HTMLElement>(null);
+  const [planningMenuAnchor, setPlanningMenuAnchor] =
+    useState<null | HTMLElement>(null);
+  const [preFillDate, setPreFillDate] = useState<string | null>(null);
   const [showClosureModal, setShowClosureModal] = useState(false);
   const [closureItem, setClosureItem] = useState<any>(null);
   const [closureRemarks, setClosureRemarks] = useState("");
   const [closureAttachments, setClosureAttachments] = useState<any[]>([]);
   const [isClosureSubmitting, setIsClosureSubmitting] = useState(false);
+  const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
+  const [overdueItemId, setOverdueItemId] = useState<string | null>(null);
+  const [isOverdueLoading, setIsOverdueLoading] = useState(false);
+  const [overdueReason, setOverdueReason] = useState("");
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState<any>(null);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -193,6 +216,8 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
   const [hasMoreTasks, setHasMoreTasks] = useState(true);
   const [hasMoreIssues, setHasMoreIssues] = useState(true);
+  const [todosData, setTodosData] = useState<any>(null);
+  const [todosLoading, setTodosLoading] = useState(false);
 
   const user =
     typeof localStorage !== "undefined"
@@ -200,10 +225,93 @@ const BusinessCompassDailyReport: React.FC = () => {
       : {};
   const userId = user?.id;
 
+  // Fetch todos with same date and completed filter as tasks and issues
+
+  const fetchTodos = async () => {
+    if (!baseUrl || !token || !userId) return;
+
+    try {
+      setTodosLoading(true);
+      // Build query parameters for todos - filter by date and include both open and completed
+      const queryParams = new URLSearchParams();
+      queryParams.append("q[user_id_eq]", userId.toString());
+      queryParams.append("q[target_date_lteq]", startDate);
+      // Include both open and completed statuses
+      queryParams.append("q[status_in][]", "open");
+      queryParams.append("q[status_in][]", "completed");
+
+      const url = `https://${baseUrl}/todos.json?${queryParams.toString()}`;
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setTodosData(response.data);
+    } catch (error) {
+      console.error("Error fetching todos:", error);
+      setTodosData(null);
+    } finally {
+      setTodosLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTodos();
+  }, [startDate, baseUrl, token, userId]);
+  const draftStorageKey = useMemo(
+    () => `business-compass-daily-report-draft:${userId || "guest"}:${startDate}`,
+    [userId, startDate]
+  );
+  const canPersistDraftRef = useRef(false);
+  const draftDirtyRef = useRef(false);
+
+  const markDraftDirty = React.useCallback(() => {
+    draftDirtyRef.current = true;
+    canPersistDraftRef.current = true;
+  }, []);
+
+  const getStoredDraft = React.useCallback(
+    (key = draftStorageKey): DailyReportDraft | null => {
+      try {
+        const rawDraft = localStorage.getItem(key);
+        return rawDraft ? JSON.parse(rawDraft) : null;
+      } catch {
+        return null;
+      }
+    },
+    [draftStorageKey]
+  );
+
+  const clearStoredDraft = React.useCallback((key = draftStorageKey) => {
+    localStorage.removeItem(key);
+  }, [draftStorageKey]);
+
+  const applyStoredDraft = React.useCallback((draft: DailyReportDraft | null) => {
+    if (!draft) return;
+    if (Array.isArray(draft.accomplishments))
+      setAccomplishments(draft.accomplishments);
+    if (Array.isArray(draft.planningItems))
+      setPlanningItems(draft.planningItems);
+    if (Array.isArray(draft.selfRating)) setSelfRating(draft.selfRating);
+    if (typeof draft.isAbsent === "boolean") setIsAbsent(draft.isAbsent);
+    if (typeof draft.absenceReason === "string")
+      setAbsenceReason(draft.absenceReason);
+    if (draft.kpiEntries && typeof draft.kpiEntries === "object")
+      setKpiEntries(draft.kpiEntries);
+    if (
+      draft.selectedTasksIssues &&
+      typeof draft.selectedTasksIssues === "object"
+    ) {
+      setSelectedTasksIssues(draft.selectedTasksIssues);
+    }
+  }, []);
+
   const myIssuesFilter = `
   q[status_in][]=open
   &q[status_in][]=overdued
   &q[status_in][]=completed
+  &q[start_date_or_target_date_or_completed_at_eq]=${startDate}
   ${userId ? `&q[responsible_person_id_eq]=${userId}` : ""}
 `.replace(/\s+/g, "");
 
@@ -211,7 +319,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     taskType: "my",
     page: currentTasksPage,
     filters: {
-      "q[start_date_or_target_date_eq]": startDate,
+      "q[start_date_or_target_date_or_completed_at_eq]": startDate,
     },
   });
 
@@ -227,6 +335,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     const tasks =
       tasksData?.data?.task_managements || tasksData?.task_managements || [];
     const issues = issuesData?.issues || [];
+    const todos = todosData?.todos || [];
 
     const tasksPagination =
       tasksData?.data?.pagination || tasksData?.pagination;
@@ -257,7 +366,18 @@ const BusinessCompassDailyReport: React.FC = () => {
       originalData: issue,
     }));
 
-    const newData = [...transformedTasks, ...transformedIssues].sort(
+    const transformedTodos = todos.map((todo: any) => ({
+      id: `todo-${todo.id}`,
+      title: todo.title,
+      type: "todo",
+      status: todo.status || "open",
+      priority: todo.priority || "Medium",
+      created_at: todo.created_at,
+      responsible: todo.user_id,
+      originalData: todo,
+    }));
+
+    const newData = [...transformedTasks, ...transformedIssues, ...transformedTodos].sort(
       (a, b) =>
         new Date(b.created_at || 0).getTime() -
         new Date(a.created_at || 0).getTime()
@@ -281,7 +401,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
 
     setIsLoadingMore(false);
-  }, [tasksData, issuesData, currentTasksPage, currentIssuesPage]);
+  }, [tasksData, issuesData, todosData, currentTasksPage, currentIssuesPage]);
 
   useEffect(() => {
     const completedItems: { [key: string]: boolean } = {};
@@ -301,7 +421,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
 
-      if (isNearBottom && !isLoadingMore && !tasksLoading && !issuesLoading) {
+      if (isNearBottom && !isLoadingMore && !tasksLoading && !issuesLoading && !todosLoading) {
         setIsLoadingMore(true);
         if (hasMoreTasks) setCurrentTasksPage((prev) => prev + 1);
         if (hasMoreIssues) setCurrentIssuesPage((prev) => prev + 1);
@@ -311,7 +431,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [isLoadingMore, tasksLoading, issuesLoading, hasMoreTasks, hasMoreIssues]);
+  }, [isLoadingMore, tasksLoading, issuesLoading, todosLoading, hasMoreTasks, hasMoreIssues]);
 
   const taskIssueCounts = useMemo(() => {
     const completed = mergedTasksIssues.filter(
@@ -411,6 +531,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const addAccomplishment = () => {
+    markDraftDirty();
     setAccomplishments([
       ...accomplishments,
       {
@@ -424,10 +545,12 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const removeAccomplishment = (id: string) => {
+    markDraftDirty();
     setAccomplishments(accomplishments.filter((a) => a.id !== id));
   };
 
   const toggleAccomplishment = (id: string) => {
+    markDraftDirty();
     setAccomplishments(
       accomplishments.map((a) =>
         a.id === id ? { ...a, completed: !a.completed } : a
@@ -436,6 +559,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const toggleStar = (id: string) => {
+    markDraftDirty();
     setAccomplishments(
       accomplishments.map((a) =>
         a.id === id ? { ...a, starred: !a.starred } : a
@@ -444,6 +568,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const addPlanningItem = () => {
+    markDraftDirty();
     setPlanningItems([
       ...planningItems,
       { id: Date.now().toString(), text: "", starred: false },
@@ -451,10 +576,12 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const removePlanningItem = (id: string) => {
+    markDraftDirty();
     setPlanningItems(planningItems.filter((p) => p.id !== id));
   };
 
   const togglePlanningStar = (id: string) => {
+    markDraftDirty();
     setPlanningItems(
       planningItems.map((p) =>
         p.id === id ? { ...p, starred: !p.starred } : p
@@ -463,18 +590,21 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const updatePlanningText = (id: string, text: string) => {
+    markDraftDirty();
     setPlanningItems(
       planningItems.map((p) => (p.id === id ? { ...p, text } : p))
     );
   };
 
   const updateAccomplishmentText = (id: string, text: string) => {
+    markDraftDirty();
     setAccomplishments(
       accomplishments.map((a) => (a.id === id ? { ...a, text } : a))
     );
   };
 
   const transferUncheckedToTomorrow = () => {
+    markDraftDirty();
     const unchecked = accomplishments.filter((a) => !a.completed);
     const newPlanItems = unchecked.map((a) => ({
       id: `transferred-${Date.now()}-${a.id}`,
@@ -493,6 +623,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   ) => {
     const files = event.target.files;
     if (!files) return;
+    markDraftDirty();
     const newFiles = await Promise.all(
       Array.from(files).map(async (file) => {
         const base64 = await new Promise<string>((resolve) => {
@@ -546,14 +677,16 @@ const BusinessCompassDailyReport: React.FC = () => {
     try {
       const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
       const isTask = closureItem.type === "task";
+      const isTodo = closureItem.type === "todo";
       const urlBase = `https://${baseUrl}`;
-      const realId = closureItem.id.replace("task-", "").replace("issue-", "");
+      const realId = closureItem.id.replace("task-", "").replace("issue-", "").replace("todo-", "");
 
       setMergedTasksIssues((prev) =>
         prev.map((item) =>
           item.id === closureItem.id ? { ...item, status: "completed" } : item
         )
       );
+      markDraftDirty();
       setSelectedTasksIssues((prev) => ({ ...prev, [closureItem.id]: true }));
 
       const formDataToSend = new FormData();
@@ -568,6 +701,12 @@ const BusinessCompassDailyReport: React.FC = () => {
         await axios.put(
           `${urlBase}/task_managements/${realId}.json`,
           formDataToSend,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else if (isTodo) {
+        // Handle todo completion
+        await axios.put(`${urlBase}/todos/${realId}.json`,
+          { todo: { status: "completed" } },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
@@ -587,7 +726,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             comment: {
               body: `Closure Remarks: ${closureRemarks}`,
               commentable_id: realId,
-              commentable_type: isTask ? "TaskManagement" : "Issue",
+              commentable_type: isTask ? "TaskManagement" : isTodo ? "Todo" : "Issue",
               commentor_id: userId,
               active: true,
             },
@@ -616,6 +755,139 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   };
 
+  // Check if date is overdue
+  const isDateOverdue = (dateStr: string | undefined) => {
+    if (!dateStr) return false;
+    const itemDate = new Date(dateStr);
+    const today = new Date();
+    itemDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return itemDate < today;
+  };
+
+  // Handle item completion with overdue check
+  const handleCompleteItem = async (item: any) => {
+    try {
+      const isTask = item.type === "task";
+      const isTodo = item.type === "todo";
+      const urlBase = `https://${baseUrl}`;
+      const realId = item.id.replace("task-", "").replace("issue-", "").replace("todo-", "");
+      const targetDate = item.originalData?.target_date || item.originalData?.due_date;
+
+      // Check if item is overdue
+      if (isDateOverdue(targetDate)) {
+        setOverdueItemId(item.id);
+        setIsOverdueModalOpen(true);
+        return;
+      }
+
+      // Item is not overdue, complete it directly
+      setMergedTasksIssues((prev) =>
+        prev.map((i) =>
+          i.id === item.id ? { ...i, status: "completed" } : i
+        )
+      );
+      setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
+
+      if (isTask) {
+        await axios.put(
+          `${urlBase}/task_managements/${realId}.json`,
+          { task_management: { status: "completed" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else if (isTodo) {
+        await axios.put(`${urlBase}/todos/${realId}.json`,
+          { todo: { status: "completed" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await axios.put(`${urlBase}/issues/${realId}.json`,
+          { issue: { status: "completed" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
+      toast.success(`${item.type.charAt(0).toUpperCase() + item.type.slice(1)} completed successfully`);
+    } catch (error) {
+      console.error("Error completing item:", error);
+      toast.error(`Failed to complete ${item.type}`);
+      // Revert the UI change
+      setMergedTasksIssues((prev) =>
+        prev.map((i) =>
+          i.id === item.id ? { ...i, status: item.status } : i
+        )
+      );
+    }
+  };
+
+  // Handle overdue reason submission
+  const handleOverdueReasonSubmit = async (reason: string) => {
+    if (!overdueItemId) return;
+
+    setIsOverdueLoading(true);
+    try {
+      const item = mergedTasksIssues.find(i => i.id === overdueItemId);
+      if (!item) return;
+
+      const isTask = item.type === "task";
+      const isTodo = item.type === "todo";
+      const urlBase = `https://${baseUrl}`;
+      const realId = item.id.replace("task-", "").replace("issue-", "").replace("todo-", "");
+      const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
+
+      // Complete the item
+      setMergedTasksIssues((prev) =>
+        prev.map((i) =>
+          i.id === item.id ? { ...i, status: "completed" } : i
+        )
+      );
+      setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
+
+      if (isTask) {
+        await axios.put(
+          `${urlBase}/task_managements/${realId}.json`,
+          { task_management: { status: "completed" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else if (isTodo) {
+        await axios.put(`${urlBase}/todos/${realId}.json`,
+          { todo: { status: "completed" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await axios.put(`${urlBase}/issues/${realId}.json`,
+          { issue: { status: "completed" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
+      // Save overdue reason as comment
+      await axios.post(
+        `${urlBase}/comments.json`,
+        {
+          comment: {
+            body: `Overdue reason: ${reason}`,
+            commentable_id: realId,
+            commentable_type: isTask ? "TaskManagement" : isTodo ? "Todo" : "Issue",
+            commentor_id: userId,
+            active: true,
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success(`${item.type.charAt(0).toUpperCase() + item.type.slice(1)} completed with overdue reason`);
+      setIsOverdueModalOpen(false);
+      setOverdueItemId(null);
+      setOverdueReason("");
+    } catch (error) {
+      console.error("Error submitting overdue reason:", error);
+      toast.error("Failed to complete item");
+    } finally {
+      setIsOverdueLoading(false);
+    }
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -627,7 +899,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [viewStartDate, setViewStartDate] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - 3);
+    d.setDate(d.getDate() - 6);
     return d;
   });
 
@@ -687,8 +959,13 @@ const BusinessCompassDailyReport: React.FC = () => {
   const handleNextWeek = () => {
     const newDate = new Date(viewStartDate);
     newDate.setDate(newDate.getDate() + 7);
-    setViewStartDate(newDate);
-    const midWeek = new Date(newDate);
+    const maxStartDate = new Date();
+    maxStartDate.setHours(0, 0, 0, 0);
+    maxStartDate.setDate(maxStartDate.getDate() - 6);
+    const nextStartDate =
+      newDate.getTime() > maxStartDate.getTime() ? maxStartDate : newDate;
+    setViewStartDate(nextStartDate);
+    const midWeek = new Date(nextStartDate);
     midWeek.setDate(midWeek.getDate() + 3);
     setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
     setSelectedYear(midWeek.getFullYear().toString());
@@ -816,12 +1093,55 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   }, [selectedDate, selectedMonth, selectedYear]);
 
+  // Get next day's date in YYYY-MM-DD format for APIs
+  const getNextDayDate = () => {
+    const nextDate = new Date(startDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    // Skip weekends for task/issue dates
+    if (nextDate.getDay() === 0) nextDate.setDate(nextDate.getDate() + 1);
+    return nextDate.toLocaleDateString("en-CA");
+  };
+
+  React.useEffect(() => {
+    canPersistDraftRef.current = false;
+    draftDirtyRef.current = false;
+  }, [draftStorageKey]);
+
+  React.useEffect(() => {
+    if (!draftDirtyRef.current) return;
+    if (!canPersistDraftRef.current) return;
+    const draft: DailyReportDraft = {
+      accomplishments,
+      planningItems,
+      selfRating,
+      isAbsent,
+      absenceReason,
+      kpiEntries,
+      selectedTasksIssues,
+    };
+    localStorage.setItem(draftStorageKey, JSON.stringify(draft));
+  }, [
+    accomplishments,
+    planningItems,
+    selfRating,
+    isAbsent,
+    absenceReason,
+    kpiEntries,
+    selectedTasksIssues,
+    draftStorageKey,
+  ]);
+
   React.useEffect(() => {
     const fetchExistingReport = async () => {
       try {
+        canPersistDraftRef.current = false;
         const baseUrl = getBaseUrl() ?? "https://fm-uat-api.lockated.com";
         const token = getToken();
-        if (!token) return;
+        if (!token) {
+          applyStoredDraft();
+          canPersistDraftRef.current = true;
+          return;
+        }
 
         // Safely extract year, month, and day to avoid Javascript Date UTC shift bugs
         const [year, month, day] = startDate.split("-");
@@ -957,6 +1277,7 @@ const BusinessCompassDailyReport: React.FC = () => {
               if (existingReport.self_rating !== undefined)
                 setSelfRating([existingReport.self_rating]);
               setSelectedTasksIssues({});
+              applyStoredDraft(getStoredDraft());
             }
           } else {
             setCurrentReportId(null);
@@ -971,14 +1292,18 @@ const BusinessCompassDailyReport: React.FC = () => {
 
             // No report today, just apply carried items
             setAccomplishments(carriedPlanItems);
+            applyStoredDraft(getStoredDraft());
           }
         }
       } catch (err) {
         console.error("Failed to fetch existing report:", err);
+        applyStoredDraft(getStoredDraft());
+      } finally {
+        canPersistDraftRef.current = true;
       }
     };
     fetchExistingReport();
-  }, [startDate]);
+  }, [startDate, draftStorageKey, getStoredDraft, applyStoredDraft]);
 
   const fetchReportsList = async () => {
     try {
@@ -1123,6 +1448,9 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       const data = response.data;
       if (!currentReportId && data.id) setCurrentReportId(data.id);
+      draftDirtyRef.current = false;
+      canPersistDraftRef.current = false;
+      clearStoredDraft();
       setSubmitSuccess(true);
       fetchReportsList();
       setTimeout(() => {
@@ -1456,12 +1784,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <input
                                 type="number"
                                 value={kpiEntries[kpi.kpi_id] || ""}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  markDraftDirty();
                                   setKpiEntries((prev) => ({
                                     ...prev,
                                     [kpi.kpi_id]: e.target.value,
-                                  }))
-                                }
+                                  }));
+                                }}
                                 placeholder="0"
                                 className="w-full px-3 py-2 border border-[#e5e7eb] rounded-[10px] text-sm font-bold text-center bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/30 focus:border-[#f59e0b]"
                               />
@@ -1645,19 +1974,19 @@ const BusinessCompassDailyReport: React.FC = () => {
                           className="hidden"
                         />
                         <button
-  disabled={uploadedFiles.length + reportAttachments.length >= 5}
-  onClick={triggerFileUpload}
-  style={{
-    backgroundColor: uploadedFiles.length + reportAttachments.length >= 5 ? '#d1d5db' : '#DA7756',
-    color: '#ffffff',
-    cursor: uploadedFiles.length + reportAttachments.length >= 5 ? 'not-allowed' : 'pointer',
-    opacity: uploadedFiles.length + reportAttachments.length >= 5 ? 0.5 : 1,
-  }}
-  className="flex items-center gap-2 px-6 h-10 rounded-[8px] text-xs font-black shadow-md transition-all border-none"
->
-  <Upload size={16} />
-  File Upload
-</button>
+                          disabled={uploadedFiles.length + reportAttachments.length >= 5}
+                          onClick={triggerFileUpload}
+                          style={{
+                            backgroundColor: uploadedFiles.length + reportAttachments.length >= 5 ? '#d1d5db' : '#DA7756',
+                            color: '#ffffff',
+                            cursor: uploadedFiles.length + reportAttachments.length >= 5 ? 'not-allowed' : 'pointer',
+                            opacity: uploadedFiles.length + reportAttachments.length >= 5 ? 0.5 : 1,
+                          }}
+                          className="flex items-center gap-2 px-6 h-10 rounded-[8px] text-xs font-black shadow-md transition-all border-none"
+                        >
+                          <Upload size={16} />
+                          File Upload
+                        </button>
                       </div>
                     </div>
 
@@ -1776,7 +2105,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <div className="flex items-center gap-3">
                           <CheckSquare className="h-6 w-6 text-[#DA7756]" />
                           <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                            Tasks & Issues
+                            Tasks, Issues & Todos
                           </h3>
                         </div>
                         {/* <p className="text-[11px] text-gray-500 font-medium">
@@ -1885,14 +2214,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 item.status === "closed"
                               }
                               onCheckedChange={(checked) => {
-                                if (
-                                  checked &&
-                                  item.status !== "completed" &&
-                                  item.status !== "closed"
-                                ) {
-                                  setClosureItem(item);
-                                  setShowClosureModal(true);
+                                if (checked && item.status !== "completed" && item.status !== "closed") {
+                                  // Call API directly to complete the item
+                                  handleCompleteItem(item);
                                 } else {
+                                  markDraftDirty();
                                   setSelectedTasksIssues((prev) => ({
                                     ...prev,
                                     [item.id]: checked as boolean,
@@ -1903,11 +2229,16 @@ const BusinessCompassDailyReport: React.FC = () => {
                             />
                             <button
                               onClick={() => {
-                                const detailsUrl =
-                                  item.type === "task"
-                                    ? `/vas/tasks/${item.originalData?.id}`
-                                    : `/vas/issues/${item.originalData?.id}`;
-                                navigate(detailsUrl);
+                                if (item.type === "todo") {
+                                  setSelectedTodo(item.originalData);
+                                  setIsDetailsModalOpen(true);
+                                } else {
+                                  const detailsUrl =
+                                    item.type === "task"
+                                      ? `/vas/tasks/${item.originalData?.id}`
+                                      : `/vas/issues/${item.originalData?.id}`;
+                                  navigate(detailsUrl);
+                                }
                               }}
                               className="p-1.5 hover:bg-gray-200 rounded-[6px] transition-colors"
                               title={`View ${item.type} details`}
@@ -1916,6 +2247,15 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 size={16}
                                 className="text-[#DA7756] hover:text-[#DA7756]"
                               />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                              className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
+                              title="View todo"
+                            >
+                              <Pencil size={14} />
                             </button>
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[#DA7756] text-[#fff] uppercase">
@@ -2076,13 +2416,22 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </p>
                       </div>
                     )}
-                    <Button
-                      className="rounded-[8px] shadow-md font-semibold text-sm w-full"
-                      onClick={addPlanningItem}
-                    >
-                      <Plus size={14} />
-                      Add Item
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        className="rounded-[8px] shadow-md font-semibold text-sm flex-1"
+                        onClick={addPlanningItem}
+                      >
+                        <Plus size={14} />
+                        Add Item
+                      </Button>
+                      <Button
+                        className="rounded-[8px] shadow-md font-semibold text-sm px-4"
+                        onClick={(e) => setPlanningMenuAnchor(e.currentTarget)}
+                        title="Add Task, Issue, or Todo for next day"
+                      >
+                        <Plus size={14} />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -2101,21 +2450,25 @@ const BusinessCompassDailyReport: React.FC = () => {
                         {selfRating[0]}/10
                       </span>
                     </div>
-                   <Slider
-  value={selfRating}
-  onValueChange={setSelfRating}
-  max={10}
-  step={1}
-  className="cursor-pointer [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer [&_[role=slider]]:outline-none [&_[data-orientation=horizontal]]:h-1.5 [&_[data-orientation=horizontal]_span:first-child]:bg-[#DA7756]"
-/>
+                    <Slider
+                      value={selfRating}
+                      onValueChange={(value) => {
+    markDraftDirty();
+    setSelfRating(value);
+  }}
+                      max={10}
+                      step={1}
+                      className="cursor-pointer [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer [&_[role=slider]]:outline-none [&_[data-orientation=horizontal]]:h-1.5 [&_[data-orientation=horizontal]_span:first-child]:bg-[#DA7756]"
+                    />
                   </div>
                   <div className="flex items-center gap-3 bg-[#DA7756]/5 px-4 py-3 rounded-[10px] border border-[#DA7756]/20 min-w-[150px] justify-center">
                     <Checkbox
                       id="absent"
                       checked={isAbsent}
-                      onCheckedChange={(checked) =>
-                        setIsAbsent(checked as boolean)
-                      }
+                      onCheckedChange={(checked) => {
+                        markDraftDirty();
+                        setIsAbsent(checked as boolean);
+                      }}
                       className="h-5 w-5 rounded-[4px] border-[#DA7756]/40 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
                     />
                     <label
@@ -2135,7 +2488,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <Input
                       placeholder="Why are you absent today?"
                       value={absenceReason}
-                      onChange={(e) => setAbsenceReason(e.target.value)}
+                      onChange={(e) => {
+                        markDraftDirty();
+                        setAbsenceReason(e.target.value);
+                      }}
                       className="h-12 rounded-[10px] border-gray-200 focus:ring-[#22c55e]/20"
                     />
                   </div>
@@ -2395,7 +2751,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 className="text-[#ea580c]"
                               />
                               <span className="text-xs font-black text-[#ea580c] uppercase tracking-widest">
-                                Tasks & Issues
+                                Tasks, Issues & Todos
                               </span>
                             </div>
                             <span className="text-xs font-black text-[#ea580c]">
@@ -3400,7 +3756,20 @@ const BusinessCompassDailyReport: React.FC = () => {
           <div className="flex-1 overflow-y-auto">
             <ProjectTaskCreateModal
               isEdit={false}
-              onCloseModal={() => setOpenTaskModal(false)}
+              onCloseModal={() => {
+                setOpenTaskModal(false);
+                setPreFillDate(null);
+              }}
+              prefillData={{
+                title: "",
+                description: "",
+                responsible_person: {
+                  id: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").id : "",
+                },
+                tags: [],
+                start_date: preFillDate,
+                target_date: preFillDate,
+              }}
             />
           </div>
         </DialogContent>
@@ -3408,7 +3777,39 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       <AddIssueModal
         openDialog={openIssueModal}
-        handleCloseDialog={() => setOpenIssueModal(false)}
+        handleCloseDialog={() => {
+          setOpenIssueModal(false);
+          setPreFillDate(null);
+        }}
+        prefillData={{
+          title: "",
+          description: "",
+          responsible_person: {
+            id: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").id : "",
+          },
+          tags: [],
+          start_date: preFillDate,
+          target_date: preFillDate,
+        }}
+      />
+
+
+      <AddToDoModal
+        isModalOpen={openTodoModal}
+        setIsModalOpen={() => {
+          setOpenTodoModal(false);
+          setPreFillDate(null);
+        }}
+        getTodos={fetchTodos}
+        prefillData={{
+          title: "",
+          description: "",
+          responsible_person: {
+            id: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").id : "",
+          },
+          tags: [],
+          start_date: preFillDate,
+        }}
       />
 
       {/* Closure Remarks Modal */}
@@ -3629,7 +4030,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           sx={{
             py: 1.5,
             px: 2,
-            margin: "4px 8px 8px 8px",
+            margin: "4px 8px 4px 8px",
             borderRadius: "10px",
             "&:hover": {
               backgroundColor: "#fef2f2",
@@ -3649,7 +4050,222 @@ const BusinessCompassDailyReport: React.FC = () => {
             </div>
           </div>
         </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setOpenTodoModal(true);
+            setTaskIssueMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "4px 8px 8px 8px",
+            borderRadius: "10px",
+            "&:hover": {
+              backgroundColor: "#fef9f0",
+              transform: "translateX(4px)",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-amber-50 rounded-lg">
+              <ListTodo size={18} className="text-amber-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+              <span className="text-xs text-gray-500 font-medium">
+                Create a quick todo
+              </span>
+            </div>
+          </div>
+        </MenuItem>
       </Menu>
+
+      <Menu
+        anchorEl={planningMenuAnchor}
+        open={Boolean(planningMenuAnchor)}
+        onClose={() => setPlanningMenuAnchor(null)}
+        sx={{
+          "& .MuiPaper-root": {
+            borderRadius: "12px",
+            boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+            minWidth: "220px",
+            overflow: "visible",
+            "&::before": {
+              content: '""',
+              display: "block",
+              position: "absolute",
+              top: -8,
+              right: 20,
+              width: 12,
+              height: 12,
+              backgroundColor: "#ffffff",
+              transform: "translateY(-50%) rotate(45deg)",
+              zIndex: 0,
+              boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+            },
+          },
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem
+          onClick={() => {
+            setPreFillDate(getNextDayDate());
+            setOpenTaskModal(true);
+            setPlanningMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "8px 8px 4px 8px",
+            borderRadius: "10px",
+            "&:hover": {
+              backgroundColor: "#f0f4ff",
+              transform: "translateX(4px)",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <CheckSquare size={18} className="text-blue-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Task</span>
+              <span className="text-xs text-gray-500 font-medium">
+                For {nextDayLabel || "tomorrow"}
+              </span>
+            </div>
+          </div>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setPreFillDate(getNextDayDate());
+            setOpenIssueModal(true);
+            setPlanningMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "4px 8px 4px 8px",
+            borderRadius: "10px",
+            "&:hover": {
+              backgroundColor: "#fef2f2",
+              transform: "translateX(4px)",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-red-50 rounded-lg">
+              <AlertCircle size={18} className="text-red-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Issue</span>
+              <span className="text-xs text-gray-500 font-medium">
+                For {nextDayLabel || "tomorrow"}
+              </span>
+            </div>
+          </div>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setPreFillDate(getNextDayDate());
+            setOpenTodoModal(true);
+            setPlanningMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "4px 8px 8px 8px",
+            borderRadius: "10px",
+            "&:hover": {
+              backgroundColor: "#fef9f0",
+              transform: "translateX(4px)",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-amber-50 rounded-lg">
+              <ListTodo size={18} className="text-amber-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+              <span className="text-xs text-gray-500 font-medium">
+                For {nextDayLabel || "tomorrow"}
+              </span>
+            </div>
+          </div>
+        </MenuItem>
+      </Menu>
+
+      {/* Overdue Reason Modal */}
+      <Dialog
+        open={isOverdueModalOpen}
+        onClose={() => {
+          setIsOverdueModalOpen(false);
+          setOverdueItemId(null);
+          setOverdueReason("");
+        }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          className: "rounded-[16px]",
+          sx: {
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
+          },
+        }}
+      >
+        <DialogContent className="pt-6">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Item is Overdue</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                This item is past its target date. Please provide a reason for the delay.
+              </p>
+            </div>
+
+            <textarea
+              value={overdueReason}
+              onChange={(e) => setOverdueReason(e.target.value)}
+              placeholder="Enter reason for overdue..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#DA7756]/50 resize-none"
+              rows={4}
+              disabled={isOverdueLoading}
+            />
+
+            <div className="flex gap-2 justify-end pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsOverdueModalOpen(false);
+                  setOverdueItemId(null);
+                  setOverdueReason("");
+                }}
+                disabled={isOverdueLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-[#DA7756] hover:bg-[#c45f3a] text-white"
+                onClick={() => handleOverdueReasonSubmit(overdueReason)}
+                disabled={!overdueReason.trim() || isOverdueLoading}
+              >
+                {isOverdueLoading ? "Submitting..." : "Complete & Submit"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Todo Details Modal */}
+      <TodoDetailsModal
+        isModalOpen={isDetailsModalOpen}
+        setIsModalOpen={setIsDetailsModalOpen}
+        todo={selectedTodo}
+        onEditClick={() => {
+          setIsDetailsModalOpen(false);
+          // Can add edit functionality here if needed
+        }}
+      />
     </div>
   );
 };

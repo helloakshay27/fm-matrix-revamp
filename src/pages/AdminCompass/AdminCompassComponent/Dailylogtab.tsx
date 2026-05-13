@@ -311,39 +311,68 @@ const resolveRawSource = (report) => {
   const hasDraft = !!report.daily_report;
   const hasReportData = rd && Object.keys(rd).length > 0;
 
+  const normalizeDraftRaw = (raw) => ({
+    ...raw,
+    accomplishments:
+      raw.accomplishments?.items ||
+      (Array.isArray(raw.accomplishments) ? raw.accomplishments : []),
+    self_rating:
+      raw.details?.self_rating ?? raw.sections?.self_rating ?? null,
+    total_score: raw.total_score ?? null,
+    is_absent: raw.details?.is_absent ?? raw.sections?.is_absent ?? null,
+  });
+
   if (!hasReportData && hasDraft) {
-    return {
-      ...draftRaw,
-      accomplishments:
-        draftRaw.accomplishments?.items ||
-        (Array.isArray(draftRaw.accomplishments)
-          ? draftRaw.accomplishments
-          : []),
-      self_rating:
-        draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? null,
-      total_score: draftRaw.total_score ?? null,
-      is_absent:
-        draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent ?? null,
-    };
+    return normalizeDraftRaw(draftRaw);
   }
 
   if (report.status === "pending" && hasDraft) {
+    return normalizeDraftRaw(draftRaw);
+  }
+
+  if (hasReportData && hasDraft) {
+    const normalizedDraft = normalizeDraftRaw(draftRaw);
+
     return {
-      ...draftRaw,
+      ...normalizedDraft,
+      ...rd,
+      tasks_issues: Array.isArray(rd.tasks_issues)
+        ? rd.tasks_issues
+        : normalizedDraft.tasks_issues || [],
+      tomorrow_plan: Array.isArray(rd.tomorrow_plan)
+        ? rd.tomorrow_plan
+        : normalizedDraft.tomorrow_plan || [],
       accomplishments:
-        draftRaw.accomplishments?.items ||
-        (Array.isArray(draftRaw.accomplishments)
-          ? draftRaw.accomplishments
-          : []),
-      self_rating:
-        draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? null,
-      total_score: draftRaw.total_score ?? null,
-      is_absent:
-        draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent ?? null,
+        rd.accomplishments?.items ||
+        (Array.isArray(rd.accomplishments)
+          ? rd.accomplishments
+          : normalizedDraft.accomplishments || []),
+      self_rating: rd.self_rating ?? normalizedDraft.self_rating,
+      total_score: rd.total_score ?? normalizedDraft.total_score,
+      is_absent: rd.is_absent ?? normalizedDraft.is_absent,
     };
   }
 
   return rd;
+};
+
+const getMeetingNotesData = (data) => {
+  if (!data) return {};
+  const allReports = data.member_reports || data.reports || [];
+  const meetingHeadUserId = data.config?.meeting_head?.id;
+  const sourceReport =
+    allReports.find(
+      (report) =>
+        report.user_id === meetingHeadUserId &&
+        report.status === "submitted" &&
+        report.report_data?.meeting_notes
+    ) ||
+    allReports.find(
+      (report) => report.status === "submitted" && report.report_data?.meeting_notes
+    ) ||
+    allReports.find((report) => report.report_data?.meeting_notes);
+
+  return data.report_data?.meeting_notes || sourceReport?.report_data?.meeting_notes || {};
 };
 
 const getItemTitle = (item) => {
@@ -454,11 +483,20 @@ const ReportDetailModal = ({ log, onClose }) => {
   const hasDraft = !!details?.daily_report;
   const draftRaw = details?.daily_report?.report_data || {};
   const rd = details?.report_data || {};
+  const detailSource =
+    details && (details.report_data || details.daily_report)
+      ? {
+          ...log._raw,
+          ...details,
+          report_data: details.report_data ?? log._raw?.report_data,
+          daily_report: details.daily_report ?? log._raw?.daily_report,
+        }
+      : log._raw || {
+          report_data: rd,
+          daily_report: details?.daily_report,
+        };
 
-  const rawDisplayRd = resolveRawSource(
-    details ||
-      log._raw || { report_data: rd, daily_report: details?.daily_report }
-  );
+  const rawDisplayRd = resolveRawSource(detailSource);
 
   const displayRd = normalizeReportData(rawDisplayRd);
 
@@ -516,9 +554,7 @@ const ReportDetailModal = ({ log, onClose }) => {
       return false;
     }
 
-    const rawSource = resolveRawSource(
-      details || { report_data: rd, daily_report: details?.daily_report }
-    );
+    const rawSource = resolveRawSource(detailSource);
 
     if (patch.tomorrow_plan_item) {
       const existingPlan = Array.isArray(rawSource.tomorrow_plan)
@@ -1325,13 +1361,30 @@ const DailyLogTab = () => {
       setMeetingDays(configDays);
       setIsNonWorkingDay(checkIsNonWorkingDay(selectedDate, configDays));
 
-      // Show anyone who has submitted OR has a draft — exclude only pure pending (no draft at all)
+      // Show logs only for saved meetings; member draft data can remain after a meeting is deleted.
       const allReports = data?.member_reports || data?.reports || [];
-      const hasMeetingNotes =
-        !!data?.report_data?.meeting_notes ||
-        allReports.some((report) => !!report.report_data?.meeting_notes);
+      const meetingNotesData = getMeetingNotesData(data);
+      const detailedReports = Array.isArray(meetingNotesData?.detailed_reports)
+        ? meetingNotesData.detailed_reports
+        : [];
+      const meetingNotesMissedMembers = Array.isArray(
+        meetingNotesData?.missed_report_members
+      )
+        ? meetingNotesData.missed_report_members
+        : [];
+      const rootMissedMembers = Array.isArray(data?.missed_members)
+        ? data.missed_members
+        : [];
+      const missedCount =
+        meetingNotesMissedMembers.length ||
+        rootMissedMembers.length ||
+        allReports.filter(
+          (report) => report.status === "pending" || report.status === "missed"
+        ).length;
+      const hasSavedMeetingData =
+        !!data?.report_data?.meeting_notes || detailedReports.length > 0;
 
-      if (!hasMeetingNotes) {
+      if (!hasSavedMeetingData) {
         setApiLogs([]);
         setGroupedApiLogs({});
         setMetaSubmitted(0);
@@ -1339,9 +1392,20 @@ const DailyLogTab = () => {
         return;
       }
 
-      const submittedReports = allReports.filter(
-        (r) => r.status !== "pending" || !!r.daily_report
+      const detailedReportUserIds = new Set(
+        detailedReports
+          .map((report) => Number(report.user_id))
+          .filter((id) => Number.isFinite(id) && id > 0)
       );
+
+      const submittedReports =
+        detailedReports.length > 0
+          ? allReports.filter((report) =>
+              detailedReportUserIds.has(Number(report.user_id))
+            )
+          : allReports.filter(
+              (r) => r.status !== "pending" || !!r.daily_report
+            );
 
       // Map to table row format
       let logsArray = submittedReports.map((report) => {
@@ -1372,11 +1436,8 @@ const DailyLogTab = () => {
         };
       });
 
-      const rootDetailedReports =
-        data?.report_data?.meeting_notes?.detailed_reports || [];
-
-      if (logsArray.length === 0 && Array.isArray(rootDetailedReports)) {
-        logsArray = rootDetailedReports.map((report) => {
+      if (logsArray.length === 0 && detailedReports.length > 0) {
+        logsArray = detailedReports.map((report) => {
           const accomplishments = Array.isArray(report.accomplishments)
             ? report.accomplishments
             : [];
@@ -1437,8 +1498,8 @@ const DailyLogTab = () => {
         setGroupedApiLogs({});
       }
 
-      setMetaSubmitted(logsArray.length);
-      setMetaExpected(data?.total_members ?? 0);
+      setMetaSubmitted(detailedReports.length || logsArray.length);
+      setMetaExpected(missedCount);
     } catch (err) {
       setApiError(err.message);
       setApiLogs([]);
@@ -1570,14 +1631,12 @@ const DailyLogTab = () => {
                         {metaSubmitted}
                       </span>
                     </span>
-                    {metaExpected > 0 && (
-                      <span className="flex items-center gap-2">
-                        Total Members
-                        <span className="px-2 py-0.5 rounded-[6px] bg-[#EB4A4A] text-white">
-                          {metaExpected}
-                        </span>
+                    <span className="flex items-center gap-2">
+                      Missed
+                      <span className="px-2 py-0.5 rounded-[6px] bg-[#EB4A4A] text-white">
+                        {metaExpected}
                       </span>
-                    )}
+                    </span>
                   </>
                 )}
               </div>
