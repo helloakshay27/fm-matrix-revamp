@@ -356,6 +356,25 @@ const resolveRawSource = (report) => {
   return rd;
 };
 
+const getMeetingNotesData = (data) => {
+  if (!data) return {};
+  const allReports = data.member_reports || data.reports || [];
+  const meetingHeadUserId = data.config?.meeting_head?.id;
+  const sourceReport =
+    allReports.find(
+      (report) =>
+        report.user_id === meetingHeadUserId &&
+        report.status === "submitted" &&
+        report.report_data?.meeting_notes
+    ) ||
+    allReports.find(
+      (report) => report.status === "submitted" && report.report_data?.meeting_notes
+    ) ||
+    allReports.find((report) => report.report_data?.meeting_notes);
+
+  return data.report_data?.meeting_notes || sourceReport?.report_data?.meeting_notes || {};
+};
+
 const getItemTitle = (item) => {
   if (!item) return "";
   if (typeof item === "string") return item;
@@ -1344,11 +1363,26 @@ const DailyLogTab = () => {
 
       // Show logs only for saved meetings; member draft data can remain after a meeting is deleted.
       const allReports = data?.member_reports || data?.reports || [];
+      const meetingNotesData = getMeetingNotesData(data);
+      const detailedReports = Array.isArray(meetingNotesData?.detailed_reports)
+        ? meetingNotesData.detailed_reports
+        : [];
+      const meetingNotesMissedMembers = Array.isArray(
+        meetingNotesData?.missed_report_members
+      )
+        ? meetingNotesData.missed_report_members
+        : [];
+      const rootMissedMembers = Array.isArray(data?.missed_members)
+        ? data.missed_members
+        : [];
+      const missedCount =
+        meetingNotesMissedMembers.length ||
+        rootMissedMembers.length ||
+        allReports.filter(
+          (report) => report.status === "pending" || report.status === "missed"
+        ).length;
       const hasSavedMeetingData =
-        !!data?.report_data?.meeting_notes ||
-        allReports.some(
-          (report) => !!report.journal_id || !!report.report_data?.meeting_notes
-        );
+        !!data?.report_data?.meeting_notes || detailedReports.length > 0;
 
       if (!hasSavedMeetingData) {
         setApiLogs([]);
@@ -1358,10 +1392,20 @@ const DailyLogTab = () => {
         return;
       }
 
-      // Show anyone who has submitted OR has a draft — exclude only pure pending (no draft at all)
-      const submittedReports = allReports.filter(
-        (r) => r.status !== "pending" || !!r.daily_report
+      const detailedReportUserIds = new Set(
+        detailedReports
+          .map((report) => Number(report.user_id))
+          .filter((id) => Number.isFinite(id) && id > 0)
       );
+
+      const submittedReports =
+        detailedReports.length > 0
+          ? allReports.filter((report) =>
+              detailedReportUserIds.has(Number(report.user_id))
+            )
+          : allReports.filter(
+              (r) => r.status !== "pending" || !!r.daily_report
+            );
 
       // Map to table row format
       let logsArray = submittedReports.map((report) => {
@@ -1392,11 +1436,8 @@ const DailyLogTab = () => {
         };
       });
 
-      const rootDetailedReports =
-        data?.report_data?.meeting_notes?.detailed_reports || [];
-
-      if (logsArray.length === 0 && Array.isArray(rootDetailedReports)) {
-        logsArray = rootDetailedReports.map((report) => {
+      if (logsArray.length === 0 && detailedReports.length > 0) {
+        logsArray = detailedReports.map((report) => {
           const accomplishments = Array.isArray(report.accomplishments)
             ? report.accomplishments
             : [];
@@ -1457,8 +1498,8 @@ const DailyLogTab = () => {
         setGroupedApiLogs({});
       }
 
-      setMetaSubmitted(logsArray.length);
-      setMetaExpected(data?.total_members ?? 0);
+      setMetaSubmitted(detailedReports.length || logsArray.length);
+      setMetaExpected(missedCount);
     } catch (err) {
       setApiError(err.message);
       setApiLogs([]);
@@ -1590,14 +1631,12 @@ const DailyLogTab = () => {
                         {metaSubmitted}
                       </span>
                     </span>
-                    {metaExpected > 0 && (
-                      <span className="flex items-center gap-2">
-                        Total Members
-                        <span className="px-2 py-0.5 rounded-[6px] bg-[#EB4A4A] text-white">
-                          {metaExpected}
-                        </span>
+                    <span className="flex items-center gap-2">
+                      Missed
+                      <span className="px-2 py-0.5 rounded-[6px] bg-[#EB4A4A] text-white">
+                        {metaExpected}
                       </span>
-                    )}
+                    </span>
                   </>
                 )}
               </div>

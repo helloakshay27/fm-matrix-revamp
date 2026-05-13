@@ -133,6 +133,16 @@ interface AccomplishmentItem {
   fromYesterday?: boolean;
 }
 
+interface DailyReportDraft {
+  accomplishments?: AccomplishmentItem[];
+  planningItems?: { id: string; text: string; starred: boolean }[];
+  selfRating?: number[];
+  isAbsent?: boolean;
+  absenceReason?: string;
+  kpiEntries?: { [key: number]: string };
+  selectedTasksIssues?: { [key: string]: boolean };
+}
+
 const BusinessCompassDailyReport: React.FC = () => {
   const navigate = useNavigate();
   const now = new Date();
@@ -249,6 +259,53 @@ const BusinessCompassDailyReport: React.FC = () => {
   useEffect(() => {
     fetchTodos();
   }, [startDate, baseUrl, token, userId]);
+  const draftStorageKey = useMemo(
+    () => `business-compass-daily-report-draft:${userId || "guest"}:${startDate}`,
+    [userId, startDate]
+  );
+  const canPersistDraftRef = useRef(false);
+  const draftDirtyRef = useRef(false);
+
+  const markDraftDirty = React.useCallback(() => {
+    draftDirtyRef.current = true;
+    canPersistDraftRef.current = true;
+  }, []);
+
+  const getStoredDraft = React.useCallback(
+    (key = draftStorageKey): DailyReportDraft | null => {
+      try {
+        const rawDraft = localStorage.getItem(key);
+        return rawDraft ? JSON.parse(rawDraft) : null;
+      } catch {
+        return null;
+      }
+    },
+    [draftStorageKey]
+  );
+
+  const clearStoredDraft = React.useCallback((key = draftStorageKey) => {
+    localStorage.removeItem(key);
+  }, [draftStorageKey]);
+
+  const applyStoredDraft = React.useCallback((draft: DailyReportDraft | null) => {
+    if (!draft) return;
+    if (Array.isArray(draft.accomplishments))
+      setAccomplishments(draft.accomplishments);
+    if (Array.isArray(draft.planningItems))
+      setPlanningItems(draft.planningItems);
+    if (Array.isArray(draft.selfRating)) setSelfRating(draft.selfRating);
+    if (typeof draft.isAbsent === "boolean") setIsAbsent(draft.isAbsent);
+    if (typeof draft.absenceReason === "string")
+      setAbsenceReason(draft.absenceReason);
+    if (draft.kpiEntries && typeof draft.kpiEntries === "object")
+      setKpiEntries(draft.kpiEntries);
+    if (
+      draft.selectedTasksIssues &&
+      typeof draft.selectedTasksIssues === "object"
+    ) {
+      setSelectedTasksIssues(draft.selectedTasksIssues);
+    }
+  }, []);
 
   const myIssuesFilter = `
   q[status_in][]=open
@@ -474,6 +531,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const addAccomplishment = () => {
+    markDraftDirty();
     setAccomplishments([
       ...accomplishments,
       {
@@ -487,10 +545,12 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const removeAccomplishment = (id: string) => {
+    markDraftDirty();
     setAccomplishments(accomplishments.filter((a) => a.id !== id));
   };
 
   const toggleAccomplishment = (id: string) => {
+    markDraftDirty();
     setAccomplishments(
       accomplishments.map((a) =>
         a.id === id ? { ...a, completed: !a.completed } : a
@@ -499,6 +559,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const toggleStar = (id: string) => {
+    markDraftDirty();
     setAccomplishments(
       accomplishments.map((a) =>
         a.id === id ? { ...a, starred: !a.starred } : a
@@ -507,6 +568,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const addPlanningItem = () => {
+    markDraftDirty();
     setPlanningItems([
       ...planningItems,
       { id: Date.now().toString(), text: "", starred: false },
@@ -514,10 +576,12 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const removePlanningItem = (id: string) => {
+    markDraftDirty();
     setPlanningItems(planningItems.filter((p) => p.id !== id));
   };
 
   const togglePlanningStar = (id: string) => {
+    markDraftDirty();
     setPlanningItems(
       planningItems.map((p) =>
         p.id === id ? { ...p, starred: !p.starred } : p
@@ -526,18 +590,21 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const updatePlanningText = (id: string, text: string) => {
+    markDraftDirty();
     setPlanningItems(
       planningItems.map((p) => (p.id === id ? { ...p, text } : p))
     );
   };
 
   const updateAccomplishmentText = (id: string, text: string) => {
+    markDraftDirty();
     setAccomplishments(
       accomplishments.map((a) => (a.id === id ? { ...a, text } : a))
     );
   };
 
   const transferUncheckedToTomorrow = () => {
+    markDraftDirty();
     const unchecked = accomplishments.filter((a) => !a.completed);
     const newPlanItems = unchecked.map((a) => ({
       id: `transferred-${Date.now()}-${a.id}`,
@@ -556,6 +623,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   ) => {
     const files = event.target.files;
     if (!files) return;
+    markDraftDirty();
     const newFiles = await Promise.all(
       Array.from(files).map(async (file) => {
         const base64 = await new Promise<string>((resolve) => {
@@ -618,6 +686,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           item.id === closureItem.id ? { ...item, status: "completed" } : item
         )
       );
+      markDraftDirty();
       setSelectedTasksIssues((prev) => ({ ...prev, [closureItem.id]: true }));
 
       const formDataToSend = new FormData();
@@ -830,7 +899,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [viewStartDate, setViewStartDate] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - 3);
+    d.setDate(d.getDate() - 6);
     return d;
   });
 
@@ -890,8 +959,13 @@ const BusinessCompassDailyReport: React.FC = () => {
   const handleNextWeek = () => {
     const newDate = new Date(viewStartDate);
     newDate.setDate(newDate.getDate() + 7);
-    setViewStartDate(newDate);
-    const midWeek = new Date(newDate);
+    const maxStartDate = new Date();
+    maxStartDate.setHours(0, 0, 0, 0);
+    maxStartDate.setDate(maxStartDate.getDate() - 6);
+    const nextStartDate =
+      newDate.getTime() > maxStartDate.getTime() ? maxStartDate : newDate;
+    setViewStartDate(nextStartDate);
+    const midWeek = new Date(nextStartDate);
     midWeek.setDate(midWeek.getDate() + 3);
     setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
     setSelectedYear(midWeek.getFullYear().toString());
@@ -1029,11 +1103,45 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   React.useEffect(() => {
+    canPersistDraftRef.current = false;
+    draftDirtyRef.current = false;
+  }, [draftStorageKey]);
+
+  React.useEffect(() => {
+    if (!draftDirtyRef.current) return;
+    if (!canPersistDraftRef.current) return;
+    const draft: DailyReportDraft = {
+      accomplishments,
+      planningItems,
+      selfRating,
+      isAbsent,
+      absenceReason,
+      kpiEntries,
+      selectedTasksIssues,
+    };
+    localStorage.setItem(draftStorageKey, JSON.stringify(draft));
+  }, [
+    accomplishments,
+    planningItems,
+    selfRating,
+    isAbsent,
+    absenceReason,
+    kpiEntries,
+    selectedTasksIssues,
+    draftStorageKey,
+  ]);
+
+  React.useEffect(() => {
     const fetchExistingReport = async () => {
       try {
+        canPersistDraftRef.current = false;
         const baseUrl = getBaseUrl() ?? "https://fm-uat-api.lockated.com";
         const token = getToken();
-        if (!token) return;
+        if (!token) {
+          applyStoredDraft();
+          canPersistDraftRef.current = true;
+          return;
+        }
 
         // Safely extract year, month, and day to avoid Javascript Date UTC shift bugs
         const [year, month, day] = startDate.split("-");
@@ -1169,6 +1277,7 @@ const BusinessCompassDailyReport: React.FC = () => {
               if (existingReport.self_rating !== undefined)
                 setSelfRating([existingReport.self_rating]);
               setSelectedTasksIssues({});
+              applyStoredDraft(getStoredDraft());
             }
           } else {
             setCurrentReportId(null);
@@ -1183,14 +1292,18 @@ const BusinessCompassDailyReport: React.FC = () => {
 
             // No report today, just apply carried items
             setAccomplishments(carriedPlanItems);
+            applyStoredDraft(getStoredDraft());
           }
         }
       } catch (err) {
         console.error("Failed to fetch existing report:", err);
+        applyStoredDraft(getStoredDraft());
+      } finally {
+        canPersistDraftRef.current = true;
       }
     };
     fetchExistingReport();
-  }, [startDate]);
+  }, [startDate, draftStorageKey, getStoredDraft, applyStoredDraft]);
 
   const fetchReportsList = async () => {
     try {
@@ -1335,6 +1448,9 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       const data = response.data;
       if (!currentReportId && data.id) setCurrentReportId(data.id);
+      draftDirtyRef.current = false;
+      canPersistDraftRef.current = false;
+      clearStoredDraft();
       setSubmitSuccess(true);
       fetchReportsList();
       setTimeout(() => {
@@ -1668,12 +1784,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <input
                                 type="number"
                                 value={kpiEntries[kpi.kpi_id] || ""}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  markDraftDirty();
                                   setKpiEntries((prev) => ({
                                     ...prev,
                                     [kpi.kpi_id]: e.target.value,
-                                  }))
-                                }
+                                  }));
+                                }}
                                 placeholder="0"
                                 className="w-full px-3 py-2 border border-[#e5e7eb] rounded-[10px] text-sm font-bold text-center bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/30 focus:border-[#f59e0b]"
                               />
@@ -2101,6 +2218,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   // Call API directly to complete the item
                                   handleCompleteItem(item);
                                 } else {
+                                  markDraftDirty();
                                   setSelectedTasksIssues((prev) => ({
                                     ...prev,
                                     [item.id]: checked as boolean,
@@ -2334,7 +2452,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                     </div>
                     <Slider
                       value={selfRating}
-                      onValueChange={setSelfRating}
+                      onValueChange={(value) => {
+    markDraftDirty();
+    setSelfRating(value);
+  }}
                       max={10}
                       step={1}
                       className="cursor-pointer [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer [&_[role=slider]]:outline-none [&_[data-orientation=horizontal]]:h-1.5 [&_[data-orientation=horizontal]_span:first-child]:bg-[#DA7756]"
@@ -2344,9 +2465,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <Checkbox
                       id="absent"
                       checked={isAbsent}
-                      onCheckedChange={(checked) =>
-                        setIsAbsent(checked as boolean)
-                      }
+                      onCheckedChange={(checked) => {
+                        markDraftDirty();
+                        setIsAbsent(checked as boolean);
+                      }}
                       className="h-5 w-5 rounded-[4px] border-[#DA7756]/40 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
                     />
                     <label
@@ -2366,7 +2488,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <Input
                       placeholder="Why are you absent today?"
                       value={absenceReason}
-                      onChange={(e) => setAbsenceReason(e.target.value)}
+                      onChange={(e) => {
+                        markDraftDirty();
+                        setAbsenceReason(e.target.value);
+                      }}
                       className="h-12 rounded-[10px] border-gray-200 focus:ring-[#22c55e]/20"
                     />
                   </div>

@@ -1657,86 +1657,92 @@ export const AddServicePRDashboard = () => {
                       }}
                     />
                   )}
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="IGST Rate"
+                      value={detailsData.igstRate}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                          handleDetailsChange(detailsData.id, "igstRate", value);
+                        }
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      type="text"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  )}
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="IGST Amt"
+                      value={detailsData.igstAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+                  )}
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="TCS Rate"
+                      value={detailsData.tcsRate}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                          handleDetailsChange(detailsData.id, "tcsRate", value);
+                        }
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      type="text"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  )}
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="TCS Amt"
+                      value={detailsData.tcsAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+                  )}
+                  {!isPanchshilOrg && (
 
-                  <TextField
-                    label="IGST Rate"
-                    value={detailsData.igstRate}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                        handleDetailsChange(detailsData.id, "igstRate", value);
-                      }
-                    }}
-                    fullWidth
-                    variant="outlined"
-                    type="text"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="IGST Amt"
-                    value={detailsData.igstAmt}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
-
-                  <TextField
-                    label="TCS Rate"
-                    value={detailsData.tcsRate}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                        handleDetailsChange(detailsData.id, "tcsRate", value);
-                      }
-                    }}
-                    fullWidth
-                    variant="outlined"
-                    type="text"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="TCS Amt"
-                    value={detailsData.tcsAmt}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
-
-                  <TextField
-                    label="Tax Amount"
-                    value={detailsData.taxAmount}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
+                    <TextField
+                      label="Tax Amount"
+                      value={detailsData.taxAmount}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+                  )}
 
                   <TextField
                     label="Amount"
