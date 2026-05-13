@@ -283,7 +283,8 @@ export const ServicePRDetailsPage = () => {
           editWbsCode: response.can_edit_wbs_codes,
           canEditAll: response.can_edit,
         });
-        // Set external API calls if available
+        // Set external API calls if avai
+        // lable
         console.log("response.page", response.page.api_responses);
         if (response.page?.api_responses && Array.isArray(response.page.api_responses)) {
           setExternalApiCalls(response.page.api_responses);
@@ -632,13 +633,15 @@ export const ServicePRDetailsPage = () => {
       };
 
       try {
-        await dispatch(
+        const response = await dispatch(
           approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
-        toast.success("Work Order approved successfully");
+
+        toast.success(response?.message || "Service PR approved successfully");
+        
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
-        toast.error(error.message || "Failed to approve Work Order");
+        toast.error(error.message || "Failed to approve Service PR");
       }
     }
   };
@@ -666,13 +669,14 @@ export const ServicePRDetailsPage = () => {
       };
 
       try {
-        await dispatch(
-          approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
-        ).unwrap();
-        toast.success("Work Order rejected successfully");
+       const response = await dispatch(
+  approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+).unwrap();
+        // toast.success("Service PR rejected successfully");
+        toast.success(response?.message || "Service PR rejected successfully");
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
-        toast.error(error.message || "Failed to reject Work Order");
+        toast.error(error.message || "Failed to reject Service PR");
       } finally {
         setOpenRejectDialog(false);
         setRejectComment("");

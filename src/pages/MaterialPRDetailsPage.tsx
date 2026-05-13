@@ -569,10 +569,10 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
       };
 
       try {
-        await dispatch(
+        const response = await dispatch(
           approvePO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
-        toast.success("PR approved successfully");
+        toast.success(response?.message || "PR approved successfully");
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
         toast.error(error.message || "Failed to approve PO");
@@ -604,10 +604,10 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
       };
 
       try {
-        await dispatch(
+        const response = await dispatch(
           rejectPO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
-        toast.success("PO rejected successfully");
+        toast.success(response?.message || "PO rejected successfully");
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
         toast.error(error.message || "Failed to reject PO");
