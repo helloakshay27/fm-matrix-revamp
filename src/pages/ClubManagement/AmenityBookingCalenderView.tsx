@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
 import { FormControlLabel, Radio, RadioGroup } from "@mui/material";
 import axios from "axios";
-import { ArrowUpDown, Bell, ChevronLeft, ChevronRight, Filter, Plus, Search, X } from "lucide-react";
+import { Calendar, ChevronDown, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -312,23 +311,61 @@ const AmenityBookingClubCalenderView = () => {
                     </RadioGroup>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <div className="relative max-w-sm">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                        <Input placeholder="Search..." className="pl-10 pr-10" />
-                    </div>
-                    {/* <Button className="text-[14px]">
-                        <ArrowUpDown size={16} />
-                        Advance Search
-                    </Button> */}
-                    {/* <Button
-                        variant="outline"
-                        size="sm"
-                        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
-                        title="Filter"
+                {/* Month / Year picker */}
+                <div className="flex items-center bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                    {/* Prev arrow */}
+                    <button
+                        onClick={() => handleMonthChange("prev")}
+                        title="Previous month"
+                        className="h-10 w-10 flex items-center justify-center"
                     >
-                        <Filter className="w-4 h-4" />
-                    </Button> */}
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+
+                    {/* Calendar icon */}
+                    <span className="pl-3 pr-1 text-[#C72030]">
+                        <Calendar className="w-4 h-4" />
+                    </span>
+
+                    {/* Month select */}
+                    <div className="relative flex items-center">
+                        <select
+                            value={currentMonth}
+                            onChange={(e) => setCurrentMonth(e.target.value)}
+                            className="appearance-none h-10 pl-2 pr-6 text-sm font-semibold text-gray-700 bg-transparent border-none focus:outline-none cursor-pointer"
+                        >
+                            {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m) => (
+                                <option key={m} value={m}>{m}</option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-1 w-3 h-3 text-gray-400 pointer-events-none" />
+                    </div>
+
+                    {/* Divider */}
+                    <span className="h-5 w-px bg-gray-200 mx-1 flex-shrink-0" />
+
+                    {/* Year select */}
+                    <div className="relative flex items-center">
+                        <select
+                            value={currentYear}
+                            onChange={(e) => setCurrentYear(Number(e.target.value))}
+                            className="appearance-none h-10 pl-2 pr-6 text-sm font-semibold text-gray-700 bg-transparent border-none focus:outline-none cursor-pointer"
+                        >
+                            {[initialYear - 2, initialYear - 1, initialYear, initialYear + 1, initialYear + 2].map((y) => (
+                                <option key={y} value={y}>{y}</option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-1 w-3 h-3 text-gray-400 pointer-events-none" />
+                    </div>
+
+                    {/* Next arrow */}
+                    <button
+                        onClick={() => handleMonthChange("next")}
+                        title="Next month"
+                        className="h-10 w-10 flex items-center justify-center"
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
                 </div>
             </div>
 
