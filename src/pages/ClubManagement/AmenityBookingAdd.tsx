@@ -407,7 +407,7 @@ export const AddFacilityBookingClubPage = () => {
         params.user_id = userId;
       }
 
-      const response = await apiClient.get(`/pms/admin/facility_setups/${facilityId}/get_schedules.json`, {
+      const response = await apiClient.get(`/pms/admin/facility_setups/${facilityId}/all_schedules_for_facility_setup.json`, {
         params
       });
 
