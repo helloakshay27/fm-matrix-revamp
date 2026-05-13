@@ -394,9 +394,10 @@ const ChartCard: React.FC<{
   title: string;
   action?: React.ReactNode;
   children: React.ReactNode;
-}> = ({ title, action, children }) => (
+  headerBgColor?: string;
+}> = ({ title, action, children, headerBgColor }) => (
   <div className="bg-white rounded-lg border border-gray-100 transition-shadow duration-300 hover:shadow-lg p-5 h-full flex flex-col">
-    <div className="flex items-center justify-between mb-4 gap-4">
+    <div className="flex items-center justify-between mb-4 gap-4 px-3 py-2 -mx-3 -mt-5 rounded-t-lg" style={{ backgroundColor: headerBgColor || '#ffffff' }}>
       <h3 className="text-sm font-semibold text-gray-700 whitespace-nowrap">
         {title}
       </h3>
@@ -463,8 +464,9 @@ const DonutChartCard: React.FC<{
   colors: string[];
   loading?: boolean;
   total?: number;
-}> = ({ title, data, colors, loading, total }) => (
-  <ChartCard title={title}>
+  headerBgColor?: string;
+}> = ({ title, data, colors, loading, total, headerBgColor }) => (
+  <ChartCard title={title} headerBgColor={headerBgColor}>
     <div className="flex flex-col items-center justify-center h-full">
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -2558,6 +2560,7 @@ const DashboardUI: React.FC = () => {
                         data={raMilestoneChart}
                         colors={MILESTONE_COLORS}
                         loading={reportLoading}
+                        headerBgColor="#e1fcbd"
                       />
                     </div>
                   )}
@@ -2569,6 +2572,7 @@ const DashboardUI: React.FC = () => {
                         data={raTaskChart}
                         colors={TASK_COLORS}
                         loading={reportLoading}
+                        headerBgColor="#c7ffff"
                       />
                     </div>
                   )}
@@ -2581,6 +2585,7 @@ const DashboardUI: React.FC = () => {
                         colors={ISSUE_COLORS}
                         loading={reportLoading}
                         total={reportIssueSummary?.total}
+                        headerBgColor="#ffe1e0"
                       />
                     </div>
                   )}
@@ -2591,6 +2596,7 @@ const DashboardUI: React.FC = () => {
                       <div className="col-span-1 lg:col-span-2 xl:col-span-4">
                         <ChartCard
                           title="Milestone Activity Wise Progress"
+                          headerBgColor="#e1fcbd"
                           action={
                             <SearchInput
                               placeholder="Search by milestone"
@@ -2679,6 +2685,7 @@ const DashboardUI: React.FC = () => {
                     <div className="col-span-1 lg:col-span-2 xl:col-span-4">
                       <ChartCard
                         title="Task Details"
+                        headerBgColor="#c7ffff"
                         action={
                           <SearchInput
                             placeholder="Search by task"
@@ -2732,6 +2739,7 @@ const DashboardUI: React.FC = () => {
                     <div className="col-span-1 lg:col-span-2 xl:col-span-4">
                       <ChartCard
                         title="Issue Details"
+                        headerBgColor="#ffe1e0"
                         action={
                           <SearchInput
                             placeholder="Search by issue"
