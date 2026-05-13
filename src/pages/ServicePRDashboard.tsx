@@ -47,7 +47,7 @@ const columns: ColumnConfig[] = [
   },
   {
     key: "po_number",
-    label: "PO Number",
+    label: "Wo Number",
     sortable: true,
     draggable: true,
     defaultVisible: true,

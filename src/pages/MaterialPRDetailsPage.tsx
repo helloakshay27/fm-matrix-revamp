@@ -80,7 +80,7 @@ interface Inventory {
 
 interface PRInventory {
   gl_account: string;
-  tax_code?: string; 
+  tax_code?: string;
   id?: number;
   inventory?: Inventory;
   availability?: string;
@@ -290,23 +290,23 @@ export const MaterialPRDetailsPage = () => {
           {}
         );
         // CORRECT - use pms_po_inventories which has gl_account and tax_code
-const initialGlAccounts = response.pms_po_inventories?.reduce(
-  (acc: { [key: string]: string }, item: PRInventory) => {
-    const key = item.id?.toString();
-    acc[key] = item.gl_account || "";
-    return acc;
-  },
-  {}
-);
+        const initialGlAccounts = response.pms_po_inventories?.reduce(
+          (acc: { [key: string]: string }, item: PRInventory) => {
+            const key = item.id?.toString();
+            acc[key] = item.gl_account || "";
+            return acc;
+          },
+          {}
+        );
 
-const initialTaxCodes = response.pms_po_inventories?.reduce(
-  (acc: { [key: string]: string }, item: PRInventory) => {
-    const key = item.id?.toString();
-    acc[key] = item.tax_code || "";
-    return acc;
-  },
-  {}
-);
+        const initialTaxCodes = response.pms_po_inventories?.reduce(
+          (acc: { [key: string]: string }, item: PRInventory) => {
+            const key = item.id?.toString();
+            acc[key] = item.tax_code || "";
+            return acc;
+          },
+          {}
+        );
         const initialHsnCodes = response.pms_pr_inventories?.reduce(
           (acc: { [key: string]: string }, item: PRInventory) => {
             const key = item.id?.toString();
@@ -486,12 +486,12 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
     try {
       const updates = {
         pms_po_inventory_updates: Object.entries(updatedWbsCodes).map(([itemKey]) => ({
-        id: itemKey,
-        wbs_code: updatedWbsCodes[itemKey],
-        gl_account: updatedGlAccounts[itemKey],   // stale if not in deps
-        tax_code: updatedTaxCodes[itemKey],
-        sac_hsn_code: updatedHsnCodes[itemKey]
-      }))
+          id: itemKey,
+          wbs_code: updatedWbsCodes[itemKey],
+          gl_account: updatedGlAccounts[itemKey],   // stale if not in deps
+          tax_code: updatedTaxCodes[itemKey],
+          sac_hsn_code: updatedHsnCodes[itemKey]
+        }))
       }
 
       await axios.patch(
@@ -507,7 +507,7 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
     } catch (error: any) {
       toast.error(error.message || "Failed to update details");
     }
-}, [id, updatedWbsCodes, updatedGlAccounts, updatedTaxCodes, updatedHsnCodes]); // ← add all state deps
+  }, [id, updatedWbsCodes, updatedGlAccounts, updatedTaxCodes, updatedHsnCodes]); // ← add all state deps
 
   const handleApproveDeletionRequest = async () => {
     const payload = {
@@ -569,10 +569,10 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
       };
 
       try {
-        await dispatch(
+        const response = await dispatch(
           approvePO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
-        toast.success("PO approved successfully");
+        toast.success(response?.message || "PR approved successfully");
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
         toast.error(error.message || "Failed to approve PO");
@@ -604,10 +604,10 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
       };
 
       try {
-        await dispatch(
+        const response = await dispatch(
           rejectPO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
-        toast.success("PO rejected successfully");
+        toast.success(response?.message || "PO rejected successfully");
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
         toast.error(error.message || "Failed to reject PO");
@@ -659,7 +659,7 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
       }
 
       // Disable the button after successful push
-      
+
     } catch (error: any) {
       toast.error(error.message || "Failed to push to SAP");
     }
@@ -966,7 +966,7 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
                     >
                       Edit Material Details
                     </Button>
-                  {/* {( !shouldShowButtons) &&(
+                    {/* {( !shouldShowButtons) &&(
                     <Button
                       size="sm"
                       variant="outline"
@@ -1410,7 +1410,7 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
                   <div className="font-semibold text-gray-900 text-sm mb-4">
                     {item.inventory?.name || `Item ${item.id}`}
                   </div>
-                  
+
                   {/* Grid for fields in rows */}
                   <div className="grid grid-cols-2 gap-4">
                     {/* Material Dropdown (Editable) */}
@@ -1569,45 +1569,45 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
 
         {/* External API Calls Logs Section */}
         {externalApiCalls && externalApiCalls.length > 0 && (
-  <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6 p-6">
-    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-      <Rss className="w-5 h-5" />
-      External API Calls
-    </h3>
-    {(() => {
-      const apiCall = externalApiCalls[externalApiCalls.length - 1];
-      return (
-        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-600 font-semibold">Provider</p>
-              <p className="text-sm font-medium">{apiCall.api_provider || '-'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
-              <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'}`}>
-                {apiCall.response_status || '-'}
-              </p>
-            </div>
-            <div className="md:col-span-2">
-              <p className="text-sm text-gray-600 font-semibold">Message</p>
-              <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
-                {apiCall.message || '-'}
-              </p>
-            </div>
-            {apiCall.created_at && (
-              <div className="md:col-span-2">
-                <p className="text-xs text-gray-500">
-                  Created: {new Date(apiCall.created_at).toLocaleString()}
-                </p>
-              </div>
-            )}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mt-6 p-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Rss className="w-5 h-5" />
+              External API Calls
+            </h3>
+            {(() => {
+              const apiCall = externalApiCalls[externalApiCalls.length - 1];
+              return (
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600 font-semibold">Provider</p>
+                      <p className="text-sm font-medium">{apiCall.api_provider || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
+                      <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'}`}>
+                        {apiCall.response_status || '-'}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-gray-600 font-semibold">Message</p>
+                      <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
+                        {apiCall.message || '-'}
+                      </p>
+                    </div>
+                    {apiCall.created_at && (
+                      <div className="md:col-span-2">
+                        <p className="text-xs text-gray-500">
+                          Created: {new Date(apiCall.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-        </div>
-      );
-    })()}
-  </div>
-)}
+        )}
       </div>
     </div>
   );
