@@ -616,7 +616,8 @@ export const ExternalUsersDashboard = () => {
                 {canSeeActionButton && (
                   <Button
                     onClick={handleActionClick}
-                    className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+                    className="fm-button-fix fm-button-brand px-4 py-2"
+                    variant="ghost"
                   >
                     <Plus className="w-4 h-4" />
                     Action
@@ -624,7 +625,8 @@ export const ExternalUsersDashboard = () => {
                 )}
                 <Button
                   onClick={() => navigate('/safety/m-safe/external-users/multiple-delete')}
-                  className="text-white bg-red-500 hover:bg-red-600"
+                  className="fm-button-fix fm-button-brand px-4 py-2"
+                  variant="ghost"
                 >
                   <Trash2 className="w-4 h-4" />
                   User Deletion

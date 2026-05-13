@@ -959,8 +959,8 @@ export const InventoryDashboard = () => {
       <div className="flex flex-wrap gap-3 items-center">
         <Button
           onClick={handleActionClick}
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
-          variant="default"
+          className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
         >
           <Plus className="w-4 h-4" /> Action
         </Button>

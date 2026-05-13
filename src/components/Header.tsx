@@ -868,7 +868,7 @@ export const Header = () => {
                     }}
                     className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm bg-white hover:bg-[#C72030] text-gray-700 hover:text-white transition-all duration-200 border border-gray-200 hover:border-[#C72030] group shadow-sm"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="fm-button-content flex items-center gap-2">
                       <User className="w-4 h-4" />
                       <span className="font-medium">Employee View</span>
                     </div>

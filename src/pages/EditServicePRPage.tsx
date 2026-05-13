@@ -1628,7 +1628,8 @@ export const EditServicePRPage = () => {
         <div className="flex items-center justify-center gap-4 mt-8">
           <Button
             onClick={handleSubmit}
-            className="bg-red-600 hover:bg-red-700 text-white px-8"
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
             disabled={submitting}
           >
             Save Service PR

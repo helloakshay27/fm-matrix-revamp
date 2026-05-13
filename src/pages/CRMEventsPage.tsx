@@ -536,7 +536,8 @@ export const CRMEventsPage = () => {
         leftActions={
           <div className="flex flex-wrap gap-2">
             <Button
-              className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px] py-[10px] px-[20px]"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
               onClick={handleAdd}
             >
               <Plus className="w-4 h-4" />
