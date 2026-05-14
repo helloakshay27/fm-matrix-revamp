@@ -33,8 +33,37 @@ interface ExportStatusResponse {
 
 export const assetExportService = {
   /**
-   * Start the asset export process
-   * POST /pms/assets/export_assets
+   * Start the digital register export (asset_register_export)
+   * GET /pms/assets/asset_register_export
+   */
+  startDigitalRegisterExport: async (): Promise<ExportStartResponse> => {
+    const siteId = getCurrentSiteId();
+    const accessToken = getAccessToken();
+    const params = new URLSearchParams({ access_token: accessToken });
+    // if (siteId) params.set('q[pms_site_id_eq]', siteId);
+    const url = `${getBaseUrl()}/pms/assets/asset_register_export?${params}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: getAuthHeader(),
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to start digital register export: ${response.status}`);
+      }
+      return response.json();
+    } catch (error) {
+      console.error('Error starting digital register export:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Start the asset export process (excel data report)
+   * GET /pms/assets/assets_data_report_export
    */
   startExport: async (): Promise<ExportStartResponse> => {
     const siteId = getCurrentSiteId();
@@ -64,6 +93,38 @@ export const assetExportService = {
       console.error('Error starting asset export:', error);
       throw error;
     }
+  },
+
+  /**
+   * Poll the status of a digital register export
+   * GET /pms/assets/export_status?key=KEY  → always returns JSON { status: 'processing' | 'done' | 'failed' }
+   */
+  checkDigitalRegisterExportStatus: async (key: string): Promise<ExportStatusResponse> => {
+    const accessToken = getAccessToken();
+    const url = `${getBaseUrl()}/pms/assets/export_status?key=${key}&access_token=${accessToken}`;
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { Authorization: getAuthHeader() },
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to check digital register export status: ${response.status}`);
+      }
+      return response.json();
+    } catch (error) {
+      console.error('Error checking digital register export status:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Trigger download of a digital register export via browser navigation
+   * GET /pms/assets/download_export?key=KEY  → returns .xlsx attachment
+   */
+  downloadDigitalRegisterExport: (key: string): void => {
+    const accessToken = getAccessToken();
+    window.location.href = `${getBaseUrl()}/pms/assets/download_export?key=${key}&access_token=${accessToken}`;
   },
 
   /**
