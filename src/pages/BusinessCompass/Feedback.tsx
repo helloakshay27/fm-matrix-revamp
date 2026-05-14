@@ -2525,15 +2525,15 @@ function EditFeedbackModal({
             </Label>
             <div
               className="flex gap-1"
-              role="radiogroup"
+              role="group"
               aria-label="Star rating"
             >
               {[1, 2, 3, 4, 5].map((n) => (
                 <button
                   key={n}
                   type="button"
-                  role="radio"
-                  aria-checked={rating === n}
+                  aria-pressed={rating === n}
+                  aria-label={`${n} star${n === 1 ? "" : "s"}`}
                   onClick={() => setRating(n)}
                   className="rounded-lg transition-transform hover:scale-110 focus:outline-none"
                 >
@@ -2851,15 +2851,15 @@ function GiveFeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
         </div>
         <div
           className="flex gap-1.5"
-          role="radiogroup"
+          role="group"
           aria-label="Star rating"
         >
           {[1, 2, 3, 4, 5].map((n) => (
             <button
               key={n}
               type="button"
-              role="radio"
-              aria-checked={rating === n}
+              aria-pressed={rating === n}
+              aria-label={`${n} star${n === 1 ? "" : "s"}`}
               onClick={() => setRating(n)}
               className="rounded-lg p-1 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#DA7756]/40"
             >
