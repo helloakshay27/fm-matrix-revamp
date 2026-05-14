@@ -287,6 +287,19 @@ const getItemStatus = (item: any): string => {
   return item.status || "open";
 };
 
+const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
+  const merged: any[] = [];
+  const seen = new Set<string>();
+  [...primary, ...fallback].forEach((item) => {
+    const title = getItemTitle(item).trim();
+    const key = title.toLowerCase();
+    if (!title || seen.has(key)) return;
+    seen.add(key);
+    merged.push(item);
+  });
+  return merged;
+};
+
 const formatSelfRating = (rating: any): string => {
   if (rating === null || rating === undefined || rating === "") return "";
   const ratingText = String(rating).trim();
@@ -340,10 +353,10 @@ const resolveRawSource = (report: any) => {
       ...normalizedDraft,
       ...rd,
       tasks_issues: Array.isArray(rd.tasks_issues)
-        ? rd.tasks_issues
+        ? mergeUniqueItems(rd.tasks_issues, normalizedDraft.tasks_issues || [])
         : normalizedDraft.tasks_issues || [],
       tomorrow_plan: Array.isArray(rd.tomorrow_plan)
-        ? rd.tomorrow_plan
+        ? mergeUniqueItems(rd.tomorrow_plan, normalizedDraft.tomorrow_plan || [])
         : normalizedDraft.tomorrow_plan || [],
       accomplishments:
         rd.accomplishments?.items ||
@@ -604,16 +617,25 @@ const DailyTab = ({
     }
 
     const rawSource = resolveRawSource(report);
+    const baseReportData =
+      report.report_data ||
+      report.daily_report?.report_data ||
+      rawSource ||
+      {};
 
     if (patch.tomorrow_plan_item) {
-      const existingPlan: any[] = Array.isArray(rawSource.tomorrow_plan)
-        ? rawSource.tomorrow_plan
+      const existingPlan: any[] = Array.isArray(baseReportData.tomorrow_plan)
+        ? baseReportData.tomorrow_plan
         : [];
 
       const updatedPlan = [
         ...existingPlan,
         { title: patch.tomorrow_plan_item.trim() },
       ];
+      const updatedReportData = {
+        ...baseReportData,
+        tomorrow_plan: updatedPlan,
+      };
 
       try {
         const res = await fetch(
@@ -625,10 +647,7 @@ const DailyTab = ({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              report_data: {
-                ...rawSource,
-                tomorrow_plan: updatedPlan,
-              },
+              report_data: updatedReportData,
             }),
           }
         );
