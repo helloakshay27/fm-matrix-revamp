@@ -41,10 +41,12 @@ function buildPatchCSS(): string {
     allOldColours.forEach((old) => {
         const escaped = old.replace(/[#(),. ]/g, (c) => `\\${c}`);
 
-        // Elements whose inline style sets color / background-color / border-color
+        // Elements whose inline style sets background-color / border-color
+        // NOTE: do NOT set `color` here — buttons and text elements manage their
+        // own text colour. Setting it globally causes white-on-orange to become
+        // orange-on-orange (invisible text).
         rules.push(`
 [style*="${old}"] {
-  color: ${BRAND_PRIMARY} !important;
   background-color: transparent !important;
   border-color: ${BRAND_PRIMARY} !important;
 }`);

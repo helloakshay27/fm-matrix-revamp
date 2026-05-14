@@ -390,7 +390,7 @@ export const AddMasterChecklistPage = () => {
               <Button
                 type="button"
                 onClick={() => addQuestion(section.id)}
-                className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium flex items-center gap-2"
+                className="bg-[#C72030] text-white hover:bg-[#B01828] h-9 px-4 text-sm font-medium flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" /> Action Question
               </Button>
@@ -402,14 +402,14 @@ export const AddMasterChecklistPage = () => {
           <Button
             type="button"
             onClick={addTaskSection}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium flex items-center gap-2"
+            className="bg-[#C72030] text-white hover:bg-[#B01828] h-9 px-4 text-sm font-medium flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> Action Section
           </Button>
 
           <Button
             type="submit"
-            className="bg-red-600 text-white px-6"
+            className="bg-[#C72030] text-white hover:bg-[#B01828] h-9 px-4 text-sm font-medium flex items-center gap-2"
           >
             Submit
           </Button>
