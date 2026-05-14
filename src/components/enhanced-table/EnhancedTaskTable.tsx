@@ -533,9 +533,9 @@ export function EnhancedTaskTable<T extends Record<string, any>>({
 
           {onFilterClick && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-2"
+              className="fm-button-fix !h-9 !w-9 !min-h-9 !p-0 !bg-white hover:!bg-white !border !border-[#DA7756] !text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
               onClick={onFilterClick}
             >
               <Filter className="w-4 h-4" />

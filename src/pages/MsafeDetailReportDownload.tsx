@@ -139,7 +139,8 @@ const MsafeDetailReportDownload: React.FC = () => {
       <Button
         onClick={handleGenerate}
         disabled={loading}
-        className="bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-5 text-base md:text-[16px] rounded-md"
+        className="fm-button-fix fm-button-brand px-4 py-2"
+        variant="ghost"
       >
         {loading ? 'Generating...' : 'Download Latest Report'}
       </Button>

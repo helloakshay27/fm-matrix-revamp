@@ -599,8 +599,8 @@ export const PODashboard = () => {
     <>
     
       <Button
-        style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
-        className="hover:bg-[#F2EEE9]/90"
+        className="fm-button-fix fm-button-brand px-4 py-2"
+        variant="ghost"
         onClick={() => navigate("/finance/po/add")}
       >
         <Plus className="w-4 h-4 mr-2" />

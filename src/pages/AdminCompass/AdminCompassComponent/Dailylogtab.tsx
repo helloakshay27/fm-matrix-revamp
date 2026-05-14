@@ -337,10 +337,10 @@ const resolveRawSource = (report) => {
       ...normalizedDraft,
       ...rd,
       tasks_issues: Array.isArray(rd.tasks_issues)
-        ? rd.tasks_issues
+        ? mergeUniqueItems(rd.tasks_issues, normalizedDraft.tasks_issues || [])
         : normalizedDraft.tasks_issues || [],
       tomorrow_plan: Array.isArray(rd.tomorrow_plan)
-        ? rd.tomorrow_plan
+        ? mergeUniqueItems(rd.tomorrow_plan, normalizedDraft.tomorrow_plan || [])
         : normalizedDraft.tomorrow_plan || [],
       accomplishments:
         rd.accomplishments?.items ||
@@ -378,9 +378,25 @@ const getMeetingNotesData = (data) => {
 const getItemTitle = (item) => {
   if (!item) return "";
   if (typeof item === "string") return item;
-  if (typeof item === "object") return String(item.title || item.name || "");
+  if (typeof item === "object") return String(item.title || item.name || item.text || "");
   return String(item);
 };
+
+const mergeUniqueItems = (primary = [], fallback = []) => {
+  const merged = [];
+  const seen = new Set();
+  [...primary, ...fallback].forEach((item) => {
+    const title = getItemTitle(item).trim();
+    const key = title.toLowerCase();
+    if (!title || seen.has(key)) return;
+    seen.add(key);
+    merged.push(item);
+  });
+  return merged;
+};
+
+const normalizeName = (name) =>
+  String(name || "").trim().replace(/\s+/g, " ").toLowerCase();
 
 const getItemStatus = (item) => {
   if (!item || typeof item !== "object") return "open";
@@ -431,7 +447,7 @@ const FormattedHighlights = ({ text, isPending }) => {
 // Report Detail Modal
 // Uses /user_journals/:id.json — same as before
 // ─────────────────────────────────────────────
-const ReportDetailModal = ({ log, onClose }) => {
+const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
   const [details, setDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -449,7 +465,7 @@ const ReportDetailModal = ({ log, onClose }) => {
 
   // log.id is journal_id (or daily_report.id as fallback) from the meeting report
   const hasValidId =
-    log.id && !String(log.id).startsWith("user-") && log.id !== "null";
+    log.id && /^\d+$/.test(String(log.id));
 
   const refetchDetails = useCallback(
     async (silent = false) => {
@@ -464,7 +480,13 @@ const ReportDetailModal = ({ log, onClose }) => {
           { method: "GET", headers: getAuthHeaders() }
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        setDetails(await res.json());
+        const json = await res.json();
+        const nextDetails = json?.data || json;
+        setDetails((prev) =>
+          nextDetails?.report_data || nextDetails?.daily_report
+            ? nextDetails
+            : prev || nextDetails
+        );
       } catch (error) {
         toast.error("Failed to load report details: " + error.message);
       } finally {
@@ -555,15 +577,26 @@ const ReportDetailModal = ({ log, onClose }) => {
     }
 
     const rawSource = resolveRawSource(detailSource);
+    const baseReportData =
+      details?.report_data ||
+      details?.daily_report?.report_data ||
+      log._raw?.report_data ||
+      log._raw?.daily_report?.report_data ||
+      rawSource ||
+      {};
 
     if (patch.tomorrow_plan_item) {
-      const existingPlan = Array.isArray(rawSource.tomorrow_plan)
-        ? rawSource.tomorrow_plan
+      const existingPlan = Array.isArray(baseReportData.tomorrow_plan)
+        ? baseReportData.tomorrow_plan
         : [];
       const updatedPlan = [
         ...existingPlan,
         { title: patch.tomorrow_plan_item.trim() },
       ];
+      const updatedReportData = {
+        ...baseReportData,
+        tomorrow_plan: updatedPlan,
+      };
       try {
         const res = await fetch(
           `${getBaseUrl()}/user_journals/${log.id}.json`,
@@ -574,11 +607,29 @@ const ReportDetailModal = ({ log, onClose }) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              report_data: { ...rawSource, tomorrow_plan: updatedPlan },
+              report_data: updatedReportData,
             }),
           }
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        setDetails((prev) => {
+          const current = prev || details || {};
+          const shouldUseRootReportData =
+            !!current.report_data || !current.daily_report;
+          return {
+            ...current,
+            report_data: shouldUseRootReportData
+              ? updatedReportData
+              : current.report_data,
+            daily_report: current.daily_report
+              ? {
+                  ...current.daily_report,
+                  report_data: updatedReportData,
+                }
+              : current.daily_report,
+          };
+        });
+        onReportUpdated?.(log.id, updatedReportData);
         return true;
       } catch (err) {
         toast.error("Error updating plan: " + err.message);
@@ -1397,11 +1448,18 @@ const DailyLogTab = () => {
           .map((report) => Number(report.user_id))
           .filter((id) => Number.isFinite(id) && id > 0)
       );
+      const detailedReportNames = new Set(
+        detailedReports
+          .map((report) => normalizeName(report.name))
+          .filter(Boolean)
+      );
 
       const submittedReports =
         detailedReports.length > 0
-          ? allReports.filter((report) =>
-              detailedReportUserIds.has(Number(report.user_id))
+          ? allReports.filter(
+              (report) =>
+                detailedReportUserIds.has(Number(report.user_id)) ||
+                detailedReportNames.has(normalizeName(report.name))
             )
           : allReports.filter(
               (r) => r.status !== "pending" || !!r.daily_report
@@ -1438,19 +1496,44 @@ const DailyLogTab = () => {
 
       if (logsArray.length === 0 && detailedReports.length > 0) {
         logsArray = detailedReports.map((report) => {
-          const accomplishments = Array.isArray(report.accomplishments)
-            ? report.accomplishments
-            : [];
-          const tasksIssues = Array.isArray(report.tasks_issues)
-            ? report.tasks_issues
-            : [];
+          const matchingMemberReport =
+            allReports.find(
+              (memberReport) =>
+                Number(memberReport.user_id) === Number(report.user_id)
+            ) ||
+            allReports.find(
+              (memberReport) =>
+                normalizeName(memberReport.name) === normalizeName(report.name)
+            );
+          const hydratedReport = matchingMemberReport || {
+            report_data: report,
+            status: "submitted",
+            user_id: report.user_id,
+            name: report.name,
+          };
+          const rawRd = resolveRawSource(hydratedReport);
+          const rd = normalizeReportData(rawRd);
+          const accomplishments = rd.accomplishments;
+          const tasksIssues = rd.tasks_issues;
+          const reportSelfRating =
+            Number(String(report.self_rating || "0").split("/")[0]) || 0;
 
           return {
-            id: report.user_id || report.name || selectedDate,
-            user: report.name || "",
-            email: "",
-            score: Number(String(report.self_rating || "0").split("/")[0]) || 0,
-            dept: "",
+            id:
+              hydratedReport.journal_id ||
+              hydratedReport.daily_report?.id ||
+              hydratedReport.id ||
+              report.user_id ||
+              report.name ||
+              selectedDate,
+            user: hydratedReport.name || report.name || "",
+            email: hydratedReport.email || "",
+            score: Math.round(
+              hydratedReport.score ??
+                rawRd?.total_score ??
+                reportSelfRating
+            ),
+            dept: hydratedReport.department || "",
             highlights:
               accomplishments.length > 0 || tasksIssues.length > 0
                 ? `Acc: ${accomplishments.length} | Chal: ${tasksIssues.length}`
@@ -1458,8 +1541,8 @@ const DailyLogTab = () => {
             submittedAt: "—",
             status: "submitted",
             date: selectedDate,
-            userId: report.user_id,
-            _raw: { report_data: report, status: "submitted" },
+            userId: hydratedReport.user_id || report.user_id,
+            _raw: hydratedReport,
           };
         });
       }
@@ -1548,6 +1631,35 @@ const DailyLogTab = () => {
       {children}
     </th>
   );
+
+  const handleReportUpdated = (logId, updatedReportData) => {
+    const updateLog = (log) => {
+      if (String(log.id) !== String(logId)) return log;
+      const raw = log._raw || {};
+      const updatedRaw = {
+        ...raw,
+        report_data: raw.report_data ? updatedReportData : raw.report_data,
+        daily_report: raw.daily_report
+          ? {
+              ...raw.daily_report,
+              report_data: updatedReportData,
+            }
+          : raw.daily_report,
+      };
+      return { ...log, _raw: updatedRaw };
+    };
+
+    setSelectedReport((prev) => (prev ? updateLog(prev) : prev));
+    setApiLogs((prev) => prev.map(updateLog));
+    setGroupedApiLogs((prev) =>
+      Object.fromEntries(
+        Object.entries(prev).map(([dept, logs]) => [
+          dept,
+          Array.isArray(logs) ? logs.map(updateLog) : logs,
+        ])
+      )
+    );
+  };
 
   const renderRow = (log) => {
     const sub = log.submittedAt || "—";
@@ -1848,6 +1960,7 @@ const DailyLogTab = () => {
         <ReportDetailModal
           log={selectedReport}
           onClose={() => setSelectedReport(null)}
+          onReportUpdated={handleReportUpdated}
         />
       )}
     </div>
