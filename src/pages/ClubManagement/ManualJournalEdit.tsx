@@ -21,7 +21,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 
-const initialRow = { account: '', description: '', contact: '', debit: '', credit: '' };
+const initialRow = { id: '', account: '', description: '', contact: '', debit: '', credit: '' };
 
 
 
@@ -29,6 +29,7 @@ const initialRow = { account: '', description: '', contact: '', debit: '', credi
 const ManualJournalEdit = () => {
     const [date, setDate] = useState('');
     const navigate = useNavigate();
+    const { id } = useParams();
     const [journalNo, setJournalNo] = useState('');
     const [reference, setReference] = useState('');
     const [notes, setNotes] = useState('');
@@ -39,7 +40,95 @@ const ManualJournalEdit = () => {
     const [accountOptions, setAccountOptions] = useState([]);
     const fileInputRef = useRef(null);
     const [contactOptions, setContactOptions] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [transactionDetails, setTransactionDetails] = useState(null);
     const lock_account_id = localStorage.getItem("lock_account_id");
+
+    const findContactOption = (record, contacts = contactOptions) => {
+        const resourceId =
+            record?.resource_id ||
+            record?.resource?.id ||
+            record?.contact?.id ||
+            record?.customer?.id ||
+            record?.supplier?.id;
+        const resourceType =
+            record?.resource_type ||
+            record?.resource?.class_name ||
+            record?.contact?.class_name ||
+            record?.customer?.class_name ||
+            record?.supplier?.class_name;
+
+        if (!resourceId) return '';
+
+        return (
+            contacts.find(
+                contact =>
+                    String(contact.id) === String(resourceId) &&
+                    (!resourceType || contact.class_name === resourceType)
+            ) || ''
+        );
+    };
+
+    const mapTransactionToForm = (data, contacts = contactOptions) => {
+        setDate(data.transaction_date || '');
+        setJournalNo(data.voucher_number || '');
+        setReference(data.reference || '');
+        setNotes(data.description || '');
+        setReportingMethod(data.reporting_method || 'Accrual and Cash');
+
+        const formattedRows = Array.isArray(data.records)
+            ? data.records.map(record => ({
+                id: record.id ? String(record.id) : '',
+                account: record.ledger_id ? String(record.ledger_id) : '',
+                description: record.description || '',
+                contact: findContactOption(record, contacts),
+                debit: record.tr_type === 'dr' ? String(record.amount || '') : '',
+                credit: record.tr_type === 'cr' ? String(record.amount || '') : '',
+            }))
+            : [];
+
+        setRows(
+            formattedRows.length
+                ? formattedRows
+                : [{ ...initialRow }, { ...initialRow }]
+        );
+    };
+
+    const fetchJournalDetails = async (contacts = contactOptions) => {
+        if (!id || !lock_account_id) return;
+
+        const baseUrl = API_CONFIG.BASE_URL;
+        const token = API_CONFIG.TOKEN;
+
+        try {
+            setLoading(true);
+            const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/${id}.json`;
+            const response = await axios.get(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+            });
+
+            setTransactionDetails(response.data);
+            mapTransactionToForm(response.data, contacts);
+        } catch (error) {
+            console.error('Error fetching manual journal details:', error);
+            toast.error('Failed to load manual journal details');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchJournalDetails();
+    }, [id, lock_account_id]);
+
+    useEffect(() => {
+        if (transactionDetails && contactOptions.length) {
+            mapTransactionToForm(transactionDetails, contactOptions);
+        }
+    }, [transactionDetails, contactOptions]);
 
     // Fetch account options from API using axios, with baseUrl and token
     useEffect(() => {
@@ -78,7 +167,7 @@ const ManualJournalEdit = () => {
                     }
                 });
 
-                setContactOptions(response.data);
+                setContactOptions(response.data || []);
 
             } catch (error) {
                 console.error("Error fetching contacts:", error);
@@ -101,21 +190,15 @@ const ManualJournalEdit = () => {
     // 	}));
     // };
     const handleRowChange = (idx, field, value) => {
-        // Prevent negative values for debit/credit
-        if ((field === 'debit' || field === 'credit')) {
+        if (field === 'debit' || field === 'credit') {
             let val = value;
-            // Remove minus sign if present
             if (typeof val === 'string') {
                 val = val.replace(/-/g, '');
             }
-            // Prevent negative numbers
             if (Number(val) < 0) val = '';
-            // Format to 2 decimal places if not empty and is a number
-            if (val !== '' && !isNaN(Number(val))) {
-                // Only format if not typing decimal point
-                if (!val.endsWith('.')) {
-                    val = Number(val).toFixed(2);
-                }
+            if (val && val.includes('.')) {
+                const [intPart, decPart] = val.split('.');
+                val = intPart + '.' + (decPart ? decPart.slice(0, 2) : '');
             }
             setRows(prevRows => prevRows.map((row, i) => {
                 if (i !== idx) return row;
@@ -165,6 +248,7 @@ const ManualJournalEdit = () => {
             },
             lock_account_transaction_records: rows.map(row => {
                 const record = {
+                    id: row.id || undefined,
                     ledger_id: row.account ? Number(row.account) : undefined,
                     // cost_centre_id: 1, // Set as needed or make dynamic
                 };
@@ -238,12 +322,19 @@ const ManualJournalEdit = () => {
         );
         formData.append(
             "lock_account_transaction[lock_account_id]",
-            1
+            lock_account_id || ''
         );
 
         // Journal rows
         rows.forEach((row, index) => {
             if (!row.account) return;
+
+            if (row.id) {
+                formData.append(
+                    `lock_account_transaction_records[${index}][id]`,
+                    row.id
+                );
+            }
 
             formData.append(
                 `lock_account_transaction_records[${index}][ledger_id]`,
@@ -294,8 +385,14 @@ const ManualJournalEdit = () => {
         const baseUrl = API_CONFIG.BASE_URL;
         const token = API_CONFIG.TOKEN;
         try {
-            const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions.json`;
-            const response = await axios.post(url, formData, {
+            if (!id) {
+                toast.error('Manual journal id is missing.');
+                return;
+            }
+
+            setLoading(true);
+            const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/${id}.json`;
+            const response = await axios.put(url, formData, {
                 headers: {
                     // 'Content-Type': 'application/json',
                     // "Content-Type": "multipart/form-data",
@@ -303,19 +400,22 @@ const ManualJournalEdit = () => {
                 },
             });
             console.log('API response:', response.data);
+            toast.success('Manual journal updated successfully');
             navigate('/accounting/manual-journal');
             // Optionally show success message or redirect
         } catch (error) {
             console.error('Error submitting journal entry:', error);
-            toast.error('Failed to create journal entry');
+            toast.error('Failed to update journal entry');
             // Optionally show error message
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
         <div className="w-full min-h-screen bg-gray-50 p-0 m-0">
             <div className="w-full max-w-full px-8 py-8 mx-auto">
-                <h2 className="text-2xl font-semibold text-[#1a1a1a] mb-6">New Journal</h2>
+                <h2 className="text-2xl font-semibold text-[#1a1a1a] mb-6">Edit Journal</h2>
                 <form className="space-y-6" onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <TextField
@@ -716,9 +816,10 @@ const ManualJournalEdit = () => {
 
                         <Button
                             type="submit"
+                            disabled={loading}
                             className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[140px]"
                         >
-                            Save
+                            {loading ? 'Updating...' : 'Update'}
                         </Button>
                         {/* <Button
                             variant="outline"
@@ -731,7 +832,7 @@ const ManualJournalEdit = () => {
                         <Button
                             variant="outline"
                             type="button"
-                            onClick={() => window.history.back()}
+                            onClick={() => navigate('/accounting/manual-journal')}
                             className="min-w-[100px]"
                         >
                             Cancel

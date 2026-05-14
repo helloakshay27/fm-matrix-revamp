@@ -19,7 +19,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 
 
 
-const initialRow = { account: '', description: '', contact: '', debit: '', credit: '' };
+// const initialRow = { account: '', description: '', contact: '', debit: '', credit: '' };
+
+const initialRow = {
+  id: "",
+  account: "",
+  description: "",
+  contact: "",
+  debit: "",
+  credit: "",
+};
 
 const TransactionsEdit = () => {
     const [date, setDate] = useState('');
@@ -38,43 +47,118 @@ const TransactionsEdit = () => {
     const [loading, setLoading] = useState(false);
 
 
+    // useEffect(() => {
+    //     const fetchDetails = async () => {
+    //         const baseUrl = API_CONFIG.BASE_URL;
+    //         const token = API_CONFIG.TOKEN;
+    //         try {
+    //             if (!id) return;
+    //             const url = `${baseUrl}/lock_accounts/1/lock_account_transactions/${id}.json`;
+    //             const response = await axios.get(url, {
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                     ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    //                 },
+    //             });
+    //             const data = response.data;
+    //             setTransactionType(data.transaction_type || '');
+    //             setDate(data.transaction_date || '');
+    //             setJournalNo(data.voucher_number || '');
+    //             setReference(data.reference || '');
+    //             setNotes(data.description || '');
+    //             // reportingMethod and currency not in API, keep defaults
+    //             setRows(
+    //                 Array.isArray(data.records)
+    //                     ? data.records.map((rec) => ({
+    //                         account: rec.ledger_id ? String(rec.ledger_id) : '',
+    //                         description: rec.description || '',
+    //                         contact: '', // Not present in API
+    //                         debit: rec.tr_type === 'dr' ? rec.amount.toFixed(2) : '',
+    //                         credit: rec.tr_type === 'cr' ? rec.amount.toFixed(2) : '',
+    //                     }))
+    //                     : [{ ...initialRow }, { ...initialRow }]
+    //             );
+    //         } catch (error) {
+    //             console.error('Error fetching journal details:', error);
+    //         }
+    //     };
+    //     fetchDetails();
+    // }, [id]);
+
+
+ const lock_account_id = localStorage.getItem("lock_account_id");
     useEffect(() => {
-        const fetchDetails = async () => {
-            const baseUrl = API_CONFIG.BASE_URL;
-            const token = API_CONFIG.TOKEN;
-            try {
-                if (!id) return;
-                const url = `${baseUrl}/lock_accounts/1/lock_account_transactions/${id}.json`;
-                const response = await axios.get(url, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                    },
-                });
-                const data = response.data;
-                setTransactionType(data.transaction_type || '');
-                setDate(data.transaction_date || '');
-                setJournalNo(data.voucher_number || '');
-                setReference(data.reference || '');
-                setNotes(data.description || '');
-                // reportingMethod and currency not in API, keep defaults
-                setRows(
-                    Array.isArray(data.records)
-                        ? data.records.map((rec) => ({
-                            account: rec.ledger_id ? String(rec.ledger_id) : '',
-                            description: rec.description || '',
-                            contact: '', // Not present in API
-                            debit: rec.tr_type === 'dr' ? rec.amount.toFixed(2) : '',
-                            credit: rec.tr_type === 'cr' ? rec.amount.toFixed(2) : '',
-                        }))
-                        : [{ ...initialRow }, { ...initialRow }]
-                );
-            } catch (error) {
-                console.error('Error fetching journal details:', error);
-            }
-        };
-        fetchDetails();
-    }, [id]);
+  const fetchDetails = async () => {
+    const baseUrl = API_CONFIG.BASE_URL;
+    const token = API_CONFIG.TOKEN;
+
+    try {
+      if (!id) return;
+
+      const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/${id}.json`;
+
+      setLoading(true);
+
+      const response = await axios.get(url, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(token
+            ? { Authorization: `Bearer ${token}` }
+            : {}),
+        },
+      });
+
+      const data = response.data;
+
+      console.log("EDIT DATA", data);
+
+      setTransactionType(data.transaction_type || "");
+      setDate(data.transaction_date || "");
+      setJournalNo(data.voucher_number || "");
+      setReference(data.reference || "");
+      setNotes(data.description || "");
+      setReportingMethod(
+        data.reporting_method || "Accrual and Cash"
+      );
+
+      // PRESELECT TABLE ROWS
+      if (Array.isArray(data.records)) {
+        const formattedRows = data.records.map((rec) => ({
+          id: rec.id,
+          account: rec.ledger_id
+            ? String(rec.ledger_id)
+            : "",
+          description: rec.description || "",
+          contact: "",
+          debit:
+            rec.tr_type === "dr"
+              ? String(rec.amount)
+              : "",
+          credit:
+            rec.tr_type === "cr"
+              ? String(rec.amount)
+              : "",
+        }));
+
+        setRows(
+          formattedRows.length
+            ? formattedRows
+            : [{ ...initialRow }, { ...initialRow }]
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Error fetching transaction details:",
+        error
+      );
+      toast.error("Failed to load transaction details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchDetails();
+}, [id]);
 
     // Fetch account options from API using axios, with baseUrl and token
     useEffect(() => {
@@ -82,7 +166,7 @@ const TransactionsEdit = () => {
             const baseUrl = API_CONFIG.BASE_URL;
             const token = API_CONFIG.TOKEN;
             try {
-                const url = `${baseUrl}/lock_accounts/1/lock_account_ledgers.json`;
+                const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_ledgers.json`;
                 const response = await axios.get(url, {
                     headers: {
                         'Content-Type': 'application/json',
@@ -100,8 +184,29 @@ const TransactionsEdit = () => {
 
 
     const handleRowChange = (idx, field, value) => {
-        const updated = rows.map((row, i) => i === idx ? { ...row, [field]: value } : row);
-        setRows(updated);
+        if (field === 'debit' || field === 'credit') {
+            let val = value;
+            if (typeof val === 'string') {
+                val = val.replace(/-/g, '');
+            }
+            if (Number(val) < 0) val = '';
+            if (val && val.includes('.')) {
+                const [intPart, decPart] = val.split('.');
+                val = intPart + '.' + (decPart ? decPart.slice(0, 2) : '');
+            }
+            setRows(prevRows => prevRows.map((row, i) => {
+                if (i !== idx) return row;
+                if (field === 'debit') {
+                    return { ...row, debit: val, credit: val && Number(val) > 0 ? '' : row.credit };
+                }
+                if (field === 'credit') {
+                    return { ...row, credit: val, debit: val && Number(val) > 0 ? '' : row.debit };
+                }
+                return { ...row, [field]: val };
+            }));
+            return;
+        }
+        setRows(prevRows => prevRows.map((row, i) => i === idx ? { ...row, [field]: value } : row));
     };
 
     const addRow = () => setRows([...rows, { ...initialRow }]);
@@ -120,53 +225,149 @@ const TransactionsEdit = () => {
     };
     console.log('Rows transation type:', transactionType);
     // Helper to build the payload for API
-    const buildJournalPayload = () => {
-        const lock_account_id = localStorage.getItem("lock_account_id");
-        return {
-            lock_account_transaction: {
-                transaction_type: transactionType,
-                transaction_date: date,
-                voucher_number: journalNo,
-                description: notes,
-                reference: reference,
-                publish: false, // Set true if publishing
-                lock_account_id: lock_account_id,
-            },
-            lock_account_transaction_records: rows.map(row => {
-                const record = {
-                    ledger_id: row.account ? Number(row.account) : undefined,
-                    cost_centre_id: 1, // Set as needed or make dynamic
-                };
-                if (row.debit && Number(row.debit) > 0) record.dr = row.debit;
-                if (row.credit && Number(row.credit) > 0) record.cr = row.credit;
-                return record;
-            }).filter(r => r.ledger_id),
-        };
-    };
+    // const buildJournalPayload = () => {
+    //     const lock_account_id = localStorage.getItem("lock_account_id");
+    //     return {
+    //         lock_account_transaction: {
+    //             transaction_type: transactionType,
+    //             transaction_date: date,
+    //             voucher_number: journalNo,
+    //             description: notes,
+    //             reference: reference,
+    //             publish: false, // Set true if publishing
+    //             lock_account_id: lock_account_id,
+    //         },
+    //         lock_account_transaction_records: rows.map(row => {
+    //             const record = {
+    //                 ledger_id: row.account ? Number(row.account) : undefined,
+    //                 cost_centre_id: 1, // Set as needed or make dynamic
+    //             };
+    //             if (row.debit && Number(row.debit) > 0) record.dr = row.debit;
+    //             if (row.credit && Number(row.credit) > 0) record.cr = row.credit;
+    //             return record;
+    //         }).filter(r => r.ledger_id),
+    //     };
+    // };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        const payload = buildJournalPayload();
-        console.log('Payload to send:', payload);
-        const baseUrl = API_CONFIG.BASE_URL;
-        const token = API_CONFIG.TOKEN;
-        try {
-            const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
-            const response = await axios.post(url, payload, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-            });
-            console.log('API response:', response.data);
-            navigate('/accounting/transactions');
-            // Optionally show success message or redirect
-        } catch (error) {
-            console.error('Error submitting journal entry:', error);
-            toast.error('Failed to create journal entry');
-            // Optionally show error message
+
+    const buildJournalPayload = () => {
+  const lock_account_id =
+    localStorage.getItem("lock_account_id");
+
+  return {
+    lock_account_transaction: {
+      id: id,
+      transaction_type: transactionType,
+      transaction_date: date,
+      voucher_number: journalNo,
+      description: notes,
+      reference: reference,
+      publish: true,
+      lock_account_id: lock_account_id,
+    },
+
+    lock_account_transaction_records: rows
+      .map((row) => {
+        const record = {
+          id: row.id,
+          ledger_id: row.account
+            ? Number(row.account)
+            : undefined,
+          cost_centre_id: 1,
+        };
+
+        if (row.debit && Number(row.debit) > 0) {
+          record.dr = Number(row.debit);
         }
-    };
+
+        if (row.credit && Number(row.credit) > 0) {
+          record.cr = Number(row.credit);
+        }
+
+        return record;
+      })
+      .filter((r) => r.ledger_id),
+  };
+};
+
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault();
+    //     const payload = buildJournalPayload();
+    //     console.log('Payload to send:', payload);
+    //     const baseUrl = API_CONFIG.BASE_URL;
+    //     const token = API_CONFIG.TOKEN;
+    //     try {
+    //         const url = `${baseUrl}/lock_accounts/1/lock_account_transactions.json`;
+    //         const response = await axios.post(url, payload, {
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    //             },
+    //         });
+    //         console.log('API response:', response.data);
+    //         navigate('/accounting/transactions');
+    //         // Optionally show success message or redirect
+    //     } catch (error) {
+    //         console.error('Error submitting journal entry:', error);
+    //         toast.error('Failed to create journal entry');
+    //         // Optionally show error message
+    //     }
+    // };
+
+
+
+
+        const handleSubmit = async (e) => {
+                e.preventDefault();
+
+                // Build FormData payload for update
+                const formData = new FormData();
+                formData.append('lock_account_transaction[id]', id);
+                formData.append('lock_account_transaction[transaction_type]', transactionType);
+                formData.append('lock_account_transaction[transaction_date]', date);
+                formData.append('lock_account_transaction[voucher_number]', journalNo);
+                formData.append('lock_account_transaction[description]', notes);
+                formData.append('lock_account_transaction[reference]', reference);
+                formData.append('lock_account_transaction[publish]', 'true');
+                formData.append('lock_account_transaction[lock_account_id]', lock_account_id);
+                 formData.append('lock_account_transaction[reporting_method]', reportingMethod);
+
+                rows.forEach((row, idx) => {
+                        if (!row.account) return;
+                        if (row.id) formData.append(`lock_account_transaction_records[${idx}][id]`, row.id);
+                        formData.append(`lock_account_transaction_records[${idx}][ledger_id]`, row.account);
+                        formData.append(`lock_account_transaction_records[${idx}][cost_centre_id]`, '1');
+                        if (row.debit && Number(row.debit) > 0) formData.append(`lock_account_transaction_records[${idx}][dr]`, row.debit);
+                        if (row.credit && Number(row.credit) > 0) formData.append(`lock_account_transaction_records[${idx}][cr]`, row.credit);
+                });
+
+                // Attach files
+                attachments.forEach((file, idx) => {
+                        formData.append('attachments[]', file);
+                });
+
+                const baseUrl = API_CONFIG.BASE_URL;
+                const token = API_CONFIG.TOKEN;
+
+                try {
+                        setLoading(true);
+                        const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/${id}.json`;
+                        const response = await axios.put(url, formData, {
+                                headers: {
+                                        'Content-Type': 'multipart/form-data',
+                                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                                },
+                        });
+                        console.log('UPDATE RESPONSE', response.data);
+                        toast.success('Transaction updated successfully');
+                        navigate('/accounting/transactions');
+                } catch (error) {
+                        console.error('Update Error', error);
+                        toast.error('Failed to update transaction');
+                } finally {
+                        setLoading(false);
+                }
+        };
 
     // const handleSubmit = (e) => {
     //     e.preventDefault();
@@ -557,6 +758,26 @@ const TransactionsEdit = () => {
                             Cancel
                         </Button>
                     </div>
+
+
+                    <div className="flex gap-3 pt-4 justify-center">
+  <Button
+    type="submit"
+    disabled={loading}
+    className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[140px]"
+  >
+    {loading ? "Updating..." : "Update"}
+  </Button>
+
+  <Button
+    variant="outline"
+    type="button"
+    onClick={() => navigate("/accounting/transactions")}
+    className="min-w-[100px]"
+  >
+    Cancel
+  </Button>
+</div>
                 </form>
             </div>
         </div>

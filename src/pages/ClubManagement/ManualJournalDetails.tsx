@@ -120,7 +120,7 @@ export const ManualJournalDetails = () => {
     const token = localStorage.getItem("token");
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<ManualJournalTransaction | null>(null);
-
+ const lock_account_id = localStorage.getItem("lock_account_id");
 
     const [amenities, setAmenities] = useState([])
     const [formData, setFormData] = useState({
@@ -159,7 +159,7 @@ export const ManualJournalDetails = () => {
     const fetchMembershipPlanDetails = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`https://${baseUrl}/lock_accounts/1/lock_account_transactions/${id}.json`, {
+            const response = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions/${id}.json`, {
                 headers: {
                     "Authorization": `Bearer ${token}`,
                 }
