@@ -43,6 +43,38 @@ const stripMissedMembersPrefix = (text: string): string => {
   return text;
 };
 
+const normalizeName = (name: any): string =>
+  String(name || "").trim().replace(/\s+/g, " ").toLowerCase();
+
+const getItemTitle = (item: any): string => {
+  if (!item) return "";
+  if (typeof item === "string") return item;
+  if (typeof item === "object")
+    return String(item.title || item.name || item.text || "");
+  return String(item);
+};
+
+const toItemArray = (value: any): any[] => {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.items)) return value.items;
+  return [];
+};
+
+const mergeUniqueItems = (primary: any = [], fallback: any = []) => {
+  const merged: any[] = [];
+  const seen = new Set<string>();
+  const addItem = (item: any) => {
+    const title = getItemTitle(item).trim();
+    const key = title.toLowerCase();
+    if (!title || seen.has(key)) return;
+    seen.add(key);
+    merged.push(item);
+  };
+  toItemArray(primary).forEach(addItem);
+  toItemArray(fallback).forEach(addItem);
+  return merged;
+};
+
 const getReportDataSource = (report: any) => {
   const reportData = report?.report_data || {};
   const draftData = report?.daily_report?.report_data || {};
@@ -60,10 +92,10 @@ const getReportDataSource = (report: any) => {
       ...draftData,
       ...reportData,
       tasks_issues: Array.isArray(reportData.tasks_issues)
-        ? reportData.tasks_issues
+        ? mergeUniqueItems(reportData.tasks_issues, draftData.tasks_issues || [])
         : draftData.tasks_issues || [],
       tomorrow_plan: Array.isArray(reportData.tomorrow_plan)
-        ? reportData.tomorrow_plan
+        ? mergeUniqueItems(reportData.tomorrow_plan, draftData.tomorrow_plan || [])
         : draftData.tomorrow_plan || [],
       accomplishments:
         reportData.accomplishments?.items ||
@@ -160,6 +192,10 @@ const compileMeetingNotes = (historyData: any): string => {
         ? memberReports.find(
             (memberReport: any) =>
               Number(memberReport.user_id) === Number(report.user_id)
+          ) ||
+          memberReports.find(
+            (memberReport: any) =>
+              normalizeName(memberReport.name) === normalizeName(report.name)
           )
         : report;
     const memberRawSource = matchingMemberReport
@@ -172,13 +208,13 @@ const compileMeetingNotes = (historyData: any): string => {
             ...memberRawSource,
             ...report,
             accomplishments: Array.isArray(report.accomplishments)
-              ? report.accomplishments
+              ? mergeUniqueItems(report.accomplishments, memberRawSource.accomplishments || [])
               : memberRawSource.accomplishments,
             tomorrow_plan: Array.isArray(report.tomorrow_plan)
-              ? report.tomorrow_plan
+              ? mergeUniqueItems(report.tomorrow_plan, memberRawSource.tomorrow_plan || [])
               : memberRawSource.tomorrow_plan,
             tasks_issues: Array.isArray(report.tasks_issues)
-              ? report.tasks_issues
+              ? mergeUniqueItems(report.tasks_issues, memberRawSource.tasks_issues || [])
               : memberRawSource.tasks_issues,
             kpis:
               Array.isArray(report.kpis) || typeof report.kpis === "object"

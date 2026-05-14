@@ -48,7 +48,9 @@ export const EditServicePRPage = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const orgId = localStorage.getItem("org_id");
   const navigate = useNavigate();
+  const isPanchshilOrg = orgId === "63";
 
   const { data = [] } = useAppSelector((state) => state.changePlantDetails) as { data: any[] };
 
@@ -440,10 +442,26 @@ export const EditServicePRPage = () => {
     }
   }, [formData.plantDetail, dispatch, baseUrl, token]);
 
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    setAttachedFiles((prev) => [...prev, ...selectedFiles]);
-  };
+ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const selectedFiles = Array.from(e.target.files || []);
+
+  const validFileTypes = ['application/pdf'];
+  const validFiles: File[] = [];
+
+  selectedFiles.forEach((file) => {
+    if (validFileTypes.includes(file.type)) {
+      validFiles.push(file);
+    } else {
+      toast.error(
+        `Invalid file type: ${file.name}. Only PDF files are accepted.`
+      );
+    }
+  });
+
+  if (validFiles.length > 0) {
+    setAttachedFiles((prev) => [...prev, ...validFiles]);
+  }
+};
 
   const removeFile = (index, type) => {
     if (type === "existing") {
@@ -989,87 +1007,97 @@ export const EditServicePRPage = () => {
                       InputLabelProps={{ shrink: true }}
                       sx={fieldStyles}
                     />
+                    {!isPanchshilOrg && (
+                      <TextField
+                        label="CGST Rate"
+                        value={detailsData.cgstRate}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                            handleDetailsChange(detailsData.id, "cgstRate", value);
+                          }
+                        }}
+                        fullWidth
+                        variant="outlined"
+                        type="text"
+                        InputLabelProps={{ shrink: true }}
+                        sx={fieldStyles}
+                      />
+                    )}
 
-                    <TextField
-                      label="CGST Rate"
-                      value={detailsData.cgstRate}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                          handleDetailsChange(detailsData.id, "cgstRate", value);
-                        }
-                      }}
-                      fullWidth
-                      variant="outlined"
-                      type="text"
-                      InputLabelProps={{ shrink: true }}
-                      sx={fieldStyles}
-                    />
 
-                    <TextField
-                      label="CGST Amt"
-                      value={detailsData.cgstAmt}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ readOnly: true }}
-                      sx={{
-                        mt: 1,
-                        "& .MuiInputBase-input": {
-                          padding: { xs: "8px", sm: "10px", md: "12px" },
-                        },
-                        height: { xs: 28, sm: 36, md: 45 },
-                      }}
-                    />
+                    {!isPanchshilOrg && (
+                      <TextField
+                        label="CGST Amt"
+                        value={detailsData.cgstAmt}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ readOnly: true }}
+                        sx={{
+                          mt: 1,
+                          "& .MuiInputBase-input": {
+                            padding: { xs: "8px", sm: "10px", md: "12px" },
+                          },
+                          height: { xs: 28, sm: 36, md: 45 },
+                        }}
+                      />
+                    )}
+                    {!isPanchshilOrg && (
+                      <TextField
+                        label="SGST Rate"
+                        value={detailsData.sgstRate}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                            handleDetailsChange(detailsData.id, "sgstRate", value);
+                          }
+                        }}
+                        fullWidth
+                        variant="outlined"
+                        type="text"
+                        InputLabelProps={{ shrink: true }}
+                        sx={fieldStyles}
+                      />
+                    )}
 
-                    <TextField
-                      label="SGST Rate"
-                      value={detailsData.sgstRate}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                          handleDetailsChange(detailsData.id, "sgstRate", value);
-                        }
-                      }}
-                      fullWidth
-                      variant="outlined"
-                      type="text"
-                      InputLabelProps={{ shrink: true }}
-                      sx={fieldStyles}
-                    />
+                    {!isPanchshilOrg && (
 
-                    <TextField
-                      label="SGST Amt"
-                      value={detailsData.sgstAmt}
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ readOnly: true }}
-                      sx={{
-                        mt: 1,
-                        "& .MuiInputBase-input": {
-                          padding: { xs: "8px", sm: "10px", md: "12px" },
-                        },
-                        height: { xs: 28, sm: 36, md: 45 },
-                      }}
-                    />
+                      <TextField
+                        label="SGST Amt"
+                        value={detailsData.sgstAmt}
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ readOnly: true }}
+                        sx={{
+                          mt: 1,
+                          "& .MuiInputBase-input": {
+                            padding: { xs: "8px", sm: "10px", md: "12px" },
+                          },
+                          height: { xs: 28, sm: 36, md: 45 },
+                        }}
+                      />
+                    )}
 
-                    <TextField
-                      label="IGST Rate"
-                      value={detailsData.igstRate}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                          handleDetailsChange(detailsData.id, "igstRate", value);
-                        }
-                      }}
-                      fullWidth
-                      variant="outlined"
-                      type="text"
-                      InputLabelProps={{ shrink: true }}
-                      sx={fieldStyles}
-                    />
-
+                    {!isPanchshilOrg && (
+                      <TextField
+                        label="IGST Rate"
+                        value={detailsData.igstRate}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                            handleDetailsChange(detailsData.id, "igstRate", value);
+                          }
+                        }}
+                        fullWidth
+                        variant="outlined"
+                        type="text"
+                        InputLabelProps={{ shrink: true }}
+                        sx={fieldStyles}
+                      />
+                    )}
+                    {!isPanchshilOrg && (
                     <TextField
                       label="IGST Amt"
                       value={detailsData.igstAmt}
@@ -1085,7 +1113,8 @@ export const EditServicePRPage = () => {
                         height: { xs: 28, sm: 36, md: 45 },
                       }}
                     />
-
+                    )}
+                  {!isPanchshilOrg && (
                     <TextField
                       label="TCS Rate"
                       value={detailsData.tcsRate}
@@ -1101,6 +1130,9 @@ export const EditServicePRPage = () => {
                       InputLabelProps={{ shrink: true }}
                       sx={fieldStyles}
                     />
+                  )}
+
+                  {!isPanchshilOrg && (
 
                     <TextField
                       label="TCS Amt"
@@ -1117,7 +1149,8 @@ export const EditServicePRPage = () => {
                         height: { xs: 28, sm: 36, md: 45 },
                       }}
                     />
-
+                    )}
+                  {!isPanchshilOrg && (
                     <TextField
                       label="Tax Amount"
                       value={detailsData.taxAmount}
@@ -1133,6 +1166,7 @@ export const EditServicePRPage = () => {
                         height: { xs: 28, sm: 36, md: 45 }
                       }}
                     />
+                    )}
 
                     <TextField
                       label="Amount"
@@ -1460,7 +1494,7 @@ export const EditServicePRPage = () => {
                 <div className="text-[12px] text-gray-700 border border-gray-200 rounded-md bg-gray-50 px-3 py-2">
                   <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
                     <span className="text-gray-600 font-bold">Allowed formats:</span>
-                    <span className="text-gray-800">PDF, JPG, JPEG, XLS, XLSX</span>
+                    <span className="text-gray-800">PDF</span>
                     <span className="text-gray-600 font-bold">Max size per file:</span>
                     <span className="text-gray-800">10 MB</span>
                   </div>
@@ -1628,7 +1662,8 @@ export const EditServicePRPage = () => {
         <div className="flex items-center justify-center gap-4 mt-8">
           <Button
             onClick={handleSubmit}
-            className="bg-red-600 hover:bg-red-700 text-white px-8"
+            className="fm-button-fix fm-button-brand px-4 py-2"
+            variant="ghost"
             disabled={submitting}
           >
             Save Service PR

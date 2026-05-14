@@ -287,6 +287,19 @@ const getItemStatus = (item: any): string => {
   return item.status || "open";
 };
 
+const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
+  const merged: any[] = [];
+  const seen = new Set<string>();
+  [...primary, ...fallback].forEach((item) => {
+    const title = getItemTitle(item).trim();
+    const key = title.toLowerCase();
+    if (!title || seen.has(key)) return;
+    seen.add(key);
+    merged.push(item);
+  });
+  return merged;
+};
+
 const formatSelfRating = (rating: any): string => {
   if (rating === null || rating === undefined || rating === "") return "";
   const ratingText = String(rating).trim();
@@ -317,7 +330,10 @@ const resolveRawSource = (report: any) => {
       raw.accomplishments?.items ||
       (Array.isArray(raw.accomplishments) ? raw.accomplishments : []),
     self_rating:
-      raw.self_rating ?? raw.details?.self_rating ?? raw.sections?.self_rating ?? null,
+      raw.self_rating ??
+      raw.details?.self_rating ??
+      raw.sections?.self_rating ??
+      null,
     total_score: raw.total_score ?? null,
     is_absent: raw.details?.is_absent ?? raw.sections?.is_absent ?? null,
   });
@@ -337,10 +353,10 @@ const resolveRawSource = (report: any) => {
       ...normalizedDraft,
       ...rd,
       tasks_issues: Array.isArray(rd.tasks_issues)
-        ? rd.tasks_issues
+        ? mergeUniqueItems(rd.tasks_issues, normalizedDraft.tasks_issues || [])
         : normalizedDraft.tasks_issues || [],
       tomorrow_plan: Array.isArray(rd.tomorrow_plan)
-        ? rd.tomorrow_plan
+        ? mergeUniqueItems(rd.tomorrow_plan, normalizedDraft.tomorrow_plan || [])
         : normalizedDraft.tomorrow_plan || [],
       accomplishments:
         rd.accomplishments?.items ||
@@ -348,12 +364,8 @@ const resolveRawSource = (report: any) => {
           ? rd.accomplishments
           : normalizedDraft.accomplishments || []),
       self_rating: normalizedDraft.self_rating,
-      total_score:
-        rd.total_score ??
-        normalizedDraft.total_score,
-      is_absent:
-        rd.is_absent ??
-        normalizedDraft.is_absent,
+      total_score: rd.total_score ?? normalizedDraft.total_score,
+      is_absent: rd.is_absent ?? normalizedDraft.is_absent,
     };
   }
 
@@ -605,16 +617,25 @@ const DailyTab = ({
     }
 
     const rawSource = resolveRawSource(report);
+    const baseReportData =
+      report.report_data ||
+      report.daily_report?.report_data ||
+      rawSource ||
+      {};
 
     if (patch.tomorrow_plan_item) {
-      const existingPlan: any[] = Array.isArray(rawSource.tomorrow_plan)
-        ? rawSource.tomorrow_plan
+      const existingPlan: any[] = Array.isArray(baseReportData.tomorrow_plan)
+        ? baseReportData.tomorrow_plan
         : [];
 
       const updatedPlan = [
         ...existingPlan,
         { title: patch.tomorrow_plan_item.trim() },
       ];
+      const updatedReportData = {
+        ...baseReportData,
+        tomorrow_plan: updatedPlan,
+      };
 
       try {
         const res = await fetch(
@@ -626,10 +647,7 @@ const DailyTab = ({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              report_data: {
-                ...rawSource,
-                tomorrow_plan: updatedPlan,
-              },
+              report_data: updatedReportData,
             }),
           }
         );
@@ -775,7 +793,7 @@ const DailyTab = ({
     };
   };
 
-const buildMeetingNotesObject = (
+  const buildMeetingNotesObject = (
     allReports: any[],
     allMissed: any[],
     meetingNotesText: string
@@ -1133,7 +1151,13 @@ const buildMeetingNotesObject = (
 
   const notesChanged = meetingNotes.trim() !== savedMeetingNotes.trim();
 
-  let memberReports = dailyData?.member_reports || dailyData?.reports || [];
+  let memberReports = (dailyData?.member_reports || dailyData?.reports || [])
+    .slice()
+    .sort((a: any, b: any) =>
+      (a.name || "").localeCompare(b.name || "", undefined, {
+        sensitivity: "base",
+      })
+    );
   let failedMembers = dailyData?.missed_members || [];
   if (selectedMember !== "all") {
     memberReports = memberReports.filter(
@@ -1692,7 +1716,8 @@ const buildMeetingNotesObject = (
                       const isExpanded = expandedReports.includes(rId);
                       const isPending = report.status === "pending";
                       const hasDraft = !!report.daily_report;
-                      const isPermanentlyChecked = report.checked_in_meeting === true;
+                      const isPermanentlyChecked =
+                        report.checked_in_meeting === true;
                       const draftRaw = report.daily_report?.report_data || {};
 
                       const rawDisplayRd = resolveRawSource(report);
@@ -1725,26 +1750,49 @@ const buildMeetingNotesObject = (
                       );
 
                       // ── NEW LOGIC FOR SCORING ──
-                      const sections = draftRaw?.sections || rawDisplayRd?.sections || displayRd?.sections || report?.report_data?.sections || {};
-                      const kpisFallback = report.kpis || report.report_data?.kpis || rawDisplayRd?.kpis || {};
+                      const sections =
+                        draftRaw?.sections ||
+                        rawDisplayRd?.sections ||
+                        displayRd?.sections ||
+                        report?.report_data?.sections ||
+                        {};
+                      const kpisFallback =
+                        report.kpis ||
+                        report.report_data?.kpis ||
+                        rawDisplayRd?.kpis ||
+                        {};
 
                       // Explicit strict checker to prevent `0` from failing over to fallback values
                       const getScore = (val1: any, val2: any) => {
-                        if (val1 !== undefined && val1 !== null && val1 !== "") return Number(val1);
-                        if (val2 !== undefined && val2 !== null && val2 !== "") return Number(val2);
+                        if (val1 !== undefined && val1 !== null && val1 !== "")
+                          return Number(val1);
+                        if (val2 !== undefined && val2 !== null && val2 !== "")
+                          return Number(val2);
                         return 0;
                       };
 
-                      const kpiAchieved = getScore(sections.kpi_achievement, kpisFallback.score);
+                      const kpiAchieved = getScore(
+                        sections.kpi_achievement,
+                        kpisFallback.score
+                      );
                       const kpiStr = `${kpiAchieved}/20`;
 
-                      const tasksIssuesAchieved = getScore(sections.tasks_issues, kpisFallback.tasks);
+                      const tasksIssuesAchieved = getScore(
+                        sections.tasks_issues,
+                        kpisFallback.tasks
+                      );
                       const tasksIssuesStr = `${tasksIssuesAchieved}/20`;
 
-                      const planAchieved = getScore(sections.planning, kpisFallback.planning);
+                      const planAchieved = getScore(
+                        sections.planning,
+                        kpisFallback.planning
+                      );
                       const planStr = `${planAchieved}/20`;
 
-                      const timeAchieved = getScore(sections.timing, kpisFallback.timing);
+                      const timeAchieved = getScore(
+                        sections.timing,
+                        kpisFallback.timing
+                      );
                       const timeStr = `${timeAchieved}/20`;
 
                       const selfRating =

@@ -1975,3 +1975,58 @@ body {
   -webkit-backdrop-filter: none !important;
   opacity: 1 !important;
 }
+
+/* Opt-in rescue class for buttons that get clipped or misaligned by local overrides. */
+.fm-button-fix,
+button.fm-button-fix,
+a.fm-button-fix,
+[role="button"].fm-button-fix {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  width: auto !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 36px !important;
+  padding: 8px 14px !important;
+  line-height: 1.25 !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+
+.fm-button-fix svg,
+.fm-button-fix .lucide {
+  flex-shrink: 0 !important;
+}
+
+.fm-button-fix > span {
+  min-width: 0 !important;
+}
+
+button.fm-button-fix.fm-button-brand,
+a.fm-button-fix.fm-button-brand,
+[role="button"].fm-button-fix.fm-button-brand {
+  background-color: #da7756 !important;
+  border-color: #da7756 !important;
+  color: #ffffff !important;
+}
+
+button.fm-button-fix.fm-button-brand:hover:not(:disabled),
+a.fm-button-fix.fm-button-brand:hover,
+[role="button"].fm-button-fix.fm-button-brand:hover {
+  background-color: #c45f40 !important;
+  border-color: #c45f40 !important;
+  color: #ffffff !important;
+}
+
+button.fm-button-fix.fm-button-brand *,
+a.fm-button-fix.fm-button-brand *,
+[role="button"].fm-button-fix.fm-button-brand * {
+  color: #ffffff !important;
+}

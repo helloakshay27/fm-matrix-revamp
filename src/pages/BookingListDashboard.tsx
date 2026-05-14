@@ -660,8 +660,13 @@ const BookingListDashboard = () => {
   const handleDownload = async () => {
     setExportLoading(true);
     try {
-      const response = await dispatch(exportReport({ baseUrl, token })).unwrap();
-      const url = window.URL.createObjectURL(new Blob([response]));
+      const response = await axios.get(`https://${baseUrl}/pms/facility_bookings/export.xlsx`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        responseType: 'blob',
+      })
+      const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'facility_bookings.xlsx');
@@ -719,6 +724,8 @@ const BookingListDashboard = () => {
         renderCell={renderCell}
         renderActions={renderActions}
         storageKey="booking-list-table"
+        handleExport={handleDownload}
+        enableExport={true}
         loading={loading || isPageLoading}
         onFilterClick={() => setIsFilterModalOpen(true)}
         emptyMessage={loading || isPageLoading ? 'Loading bookings...' : 'No bookings found'}

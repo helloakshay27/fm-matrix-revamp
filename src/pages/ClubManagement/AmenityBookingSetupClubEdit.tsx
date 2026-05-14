@@ -1959,35 +1959,35 @@ export const EditBookingSetupClubPage = () => {
                                 .map(({ blockDay, index: blockIndex }, reverseIndex) => {
                                     return (
                                         <div key={blockIndex} className="space-y-4 p-4 border rounded-lg">
-                                            {formData.blockDays.filter((bd) => !bd._destroy).length > 1 && (
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-sm font-semibold">Block Day {blockIndex + 1}</span>
-                                                    <button
-                                                        onClick={() => {
-                                                            const newBlockDays = [...formData.blockDays];
-                                                            // If it's an existing block day with an ID, mark it for deletion with _destroy
-                                                            if (newBlockDays[blockIndex].id) {
-                                                                console.log(`Marking block day ${blockIndex} (ID: ${newBlockDays[blockIndex].id}) for deletion`);
-                                                                newBlockDays[blockIndex] = {
-                                                                    ...newBlockDays[blockIndex],
-                                                                    _destroy: true,
-                                                                };
-                                                            } else {
-                                                                // If it's a new block day without an ID, remove it from the array
-                                                                console.log(`Removing new block day ${blockIndex} (no ID)`);
-                                                                newBlockDays.splice(blockIndex, 1);
-                                                            }
-                                                            setFormData({
-                                                                ...formData,
-                                                                blockDays: newBlockDays,
-                                                            });
-                                                        }}
-                                                        className="text-red-500 hover:text-red-700"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            )}
+                                            {/* {formData.blockDays.filter((bd) => !bd._destroy).length > 1 && ( */}
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-sm font-semibold">Block Day {blockIndex + 1}</span>
+                                                <button
+                                                    onClick={() => {
+                                                        const newBlockDays = [...formData.blockDays];
+                                                        // If it's an existing block day with an ID, mark it for deletion with _destroy
+                                                        if (newBlockDays[blockIndex].id) {
+                                                            console.log(`Marking block day ${blockIndex} (ID: ${newBlockDays[blockIndex].id}) for deletion`);
+                                                            newBlockDays[blockIndex] = {
+                                                                ...newBlockDays[blockIndex],
+                                                                _destroy: true,
+                                                            };
+                                                        } else {
+                                                            // If it's a new block day without an ID, remove it from the array
+                                                            console.log(`Removing new block day ${blockIndex} (no ID)`);
+                                                            newBlockDays.splice(blockIndex, 1);
+                                                        }
+                                                        setFormData({
+                                                            ...formData,
+                                                            blockDays: newBlockDays,
+                                                        });
+                                                    }}
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                            {/* )} */}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <TextField
                                                     label="Date"

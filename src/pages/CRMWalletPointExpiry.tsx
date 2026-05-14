@@ -129,8 +129,8 @@ const CRMWalletPointExpiry = () => {
                         {
                             !addAllowed && (
                                 <Button
-                                    variant="outline"
-                                    className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 flex items-center gap-3"
+                                    variant="ghost"
+                                        className="fm-button-fix fm-button-brand px-4 py-2"
                                     onClick={() => navigate('/crm/point-expiry/edit')}
                                 >
                                     <Pen size={15} /> Edit

@@ -222,6 +222,32 @@ export type FaceEnrollmentResponse = {
   message?: string;
 };
 
+export type UserFaceMember = {
+  id: string | number;
+  name?: string | null;
+  face_added: boolean;
+  email?: string | null;
+  face_url?: string | null;
+};
+
+export type UserFacesResponse = {
+  code?: number;
+  collection_id?: string;
+  total_count?: number;
+  face_added_count?: number;
+  face_not_added?: number;
+  page?: number;
+  per_page?: number;
+  users?: UserFaceMember[];
+  [key: string]: unknown;
+};
+
+type GetUserFacesParams = {
+  page?: number;
+  perPage?: number;
+  signal?: AbortSignal;
+};
+
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   value && typeof value === "object"
     ? (value as Record<string, unknown>)
@@ -374,6 +400,68 @@ export const enrollFaceWithBase64 = async (base64Face: string) => {
   } catch (err) {
     throw getFaceApiError(err, "Failed to enroll face");
   }
+};
+
+export const getUserFaces = async ({
+  page = 1,
+  perPage = 10,
+  signal,
+}: GetUserFacesParams = {}) => {
+  const token = getToken();
+
+  try {
+    const response = await axios.get<UserFacesResponse>(
+      `${getFaceAuthApiBaseUrl()}${FACE_ENROLL_PATH}`,
+      {
+        params: {
+          page,
+          per_page: perPage,
+        },
+        signal,
+        headers: {
+          Accept: "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      }
+    );
+
+    return response.data;
+  } catch (err) {
+    throw getFaceApiError(err, "Failed to load user faces");
+  }
+};
+
+export const getAllFaceAddedUsers = async ({
+  perPage = 100,
+  signal,
+}: Omit<GetUserFacesParams, "page"> = {}) => {
+  const firstPage = await getUserFaces({ page: 1, perPage, signal });
+  const users = [...(firstPage.users || [])];
+  const responsePerPage = Number(firstPage.per_page) || perPage;
+  const totalCount = Number(firstPage.total_count) || users.length;
+  const totalPages =
+    responsePerPage > 0 ? Math.ceil(totalCount / responsePerPage) : 1;
+
+  for (let page = 2; page <= totalPages; page += 1) {
+    if (signal?.aborted) break;
+
+    const response = await getUserFaces({ page, perPage, signal });
+    users.push(...(response.users || []));
+  }
+
+  const addedUsers = users.filter((user) => user.face_added);
+
+  return {
+    ...firstPage,
+    users: addedUsers,
+    page: 1,
+    per_page: addedUsers.length,
+    face_added_count: Number(firstPage.face_added_count) || addedUsers.length,
+    face_not_added:
+      Number(firstPage.face_not_added) ||
+      Math.max(totalCount - addedUsers.length, 0),
+    total_count: totalCount,
+  };
 };
 
 export const recognizeFaceWithBase64 = async (base64Face: string) => {
