@@ -4,12 +4,14 @@ import { toast } from 'sonner';
 
 export type ExportStatus = 'idle' | 'processing' | 'done' | 'failed' | 'downloading';
 
+export type ExportType = 'excel' | 'digital_register';
+
 interface UseAssetExportReturn {
   status: ExportStatus;
   progress: number;
   exportKey: string | null;
   error: string | null;
-  startExport: () => Promise<void>;
+  startExport: (type?: ExportType) => Promise<void>;
   cancelExport: () => void;
   downloadExport: () => Promise<void>;
   reset: () => void;
@@ -27,6 +29,7 @@ export const useAssetExport = (
   const pollingTimeoutRef = useRef<NodeJS.Timeout>();
   const retriesRef = useRef(0);
   const isMountedRef = useRef(true);
+  const exportTypeRef = useRef<ExportType>('excel');
 
   // Cleanup on unmount
   useEffect(() => {
@@ -47,7 +50,9 @@ export const useAssetExport = (
 
       try {
         console.log(`📊 Poll attempt ${retriesRef.current + 1} for key:`, key);
-        const statusResponse = await assetExportService.checkExportStatus(key);
+        const statusResponse = exportTypeRef.current === 'digital_register'
+          ? await assetExportService.checkDigitalRegisterExportStatus(key)
+          : await assetExportService.checkExportStatus(key);
 
         if (!isMountedRef.current) return;
 
@@ -91,7 +96,8 @@ export const useAssetExport = (
           return;
         }
 
-        console.log(`⏳ Status: ${statusResponse.status}, retrying in ${pollingInterval}ms...`);
+        const interval = exportTypeRef.current === 'digital_register' ? 4000 : pollingInterval;
+        console.log(`⏳ Status: ${statusResponse.status}, retrying in ${interval}ms...`);
 
         // Schedule next poll - use a ref to avoid closure issues
         if (isMountedRef.current) {
@@ -99,7 +105,7 @@ export const useAssetExport = (
             if (isMountedRef.current) {
               poll(key);
             }
-          }, pollingInterval);
+          }, interval);
         }
       } catch (err) {
         if (!isMountedRef.current) return;
@@ -114,21 +120,24 @@ export const useAssetExport = (
     [pollingInterval, maxRetries]
   );
 
-  const startExport = useCallback(async () => {
+  const startExport = useCallback(async (type: ExportType = 'excel') => {
     if (status !== 'idle') {
       console.log('⚠️ Export already in progress');
       toast.error('An export is already in progress');
       return;
     }
 
+    exportTypeRef.current = type;
     setStatus('processing');
     setProgress(30);
     setError(null);
     retriesRef.current = 0;
 
     try {
-      console.log('🚀 Starting export...');
-      const response = await assetExportService.startExport();
+      console.log('🚀 Starting export...', type);
+      const response = type === 'digital_register'
+        ? await assetExportService.startDigitalRegisterExport()
+        : await assetExportService.startExport();
 
       if (!isMountedRef.current) return;
 
@@ -170,16 +179,21 @@ export const useAssetExport = (
     setStatus('downloading');
 
     try {
-      await assetExportService.downloadExport(
-        exportKey,
-        `assets-export-${new Date().toISOString().split('T')[0]}.xlsx`
-      );
-
-      if (!isMountedRef.current) return;
-
-      setStatus('idle');
-      toast.success('Export downloaded successfully');
-      reset();
+      if (exportTypeRef.current === 'digital_register') {
+        // Browser navigation — the server returns the file as an attachment
+        assetExportService.downloadDigitalRegisterExport(exportKey);
+        toast.success('Download started');
+        reset();
+      } else {
+        await assetExportService.downloadExport(
+          exportKey,
+          `assets-export-${new Date().toISOString().split('T')[0]}.xlsx`
+        );
+        if (!isMountedRef.current) return;
+        setStatus('idle');
+        toast.success('Export downloaded successfully');
+        reset();
+      }
     } catch (err) {
       if (!isMountedRef.current) return;
 
@@ -212,6 +226,7 @@ export const useAssetExport = (
     setError(null);
     setExportKey(null);
     retriesRef.current = 0;
+    exportTypeRef.current = 'excel';
   }, []);
 
   return {
