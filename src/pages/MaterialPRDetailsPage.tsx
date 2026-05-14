@@ -729,19 +729,6 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
         toast.error("Failed to load test results");
       }
 
-      // Step 3: Push to SAP
-      try {
-        const sapResponse = await axios.get<{ message: string }>(
-          `https://${baseUrl}/pms/purchase_orders/${id}.json?send_sap=yes`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        toast.success(sapResponse.data.message || "Pushed to SAP successfully");
-      } catch (sapError: any) {
-        console.error("Error pushing to SAP:", sapError);
-        toast.error(sapError.message || "Failed to push to SAP");
-      }
 
     } catch (error: any) {
       toast.error(error.message || "Failed to run test run");
