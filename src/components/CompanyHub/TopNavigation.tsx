@@ -776,7 +776,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                   >
                     <div className="fm-button-content flex items-center gap-2">
                       <Shield className="w-4 h-4" />
-                      <span className="font-medium">Admin View</span>
+                      <span className="fm-button-content flex items-center gap-2">Admin View</span>
                     </div>
                     <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
                   </button>
