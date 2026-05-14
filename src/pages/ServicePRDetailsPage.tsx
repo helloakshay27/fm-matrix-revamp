@@ -423,6 +423,29 @@ export const ServicePRDetailsPage = () => {
 
       toast.success("WBS Codes updated successfully");
       setShowEditWbsModal(false);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const detailsResponse = await axios.get(
+        `https://${baseUrl}/pms/work_orders/${id}.json`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (detailsResponse.data?.page) {
+        setServicePR(detailsResponse.data.page);
+
+        if (
+          detailsResponse.data.page?.api_responses &&
+          Array.isArray(detailsResponse.data.page.api_responses)
+        ) {
+          setExternalApiCalls(detailsResponse.data.page.api_responses);
+        }
+
+        toast.success("Data refreshed after test run");
+      }
+
+
     } catch (error: any) {
       toast.error(error.message || "Failed to update WBS Codes");
     }
