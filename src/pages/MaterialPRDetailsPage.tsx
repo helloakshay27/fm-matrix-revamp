@@ -503,7 +503,30 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
       );
 
       toast.success("Details updated successfully");
+
       setShowEditWbsModal(false);
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Step 2: Fetch the updated details after test run
+      try {
+        const detailsResponse = await dispatch(
+          getMaterialPRById({ baseUrl, token, id })
+        ).unwrap();
+        setPR(detailsResponse);
+        setButtonCondition({
+          showSap: detailsResponse.show_send_sap_yes,
+          editWbsCode: detailsResponse.can_edit_wbs_codes,
+          canEditAll: detailsResponse.can_edit_all,
+        });
+        if (detailsResponse.api_calls && Array.isArray(detailsResponse.api_calls)) {
+          setExternalApiCalls(detailsResponse.api_calls);
+        }
+        toast.info("Test results loaded successfully");
+      } catch (detailsError) {
+        console.error("Error loading test results:", detailsError);
+        toast.error("Failed to load test results");
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to update details");
     }
