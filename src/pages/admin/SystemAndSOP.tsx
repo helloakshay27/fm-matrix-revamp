@@ -101,7 +101,7 @@ const ThemeStyle = () => (
       border: 1px solid #e5e7eb;
       border-radius: 12px;
       padding: 9px 12px;
-      font-size: 13px; font-weight: 600;
+      font-size: 13px; font-weight: 500;
       color: #1a1a1a;
       background: #fffaf8;
       transition: border-color .15s, box-shadow .15s;
@@ -116,7 +116,7 @@ const ThemeStyle = () => (
       border: 1px solid #e5e7eb;
       border-radius: 12px;
       padding: 9px 36px 9px 12px;
-      font-size: 13px; font-weight: 600;
+      font-size: 13px; font-weight: 500;
       color: #1a1a1a;
       background: #fffaf8;
       appearance: none; -webkit-appearance: none;
@@ -139,14 +139,30 @@ const ThemeStyle = () => (
     .bp-card-lift { transition: box-shadow .2s, transform .2s; }
     .bp-card-lift:hover { box-shadow: 0 8px 32px rgba(218,119,86,0.12); transform: translateY(-1px); }
     .sop-kanban-card {
-      border-radius: 16px;
-      border: 1px solid #ebebeb;
+      position: relative;
+      border-radius: 18px;
+      border: 1px solid #e8e3de;
       background: #ffffff;
       padding: 16px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      transition: box-shadow .2s, transform .2s;
+      box-shadow: 0 10px 24px rgba(26,26,26,0.05);
+      transition: box-shadow .2s, transform .2s, border-color .2s;
+      overflow: hidden;
     }
-    .sop-kanban-card:hover { box-shadow: 0 6px 20px rgba(218,119,86,0.10); transform: translateY(-1px); }
+    .sop-kanban-card:hover {
+      border-color: rgba(218,119,86,0.35);
+      box-shadow: 0 16px 36px rgba(26,26,26,0.08), 0 4px 14px rgba(218,119,86,0.10);
+      transform: translateY(-2px);
+    }
+    .sop-card-description {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .sop-card-action {
+      transition: background .15s, border-color .15s, color .15s, transform .15s;
+    }
+    .sop-card-action:hover { transform: translateY(-1px); }
     .sop-col-panel {
       border-radius: 20px;
       border: 1px solid #e8e3de;
@@ -173,7 +189,7 @@ const BtnPrimary = ({
   <button
     onClick={onClick}
     disabled={disabled}
-    className={`inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white shadow-sm transition-all duration-150 active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
+    className={`inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold text-white shadow-sm transition-all duration-150 active:scale-[0.97] disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
     style={{ background: C.primary, fontFamily: C.font }}
     onMouseEnter={(e) => {
       if (!disabled) e.currentTarget.style.background = C.primaryHov;
@@ -193,7 +209,7 @@ const BtnOutline = ({
   <button
     onClick={onClick}
     disabled={disabled}
-    className={`inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm font-bold bg-white shadow-sm transition-all duration-150 active:scale-[0.97] border disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
+    className={`inline-flex items-center justify-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold bg-white shadow-sm transition-all duration-150 active:scale-[0.97] border disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
     style={{ borderColor: C.primaryBord, color: C.primary, fontFamily: C.font }}
     onMouseEnter={(e) => {
       if (!disabled) {
@@ -468,7 +484,7 @@ const fetchDepartmentsData = async (): Promise<
       ? json
       : (json.data ?? json.departments ?? []);
     return arr.map((d: any) => ({
-      value: String(d.name || d.id),
+      value: String(d.name || d.department_name || d.id),
       label: d.name || d.department_name,
       id: d.id,
     }));
@@ -594,7 +610,7 @@ const FieldBox = ({
     style={{ borderColor: C.primaryBord }}
   >
     <label
-      className="block text-[12px] font-black mb-2"
+      className="block text-[12px] font-semibold mb-2"
       style={{ color: C.textMain }}
     >
       {label} {required && <span style={{ color: C.primary }}>*</span>}
@@ -611,6 +627,10 @@ const SearchableSelect = ({
   onChange,
   options,
   placeholder = "Search...",
+  clearValue = "",
+  clearLabel = "Clear",
+  showClear = true,
+  menuPlacement = "top",
 }: any) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -669,36 +689,43 @@ const SearchableSelect = ({
         <div
           style={{
             position: "absolute",
-            bottom: "calc(100% + 4px)",
             left: 0,
             right: 0,
             background: "#fff",
             border: `1px solid ${C.borderLgt}`,
             borderRadius: 12,
-            boxShadow: "0 -8px 24px rgba(0,0,0,0.10)",
             maxHeight: 200,
             overflowY: "auto",
             zIndex: 9999,
             fontFamily: C.font,
+            ...(menuPlacement === "bottom"
+              ? {
+                top: "calc(100% + 4px)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.10)",
+              }
+              : {
+                bottom: "calc(100% + 4px)",
+                boxShadow: "0 -8px 24px rgba(0,0,0,0.10)",
+              }),
           }}
         >
-          {value && (
+          {showClear && value && value !== clearValue && (
             <div
               onClick={() => {
-                onChange("");
+                onChange(clearValue);
                 setOpen(false);
                 setSearch("");
               }}
               style={{
                 padding: "10px 12px",
                 fontSize: 12,
-                fontWeight: 700,
+                fontWeight: 600,
                 color: "#ef4444",
                 cursor: "pointer",
                 borderBottom: `1px solid ${C.borderLgt}`,
               }}
             >
-              ✕ Clear
+              {clearLabel}
             </div>
           )}
           {filtered.length === 0 ? (
@@ -724,7 +751,7 @@ const SearchableSelect = ({
                 style={{
                   padding: "10px 12px",
                   fontSize: 13,
-                  fontWeight: 600,
+                  fontWeight: 500,
                   color: o.value === value ? C.primary : C.textMain,
                   background: o.value === value ? C.primaryTint : "transparent",
                   cursor: "pointer",
@@ -824,10 +851,33 @@ function CopySopModal({
     <Modal onClose={onClose}>
       <div className="sop-modal-box max-w-2xl bg-white shadow-2xl flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="flex justify-between items-center px-6 py-5 border-b border-gray-100 shrink-0">
-          <h2 className="font-bold text-[18px] text-gray-900 m-0 tracking-tight">
-            Assign System SOP
-          </h2>
+        <div
+          className="flex justify-between items-start gap-4 px-6 py-5 border-b shrink-0"
+          style={{ background: "#ffffff", borderColor: C.primaryBord }}
+        >
+          <div className="flex min-w-0 items-start gap-3">
+            <span
+              className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl"
+              style={{ background: C.primaryTint, color: C.primary }}
+            >
+              <Copy className="w-4 h-4" />
+            </span>
+            <div className="min-w-0">
+              <h2
+                className="font-semibold text-[18px] m-0 tracking-tight"
+                style={{ color: C.textMain }}
+              >
+                Assign System SOP
+              </h2>
+              <p
+                className="mt-1 truncate text-[12px] font-medium"
+                style={{ color: C.textMuted }}
+                title={item.title}
+              >
+                {item.title}
+              </p>
+            </div>
+          </div>
           <BtnIcon onClick={onClose}>
             <X className="w-4 h-4" />
           </BtnIcon>
@@ -835,15 +885,27 @@ function CopySopModal({
 
         {/* Banner & Sticky Search Bar */}
         <div className="shrink-0 flex flex-col z-10 bg-white">
-          <div className="p-4 bg-blue-50/50 border-b border-blue-100">
-            <p className="text-[13px] font-semibold text-blue-900 leading-relaxed max-w-[95%]">
+          <div
+            className="mx-5 mt-5 rounded-2xl border px-4 py-3"
+            style={{ background: C.primaryTint, borderColor: C.primaryBord }}
+          >
+            <p
+              className="text-[13px] font-medium leading-relaxed"
+              style={{ color: C.textMain }}
+            >
               Select users to assign this SOP to. The system will automatically
               skip users who already have this SOP.
             </p>
           </div>
-          <div className="p-4 border-b border-gray-100">
+          <div
+            className="p-5 border-b"
+            style={{ borderColor: C.primaryBord }}
+          >
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                style={{ color: C.textMuted }}
+              />
               <input
                 type="text"
                 placeholder="Search users by name or email..."
@@ -857,11 +919,17 @@ function CopySopModal({
         </div>
 
         {/* User List */}
-        <div className="flex-1 overflow-y-auto bp-scroll p-4">
-          <div className="flex flex-col">
+        <div className="flex-1 overflow-y-auto bp-scroll p-5">
+          <div className="flex flex-col gap-2">
             {filteredUsers.length === 0 ? (
-              <div className="text-center py-10">
-                <p className="text-[13px] font-semibold text-gray-500">
+              <div
+                className="text-center py-10 rounded-2xl border"
+                style={{ borderColor: C.primaryBord, background: "#fffaf8" }}
+              >
+                <p
+                  className="text-[13px] font-medium"
+                  style={{ color: C.textMuted }}
+                >
                   Loading users...
                 </p>
               </div>
@@ -874,18 +942,26 @@ function CopySopModal({
                   <div
                     key={u.value}
                     onClick={() => toggleUser(u.value)}
-                    className={`flex items-center gap-4 py-3 px-3 rounded-xl cursor-pointer transition-all border border-transparent mb-1 ${hasIt
+                    className={`flex items-center gap-4 rounded-2xl border px-4 py-3 transition-all ${hasIt
                       ? "opacity-60 cursor-not-allowed"
                       : isChecked
-                        ? "bg-blue-50 border-blue-100"
-                        : "hover:bg-gray-50 border-gray-50"
+                        ? ""
+                        : "cursor-pointer hover:bg-[#fffaf8]"
                       }`}
+                    style={{
+                      background: isChecked ? C.primaryTint : "#ffffff",
+                      borderColor: isChecked ? C.primary : C.primaryBord,
+                      boxShadow: isChecked
+                        ? "0 8px 18px rgba(218,119,86,0.08)"
+                        : "0 1px 4px rgba(26,26,26,0.03)",
+                    }}
                   >
                     <div
-                      className={`w-5 h-5 flex shrink-0 items-center justify-center rounded-md border transition-colors ${isChecked
-                        ? "bg-blue-600 border-blue-600"
-                        : "bg-white border-gray-300"
-                        }`}
+                      className="w-5 h-5 flex shrink-0 items-center justify-center rounded-md border transition-colors"
+                      style={{
+                        background: isChecked ? C.primary : "#ffffff",
+                        borderColor: isChecked ? C.primary : C.primaryBord,
+                      }}
                     >
                       {isChecked && (
                         <Check
@@ -896,18 +972,30 @@ function CopySopModal({
                     </div>
 
                     <div className="flex-1 min-w-0 flex flex-col">
-                      <p className="text-[14px] font-bold text-gray-900 truncate">
+                      <p
+                        className="text-[14px] font-semibold truncate"
+                        style={{ color: C.textMain }}
+                      >
                         {u.label}
                       </p>
                       {u.email && (
-                        <p className="text-[12px] font-medium text-gray-500 truncate mt-0.5">
+                        <p
+                          className="text-[12px] font-normal truncate mt-0.5"
+                          style={{ color: C.textMuted }}
+                        >
                           {u.email}
                         </p>
                       )}
                     </div>
 
                     {hasIt && (
-                      <span className="text-[12px] font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full shrink-0">
+                      <span
+                        className="text-[11px] font-medium px-3 py-1 rounded-full shrink-0"
+                        style={{
+                          background: "#f3f4f6",
+                          color: C.textMuted,
+                        }}
+                      >
                         Already has SOP
                       </span>
                     )}
@@ -919,15 +1007,18 @@ function CopySopModal({
         </div>
 
         {/* Footer */}
-        <div className="p-5 flex items-center justify-between border-t border-gray-100 bg-white shrink-0">
-          <p className="text-[14px] font-medium text-gray-600">
+        <div
+          className="p-5 flex flex-col gap-3 border-t bg-white shrink-0 sm:flex-row sm:items-center sm:justify-between"
+          style={{ borderColor: C.primaryBord }}
+        >
+          <p className="text-[13px] font-medium" style={{ color: C.textMuted }}>
             Summary:{" "}
-            <span className="font-bold text-gray-900">
+            <span className="font-semibold" style={{ color: C.textMain }}>
               {selected.length} user(s)
             </span>{" "}
             will receive a copy of this SOP
           </p>
-          <div className="flex gap-3">
+          <div className="flex gap-3 sm:justify-end">
             <BtnOutline onClick={onClose} disabled={isSubmitting}>
               Cancel
             </BtnOutline>
@@ -965,12 +1056,62 @@ function SopFormModal({
   const [selectedKpiIds, setSelectedKpiIds] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
+  const normalizeDepartmentMatch = (value: any) =>
+    String(value ?? "")
+      .trim()
+      .toLowerCase();
+
+  const departmentOptions = useMemo(() => {
+    const opts = departments.map((d: any) => ({
+      value: d.value,
+      label: d.label,
+    }));
+    const initialDepartmentName =
+      initialData?.department ??
+      initialData?._raw?.department_name ??
+      initialData?._raw?.department;
+
+    if (!isEdit || !initialDepartmentName) return opts;
+
+    const initialKey = normalizeDepartmentMatch(initialDepartmentName);
+    const exists = opts.some(
+      (opt: any) =>
+        normalizeDepartmentMatch(opt.value) === initialKey ||
+        normalizeDepartmentMatch(opt.label) === initialKey
+    );
+
+    return exists
+      ? opts
+      : [
+        {
+          value: String(initialDepartmentName),
+          label: String(initialDepartmentName),
+        },
+        ...opts,
+      ];
+  }, [departments, initialData, isEdit]);
+
   useEffect(() => {
     if (open) {
       if (isEdit && initialData) {
+        const initialDepartmentName =
+          initialData.department ??
+          initialData?._raw?.department_name ??
+          initialData?._raw?.department;
+        const initialDepartmentKey = normalizeDepartmentMatch(
+          initialDepartmentName
+        );
+        const selectedDepartment = departments.find(
+          (d: any) =>
+            String(d.id) === String(initialData.departmentId) ||
+            normalizeDepartmentMatch(d.value) === initialDepartmentKey ||
+            normalizeDepartmentMatch(d.label) === initialDepartmentKey
+        );
         setSystemName(initialData.title);
         setDescription(initialData.description ?? "");
-        setDepartment(initialData.department);
+        setDepartment(
+          selectedDepartment?.value ?? String(initialDepartmentName ?? "")
+        );
         setStatusColumn(
           (STATUS_TO_COL[initialData.status ?? ""] ?? "broken") as ColumnKey
         );
@@ -991,7 +1132,7 @@ function SopFormModal({
         setSelectedKpiIds([]);
       }
     }
-  }, [open, isEdit, initialData]);
+  }, [open, isEdit, initialData, departments]);
 
   if (!open) return null;
 
@@ -1007,7 +1148,13 @@ function SopFormModal({
     if (!assignUser) return toast.error("Please assign a user");
     setIsSaving(true);
     try {
-      const selectedDept = departments.find((d: any) => d.value === department);
+      const selectedDept = departments.find(
+        (d: any) =>
+          String(d.id) === String(department) ||
+          normalizeDepartmentMatch(d.value) ===
+          normalizeDepartmentMatch(department) ||
+          normalizeDepartmentMatch(d.label) === normalizeDepartmentMatch(department)
+      );
       const builtKpis = selectedKpiIds.map((id, i) => {
         const k = kpiOptions.find((x: any) => x.id === id);
         return {
@@ -1022,7 +1169,7 @@ function SopFormModal({
       const payload = {
         system_name: systemName.trim(),
         description: description.trim() || undefined,
-        department_id: selectedDept ? selectedDept.id : 1,
+        department_id: selectedDept?.id ?? initialData?.departmentId ?? 1,
         status: COL_TO_STATUS[statusColumn],
         priority: priority.charAt(0).toUpperCase() + priority.slice(1),
         assignee_id: parseInt(assignUser, 10),
@@ -1056,7 +1203,7 @@ function SopFormModal({
               }}
             />
             <h2
-              className="font-black text-[17px] m-0"
+              className="font-semibold text-[17px] m-0"
               style={{ color: C.textMain }}
             >
               {isEdit ? "Edit System / SOP" : "Add New System / SOP"}
@@ -1092,10 +1239,7 @@ function SopFormModal({
               <SearchableSelect
                 value={department}
                 onChange={setDepartment}
-                options={departments.map((d: any) => ({
-                  value: d.value,
-                  label: d.label,
-                }))}
+                options={departmentOptions}
                 placeholder="Search department..."
               />
             </FieldBox>
@@ -1132,7 +1276,7 @@ function SopFormModal({
                   onClick={() =>
                     setPriority(p.value as SopCardData["priority"])
                   }
-                  className="flex-1 py-2 rounded-xl text-[12px] font-black border transition-all"
+                  className="flex-1 py-2 rounded-xl text-[12px] font-medium border transition-all"
                   style={{
                     borderColor: priority === p.value ? C.primary : C.borderLgt,
                     background: priority === p.value ? C.primaryTint : "#fff",
@@ -1193,7 +1337,7 @@ function SopFormModal({
             <FieldBox label="Link KPIs">
               {kpiOptions.length === 0 ? (
                 <p
-                  className="text-[12px] font-semibold py-2"
+                  className="text-[12px] font-medium py-2"
                   style={{ color: C.textMuted }}
                 >
                   No KPIs available
@@ -1220,7 +1364,7 @@ function SopFormModal({
                           onClick={(e) => e.stopPropagation()}
                         />
                         <span
-                          className="text-[13px] font-black flex-1 min-w-0 truncate"
+                          className="text-[13px] font-medium flex-1 min-w-0 truncate"
                           style={{ color: C.textMain }}
                         >
                           {k.name}
@@ -1244,7 +1388,7 @@ function SopFormModal({
           <button
             onClick={handleSubmit}
             disabled={isSaving}
-            className="px-6 py-2 text-[13px] font-black text-white rounded-xl transition-colors shadow-sm active:scale-[0.97] flex items-center gap-2 disabled:opacity-60"
+            className="px-6 py-2 text-[13px] font-semibold text-white rounded-xl transition-colors shadow-sm active:scale-[0.97] flex items-center gap-2 disabled:opacity-60"
             style={{ background: "#1a1a1a", fontFamily: C.font }}
           >
             {isSaving && <LoaderIcon />}{" "}
@@ -1284,13 +1428,16 @@ function SopKanbanCard({
       : column === "toStart"
         ? "#38bdf8"
         : "#ef4444";
-  const pChip = PRIORITY_CHIP[item.priority as "low" | "medium" | "high"];
+  const pChip =
+    PRIORITY_CHIP[item.priority as "low" | "medium" | "high"] ||
+    PRIORITY_CHIP.medium;
   const statusChip =
     column === "running"
       ? { label: "Running", bg: "#dcfce7", color: "#15803d" }
       : column === "toStart"
         ? { label: "To Start", bg: "#e0f2fe", color: "#0369a1" }
         : { label: "Broken", bg: "#fee2e2", color: "#b91c1c" };
+  const accentColor = statusChip.color;
 
   return (
     <div
@@ -1300,66 +1447,101 @@ function SopKanbanCard({
         : ""
         }`}
     >
-      <p
-        className="font-black text-[14px] leading-snug mb-3"
-        style={{ color: C.textMain }}
-      >
-        {item.title}
-      </p>
+      <div
+        className="absolute inset-x-0 top-0 h-1"
+        style={{ background: accentColor }}
+      />
 
-      <div className="flex flex-wrap gap-1.5 mb-3">
+      <div className="mb-4 flex items-start justify-between gap-3 pt-1">
+        <div className="min-w-0 flex-1">
+          <p
+            className="font-semibold text-[15px] leading-snug"
+            style={{ color: C.textMain }}
+          >
+            {item.title}
+          </p>
+          {item.description && (
+            <p
+              className="sop-card-description mt-1 text-[12px] font-normal leading-relaxed"
+              style={{ color: C.textMuted }}
+            >
+              {item.description}
+            </p>
+          )}
+        </div>
         <span
-          className="px-2 py-0.5 rounded-lg text-[11px] font-black"
-          style={{ background: "#f3f4f6", color: C.textMuted }}
+          className="shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide"
+          style={{ background: statusChip.bg, color: statusChip.color }}
         >
+          {statusChip.label}
+        </span>
+      </div>
+
+      <div className="mb-4 flex flex-wrap gap-1.5">
+        <span
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium"
+          style={{ background: C.primaryTint, color: C.textMain }}
+        >
+          <FileText className="w-3 h-3" style={{ color: C.primary }} />
           {item.department}
         </span>
         <span
-          className="px-2 py-0.5 rounded-lg text-[11px] font-black capitalize"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium capitalize"
           style={{ background: pChip.bg, color: pChip.color }}
         >
+          <span
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ background: pChip.color }}
+          />
           {item.priority}
         </span>
         {item.assigneeName && (
           <span
-            className="px-2 py-0.5 rounded-lg text-[11px] font-black"
-            style={{ background: "#ede9fe", color: "#7c3aed" }}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium"
+            style={{
+              background: "#fffaf8",
+              color: C.textMuted,
+              border: `1px solid ${C.primaryBord}`,
+            }}
           >
+            <User className="w-3 h-3" style={{ color: C.primary }} />
             {item.assigneeName}
           </span>
         )}
       </div>
 
-      <div className="space-y-1.5 mb-4">
-        <div className="flex items-center justify-between">
-          <span
-            className="text-[11px] font-black"
-            style={{ color: C.textMuted }}
-          >
-            Health
-          </span>
-          <span
-            className="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wide"
-            style={{ background: statusChip.bg, color: statusChip.color }}
-          >
-            {statusChip.label}
-          </span>
+      <div
+        className="mb-4 rounded-2xl border p-3"
+        style={{ background: "#fffaf8", borderColor: C.primaryBord }}
+      >
+        <div className="mb-2 flex items-end justify-between gap-3">
+          <div>
+            <p
+              className="text-[10px] font-semibold uppercase tracking-[0.14em]"
+              style={{ color: C.textMuted }}
+            >
+              Health
+            </p>
+            <p
+              className="text-[18px] font-semibold leading-none tabular-nums"
+              style={{ color: C.textMain }}
+            >
+              {health}%
+            </p>
+          </div>
+          <p className="text-[11px] font-medium" style={{ color: C.textMuted }}>
+            System score
+          </p>
         </div>
         <div
-          className="h-2 w-full rounded-full overflow-hidden"
-          style={{ background: "#f3f4f6" }}
+          className="h-2.5 w-full rounded-full overflow-hidden"
+          style={{ background: "#efe9e3" }}
         >
           <div
             className="h-full rounded-full transition-all"
             style={{ width: `${health}%`, background: barColor }}
           />
         </div>
-        <p
-          className="text-right text-[11px] font-black tabular-nums"
-          style={{ color: C.textMuted }}
-        >
-          {health}%
-        </p>
       </div>
 
       <div className="flex items-center gap-2">
@@ -1370,7 +1552,7 @@ function SopKanbanCard({
             e.stopPropagation();
             onEditClick?.();
           }}
-          className="flex-1 py-2 rounded-xl text-[12px] font-black text-white flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.97]"
+          className="sop-card-action flex-1 py-2.5 rounded-xl text-[12px] font-semibold text-white flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.97]"
           style={{ background: C.primary }}
         >
           <Pencil className="w-3.5 h-3.5" /> Edit
@@ -1382,8 +1564,9 @@ function SopKanbanCard({
             e.stopPropagation();
             onDuplicateClick?.();
           }}
-          className="w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all active:scale-[0.97] hover:bg-gray-50"
-          style={{ borderColor: C.borderLgt, color: C.textMuted }}
+          className="sop-card-action w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm active:scale-[0.97]"
+          style={{ borderColor: C.primaryBord, color: C.textMuted, background: "#fff" }}
+          title="Assign copy"
         >
           <Copy className="w-3.5 h-3.5" />
         </button>
@@ -1394,8 +1577,9 @@ function SopKanbanCard({
             e.stopPropagation();
             onDeleteClick?.();
           }}
-          className="w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm transition-all active:scale-[0.97] hover:bg-red-50"
-          style={{ borderColor: "#fecaca", color: "#ef4444" }}
+          className="sop-card-action w-9 h-9 rounded-xl flex items-center justify-center border shadow-sm active:scale-[0.97] hover:bg-red-50"
+          style={{ borderColor: "#fecaca", color: "#ef4444", background: "#fff" }}
+          title="Delete"
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -1899,7 +2083,7 @@ const SystemAndSOP = () => {
       <div
         className="overflow-hidden rounded-2xl border shadow-sm p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
         style={{
-          background: "rgba(218,119,86,0.10)",
+          background: "#ffffff",
           borderColor: C.primaryBord,
         }}
       >
@@ -2078,7 +2262,7 @@ const SystemAndSOP = () => {
       <div
         className="rounded-2xl border p-4 shadow-sm space-y-3"
         style={{
-          background: "rgba(218,119,86,0.06)",
+          background: "#ffffff",
           borderColor: C.primaryBord,
         }}
       >
@@ -2089,25 +2273,33 @@ const SystemAndSOP = () => {
           Filters
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <SearchableSelect
+            value={filterDept}
+            onChange={setFilterDept}
+            options={[
+              { value: "all", label: "All Departments" },
+              ...departments.map((d) => ({ value: d.value, label: d.label })),
+            ]}
+            placeholder="Search department..."
+            clearValue="all"
+            clearLabel="All Departments"
+            showClear={false}
+            menuPlacement="bottom"
+          />
+          <SearchableSelect
+            value={filterAssignee}
+            onChange={setFilterAssignee}
+            options={[
+              { value: "all", label: "All People" },
+              ...users.map((u) => ({ value: u.value, label: u.label })),
+            ]}
+            placeholder="Search people..."
+            clearValue="all"
+            clearLabel="All People"
+            showClear={false}
+            menuPlacement="bottom"
+          />
           {[
-            {
-              label: "All Departments",
-              value: filterDept,
-              setter: setFilterDept,
-              opts: [
-                { value: "all", label: "All Departments" },
-                ...departments.map((d) => ({ value: d.value, label: d.label })),
-              ],
-            },
-            {
-              label: "All People",
-              value: filterAssignee,
-              setter: setFilterAssignee,
-              opts: [
-                { value: "all", label: "All People" },
-                ...users.map((u) => ({ value: u.value, label: u.label })),
-              ],
-            },
             {
               label: "All Priorities",
               value: filterPriority,
@@ -2285,13 +2477,13 @@ const SystemAndSOP = () => {
                       style={{ color: col.iconColor }}
                     />
                     <span
-                      className="flex-1 font-black text-[13px]"
+                      className="flex-1 font-semibold text-[13px]"
                       style={{ color: C.textMain }}
                     >
                       {col.title}
                     </span>
                     <span
-                      className="rounded-full px-2.5 py-0.5 text-[11px] font-black text-white tabular-nums"
+                      className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold text-white tabular-nums"
                       style={{ background: col.badgeBg }}
                     >
                       {counts[col.key]}
@@ -2317,7 +2509,7 @@ const SystemAndSOP = () => {
                                 }}
                               />
                               <p
-                                className="text-[13px] font-black"
+                                className="text-[13px] font-medium"
                                 style={{ color: C.textMuted }}
                               >
                                 No systems here

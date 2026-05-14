@@ -300,6 +300,18 @@ const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
   return merged;
 };
 
+const getReportTotalScore = (report: any, rawSource: any = null) => {
+  const score =
+    report?.daily_report?.report_data?.total_score ??
+    report?.report_data?.total_score ??
+    rawSource?.total_score ??
+    report?.score;
+
+  if (score === null || score === undefined || score === "") return null;
+  const numericScore = Number(score);
+  return Number.isFinite(numericScore) ? numericScore : null;
+};
+
 const formatSelfRating = (rating: any): string => {
   if (rating === null || rating === undefined || rating === "") return "";
   const ratingText = String(rating).trim();
@@ -779,7 +791,8 @@ const DailyTab = ({
         combinedKpis.planning += p;
         combinedKpis.timing += tim;
 
-        if (report.score) combinedKpis.score += parseInt(report.score) || 0;
+        const totalScore = getReportTotalScore(report, rawSource);
+        if (totalScore !== null) combinedKpis.score += totalScore;
       });
 
     return {
@@ -1802,12 +1815,11 @@ const DailyTab = ({
                         null;
                       const selfRatingText = formatSelfRating(selfRating);
 
-                      const totalScoreStr = Math.round(
-                        rawDisplayRd?.total_score ??
-                          draftRaw?.total_score ??
-                          report.score ??
-                          0
+                      const totalScoreValue = getReportTotalScore(
+                        report,
+                        rawDisplayRd
                       );
+                      const totalScoreStr = Math.round(totalScoreValue ?? 0);
 
                       const canExpand = !isPending || hasDraft;
                       const isSelected = selectedReports.includes(rId);
@@ -1990,10 +2002,10 @@ const DailyTab = ({
                                       </span>
                                     </div>
                                   )}
-                                  {rawDisplayRd?.total_score != null && (
+                                  {totalScoreValue != null && (
                                     <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
                                       <span className="text-sm font-bold text-purple-800">
-                                        Total Score: {rawDisplayRd.total_score}
+                                        Total Score: {totalScoreStr}
                                       </span>
                                     </div>
                                   )}

@@ -134,6 +134,7 @@ interface AccomplishmentItem {
 }
 
 interface DailyReportDraft {
+  reportId?: number | null;
   accomplishments?: AccomplishmentItem[];
   planningItems?: { id: string; text: string; starred: boolean }[];
   selfRating?: number[];
@@ -142,6 +143,100 @@ interface DailyReportDraft {
   kpiEntries?: { [key: number]: string };
   selectedTasksIssues?: { [key: string]: boolean };
 }
+
+interface ApplyDraftOptions {
+  allowEmptyLists?: boolean;
+}
+
+const cleanReportText = (value: unknown) =>
+  String(value ?? "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<\/?[^>]+>/g, "")
+    .trim();
+
+const getReportItemText = (item: any) =>
+  cleanReportText(typeof item === "string" ? item : item?.title ?? item?.text);
+
+const getReportDateKey = (date: unknown) => cleanReportText(date).slice(0, 10);
+
+const getNonEmptyReportItems = (
+  items: any[] | { items?: any[] } | undefined | null
+) => {
+  const sourceItems = Array.isArray(items)
+    ? items
+    : Array.isArray(items?.items)
+      ? items.items
+      : [];
+
+  return sourceItems.filter((item) => getReportItemText(item) !== "");
+};
+
+const normalizeReportForUi = (report: DailyReport): DailyReport => {
+  if (!report?.report_data) return report;
+  const accomplishments = report.report_data.accomplishments as any;
+  const normalizedAccomplishments = accomplishments
+    ? {
+      ...(Array.isArray(accomplishments)
+        ? { attachments: [] }
+        : accomplishments),
+      items: getNonEmptyReportItems(accomplishments).map((item: any) => ({
+        ...(typeof item === "object" && item !== null ? item : {}),
+        title: getReportItemText(item),
+      })),
+    }
+    : accomplishments;
+
+  return {
+    ...report,
+    report_data: {
+      ...report.report_data,
+      accomplishments: normalizedAccomplishments,
+      tomorrow_plan: getNonEmptyReportItems(
+        report.report_data.tomorrow_plan
+      ).map((item: any) => ({
+        ...(typeof item === "object" && item !== null ? item : {}),
+        title: getReportItemText(item),
+      })),
+    },
+  };
+};
+
+const isReportBackedDraft = (draft: DailyReportDraft | null) =>
+  Boolean(draft?.reportId) ||
+  Boolean(
+    draft?.accomplishments?.some((item) =>
+      String(item.id).startsWith("fetched-")
+    )
+  ) ||
+  Boolean(
+    draft?.planningItems?.some((item) =>
+      String(item.id).startsWith("fetched-")
+    )
+  );
+
+const hasMeaningfulDraftData = (draft: DailyReportDraft | null) => {
+  if (!draft) return false;
+  const hasAccomplishments = getNonEmptyReportItems(draft.accomplishments).length > 0;
+  const hasPlanning = getNonEmptyReportItems(draft.planningItems).length > 0;
+  const hasKpis = Object.values(draft.kpiEntries ?? {}).some(
+    (value) => cleanReportText(value) !== ""
+  );
+  const hasSelectedTasks = Object.values(draft.selectedTasksIssues ?? {}).some(Boolean);
+  const hasCustomRating =
+    Array.isArray(draft.selfRating) && draft.selfRating.some((value) => value !== 2);
+
+  return (
+    hasAccomplishments ||
+    hasPlanning ||
+    hasKpis ||
+    hasSelectedTasks ||
+    hasCustomRating ||
+    draft.isAbsent === true ||
+    cleanReportText(draft.absenceReason) !== ""
+  );
+};
 
 const BusinessCompassDailyReport: React.FC = () => {
   const navigate = useNavigate();
@@ -332,12 +427,19 @@ const BusinessCompassDailyReport: React.FC = () => {
   useEffect(() => {
     fetchPlanForItems();
   }, [startDate, baseUrl, token, userId]);
+  const buildDraftStorageKey = React.useCallback(
+    (date: string, draftUserId: string | number | null | undefined = userId) =>
+      `business-compass-daily-report-draft:${draftUserId || "guest"}:${date}`,
+    [userId]
+  );
   const draftStorageKey = useMemo(
-    () => `business-compass-daily-report-draft:${userId || "guest"}:${startDate}`,
-    [userId, startDate]
+    () => buildDraftStorageKey(startDate),
+    [buildDraftStorageKey, startDate]
   );
   const canPersistDraftRef = useRef(false);
   const draftDirtyRef = useRef(false);
+  const deletedReportIdsRef = useRef<Set<number>>(new Set());
+  const deletedReportDatesRef = useRef<Set<string>>(new Set());
 
   const markDraftDirty = React.useCallback(() => {
     draftDirtyRef.current = true;
@@ -360,12 +462,62 @@ const BusinessCompassDailyReport: React.FC = () => {
     localStorage.removeItem(key);
   }, [draftStorageKey]);
 
-  const applyStoredDraft = React.useCallback((draft: DailyReportDraft | null) => {
+  const clearStoredDraftsForDate = React.useCallback(
+    (date: string) => {
+      const dateKey = getReportDateKey(date);
+      const draftPrefix = "business-compass-daily-report-draft:";
+
+      [
+        buildDraftStorageKey(dateKey),
+        buildDraftStorageKey(dateKey, userId),
+        buildDraftStorageKey(dateKey, "guest"),
+      ].forEach((key) => localStorage.removeItem(key));
+
+      for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+        const key = localStorage.key(i);
+        if (
+          key?.startsWith(draftPrefix) &&
+          getReportDateKey(key.split(":").pop()) === dateKey
+        ) {
+          localStorage.removeItem(key);
+        }
+      }
+    },
+    [buildDraftStorageKey, userId]
+  );
+
+  const isLocallyDeletedReport = React.useCallback((report: any) => {
+    const reportId = Number(report?.id);
+    const reportDate = getReportDateKey(report?.start_date);
+    return (
+      (Number.isFinite(reportId) && deletedReportIdsRef.current.has(reportId)) ||
+      (!!reportDate && deletedReportDatesRef.current.has(reportDate))
+    );
+  }, []);
+
+  const applyStoredDraft = React.useCallback((
+    draft: DailyReportDraft | null,
+    options: ApplyDraftOptions = {}
+  ) => {
     if (!draft) return;
-    if (Array.isArray(draft.accomplishments))
-      setAccomplishments(draft.accomplishments);
-    if (Array.isArray(draft.planningItems))
-      setPlanningItems(draft.planningItems);
+    if (!hasMeaningfulDraftData(draft)) return;
+    const allowEmptyLists = options.allowEmptyLists ?? false;
+    if (Array.isArray(draft.accomplishments)) {
+      const cleanAccomplishments = draft.accomplishments
+        .filter((a) => cleanReportText(a.text) !== "")
+        .map((a) => ({ ...a, text: cleanReportText(a.text) }));
+      if (cleanAccomplishments.length || allowEmptyLists) {
+        setAccomplishments(cleanAccomplishments);
+      }
+    }
+    if (Array.isArray(draft.planningItems)) {
+      const cleanPlanningItems = draft.planningItems
+        .filter((p) => cleanReportText(p.text) !== "")
+        .map((p) => ({ ...p, text: cleanReportText(p.text) }));
+      if (cleanPlanningItems.length || allowEmptyLists) {
+        setPlanningItems(cleanPlanningItems);
+      }
+    }
     if (Array.isArray(draft.selfRating)) setSelfRating(draft.selfRating);
     if (typeof draft.isAbsent === "boolean") setIsAbsent(draft.isAbsent);
     if (typeof draft.absenceReason === "string")
@@ -379,6 +531,16 @@ const BusinessCompassDailyReport: React.FC = () => {
       setSelectedTasksIssues(draft.selectedTasksIssues);
     }
   }, []);
+
+  const applyDraftForMissingReport = React.useCallback(() => {
+    const draft = getStoredDraft();
+    if (!draft) return;
+    if (isReportBackedDraft(draft)) {
+      clearStoredDraft();
+      return;
+    }
+    applyStoredDraft(draft, { allowEmptyLists: true });
+  }, [applyStoredDraft, clearStoredDraft, getStoredDraft]);
 
   const myIssuesFilter = `
   q[status_in][]=open
@@ -542,11 +704,17 @@ const BusinessCompassDailyReport: React.FC = () => {
       ...kpi,
       actual_value: kpiEntries[kpi.kpi_id] || 0,
     }));
+    const nonEmptyAccomplishments = accomplishments.filter(
+      (a) => cleanReportText(a.text) !== ""
+    );
+    const nonEmptyPlanningItems = planningItems.filter(
+      (p) => cleanReportText(p.text) !== ""
+    );
     return calculateLivePreviewScore(
       kpisWithActualValues,
-      accomplishments,
+      nonEmptyAccomplishments,
       mergedTasksIssues,
-      planningItems
+      nonEmptyPlanningItems
     );
   }, [kpis, kpiEntries, accomplishments, mergedTasksIssues, planningItems]);
 
@@ -969,6 +1137,23 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("submit");
 
+  const resetReportFormState = React.useCallback(() => {
+    canPersistDraftRef.current = false;
+    draftDirtyRef.current = false;
+    setCurrentReportId(null);
+    setAccomplishments([]);
+    setPlanningItems([]);
+    setUploadedFiles([]);
+    setReportAttachments([]);
+    setSelectedTasksIssues({});
+    setKpiEntries({});
+    setIsAbsent(false);
+    setAbsenceReason("");
+    setSelfRating([2]);
+    setSubmitError(null);
+    setSubmitSuccess(false);
+  }, []);
+
   const [viewStartDate, setViewStartDate] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
@@ -987,7 +1172,11 @@ const BusinessCompassDailyReport: React.FC = () => {
       const isPast = date.getTime() < today.getTime();
       const isFuture = date.getTime() > today.getTime();
       const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-      const report = reportsList.find((r) => r.start_date === dateStr);
+      const report = reportsList.find(
+        (r) =>
+          getReportDateKey(r.start_date) === dateStr &&
+          !isLocallyDeletedReport(r)
+      );
       let type: "filled" | "missed" | "holiday" | "upcoming" = "upcoming";
       let status = "";
       if (report) {
@@ -1017,7 +1206,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       date.setDate(date.getDate() + 1);
     }
     return result;
-  }, [viewStartDate, reportsList]);
+  }, [viewStartDate, reportsList, isLocallyDeletedReport]);
 
   const handlePrevWeek = () => {
     const newDate = new Date(viewStartDate);
@@ -1052,25 +1241,42 @@ const BusinessCompassDailyReport: React.FC = () => {
     );
     setSelectedYear(item.actualDate.getFullYear().toString());
 
-    const report = reportsList.find((r) => r.start_date === item.fullDate);
+    const selectedDateKey = getReportDateKey(item.fullDate);
+    if (deletedReportDatesRef.current.has(selectedDateKey)) {
+      clearStoredDraftsForDate(selectedDateKey);
+      resetReportFormState();
+      return;
+    }
+
+    const report = reportsList.find(
+      (r) =>
+        getReportDateKey(r.start_date) === selectedDateKey &&
+        !isLocallyDeletedReport(r)
+    );
 
     // Get previous day's plan regardless of if today's report exists
     const prevDate = new Date(item.actualDate);
     prevDate.setDate(prevDate.getDate() - 1);
     const prevDateStr = prevDate.toLocaleDateString("en-CA");
-    const prevReport = reportsList.find((r) => r.start_date === prevDateStr);
+    const prevReport = reportsList.find(
+      (r) =>
+        getReportDateKey(r.start_date) === getReportDateKey(prevDateStr) &&
+        !isLocallyDeletedReport(r)
+    );
 
     let carriedPlanItems: AccomplishmentItem[] = [];
-    if (prevReport?.report_data?.tomorrow_plan?.length) {
-      carriedPlanItems = prevReport.report_data.tomorrow_plan.map(
-        (p: any, idx: number) => ({
+    const previousPlanItems = getNonEmptyReportItems(
+      prevReport?.report_data?.tomorrow_plan
+    );
+    if (previousPlanItems.length) {
+      carriedPlanItems = previousPlanItems
+        .map((p: any, idx: number) => ({
           id: `carried-${idx}-${Date.now()}`,
-          text: p.title || "",
+          text: getReportItemText(p),
           completed: false,
           starred: false,
           fromYesterday: true,
-        })
-      );
+        }));
     }
 
     if (report && report.id) {
@@ -1078,15 +1284,16 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       let currentAccomplishments: AccomplishmentItem[] = [];
       if (report.report_data?.accomplishments?.items) {
-        currentAccomplishments = report.report_data.accomplishments.items.map(
-          (ach: any, idx: number) => ({
+        currentAccomplishments = getNonEmptyReportItems(
+          report.report_data.accomplishments.items
+        )
+          .map((ach: any, idx: number) => ({
             id: `fetched-ach-${idx}`,
-            text: ach.title || "",
+            text: getReportItemText(ach),
             completed: true,
             starred: false,
             fromYesterday: false,
-          })
-        );
+          }));
       }
 
       // Merge existing accomplishments with carried items to prevent overwriting
@@ -1107,11 +1314,12 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       if (report.report_data?.tomorrow_plan) {
         setPlanningItems(
-          report.report_data.tomorrow_plan.map((p: any, idx: number) => ({
-            id: `fetched-plan-${idx}`,
-            text: p.title || "",
-            starred: p.is_starred ?? false,
-          }))
+          getNonEmptyReportItems(report.report_data.tomorrow_plan)
+            .map((p: any, idx: number) => ({
+              id: `fetched-plan-${idx}`,
+              text: getReportItemText(p),
+              starred: p.is_starred ?? false,
+            }))
         );
       } else {
         setPlanningItems([]);
@@ -1184,8 +1392,19 @@ const BusinessCompassDailyReport: React.FC = () => {
     if (!draftDirtyRef.current) return;
     if (!canPersistDraftRef.current) return;
     const draft: DailyReportDraft = {
-      accomplishments,
-      planningItems,
+      reportId: currentReportId,
+      accomplishments: accomplishments
+        .filter((item) => cleanReportText(item.text) !== "")
+        .map((item) => ({
+          ...item,
+          text: cleanReportText(item.text),
+        })),
+      planningItems: planningItems
+        .filter((item) => cleanReportText(item.text) !== "")
+        .map((item) => ({
+          ...item,
+          text: cleanReportText(item.text),
+        })),
       selfRating,
       isAbsent,
       absenceReason,
@@ -1202,6 +1421,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     kpiEntries,
     selectedTasksIssues,
     draftStorageKey,
+    currentReportId,
   ]);
 
   React.useEffect(() => {
@@ -1211,7 +1431,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         const baseUrl = getBaseUrl() ?? "https://fm-uat-api.lockated.com";
         const token = getToken();
         if (!token) {
-          applyStoredDraft();
+          applyStoredDraft(getStoredDraft(), { allowEmptyLists: true });
           canPersistDraftRef.current = true;
           return;
         }
@@ -1263,19 +1483,23 @@ const BusinessCompassDailyReport: React.FC = () => {
             ? prevData
             : prevData.user_journals || [];
           const prevReport = prevJournals.find(
-            (j: any) => j.start_date === prevDateStr
+            (j: any) =>
+              getReportDateKey(j.start_date) === getReportDateKey(prevDateStr) &&
+              !isLocallyDeletedReport(j)
           );
 
-          if (prevReport?.report_data?.tomorrow_plan?.length) {
-            carriedPlanItems = prevReport.report_data.tomorrow_plan.map(
-              (p: any, idx: number) => ({
+          const previousPlanItems = getNonEmptyReportItems(
+            prevReport?.report_data?.tomorrow_plan
+          );
+          if (previousPlanItems.length) {
+            carriedPlanItems = previousPlanItems
+              .map((p: any, idx: number) => ({
                 id: `carried-${idx}-${Date.now()}`,
-                text: p.title || "",
+                text: getReportItemText(p),
                 completed: false,
                 starred: false,
                 fromYesterday: true,
-              })
-            );
+              }));
           }
         }
 
@@ -1284,12 +1508,14 @@ const BusinessCompassDailyReport: React.FC = () => {
           const journals = Array.isArray(data)
             ? data
             : data.user_journals || [];
-          const existingReport = journals.find(
+          const existingReport = journals.map(normalizeReportForUi).find(
             (j: {
               id: number;
               start_date: string;
               report_data?: Record<string, unknown>;
-            }) => j.start_date === startDate
+            }) =>
+              getReportDateKey(j.start_date) === getReportDateKey(startDate) &&
+              !isLocallyDeletedReport(j)
           );
 
           if (existingReport?.id) {
@@ -1299,15 +1525,16 @@ const BusinessCompassDailyReport: React.FC = () => {
 
               let currentAccomplishments: AccomplishmentItem[] = [];
               if (rData.accomplishments?.items) {
-                currentAccomplishments = rData.accomplishments.items.map(
-                  (ach: any, idx: number) => ({
+                currentAccomplishments = getNonEmptyReportItems(
+                  rData.accomplishments.items
+                )
+                  .map((ach: any, idx: number) => ({
                     id: `fetched-ach-${idx}`,
-                    text: ach.title || "",
+                    text: getReportItemText(ach),
                     completed: true,
                     starred: false,
                     fromYesterday: false,
-                  })
-                );
+                  }));
               }
 
               // Merge logic
@@ -1327,11 +1554,12 @@ const BusinessCompassDailyReport: React.FC = () => {
               }
               if (rData.tomorrow_plan) {
                 setPlanningItems(
-                  rData.tomorrow_plan.map((p: any, idx: number) => ({
-                    id: `fetched-plan-${idx}`,
-                    text: p.title || "",
-                    starred: p.is_starred ?? false,
-                  }))
+                  getNonEmptyReportItems(rData.tomorrow_plan)
+                    .map((p: any, idx: number) => ({
+                      id: `fetched-plan-${idx}`,
+                      text: getReportItemText(p),
+                      starred: p.is_starred ?? false,
+                    }))
                 );
               }
               if (rData.past_kpis) {
@@ -1365,18 +1593,25 @@ const BusinessCompassDailyReport: React.FC = () => {
 
             // No report today, just apply carried items
             setAccomplishments(carriedPlanItems);
-            applyStoredDraft(getStoredDraft());
+            applyDraftForMissingReport();
           }
         }
       } catch (err) {
         console.error("Failed to fetch existing report:", err);
-        applyStoredDraft(getStoredDraft());
+        applyStoredDraft(getStoredDraft(), { allowEmptyLists: true });
       } finally {
         canPersistDraftRef.current = true;
       }
     };
     fetchExistingReport();
-  }, [startDate, draftStorageKey, getStoredDraft, applyStoredDraft]);
+  }, [
+    startDate,
+    draftStorageKey,
+    getStoredDraft,
+    applyStoredDraft,
+    applyDraftForMissingReport,
+    isLocallyDeletedReport,
+  ]);
 
   const fetchReportsList = async () => {
     try {
@@ -1402,7 +1637,14 @@ const BusinessCompassDailyReport: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setReportsList(response.data || []);
+      const reports = Array.isArray(response.data)
+        ? response.data
+        : response.data?.user_journals || [];
+      setReportsList(
+        reports
+          .map(normalizeReportForUi)
+          .filter((report: DailyReport) => !isLocallyDeletedReport(report))
+      );
     } catch (err) {
       console.error("Failed to fetch reports history:", err);
     } finally {
@@ -1412,15 +1654,65 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   React.useEffect(() => {
     fetchReportsList();
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, isLocallyDeletedReport]);
 
   const handleSubmit = async () => {
     // Only completed items should count towards submitting successfully
-    const completedAccomplishments = accomplishments.filter(
-      (a) => a.completed && a.text.trim() !== ""
+    const accomplishmentItemsPayload = accomplishments
+      .filter((a) => a.completed)
+      .map((a) => ({
+        title: cleanReportText(a.text),
+        star: a.starred,
+      }))
+      .filter((a) => a.title !== "");
+    const manualTomorrowPlan = planningItems
+      .map((p) => ({
+        title: cleanReportText(p.text),
+        is_starred: p.starred,
+      }))
+      .filter((p) => p.title !== "");
+    const uncheckedAccomplishmentPlan = accomplishments
+      .filter((a) => !a.completed)
+      .map((a) => ({
+        title: cleanReportText(a.text),
+        is_starred: a.starred,
+      }))
+      .filter((p) => p.title !== "");
+    const tomorrowPlanPayload = [
+      ...manualTomorrowPlan,
+      ...uncheckedAccomplishmentPlan,
+    ].filter((item, index, arr) => {
+      const key = item.title.toLowerCase();
+      return (
+        arr.findIndex(
+          (candidate) => candidate.title.toLowerCase() === key
+        ) === index
+      );
+    });
+    const finalPlanningItemsForScore = tomorrowPlanPayload.map((p, index) => ({
+      id: `submit-plan-${index}`,
+      text: p.title,
+      starred: p.is_starred,
+    }));
+    const finalAccomplishmentsForScore = accomplishmentItemsPayload.map(
+      (a, index) => ({
+        id: `submit-ach-${index}`,
+        text: a.title,
+        completed: true,
+        starred: a.star,
+      })
+    );
+    const finalDailyScore = calculateLivePreviewScore(
+      kpis.map((kpi) => ({
+        ...kpi,
+        actual_value: kpiEntries[kpi.kpi_id] || 0,
+      })),
+      finalAccomplishmentsForScore,
+      mergedTasksIssues,
+      finalPlanningItemsForScore
     );
 
-    if (!isAbsent && completedAccomplishments.length === 0) {
+    if (!isAbsent && accomplishmentItemsPayload.length === 0) {
       setSubmitError(
         "Please add and complete at least one accomplishment before submitting."
       );
@@ -1451,10 +1743,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           report_data: {
             accomplishments: {
               // Ensure we only save items that were actually completed!
-              items: completedAccomplishments.map((a) => ({
-                title: a.text,
-                star: a.starred,
-              })),
+              items: accomplishmentItemsPayload,
               attachments: uploadedFiles.map((f) => ({
                 filename: f.name,
                 content_type: f.type,
@@ -1471,7 +1760,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                   "",
                 status: "completed",
               })),
-            tomorrow_plan: planningItems.map((p) => ({ title: p.text, is_starred: p.starred })),
+            tomorrow_plan: tomorrowPlanPayload,
             past_kpis: kpis.map((kpi) => ({
               kpi_id: kpi.kpi_id,
               actual_value: kpiEntries[kpi.kpi_id]
@@ -1482,13 +1771,13 @@ const BusinessCompassDailyReport: React.FC = () => {
             })),
             // Score snapshot — same pattern as WeeklyReports
             score_override: true,
-            total_score: Math.round(dailyScore.totalScore),
+            total_score: Math.round(finalDailyScore.totalScore),
             sections: {
-              kpi_achievement: dailyScore.kpiScore,
-              accomplishments: dailyScore.accomplishmentsScore,
-              tasks_issues: dailyScore.tasksIssuesScore,
-              planning: dailyScore.planningScore,
-              timing: dailyScore.timingScore,
+              kpi_achievement: finalDailyScore.kpiScore,
+              accomplishments: finalDailyScore.accomplishmentsScore,
+              tasks_issues: finalDailyScore.tasksIssuesScore,
+              planning: finalDailyScore.planningScore,
+              timing: finalDailyScore.timingScore,
             },
           },
         },
@@ -1521,9 +1810,11 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       const data = response.data;
       if (!currentReportId && data.id) setCurrentReportId(data.id);
+      deletedReportDatesRef.current.delete(getReportDateKey(startDate));
+      if (data?.id) deletedReportIdsRef.current.delete(Number(data.id));
       draftDirtyRef.current = false;
       canPersistDraftRef.current = false;
-      clearStoredDraft();
+      clearStoredDraftsForDate(startDate);
       setSubmitSuccess(true);
       fetchReportsList();
       setTimeout(() => {
@@ -3524,28 +3815,30 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     report.report_data?.accomplishments?.items
                                   ) {
                                     setAccomplishments(
-                                      report.report_data.accomplishments.items.map(
-                                        (ach: any, idx: number) => ({
+                                      getNonEmptyReportItems(
+                                        report.report_data.accomplishments.items
+                                      )
+                                        .map((ach: any, idx: number) => ({
                                           id: `fetched-ach-${idx}`,
-                                          text: ach.title || "",
+                                          text: getReportItemText(ach),
                                           completed: true,
                                           starred: false,
                                           fromYesterday: false,
-                                        })
-                                      )
+                                        }))
                                     );
                                   } else {
                                     setAccomplishments([]);
                                   }
                                   if (report.report_data?.tomorrow_plan) {
                                     setPlanningItems(
-                                      report.report_data.tomorrow_plan.map(
-                                        (p: any, idx: number) => ({
-                                          id: `fetched-plan-${idx}`,
-                                          text: p.title || "",
-                                          starred: false,
-                                        })
+                                      getNonEmptyReportItems(
+                                        report.report_data.tomorrow_plan
                                       )
+                                        .map((p: any, idx: number) => ({
+                                          id: `fetched-plan-${idx}`,
+                                          text: getReportItemText(p),
+                                          starred: false,
+                                        }))
                                     );
                                   } else {
                                     setPlanningItems([]);
@@ -3603,9 +3896,49 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         },
                                       }
                                     );
-                                    fetchReportsList();
+                                    const deletedDateKey = getReportDateKey(
+                                      report.start_date
+                                    );
+                                    deletedReportIdsRef.current.add(
+                                      Number(report.id)
+                                    );
+                                    deletedReportDatesRef.current.add(
+                                      deletedDateKey
+                                    );
+                                    clearStoredDraftsForDate(deletedDateKey);
+                                    setReportsList((prev) =>
+                                      prev.filter(
+                                        (item) =>
+                                          item.id !== report.id &&
+                                          getReportDateKey(item.start_date) !==
+                                          deletedDateKey
+                                      )
+                                    );
+                                    const deletedDate = new Date(
+                                      `${deletedDateKey}T00:00:00`
+                                    );
+                                    if (!Number.isNaN(deletedDate.getTime())) {
+                                      setStartDate(deletedDateKey);
+                                      setSelectedDate(
+                                        deletedDate
+                                          .getDate()
+                                          .toString()
+                                          .padStart(2, "0")
+                                      );
+                                      setSelectedMonth(
+                                        deletedDate.toLocaleString("default", {
+                                          month: "long",
+                                        })
+                                      );
+                                      setSelectedYear(
+                                        deletedDate.getFullYear().toString()
+                                      );
+                                    }
+                                    resetReportFormState();
+                                    toast.success("Report deleted");
                                   } catch (err) {
                                     console.error("Delete failed:", err);
+                                    toast.error("Failed to delete report");
                                   }
                                 }}
                               >
@@ -3786,11 +4119,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                             </div>
                             <div className="p-4">
-                              {report.report_data?.accomplishments?.items
-                                ?.length ? (
+                              {getNonEmptyReportItems(
+                                report.report_data?.accomplishments?.items
+                              ).length ? (
                                 <ul className="space-y-2">
-                                  {report.report_data.accomplishments.items.map(
-                                    (ach: any, idx: number) => (
+                                  {getNonEmptyReportItems(
+                                    report.report_data?.accomplishments?.items
+                                  )
+                                    .map((ach: any, idx: number) => (
                                       <li
                                         key={idx}
                                         className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
@@ -3798,10 +4134,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         <span className="text-gray-400 font-medium">
                                           ✓
                                         </span>
-                                        {ach.title}
+                                        {getReportItemText(ach)}
                                       </li>
-                                    )
-                                  )}
+                                    ))}
                                 </ul>
                               ) : (
                                 <div className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm shadow-sm">
@@ -3820,10 +4155,14 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </span>
                             </div>
                             <div className="p-4">
-                              {report.report_data?.tomorrow_plan?.length ? (
+                              {getNonEmptyReportItems(
+                                report.report_data?.tomorrow_plan
+                              ).length ? (
                                 <ul className="space-y-2">
-                                  {report.report_data.tomorrow_plan.map(
-                                    (task: any, idx: number) => (
+                                  {getNonEmptyReportItems(
+                                    report.report_data?.tomorrow_plan
+                                  )
+                                    .map((task: any, idx: number) => (
                                       <li
                                         key={idx}
                                         className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
@@ -3831,10 +4170,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         <span className="text-gray-400 font-bold mt-0.5">
                                           •
                                         </span>
-                                        {task.title}
+                                        {getReportItemText(task)}
                                       </li>
-                                    )
-                                  )}
+                                    ))}
                                 </ul>
                               ) : (
                                 <div className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm shadow-sm">
