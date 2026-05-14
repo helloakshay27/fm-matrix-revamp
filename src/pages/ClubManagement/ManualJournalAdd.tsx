@@ -101,21 +101,15 @@ const ManualJournalAdd = () => {
 	// 	}));
 	// };
 	const handleRowChange = (idx, field, value) => {
-		// Prevent negative values for debit/credit
-		if ((field === 'debit' || field === 'credit')) {
+		if (field === 'debit' || field === 'credit') {
 			let val = value;
-			// Remove minus sign if present
 			if (typeof val === 'string') {
 				val = val.replace(/-/g, '');
 			}
-			// Prevent negative numbers
 			if (Number(val) < 0) val = '';
-			// Format to 2 decimal places if not empty and is a number
-			if (val !== '' && !isNaN(Number(val))) {
-				// Only format if not typing decimal point
-				if (!val.endsWith('.')) {
-					val = Number(val).toFixed(2);
-				}
+			if (val && val.includes('.')) {
+				const [intPart, decPart] = val.split('.');
+				val = intPart + '.' + (decPart ? decPart.slice(0, 2) : '');
 			}
 			setRows(prevRows => prevRows.map((row, i) => {
 				if (i !== idx) return row;

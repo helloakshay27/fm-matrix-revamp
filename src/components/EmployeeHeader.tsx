@@ -976,11 +976,11 @@ export const EmployeeHeader: React.FC = () => {
                         const adminLink = getFirstAdminLink();
                         window.location.href = adminLink;
                       }}
-                      className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm bg-white hover:bg-[#C72030] text-gray-700 hover:text-white transition-all duration-200 border border-gray-200 hover:border-[#C72030] group shadow-sm"
+                      className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg text-sm font-medium group shadow-sm"
                     >
                       <div className="flex items-center gap-2">
                         <Shield className="w-4 h-4" />
-                        <span className="font-medium">Admin View</span>
+                        <span>Admin View</span>
                       </div>
                       <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
                     </button>
