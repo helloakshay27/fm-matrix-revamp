@@ -7,7 +7,7 @@ import {
 } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { FileText, Share2, File, Info, XCircle, Pencil, ArrowLeft } from "lucide-react";
+import { FileText, Share2, File, Info, XCircle, Pencil, ArrowLeft, FileVideo, FileSpreadsheet } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch } from "@/store/hooks";
 import { toast } from "sonner";
@@ -229,17 +229,17 @@ export const EditBroadcastPage = () => {
                 ...prev,
                 attachment: file,
             }));
-            // Create preview for image files
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
                 reader.onloadend = () => {
                     setImagePreview(reader.result as string);
                 };
                 reader.readAsDataURL(file);
+            } else if (file.type.startsWith('video/')) {
+                setImagePreview(URL.createObjectURL(file));
             } else {
                 setImagePreview(null);
             }
-            // Clear existing attachment
             setExistingAttachmentUrl(null);
         }
     };
@@ -380,6 +380,64 @@ export const EditBroadcastPage = () => {
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    const getFileTypeFromMime = (mimeType: string): string => {
+        if (mimeType.startsWith('image/')) return 'image';
+        if (mimeType.startsWith('video/')) return 'video';
+        if (mimeType === 'application/pdf') return 'pdf';
+        if (['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/csv'].includes(mimeType)) return 'sheet';
+        if (['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain', 'application/rtf'].includes(mimeType)) return 'doc';
+        return 'file';
+    };
+
+    const getFileTypeFromUrl = (url: string): string => {
+        const ext = url.split('.').pop()?.toLowerCase() || '';
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return 'image';
+        if (['mp4', 'mov', 'avi', 'webm', 'mkv', 'm4v'].includes(ext)) return 'video';
+        if (ext === 'pdf') return 'pdf';
+        if (['xls', 'xlsx', 'csv'].includes(ext)) return 'sheet';
+        if (['doc', 'docx', 'txt', 'rtf'].includes(ext)) return 'doc';
+        return 'file';
+    };
+
+    const renderDocumentPreview = (file: File | null, existingUrl: string | null, previewUrl: string | null) => {
+        const type = file ? getFileTypeFromMime(file.type) : (existingUrl ? getFileTypeFromUrl(existingUrl) : 'file');
+
+        if (type === 'image') {
+            return <img src={previewUrl || existingUrl || ''} alt="Preview" className="w-20 h-20 object-contain mt-6" />;
+        }
+        if (type === 'video') {
+            return <video src={previewUrl || existingUrl || ''} className="w-20 h-20 object-contain mt-6" muted preload="metadata" />;
+        }
+        if (type === 'pdf') {
+            return (
+                <div className="flex flex-col items-center mt-4">
+                    <div className="w-12 h-16 bg-red-500 rounded-sm flex items-center justify-center">
+                        <span className="text-white text-xs font-bold">PDF</span>
+                    </div>
+                </div>
+            );
+        }
+        if (type === 'sheet') {
+            return (
+                <div className="flex flex-col items-center mt-4">
+                    <div className="w-12 h-16 bg-green-600 rounded-sm flex items-center justify-center">
+                        <FileSpreadsheet className="text-white w-6 h-6" />
+                    </div>
+                </div>
+            );
+        }
+        if (type === 'doc') {
+            return (
+                <div className="flex flex-col items-center mt-4">
+                    <div className="w-12 h-16 bg-blue-600 rounded-sm flex items-center justify-center">
+                        <FileText className="text-white w-6 h-6" />
+                    </div>
+                </div>
+            );
+        }
+        return <File size={40} className="text-gray-400 mt-6" />;
     };
 
     if (isLoading) {
@@ -698,15 +756,7 @@ export const EditBroadcastPage = () => {
                                         >
                                             <XCircle size={20} />
                                         </button>
-                                        {imagePreview || existingAttachmentUrl ? (
-                                            <img
-                                                src={imagePreview || existingAttachmentUrl || ""}
-                                                alt="Preview"
-                                                className="w-20 h-20 object-contain mt-6"
-                                            />
-                                        ) : (
-                                            <File size={40} className="text-gray-400 mt-6" />
-                                        )}
+                                        {renderDocumentPreview(formData.attachment, existingAttachmentUrl, imagePreview)}
                                     </div>
                                 ) : (
                                     <div

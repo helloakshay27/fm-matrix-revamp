@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -144,6 +144,7 @@ export const GRNDetailsPage = () => {
   const [rejectComment, setRejectComment] = useState("");
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [sendToSap, setSendToSap] = useState(false);
+  const [sapPushDisabled, setSapPushDisabled] = useState(false);
   const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [printing, setPrinting] = useState(false)
@@ -213,6 +214,44 @@ export const GRNDetailsPage = () => {
   const handleFeeds = () => {
     navigate(`/finance/grn-srn/feeds/${id}`);
   };
+
+    const handleSendToSap = useCallback(async () => {
+      const token = localStorage.getItem("token");
+      const baseUrl = localStorage.getItem("baseUrl");
+  
+  
+      if (!baseUrl || !token || !id) {
+        toast.error("Missing required configuration");
+        return;
+      }
+      setSapPushDisabled(true);
+      try {
+        const response = await axios.get<{ message: string }>(
+          `https://${baseUrl}/pms/grns/${id}.json?send_sap=yes`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+  
+        toast.success(response.data.message || "Sent to SAP successfully");
+  
+        // wait for server-side processing
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+  
+        fetchData();
+          toast.success("Data refreshed after send to SAP");
+        // Disable the button after successful push
+  
+      } catch (error: any) {
+        console.error("Send to SAP error:", error);
+  
+        toast.error(
+          error?.response?.data?.message ||
+          error.message ||
+          "Failed to send to SAP"
+        );
+      }
+    }, [id]);
 
   const handleApprove = async () => {
     const payload = {
@@ -360,8 +399,10 @@ export const GRNDetailsPage = () => {
               size="sm"
               variant="outline"
               className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+              onClick={handleSendToSap}
+              disabled={sapPushDisabled}
             >
-              Send to SAP
+              Push To SAP
             </Button>
           )}
           {
@@ -945,3 +986,4 @@ export const GRNDetailsPage = () => {
     </div>
   );
 };
+

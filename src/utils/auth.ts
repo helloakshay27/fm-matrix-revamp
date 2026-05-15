@@ -405,7 +405,8 @@ export const loginUser = async (
   email: string,
   password: string,
   baseUrl: string,
-  organizationId?: number
+  organizationId?: number,
+  recaptchaToken?: string
 ): Promise<User> => {
   // Build request body
   const requestBody: any = {
@@ -418,7 +419,19 @@ export const loginUser = async (
     requestBody.organization_id = organizationId;
   }
 
-  const response = await fetch(`https://${baseUrl}/api/users/sign_in.json`, {
+  // Include reCAPTCHA v3 token when available
+  if (recaptchaToken) {
+    requestBody.recaptcha_token = recaptchaToken;
+  }
+
+  // VITE_LOCAL_BACKEND_URL overrides the org's backend for local testing
+  // e.g. VITE_LOCAL_BACKEND_URL=http://localhost:3000
+  const localOverride = (import.meta as any).env?.VITE_LOCAL_BACKEND_URL;
+  const signInUrl = localOverride
+    ? `${localOverride}/api/users/sign_in.json`
+    : `https://${baseUrl}/api/users/sign_in.json`;
+
+  const response = await fetch(signInUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

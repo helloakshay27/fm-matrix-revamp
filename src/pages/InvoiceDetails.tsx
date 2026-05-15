@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -172,6 +172,8 @@ export const InvoiceDetails = () => {
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [openDebitModal, setOpenDebitModal] = useState(false)
     const [printing, setPrinting] = useState(false)
+    const [showSapButton, setShowSapButton] = useState(false)
+    const [sapPushDisabled, setSapPushDisabled] = useState(false)
     const [debitCreditForm, setDebitCreditForm] = useState({
         type: "",
         amount: "",
@@ -184,6 +186,7 @@ export const InvoiceDetails = () => {
                 getInvoiceById({ baseUrl, token, id })
             ).unwrap();
             setInvoice(response);
+            setShowSapButton((response as any).show_send_sap_yes === true);
         } catch (error) {
             console.error("Error fetching invoice:", error);
             toast.error(String(error) || "Failed to fetch invoice");
@@ -195,6 +198,33 @@ export const InvoiceDetails = () => {
             fetchData();
         }
     }, [dispatch, baseUrl, token, id]);
+
+    const handleSendToSap = useCallback(async () => {
+        if (!baseUrl || !token || !id) {
+            toast.error("Missing required configuration");
+            return;
+        }
+        setSapPushDisabled(true);
+        try {
+            const response = await axios.get<{ message: string }>(
+                `https://${baseUrl}/pms/work_order_invoices/${id}.json?send_sap=yes`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success(response.data.message || "Sent to SAP successfully");
+
+            // Wait for server-side processing then refresh
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await fetchData();
+        } catch (error: any) {
+            console.error("Send to SAP error:", error);
+            setSapPushDisabled(false);
+            toast.error(
+                error?.response?.data?.message ||
+                error.message ||
+                "Failed to send to SAP"
+            );
+        }
+    }, [id, baseUrl, token]);
 
     const handlePrint = async () => {
         setPrinting(true)
@@ -349,6 +379,17 @@ export const InvoiceDetails = () => {
                             </Button>
                         )
                     }
+                    {showSapButton && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                            onClick={handleSendToSap}
+                            disabled={sapPushDisabled}
+                        >
+                            Push To SAP
+                        </Button>
+                    )}
                     <Button
                         size="sm"
                         variant="outline"
