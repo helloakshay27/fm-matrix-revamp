@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Loader2, Printer, Star, FileText, Share2, File, Pencil } from 'lucide-react';
+import { ArrowLeft, Loader2, Printer, Star, FileText, Share2, File, Pencil, FileVideo, FileSpreadsheet } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChangeStatusDialog } from '@/components/ChangeStatusDialog';
 import { toast } from 'sonner';
@@ -133,6 +133,79 @@ export const BroadcastDetailsPage = () => {
       else if (field === 'show_on_home_screen') setShowOnHomeScreen(!value);
       else if (field === 'visible_after_expire') setVisibleAfterExpire(!value);
     }
+  };
+
+  const getFileType = (url: string, name?: string): string => {
+    const source = (url || name || '').toLowerCase();
+    const ext = source.split('.').pop() || '';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return 'image';
+    if (['mp4', 'mov', 'avi', 'webm', 'mkv', 'm4v'].includes(ext)) return 'video';
+    if (ext === 'pdf') return 'pdf';
+    if (['xls', 'xlsx', 'csv'].includes(ext)) return 'sheet';
+    if (['doc', 'docx', 'txt', 'rtf'].includes(ext)) return 'doc';
+    return 'file';
+  };
+
+  const renderAttachmentPreview = (attachment: any) => {
+    const type = getFileType(attachment.url || '', attachment.document_name);
+
+    if (type === 'image') {
+      return (
+        <img
+          src={attachment.url}
+          alt={attachment.document_name || 'Image'}
+          className="w-16 h-16 object-contain rounded"
+        />
+      );
+    }
+    if (type === 'video') {
+      return (
+        <video
+          src={attachment.url}
+          className="w-16 h-16 object-contain rounded"
+          muted
+          preload="metadata"
+        />
+      );
+    }
+    if (type === 'pdf') {
+      return (
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-16 bg-red-500 rounded-sm flex items-center justify-center mb-1">
+            <span className="text-white text-xs font-bold">PDF</span>
+          </div>
+          <div className="w-12 h-1 bg-gray-300 rounded" />
+        </div>
+      );
+    }
+    if (type === 'sheet') {
+      return (
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-16 bg-green-600 rounded-sm flex items-center justify-center mb-1">
+            <FileSpreadsheet className="text-white w-6 h-6" />
+          </div>
+          <div className="w-12 h-1 bg-gray-300 rounded" />
+        </div>
+      );
+    }
+    if (type === 'doc') {
+      return (
+        <div className="flex flex-col items-center">
+          <div className="w-12 h-16 bg-blue-600 rounded-sm flex items-center justify-center mb-1">
+            <FileText className="text-white w-6 h-6" />
+          </div>
+          <div className="w-12 h-1 bg-gray-300 rounded" />
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col items-center">
+        <div className="w-12 h-16 bg-gray-400 rounded-sm flex items-center justify-center mb-1">
+          <File className="text-white w-6 h-6" />
+        </div>
+        <div className="w-12 h-1 bg-gray-300 rounded" />
+      </div>
+    );
   };
 
   return (
@@ -317,52 +390,54 @@ export const BroadcastDetailsPage = () => {
         </div>
         <div className="p-6 bg-white">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-            {/* Upload Document */}
-            <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-4">Upload Document</h4>
-              {broadcastDetails?.attachments && broadcastDetails.attachments.length > 0 ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex flex-col items-center justify-center bg-white">
-                  <span className="text-xs text-gray-600 mb-2 text-center truncate max-w-full px-2">
-                    {broadcastDetails.attachments[0]?.document_name || "Document"}
-                  </span>
-                  <div className="flex flex-col items-center">
-                    {broadcastDetails.attachments[0]?.url?.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                      <img
-                        src={broadcastDetails.attachments[0].url}
-                        alt="Document"
-                        className="w-16 h-16 object-contain"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center">
-                        <div className="w-12 h-16 bg-red-500 rounded-sm flex items-center justify-center mb-1">
-                          <span className="text-white text-xs font-bold">PDF</span>
-                        </div>
-                        <div className="w-12 h-1 bg-gray-300 rounded"></div>
-                      </div>
-                    )}
-                  </div>
+            {/* Attachments */}
+            {broadcastDetails?.attachments && broadcastDetails.attachments.length > 0 ? (
+              broadcastDetails.attachments.map((attachment: any, index: number) => (
+                <div key={index}>
+                  <h4 className="text-sm font-semibold text-gray-900 mb-4">
+                    {index === 0 ? 'Attachments' : ''}
+                  </h4>
+                  <a
+                    href={attachment.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 w-full max-w-[200px] h-40 bg-white hover:border-gray-400 transition-colors cursor-pointer"
+                  >
+                    <span className="text-xs text-gray-600 mb-3 text-center truncate max-w-full px-1">
+                      {attachment.document_name || `Attachment ${index + 1}`}
+                    </span>
+                    {renderAttachmentPreview(attachment)}
+                  </a>
                 </div>
-              ) : (
+              ))
+            ) : (
+              <div>
+                <h4 className="text-sm font-semibold text-gray-900 mb-4">Attachments</h4>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
-                  <span className="text-sm text-gray-400">No document</span>
+                  <span className="text-sm text-gray-400">No attachments</span>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
 
-            {/* Upload Cover Image */}
+            {/* Cover Image */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-900 mb-4">Upload Cover Image</h4>
+              <h4 className="text-sm font-semibold text-gray-900 mb-4">Cover Image</h4>
               {broadcastDetails?.cover_image ? (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex flex-col items-center justify-center bg-white">
-                  <span className="text-xs text-gray-600 mb-2 text-center truncate max-w-full px-2">
-                    {broadcastDetails.cover_image?.name || "Name.jpg"}
+                <a
+                  href={broadcastDetails.cover_image?.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-4 w-full max-w-[200px] h-40 bg-white hover:border-gray-400 transition-colors cursor-pointer"
+                >
+                  <span className="text-xs text-gray-600 mb-3 text-center truncate max-w-full px-1">
+                    {broadcastDetails.cover_image?.name || "Cover Image"}
                   </span>
                   <img
-                    src={broadcastDetails.cover_image?.url || "https://via.placeholder.com/80"}
+                    src={broadcastDetails.cover_image?.url}
                     alt="Cover"
-                    className="w-16 h-16 object-contain"
+                    className="w-16 h-16 object-contain rounded"
                   />
-                </div>
+                </a>
               ) : (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 w-full max-w-[200px] h-40 flex items-center justify-center bg-gray-50">
                   <span className="text-sm text-gray-400">No cover image</span>
