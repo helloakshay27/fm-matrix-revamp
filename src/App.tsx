@@ -4568,7 +4568,7 @@ function App() {
                           />
                           <Route
                             path="/vas/project-dashboard"
-                            element={<SupersetDashboard />}
+                            element={<DashboardUI />}
                           />
 
                           <Route path="/vas/add-mom" element={<AddMoMPage />} />
