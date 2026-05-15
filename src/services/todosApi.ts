@@ -108,10 +108,10 @@ export const fetchTodos = async (
 
     // Add date range filters if provided
     if (fromDate) {
-        queryParts.push(`q[target_date_or_updated_at_gteq]=${fromDate}`);
+        queryParts.push(`q[target_date_and_updated_at_gteq]=${fromDate}`);
     }
     if (toDate) {
-        queryParts.push(`q[target_date_or_updated_at_lteq]=${toDate}`);
+        queryParts.push(`q[target_date_and_updated_at_lteq]=${toDate}`);
     }
 
     // Append query parameters to URL
