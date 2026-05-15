@@ -715,6 +715,12 @@ export const IncidentDashboard = () => {
     return { baseUrl, token, valid: !!(baseUrl && token) };
   };
 
+  const getSelectedSiteId = () =>
+    localStorage.getItem("selectedSiteId") ||
+    localStorage.getItem("site_id") ||
+    localStorage.getItem("siteId") ||
+    "";
+
   const buildParams = (
     fromDate: string,
     toDate: string,
@@ -877,6 +883,31 @@ export const IncidentDashboard = () => {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleExportStatusSummary = async () => {
+    const { baseUrl, valid } = getApiBase();
+    const siteId = getSelectedSiteId();
+    if (!valid || !siteId) {
+      toast.error("API details missing.");
+      return;
+    }
+    try {
+      const params = buildParams(
+        analyticsDateRange.startDate,
+        analyticsDateRange.endDate,
+        {
+          site_id: siteId,
+          export: "true",
+        }
+      );
+      await downloadFile(
+        `https://${baseUrl}/incident_dashboard/status_summary.json?${params}`,
+        `incident_status_distribution_${new Date().toISOString().split("T")[0]}.xlsx`
+      );
+    } catch {
+      toast.error("Failed to export incident status distribution");
     }
   };
 
@@ -1190,7 +1221,7 @@ export const IncidentDashboard = () => {
             </Button>
             <div className="w-full sm:w-auto">
               <AssetAnalyticsSelector
-                // @ts-ignore
+                // @ts-expect-error Asset selector accepts this chart option shape at runtime.
                 options={INCIDENT_CHART_OPTIONS}
                 selectedOptions={selectedCharts}
                 onSelectionChange={setSelectedCharts}
@@ -1208,7 +1239,7 @@ export const IncidentDashboard = () => {
             <StatCard
               icon={<AlertTriangle />}
               label="Total Incidents"
-              value={analyticsStats.total}
+              value={kpiData?.incident_rate.incidents ?? analyticsStats.total}
             />
             <StatCard
               icon={<Clock />}
@@ -1274,6 +1305,7 @@ export const IncidentDashboard = () => {
                             title="Incident Status Distribution"
                             sources={statusSummaryData}
                             showPercentage={false}
+                            onDownload={handleExportStatusSummary}
                             className="h-full"
                           />
                         )}
