@@ -1141,7 +1141,11 @@ const TaskForm = ({
                 return (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-white hover:shadow-sm transition-shadow"
+                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-white hover:shadow-sm transition-shadow cursor-pointer"
+                    onClick={() => {
+                      const url = URL.createObjectURL(file);
+                      window.open(url, "_blank");
+                    }}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div
@@ -1171,7 +1175,8 @@ const TaskForm = ({
 
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setAttachments(attachments.filter((_, i) => i !== idx));
                       }}
                       disabled={isReadOnly}
