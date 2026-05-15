@@ -104,7 +104,7 @@ export const AssetExportModal: React.FC<AssetExportModalProps> = ({
                     <FileSpreadsheet className={`w-5 h-5 ${selectedType === 'excel' ? 'text-[#C72030]' : 'text-gray-500'}`} />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">Excel Data Report</p>
+                    <p className="font-medium text-gray-900">Asset Master Dump</p>
                     <p className="text-sm text-gray-500 mt-0.5">Export all asset data as an Excel spreadsheet</p>
                   </div>
                 </button>
@@ -124,8 +124,8 @@ export const AssetExportModal: React.FC<AssetExportModalProps> = ({
                     <BookOpen className={`w-5 h-5 ${selectedType === 'digital_register' ? 'text-[#C72030]' : 'text-gray-500'}`} />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">Digital Register Export</p>
-                    <p className="text-sm text-gray-500 mt-0.5">Export the asset register in digital format (all 8 tabs)</p>
+                    <p className="font-medium text-gray-900">Digital Asset Register</p>
+                    <p className="text-sm text-gray-500 mt-0.5">(Ind AS 16 (PPE), Ind AS 36 (Impairment), Ind AS 38 (Intangibles); IFRS 16 (Leases))</p>
                   </div>
                 </button>
               </div>
