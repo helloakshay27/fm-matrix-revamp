@@ -144,6 +144,7 @@ export const GRNDetailsPage = () => {
   const [rejectComment, setRejectComment] = useState("");
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [sendToSap, setSendToSap] = useState(false);
+  const [sapPushDisabled, setSapPushDisabled] = useState(false);
   const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [printing, setPrinting] = useState(false)
@@ -398,9 +399,10 @@ export const GRNDetailsPage = () => {
               size="sm"
               variant="outline"
               className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-
+              onClick={handleSendToSap}
+              disabled={sapPushDisabled}
             >
-              Send to SAP
+              Push To SAP
             </Button>
           )}
           {
@@ -984,7 +986,4 @@ export const GRNDetailsPage = () => {
     </div>
   );
 };
-function setSapPushDisabled(arg0: boolean) {
-  throw new Error("Function not implemented.");
-}
 
