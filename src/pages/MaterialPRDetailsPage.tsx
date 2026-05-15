@@ -887,7 +887,7 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
             ) : (
 
               <>
-                {!buttonCondition.showSap && buttonCondition.canEditAll && (
+                {buttonCondition.canEditAll && (
                   <Button
                     size="sm"
                     variant="outline"
