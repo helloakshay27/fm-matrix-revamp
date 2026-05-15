@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Users,
   LineChart,
@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   ChevronDown,
   ChevronRight,
+  Check,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,9 +20,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import axios from "axios";
-import { toast } from "sonner";
 import TeamMembersTable from "./TeamMembersTable";
+import { cn } from "@/lib/utils";
+import { getBaseUrl, getToken } from "@/utils/auth";
 
 const C = {
   primary: "#DA7756",
@@ -80,6 +91,93 @@ interface TeamDashboardData {
   grouped_by_department?: DepartmentGroup[];
 }
 
+const EMPTY_DASHBOARD_DATA: TeamDashboardData = {
+  summary: {
+    active_members: 0,
+    total_kpis: 0,
+    completed_actions: 0,
+    team_reviews: 0,
+  },
+  period: { from: "", to: "" },
+  total_members: 0,
+  members: [],
+  grouped_by_department: [],
+};
+
+const getDashboardToken = () =>
+  localStorage.getItem("auth_token") || getToken() || "";
+
+const normalizeDashboardData = (payload: unknown): TeamDashboardData => {
+  const record =
+    payload && typeof payload === "object"
+      ? (payload as Partial<TeamDashboardData>)
+      : {};
+  const groupedByDepartment = Array.isArray(record.grouped_by_department)
+    ? record.grouped_by_department
+    : [];
+  const members = Array.isArray(record.members)
+    ? record.members
+    : groupedByDepartment.flatMap((group) =>
+        Array.isArray(group.members) ? group.members : []
+      );
+
+  return {
+    ...EMPTY_DASHBOARD_DATA,
+    ...record,
+    summary: {
+      ...EMPTY_DASHBOARD_DATA.summary,
+      ...(record.summary || {}),
+    },
+    period: {
+      ...EMPTY_DASHBOARD_DATA.period,
+      ...(record.period || {}),
+    },
+    members,
+    grouped_by_department: groupedByDepartment,
+    total_members: record.total_members ?? members.length,
+  };
+};
+
+const csvHeaders: Array<{ label: string; key: keyof TeamMember }> = [
+  { label: "Score", key: "score" },
+  { label: "Name", key: "name" },
+  { label: "Email", key: "email" },
+  { label: "Designation", key: "designation" },
+  { label: "Department", key: "department" },
+  { label: "Daily Reports", key: "daily_reports" },
+  { label: "Day Rating", key: "day_rating" },
+  { label: "Weekly Reports", key: "weekly_reports" },
+  { label: "Week Rating", key: "week_rating" },
+  { label: "Tasks", key: "tasks" },
+  { label: "Issues", key: "issues" },
+  { label: "KPIs", key: "kpis" },
+  { label: "Daily Checklists", key: "daily_checklists" },
+  { label: "Weekly Checklists", key: "weekly_checklists" },
+  { label: "SOPs", key: "sops" },
+  { label: "Goals", key: "goals" },
+  { label: "DISC Type", key: "disc_type" },
+];
+
+const escapeCsvValue = (value: unknown) => {
+  const text = value === null || value === undefined ? "" : String(value);
+  return `"${text.replace(/"/g, '""')}"`;
+};
+
+const downloadCsvFile = (filename: string, csv: string) => {
+  const blob = new Blob([`\uFEFF${csv}`], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.rel = "noopener";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+};
+
 const Shimmer = ({ w = "100%", h = 16 }: { w?: string; h?: number }) => (
   <div
     className="animate-pulse rounded-2xl"
@@ -94,8 +192,9 @@ export const TeamPerformance = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [departmentOpen, setDepartmentOpen] = useState(false);
   const [departments, setDepartments] = useState<string[]>([]);
-  const [departmentId, setDepartmentId] = useState<string>("");
+  const [departmentId] = useState<string>("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [minScore, setMinScore] = useState("");
@@ -118,61 +217,69 @@ export const TeamPerformance = () => {
     const fetchTeamDashboard = async () => {
       try {
         setLoading(true);
-        const baseUrl = localStorage.getItem("baseUrl");
-        const token = localStorage.getItem("token");
+        const baseUrl = getBaseUrl();
+        const token = getDashboardToken();
         if (!baseUrl || !token) {
-          toast.error("Missing authentication credentials");
+          console.error("Missing authentication credentials");
           return;
         }
 
         const queryParams = new URLSearchParams();
-        queryParams.append("search", searchTerm);
         if (departmentId) queryParams.append("department_id", departmentId);
         queryParams.append("group_by_dept", groupByDept.toString());
-        if (minScore) queryParams.append("min_score", minScore);
-        if (maxScore) queryParams.append("max_score", maxScore);
-        if (minDailyReports)
-          queryParams.append("min_daily_reports", minDailyReports);
-        if (minWeeklyReports)
-          queryParams.append("min_weekly_reports", minWeeklyReports);
-        if (minKpis) queryParams.append("min_kpis", minKpis);
-        if (minTasks) queryParams.append("min_tasks", minTasks);
 
-        const response = await axios.get(
-          `https://${baseUrl}/team_dashboard.json?${queryParams.toString()}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
+        const requestConfig = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        };
+        const queryString = queryParams.toString();
+        const endpoints = [
+          "/business_compass/team_dashboard.json",
+          "/team_dashboard.json",
+        ];
+        let response;
+        let lastError: unknown;
+
+        for (const endpoint of endpoints) {
+          try {
+            response = await axios.get(
+              `${baseUrl}${endpoint}?${queryString}`,
+              requestConfig
+            );
+            break;
+          } catch (error) {
+            lastError = error;
+            if (!axios.isAxiosError(error) || error.response?.status !== 404) {
+              throw error;
+            }
           }
+        }
+
+        if (!response) throw lastError;
+
+        const data = normalizeDashboardData(
+          response.data?.data ?? response.data?.team_dashboard ?? response.data
         );
-        const data = response.data.data;
         setDashboardData(data);
         const uniqueDepts = Array.from(
           new Set(
-            data.members.map((m: TeamMember) => m.department).filter(Boolean)
+            data.members?.map((m: TeamMember) => m.department).filter(Boolean)
           )
         ) as string[];
         setDepartments(uniqueDepts);
       } catch (error) {
         console.error("Error fetching team dashboard:", error);
-        toast.error("Failed to load team dashboard");
       } finally {
         setLoading(false);
       }
     };
     fetchTeamDashboard();
   }, [
-    searchTerm,
     departmentId,
     groupByDept,
-    minScore,
-    maxScore,
-    minDailyReports,
-    minWeeklyReports,
-    minKpis,
-    minTasks,
   ]);
 
   const filteredMembers = (dashboardData?.members || []).filter((member) => {
@@ -210,6 +317,24 @@ export const TeamPerformance = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const handleDownloadCsv = () => {
+    if (!filteredMembers.length) {
+      console.warn("No team members to export");
+      return;
+    }
+
+    const rows = [
+      csvHeaders.map((header) => escapeCsvValue(header.label)).join(","),
+      ...filteredMembers.map((member) =>
+        csvHeaders
+          .map((header) => escapeCsvValue(member[header.key]))
+          .join(",")
+      ),
+    ];
+    const today = new Date().toISOString().slice(0, 10);
+    downloadCsvFile(`team-dashboard-${today}.csv`, rows.join("\r\n"));
+  };
 
   React.useEffect(() => {
     setCurrentPage(1);
@@ -261,66 +386,67 @@ export const TeamPerformance = () => {
 
   const inputCls =
     "text-sm rounded-xl border bg-white/80 focus-visible:ring-2 focus-visible:ring-[#DA7756]/20 focus-visible:border-[#DA7756]";
+  const departmentOptions = useMemo(
+    () =>
+      [...departments].sort((left, right) =>
+        left.localeCompare(right, undefined, { sensitivity: "base" })
+      ),
+    [departments]
+  );
+  const selectedDepartmentLabel =
+    departmentFilter === "all" ? "All Departments" : departmentFilter;
 
   return (
-    <div style={{ fontFamily: C.font }} className="space-y-5">
+    <div style={{ fontFamily: C.font }} className="space-y-4">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {loading
           ? [1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="p-5 rounded-2xl border"
+                className="rounded-[20px] border p-4 shadow-sm"
                 style={{ background: C.cardBg, borderColor: C.primaryBord }}
               >
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-4">
+                  <Shimmer w="48px" h={48} />
                   <div className="flex flex-col gap-2 flex-1">
-                    <Shimmer w="60%" h={12} />
-                    <Shimmer w="40%" h={28} />
-                    <Shimmer w="50%" h={20} />
+                    <Shimmer w="60%" h={10} />
+                    <Shimmer w="35%" h={28} />
                   </div>
-                  <Shimmer w="40px" h={40} />
                 </div>
               </div>
             ))
           : summaryCards.map((card, i) => (
               <div
                 key={i}
-                className="p-5 rounded-2xl border flex items-start justify-between shadow-sm"
+                className="flex items-center gap-4 rounded-[20px] border p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
                 style={{
-                  background: card.bg,
+                  background: C.cardBg,
                   borderColor: C.primaryBord,
-                  borderTop: `3px solid ${card.accent}`,
                 }}
               >
-                <div className="flex flex-col gap-1.5">
+                <div
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
+                  style={{ background: card.bg }}
+                >
+                  {card.icon}
+                </div>
+                <div className="min-w-0">
                   <p
-                    className="text-[11px] font-black uppercase tracking-[0.12em]"
-                    style={{ color: card.accent }}
+                    className="text-[11px] font-medium uppercase tracking-wide"
+                    style={{ color: C.textMuted }}
                   >
                     {card.title}
                   </p>
                   <p
-                    className="text-3xl font-black"
+                    className="mt-1 text-3xl font-semibold tabular-nums"
                     style={{ color: C.textMain }}
                   >
                     {card.value}
                   </p>
-                  <span
-                    className="text-[11px] font-black px-2.5 py-1 rounded-full w-fit"
-                    style={{
-                      background: `${card.accent}20`,
-                      color: card.accent,
-                    }}
-                  >
+                  <p className="mt-1 text-xs font-normal" style={{ color: C.textMuted }}>
                     {card.tag}
-                  </span>
-                </div>
-                <div
-                  className="p-2.5 rounded-xl"
-                  style={{ background: `${card.accent}15` }}
-                >
-                  {card.icon}
+                  </p>
                 </div>
               </div>
             ))}
@@ -328,9 +454,9 @@ export const TeamPerformance = () => {
 
       {/* Filters */}
       <div
-        className="rounded-2xl border p-5 space-y-4"
+        className="space-y-4 rounded-[20px] border p-4 shadow-sm sm:p-5"
         style={{
-          background: "rgba(218,119,86,0.07)",
+          background: C.cardBg,
           borderColor: C.primaryBord,
         }}
       >
@@ -351,22 +477,63 @@ export const TeamPerformance = () => {
             />
           </div>
 
-          <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-            <SelectTrigger
-              className={`w-[170px] h-9 ${inputCls}`}
-              style={{ borderColor: C.primaryBord }}
-            >
-              <SelectValue placeholder="All Departments" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Departments</SelectItem>
-              {departments.map((dept) => (
-                <SelectItem key={dept} value={dept}>
-                  {dept}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={departmentOpen} onOpenChange={setDepartmentOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "flex h-9 w-[190px] items-center justify-between rounded-xl border bg-white/80 px-3 text-left text-sm font-normal outline-none transition-colors hover:bg-white focus-visible:border-[#DA7756] focus-visible:ring-2 focus-visible:ring-[#DA7756]/20"
+                )}
+                style={{ borderColor: C.primaryBord, color: C.textMain }}
+              >
+                <span className="truncate">{selectedDepartmentLabel}</span>
+                <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-neutral-400" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[260px] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Search department..." />
+                <CommandList>
+                  <CommandEmpty>No department found.</CommandEmpty>
+                  <CommandGroup>
+                    <CommandItem
+                      value="All Departments"
+                      onSelect={() => {
+                        setDepartmentFilter("all");
+                        setDepartmentOpen(false);
+                      }}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          departmentFilter === "all" ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      All Departments
+                    </CommandItem>
+                    {departmentOptions.map((dept) => (
+                      <CommandItem
+                        key={dept}
+                        value={dept}
+                        onSelect={() => {
+                          setDepartmentFilter(dept);
+                          setDepartmentOpen(false);
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            departmentFilter === dept ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                        {dept}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
 
           <Select>
             <SelectTrigger
@@ -381,8 +548,9 @@ export const TeamPerformance = () => {
           </Select>
 
           <button
+            type="button"
             onClick={() => setGroupByDept(!groupByDept)}
-            className="inline-flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-black border transition-all"
+            className="inline-flex h-9 items-center gap-2 rounded-xl border px-4 text-sm font-medium transition-all"
             style={{
               background: groupByDept ? C.primary : C.cardBg,
               color: groupByDept ? "#fff" : C.textMain,
@@ -403,16 +571,21 @@ export const TeamPerformance = () => {
           </button>
 
           <button
-            className="inline-flex items-center gap-2 px-4 h-9 rounded-xl text-sm font-black border transition-all"
+            type="button"
+            onClick={handleDownloadCsv}
+            disabled={loading || filteredMembers.length === 0}
+            className="inline-flex h-9 items-center gap-2 rounded-xl border px-4 text-sm font-medium transition-all disabled:cursor-not-allowed disabled:opacity-60"
             style={{
               background: C.cardBg,
-              color: C.primary,
+              color: loading || filteredMembers.length === 0 ? C.textMuted : C.primary,
               borderColor: C.primaryBord,
               fontFamily: C.font,
             }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.background = C.primaryBg)
-            }
+            onMouseEnter={(e) => {
+              if (!loading && filteredMembers.length > 0) {
+                e.currentTarget.style.background = C.primaryBg;
+              }
+            }}
             onMouseLeave={(e) => (e.currentTarget.style.background = C.cardBg)}
           >
             <Download className="h-4 w-4" />
@@ -424,7 +597,7 @@ export const TeamPerformance = () => {
         <div className="flex flex-wrap gap-3 items-center">
           <div className="flex items-center gap-2">
             <label
-              className="text-[11px] font-black"
+              className="text-[11px] font-medium"
               style={{ color: C.textMuted }}
             >
               Score:
@@ -482,6 +655,7 @@ export const TeamPerformance = () => {
             style={{ borderColor: C.primaryBord }}
           />
           <button
+            type="button"
             onClick={() => {
               setSearchTerm("");
               setDepartmentFilter("all");
@@ -495,7 +669,7 @@ export const TeamPerformance = () => {
               setExpandedDepts(new Set());
               setCurrentPage(1);
             }}
-            className="px-4 h-9 rounded-xl text-[12px] font-black border transition-all"
+            className="h-9 rounded-xl border px-4 text-[12px] font-medium transition-all"
             style={{
               background: C.cardBg,
               color: C.primary,
@@ -551,13 +725,13 @@ export const TeamPerformance = () => {
                   style={{ color: C.primary }}
                 />
                 <span
-                  className="font-black text-sm"
+                  className="text-sm font-medium"
                   style={{ color: C.textMain }}
                 >
                   {group.department}
                 </span>
                 <span
-                  className="text-[11px] font-black px-2.5 py-0.5 rounded-full text-white"
+                  className="rounded-full px-2.5 py-0.5 text-[11px] font-medium text-white"
                   style={{ background: C.primary }}
                 >
                   {group.count} members
@@ -598,7 +772,7 @@ export const TeamPerformance = () => {
                           ].map((h) => (
                             <th
                               key={h}
-                              className="px-3 py-3 text-center text-[10px] font-black uppercase tracking-wider"
+                              className="px-3 py-3 text-center text-[10px] font-medium uppercase tracking-wider"
                               style={{ color: C.textMuted }}
                             >
                               {h}
@@ -637,7 +811,7 @@ export const TeamPerformance = () => {
           left: "50%",
           transform: "translate(-50%, -50%)",
           fontSize: "11px",
-          fontWeight: "900",
+          fontWeight: 600,
           color: "white",
           lineHeight: 1,
         }}
@@ -651,7 +825,7 @@ export const TeamPerformance = () => {
       </span>
     </div>
     <div>
-      <p className="font-black text-xs" style={{ color: C.textMain }}>
+      <p className="text-xs font-medium" style={{ color: C.textMain }}>
         {member.name}
       </p>
       <p className="text-[11px]" style={{ color: C.textMuted }}>
@@ -668,7 +842,7 @@ export const TeamPerformance = () => {
                             </td>
                             <td className="px-3 py-3 text-center">
                               <span
-                                className="rounded-full px-2.5 py-1 text-[11px] font-black border"
+                                className="rounded-full border px-2.5 py-1 text-[11px] font-medium"
                                 style={{
                                   background: C.cardBg,
                                   borderColor: C.primaryBord,
@@ -679,13 +853,13 @@ export const TeamPerformance = () => {
                               </span>
                             </td>
                             <td className="px-3 py-3 text-center">
-                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[11px] font-black bg-sky-100 text-sky-700">
+                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-sky-100 px-2 text-[11px] font-medium text-sky-700">
                                 {member.daily_reports}
                               </span>
                             </td>
                             <td className="px-3 py-3 text-center">
                               <span
-                                className="rounded-lg px-2 py-1 text-[11px] font-black border"
+                                className="rounded-lg border px-2 py-1 text-[11px] font-medium"
                                 style={{
                                   background: C.cardBg,
                                   borderColor: C.primaryBord,
@@ -696,13 +870,13 @@ export const TeamPerformance = () => {
                               </span>
                             </td>
                             <td className="px-3 py-3 text-center">
-                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[11px] font-black bg-sky-100 text-sky-700">
+                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-sky-100 px-2 text-[11px] font-medium text-sky-700">
                                 {member.weekly_reports}
                               </span>
                             </td>
                             <td className="px-3 py-3 text-center">
                               <span
-                                className="rounded-lg px-2 py-1 text-[11px] font-black border"
+                                className="rounded-lg border px-2 py-1 text-[11px] font-medium"
                                 style={{
                                   background: C.cardBg,
                                   borderColor: C.primaryBord,
@@ -713,27 +887,27 @@ export const TeamPerformance = () => {
                               </span>
                             </td>
                             <td className="px-3 py-3 text-center">
-                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[11px] font-black bg-purple-100 text-purple-700">
+                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-purple-100 px-2 text-[11px] font-medium text-purple-700">
                                 {member.tasks}
                               </span>
                             </td>
                             <td className="px-3 py-3 text-center">
-                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[11px] font-black bg-rose-100 text-rose-700">
+                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-rose-100 px-2 text-[11px] font-medium text-rose-700">
                                 {member.issues}
                               </span>
                             </td>
                             <td className="px-3 py-3 text-center">
-                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[11px] font-black bg-emerald-100 text-emerald-700">
+                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-emerald-100 px-2 text-[11px] font-medium text-emerald-700">
                                 {member.kpis}
                               </span>
                             </td>
                             <td className="px-3 py-3 text-center">
-                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[11px] font-black bg-amber-100 text-amber-700">
+                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-amber-100 px-2 text-[11px] font-medium text-amber-700">
                                 {member.daily_checklists}
                               </span>
                             </td>
                             <td className="px-3 py-3 text-center">
-                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg px-2 text-[11px] font-black bg-indigo-100 text-indigo-700">
+                              <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-indigo-100 px-2 text-[11px] font-medium text-indigo-700">
                                 {member.weekly_checklists}
                               </span>
                             </td>

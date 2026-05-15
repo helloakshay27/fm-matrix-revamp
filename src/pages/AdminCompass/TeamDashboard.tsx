@@ -1,33 +1,63 @@
+import { LineChart } from "lucide-react";
 import { TeamPerformance } from "./TeamPerformance";
+
+const T = {
+  primary: "#DA7756",
+  primaryBg: "#fdf9f7",
+  primaryBord: "#e8e3de",
+  pageBg: "#f6f4ee",
+  cardBg: "#ffffff",
+  textMain: "#1a1a1a",
+  textMuted: "#6b7280",
+  font: "'Poppins', sans-serif",
+};
 
 const TeamDashboard = () => {
   return (
     <div
-      className="min-h-screen w-full"
-      style={{ background: "#f6f4ee", fontFamily: "'Poppins', sans-serif" }}
+      className="min-h-[calc(100vh-5rem)] w-full px-4 py-6 sm:px-6"
+      style={{ background: T.pageBg, fontFamily: T.font }}
     >
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap'); * { font-family: 'Poppins', sans-serif !important; }`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap'); .team-dashboard-wrap, .team-dashboard-wrap * { font-family: 'Poppins', sans-serif !important; }`}</style>
 
-      <div className="px-4 md:px-8 py-6 max-w-[1600px] mx-auto space-y-5">
+      <div className="team-dashboard-wrap mx-auto max-w-7xl space-y-4">
         <div
-          className="rounded-2xl border p-8"
+          className="flex flex-col gap-4 rounded-[20px] border p-5 shadow-sm sm:p-6 md:flex-row md:items-center md:justify-between"
           style={{
-            background: "rgba(218,119,86,0.10)",
-            borderColor: "#e8e3de",
+            background: T.cardBg,
+            borderColor: T.primaryBord,
+            boxShadow: "0 10px 24px rgba(26,26,26,0.05)",
           }}
         >
-          <p
-            className="text-[10px] font-black uppercase tracking-[0.18em] mb-1"
-            style={{ color: "#6b7280" }}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border shadow-sm"
+              style={{ borderColor: T.primaryBord, background: T.primaryBg }}
+            >
+              <LineChart className="h-6 w-6" style={{ color: T.primary }} />
+            </div>
+            <div>
+              <h1
+                className="text-2xl font-semibold tracking-tight"
+                style={{ color: T.textMain }}
+              >
+                Team Dashboard
+              </h1>
+              <p className="mt-1 text-sm font-normal" style={{ color: T.textMuted }}>
+                Performance overview and feedback analytics
+              </p>
+            </div>
+          </div>
+          <div
+            className="w-fit rounded-xl border px-4 py-2.5 text-sm font-medium"
+            style={{
+              borderColor: T.primaryBord,
+              background: T.primaryBg,
+              color: T.textMuted,
+            }}
           >
-            Performance overview and feedback analytics
-          </p>
-          <h1
-            className="text-2xl font-black tracking-tight"
-            style={{ color: "#1a1a1a" }}
-          >
-            Team Dashboard
-          </h1>
+            Team performance
+          </div>
         </div>
         <TeamPerformance />
       </div>

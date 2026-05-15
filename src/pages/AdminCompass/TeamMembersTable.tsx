@@ -1,5 +1,4 @@
 import { ArrowUpDown, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 
 interface TeamMember {
@@ -55,19 +54,19 @@ const TeamMembersTable = ({
     if (score >= 20) return "bg-amber-100 text-amber-700";
     return "bg-rose-100 text-rose-700";
   };
-const getAvatarColor = (index: number) => {
-  const colors = [
-    "#3b82f6", // blue
-    "#a855f7", // purple
-    "#ec4899", // pink
-    "#22c55e", // green
-    "#f97316", // orange
-    "#ef4444", // red
-    "#6366f1", // indigo
-    "#06b6d4", // cyan
-  ];
-  return colors[index % colors.length];
-};
+  const getAvatarColor = (index: number) => {
+    const colors = [
+      "#3b82f6",
+      "#a855f7",
+      "#ec4899",
+      "#22c55e",
+      "#f97316",
+      "#ef4444",
+      "#6366f1",
+      "#06b6d4",
+    ];
+    return colors[index % colors.length];
+  };
   // Generate pagination pages with ellipsis
   const getPaginationPages = () => {
     const pages: (number | string)[] = [];
@@ -120,7 +119,7 @@ const getAvatarColor = (index: number) => {
   };
 
   return (
-    <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+    <div className="rounded-[20px] border border-[#e8e3de] bg-white p-4 shadow-sm sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold text-neutral-900">
@@ -130,7 +129,7 @@ const getAvatarColor = (index: number) => {
             Daily and weekly performance snapshot by team member
           </p>
         </div>
-        <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-900">
+        <span className="rounded-xl border border-[#e8e3de] bg-[#fdf9f7] px-3 py-1.5 text-xs font-medium text-neutral-600">
           {totalMembers} Members
         </span>
       </div>
@@ -145,86 +144,86 @@ const getAvatarColor = (index: number) => {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-2xl border border-[#e8e3de]">
             <table className="w-full min-w-[1400px] text-sm text-center">
               <thead>
-                <tr className="border-b border-[#DA7756]/20 text-xs uppercase tracking-wide text-neutral-500">
-                  <th className="px-3 py-3 font-semibold text-center">
+                <tr className="border-b border-[#e8e3de] bg-[#fdf9f7] text-xs uppercase tracking-wide text-neutral-500">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       Score <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
-                  <th className="px-3 py-3 font-semibold text-center">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       User <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
-                  <th className="px-3 py-3 font-semibold text-center">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       Designation <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
-                  <th className="px-3 py-3 font-semibold text-center">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       Department <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
-                  <th className="px-3 py-3 font-semibold text-center">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       Daily Reports <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
-                  <th className="px-3 py-3 font-semibold text-center">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       Day Rating <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
-                  <th className="px-3 py-3 font-semibold text-center">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       Weekly Reports <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
-                  <th className="px-3 py-3 font-semibold text-center">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       Week Rating <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
-                  <th className="px-3 py-3 font-semibold text-center">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       Tasks <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
-                  <th className="px-3 py-3 font-semibold text-center">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       Issues <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
-                  <th className="px-3 py-3 font-semibold text-center">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       KPIs <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
-                  <th className="px-3 py-3 font-semibold text-center">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       Daily Checklists <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
-                  <th className="px-3 py-3 font-semibold text-center">
+                  <th className="px-3 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1.5">
                       Weekly Checklists <ArrowUpDown className="h-3.5 w-3.5" />
                     </div>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#DA7756]/15">
+              <tbody className="divide-y divide-[#e8e3de]">
                 {members.map((member, index) => (
                   <tr
                     key={member.user_id}
-                    className="bg-[#fef6f4]/90 transition-colors hover:bg-[#fef6f4]"
+                    className="bg-white transition-colors hover:bg-[#fffaf8]"
                   >
                     <td className="px-3 py-3 text-center">
                       <div
-                        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 font-bold tabular-nums ${getScoreStyles(member.score)}`}
+                        className={`inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 font-medium tabular-nums ${getScoreStyles(member.score)}`}
                       >
                         {member.score}
                       </div>
@@ -232,29 +231,29 @@ const getAvatarColor = (index: number) => {
                     <td className="px-3 py-3 text-center">
                       <div className="flex items-center justify-center gap-3">
                         <div
-  className="shrink-0 rounded-full"
-  style={{
-    width: "36px",
-    height: "36px",
-    backgroundColor: getAvatarColor(index),
-    position: "relative",
-  }}
->
-  <span
-    style={{
-      position: "absolute",
-      top: "50%",
-      left: "50%",
-      transform: "translate(-50%, -50%)",
-      fontSize: "12px",
-      fontWeight: "bold",
-      color: "white",
-      lineHeight: 1,
-    }}
-  >
-    {getInitials(member.name)}
-  </span>
-</div>
+                          className="shrink-0 rounded-full"
+                          style={{
+                            width: "36px",
+                            height: "36px",
+                            backgroundColor: getAvatarColor(index),
+                            position: "relative",
+                          }}
+                        >
+                          <span
+                            style={{
+                              position: "absolute",
+                              top: "50%",
+                              left: "50%",
+                              transform: "translate(-50%, -50%)",
+                              fontSize: "12px",
+                              fontWeight: 600,
+                              color: "white",
+                              lineHeight: 1,
+                            }}
+                          >
+                            {getInitials(member.name)}
+                          </span>
+                        </div>
                         <div className="text-left">
                           <p className="font-medium text-neutral-900">
                             {member.name}
@@ -271,52 +270,52 @@ const getAvatarColor = (index: number) => {
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-neutral-700 border border-[#DA7756]/20">
+                      <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-neutral-700 border border-[#e8e3de]">
                         {member.department || "-"}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-sky-100 px-2 text-xs font-bold text-sky-700 tabular-nums">
+                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-sky-100 px-2 text-xs font-medium text-sky-700 tabular-nums">
                         {member.daily_reports}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-neutral-700 border border-[#DA7756]/20 tabular-nums">
+                      <span className="rounded-md bg-white px-2 py-1 text-xs font-medium text-neutral-700 border border-[#e8e3de] tabular-nums">
                         {member.day_rating}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-sky-100 px-2 text-xs font-bold text-sky-700 tabular-nums">
+                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-sky-100 px-2 text-xs font-medium text-sky-700 tabular-nums">
                         {member.weekly_reports}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="rounded-md bg-white px-2 py-1 text-xs font-semibold text-neutral-700 border border-[#DA7756]/20 tabular-nums">
+                      <span className="rounded-md bg-white px-2 py-1 text-xs font-medium text-neutral-700 border border-[#e8e3de] tabular-nums">
                         {member.week_rating}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-purple-100 px-2 text-xs font-bold text-purple-700 tabular-nums">
+                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-purple-100 px-2 text-xs font-medium text-purple-700 tabular-nums">
                         {member.tasks}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-red-100 px-2 text-xs font-bold text-red-700 tabular-nums">
+                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-red-100 px-2 text-xs font-medium text-red-700 tabular-nums">
                         {member.issues}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-green-100 px-2 text-xs font-bold text-green-700 tabular-nums">
+                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-green-100 px-2 text-xs font-medium text-green-700 tabular-nums">
                         {member.kpis}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-yellow-100 px-2 text-xs font-bold text-yellow-700 tabular-nums">
+                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-yellow-100 px-2 text-xs font-medium text-yellow-700 tabular-nums">
                         {member.daily_checklists}
                       </span>
                     </td>
                     <td className="px-3 py-3 text-center">
-                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-indigo-100 px-2 text-xs font-bold text-indigo-700 tabular-nums">
+                      <span className="inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-indigo-100 px-2 text-xs font-medium text-indigo-700 tabular-nums">
                         {member.weekly_checklists}
                       </span>
                     </td>
@@ -327,7 +326,7 @@ const getAvatarColor = (index: number) => {
           </div>
 
           {/* Pagination Controls */}
-          <div className="mt-6 flex items-center justify-between border-t border-[#DA7756]/20 pt-4">
+          <div className="mt-6 flex items-center justify-between border-t border-[#e8e3de] pt-4">
             <div className="text-xs text-neutral-600">
               Showing {totalMembers === 0 ? 0 : (currentPage - 1) * 10 + 1} to{" "}
               {Math.min(currentPage * 10, totalMembers)} of {totalMembers}{" "}
