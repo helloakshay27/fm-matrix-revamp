@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
+import { useGoogleReCaptcha } from "react-google-recaptcha-v3";
 import { TextField, IconButton, InputAdornment } from "@mui/material";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Building2, Check, Eye, EyeOff } from "lucide-react";
@@ -59,6 +60,13 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { userRole } = usePermissions();
+  const { executeRecaptcha } = useGoogleReCaptcha();
+  // Keep a ref so handleLogin always sees the latest executeRecaptcha without stale closure
+  const executeRecaptchaRef = useRef(executeRecaptcha);
+  useEffect(() => {
+    executeRecaptchaRef.current = executeRecaptcha;
+  }, [executeRecaptcha]);
+
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -312,11 +320,40 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     try {
       const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
       const organizationId = selectedOrganization.id;
+
+      // Execute Google reCAPTCHA v3 and obtain token for backend verification.
+      // Poll up to 3 s in case the script is still loading.
+      let recaptchaToken: string | undefined;
+      {
+        const maxWaitMs = 3000;
+        const pollMs = 300;
+        let waited = 0;
+        while (!executeRecaptchaRef.current && waited < maxWaitMs) {
+          await new Promise((r) => setTimeout(r, pollMs));
+          waited += pollMs;
+        }
+        const execFn = executeRecaptchaRef.current;
+        if (execFn) {
+          try {
+            recaptchaToken = await execFn("login");
+          } catch {
+            toast.error("reCAPTCHA failed. Please refresh and try again.");
+            setLoginLoading(false);
+            return;
+          }
+        } else {
+          toast.error("reCAPTCHA not ready. Check your network and try again.");
+          setLoginLoading(false);
+          return;
+        }
+      }
+
       const response = await loginUser(
         email,
         password,
         baseUrl,
-        organizationId
+        organizationId,
+        recaptchaToken
       );
 
       if (!response || !response.access_token) {
