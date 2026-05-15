@@ -17,6 +17,7 @@ import {
   ChartArea,
   ChartAreaIcon,
   Shield,
+  Menu,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -46,6 +47,7 @@ import { Dashboard } from "@mui/icons-material";
 import { AnalyticsGrid } from "./dashboard/AnalyticsGrid";
 import axios from "axios";
 import { useNotification } from "@/contexts/NotificationContext";
+import { useLayout } from "../contexts/LayoutContext";
 
 export interface Company {
   id: number;
@@ -69,6 +71,8 @@ export const Header = () => {
     role_name?: string;
   } | null>(null);
   const dispatch = useDispatch<AppDispatch>();
+
+  const { isMobileSidebarOpen, setIsMobileSidebarOpen } = useLayout();
 
   // Use Notification Context
   const {
@@ -207,7 +211,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => { });
+        .catch(() => {});
     } catch {
       /* no-op */
     }
@@ -217,7 +221,12 @@ export const Header = () => {
     if (selectedCompany) {
       // setCompany(selectedCompany.name)
       localStorage.setItem("selectedCompany", selectedCompany.name);
-      localStorage.setItem("selectedCompanyId", selectedCompany.id.toString());
+      if (selectedCompany.id) {
+        localStorage.setItem(
+          "selectedCompanyId",
+          selectedCompany.id.toString()
+        );
+      }
     }
   }, [selectedCompany]);
 
@@ -271,12 +280,13 @@ export const Header = () => {
       );
     }
     if (notification.ntype === "projectspace") {
-      navigate(
-        `/vas/channels/groups/${notification.payload.project_space_id}`
-      );
+      navigate(`/vas/channels/groups/${notification.payload.project_space_id}`);
     }
     if (notification.payload.ntype === "newtaskmanagement") {
       navigate(`/vas/tasks/${notification.payload.task_management_id}`);
+    }
+    if (notification.payload.ntype === "newissue") {
+      navigate(`/vas/issues/${notification.payload.issue_id}`);
     }
   };
 
@@ -328,9 +338,17 @@ export const Header = () => {
 
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-20 w-full shadow-sm">
-      <div className="flex items-center justify-between h-full px-6">
-        <div className="flex align-items-center gap-14">
-          <div className="w-44">
+      <div className="flex items-center justify-between h-full px-3 md:px-6">
+        <div className="flex items-center gap-3 md:gap-14">
+          {/* Hamburger - visible only on mobile */}
+          <button
+            className="md:hidden p-2 rounded-lg hover:bg-[#f6f4ee] transition-colors flex-shrink-0"
+            onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+            aria-label="Toggle sidebar"
+          >
+            <Menu className="w-5 h-5 text-[#1a1a1a]" />
+          </button>
+          <div className="w-32 md:w-44">
             {isOmanSite ? (
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -467,7 +485,7 @@ export const Header = () => {
 
           {/* Dashboard Button */}
           {!isRestrictedUser && (
-            <div className="flex items-center gap-2">
+            <div className="hidden md:flex items-center gap-2">
               {!isViSite && (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}
@@ -489,7 +507,7 @@ export const Header = () => {
                 </button>
               )}
 
-              {isViSite && selectedCompany?.id !== 294 && !isWebSite && (
+              {/* {isViSite && selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
                 <button
                   onClick={() => navigate("/msafedashboard")}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -499,13 +517,40 @@ export const Header = () => {
                 </button>
               )}
 
-              {!isViSite && selectedCompany?.id !== 294 && !isWebSite && (
+              {!isViSite && selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
                 <button
                   onClick={() =>
                     window.open(
                       "https://web.gophygital.work/msafedashboard",
                       "_blank"
                     )
+                  }
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Home className="w-4 h-4" />
+                  MSafe Dashboard
+                </button>
+              )} */}
+
+               {isViSite && (selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
+                <button
+                  onClick={() => navigate("/msafedashboard")}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Home className="w-4 h-4" />
+                  MSafe Dashboard
+                </button>
+              )}
+
+              {!isViSite && (selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
+                <button
+                  onClick={() =>
+                    selectedCompany?.id === 145
+                      ? navigate("/msafedashboard")
+                      : window.open(
+                          "https://web.gophygital.work/msafedashboard",
+                          "_blank"
+                        )
                   }
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
@@ -519,15 +564,15 @@ export const Header = () => {
           {/* Project Dropdown */}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 md:gap-3">
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-              <Building2 className="w-4 h-4" />
+            <DropdownMenuTrigger className="flex items-center gap-1 md:gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+              <Building2 className="w-4 h-4 flex-shrink-0" />
 
               {projectLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <span className="text-sm font-medium">
+                <span className="hidden md:inline text-sm font-medium max-w-[120px] truncate">
                   {selectedCompany?.name || "Select Project"}
                 </span>
               )}
@@ -553,12 +598,12 @@ export const Header = () => {
           {/* Site Dropdown (hidden for VI and localhost) */}
           {!isViSite && (
             <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-                <MapPin className="w-4 h-4" />
+              <DropdownMenuTrigger className="flex items-center gap-1 md:gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+                <MapPin className="w-4 h-4 flex-shrink-0" />
                 {siteLoading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <span className="text-sm font-medium">
+                  <span className="hidden md:inline text-sm font-medium max-w-[120px] truncate">
                     {selectedSite?.name || "Select Site"}
                   </span>
                 )}
@@ -702,15 +747,17 @@ export const Header = () => {
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
-                          }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
+                          !notification.read ? "bg-blue-50/30" : ""
+                        }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
-                              ? "bg-[#C72030]"
-                              : "bg-gray-300"
-                              }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                              !notification.read
+                                ? "bg-[#C72030]"
+                                : "bg-gray-300"
+                            }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -796,7 +843,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                    "User"
+                      "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-0.5">
@@ -846,11 +893,11 @@ export const Header = () => {
                       );
                       window.location.href = "/vas/projects";
                     }}
-                    className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm bg-white hover:bg-[#C72030] text-gray-700 hover:text-white transition-all duration-200 border border-gray-200 hover:border-[#C72030] group shadow-sm"
+                    className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg text-sm font-medium group shadow-sm"
                   >
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4" />
-                      <span className="font-medium">Employee View</span>
+                      <span>Employee View</span>
                     </div>
                     <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
                   </button>
