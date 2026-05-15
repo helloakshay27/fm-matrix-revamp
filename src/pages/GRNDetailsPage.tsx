@@ -218,7 +218,7 @@ export const GRNDetailsPage = () => {
     const handleSendToSap = useCallback(async () => {
       const token = localStorage.getItem("token");
       const baseUrl = localStorage.getItem("baseUrl");
-  
+  // sendto sap
   
       if (!baseUrl || !token || !id) {
         toast.error("Missing required configuration");

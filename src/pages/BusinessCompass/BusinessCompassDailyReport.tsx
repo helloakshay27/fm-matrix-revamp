@@ -2272,13 +2272,20 @@ const BusinessCompassDailyReport: React.FC = () => {
                           Add Item
                         </Button>
                         {accomplishments.some((a) => !a.completed) && (
-                          <Button
-                            variant="outline"
-                            className="h-11 border-blue-200 text-blue-600 font-bold text-xs bg-white hover:bg-blue-50 rounded-[8px] px-4"
+                          <button
+                            type="button"
+                            style={{
+                              backgroundColor: "#DA7756",
+                              color: "#ffffff",
+                              cursor: "pointer",
+                              opacity: 1,
+                            }}
+                            className="flex h-10 items-center gap-2 rounded-[8px] border-none px-6 text-xs font-black shadow-md transition-all"
                             onClick={transferUncheckedToTomorrow}
                           >
+                            <CalendarCheck size={16} />
                             Transfer unchecked to tomorrow
-                          </Button>
+                          </button>
                         )}
                       </div>
                     </div>
