@@ -120,7 +120,7 @@ export const ManualJournalDetails = () => {
     const token = localStorage.getItem("token");
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState<ManualJournalTransaction | null>(null);
- const lock_account_id = localStorage.getItem("lock_account_id");
+    const lock_account_id = localStorage.getItem("lock_account_id");
 
     const [amenities, setAmenities] = useState([])
     const [formData, setFormData] = useState({
@@ -132,8 +132,8 @@ export const ManualJournalDetails = () => {
         reportingMethod: "",
         currency: "",
         journalRows: [],
-
-          createdAt: "",
+        attachments: [],
+        createdAt: "",
         //   createdBy: "",
         //   active: true,
     });
@@ -175,14 +175,18 @@ export const ManualJournalDetails = () => {
                 notes: data.description || "",
                 reportingMethod: data.reporting_method || "", // Not present in API
                 currency: "", // Not present in API
-                createdAt:data.created_at,
+                createdAt: data.created_at,
+                attachments: data.attachments || [],
                 journalRows: Array.isArray(data.records) ? data.records.map((rec: any) => ({
                     accountName: rec.ledger_name || "",
                     description: data.description || "",
                     contactName: "", // Not present in API
-                    resource:rec.resource || "",
+                    resource: rec.resource || "",
                     debit: rec.tr_type === "dr" ? rec.amount.toFixed(2) : "0.00",
-                    credit: rec.tr_type === "cr" ? rec.amount.toFixed(2) : "0.00",
+                    // credit: rec.tr_type === "cr" ? rec.amount.toFixed(2) : "0.00",
+                    credit: rec.tr_type === "cr"
+                        ? Math.abs(rec.amount).toFixed(2)
+                        : "0.00",
                 })) : [],
                 // createdAt, createdBy, active are not present in this API
             });
@@ -377,7 +381,7 @@ export const ManualJournalDetails = () => {
                         </div>
 
                     </div>
-{console.log("formData.journalRows:",formData.journalRows)}
+                    {console.log("formData.journalRows:", formData.journalRows)}
                     {/* Subtotal Card */}
 
 
@@ -416,6 +420,53 @@ export const ManualJournalDetails = () => {
                             })()}
                         </div>
                     </div>
+
+                    {/* Attachments Section */}
+                    {formData.attachments && formData.attachments.length > 0 && (
+                        <div className="mt-6">
+                            <div className="bg-white rounded-lg shadow p-6">
+                                <h3 className="text-lg font-semibold mb-4 text-[#1A1A1A]">
+                                    Attachments
+                                </h3>
+
+                                <div className="flex flex-wrap gap-4">
+                                    {formData.attachments.map((file: any, index: number) => (
+                                        <div
+                                            key={index}
+                                            className="border rounded-lg overflow-hidden w-[180px] shadow-sm"
+                                        >
+                                            {file.content_type?.startsWith("image/") ? (
+                                                <img
+                                                    src={file.url}
+                                                    alt={file.file_name}
+                                                    className="w-full h-[140px] object-cover"
+                                                />
+                                            ) : (
+                                                <div className="h-[140px] flex items-center justify-center bg-gray-100 text-gray-500 text-sm">
+                                                    File Preview
+                                                </div>
+                                            )}
+
+                                            <div className="p-2">
+                                                <p className="text-sm truncate">
+                                                    {file.file_name}
+                                                </p>
+
+                                                {/* <a
+                                href={file.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[#C72030] text-sm hover:underline"
+                            >
+                                View File
+                            </a> */}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </ThemeProvider>
