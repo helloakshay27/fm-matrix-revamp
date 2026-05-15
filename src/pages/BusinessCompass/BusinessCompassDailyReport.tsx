@@ -49,8 +49,10 @@ import { useTasks } from "@/hooks/useTasks";
 import { useIssues } from "@/hooks/useIssues";
 import { Dialog, DialogContent, Slide, Menu, MenuItem } from "@mui/material";
 import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
+import ProjectTaskEditModal from "@/components/ProjectTaskEditModal";
 import { TransitionProps } from "@mui/material/transitions";
 import AddIssueModal from "@/components/AddIssueModal";
+import EditIssueModal from "@/components/EditIssueModal";
 import AddToDoModal from "@/components/AddToDoModal";
 import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
@@ -281,6 +283,12 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [openTaskModal, setOpenTaskModal] = useState(false);
   const [openIssueModal, setOpenIssueModal] = useState(false);
   const [openTodoModal, setOpenTodoModal] = useState(false);
+  const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
+  const [editTaskData, setEditTaskData] = useState<any>(null);
+  const [isEditIssueModalOpen, setIsEditIssueModalOpen] = useState(false);
+  const [editIssueData, setEditIssueData] = useState<any>(null);
+  const [isEditTodoModalOpen, setIsEditTodoModalOpen] = useState(false);
+  const [editTodoData, setEditTodoData] = useState<any>(null);
   const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] =
     useState<null | HTMLElement>(null);
   const [planningMenuAnchor, setPlanningMenuAnchor] =
@@ -314,12 +322,6 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [todosData, setTodosData] = useState<any>(null);
   const [todosLoading, setTodosLoading] = useState(false);
 
-  // Plan for - next day items
-  const [planForTasks, setPlanForTasks] = useState<any[]>([]);
-  const [planForIssues, setPlanForIssues] = useState<any[]>([]);
-  const [planForTodos, setPlanForTodos] = useState<any[]>([]);
-  const [planForLoading, setPlanForLoading] = useState(false);
-
   const user =
     typeof localStorage !== "undefined"
       ? JSON.parse(localStorage.getItem("user") || "{}")
@@ -327,6 +329,30 @@ const BusinessCompassDailyReport: React.FC = () => {
   const userId = user?.id;
 
   // Fetch todos with same date and completed filter as tasks and issues
+
+  const fetchTasks = async () => {
+    if (!baseUrl || !token || !userId) return;
+
+    try {
+      // Reset pagination for fresh fetch
+      setCurrentTasksPage(1);
+      // Tasks are fetched via the useTasks hook with currentTasksPage
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+
+  const fetchIssues = async () => {
+    if (!baseUrl || !token || !userId) return;
+
+    try {
+      // Reset pagination for fresh fetch
+      setCurrentIssuesPage(1);
+      // Issues are fetched via the useIssues hook with currentIssuesPage
+    } catch (error) {
+      console.error("Error fetching issues:", error);
+    }
+  };
 
   const fetchTodos = async () => {
     if (!baseUrl || !token || !userId) return;
@@ -361,72 +387,6 @@ const BusinessCompassDailyReport: React.FC = () => {
     fetchTodos();
   }, [startDate, baseUrl, token, userId]);
 
-  // Fetch plan for items for next day
-  const fetchPlanForItems = async () => {
-    if (!baseUrl || !token || !userId) return;
-
-    try {
-      setPlanForLoading(true);
-      const nextDay = getNextDayDate();
-
-      // Fetch tasks
-      const tasksQueryParams = new URLSearchParams();
-      tasksQueryParams.append("q[user_id_eq]", userId.toString());
-      tasksQueryParams.append("q[expected_start_date_gteq]", nextDay);
-      tasksQueryParams.append("q[status_in][]", "on_hold");
-      tasksQueryParams.append("q[status_in][]", "open");
-      tasksQueryParams.append("q[status_in][]", "in_progress");
-
-      const tasksUrl = `https://${baseUrl}/task_managements.json?${tasksQueryParams.toString()}`;
-      const tasksResponse = await axios.get(tasksUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      // Fetch issues
-      const issuesQueryParams = new URLSearchParams();
-      issuesQueryParams.append("q[responsible_person_id_eq]", userId.toString());
-      issuesQueryParams.append("q[start_date_gteq]", nextDay);
-      issuesQueryParams.append("q[status_in][]", "on_hold");
-      issuesQueryParams.append("q[status_in][]", "open");
-      issuesQueryParams.append("q[status_in][]", "in_progress");
-
-      const issuesUrl = `https://${baseUrl}/issues.json?${issuesQueryParams.toString()}`;
-      const issuesResponse = await axios.get(issuesUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      // Fetch todos
-      const todosQueryParams = new URLSearchParams();
-      todosQueryParams.append("q[user_id_eq]", userId.toString());
-      todosQueryParams.append("q[target_date_gteq]", nextDay);
-      todosQueryParams.append("q[status_in][]", "on_hold");
-      todosQueryParams.append("q[status_in][]", "open");
-      todosQueryParams.append("q[status_in][]", "in_progress");
-
-      const todosUrl = `https://${baseUrl}/todos.json?${todosQueryParams.toString()}`;
-      const todosResponse = await axios.get(todosUrl, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setPlanForTasks(tasksResponse.data?.task_managements || []);
-      setPlanForIssues(issuesResponse.data?.issues || []);
-      setPlanForTodos(todosResponse.data?.todos || []);
-    } catch (error) {
-      console.error("Error fetching plan for items:", error);
-    } finally {
-      setPlanForLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPlanForItems();
-  }, [startDate, baseUrl, token, userId]);
   const buildDraftStorageKey = React.useCallback(
     (date: string, draftUserId: string | number | null | undefined = userId) =>
       `business-compass-daily-report-draft:${draftUserId || "guest"}:${date}`,
@@ -1681,14 +1641,16 @@ const BusinessCompassDailyReport: React.FC = () => {
     const tomorrowPlanPayload = [
       ...manualTomorrowPlan,
       ...uncheckedAccomplishmentPlan,
-    ].filter((item, index, arr) => {
-      const key = item.title.toLowerCase();
-      return (
-        arr.findIndex(
-          (candidate) => candidate.title.toLowerCase() === key
-        ) === index
-      );
-    });
+    ]
+      .filter((item) => item.title.trim() !== "")
+      .filter((item, index, arr) => {
+        const key = item.title.toLowerCase();
+        return (
+          arr.findIndex(
+            (candidate) => candidate.title.toLowerCase() === key
+          ) === index
+        );
+      });
     const finalPlanningItemsForScore = tomorrowPlanPayload.map((p, index) => ({
       id: `submit-plan-${index}`,
       text: p.title,
@@ -2615,9 +2577,19 @@ const BusinessCompassDailyReport: React.FC = () => {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
+                                if (item.type === "task") {
+                                  setEditTaskData(item.originalData);
+                                  setIsEditTaskModalOpen(true);
+                                } else if (item.type === "issue") {
+                                  setEditIssueData(item.originalData);
+                                  setIsEditIssueModalOpen(true);
+                                } else if (item.type === "todo") {
+                                  setEditTodoData(item.originalData);
+                                  setIsEditTodoModalOpen(true);
+                                }
                               }}
-                              className="flex-shrink-0 p-1 text-gray-600 hover:text-primary transition-colors"
-                              title="View todo"
+                              className="flex-shrink-0 p-1 text-gray-600 hover:text-[#DA7756] transition-colors"
+                              title={`Edit ${item.type}`}
                             >
                               <Pencil size={14} />
                             </button>
@@ -2723,199 +2695,68 @@ const BusinessCompassDailyReport: React.FC = () => {
                   </div>
 
                   <CardContent className="p-6">
-                    {planForLoading ? (
-                      <div className="flex flex-col items-center justify-center text-center py-8">
-                        <Loader2
-                          size={32}
-                          className="text-[#DA7756]/30 animate-spin mb-3"
-                        />
-                        <p className="text-sm font-bold text-gray-500">
-                          Loading plan items...
+                    {/* Manual planning items */}
+                    {planningItems.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                          Your plan
+                        </h4>
+                        <div className="space-y-4">
+                          {planningItems.map((item) => (
+                            <div
+                              key={item.id}
+                              className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
+                            >
+                              <div className="flex items-center gap-4 bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] hover:border-[#DA7756]/30 transition-all">
+                                <Star
+                                  size={18}
+                                  className={cn(
+                                    "cursor-pointer transition-all shrink-0",
+                                    item.starred
+                                      ? "text-[#eab308] fill-[#eab308]"
+                                      : "text-gray-300 hover:text-gray-400"
+                                  )}
+                                  onClick={() => togglePlanningStar(item.id)}
+                                />
+                                <input
+                                  type="text"
+                                  value={item.text}
+                                  onChange={(e) =>
+                                    updatePlanningText(item.id, e.target.value)
+                                  }
+                                  placeholder="What's your strategic priority?"
+                                  className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
+                                />
+                                <div className="flex items-center gap-2">
+                                  <X
+                                    size={18}
+                                    className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                                    onClick={() => removePlanningItem(item.id)}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {planningItems.length === 0 && (
+                      <div className="flex flex-col items-center gap-4 text-center mb-8">
+                        <div className="flex flex-col items-center gap-3 opacity-30">
+                          <Calendar
+                            size={40}
+                            className="text-[#DA7756]/20"
+                          />
+                          <p className="text-base font-bold text-gray-400 tracking-tight">
+                            Plan your next working day!
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-500 font-medium -mt-2">
+                          List 3-5 key tasks for {nextDayLabel || "tomorrow"}{" "}
+                          to stay focused.
                         </p>
                       </div>
-                    ) : (
-                      <>
-                        {/* Fetched plan for items */}
-                        {(planForTasks.length > 0 || planForIssues.length > 0 || planForTodos.length > 0) && (
-                          <div className="mb-6 space-y-2">
-                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                              From your next day's items
-                            </h4>
-
-                            {/* Tasks */}
-                            {planForTasks.map((task) => (
-                              <div
-                                key={`plan-task-${task.id}`}
-                                className="flex items-center gap-3 p-3 rounded-[10px] bg-blue-50/50 border border-blue-200/30"
-                              >
-                                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-100 text-blue-700 uppercase">
-                                  Task
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-700 truncate">
-                                    {task.title}
-                                  </p>
-                                </div>
-                                <span
-                                  className="text-[10px] px-2 py-1 rounded-full font-bold"
-                                  style={{
-                                    backgroundColor:
-                                      task.priority === "High"
-                                        ? "#fee2e2"
-                                        : task.priority === "Medium"
-                                          ? "#fef3c7"
-                                          : "#dcfce7",
-                                    color:
-                                      task.priority === "High"
-                                        ? "#991b1b"
-                                        : task.priority === "Medium"
-                                          ? "#92400e"
-                                          : "#166534",
-                                  }}
-                                >
-                                  {task.priority || "Medium"}
-                                </span>
-                              </div>
-                            ))}
-
-                            {/* Issues */}
-                            {planForIssues.map((issue) => (
-                              <div
-                                key={`plan-issue-${issue.id}`}
-                                className="flex items-center gap-3 p-3 rounded-[10px] bg-rose-50/50 border border-rose-200/30"
-                              >
-                                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-rose-100 text-rose-700 uppercase">
-                                  Issue
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-700 truncate">
-                                    {issue.title}
-                                  </p>
-                                </div>
-                                <span
-                                  className="text-[10px] px-2 py-1 rounded-full font-bold"
-                                  style={{
-                                    backgroundColor:
-                                      issue.priority === "High"
-                                        ? "#fee2e2"
-                                        : issue.priority === "Medium"
-                                          ? "#fef3c7"
-                                          : "#dcfce7",
-                                    color:
-                                      issue.priority === "High"
-                                        ? "#991b1b"
-                                        : issue.priority === "Medium"
-                                          ? "#92400e"
-                                          : "#166534",
-                                  }}
-                                >
-                                  {issue.priority || "Medium"}
-                                </span>
-                              </div>
-                            ))}
-
-                            {/* Todos */}
-                            {planForTodos.map((todo) => (
-                              <div
-                                key={`plan-todo-${todo.id}`}
-                                className="flex items-center gap-3 p-3 rounded-[10px] bg-emerald-50/50 border border-emerald-200/30"
-                              >
-                                <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 uppercase">
-                                  Todo
-                                </span>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-gray-700 truncate">
-                                    {todo.title}
-                                  </p>
-                                </div>
-                                <span
-                                  className="text-[10px] px-2 py-1 rounded-full font-bold"
-                                  style={{
-                                    backgroundColor:
-                                      todo.priority === "High"
-                                        ? "#fee2e2"
-                                        : todo.priority === "Medium"
-                                          ? "#fef3c7"
-                                          : "#dcfce7",
-                                    color:
-                                      todo.priority === "High"
-                                        ? "#991b1b"
-                                        : todo.priority === "Medium"
-                                          ? "#92400e"
-                                          : "#166534",
-                                  }}
-                                >
-                                  {todo.priority || "Medium"}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Manual planning items */}
-                        {planningItems.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
-                              Your plan
-                            </h4>
-                            <div className="space-y-4">
-                              {planningItems.map((item) => (
-                                <div
-                                  key={item.id}
-                                  className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
-                                >
-                                  <div className="flex items-center gap-4 bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] hover:border-[#DA7756]/30 transition-all">
-                                    <Star
-                                      size={18}
-                                      className={cn(
-                                        "cursor-pointer transition-all shrink-0",
-                                        item.starred
-                                          ? "text-[#eab308] fill-[#eab308]"
-                                          : "text-gray-300 hover:text-gray-400"
-                                      )}
-                                      onClick={() => togglePlanningStar(item.id)}
-                                    />
-                                    <input
-                                      type="text"
-                                      value={item.text}
-                                      onChange={(e) =>
-                                        updatePlanningText(item.id, e.target.value)
-                                      }
-                                      placeholder="What's your strategic priority?"
-                                      className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
-                                    />
-                                    <div className="flex items-center gap-2">
-                                      <X
-                                        size={18}
-                                        className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
-                                        onClick={() => removePlanningItem(item.id)}
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {planningItems.length === 0 && planForTasks.length === 0 && planForIssues.length === 0 && planForTodos.length === 0 && (
-                          <div className="flex flex-col items-center gap-4 text-center mb-8">
-                            <div className="flex flex-col items-center gap-3 opacity-30">
-                              <Calendar
-                                size={40}
-                                className="text-[#DA7756]/20"
-                              />
-                              <p className="text-base font-bold text-gray-400 tracking-tight">
-                                Plan your next working day!
-                              </p>
-                            </div>
-                            <p className="text-xs text-gray-500 font-medium -mt-2">
-                              List 3-5 key tasks for {nextDayLabel || "tomorrow"}{" "}
-                              to stay focused.
-                            </p>
-                          </div>
-                        )}
-                      </>
                     )}
 
                     <div className="flex gap-2 mt-4">
@@ -4814,6 +4655,86 @@ const BusinessCompassDailyReport: React.FC = () => {
           setIsDetailsModalOpen(false);
           // Can add edit functionality here if needed
         }}
+      />
+
+      {/* Edit Task Modal */}
+      <Dialog
+        open={isEditTaskModalOpen}
+        onClose={() => {
+          setIsEditTaskModalOpen(false);
+          setEditTaskData(null);
+        }}
+        TransitionComponent={Transition}
+        maxWidth={false}
+      >
+        <DialogContent
+          className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+          style={{
+            margin: 0,
+            maxHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+          }}
+          sx={{
+            padding: "0 !important",
+            "& .MuiDialogContent-root": {
+              padding: "0 !important",
+              overflow: "auto",
+            },
+          }}
+        >
+          <div className="sticky top-0 bg-white z-10">
+            <h3 className="text-[14px] font-medium text-center mt-8">
+              Edit Task
+            </h3>
+            <X
+              className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
+              onClick={() => {
+                setIsEditTaskModalOpen(false);
+                setEditTaskData(null);
+              }}
+            />
+            <hr className="border border-[#E95420] mt-4" />
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            <ProjectTaskEditModal
+              taskId={editTaskData?.id}
+              onCloseModal={() => {
+                setIsEditTaskModalOpen(false);
+                setEditTaskData(null);
+                fetchTasks();
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Issue Modal */}
+      <EditIssueModal
+        openDialog={isEditIssueModalOpen}
+        handleCloseDialog={() => {
+          setIsEditIssueModalOpen(false);
+          setEditIssueData(null);
+        }}
+        issueData={editIssueData}
+        onIssueUpdated={() => {
+          fetchIssues();
+        }}
+      />
+
+      {/* Edit Todo Modal */}
+      <AddToDoModal
+        isModalOpen={isEditTodoModalOpen}
+        setIsModalOpen={() => {
+          setIsEditTodoModalOpen(false);
+          setEditTodoData(null);
+          fetchTodos();
+        }}
+        getTodos={fetchTodos}
+        editingTodo={editTodoData}
+        isEditMode={!!editTodoData}
+        prefillData={editTodoData || {}}
       />
     </div>
   );
