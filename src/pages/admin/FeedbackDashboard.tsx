@@ -25,6 +25,19 @@ import {
 // ─── API Endpoints ───────────────────────────────────────────────────────────
 const RATINGS_FEEDBACK_DASHBOARD_ENDPOINT = "/ratings/feedback_dashboard";
 
+const BP = {
+  primary: "#DA7756",
+  primaryBg: "#fdf9f7",
+  primaryTint: "rgba(218,119,86,0.06)",
+  primaryBord: "#e8e3de",
+  primaryBordStrong: "#d4cdc6",
+  pageBg: "#f6f4ee",
+  cardBg: "#ffffff",
+  textMain: "#1a1a1a",
+  textMuted: "#6b7280",
+  font: "'Poppins', sans-serif",
+};
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface RatingBreakdown {
   "1": number;
@@ -103,6 +116,49 @@ interface RatingsFeedbackDashboardResponse {
 }
 
 type ApiRecord = Record<string, unknown>;
+
+const EMPTY_RATING_BREAKDOWN: RatingBreakdown = {
+  "1": 0,
+  "2": 0,
+  "3": 0,
+  "4": 0,
+  "5": 0,
+};
+
+const FeedbackThemeStyle = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+    .feedback-wrap, .feedback-wrap * { font-family: 'Poppins', sans-serif !important; }
+    .feedback-panel {
+      border-radius: 20px;
+      border: 1px solid #e8e3de;
+      background: #ffffff;
+      box-shadow: 0 10px 24px rgba(26,26,26,0.05);
+    }
+    .feedback-card-lift {
+      transition: box-shadow .2s, transform .2s, border-color .2s, background .2s;
+    }
+    .feedback-card-lift:hover {
+      border-color: rgba(218,119,86,0.35);
+      box-shadow: 0 16px 36px rgba(26,26,26,0.08), 0 4px 14px rgba(218,119,86,0.10);
+      transform: translateY(-2px);
+    }
+    .feedback-row {
+      border: 1px solid #e8e3de;
+      background: #fffaf8;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .feedback-row:hover {
+      border-color: rgba(218,119,86,0.35);
+      background: #ffffff;
+      box-shadow: 0 10px 22px rgba(26,26,26,0.05);
+    }
+    .feedback-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+    .feedback-scroll::-webkit-scrollbar-track { background: transparent; }
+    .feedback-scroll::-webkit-scrollbar-thumb { background: #d8d0c7; border-radius: 10px; }
+    .feedback-scroll::-webkit-scrollbar-thumb:hover { background: #DA7756; }
+  `}</style>
+);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function StarRow({ value }: { value: number }) {
@@ -307,7 +363,10 @@ function pickList(payload: unknown, keys: string[], allowAnyArray = false): unkn
 }
 
 function buildFeedbackComment(item: ApiRecord) {
-  const directComment = getString(item.comment) || getString(item.feedback);
+  const directComment =
+    getString(item.comment) ||
+    getString(item.feedback) ||
+    getString(item.title);
   if (directComment) return directComment;
 
   return [
@@ -466,13 +525,7 @@ function mapFeedbackItem(rawItem: unknown, index: number): RecentFeedback {
 }
 
 function buildDashboardDataFromFeedbacks(items: RecentFeedback[]): DashboardData {
-  const ratingBreakdown: RatingBreakdown = {
-    "1": 0,
-    "2": 0,
-    "3": 0,
-    "4": 0,
-    "5": 0,
-  };
+  const ratingBreakdown: RatingBreakdown = { ...EMPTY_RATING_BREAKDOWN };
 
   for (const item of items) {
     const normalizedRating = String(
@@ -514,6 +567,7 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
   const wrapper = raw as RatingsFeedbackDashboardResponse;
   const source = (wrapper.data ?? raw) as ApiDashboardData;
   const sourceRecord = toApiRecord(source);
+  const summaryRecord = toApiRecord(sourceRecord.summary);
   const breakdown = source.ratingBreakdown ?? source.rating_breakdown ?? {};
   const recent =
     source.recentFeedbacks ??
@@ -530,7 +584,9 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       return {
         id: String(department.department_id ?? department.id ?? `department-${index}`),
         rank: toNumber(department.rank, index + 1),
-        name: getString(department.department_name) || getString(department.name) || "Unknown Department",
+        name:
+          (getString(department.department_name) || getString(department.name)).trim() ||
+          "Unknown Department",
         count: toNumber(
           department.feedback_received ?? department.total_feedback ?? department.count
         ),
@@ -576,12 +632,18 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
         5,
         Math.max(
           1,
-          Math.round(toNumber(recentItem.rating ?? recentItem.avg_rating, 0)) || 1
+          Math.round(
+            toNumber(
+              recentItem.score ?? recentItem.rating ?? recentItem.avg_rating,
+              0
+            )
+          ) || 1
         )
       ),
       comment:
         getString(recentItem.comment) ||
         getString(recentItem.feedback_comment) ||
+        getString(recentItem.title) ||
         getString(recentItem.department_name) ||
         "No comment provided",
       createdAt:
@@ -603,7 +665,7 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
         "4": toNumber(breakdown["4"]),
         "5": toNumber(breakdown["5"]),
       }
-    : buildDashboardDataFromFeedbacks(recentFeedbacks).ratingBreakdown;
+    : { ...EMPTY_RATING_BREAKDOWN };
 
   const totalFeedbacksFromApi =
     pickFirstNumber(sourceRecord, [
@@ -612,6 +674,15 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       "total",
       "feedback_count",
       "total_count",
+      "total_feedback",
+    ]) ??
+    pickFirstNumber(summaryRecord, [
+      "totalFeedbacks",
+      "total_feedbacks",
+      "total",
+      "feedback_count",
+      "total_count",
+      "total_feedback",
     ]) ??
     pickFirstNumberDeep(source, [
       "totalFeedbacks",
@@ -645,6 +716,12 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       "avg_rating",
       "avgRating",
     ]) ??
+    pickFirstNumber(summaryRecord, [
+      "averageRating",
+      "average_rating",
+      "avg_rating",
+      "avgRating",
+    ]) ??
     pickFirstNumberDeep(source, [
       "averageRating",
       "average_rating",
@@ -673,6 +750,13 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
 
   const activeTeamFromApi =
     pickFirstNumber(sourceRecord, [
+      "activeTeam",
+      "active_team",
+      "active_teams",
+      "active_team_count",
+      "team_count",
+    ]) ??
+    pickFirstNumber(summaryRecord, [
       "activeTeam",
       "active_team",
       "active_teams",
@@ -715,8 +799,23 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
     "readratio",
     "readRatio",
   ]);
-  const readRateFromDeep =
+  const readRateFromSummary =
     readRateFromDirect === undefined
+      ? pickFirstNullableNumber(summaryRecord, [
+          "readRate",
+          "read_rate",
+          "read_percentage",
+          "readPercent",
+          "read_percent",
+          "feedback_read_rate",
+          "read_feedback_rate",
+          "read_ratio",
+          "readratio",
+          "readRatio",
+        ])
+      : undefined;
+  const readRateFromDeep =
+    readRateFromDirect === undefined && readRateFromSummary === undefined
       ? pickFirstNumberDeep(source, [
           "readRate",
           "read_rate",
@@ -750,7 +849,12 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
       : undefined;
   const readRateFromActivity = deriveReadRateFromActivity(recent);
   const selectedReadRate =
-    readRateFromDirect ?? readRateFromDeep ?? readRateFromCounts ?? readRateFromActivity ?? null;
+    readRateFromDirect ??
+    readRateFromSummary ??
+    readRateFromDeep ??
+    readRateFromCounts ??
+    readRateFromActivity ??
+    null;
   const readRate =
     selectedReadRate === null
       ? null
@@ -763,13 +867,21 @@ function normalizeDashboardData(raw: unknown): DashboardData | null {
               : selectedReadRate
           )
         );
-  const readTrackingFlag = pickFirstValue(sourceRecord, [
-    "readTrackingAvailable",
-    "read_tracking_available",
-    "is_read_tracking_available",
-    "readTrackingEnabled",
-    "read_tracking_enabled",
-  ]);
+  const readTrackingFlag =
+    pickFirstValue(sourceRecord, [
+      "readTrackingAvailable",
+      "read_tracking_available",
+      "is_read_tracking_available",
+      "readTrackingEnabled",
+      "read_tracking_enabled",
+    ]) ??
+    pickFirstValue(summaryRecord, [
+      "readTrackingAvailable",
+      "read_tracking_available",
+      "is_read_tracking_available",
+      "readTrackingEnabled",
+      "read_tracking_enabled",
+    ]);
   const readTrackingAvailable =
     typeof readTrackingFlag === "boolean"
       ? readTrackingFlag
@@ -863,33 +975,6 @@ async function safeApiRequest<T>(endpoint: string): Promise<T> {
   }
 }
 
-// ─── Rating Bar ──────────────────────────────────────────────────────────────
-function RatingBar({
-  label,
-  count,
-  total,
-}: {
-  label: string;
-  count: number;
-  total: number;
-}) {
-  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-  return (
-    <div className="flex items-center gap-3">
-      <span className="w-4 shrink-0 text-right text-xs font-semibold text-neutral-600">
-        {label}
-      </span>
-      <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-neutral-200">
-        <div
-          className="h-full rounded-full bg-amber-400 transition-all duration-500"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <span className="w-8 shrink-0 text-xs text-neutral-500">{count}</span>
-    </div>
-  );
-}
-
 // ─── Component ───────────────────────────────────────────────────────────────
 const FeedbackDashboard = () => {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -932,7 +1017,11 @@ const FeedbackDashboard = () => {
   // ── Loading ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-[#f6f4ee]">
+      <div
+        className="feedback-wrap flex min-h-[calc(100vh-5rem)] items-center justify-center"
+        style={{ background: BP.pageBg, fontFamily: BP.font }}
+      >
+        <FeedbackThemeStyle />
         <div className="flex flex-col items-center gap-3 text-neutral-500">
           <Loader2 className="h-9 w-9 animate-spin text-[#DA7756]" />
           <p className="text-sm font-medium">Fetching data from API…</p>
@@ -944,7 +1033,11 @@ const FeedbackDashboard = () => {
   // ── Error ──────────────────────────────────────────────────────────────────
   if (error || !data) {
     return (
-      <div className="flex min-h-[calc(100vh-5rem)] items-center justify-center bg-[#f6f4ee] px-4">
+      <div
+        className="feedback-wrap flex min-h-[calc(100vh-5rem)] items-center justify-center px-4"
+        style={{ background: BP.pageBg, fontFamily: BP.font }}
+      >
+        <FeedbackThemeStyle />
         <div className="w-full max-w-sm rounded-2xl border border-red-200 bg-red-50 p-6 text-center shadow-sm">
           <AlertCircle className="mx-auto mb-3 h-8 w-8 text-red-500" />
           <p className="text-sm font-semibold text-red-700">
@@ -953,7 +1046,7 @@ const FeedbackDashboard = () => {
           <p className="mt-1 break-all text-xs text-red-500">{error}</p>
           <button
             onClick={() => fetchDashboard()}
-            className="mt-4 rounded-lg bg-[#DA7756] px-5 py-2 text-xs font-semibold text-white hover:bg-[#DA7756]/85"
+            className="mt-4 rounded-xl bg-[#DA7756] px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-[#c9673f]"
           >
             Retry
           </button>
@@ -969,7 +1062,6 @@ const FeedbackDashboard = () => {
     activeTeam,
     readRate,
     readTrackingAvailable,
-    ratingBreakdown,
     departments,
     mostFeedbackReceived,
     mostFeedbackGiven,
@@ -980,101 +1072,147 @@ const FeedbackDashboard = () => {
     readRate !== null
       ? `${Number.isInteger(readRate) ? readRate : readRate.toFixed(1)}%`
       : "N/A";
-
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-[#f6f4ee] px-4 py-6 sm:px-6" style={{ fontFamily: "'Poppins', sans-serif" }}>
-      <div className="mx-auto max-w-6xl space-y-6">
+    <div
+      className="min-h-[calc(100vh-5rem)] px-4 py-6 sm:px-6"
+      style={{ background: BP.pageBg, fontFamily: BP.font }}
+    >
+      <FeedbackThemeStyle />
+      <div className="feedback-wrap mx-auto max-w-7xl space-y-4">
 
         {/* Header */}
-        <header className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
-            <LineChart className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
+        <header
+          className="feedback-panel flex flex-col gap-4 p-5 sm:p-6 md:flex-row md:items-center md:justify-between"
+          style={{ borderColor: BP.primaryBord, background: BP.cardBg }}
+        >
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
+            <div
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border shadow-sm"
+              style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}
+            >
+              <LineChart className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-neutral-900">
+                Feedback Dashboard
+              </h1>
+              <p className="mt-1 text-sm font-medium text-neutral-500">
+                Live feedback overview
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-              Feedback Dashboard
-            </h1>
-            <p className="mt-1 text-sm text-neutral-500 sm:text-base">
-              Live feedback overview
-            </p>
+          <div
+            className="rounded-xl border px-4 py-2.5 text-sm font-bold"
+            style={{ borderColor: BP.primaryBord, background: BP.primaryBg, color: BP.textMuted }}
+          >
+            {totalFeedbacks} total feedback entries
           </div>
         </header>
 
         {/* Stat Cards */}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
 
           {/* Total Feedbacks — from API */}
-          <Card className="rounded-2xl border-0 bg-sky-100/90 p-5 shadow-md transition-shadow hover:shadow-lg">
-            <div className="flex flex-col items-center text-center">
-              <MessageSquare className="mb-3 h-7 w-7 text-sky-600" />
-              <p className="text-3xl font-bold tabular-nums text-neutral-900">
-                {totalFeedbacks}
-              </p>
-              <p className="mt-1 text-xs font-medium text-neutral-600">
-                Total Feedback
-              </p>
+          <Card className="feedback-panel feedback-card-lift p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-100">
+                <MessageSquare className="h-6 w-6 text-sky-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                  Total Feedback
+                </p>
+                <p className="mt-1 text-3xl font-extrabold tabular-nums text-neutral-900">
+                  {totalFeedbacks}
+                </p>
+              </div>
             </div>
           </Card>
 
           {/* Average Rating — from API */}
-          <Card className="rounded-2xl border-0 bg-violet-100/90 p-5 shadow-md transition-shadow hover:shadow-lg">
-            <div className="flex flex-col items-center text-center">
-              <div className="mb-3 flex items-center gap-1">
+          <Card className="feedback-panel feedback-card-lift p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-100">
                 <Star className="h-6 w-6 fill-amber-400 text-amber-400" />
-                <TrendingUp className="h-6 w-6 text-violet-600" />
               </div>
-              <p className="text-3xl font-bold tabular-nums text-neutral-900">
-                {averageRating.toFixed(1)}
-              </p>
-              <p className="mt-1 text-xs font-medium text-neutral-600">
-                Avg Rating
-              </p>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                  Avg Rating
+                </p>
+                <p className="mt-1 text-3xl font-extrabold tabular-nums text-neutral-900">
+                  {averageRating.toFixed(1)}
+                </p>
+              </div>
             </div>
           </Card>
 
           {/* Active Team — from API */}
-          <Card className="rounded-2xl border-0 bg-orange-100/90 p-5 shadow-md transition-shadow hover:shadow-lg">
-            <div className="flex flex-col items-center text-center">
-              <Users className="mb-3 h-7 w-7 text-orange-600" />
-              <p className="text-3xl font-bold tabular-nums text-neutral-900">
-                {activeTeam}
-              </p>
-              <p className="mt-1 text-xs font-medium text-neutral-600">
-                Active Team
-              </p>
+          <Card className="feedback-panel feedback-card-lift p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-100">
+                <Users className="h-6 w-6 text-orange-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                  Active Team
+                </p>
+                <p className="mt-1 text-3xl font-extrabold tabular-nums text-neutral-900">
+                  {activeTeam}
+                </p>
+              </div>
             </div>
           </Card>
 
           {/* Read Rate — from API */}
-          <Card className="rounded-2xl border-0 bg-emerald-100/90 p-5 shadow-md transition-shadow hover:shadow-lg">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-neutral-700">Read Rate</p>
-                <p className="mt-1 text-3xl font-bold tabular-nums text-neutral-900">
+          <Card className="feedback-panel feedback-card-lift p-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
+                <TrendingUp className="h-6 w-6 text-emerald-600" strokeWidth={2.2} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                  Read Rate
+                </p>
+                <p className="mt-1 text-3xl font-extrabold tabular-nums text-neutral-900">
                   {readRateDisplay}
                 </p>
+                <p className="mt-1 text-xs font-medium text-neutral-500">
+                  {readTrackingAvailable ? "Tracked feedback" : "Tracking unavailable"}
+                </p>
               </div>
-              <TrendingUp className="h-8 w-8 text-emerald-600" strokeWidth={2.2} />
             </div>
           </Card>
         </div>
 
-        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
-          <h2 className="mb-4 text-lg font-semibold text-neutral-900">
-            Feedback by Department
-          </h2>
+        <Card className="feedback-panel p-4 sm:p-5">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-neutral-900">
+                Feedback by Department
+              </h2>
+              <p className="mt-1 text-xs font-medium text-neutral-500">
+                Ranked by feedback received
+              </p>
+            </div>
+            <span
+              className="rounded-xl border px-3 py-1.5 text-xs font-bold text-neutral-600"
+              style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}
+            >
+              {departments.length} departments
+            </span>
+          </div>
           {departments.length > 0 ? (
-            <ul className="space-y-3">
+            <ul className="feedback-scroll max-h-[360px] space-y-2 overflow-y-auto pr-1">
               {departments.map((department) => (
               <li
                 key={department.id}
-                className="flex items-center gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4]/90 px-3 py-3 sm:gap-4 sm:px-4"
+                className="feedback-row flex items-center gap-3 rounded-xl px-3 py-2.5 sm:gap-4 sm:px-4"
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-sm font-bold text-white">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-xs font-bold text-white">
                   {department.rank}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-neutral-900">{department.name}</p>
+                  <p className="truncate text-sm font-semibold text-neutral-900">{department.name}</p>
                   <p className="text-xs text-neutral-500">
                     {department.count} feedback{department.count !== 1 ? "s" : ""} received
                   </p>
@@ -1086,14 +1224,14 @@ const FeedbackDashboard = () => {
               ))}
             </ul>
           ) : (
-            <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-5 text-center text-sm text-neutral-600">
+            <div className="rounded-xl border p-5 text-center text-sm text-neutral-600" style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}>
               Department-wise feedback is not available in the current dashboard API response.
             </div>
           )}
         </Card>
 
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+          <Card className="feedback-panel p-4 sm:p-6">
             <div className="mb-4 flex items-center gap-2">
               <ArrowDownLeft className="h-5 w-5 text-[#DA7756]" strokeWidth={2.25} />
               <h2 className="text-lg font-semibold text-neutral-900">Most Feedback Received</h2>
@@ -1103,7 +1241,7 @@ const FeedbackDashboard = () => {
                 {mostFeedbackReceived.map((entry) => (
                   <li
                     key={entry.id}
-                    className="flex items-center gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] px-3 py-3 sm:gap-4 sm:px-4"
+                    className="feedback-row feedback-card-lift flex items-center gap-3 rounded-xl px-3 py-3 sm:gap-4 sm:px-4"
                   >
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#DA7756] text-sm font-bold text-white">
                       {entry.rank}
@@ -1119,13 +1257,13 @@ const FeedbackDashboard = () => {
                 ))}
               </ul>
             ) : (
-              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-5 text-center text-sm text-neutral-600">
+              <div className="rounded-xl border p-5 text-center text-sm text-neutral-600" style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}>
                 No feedback-received leaderboard data in current API response.
               </div>
             )}
           </Card>
 
-          <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+          <Card className="feedback-panel p-4 sm:p-6">
             <div className="mb-4 flex items-center gap-2">
               <ArrowUpRight className="h-5 w-5 text-[#b85f42]" strokeWidth={2.25} />
               <h2 className="text-lg font-semibold text-neutral-900">Most Feedback Given</h2>
@@ -1135,7 +1273,7 @@ const FeedbackDashboard = () => {
                 {mostFeedbackGiven.map((entry) => (
                   <li
                     key={entry.id}
-                    className="flex items-center gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] px-3 py-3 sm:gap-4 sm:px-4"
+                    className="feedback-row feedback-card-lift flex items-center gap-3 rounded-xl px-3 py-3 sm:gap-4 sm:px-4"
                   >
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#b85f42] text-sm font-bold text-white">
                       {entry.rank}
@@ -1151,7 +1289,7 @@ const FeedbackDashboard = () => {
                 ))}
               </ul>
             ) : (
-              <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-5 text-center text-sm text-neutral-600">
+              <div className="rounded-xl border p-5 text-center text-sm text-neutral-600" style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}>
                 No feedback-given leaderboard data in current API response.
               </div>
             )}
@@ -1159,11 +1297,14 @@ const FeedbackDashboard = () => {
         </div>
 
         {/* AI Summary */}
-        <div className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 px-4 py-5 shadow-sm sm:px-6 sm:py-6">
+        <div className="feedback-panel px-4 py-5 sm:px-6 sm:py-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex gap-3 sm:gap-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-200/70">
-                <Wand2 className="h-5 w-5 text-violet-700" strokeWidth={2} />
+              <div
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                style={{ background: BP.primaryBg }}
+              >
+                <Wand2 className="h-5 w-5 text-[#DA7756]" strokeWidth={2} />
               </div>
               <div>
                 <h2 className="text-base font-semibold text-neutral-900 sm:text-lg">
@@ -1182,7 +1323,7 @@ const FeedbackDashboard = () => {
                 setAiLoading(true);
                 window.setTimeout(() => setAiLoading(false), 1200);
               }}
-              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-[#DA7756] px-5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#DA7756]/85 disabled:opacity-70 lg:self-center"
+              className="inline-flex h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-[#DA7756] px-5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#c9673f] active:scale-[0.98] disabled:opacity-70 lg:self-center"
             >
               <Sparkles className="h-4 w-4 text-white" strokeWidth={2} />
               {aiLoading ? "Generating…" : "Generate AI Summary"}
@@ -1191,7 +1332,7 @@ const FeedbackDashboard = () => {
         </div>
 
         {/* Recent Feedbacks — preserve section even when report API has no item rows */}
-        <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+        <Card className="feedback-panel p-4 sm:p-6">
           <h2 className="mb-4 text-lg font-semibold text-neutral-900">
             Recent Feedback Activity
           </h2>
@@ -1201,7 +1342,7 @@ const FeedbackDashboard = () => {
               {recentFeedbacks.map((row) => (
                 <li
                   key={row.id}
-                  className="flex flex-col gap-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+                  className="feedback-row feedback-card-lift flex flex-col gap-3 rounded-xl p-4 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-neutral-900">{row.comment}</p>
@@ -1211,15 +1352,12 @@ const FeedbackDashboard = () => {
                   </div>
                   <div className="flex flex-wrap items-center gap-3 sm:justify-end">
                     <StarRow value={row.rating} />
-                    <span className="rounded-md bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800">
-                      {row.id}
-                    </span>
                   </div>
                 </li>
               ))}
             </ul>
           ) : (
-            <div className="rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-5 text-center text-sm text-neutral-600">
+            <div className="rounded-xl border p-5 text-center text-sm text-neutral-600" style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}>
               Recent feedback entries are not available in the current dashboard API response.
             </div>
           )}

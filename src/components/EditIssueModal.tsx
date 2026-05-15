@@ -287,6 +287,7 @@ const EditIssueModal = ({
 
     const dispatch = useAppDispatch();
 
+
     // Populate form data when issueData changes
     useEffect(() => {
         if (issueData && openDialog) {
@@ -332,14 +333,7 @@ const EditIssueModal = ({
             if (issueData.task_management_id) setNewIssuesTaskId(issueData.task_management_id);
             // subtask?
 
-            // Tags
-            if (issueData.tags) {
-                // If tags are strings, we might need to map them to objects {value, label}
-                // If they are objects, use them.
-                // In IssueDetailsPage, tags is string[].
-                // We need to match them with mentionTags to get IDs.
-                // This will be done in the effect that fetches mentionTags.
-            }
+            // Tags will be set in fetchMentionTags after fetching all available tags
         }
     }, [issueData, openDialog]);
 
@@ -392,10 +386,13 @@ const EditIssueModal = ({
             const tagsData = response.data || [];
             setMentionTags(tagsData);
 
-            // If we have issueData tags (names) and now we have all tags (with IDs),
-            // we can set the tags state.
+            // If we have issueData tags, match them with the fetched tags
             if (issueData?.tags && tagsData.length > 0) {
-                const matchedTags = tagsData.filter((t: any) => issueData.tags.includes(t.name))
+                // issueData.tags is an array of tag objects with company_tag_id
+                const issueTagIds = issueData.tags.map((t: any) => t?.company_tag_id || t?.id);
+
+                const matchedTags = tagsData
+                    .filter((t: any) => issueTagIds.includes(t.id))
                     .map((t: any) => ({
                         value: t.id,
                         label: t.name,
