@@ -322,11 +322,13 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       const organizationId = selectedOrganization.id;
 
       // Execute Google reCAPTCHA v3 and obtain token for backend verification.
-      // Poll up to 3 s in case the script is still loading.
+      // Poll up to 10s in case the script is still loading.
       let recaptchaToken: string | undefined;
-      {
-        const maxWaitMs = 3000;
-        const pollMs = 300;
+      const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+
+      if (siteKey) {
+        const maxWaitMs = 10000;
+        const pollMs = 500;
         let waited = 0;
         while (!executeRecaptchaRef.current && waited < maxWaitMs) {
           await new Promise((r) => setTimeout(r, pollMs));
@@ -346,6 +348,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           setLoginLoading(false);
           return;
         }
+      } else {
+        console.warn("reCAPTCHA site key is missing. Skipping reCAPTCHA verification.");
       }
 
       const response = await loginUser(
