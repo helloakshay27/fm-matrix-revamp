@@ -507,7 +507,7 @@ export const Header = () => {
                 </button>
               )}
 
-              {isViSite && selectedCompany?.id !== 294 && !isWebSite && (
+              {/* {isViSite && selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
                 <button
                   onClick={() => navigate("/msafedashboard")}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -517,13 +517,40 @@ export const Header = () => {
                 </button>
               )}
 
-              {!isViSite && selectedCompany?.id !== 294 && !isWebSite && (
+              {!isViSite && selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
                 <button
                   onClick={() =>
                     window.open(
                       "https://web.gophygital.work/msafedashboard",
                       "_blank"
                     )
+                  }
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Home className="w-4 h-4" />
+                  MSafe Dashboard
+                </button>
+              )} */}
+
+               {isViSite && (selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
+                <button
+                  onClick={() => navigate("/msafedashboard")}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Home className="w-4 h-4" />
+                  MSafe Dashboard
+                </button>
+              )}
+
+              {!isViSite && (selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
+                <button
+                  onClick={() =>
+                    selectedCompany?.id === 145
+                      ? navigate("/msafedashboard")
+                      : window.open(
+                          "https://web.gophygital.work/msafedashboard",
+                          "_blank"
+                        )
                   }
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
