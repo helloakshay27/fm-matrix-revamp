@@ -542,7 +542,7 @@ export const Header = () => {
                 </button>
               )}
 
-              {!isViSite && (selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
+               {!isViSite && (selectedCompany?.id !== 294 || selectedCompany?.id === 145) && (!isWebSite || selectedCompany?.id === 145) && (
                 <button
                   onClick={() =>
                     selectedCompany?.id === 145
