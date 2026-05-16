@@ -332,7 +332,8 @@ const stripMissedMembersPrefix = (text: string): string => {
 // ── Resolve the "true" raw source for a report ──
 const resolveRawSource = (report: any) => {
   const rd = report.report_data || {};
-  const draftRaw = report.daily_report?.report_data || {};
+  const draftReport = report.daily_report || {};
+  const draftRaw = draftReport.report_data || {};
   const hasDraft = !!report.daily_report;
   const hasReportData = rd && Object.keys(rd).length > 0;
 
@@ -343,11 +344,17 @@ const resolveRawSource = (report: any) => {
       (Array.isArray(raw.accomplishments) ? raw.accomplishments : []),
     self_rating:
       raw.self_rating ??
+      draftReport.self_rating ??
       raw.details?.self_rating ??
       raw.sections?.self_rating ??
       null,
     total_score: raw.total_score ?? null,
-    is_absent: raw.details?.is_absent ?? raw.sections?.is_absent ?? null,
+    is_absent:
+      raw.is_absent ??
+      draftReport.is_absent ??
+      raw.details?.is_absent ??
+      raw.sections?.is_absent ??
+      false,
   });
 
   if (!hasReportData && hasDraft) {

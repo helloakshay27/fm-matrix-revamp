@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { cache } from '@/utils/cacheUtils';
-import { Edit2, ChevronDown, Plus, Edit, Eye } from 'lucide-react';
+import { Edit2, ChevronDown, Plus, Edit, Eye, Filter } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -16,6 +16,7 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { FormControl, MenuItem, Select } from '@mui/material';
 import { useAppDispatch } from '@/store/hooks';
 import { div } from '@tensorflow/tfjs';
+import OpportunityFilterModal from '@/components/OpportunityFilterModal';
 
 // Types
 interface Opportunity {
@@ -37,6 +38,7 @@ interface Opportunity {
     task_created?: boolean;
     project_created?: boolean;
     tags?: string[];
+    task_tags?: any[];
 }
 
 // Status options
@@ -83,6 +85,35 @@ const OpportunityDashboard = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [users, setUsers] = useState([])
     const [selectedOpportunityId, setSelectedOpportunityId] = useState<number | null>(null);
+
+    // Filter state
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+    const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+    const [selectedResponsible, setSelectedResponsible] = useState<number[]>([]);
+    const [selectedCreatedBy, setSelectedCreatedBy] = useState<number[]>([]);
+    const [selectedTags, setSelectedTags] = useState<any[]>([]);
+    const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
+    const [availableTags, setAvailableTags] = useState<any[]>([]);
+
+    // Dropdowns state for filter modal
+    const [dropdowns, setDropdowns] = useState({
+        status: false,
+        responsiblePerson: false,
+        createdBy: false,
+        tags: false,
+        dateRange: false,
+    });
+
+    // Search terms for filter modal
+    const [searchTerms, setSearchTerms] = useState({
+        status: '',
+        responsiblePerson: '',
+        createdBy: '',
+        tags: '',
+    });
+
+    // Filtered opportunities state
+    const [filteredOpportunities, setFilteredOpportunities] = useState<Opportunity[]>([]);
 
     // Abstract fetch function to reuse
     const fetchOpportunities = useCallback(async () => {
@@ -160,7 +191,7 @@ const OpportunityDashboard = () => {
         }
     }
 
-    const handleResponsiblePersonChange = async (id: number, responsiblePersonId: string) => {
+    const handleResponsiblePersonChange = async (id: number, responsiblePersonId: any) => {
         const payload = {
             opportunity: {
                 responsible_person_id: responsiblePersonId || null,
@@ -188,6 +219,153 @@ const OpportunityDashboard = () => {
     useEffect(() => {
         getUsers();
     }, []);
+
+    // Fetch tags
+    useEffect(() => {
+        const fetchTags = async () => {
+            try {
+                const response = await axios.get(`https://${baseUrl}/company_tags.json`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                setAvailableTags(response.data || []);
+            } catch (error) {
+                console.log('Error fetching tags:', error);
+                setAvailableTags([]);
+            }
+        };
+
+        if (token && baseUrl) {
+            fetchTags();
+        }
+    }, [baseUrl, token]);
+
+    // Apply filters to opportunities
+    useEffect(() => {
+        let filtered = [...opportunities];
+
+        // Filter by status
+        if (selectedStatus.length > 0) {
+            filtered = filtered.filter(opp => selectedStatus.includes(opp.status));
+        }
+
+        // Filter by responsible person
+        if (selectedResponsible.length > 0) {
+            filtered = filtered.filter(opp =>
+                opp.responsible_person && selectedResponsible.includes(opp.responsible_person.id)
+            );
+        }
+
+        // Filter by created by
+        if (selectedCreatedBy.length > 0) {
+            filtered = filtered.filter(opp => {
+                // Find the creator user in the users list
+                const creatorUser = users.find(u => selectedCreatedBy.includes(u.id));
+                return creatorUser && opp.created_by?.name === creatorUser.full_name;
+            });
+        }
+
+        // Filter by tags
+        if (selectedTags.length > 0) {
+            filtered = filtered.filter(opp => {
+                if (!opp.task_tags || opp.task_tags.length === 0) return false;
+                return selectedTags.some(tagId =>
+                    opp.task_tags.some((tag: any) => tag.company_tag.id === tagId)
+                );
+            });
+        }
+
+        // Filter by date range
+        if (dateRange.startDate || dateRange.endDate) {
+            filtered = filtered.filter(opp => {
+                const createdDate = new Date(opp.created_at);
+                const startDate = dateRange.startDate ? new Date(dateRange.startDate) : null;
+                const endDate = dateRange.endDate ? new Date(dateRange.endDate) : null;
+
+                if (startDate && createdDate < startDate) return false;
+                if (endDate) {
+                    endDate.setHours(23, 59, 59, 999);
+                    if (createdDate > endDate) return false;
+                }
+                return true;
+            });
+        }
+
+        setFilteredOpportunities(filtered);
+    }, [opportunities, selectedStatus, selectedResponsible, selectedCreatedBy, selectedTags, dateRange]);
+
+    // Toggle dropdown in filter modal
+    const toggleDropdown = (key: string) => {
+        setDropdowns((prev) => {
+            const isAlreadyOpen = (prev as any)[key];
+            if (isAlreadyOpen) {
+                return { ...prev, [key]: false };
+            }
+            return {
+                status: false,
+                responsiblePerson: false,
+                createdBy: false,
+                tags: false,
+                dateRange: false,
+                [key]: true,
+            };
+        });
+    };
+
+    // Render checkbox list for filter modal
+    const renderCheckboxList = (options: any[], selected: any[], setSelected: Function, searchTerm = '') => {
+        const filtered = options.filter((opt) =>
+            typeof opt === 'string'
+                ? opt.toLowerCase().includes(searchTerm.toLowerCase())
+                : opt.label?.toLowerCase().includes(searchTerm.toLowerCase()) || opt.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+        return (
+            <div className="max-h-40 overflow-y-auto p-2">
+                {filtered.map((option) => {
+                    const label = typeof option === 'string' ? option : (option.label || option.full_name);
+                    const value = typeof option === 'string' ? option : option.value;
+
+                    return (
+                        <label key={value} className="flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 rounded">
+                            <input
+                                type="checkbox"
+                                checked={selected.includes(value)}
+                                onChange={() =>
+                                    setSelected((prev: any[]) =>
+                                        prev.includes(value)
+                                            ? prev.filter((v) => v !== value)
+                                            : [...prev, value]
+                                    )
+                                }
+                                className="cursor-pointer"
+                            />
+                            <span className="text-sm">{label}</span>
+                        </label>
+                    );
+                })}
+                {filtered?.length === 0 && (
+                    <div className="text-center text-gray-400 text-sm py-2">No results found</div>
+                )}
+            </div>
+        );
+    };
+
+    // Handle apply filter
+    const handleApplyFilter = () => {
+        setIsFilterModalOpen(false);
+    };
+
+    // Handle clear filters
+    const handleClearFilters = () => {
+        setSelectedStatus([]);
+        setSelectedResponsible([]);
+        setSelectedCreatedBy([]);
+        setSelectedTags([]);
+        setDateRange({ startDate: '', endDate: '' });
+        setSearchTerms({ status: '', responsiblePerson: '', createdBy: '', tags: '' });
+    };
 
     const renderCell = (item: Opportunity, columnKey: string) => {
         switch (columnKey) {
@@ -271,7 +449,7 @@ const OpportunityDashboard = () => {
                         <Select
                             value={item?.responsible_person?.id ?? ""}
                             onChange={(e) =>
-                                handleResponsiblePersonChange(item.id, e.target.value as string)
+                                handleResponsiblePersonChange(item.id, Number(e.target.value) || null)
                             }
                             disableUnderline
                             renderValue={(value) => {
@@ -389,7 +567,7 @@ const OpportunityDashboard = () => {
             <div className="flex items-center gap-2 px-4 py-1 bg-gray-50 rounded-lg border border-gray-200">
                 <span className="text-gray-700 font-medium text-sm">Total Opportunities:</span>
                 <span className="text-lg font-bold text-[#C72030]">
-                    {opportunities.length}
+                    {filteredOpportunities.length}
                 </span>
             </div>
         </>
@@ -408,8 +586,9 @@ const OpportunityDashboard = () => {
     return (
         <div className="opportunity-wrapper p-6">
             <EnhancedTable
-                data={opportunities}
+                data={filteredOpportunities}
                 columns={columns}
+                onFilterClick={() => setIsFilterModalOpen(true)}
                 renderCell={renderCell}
                 renderActions={renderActions}
                 leftActions={leftActions}
@@ -439,6 +618,33 @@ const OpportunityDashboard = () => {
                     opportunityId={selectedOpportunityId}
                 />
             )}
+
+            {/* Filter Modal */}
+            <OpportunityFilterModal
+                isOpen={isFilterModalOpen}
+                onClose={() => setIsFilterModalOpen(false)}
+                onApply={handleApplyFilter}
+                onReset={handleClearFilters}
+                selectedStatus={selectedStatus}
+                setSelectedStatus={setSelectedStatus}
+                selectedResponsible={selectedResponsible}
+                setSelectedResponsible={setSelectedResponsible}
+                selectedCreatedBy={selectedCreatedBy}
+                setSelectedCreatedBy={setSelectedCreatedBy}
+                selectedTags={selectedTags}
+                setSelectedTags={setSelectedTags}
+                dateRange={dateRange}
+                setDateRange={setDateRange}
+                searchTerms={searchTerms}
+                setSearchTerms={setSearchTerms}
+                dropdowns={dropdowns}
+                setDropdowns={setDropdowns}
+                statusOptions={statusOptions}
+                users={users}
+                availableTags={availableTags}
+                renderCheckboxList={renderCheckboxList}
+                toggleDropdown={toggleDropdown}
+            />
         </div>
     );
 };
