@@ -355,6 +355,8 @@ const FeedbackSchema = z.object({
   id: z.coerce.string(),
   score: z.number().min(1).max(5).catch(1),
   recipient_name: z.string().optional().catch(undefined),
+  rating_to_name: z.string().optional().catch(undefined),
+  rating_to_id: z.coerce.number().optional().catch(undefined),
   rating_from_name: z.string().optional().catch(undefined),
   resource_user_id: z.coerce.number().optional().catch(undefined),
   user_id: z.coerce.number().optional().catch(undefined),
@@ -569,6 +571,7 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
 
   const recipientName =
     raw.recipient_name ||
+    raw.rating_to_name ||
     (recipient && "name" in recipient ? recipient.name : undefined) ||
     (recipient && "full_name" in recipient ? recipient.full_name : undefined) ||
     (recipient && "firstname" in recipient && "lastname" in recipient
@@ -580,6 +583,7 @@ function mapRawFeedback(raw: RawFeedback): FeedbackItem {
 
   const resourceId =
     raw.resource_id ||
+    raw.rating_to_id ||
     raw.resource_user_id ||
     raw.recipient_id ||
     raw.rated_user_id ||
