@@ -832,7 +832,8 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
       payload.append('site_id', String(ticketData.site_id));
       payload.append('on_behalf_of', ticketData.on_behalf_of);
-
+      payload.append('custom_field_id', String(ticketData.custom_field_id));
+      payload.append('of_phase', ticketData.of_phase);
       if (ticketData.sel_id_user !== null) {
         payload.append('sel_id_user', String(ticketData.sel_id_user));
       }
