@@ -57,6 +57,14 @@ const masterItems = [
     href: '/master/unit-default'
   },
   {
+    name: 'Ticket Master',
+    icon: Ticket,
+    hasChildren: true,
+    children: [
+      { name: 'Golden QR Setup', href: '/master/ticket/golden-qr' },
+    ]
+  },
+  {
     name: 'Material Master -> EBom',
     icon: FileText,
     href: '/master/material-ebom'
