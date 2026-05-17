@@ -61,7 +61,7 @@ const masterItems = [
     icon: Ticket,
     hasChildren: true,
     children: [
-      { name: 'Golden QR Setup', href: '/master/ticket/golden-qr' },
+      { name: 'Complaint QR Setup', href: '/master/ticket/golden-qr' },
     ]
   },
   {
