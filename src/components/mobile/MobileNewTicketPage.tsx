@@ -52,7 +52,7 @@ const getBaseApiDomain = (): string => {
   const hostname = window.location.hostname;
 
   if (hostname === 'localhost' || hostname.includes('127.0.0.1')) {
-    return 'https://oig-api.gophygital.work';
+    return 'https://fm-uat-api.lockated.com';
   }
 
   if (hostname === 'oig.gophygital.work' || hostname.includes('oig.gophygital.work')) {
@@ -274,7 +274,7 @@ const dynamicSiteService = {
     }
 
     const data = await response.json();
-    return data.wings || [];
+    return Array.isArray(data) ? data : (data.wings || []);
   },
 
   async getAreas(siteDomain: string, buildingId: string, wingId?: string) {
@@ -293,7 +293,7 @@ const dynamicSiteService = {
     }
 
     const data = await response.json();
-    return data.areas || [];
+    return Array.isArray(data) ? data : (data.areas || []);
   },
 
   async getFloors(siteDomain: string, buildingId: string, wingId?: string, areaId?: string) {
@@ -313,7 +313,7 @@ const dynamicSiteService = {
     }
 
     const data = await response.json();
-    return data.floors || [];
+    return Array.isArray(data) ? data : (data.floors || []);
   },
 
   async getRooms(
@@ -341,7 +341,17 @@ const dynamicSiteService = {
     }
 
     const data = await response.json();
-    return data.rooms || [];
+    return Array.isArray(data) ? data : (data.rooms || []);
+  },
+
+  async getFieldsToShow(siteDomain: string, customFieldId: string) {
+    const url = `https://${siteDomain}/pms/account_setups/get_fields_to_show.json?custom_field_id=${customFieldId}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    return response.json();
   },
 };
 
@@ -359,6 +369,15 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   // Extract site_id from URL or use default
   const siteIdParam = searchParams.get('site_id');
   const siteId = siteIdParam ? parseInt(siteIdParam) : 2189;
+
+  // Location params injected by QR scan
+  const buildingIdParam = searchParams.get('building_id');
+  const wingIdParam = searchParams.get('wing_id');
+  const areaIdParam = searchParams.get('area_id');
+  const floorIdParam = searchParams.get('floor');
+  const roomIdParam = searchParams.get('room');
+  const customFieldIdParam = searchParams.get('custom_field_id');
+  const isLocationFromUrl = !!buildingIdParam;
 
   const [siteDomain, setSiteDomain] = useState<string>('');
   const [siteError, setSiteError] = useState<string>('');
@@ -395,6 +414,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
   const [companyLogo, setCompanyLogo] = useState('');
   const [customFieldConfig, setCustomFieldConfig] = useState<Record<string, boolean>>({});
   const [checklistId, setChecklistId] = useState<number | null>(null);
+  const [showRequesterDetails, setShowRequesterDetails] = useState(true);
   const [buildings, setBuildings] = useState<any[]>([]);
   const [wings, setWings] = useState<any[]>([]);
   const [areas, setAreas] = useState<any[]>([]);
@@ -434,18 +454,23 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         const buildingsData = await dynamicSiteService.getBuildings(domain, siteId);
         setBuildings(buildingsData);
 
-        const buildingId = buildingsData[0]?.id
-          ? String(buildingsData[0].id)
-          : '';
-
-        console.log('✅ Default building selected:', buildingId);
-
-        if (buildingId) {
-          // set default building
-          field('building', buildingId);
-
-          // load dependent location data
-          await handleBuildingChange(buildingId);
+        if (isLocationFromUrl && buildingIdParam) {
+          // Set form values from URL params — location lists are loaded in the siteDomain useEffect below
+          setFormData(prev => ({
+            ...prev,
+            building: buildingIdParam,
+            wing: wingIdParam || '',
+            area: areaIdParam || '',
+            floor: floorIdParam || '',
+            room: roomIdParam || '',
+          }));
+        } else {
+          const buildingId = buildingsData[0]?.id ? String(buildingsData[0].id) : '';
+          console.log('✅ Default building selected:', buildingId);
+          if (buildingId) {
+            field('building', buildingId);
+            await handleBuildingChange(buildingId);
+          }
         }
 
         // Step 2: Fetch categories
@@ -473,6 +498,18 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
         setCustomFieldConfig(config);
         console.log('✅ Custom field config:', config);
+
+        // Step 5: Fetch fields-to-show config when custom_field_id is in URL (QR scan)
+        if (customFieldIdParam) {
+          try {
+            const fieldsToShow = await dynamicSiteService.getFieldsToShow(domain, customFieldIdParam);
+            console.log('✅ Fields to show:', fieldsToShow);
+            const showReq = fieldsToShow.show_requester ?? fieldsToShow.show_requester_details;
+            setShowRequesterDetails(showReq === true || String(showReq) === 'true');
+          } catch {
+            console.warn('⚠️ get_fields_to_show failed, defaulting to show requester');
+          }
+        }
       } catch (error) {
         console.error('❌ Error initializing site data:', error);
 
@@ -494,6 +531,32 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
     initializeSiteData();
   }, [siteId, toast]);
+
+  // Once siteDomain is ready, load location lists for URL-pre-filled fields
+  // (same siteDomain state the dropdown handlers use, so same APIs fire at the same time)
+  useEffect(() => {
+    if (!isLocationFromUrl || !siteDomain || !buildingIdParam) return;
+
+    const loadUrlLocationData = async () => {
+      const [wingsData, areasData, floorsData] = await Promise.all([
+        dynamicSiteService.getWings(siteDomain, buildingIdParam).catch(() => []),
+        dynamicSiteService.getAreas(siteDomain, buildingIdParam, wingIdParam || undefined).catch(() => []),
+        dynamicSiteService.getFloors(siteDomain, buildingIdParam, wingIdParam || undefined, areaIdParam || undefined).catch(() => []),
+      ]);
+      setWings(wingsData);
+      setAreas(areasData);
+      setFloors(floorsData);
+
+      if (floorIdParam) {
+        const roomsData = await dynamicSiteService
+          .getRooms(siteDomain, buildingIdParam, wingIdParam || undefined, areaIdParam || undefined, floorIdParam)
+          .catch(() => []);
+        setRooms(roomsData);
+      }
+    };
+
+    loadUrlLocationData();
+  }, [siteDomain]);
 
   const isFieldEnabled = (fieldName: string) =>
     customFieldConfig[fieldName] !== false;
@@ -719,7 +782,8 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
         sel_id_user: null,
         fm_user_id: user?.id || null,
         checklist_id: checklistId || null,
-
+        custom_field_id: customFieldIdParam ? parseInt(customFieldIdParam) : null,
+        
         complaint: {
           heading: formData.description || formData.categoryName,
           text: formData.description,
@@ -772,6 +836,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
       if (ticketData.sel_id_user !== null) {
         payload.append('sel_id_user', String(ticketData.sel_id_user));
       }
+      
 
       if (ticketData.fm_user_id !== null) {
         payload.append('fm_user_id', String(ticketData.fm_user_id));
@@ -1143,7 +1208,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
           </div>
 
           {/* Requester Details */}
-          <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
+          {showRequesterDetails && <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-sm" style={{ color: '#da7756' }}>&#9432;</span>
               <span className="text-base font-semibold" style={{ color: '#2c2c2c' }}>
@@ -1182,23 +1247,35 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                 ))}
               </div>
             )}
-          </div>
+          </div>}
           {isFieldEnabled('location_enabled') && (
             <div className="mx-4 mt-4 md:mx-0 bg-white rounded-xl p-4 md:p-6">
-              <p className="text-base font-semibold mb-3" style={{ color: '#2c2c2c' }}>
-                Location <span style={{ color: '#da7756' }}>*</span>
-              </p>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-base font-semibold" style={{ color: '#2c2c2c' }}>
+                  Location <span style={{ color: '#da7756' }}>*</span>
+                </p>
+                {isLocationFromUrl && (
+                  <span
+                    className="text-xs font-medium px-2 py-0.5 rounded-full"
+                    style={{ backgroundColor: '#dce8f5', color: '#5a7a9a' }}
+                  >
+                    Pre-filled from QR
+                  </span>
+                )}
+              </div>
 
               <div className="mb-3">
                 <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
                   Building
                 </label>
-
-                <Select value={formData.building} onValueChange={handleBuildingChange}>
+                <Select value={formData.building} onValueChange={handleBuildingChange} disabled={isLocationFromUrl}>
                   <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                    <SelectValue placeholder="Select Building" />
+                    <SelectValue placeholder="Select Building">
+                      {isLocationFromUrl
+                        ? buildings.find(b => String(b.id) === formData.building)?.name || formData.building || undefined
+                        : undefined}
+                    </SelectValue>
                   </SelectTrigger>
-
                   <SelectContent>
                     {buildings.map((item) => (
                       <SelectItem key={item.id} value={String(item.id)}>
@@ -1214,16 +1291,18 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                   <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
                     Wing
                   </label>
-
                   <Select
                     value={formData.wing}
                     onValueChange={handleWingChange}
-                    disabled={!formData.building}
+                    disabled={isLocationFromUrl || !formData.building}
                   >
                     <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Wing" />
+                      <SelectValue placeholder="Select Wing">
+                        {isLocationFromUrl
+                          ? wings.find(w => String(w.id) === formData.wing)?.name || formData.wing || undefined
+                          : undefined}
+                      </SelectValue>
                     </SelectTrigger>
-
                     <SelectContent>
                       {wings.map((item) => (
                         <SelectItem key={item.id} value={String(item.id)}>
@@ -1237,16 +1316,18 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                   <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
                     Area
                   </label>
-
                   <Select
                     value={formData.area}
                     onValueChange={handleAreaChange}
-                    disabled={!formData.building}
+                    disabled={isLocationFromUrl || !formData.building}
                   >
                     <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Area" />
+                      <SelectValue placeholder="Select Area">
+                        {isLocationFromUrl
+                          ? areas.find(a => String(a.id) === formData.area)?.name || formData.area || undefined
+                          : undefined}
+                      </SelectValue>
                     </SelectTrigger>
-
                     <SelectContent>
                       {areas.map((item) => (
                         <SelectItem key={item.id} value={String(item.id)}>
@@ -1256,7 +1337,6 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                     </SelectContent>
                   </Select>
                 </div>
-
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -1264,16 +1344,18 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                   <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
                     Floor
                   </label>
-
                   <Select
                     value={formData.floor}
                     onValueChange={handleFloorChange}
-                    disabled={!formData.building}
+                    disabled={isLocationFromUrl || !formData.building}
                   >
                     <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Floor" />
+                      <SelectValue placeholder="Select Floor">
+                        {isLocationFromUrl
+                          ? floors.find(f => String(f.id) === formData.floor)?.name || formData.floor || undefined
+                          : undefined}
+                      </SelectValue>
                     </SelectTrigger>
-
                     <SelectContent>
                       {floors.map((item) => (
                         <SelectItem key={item.id} value={String(item.id)}>
@@ -1288,16 +1370,18 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                   <label className="text-xs font-medium mb-1 block" style={{ color: '#888780' }}>
                     Room
                   </label>
-
                   <Select
                     value={formData.room}
                     onValueChange={(val) => field('room', val)}
-                    disabled={!formData.floor}
+                    disabled={isLocationFromUrl || !formData.floor}
                   >
                     <SelectTrigger className="h-11 rounded-lg text-sm" style={{ borderColor: '#d3d1c7' }}>
-                      <SelectValue placeholder="Select Room" />
+                      <SelectValue placeholder="Select Room">
+                        {isLocationFromUrl
+                          ? rooms.find(r => String(r.id) === formData.room)?.name || formData.room || undefined
+                          : undefined}
+                      </SelectValue>
                     </SelectTrigger>
-
                     <SelectContent>
                       {rooms.map((item) => (
                         <SelectItem key={item.id} value={String(item.id)}>
