@@ -393,146 +393,146 @@ export function GoldenQrSetupPage() {
           </div>
         ) : (
           <>
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#F5F5F5]">
-                <TableHead className="w-10">
-                  <Checkbox
-                    checked={allCurrentSelected}
-                    onCheckedChange={(checked) => toggleSelectAll(Boolean(checked))}
-                    aria-label="Select all"
-                  />
-                </TableHead>
-                <TableHead className="font-semibold text-gray-700">Sr. No.</TableHead>
-                <TableHead className="font-semibold text-gray-700">Building</TableHead>
-                <TableHead className="font-semibold text-gray-700">Wing</TableHead>
-                <TableHead className="font-semibold text-gray-700">Area</TableHead>
-                <TableHead className="font-semibold text-gray-700">Floor</TableHead>
-                <TableHead className="font-semibold text-gray-700">Room</TableHead>
-                <TableHead className="font-semibold text-gray-700">Golden Ticket</TableHead>
-                <TableHead className="font-semibold text-gray-700">Show Requester</TableHead>
-                <TableHead className="font-semibold text-gray-700">QR Code</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tableData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="text-center py-8 text-gray-500">
-                    No records found
-                  </TableCell>
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-[#F5F5F5]">
+                  <TableHead className="w-10">
+                    <Checkbox
+                      checked={allCurrentSelected}
+                      onCheckedChange={(checked) => toggleSelectAll(Boolean(checked))}
+                      aria-label="Select all"
+                    />
+                  </TableHead>
+                  <TableHead className="font-semibold text-gray-700">Sr. No.</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Building</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Wing</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Area</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Floor</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Room</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Golden Ticket</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Show Requester</TableHead>
+                  <TableHead className="font-semibold text-gray-700">QR Code</TableHead>
                 </TableRow>
-              ) : (
-                tableData.map((record, index) => {
-                  const content = record.content || record;
-                  const rowChecked = record.id != null && selectedIds.has(record.id);
-                  return (
-                    <TableRow key={record.id ?? index} className="hover:bg-gray-50">
-                      <TableCell>
-                        <Checkbox
-                          checked={rowChecked}
-                          onCheckedChange={(checked) =>
-                            record.id != null && toggleRow(record.id, Boolean(checked))
-                          }
-                          aria-label={`Select row ${record.id}`}
-                        />
-                      </TableCell>
-                      <TableCell>{(currentPage - 1) * perPage + index + 1}</TableCell>
-                      <TableCell>{getBuildingName(content.building_id)}</TableCell>
-                      <TableCell>{getWingName(content.wing_id) || '-'}</TableCell>
-                      <TableCell>{getAreaName(content.area_id) || '-'}</TableCell>
-                      <TableCell>{getFloorName(content.floor) || '-'}</TableCell>
-                      <TableCell>{getRoomName(content.room) || '-'}</TableCell>
-                      <TableCell>
-                        {String(record.mark_golden_ticket) === 'true' ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                            No
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {String(record.show_requester) === 'true' ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                            Yes
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                            No
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {record.qr_code_url ? (
-                          <img
-                            src={record.qr_code_url}
-                            alt="QR Code"
-                            className="w-16 h-16 object-contain cursor-pointer hover:opacity-75 transition-opacity"
-                            onClick={() => setQrModalUrl(record.qr_code_url)}
+              </TableHeader>
+              <TableBody>
+                {tableData.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                      No records found
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  tableData.map((record, index) => {
+                    const content = record.content || record;
+                    const rowChecked = record.id != null && selectedIds.has(record.id);
+                    return (
+                      <TableRow key={record.id ?? index} className="hover:bg-gray-50">
+                        <TableCell>
+                          <Checkbox
+                            checked={rowChecked}
+                            onCheckedChange={(checked) =>
+                              record.id != null && toggleRow(record.id, Boolean(checked))
+                            }
+                            aria-label={`Select row ${record.id}`}
                           />
-                        ) : (
-                          <span className="text-gray-400">-</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-              <p className="text-sm text-gray-600">
-                Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, totalCount)} of {totalCount} records
-              </p>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { loadTableData(currentPage - 1); setCurrentPage(currentPage - 1); }}
-                  disabled={currentPage <= 1 || isLoadingTable}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                  .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
-                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
-                    acc.push(p);
-                    return acc;
-                  }, [])
-                  .map((item, idx) =>
-                    item === 'ellipsis' ? (
-                      <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">…</span>
-                    ) : (
-                      <Button
-                        key={item}
-                        variant={item === currentPage ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => { loadTableData(item as number); setCurrentPage(item as number); }}
-                        disabled={isLoadingTable}
-                        className={`h-8 w-8 p-0 ${item === currentPage ? 'bg-[#C72030] hover:bg-[#a01828] text-white border-[#C72030]' : ''}`}
-                      >
-                        {item}
-                      </Button>
-                    )
-                  )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => { loadTableData(currentPage + 1); setCurrentPage(currentPage + 1); }}
-                  disabled={currentPage >= totalPages || isLoadingTable}
-                  className="h-8 w-8 p-0"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
+                        </TableCell>
+                        <TableCell>{(currentPage - 1) * perPage + index + 1}</TableCell>
+                        <TableCell>{getBuildingName(content.building_id)}</TableCell>
+                        <TableCell>{getWingName(content.wing_id) || '-'}</TableCell>
+                        <TableCell>{getAreaName(content.area_id) || '-'}</TableCell>
+                        <TableCell>{getFloorName(content.floor) || '-'}</TableCell>
+                        <TableCell>{getRoomName(content.room) || '-'}</TableCell>
+                        <TableCell>
+                          {String(record.mark_golden_ticket) === 'true' ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                              Yes
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                              No
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {String(record.show_requester) === 'true' ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                              Yes
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                              No
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {record.qr_code_url ? (
+                            <img
+                              src={record.qr_code_url}
+                              alt="QR Code"
+                              className="w-16 h-16 object-contain cursor-pointer hover:opacity-75 transition-opacity"
+                              onClick={() => setQrModalUrl(record.qr_code_url)}
+                            />
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+                <p className="text-sm text-gray-600">
+                  Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, totalCount)} of {totalCount} records
+                </p>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { loadTableData(currentPage - 1); setCurrentPage(currentPage - 1); }}
+                    disabled={currentPage <= 1 || isLoadingTable}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                    .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                      if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((item, idx) =>
+                      item === 'ellipsis' ? (
+                        <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">…</span>
+                      ) : (
+                        <Button
+                          key={item}
+                          variant={item === currentPage ? 'default' : 'outline'}
+                          size="sm"
+                          onClick={() => { loadTableData(item as number); setCurrentPage(item as number); }}
+                          disabled={isLoadingTable}
+                          className={`h-8 w-8 p-0 ${item === currentPage ? 'bg-[#C72030] hover:bg-[#a01828] text-white border-[#C72030]' : ''}`}
+                        >
+                          {item}
+                        </Button>
+                      )
+                    )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { loadTableData(currentPage + 1); setCurrentPage(currentPage + 1); }}
+                    disabled={currentPage >= totalPages || isLoadingTable}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
           </>
         )}
       </div>
