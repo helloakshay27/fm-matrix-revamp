@@ -11,7 +11,7 @@ import { BrowserRouter as Router } from "react-router-dom";
 // Register service worker for PWA
 // registerServiceWorker();
 
-// Apply Lockated Brand Theme and color patch only on fm-matrix.lockated.com
+// Apply Lockated Brand Theme and color patch on live and local environments
 if (window.location.hostname === "fm-matrix.lockated.com") {
   import("./styles/theme.css"); // Lockated Brand Theme - Edit this file for global color changes
   // Initialise runtime color patcher — overrides MUI inline styles and any

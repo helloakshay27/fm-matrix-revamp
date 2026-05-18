@@ -529,6 +529,46 @@ const DIGIT_COLORS = [
   "text-[#3b82f6]",
 ];
 
+const DiscThemeStyle = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+    .disc-wrap, .disc-wrap * { font-family: 'Poppins', sans-serif !important; }
+    .disc-panel {
+      border-radius: 20px;
+      border: 1px solid #e8e3de;
+      background: #ffffff;
+      box-shadow: 0 10px 24px rgba(26,26,26,0.05);
+    }
+    .disc-card-lift { transition: box-shadow .2s, transform .2s, border-color .2s; }
+    .disc-card-lift:hover {
+      border-color: rgba(218,119,86,0.35);
+      box-shadow: 0 16px 36px rgba(26,26,26,0.08), 0 4px 14px rgba(218,119,86,0.10);
+      transform: translateY(-2px);
+    }
+    .disc-input {
+      width: 100%;
+      border: 1px solid #e8e3de;
+      border-radius: 12px;
+      background: #fffaf8;
+      color: #1a1a1a;
+      outline: none;
+      transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .disc-input:focus {
+      border-color: #DA7756;
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(218,119,86,0.15);
+    }
+    .disc-input::placeholder { color: #a3a3a3; font-weight: 500; }
+    .disc-table-row { transition: background .15s, box-shadow .15s; }
+    .disc-table-row:hover { background: #fffaf8 !important; }
+    .disc-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+    .disc-scroll::-webkit-scrollbar-track { background: transparent; }
+    .disc-scroll::-webkit-scrollbar-thumb { background: #C4B89D; border-radius: 10px; }
+    .disc-scroll::-webkit-scrollbar-thumb:hover { background: #DA7756; }
+  `}</style>
+);
+
 // ─── Helpers & Small Components ──────────────────────────────────────────────
 
 function DiscScoreDigits({ scores }: { scores: Record<DiscLetter, number> }) {
@@ -1509,7 +1549,7 @@ function LearnTabContent() {
 
   return (
     <div className="space-y-6">
-      <Card className="overflow-hidden rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm">
+      <Card className="disc-panel overflow-hidden">
         <div className="border-b border-[#DA7756]/20 p-4 sm:p-6">
           <div className="flex flex-wrap items-start gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#DA7756]/10">
@@ -1525,7 +1565,7 @@ function LearnTabContent() {
             </div>
           </div>
         </div>
-        <div className="bg-[#DA7756]/5 p-3 sm:p-4">
+        <div className="p-3 sm:p-4" style={{ background: BP.primaryBg }}>
           <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-[#DA7756]/25 bg-black shadow-inner">
             <iframe
               title="How to Use DISC Test in HR — What is DISC?"
@@ -1538,7 +1578,7 @@ function LearnTabContent() {
         </div>
       </Card>
 
-      <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+      <Card className="disc-panel p-4 sm:p-6">
         <div className="mb-4 flex flex-wrap items-start gap-3 sm:gap-4">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
             <BookOpen className="h-6 w-6 text-[#DA7756]" strokeWidth={2} />
@@ -1586,7 +1626,7 @@ function LearnTabContent() {
         </div>
       </Card>
 
-      <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+      <Card className="disc-panel p-4 sm:p-6">
         <div className="mb-4 flex flex-wrap items-start gap-3 sm:gap-4">
           <div
             className={cn(
@@ -1615,7 +1655,7 @@ function LearnTabContent() {
           </div>
         </div>
 
-        <div className="mb-5 flex flex-wrap gap-1 rounded-xl border border-[#DA7756]/15 bg-[#DA7756]/10 p-1.5">
+        <div className="mb-5 flex flex-wrap gap-1 rounded-xl border p-1.5" style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}>
           {LEARN_SUB_TABS.map((st) => (
             <button
               key={st.key}
@@ -1674,7 +1714,7 @@ function LearnTabContent() {
         )}
       </Card>
 
-      <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+      <Card className="disc-panel p-4 sm:p-6">
         <h3 className="text-lg font-bold text-neutral-900">
           How DISC Types Interact
         </h3>
@@ -1686,7 +1726,7 @@ function LearnTabContent() {
             <div
               key={box.title}
               className={cn(
-                "rounded-xl border p-4 text-sm leading-relaxed shadow-sm",
+                "disc-card-lift rounded-xl border p-4 text-sm leading-relaxed shadow-sm",
                 box.boxClass
               )}
             >
@@ -1732,9 +1772,9 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
   return (
     <div
       className={cn(
-        "w-full rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 text-left shadow-sm transition-all sm:p-5",
-        "hover:border-[#DA7756]/35 hover:shadow-md"
+        "disc-card-lift w-full rounded-2xl border p-4 text-left shadow-sm sm:p-5"
       )}
+      style={{ borderColor: BP.primaryBord, background: BP.cardBg }}
     >
       <div className="flex items-start gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 border-[#DA7756] bg-[#DA7756]/10 shadow-sm">
@@ -1745,7 +1785,7 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 rounded-xl border border-[#DA7756]/20 bg-[#DA7756]/10 px-3 py-2.5 text-sm text-neutral-800">
+      <div className="mt-4 flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm text-neutral-800" style={{ borderColor: BP.primaryBord, background: BP.primaryBg }}>
         <User className="h-4 w-4 shrink-0 text-[#DA7756]" strokeWidth={2} />
         <span>
           <span className="font-semibold tabular-nums">
@@ -1807,7 +1847,7 @@ function DepartmentTeamCard({ dept }: { dept: DepartmentTeam }) {
         </div>
       </div>
 
-      <div className="mt-4 rounded-xl border border-[#DA7756]/20 bg-[#f6f4ee]/80 px-3 py-2.5">
+      <div className="mt-4 rounded-xl border px-3 py-2.5" style={{ borderColor: BP.primaryBord, background: BP.primaryTint }}>
         <p className="text-[11px] font-medium uppercase tracking-wide text-neutral-500">
           Department Head
         </p>
@@ -1920,7 +1960,7 @@ function TeamsTabContent() {
   }, [deptSearch, apiDepts]);
 
   return (
-    <Card className="rounded-2xl border border-[#DA7756]/20 bg-[#DA7756]/10 p-4 shadow-sm sm:p-6">
+    <Card className="disc-panel p-4 sm:p-6">
       <div className="mb-4 flex flex-wrap items-start gap-2">
         <Users
           className="mt-0.5 h-5 w-5 shrink-0 text-[#DA7756]"
@@ -1944,7 +1984,7 @@ function TeamsTabContent() {
             value={deptSearch}
             onChange={(e) => setDeptSearch(e.target.value)}
             placeholder="Search departments..."
-            className="h-10 w-full rounded-xl border border-neutral-200 bg-white py-2 pl-10 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-[#DA7756]/25"
+            className="disc-input h-10 py-2 pl-10 pr-3 text-sm font-medium"
           />
         </div>
       </div>
@@ -2198,24 +2238,23 @@ const DiscReport = () => {
       className="min-h-[calc(100vh-5rem)] px-4 py-6 sm:px-6"
       style={{ background: BP.pageBg, fontFamily: BP.font }}
     >
-      {/* Poppins font */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap'); .disc-wrap, .disc-wrap * { font-family: 'Poppins', sans-serif !important; }`}</style>
+      <DiscThemeStyle />
 
-      <div className="disc-wrap mx-auto max-w-6xl space-y-6">
+      <div className="disc-wrap mx-auto max-w-[1600px] space-y-5">
         {/* ── Page Header — matches BusinessPlan ── */}
         <div
           className="overflow-hidden rounded-2xl border shadow-sm p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
           style={{
-            background: "rgba(218,119,86,0.10)",
+            background: BP.cardBg,
             borderColor: BP.primaryBord,
           }}
         >
           <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:gap-4">
             <div
-              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 shadow-sm"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border shadow-sm"
               style={{
-                borderColor: BP.primary,
-                background: "rgba(218,119,86,0.10)",
+                borderColor: BP.primaryBord,
+                background: BP.primaryBg,
               }}
             >
               <Brain
@@ -2249,7 +2288,7 @@ const DiscReport = () => {
 
         {/* ── Tab Bar — matches BusinessPlan pill style ── */}
         <div
-          className="flex w-fit rounded-2xl p-1 gap-1 overflow-x-auto"
+          className="flex w-fit rounded-2xl p-1 gap-1 overflow-x-auto shadow-sm"
           style={{ background: BP.primary }}
         >
           {(["dashboard", "teams", "learn"] as DiscTab[]).map((t) => {
@@ -2286,10 +2325,10 @@ const DiscReport = () => {
           <>
             {/* DISC Type Distribution */}
             <Card
-              className="rounded-2xl border shadow-sm p-4 sm:p-6"
+              className="disc-panel p-4 sm:p-6"
               style={{
                 borderColor: BP.primaryBord,
-                background: "rgba(218,119,86,0.06)",
+                background: BP.cardBg,
               }}
             >
               <div className="mb-4 flex flex-wrap items-start gap-2">
@@ -2318,7 +2357,7 @@ const DiscReport = () => {
                   <div
                     key={d.key}
                     className={cn(
-                      "flex flex-col items-center justify-center rounded-xl border-2 px-3 py-5 text-center",
+                      "disc-card-lift flex flex-col items-center justify-center rounded-2xl border px-3 py-5 text-center shadow-sm",
                       d.bg,
                       d.border
                     )}
@@ -2341,10 +2380,10 @@ const DiscReport = () => {
 
             {/* Profile Name Distribution */}
             <Card
-              className="rounded-2xl border shadow-sm p-4 sm:p-6"
+              className="disc-panel p-4 sm:p-6"
               style={{
                 borderColor: BP.primaryBord,
-                background: "rgba(218,119,86,0.06)",
+                background: BP.cardBg,
               }}
             >
               <div className="mb-4 flex flex-wrap items-start gap-2">
@@ -2372,14 +2411,14 @@ const DiscReport = () => {
                 <button
                   type="button"
                   onClick={() => setProfileFilter(null)}
-                  className="rounded-xl border px-4 py-2 text-sm font-bold transition-all"
+                  className="rounded-xl border px-4 py-2 text-sm font-bold shadow-sm transition-all active:scale-[0.97]"
                   style={{
                     borderColor:
                       profileFilter === null ? BP.primary : BP.primaryBord,
                     background:
                       profileFilter === null
                         ? "rgba(218,119,86,0.10)"
-                        : BP.pageBg,
+                        : BP.cardBg,
                     color: profileFilter === null ? BP.primary : BP.textMain,
                   }}
                 >
@@ -2394,14 +2433,14 @@ const DiscReport = () => {
                         prev === p.name ? null : p.name
                       )
                     }
-                    className="rounded-xl border px-4 py-2 text-sm font-bold transition-all"
+                    className="rounded-xl border px-4 py-2 text-sm font-bold shadow-sm transition-all active:scale-[0.97]"
                     style={{
                       borderColor:
                         profileFilter === p.name ? BP.primary : BP.primaryBord,
                       background:
                         profileFilter === p.name
                           ? "rgba(218,119,86,0.10)"
-                          : BP.pageBg,
+                          : BP.cardBg,
                       color:
                         profileFilter === p.name ? BP.primary : BP.textMain,
                     }}
@@ -2423,10 +2462,10 @@ const DiscReport = () => {
 
             {/* DISC Profiles Table */}
             <Card
-              className="rounded-2xl border shadow-sm p-4 sm:p-6"
+              className="disc-panel p-4 sm:p-6"
               style={{
                 borderColor: BP.primaryBord,
-                background: "rgba(218,119,86,0.06)",
+                background: BP.cardBg,
               }}
             >
               <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -2554,21 +2593,7 @@ const DiscReport = () => {
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search by name, department, email..."
-                    className="h-10 w-full rounded-xl border py-2 pl-10 pr-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none"
-                    style={{
-                      borderColor: BP.primaryBord,
-                      background: BP.cardBg,
-                      fontFamily: BP.font,
-                    }}
-                    onFocus={(e) => {
-                      e.currentTarget.style.borderColor = BP.primary;
-                      e.currentTarget.style.boxShadow =
-                        "0 0 0 3px rgba(218,119,86,0.15)";
-                    }}
-                    onBlur={(e) => {
-                      e.currentTarget.style.borderColor = BP.primaryBord;
-                      e.currentTarget.style.boxShadow = "none";
-                    }}
+                    className="disc-input h-10 py-2 pl-10 pr-3 text-sm font-medium"
                   />
                 </div>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
@@ -2576,7 +2601,7 @@ const DiscReport = () => {
                     className="h-10 w-full rounded-xl sm:w-[180px]"
                     style={{
                       borderColor: BP.primaryBord,
-                      background: BP.cardBg,
+                      background: "#fffaf8",
                       fontFamily: BP.font,
                     }}
                   >
@@ -2598,7 +2623,7 @@ const DiscReport = () => {
               {/* ── Ungrouped Table ── */}
               {groupMode === "ungrouped" ? (
                 <div
-                  className="overflow-x-auto rounded-xl border"
+                  className="disc-scroll overflow-x-auto rounded-2xl border shadow-sm"
                   style={{ borderColor: BP.primaryBord, background: BP.cardBg }}
                 >
                   <table className="w-full min-w-[880px] border-collapse text-left text-sm">
@@ -2645,7 +2670,7 @@ const DiscReport = () => {
                         <tr
                           key={row.id}
                           className={cn(
-                            "border-b border-neutral-100/80",
+                            "disc-table-row border-b border-neutral-100/80",
                             row.rowBgClass
                           )}
                         >
@@ -2728,7 +2753,7 @@ const DiscReport = () => {
                   {groupedRows?.map(([groupName, rows]) => (
                     <div
                       key={groupName}
-                      className="overflow-hidden shadow-sm"
+                      className="disc-card-lift overflow-hidden shadow-sm"
                       style={{
                         borderRadius: 16,
                         border: `1px solid ${BP.primaryBord}`,
@@ -2768,7 +2793,7 @@ const DiscReport = () => {
                       </div>
 
                       {/* Grouped Table */}
-                      <div className="overflow-x-auto">
+                      <div className="disc-scroll overflow-x-auto">
                         <table className="w-full min-w-[780px] border-collapse text-left text-sm">
                           <thead>
                             <tr
@@ -2804,7 +2829,7 @@ const DiscReport = () => {
                               <tr
                                 key={row.id}
                                 className={cn(
-                                  "border-b border-neutral-100/80 transition-colors",
+                                  "disc-table-row border-b border-neutral-100/80",
                                   row.rowBgClass
                                 )}
                               >

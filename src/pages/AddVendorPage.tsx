@@ -64,14 +64,14 @@ const CustomStepIconRoot = styled('div')<{
   fontFamily: 'Work Sans, sans-serif',
   fontSize: '14px',
   ...(ownerState.active && {
-    backgroundColor: '#C72030',
+    backgroundColor: '#da7756',
     color: 'white',
-    border: '1px solid #C72030',
+    border: '1px solid #da7756',
   }),
   ...(ownerState.completed && {
-    backgroundColor: '#C72030',
+    backgroundColor: '#da7756',
     color: 'white',
-    border: '1px solid #C72030',
+    border: '1px solid #da7756',
   }),
 }));
 
@@ -92,23 +92,24 @@ function CustomStepIcon(props: {
 }
 
 const RedButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#C72030',
-  color: 'white',
+  backgroundColor: '#da7756',
+  color: 'white !important',
   borderRadius: 0,
   textTransform: 'none',
   padding: '8px 16px',
   fontFamily: 'Work Sans, sans-serif',
   fontWeight: 500,
-  boxShadow: '0 2px 4px rgba(199, 32, 48, 0.2)',
+  boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
   '&:hover': {
-    backgroundColor: '#B8252F',
-    boxShadow: '0 4px 8px rgba(199, 32, 48, 0.3)',
+    backgroundColor: '#C4623C',
+    boxShadow: '0 4px 8px rgba(218, 119, 86, 0.3)',
   },
 }));
+RedButton.defaultProps = { color: 'inherit' };
 
 const DraftButton = styled(MuiButton)(({ theme }) => ({
   backgroundColor: '#f6f4ee',
-  color: '#C72030',
+  color: '#da7756',
   borderRadius: 0,
   textTransform: 'none',
   padding: '8px 16px',
@@ -162,16 +163,16 @@ const fieldStyles = {
       borderColor: '#ddd',
     },
     '&:hover fieldset': {
-      borderColor: '#C72030',
+      borderColor: '#da7756',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+      borderColor: '#da7756',
     },
   },
   '& .MuiInputLabel-root': {
     fontSize: '14px',
     '&.Mui-focused': {
-      color: '#C72030',
+      color: '#da7756',
     },
   },
 };
@@ -722,18 +723,18 @@ export const AddVendorPage = () => {
     const fileNames = currentFiles.map(f => f.name);
 
     return (
-      <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#C72030] bg-red-50' : 'border-gray-300'}`}>
+      <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#da7756] bg-red-50' : 'border-gray-300'}`}>
         <p className="text-gray-600 font-medium mb-2">{title}</p>
         <label className="cursor-pointer">
           <div className="flex flex-col items-center">
             <Upload className="w-8 h-8 text-gray-400 mb-2" />
-            <p className="text-sm text-gray-500">Drag & Drop or <span className="text-[#C72030] font-semibold">Choose Files</span></p>
+            <p className="text-sm text-gray-500">Drag & Drop or <span className="text-[#da7756] font-semibold">Choose Files</span></p>
           </div>
           <input type="file" multiple className="hidden" onChange={handleFileChange} />
         </label>
         {fileNames.length > 0 ? (
           <div className="mt-3 p-2 bg-white rounded border">
-            <p className="text-xs text-[#C72030] font-semibold mb-1">{fileNames.length} file(s) selected:</p>
+            <p className="text-xs text-[#da7756] font-semibold mb-1">{fileNames.length} file(s) selected:</p>
             <div className="max-h-20 overflow-y-auto">
               {fileNames.map((fileName, index) => (
                 <p key={index} className="text-xs text-gray-700 truncate" title={fileName}>
@@ -756,7 +757,7 @@ export const AddVendorPage = () => {
           <>
             <SectionCard>
               <SectionHeader>
-                <Building className="text-[#C72030]" />
+                <Building className="text-[#da7756]" />
                 <SectionTitle>COMPANY INFORMATION</SectionTitle>
               </SectionHeader>
               <Box p={3}>
@@ -916,7 +917,7 @@ export const AddVendorPage = () => {
             </SectionCard>
             <SectionCard>
               <SectionHeader>
-                <Landmark className="text-[#C72030]" />
+                <Landmark className="text-[#da7756]" />
                 <SectionTitle>OTHER DETAILS</SectionTitle>
               </SectionHeader>
               <Box p={3}>
@@ -1022,7 +1023,7 @@ export const AddVendorPage = () => {
             </SectionCard>
             <SectionCard>
               <SectionHeader>
-                <Landmark className="text-[#C72030]" />
+                <Landmark className="text-[#da7756]" />
                 <SectionTitle>OPENING BALANCE</SectionTitle>
               </SectionHeader>
               <Box p={3}>
@@ -1126,9 +1127,9 @@ export const AddVendorPage = () => {
                           }
                         }}
                         sx={{
-                          border: '1px solid #C72030',
+                          border: '1px solid #da7756',
                           borderRadius: '4px',
-                          color: '#C72030',
+                          color: '#da7756',
                           width: 36,
                           height: 36,
                           flexShrink: 0,
@@ -1147,7 +1148,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <MapPin className="text-[#C72030]" />
+              <MapPin className="text-[#da7756]" />
               <SectionTitle>ADDRESS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -1289,7 +1290,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <Landmark className="text-[#C72030]" />
+              <Landmark className="text-[#da7756]" />
               <SectionTitle>BANK DETAILS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -1332,7 +1333,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <User className="text-[#C72030]" />
+              <User className="text-[#da7756]" />
               <SectionTitle>CONTACT PERSON</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -1426,7 +1427,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <FileText className="text-[#C72030]" />
+              <FileText className="text-[#da7756]" />
               <SectionTitle>KYC DETAILS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -1478,7 +1479,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <Upload className="text-[#C72030]" />
+              <Upload className="text-[#da7756]" />
               <SectionTitle>ATTACHMENTS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -1532,9 +1533,10 @@ export const AddVendorPage = () => {
                 onClick={() => handleStepClick(index)}
                 sx={{
                   cursor: 'pointer',
-                  backgroundColor: (index === activeStep || completedSteps.includes(index)) ? '#C72030' : 'white',
-                  color: (index === activeStep || completedSteps.includes(index)) ? 'white' : '#C4B89D',
-                  border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'}`,
+                  backgroundColor: 'white',
+                  color: (index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D',
+                  border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'}`,
+                  fontWeight: (index === activeStep) ? 600 : 500,
                   padding: '8px 12px',
                   fontSize: '11px',
                   fontWeight: 500,
@@ -1545,7 +1547,7 @@ export const AddVendorPage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: index === activeStep ? '0 2px 4px rgba(199, 32, 48, 0.3)' : 'none',
+                  boxShadow: index === activeStep ? '0 2px 4px rgba(218, 119, 86, 0.3)' : 'none',
                   transition: 'all 0.2s ease',
                   fontFamily: 'Work Sans, sans-serif',
                   position: 'relative',
@@ -1564,7 +1566,7 @@ export const AddVendorPage = () => {
                   sx={{
                     width: '30px',
                     height: '2px',
-                    backgroundImage: `repeating-linear-gradient(to right, ${(index < activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'} 0px, ${(index < activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'} 6px, transparent 6px, transparent 12px)`,
+                    backgroundImage: `repeating-linear-gradient(to right, ${(index < activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'} 0px, ${(index < activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'} 6px, transparent 6px, transparent 12px)`,
                     margin: '0 0px',
                     flexShrink: 0
                   }}

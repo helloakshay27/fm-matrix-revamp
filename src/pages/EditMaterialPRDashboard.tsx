@@ -63,7 +63,14 @@ export const EditMaterialPRDashboard = () => {
   const [wbsSelection, setWbsSelection] = useState("");
   const [wbsCodes, setWbsCodes] = useState([]);
   const [overallWbs, setOverallWbs] = useState("");
+  const [overallGlCode, setOverallGlCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [glAccountOptions, setGlAccountOptions] = useState([]);
+  const [taxCodeOptions, setTaxCodeOptions] = useState([]);
+  const [storageLocationOptions, setStorageLocationOptions] = useState([]);
+  const [selectedWbsCode, setSelectedWbsCode] = useState<string>("");
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState<boolean>(false);
+
   const [items, setItems] = useState([
     {
       id: 1,
@@ -79,12 +86,15 @@ export const EditMaterialPRDashboard = () => {
       expectedDate: "",
       amount: "",
       wbsCode: "",
+      generalStorage: "GNST",
       _destroy: 0,
     },
   ]);
+
   const [supplierDetails, setSupplierDetails] = useState({
     supplier: "",
     plantDetail: "",
+    type: "",
     prDate: "",
     billingAddress: "",
     deliveryAddress: "",
@@ -98,15 +108,104 @@ export const EditMaterialPRDashboard = () => {
     termsConditions: "",
     wbsCode: "",
   });
+
   const [files, setFiles] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
   const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState(null);
+  const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
+
+  // ── Additional field fetchers ─────────────────────────────────────────────
+
+  const fetchGlAccountOptions = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/get_additional_fields.json?q[fields_for_eq]=gl_account`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.additional_fields && Array.isArray(response.data.additional_fields)) {
+        setGlAccountOptions(response.data.additional_fields);
+      }
+    } catch (error) {
+      console.error("Error fetching GL Account options:", error);
+    }
+  };
+
+  const fetchTaxCodeOptions = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/get_additional_fields.json?q[fields_for_eq]=tax_code`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.additional_fields && Array.isArray(response.data.additional_fields)) {
+        setTaxCodeOptions(response.data.additional_fields);
+      }
+    } catch (error) {
+      console.error("Error fetching Tax Code options:", error);
+    }
+  };
+
+  const fetchStorageLocationOptions = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/get_additional_fields.json?q[fields_for_eq]=storage_location`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.additional_fields && Array.isArray(response.data.additional_fields)) {
+        setStorageLocationOptions(response.data.additional_fields);
+      }
+    } catch (error) {
+      console.error("Error fetching Storage Location options:", error);
+    }
+  };
+
+  // ── GL code auto-population ───────────────────────────────────────────────
+
+  const fetchGlCodeForWbs = async (itemId, wbsCode) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/wbs_costs/get_gl_code.json?wbs_code=${wbsCode}`,
+        { headers: { Authorization: token } }
+      );
+      if (response.data?.gl_code) {
+        setItems((prevItems) =>
+          prevItems.map((item) =>
+            item.id === itemId ? { ...item, glAccount: response.data.gl_code } : item
+          )
+        );
+        toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
+      }
+    } catch (error) {
+      console.error("Error fetching GL Code for WBS:", error);
+      toast.error("Failed to fetch GL Code for WBS");
+    }
+  };
+
+  const fetchGlCodeForOverallWbs = async (wbsCode) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/wbs_costs/get_gl_code.json?wbs_code=${wbsCode}`,
+        { headers: { Authorization: token } }
+      );
+      if (response.data?.gl_code) {
+        setOverallGlCode(response.data.gl_code);
+        toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
+      }
+    } catch (error) {
+      console.error("Error fetching GL Code for WBS:", error);
+      toast.error("Failed to fetch GL Code for WBS");
+    }
+  };
+
+  // ── WBS radio visibility ──────────────────────────────────────────────────
 
   useEffect(() => {
     if (Array.isArray(data) && data.length > 0) {
       setShowRadio(true);
+    }
+    if (Array.isArray(data) && data.length <= 0) {
+      setShowRadio(false);
+      setWbsSelection("");
     }
   }, [data]);
 
@@ -125,27 +224,31 @@ export const EditMaterialPRDashboard = () => {
     }
   }, [showRadio, dispatch, baseUrl, token]);
 
+  // ── Load existing PR data ─────────────────────────────────────────────────
+
   useEffect(() => {
     const getData = async () => {
       try {
         const response = await dispatch(getMaterialPRById({ baseUrl, token, id: id })).unwrap();
 
-        setWbsSelection("individual");
+        const hasIndividualWbs = response.pms_po_inventories?.some((i) => i.wbs_code);
+        setWbsSelection(hasIndividualWbs ? "individual" : "");
 
         setSupplierDetails({
-          supplier: response.supplier?.id,
-          plantDetail: response.plant_detail?.id,
+          supplier: response.supplier?.id ?? "",
+          plantDetail: response.plant_detail?.id ?? "",
+          type: response.pr_type ?? "",
           prDate: response.po_date ? response.po_date.split("T")[0] : "",
-          billingAddress: response.billing_address_id,
-          deliveryAddress: response.shipping_address_id,
-          transportation: response.transportation,
-          retention: response.retention,
-          tds: response.tds,
-          qc: response.quality_holding,
-          paymentTenure: response.payment_tenure,
-          advanceAmount: response.advance_amount,
-          relatedTo: response.related_to,
-          termsConditions: response.terms_conditions,
+          billingAddress: response.billing_address_id ?? "",
+          deliveryAddress: response.shipping_address_id ?? "",
+          transportation: response.transportation ?? "",
+          retention: response.retention ?? "",
+          tds: response.tds ?? "",
+          qc: response.quality_holding ?? "",
+          paymentTenure: response.payment_tenure ?? "",
+          advanceAmount: response.advance_amount ?? "",
+          relatedTo: response.related_to ?? "",
+          termsConditions: response.terms_conditions ?? "",
           wbsCode: "",
         });
 
@@ -153,17 +256,18 @@ export const EditMaterialPRDashboard = () => {
           response.pms_po_inventories.map((item, index) => ({
             id: index + 1,
             item_id: item.id,
-            itemDetails: item.inventory?.id,
-            sacHsnCodeId: item.hsn_id,
-            sacHsnCode: item.sac_hsn_code,
-            productDescription: item.prod_desc,
-            glAccount: item.gl_account,
-            taxCode: item.tax_code,
-            each: item.rate,
-            quantity: item.quantity,
+            itemDetails: item.inventory?.id ?? "",
+            sacHsnCodeId: item.hsn_id ?? "",
+            sacHsnCode: item.sac_hsn_code ?? "",
+            productDescription: item.prod_desc ?? "",
+            glAccount: item.gl_account ?? "",
+            taxCode: item.tax_code ?? "",
+            each: item.rate ?? "",
+            quantity: item.quantity ?? "",
             expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
-            amount: item.total_value,
-            wbsCode: item.wbs_code,
+            amount: item.total_value ?? "",
+            wbsCode: item.wbs_code ?? "",
+            generalStorage: item.general_storage ?? "GNST",
             _destroy: 0,
           }))
         );
@@ -183,6 +287,8 @@ export const EditMaterialPRDashboard = () => {
 
     getData();
   }, [id, dispatch, baseUrl, token]);
+
+  // ── Common data fetches ───────────────────────────────────────────────────
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -233,7 +339,12 @@ export const EditMaterialPRDashboard = () => {
     fetchPlantDetails();
     fetchAddresses();
     fetchInventories();
+    fetchGlAccountOptions();
+    fetchTaxCodeOptions();
+    fetchStorageLocationOptions();
   }, [dispatch, baseUrl, token]);
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleSupplierChange = (e) => {
     const { name, value } = e.target;
@@ -256,12 +367,14 @@ export const EditMaterialPRDashboard = () => {
     setItems((prevItems) =>
       prevItems.map((item) => {
         if (item.id !== id) return item;
-
         const updatedItem = { ...item, [field]: value };
         if (field === "each" || field === "quantity") {
           const rate = field === "each" ? parseFloat(value) || 0 : parseFloat(item.each) || 0;
           const quantity = field === "quantity" ? parseFloat(value) || 0 : parseFloat(item.quantity) || 0;
           updatedItem.amount = (rate * quantity).toFixed(2);
+        }
+        if (field === "wbsCode" && value) {
+          fetchGlCodeForWbs(id, value);
         }
         return updatedItem;
       })
@@ -272,21 +385,14 @@ export const EditMaterialPRDashboard = () => {
     try {
       const response = await axios.get(
         `https://${baseUrl}/pms/purchase_orders/${inventoryId}/hsn_code_categories.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setItems((prevItems) =>
         prevItems.map((item) => {
           if (item.id !== itemId) return item;
-
           const newQuantity = parseFloat(item.quantity) || 0;
           const newRate = parseFloat(response.data.rate) || 0;
           const newAmount = (newRate * newQuantity).toFixed(2);
-
           return {
             ...item,
             sacHsnCode: response.data.hsn?.code || "",
@@ -302,15 +408,35 @@ export const EditMaterialPRDashboard = () => {
     }
   }, [baseUrl, token]);
 
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
+  // ── File handling ─────────────────────────────────────────────────────────
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files || []) as File[];
+    const validFileTypes = ["application/pdf"];
+    const maxFileSizeBytes = 12 * 1024 * 1024;
+    const validFiles: File[] = [];
+
+    selectedFiles.forEach((file) => {
+      if (!validFileTypes.includes(file.type)) {
+        toast.error(`Invalid file type: ${file.name}. Only PDF files are accepted.`);
+        return;
+      }
+      if (file.size > maxFileSizeBytes) {
+        toast.error(`File size exceeded: ${file.name}. Maximum allowed size is 12 MB`);
+        return;
+      }
+      validFiles.push(file);
+    });
+
+    if (validFiles.length > 0) {
+      setFiles((prevFiles) => [...prevFiles, ...validFiles]);
+    }
   };
 
   const removeFile = (index, type) => {
     if (type === "existing") {
-      setExistingAttachments((prev) => prev.filter((_, i) => i !== index));
       setAttachmentsToDelete((prev) => [...prev, existingAttachments[index].id]);
+      setExistingAttachments((prev) => prev.filter((_, i) => i !== index));
     } else {
       setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
     }
@@ -321,7 +447,7 @@ export const EditMaterialPRDashboard = () => {
   };
 
   const addItem = () => {
-    const nextId = Math.max(...items.map(item => item.id || 0)) + 1;
+    const nextId = Math.max(...items.map((item) => item.id || 0)) + 1;
     setItems([
       ...items,
       {
@@ -338,14 +464,15 @@ export const EditMaterialPRDashboard = () => {
         expectedDate: "",
         amount: "",
         wbsCode: "",
-        _destroy: 0
+        generalStorage: "GNST",
+        _destroy: 0,
       },
     ]);
   };
 
   const removeItem = (id) => {
-    setItems(prevItems =>
-      prevItems.map(item =>
+    setItems((prevItems) =>
+      prevItems.map((item) =>
         item.id === id ? { ...item, _destroy: 1, amount: "0.00" } : item
       )
     );
@@ -353,14 +480,24 @@ export const EditMaterialPRDashboard = () => {
 
   const calculateTotalAmount = () => {
     return items
-      .filter(item => item._destroy !== 1)
+      .filter((item) => item._destroy !== 1)
       .reduce((total, item) => total + (parseFloat(item.amount) || 0), 0)
       .toFixed(2);
   };
 
+  // ── Validation ────────────────────────────────────────────────────────────
+
   const validateForm = () => {
     if (!supplierDetails.supplier) {
       toast.error("Supplier is required");
+      return false;
+    }
+    if (!supplierDetails.plantDetail) {
+      toast.error("Plant Detail is required");
+      return false;
+    }
+    if (!supplierDetails.type) {
+      toast.error("Type is required");
       return false;
     }
     if (!supplierDetails.prDate) {
@@ -385,13 +522,25 @@ export const EditMaterialPRDashboard = () => {
     }
 
     for (const item of items) {
-      if (item._destroy === 1) continue; // Skip validation for items marked for deletion
+      if (item._destroy === 1) continue;
       if (!item.itemDetails) {
         toast.error("Item Details is required for all items");
         return false;
       }
       if (!item.productDescription) {
         toast.error("Product Additional Text is required for all items");
+        return false;
+      }
+      if (!item.glAccount) {
+        toast.error("GL Account is required for all items");
+        return false;
+      }
+      if (!item.taxCode) {
+        toast.error("Tax Code is required for all items");
+        return false;
+      }
+      if (!item.generalStorage) {
+        toast.error("Storage Location is required for all items");
         return false;
       }
       if (!item.quantity) {
@@ -408,8 +557,30 @@ export const EditMaterialPRDashboard = () => {
       }
     }
 
+    if (showRadio) {
+      if (!wbsSelection) {
+        toast.error("WBS Selection (Individual or All Items) is required");
+        return false;
+      }
+      if (wbsSelection === "overall" && !overallWbs) {
+        toast.error("WBS Code is required when 'All Items' is selected");
+        return false;
+      }
+      if (wbsSelection === "individual") {
+        for (const item of items) {
+          if (item._destroy === 1) continue;
+          if (!item.wbsCode) {
+            toast.error("WBS Code is required for each item when 'Individual' is selected");
+            return false;
+          }
+        }
+      }
+    }
+
     return true;
   };
+
+  // ── Submit ────────────────────────────────────────────────────────────────
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -420,6 +591,7 @@ export const EditMaterialPRDashboard = () => {
     const payload = {
       pms_purchase_order: {
         pms_supplier_id: supplierDetails.supplier,
+        pr_type: supplierDetails.type,
         plant_detail_id: supplierDetails.plantDetail,
         billing_address_id: supplierDetails.billingAddress,
         shipping_address_id: supplierDetails.deliveryAddress,
@@ -438,18 +610,22 @@ export const EditMaterialPRDashboard = () => {
           id: item.item_id,
           pms_inventory_id: item.itemDetails,
           quantity: item.quantity,
-          gl_account: item.glAccount,
+          gl_account: wbsSelection === "overall" ? overallGlCode : item.glAccount,
           tax_code: item.taxCode,
           rate: item.each,
           total_value: item.amount,
           expected_date: item.expectedDate,
           sac_hsn_code: item.sacHsnCodeId,
           prod_desc: item.productDescription,
+          general_storage: item.generalStorage,
           _destroy: item._destroy,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
+      ...(wbsSelection === "overall" && { apply_wbs: "overall" }),
+      ...(wbsSelection === "individual" && { apply_wbs: "individual" }),
       attachments: files,
+      attachments_to_delete: attachmentsToDelete,
     };
 
     try {
@@ -463,29 +639,30 @@ export const EditMaterialPRDashboard = () => {
     }
   };
 
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
     <div className="p-6 mx-auto">
-      <Button
-        variant="ghost"
-        onClick={() => navigate(-1)}
-        className="p-0"
-      >
+      <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
       <h1 className="text-2xl font-bold mb-6">EDIT MATERIAL PR</h1>
+
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
+
+          {/* ── Section 1: Supplier Details ── */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-[#C72030] flex items-center">
-                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                  1
-                </h2>
+            <CardHeader className="bg-[#F6F4EE] mb-4">
+              <CardTitle className="text-lg text-black flex items-center">
+                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
                 SUPPLIER DETAILS
               </CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+              {/* Supplier */}
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Supplier*</InputLabel>
                 <MuiSelect
@@ -496,38 +673,49 @@ export const EditMaterialPRDashboard = () => {
                   displayEmpty
                   sx={fieldStyles}
                 >
-                  <MenuItem value="">
-                    <em>Select Supplier</em>
-                  </MenuItem>
+                  <MenuItem value=""><em>Select Supplier</em></MenuItem>
                   {suppliers.map((supplier) => (
-                    <MenuItem key={supplier.id} value={supplier.id}>
-                      {supplier.name}
-                    </MenuItem>
+                    <MenuItem key={supplier.id} value={supplier.id}>{supplier.name}</MenuItem>
                   ))}
                 </MuiSelect>
               </FormControl>
 
+              {/* Plant Detail */}
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Plant Detail</InputLabel>
+                <InputLabel shrink>Plant Detail*</InputLabel>
                 <MuiSelect
-                  label="Plant Detail"
+                  label="Plant Detail*"
                   name="plantDetail"
                   value={supplierDetails.plantDetail}
                   onChange={handlePlantDetailsChange}
                   displayEmpty
                   sx={fieldStyles}
                 >
-                  <MenuItem value="">
-                    <em>Select Plant Detail</em>
-                  </MenuItem>
+                  <MenuItem value=""><em>Select Plant Detail</em></MenuItem>
                   {plantDetails.map((plantDetail) => (
-                    <MenuItem key={plantDetail.id} value={plantDetail.id}>
-                      {plantDetail.plant_name}
-                    </MenuItem>
+                    <MenuItem key={plantDetail.id} value={plantDetail.id}>{plantDetail.plant_name}</MenuItem>
                   ))}
                 </MuiSelect>
               </FormControl>
 
+              {/* Type */}
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Type*</InputLabel>
+                <MuiSelect
+                  label="Type*"
+                  name="type"
+                  value={supplierDetails.type}
+                  onChange={handleSupplierChange}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value=""><em>Select Type</em></MenuItem>
+                  <MenuItem value="technical">Technical</MenuItem>
+                  <MenuItem value="non-technical">Non-Technical</MenuItem>
+                </MuiSelect>
+              </FormControl>
+
+              {/* PR Date */}
               <TextField
                 label="PR Date*"
                 type="date"
@@ -540,10 +728,12 @@ export const EditMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
                 inputProps={{
-                  min: new Date().toISOString().split("T")[0],
+                  min: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+                  max: new Date().toISOString().split("T")[0],
                 }}
               />
 
+              {/* Billing Address */}
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Billing Address*</InputLabel>
                 <MuiSelect
@@ -554,17 +744,14 @@ export const EditMaterialPRDashboard = () => {
                   displayEmpty
                   sx={fieldStyles}
                 >
-                  <MenuItem value="">
-                    <em>Select Billing Address</em>
-                  </MenuItem>
+                  <MenuItem value=""><em>Select Billing Address</em></MenuItem>
                   {addresses.map((address) => (
-                    <MenuItem key={address.id} value={address.id}>
-                      {address.title}
-                    </MenuItem>
+                    <MenuItem key={address.id} value={address.id}>{address.title}</MenuItem>
                   ))}
                 </MuiSelect>
               </FormControl>
 
+              {/* Delivery Address */}
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                 <InputLabel shrink>Delivery Address*</InputLabel>
                 <MuiSelect
@@ -575,17 +762,14 @@ export const EditMaterialPRDashboard = () => {
                   displayEmpty
                   sx={fieldStyles}
                 >
-                  <MenuItem value="">
-                    <em>Select Delivery Address</em>
-                  </MenuItem>
+                  <MenuItem value=""><em>Select Delivery Address</em></MenuItem>
                   {addresses.map((address) => (
-                    <MenuItem key={address.id} value={address.id}>
-                      {address.title}
-                    </MenuItem>
+                    <MenuItem key={address.id} value={address.id}>{address.title}</MenuItem>
                   ))}
                 </MuiSelect>
               </FormControl>
 
+              {/* Related To */}
               <TextField
                 label="Related To*"
                 name="relatedTo"
@@ -599,6 +783,7 @@ export const EditMaterialPRDashboard = () => {
                 sx={{ mt: 1 }}
               />
 
+              {/* Transportation */}
               <TextField
                 label="Transportation"
                 name="transportation"
@@ -613,13 +798,13 @@ export const EditMaterialPRDashboard = () => {
                 sx={{ mt: 1 }}
               />
 
+              {/* Retention */}
               <TextField
                 label="Retention(%)"
                 name="retention"
                 value={supplierDetails.retention}
                 onChange={(e) => {
                   let value = e.target.value;
-
                   if (/^\d*\.?\d{0,2}$/.test(value)) {
                     handleSupplierChange(e);
                   }
@@ -633,6 +818,7 @@ export const EditMaterialPRDashboard = () => {
                 sx={{ mt: 1 }}
               />
 
+              {/* TDS */}
               <TextField
                 label="TDS(%)"
                 name="tds"
@@ -640,7 +826,6 @@ export const EditMaterialPRDashboard = () => {
                 value={supplierDetails.tds}
                 onChange={(e) => {
                   let value = e.target.value;
-
                   if (/^\d*\.?\d{0,2}$/.test(value)) {
                     handleSupplierChange(e);
                   }
@@ -653,6 +838,7 @@ export const EditMaterialPRDashboard = () => {
                 sx={{ mt: 1 }}
               />
 
+              {/* QC */}
               <TextField
                 label="QC(%)"
                 name="qc"
@@ -660,7 +846,6 @@ export const EditMaterialPRDashboard = () => {
                 value={supplierDetails.qc}
                 onChange={(e) => {
                   let value = e.target.value;
-
                   if (/^\d*\.?\d{0,2}$/.test(value)) {
                     handleSupplierChange(e);
                   }
@@ -673,6 +858,7 @@ export const EditMaterialPRDashboard = () => {
                 sx={{ mt: 1 }}
               />
 
+              {/* Payment Tenure */}
               <TextField
                 label="Payment Tenure(In Days)"
                 name="paymentTenure"
@@ -687,6 +873,7 @@ export const EditMaterialPRDashboard = () => {
                 sx={{ mt: 1 }}
               />
 
+              {/* Advance Amount */}
               <TextField
                 label="Advance Amount"
                 name="advanceAmount"
@@ -694,7 +881,6 @@ export const EditMaterialPRDashboard = () => {
                 value={supplierDetails.advanceAmount}
                 onChange={(e) => {
                   let value = e.target.value;
-
                   if (/^\d*\.?\d{0,2}$/.test(value)) {
                     handleSupplierChange(e);
                   }
@@ -707,6 +893,7 @@ export const EditMaterialPRDashboard = () => {
                 sx={{ mt: 1 }}
               />
 
+              {/* Terms & Conditions */}
               <TextField
                 label="Terms & Conditions*"
                 name="termsConditions"
@@ -739,14 +926,9 @@ export const EditMaterialPRDashboard = () => {
                 }}
               />
 
+              {/* WBS Radio */}
               {showRadio && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "start",
-                  }}
-                >
+                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "start" }}>
                   <FormLabel component="legend" sx={{ minWidth: "80px", fontSize: "14px" }}>
                     Apply WBS
                   </FormLabel>
@@ -761,43 +943,59 @@ export const EditMaterialPRDashboard = () => {
                 </Box>
               )}
 
+              {/* Overall WBS Code */}
               {wbsSelection === "overall" && (
-                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel shrink>WBS Code*</InputLabel>
-                  <MuiSelect
-                    label="WBS Code*"
-                    value={overallWbs}
-                    onChange={(e) => setOverallWbs(e.target.value)}
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="">
-                      <em>Select WBS Code</em>
-                    </MenuItem>
-                    {wbsCodes.map((wbs) => (
-                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                        {wbs.wbs_code}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                <div className="flex gap-2 items-end">
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>WBS Code*</InputLabel>
+                    <MuiSelect
+                      label="WBS Code*"
+                      value={overallWbs}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setOverallWbs(value);
+                        if (value) fetchGlCodeForOverallWbs(value);
+                      }}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value=""><em>Select WBS Code</em></MenuItem>
+                      {wbsCodes.map((wbs) => (
+                        <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>{wbs.wbs_code}</MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+              )}
+
+              {/* Overall GL Code (auto-populated) */}
+              {wbsSelection === "overall" && overallWbs && (
+                <TextField
+                  label="GL Code (Auto-populated)"
+                  value={overallGlCode}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles, readOnly: true }}
+                  sx={{ mt: 2 }}
+                  disabled
+                />
               )}
             </CardContent>
           </Card>
 
+          {/* ── Section 2: Item Details ── */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-orange-600 flex items-center justify-between">
-                <div className="flex items-center text-[#C72030]">
-                  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                    2
-                  </h2>
+            <CardHeader className="bg-[#F6F4EE] mb-4">
+              <CardTitle className="text-lg text-black flex items-center justify-between">
+                <div className="flex items-center">
+                  <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
                   ITEM DETAILS
                 </div>
                 <Button
                   onClick={addItem}
                   size="sm"
-                  className="bg-purple-600 hover:bg-purple-700"
+                  className="bg-[#C72030] hover:bg-[#C72030]/90"
                   type="button"
                 >
                   Add Item
@@ -806,13 +1004,13 @@ export const EditMaterialPRDashboard = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               {items
-                .filter(item => !item._destroy)
+                .filter((item) => item._destroy !== 1)
                 .map((item) => (
                   <div
                     key={item.id}
                     className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg relative"
                   >
-                    {items.length > 1 && (
+                    {items.filter((i) => i._destroy !== 1).length > 1 && (
                       <Button
                         onClick={() => removeItem(item.id)}
                         size="sm"
@@ -822,6 +1020,7 @@ export const EditMaterialPRDashboard = () => {
                       </Button>
                     )}
 
+                    {/* Item Details */}
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                       <InputLabel shrink>Item Details*</InputLabel>
                       <MuiSelect
@@ -834,37 +1033,31 @@ export const EditMaterialPRDashboard = () => {
                         displayEmpty
                         sx={fieldStyles}
                       >
-                        <MenuItem value="">
-                          <em>Select Inventory</em>
-                        </MenuItem>
+                        <MenuItem value=""><em>Select Inventory</em></MenuItem>
                         {inventories.map((inventory) => (
-                          <MenuItem key={inventory.id} value={inventory.id}>
-                            {inventory.name}
-                          </MenuItem>
+                          <MenuItem key={inventory.id} value={inventory.id}>{inventory.name}</MenuItem>
                         ))}
                       </MuiSelect>
                     </FormControl>
 
+                    {/* SAC/HSN Code */}
                     <TextField
                       label="SAC/HSN Code"
                       value={item.sacHsnCode}
-                      onChange={(e) =>
-                        handleItemChange(item.id, "sacHsnCode", e.target.value)
-                      }
-                      placeholder="Enter Code"
+                      placeholder="Auto-populated from material master"
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
+                      InputProps={{ sx: fieldStyles, readOnly: true }}
                       sx={{ mt: 1 }}
+                      disabled
                     />
 
+                    {/* Product Additional Text */}
                     <TextField
                       label="Product Additional Text*"
                       value={item.productDescription}
-                      onChange={(e) =>
-                        handleItemChange(item.id, "productDescription", e.target.value)
-                      }
+                      onChange={(e) => handleItemChange(item.id, "productDescription", e.target.value)}
                       placeholder="Product Additional Text"
                       fullWidth
                       variant="outlined"
@@ -873,47 +1066,131 @@ export const EditMaterialPRDashboard = () => {
                       sx={{ mt: 1 }}
                     />
 
-                    <TextField
-                      label="GL Account"
-                      value={item.glAccount}
-                      onChange={(e) => handleItemChange(item.id, "glAccount", e.target.value)}
-                      placeholder="GL Account"
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
-                    />
+                    {/* WBS Code (individual) */}
+                    {wbsSelection === "individual" && (
+                      <div className="flex gap-2 items-end">
+                        <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                          <InputLabel shrink>WBS Code*</InputLabel>
+                          <MuiSelect
+                            label="WBS Code*"
+                            value={item.wbsCode}
+                            onChange={(e) => handleItemChange(item.id, "wbsCode", e.target.value)}
+                            displayEmpty
+                            sx={fieldStyles}
+                          >
+                            <MenuItem value=""><em>Select WBS Code</em></MenuItem>
+                            {wbsCodes.map((wbs) => (
+                              <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>{wbs.wbs_code}</MenuItem>
+                            ))}
+                          </MuiSelect>
+                        </FormControl>
+                        {item.wbsCode && (
+                          <Button
+                            variant="ghost"
+                            type="button"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedWbsCode(item.wbsCode);
+                              setIsBudgetModalOpen(true);
+                            }}
+                            className="mb-1"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    )}
 
-                    <TextField
-                      label="Tax Code"
-                      value={item.taxCode}
-                      onChange={(e) => handleItemChange(item.id, "taxCode", e.target.value)}
-                      placeholder="Tax Code"
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
-                    />
+                    {/* GL Account */}
+                    {wbsSelection !== "overall" && (
+                      <>
+                        {wbsSelection === "individual" && wbsCodes.length > 0 ? (
+                          <TextField
+                            label="GL Account*"
+                            value={item.glAccount}
+                            placeholder="Auto-populated after WBS selection"
+                            fullWidth
+                            variant="outlined"
+                            InputLabelProps={{ shrink: true }}
+                            InputProps={{ sx: fieldStyles, readOnly: true }}
+                            sx={{ mt: 1 }}
+                            disabled
+                          />
+                        ) : (
+                          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                            <InputLabel shrink>GL Account*</InputLabel>
+                            <MuiSelect
+                              label="GL Account*"
+                              value={item.glAccount}
+                              onChange={(e) => handleItemChange(item.id, "glAccount", e.target.value)}
+                              displayEmpty
+                              sx={fieldStyles}
+                            >
+                              <MenuItem value=""><em>Select GL Account</em></MenuItem>
+                              {glAccountOptions.map((option) => (
+                                <MenuItem key={option.id} value={option.content.code}>
+                                  {option.content.code} - {option.content.name}
+                                </MenuItem>
+                              ))}
+                            </MuiSelect>
+                          </FormControl>
+                        )}
+                      </>
+                    )}
 
+                    {/* Tax Code */}
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel shrink>Tax Code*</InputLabel>
+                      <MuiSelect
+                        label="Tax Code*"
+                        value={item.taxCode}
+                        onChange={(e) => handleItemChange(item.id, "taxCode", e.target.value)}
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select Tax Code</em></MenuItem>
+                        {taxCodeOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.content.code}>
+                            {option.content.code} - {option.content.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+
+                    {/* Storage Location */}
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel shrink>Storage Location*</InputLabel>
+                      <MuiSelect
+                        label="Storage Location*"
+                        value={item.generalStorage}
+                        onChange={(e) => handleItemChange(item.id, "generalStorage", e.target.value)}
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select Storage Location</em></MenuItem>
+                        {storageLocationOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.content.code}>
+                            {option.content.code} - {option.content.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+
+                    {/* Expected Date */}
                     <TextField
                       label="Expected Date*"
                       type="date"
                       value={item.expectedDate}
-                      onChange={(e) =>
-                        handleItemChange(item.id, "expectedDate", e.target.value)
-                      }
+                      onChange={(e) => handleItemChange(item.id, "expectedDate", e.target.value)}
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
                       InputProps={{ sx: fieldStyles }}
-                      inputProps={{
-                        min: new Date().toISOString().split("T")[0],
-                      }}
+                      inputProps={{ min: new Date().toISOString().split("T")[0] }}
                       sx={{ mt: 1 }}
                     />
 
+                    {/* Rate */}
                     <TextField
                       label="Rate"
                       value={item.each}
@@ -932,12 +1209,11 @@ export const EditMaterialPRDashboard = () => {
                       sx={{ mt: 1 }}
                     />
 
+                    {/* Quantity */}
                     <TextField
                       label="Quantity*"
                       value={item.quantity}
-                      onChange={(e) =>
-                        handleItemChange(item.id, "quantity", e.target.value)
-                      }
+                      onChange={(e) => handleItemChange(item.id, "quantity", e.target.value)}
                       placeholder="Enter Number"
                       fullWidth
                       variant="outlined"
@@ -947,6 +1223,7 @@ export const EditMaterialPRDashboard = () => {
                       sx={{ mt: 1 }}
                     />
 
+                    {/* Amount */}
                     <TextField
                       label="Amount*"
                       value={item.amount}
@@ -957,46 +1234,24 @@ export const EditMaterialPRDashboard = () => {
                       InputProps={{ sx: fieldStyles, readOnly: true }}
                       sx={{ mt: 1 }}
                     />
-
-                    {wbsSelection === "individual" && (
-                      <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                        <InputLabel shrink>WBS Code*</InputLabel>
-                        <MuiSelect
-                          label="WBS Code*"
-                          value={item.wbsCode}
-                          onChange={(e) => handleItemChange(item.id, "wbsCode", e.target.value)}
-                          displayEmpty
-                          sx={fieldStyles}
-                        >
-                          <MenuItem value="">
-                            <em>Select WBS Code</em>
-                          </MenuItem>
-                          {wbsCodes.map((wbs) => (
-                            <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                              {wbs.wbs_code}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                    )}
                   </div>
                 ))}
             </CardContent>
           </Card>
 
+          {/* Total */}
           <div className="flex items-center justify-end">
             <Button className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed" type="button">
               Total Amount: {calculateTotalAmount()}
             </Button>
           </div>
 
+          {/* ── Section 3: Attachments ── */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-[#C72030] flex items-center">
-                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                  3
-                </h2>
-                ATTACHMENTS
+            <CardHeader className="bg-[#F6F4EE] mb-4">
+              <CardTitle className="text-lg text-black flex items-center">
+                <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">3</span>
+                Attachments
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -1009,6 +1264,7 @@ export const EditMaterialPRDashboard = () => {
                   <span className="font-medium">Drag & Drop or Click to Upload</span>
                   <input
                     type="file"
+                    accept=".pdf"
                     multiple
                     onChange={handleFileChange}
                     className="hidden"
@@ -1016,15 +1272,21 @@ export const EditMaterialPRDashboard = () => {
                     ref={fileInputRef}
                   />
                   <span className="ml-1">
-                    {(files.length + existingAttachments.length) > 0
+                    {files.length + existingAttachments.length > 0
                       ? `${files.length + existingAttachments.length} file(s) selected`
                       : "No files chosen"}
                   </span>
+                </div>
+                <div className="text-xs text-gray-500 mt-3 space-y-1">
+                  <p>Accepts up to 12 MB files</p>
+                  <p>Supported formats: PDF</p>
                 </div>
               </div>
 
               {(files.length > 0 || existingAttachments.length > 0) && (
                 <div className="flex items-center flex-wrap gap-4 my-6">
+
+                  {/* Existing attachments */}
                   {existingAttachments.map((attachment, index) => {
                     const isImage = attachment.url.match(/\.(jpeg|jpg|png)$/i);
                     const isPdf = attachment.url.match(/\.pdf$/i);
@@ -1042,12 +1304,7 @@ export const EditMaterialPRDashboard = () => {
                               className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
                               title="View"
                               onClick={() => {
-                                setSelectedDoc({
-                                  id: attachment.id,
-                                  url: attachment.url,
-                                  document_name: attachment.name,
-                                  document_file_name: attachment.name,
-                                });
+                                setSelectedDoc({ id: attachment.id, url: attachment.url, document_name: attachment.name, document_file_name: attachment.name });
                                 setIsModalOpen(true);
                               }}
                               type="button"
@@ -1059,12 +1316,7 @@ export const EditMaterialPRDashboard = () => {
                               alt={attachment.name}
                               className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                               onClick={() => {
-                                setSelectedDoc({
-                                  id: attachment.id,
-                                  url: attachment.url,
-                                  document_name: attachment.name,
-                                  document_file_name: attachment.name,
-                                });
+                                setSelectedDoc({ id: attachment.id, url: attachment.url, document_name: attachment.name, document_file_name: attachment.name });
                                 setIsModalOpen(true);
                               }}
                             />
@@ -1100,6 +1352,8 @@ export const EditMaterialPRDashboard = () => {
                       </div>
                     );
                   })}
+
+                  {/* New files */}
                   {files.map((file, index) => {
                     const isImage = file.type === "image/jpeg" || file.type === "image/png";
                     const isPdf = file.type === "application/pdf";
@@ -1117,12 +1371,7 @@ export const EditMaterialPRDashboard = () => {
                               className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
                               title="View"
                               onClick={() => {
-                                setSelectedDoc({
-                                  id: index,
-                                  url: URL.createObjectURL(file),
-                                  document_name: file.name,
-                                  document_file_name: file.name,
-                                });
+                                setSelectedDoc({ id: index, url: URL.createObjectURL(file), document_name: file.name, document_file_name: file.name });
                                 setIsModalOpen(true);
                               }}
                               type="button"
@@ -1134,12 +1383,7 @@ export const EditMaterialPRDashboard = () => {
                               alt={file.name}
                               className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                               onClick={() => {
-                                setSelectedDoc({
-                                  id: index,
-                                  url: URL.createObjectURL(file),
-                                  document_name: file.name,
-                                  document_file_name: file.name,
-                                });
+                                setSelectedDoc({ id: index, url: URL.createObjectURL(file), document_name: file.name, document_file_name: file.name });
                                 setIsModalOpen(true);
                               }}
                             />
@@ -1199,6 +1443,52 @@ export const EditMaterialPRDashboard = () => {
         selectedDoc={selectedDoc}
         setSelectedDoc={setSelectedDoc}
       />
+
+      {/* WBS Budget Modal */}
+      {isBudgetModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">WBS Budget Details - {selectedWbsCode}</h2>
+              <button
+                onClick={() => setIsBudgetModalOpen(false)}
+                className="p-1 hover:bg-gray-200 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-gray-300">
+                <thead className="bg-[#C72030] text-white">
+                  <tr>
+                    <th className="border border-gray-300 px-4 py-2 text-left">Budget Type</th>
+                    <th className="border border-gray-300 px-4 py-2 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="hover:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2 font-medium">Total Budget</td>
+                    <td className="border border-gray-300 px-4 py-2 text-right">₹ 5,00,000.00</td>
+                  </tr>
+                  <tr className="hover:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2 font-medium">Consumed Budget</td>
+                    <td className="border border-gray-300 px-4 py-2 text-right">₹ 2,50,000.00</td>
+                  </tr>
+                  <tr className="bg-[#fafafa] hover:bg-gray-100">
+                    <td className="border border-gray-300 px-4 py-2 font-bold">Current Budget</td>
+                    <td className="border border-gray-300 px-4 py-2 text-right font-bold text-green-600">₹ 2,50,000.00</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button onClick={() => setIsBudgetModalOpen(false)} variant="outline">
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

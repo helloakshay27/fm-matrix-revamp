@@ -28,7 +28,7 @@ const cleanDiscussionPoints = (rawText: string) => {
     return cleaned;
   }
   if (rawText.includes("---")) {
-    let cleaned = rawText.split("---")[0];
+    const cleaned = rawText.split("---")[0];
     return cleaned.trim();
   }
   return rawText.trim();
@@ -43,11 +43,76 @@ const stripMissedMembersPrefix = (text: string): string => {
   return text;
 };
 
-const compileMeetingNotes = (historyData: any): string => {
-  if (!historyData) return "";
+const normalizeName = (name: any): string =>
+  String(name || "").trim().replace(/\s+/g, " ").toLowerCase();
+
+const getItemTitle = (item: any): string => {
+  if (!item) return "";
+  if (typeof item === "string") return item;
+  if (typeof item === "object")
+    return String(item.title || item.name || item.text || "");
+  return String(item);
+};
+
+const toItemArray = (value: any): any[] => {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.items)) return value.items;
+  return [];
+};
+
+const mergeUniqueItems = (primary: any = [], fallback: any = []) => {
+  const merged: any[] = [];
+  const seen = new Set<string>();
+  const addItem = (item: any) => {
+    const title = getItemTitle(item).trim();
+    const key = title.toLowerCase();
+    if (!title || seen.has(key)) return;
+    seen.add(key);
+    merged.push(item);
+  };
+  toItemArray(primary).forEach(addItem);
+  toItemArray(fallback).forEach(addItem);
+  return merged;
+};
+
+const getReportDataSource = (report: any) => {
+  const reportData = report?.report_data || {};
+  const draftData = report?.daily_report?.report_data || {};
+  const hasReportData =
+    reportData &&
+    typeof reportData === "object" &&
+    Object.keys(reportData).length > 0;
+  const hasDraftData =
+    draftData &&
+    typeof draftData === "object" &&
+    Object.keys(draftData).length > 0;
+
+  if (hasReportData && hasDraftData) {
+    return {
+      ...draftData,
+      ...reportData,
+      tasks_issues: Array.isArray(reportData.tasks_issues)
+        ? mergeUniqueItems(reportData.tasks_issues, draftData.tasks_issues || [])
+        : draftData.tasks_issues || [],
+      tomorrow_plan: Array.isArray(reportData.tomorrow_plan)
+        ? mergeUniqueItems(reportData.tomorrow_plan, draftData.tomorrow_plan || [])
+        : draftData.tomorrow_plan || [],
+      accomplishments:
+        reportData.accomplishments?.items ||
+        (Array.isArray(reportData.accomplishments)
+          ? reportData.accomplishments
+          : draftData.accomplishments || []),
+    };
+  }
+
+  return hasReportData ? reportData : draftData;
+};
+
+const getMeetingNotesData = (historyData: any) => {
+  if (!historyData) return {};
+
   const memberReports: any[] = historyData.member_reports || [];
   const meetingHeadUid = historyData.config?.meeting_head?.id;
-
   const headMemberReport =
     memberReports.find(
       (r: any) => r.user_id === meetingHeadUid && r.status === "submitted"
@@ -57,11 +122,32 @@ const compileMeetingNotes = (historyData: any): string => {
     ) ||
     memberReports.find((r: any) => r.status === "submitted");
 
-  const meetingNotesData = headMemberReport?.report_data?.meeting_notes || {};
+  return (
+    historyData.report_data?.meeting_notes ||
+    headMemberReport?.report_data?.meeting_notes ||
+    {}
+  );
+};
+
+const compileMeetingNotes = (historyData: any): string => {
+  if (!historyData) return "";
+  const memberReports: any[] = historyData.member_reports || [];
+  const meetingNotesData = getMeetingNotesData(historyData);
+  const detailedReports = Array.isArray(meetingNotesData?.detailed_reports)
+    ? meetingNotesData.detailed_reports
+    : [];
   let rawDiscussionPoints = "";
 
   // Get missed members directly from root data structure
-  let missedMembers: any[] = historyData.missed_members || [];
+  const meetingNotesMissedMembers = Array.isArray(
+    meetingNotesData?.missed_report_members
+  )
+    ? meetingNotesData.missed_report_members
+    : [];
+  const missedMembers: any[] =
+    meetingNotesMissedMembers.length > 0
+      ? meetingNotesMissedMembers
+      : historyData.missed_members || [];
 
   if (Array.isArray(meetingNotesData)) {
     rawDiscussionPoints = meetingNotesData[0]?.key_discussion_points || "";
@@ -92,15 +178,50 @@ const compileMeetingNotes = (historyData: any): string => {
 
   let detailedText = "";
 
-  // Always generate directly from member_reports to capture dynamic user data
-  const submittedReports = memberReports.filter(
-    (r: any) => r.status !== "pending" || !!r.daily_report || !!r.report_data
-  );
+  const submittedReports =
+    detailedReports.length > 0
+      ? detailedReports
+      : memberReports.filter(
+          (r: any) =>
+            r.status !== "pending" || !!r.daily_report || !!r.report_data
+        );
 
   submittedReports.forEach((report: any) => {
+    const matchingMemberReport =
+      detailedReports.length > 0
+        ? memberReports.find(
+            (memberReport: any) =>
+              Number(memberReport.user_id) === Number(report.user_id)
+          ) ||
+          memberReports.find(
+            (memberReport: any) =>
+              normalizeName(memberReport.name) === normalizeName(report.name)
+          )
+        : report;
+    const memberRawSource = matchingMemberReport
+      ? getReportDataSource(matchingMemberReport)
+      : {};
     // Check both submitted report_data and drafted daily_report.report_data
     const rawSource =
-      report.report_data || report.daily_report?.report_data || {};
+      detailedReports.length > 0
+        ? {
+            ...memberRawSource,
+            ...report,
+            accomplishments: Array.isArray(report.accomplishments)
+              ? mergeUniqueItems(report.accomplishments, memberRawSource.accomplishments || [])
+              : memberRawSource.accomplishments,
+            tomorrow_plan: Array.isArray(report.tomorrow_plan)
+              ? mergeUniqueItems(report.tomorrow_plan, memberRawSource.tomorrow_plan || [])
+              : memberRawSource.tomorrow_plan,
+            tasks_issues: Array.isArray(report.tasks_issues)
+              ? mergeUniqueItems(report.tasks_issues, memberRawSource.tasks_issues || [])
+              : memberRawSource.tasks_issues,
+            kpis:
+              Array.isArray(report.kpis) || typeof report.kpis === "object"
+                ? report.kpis
+                : memberRawSource.kpis,
+          }
+        : getReportDataSource(report);
 
     let accRaw: any[] = [];
     if (Array.isArray(rawSource.accomplishments))
@@ -131,9 +252,13 @@ const compileMeetingNotes = (historyData: any): string => {
     const kpis = rawSource.past_kpis || rawSource.kpis || report.kpis || [];
 
     detailedText += `**${(report.name || "Unknown Member").trim()}**\n`;
-    detailedText += `**Attendance:** ${isAbsent ? "✗ Absent" : "✓ Present"}\n`;
+    detailedText += `**Attendance:** ${
+      report.attendance || (isAbsent ? "✗ Absent" : "✓ Present")
+    }\n`;
 
-    if (selfRatingVal !== null && selfRatingVal !== undefined) {
+    if (report.self_rating) {
+      detailedText += `**Self Rating:** ${report.self_rating}\n`;
+    } else if (selfRatingVal !== null && selfRatingVal !== undefined) {
       detailedText += `**Self Rating:** ${selfRatingVal}/10\n`;
     }
 
@@ -212,6 +337,22 @@ const compileMeetingNotes = (historyData: any): string => {
   }
 
   return text.trim();
+};
+
+const hasMeetingDataForDate = (historyData: any, selectedDate: string) => {
+  if (!historyData) return false;
+
+  const rootMeetingNotes = historyData.report_data?.meeting_notes;
+  const meetingNotesData = getMeetingNotesData(historyData);
+  const hasDetailedReports =
+    Array.isArray(meetingNotesData?.detailed_reports) &&
+    meetingNotesData.detailed_reports.length > 0;
+  const hasRootReportData =
+    historyData.report_data &&
+    typeof historyData.report_data === "object" &&
+    Object.keys(historyData.report_data).length > 0;
+
+  return !!rootMeetingNotes || hasRootReportData || hasDetailedReports;
 };
 
 // ── CUSTOM SELECT ──
@@ -367,21 +508,43 @@ const MeetingCard = ({
     setLocalData(historyData);
   }, [historyData]);
 
+  const meetingNotesData = getMeetingNotesData(localData);
+  const detailedReports = Array.isArray(meetingNotesData?.detailed_reports)
+    ? meetingNotesData.detailed_reports
+    : [];
   const memberReports: any[] = localData?.member_reports || [];
   const submittedCount =
-    localData?.submitted ??
+    detailedReports.length ||
     memberReports.filter((r: any) => r.status === "submitted").length;
+  const meetingNotesMissedMembers = Array.isArray(
+    meetingNotesData?.missed_report_members
+  )
+    ? meetingNotesData.missed_report_members
+    : [];
+  const rootMissedMembers = Array.isArray(localData?.missed_members)
+    ? localData.missed_members
+    : [];
   const missedCount =
-    localData?.missed ??
+    meetingNotesMissedMembers.length ||
+    rootMissedMembers.length ||
     memberReports.filter(
       (r: any) => r.status === "pending" || r.status === "missed"
     ).length;
+  const missedMemberNamesSource = Array.isArray(
+    meetingNotesData?.missed_report_members
+  )
+    ? meetingNotesData.missed_report_members
+    : localData?.missed_members || [];
   const meetingHeadReport =
+    memberReports.find((r: any) =>
+      detailedReports.some((d: any) => Number(d.user_id) === Number(r.user_id))
+    ) ||
     memberReports.find(
       (r: any) =>
         r.user_id === localData?.config?.meeting_head?.id &&
         r.status === "submitted"
-    ) || memberReports.find((r: any) => r.status === "submitted");
+    ) ||
+    memberReports.find((r: any) => r.status === "submitted");
   const meetingSubmittedAt = meetingHeadReport?.submitted_at || null;
   const compiledNotes = compileMeetingNotes(localData);
 
@@ -573,7 +736,7 @@ const MeetingCard = ({
     }
   };
 
-  if (!localData || submittedCount === 0) return null;
+  if (!hasMeetingDataForDate(localData, selectedDate)) return null;
 
   return (
     <>
@@ -600,25 +763,23 @@ const MeetingCard = ({
                 >
                   {submittedCount} attendees
                 </span>
-                {missedCount > 0 && (
-                  <span
-                    className="flex items-center gap-2 text-xs font-bold"
-                    style={{ color: "rgba(255,255,255,0.7)" }}
-                  >
-                    <span className="flex items-center gap-1">
-                      Submitted:
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-400 text-white text-[10px] font-black">
-                        {submittedCount}
-                      </span>
-                    </span>
-                    <span className="flex items-center gap-1">
-                      Missed:
-                      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-400 text-white text-[10px] font-black">
-                        {missedCount}
-                      </span>
+                <span
+                  className="flex items-center gap-2 text-xs font-bold"
+                  style={{ color: "rgba(255,255,255,0.7)" }}
+                >
+                  <span className="flex items-center gap-1">
+                    Submitted:
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-400 text-white text-[10px] font-black">
+                      {submittedCount}
                     </span>
                   </span>
-                )}
+                  <span className="flex items-center gap-1">
+                    Missed:
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-400 text-white text-[10px] font-black">
+                      {missedCount}
+                    </span>
+                  </span>
+                </span>
               </div>
               {meetingSubmittedAt && (
                 <div
@@ -853,11 +1014,7 @@ const AllMeetingsView = ({
 
         if (isDeleted) return null;
 
-        const memberReports: any[] = data?.member_reports || [];
-        const submittedCount = memberReports.filter(
-          (r: any) => r.status === "submitted"
-        ).length;
-        const hasData = submittedCount > 0;
+        const hasData = hasMeetingDataForDate(data, selectedDate);
 
         return (
           <div key={id}>
@@ -995,11 +1152,7 @@ const HistoryTab = ({ initialDate }: { initialDate?: string }) => {
     : (meetings.find((m) => String(m.id) === String(selectedMeetingId))?.name ??
       "Meeting");
 
-  const memberReports: any[] = historyData?.member_reports || [];
-  const submittedCount = memberReports.filter(
-    (r: any) => r.status === "submitted"
-  ).length;
-  const hasSubmissions = submittedCount > 0;
+  const hasSubmissions = hasMeetingDataForDate(historyData, selectedDate);
 
   const meetingOptions = [
     { value: "all", label: "All Meetings" },

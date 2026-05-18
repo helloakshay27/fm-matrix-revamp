@@ -57,17 +57,26 @@ import { assetService } from '@/services/assetService';
 
 // Styled Components
 const RedButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#C72030',
-  color: 'white',
+  backgroundColor: '#DA7756',
+  color: '#ffffff !important',
   borderRadius: 4,
   textTransform: 'none',
   padding: '10px 20px',
   fontFamily: 'Work Sans, sans-serif',
   fontWeight: 500,
-  boxShadow: '0 2px 4px rgba(199, 32, 48, 0.2)',
+  boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
+  '&.MuiButton-root': {
+    color: '#ffffff !important',
+  },
   '&:hover': {
-    backgroundColor: '#B8252F',
-    boxShadow: '0 4px 8px rgba(199, 32, 48, 0.3)',
+    backgroundColor: '#DA7756',
+    color: '#ffffff !important',
+    boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
+  },
+  '&.Mui-disabled': {
+    backgroundColor: '#DA7756',
+    color: '#ffffff !important',
+    opacity: 0.65,
   },
 }));
 

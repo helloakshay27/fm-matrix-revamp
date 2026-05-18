@@ -15,6 +15,8 @@ interface LayoutContextType {
   setCurrentSection: (section: string) => void;
   isSidebarCollapsed: boolean;
   setIsSidebarCollapsed: (collapsed: boolean) => void;
+  isMobileSidebarOpen: boolean;
+  setIsMobileSidebarOpen: (open: boolean) => void;
   getLayoutByCompanyId: (companyId: number | null) => LayoutConfig;
 }
 
@@ -41,6 +43,8 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
     const savedState = localStorage.getItem("sidebarCollapsed");
     return savedState ? JSON.parse(savedState) : false;
   });
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] =
+    useState<boolean>(false);
 
   // Get current selected company from Redux store
   const { selectedCompany } = useSelector((state: RootState) => state.project);
@@ -144,6 +148,11 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
       "sidebarCollapsed",
       JSON.stringify(isSidebarCollapsed)
     );
+    if (isSidebarCollapsed) {
+      document.body.classList.add("sidebar-collapsed");
+    } else {
+      document.body.classList.remove("sidebar-collapsed");
+    }
   }, [isSidebarCollapsed]);
 
   // Company ID to layout mapping function
@@ -158,6 +167,8 @@ export const LayoutProvider: React.FC<LayoutProviderProps> = ({ children }) => {
         setCurrentSection,
         isSidebarCollapsed,
         setIsSidebarCollapsed,
+        isMobileSidebarOpen,
+        setIsMobileSidebarOpen,
         getLayoutByCompanyId,
       }}
     >

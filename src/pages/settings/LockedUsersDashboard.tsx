@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import {
   Search,
   RefreshCw,
@@ -20,6 +21,7 @@ import {
   Mail,
   Phone,
   AlertCircle,
+  Check,
 } from "lucide-react";
 import {
   Dialog,
@@ -47,9 +49,15 @@ interface LockedUser {
   designation?: string;
 }
 
+interface PaginationData {
+  current_page: number;
+  total_count: number;
+  total_pages: number;
+}
+
 interface LockedUsersResponse {
   locked_users: LockedUser[];
-  total_count: number;
+  pagination: PaginationData;
 }
 
 export const LockedUsersDashboard = () => {
@@ -60,13 +68,26 @@ export const LockedUsersDashboard = () => {
   const [selectedUser, setSelectedUser] = useState<LockedUser | null>(null);
   const [unlockDialogOpen, setUnlockDialogOpen] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [bulkUnlocking, setBulkUnlocking] = useState(false);
+  const [bulkUnlockDialogOpen, setBulkUnlockDialogOpen] = useState(false);
+  const [pagination, setPagination] = useState<PaginationData>({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 0,
+  });
 
   // Fetch locked users
-  const fetchLockedUsers = async () => {
+  const fetchLockedUsers = async (page: number = 1) => {
     setLoading(true);
     try {
+      const baseUrl = location.pathname.startsWith("/master")
+        ? "/pms/users/locked_users.json?selected_site_wise=true"
+        : "/pms/users/locked_users.json";
+      const url = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}page=${page}`;
+
       const response = await fetch(
-        getFullUrl(`${location.pathname.startsWith("/master") ? "/pms/users/locked_users.json?selected_site_wise=true" : "/pms/users/locked_users.json"}`),
+        getFullUrl(url),
         {
           method: "GET",
           headers: {
@@ -83,7 +104,11 @@ export const LockedUsersDashboard = () => {
       const data: LockedUsersResponse = await response.json();
       setLockedUsers(data.locked_users || []);
       setFilteredUsers(data.locked_users || []);
-      
+
+      if (data.pagination) {
+        setPagination(data.pagination);
+      }
+
       if (data.locked_users?.length === 0) {
         toast.info("No locked users found");
       }
@@ -154,7 +179,7 @@ export const LockedUsersDashboard = () => {
       // Remove unlocked user from the list
       setLockedUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
       setFilteredUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
-      
+
       setUnlockDialogOpen(false);
       setSelectedUser(null);
     } catch (error: any) {
@@ -184,6 +209,213 @@ export const LockedUsersDashboard = () => {
     });
   };
 
+  // Handle individual checkbox selection
+  const handleCheckboxChange = (userId: number) => {
+    const newSelectedIds = new Set(selectedIds);
+    if (newSelectedIds.has(userId)) {
+      newSelectedIds.delete(userId);
+    } else {
+      newSelectedIds.add(userId);
+    }
+    setSelectedIds(newSelectedIds);
+  };
+
+  // Handle select all checkbox
+  const handleSelectAll = () => {
+    if (selectedIds.size === filteredUsers.length) {
+      setSelectedIds(new Set());
+    } else {
+      const allIds = new Set(filteredUsers.map((user) => user.id));
+      setSelectedIds(allIds);
+    }
+  };
+
+  // Handle bulk unlock users
+  const handleBulkUnlockUsers = async () => {
+    if (selectedIds.size === 0) return;
+
+    setBulkUnlocking(true);
+    try {
+      const response = await fetch(
+        getFullUrl("/pms/users/bulk_unlock_users.json"),
+        {
+          method: "POST",
+          headers: {
+            Authorization: getAuthHeader(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ids: Array.from(selectedIds),
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to unlock user accounts");
+      }
+
+      const result = await response.json();
+      toast.success(
+        `Successfully unlocked ${selectedIds.size} user account${selectedIds.size > 1 ? "s" : ""}`
+      );
+
+      // Remove unlocked users from the list
+      const selectedIdsArray = Array.from(selectedIds);
+      setLockedUsers((prev) =>
+        prev.filter((u) => !selectedIdsArray.includes(u.id))
+      );
+      setFilteredUsers((prev) =>
+        prev.filter((u) => !selectedIdsArray.includes(u.id))
+      );
+
+      // Clear selections
+      setSelectedIds(new Set());
+      setBulkUnlockDialogOpen(false);
+    } catch (error: any) {
+      console.error("Error unlocking users:", error);
+      toast.error(error.message || "Failed to unlock user accounts");
+    } finally {
+      setBulkUnlocking(false);
+    }
+  };
+
+  const handlePageChange = async (page: number) => {
+    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
+      return;
+    }
+
+    try {
+      setPagination((prev) => ({ ...prev, current_page: page }));
+      await fetchLockedUsers(page);
+    } catch (error) {
+      console.error("Error changing page:", error);
+      toast.error("Failed to load page data. Please try again.");
+    }
+  };
+
+  const renderPaginationItems = () => {
+    if (!pagination.total_pages || pagination.total_pages <= 0) {
+      return null;
+    }
+    const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPage = pagination.current_page;
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      items.push(
+        <PaginationItem key={1} className="cursor-pointer">
+          <PaginationLink
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+            aria-disabled={loading}
+            className={loading ? "pointer-events-none opacity-50" : ""}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      if (currentPage > 4) {
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
+          items.push(
+            <PaginationItem key={i} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                aria-disabled={loading}
+                className={loading ? "pointer-events-none opacity-50" : ""}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage > 3 && currentPage < totalPages - 2) {
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i} className="cursor-pointer">
+              <PaginationLink
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+                aria-disabled={loading}
+                className={loading ? "pointer-events-none opacity-50" : ""}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      if (currentPage < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      } else {
+        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
+          if (!items.find((item) => item.key === i.toString())) {
+            items.push(
+              <PaginationItem key={i} className="cursor-pointer">
+                <PaginationLink
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                  aria-disabled={loading}
+                  className={loading ? "pointer-events-none opacity-50" : ""}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      }
+
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages} className="cursor-pointer">
+            <PaginationLink
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+              aria-disabled={loading}
+              className={loading ? "pointer-events-none opacity-50" : ""}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i} className="cursor-pointer">
+            <PaginationLink
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+              aria-disabled={loading}
+              className={loading ? "pointer-events-none opacity-50" : ""}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8">
       {/* Header */}
@@ -194,14 +426,29 @@ export const LockedUsersDashboard = () => {
             Manage and unlock user accounts that have been locked
           </p>
         </div>
-        <Button
-          onClick={fetchLockedUsers}
-          disabled={loading}
-          className="bg-[#C72030] hover:bg-[#a81c29] text-white"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          {selectedIds.size > 0 && (
+            <Button
+              onClick={() => setBulkUnlockDialogOpen(true)}
+              disabled={bulkUnlocking}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <UnlockIcon className="w-4 h-4 mr-2" />
+              Unlock ({selectedIds.size})
+            </Button>
+          )}
+          <Button
+            onClick={() => {
+              setPagination((prev) => ({ ...prev, current_page: 1 }));
+              fetchLockedUsers(1);
+            }}
+            disabled={loading}
+            className="bg-[#C72030] hover:bg-[#a81c29] text-white"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -215,7 +462,7 @@ export const LockedUsersDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">
-              {lockedUsers.length}
+              {pagination.total_count}
             </div>
           </CardContent>
         </Card>
@@ -289,18 +536,43 @@ export const LockedUsersDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-12">
+                      <div
+                        className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${selectedIds.size === filteredUsers.length && filteredUsers.length > 0
+                          ? "bg-[#C72030] border-[#C72030]"
+                          : "border-gray-300 hover:border-gray-400"
+                          }`}
+                        onClick={handleSelectAll}
+                      >
+                        {selectedIds.size > 0 && selectedIds.size === filteredUsers.length && (
+                          <Check className="w-4 h-4 text-white" />
+                        )}
+                      </div>
+                    </TableHead>
                     <TableHead>User</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Department</TableHead>
                     <TableHead>Locked At</TableHead>
                     <TableHead>Failed Attempts</TableHead>
                     <TableHead>Reason</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className={selectedIds.has(user.id) ? "bg-blue-50" : ""}>
+                      <TableCell>
+                        <div
+                          className={`w-5 h-5 rounded border-2 flex items-center justify-center cursor-pointer ${selectedIds.has(user.id)
+                            ? "bg-[#C72030] border-[#C72030]"
+                            : "border-gray-300 hover:border-gray-400"
+                            }`}
+                          onClick={() => handleCheckboxChange(user.id)}
+                        >
+                          {selectedIds.has(user.id) && (
+                            <Check className="w-4 h-4 text-white" />
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-[#C72030] bg-opacity-10 flex items-center justify-center">
@@ -357,16 +629,6 @@ export const LockedUsersDashboard = () => {
                           {user.lock_reason || "Multiple failed login attempts"}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          size="sm"
-                          onClick={() => openUnlockDialog(user)}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          <UnlockIcon className="w-4 h-4 mr-2" />
-                          Unlock
-                        </Button>
-                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -375,6 +637,26 @@ export const LockedUsersDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      <div className="flex justify-center mt-6">
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
+                className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+            {renderPaginationItems()}
+            <PaginationItem>
+              <PaginationNext
+                onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
+                className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
 
       {/* Unlock Confirmation Dialog */}
       <Dialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>
@@ -460,6 +742,57 @@ export const LockedUsersDashboard = () => {
                 <>
                   <UnlockIcon className="w-4 h-4 mr-2" />
                   Unlock Account
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Unlock Confirmation Dialog */}
+      <Dialog open={bulkUnlockDialogOpen} onOpenChange={setBulkUnlockDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unlock Multiple User Accounts</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to unlock <strong>{selectedIds.size} user account{selectedIds.size > 1 ? "s" : ""}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+              <AlertCircle className="w-5 h-5 text-blue-500 mt-0.5" />
+              <div>
+                <div className="text-sm font-medium text-blue-700">Selected Users</div>
+                <div className="text-sm text-blue-600 mt-2">
+                  {selectedIds.size} user account{selectedIds.size > 1 ? "s" : ""} will be unlocked
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setBulkUnlockDialogOpen(false)}
+              disabled={bulkUnlocking}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleBulkUnlockUsers}
+              disabled={bulkUnlocking}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              {bulkUnlocking ? (
+                <>
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Unlocking...
+                </>
+              ) : (
+                <>
+                  <UnlockIcon className="w-4 h-4 mr-2" />
+                  Unlock All
                 </>
               )}
             </Button>

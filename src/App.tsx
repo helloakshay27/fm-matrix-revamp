@@ -5,6 +5,7 @@ import {
   Route,
   Navigate,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -206,6 +207,7 @@ import CompanySetup from "./pages/CompanySetup";
 import EmployeeOfTheMonthSetup from "./pages/EmployeeOfTheMonthSetup";
 import AnnouncementsSetup from "./pages/AnnouncementsSetup";
 import TeamSetup from "./pages/settings/company-hub/team-setup";
+import FaceAuthenticationSetup from "./pages/settings/company-hub/FaceAuthenticationSetup";
 import JobsPage from "./pages/CompanyHub/JobsPage";
 import { EditPermitPage } from "./pages/EditPermitPage";
 
@@ -413,6 +415,7 @@ import OfficeAlternativePage from "./pages/products/OfficeAlternativePage";
 import BudgetingWBSPage from "./pages/products/BudgetingWBSPage";
 import LiquidtextPage from "./pages/products/LiquidtextPage";
 import ViMilesPage from "./pages/products/ViMilesPage";
+import ProductLandingPage from "./pages/products/ProductLandingPage";
 import HRPolicies from "./pages/HRPolicies";
 import Directory from "./pages/Directory";
 import EmployeeFAQ from "./pages/EmployeeFAQ";
@@ -691,6 +694,7 @@ import { ViewChecklistMasterPage } from "./pages/ViewChecklistMasterPage";
 import { UnitMasterPage } from "./pages/UnitMasterPage";
 
 // Import Location Master pages
+import { GoldenQrSetupPage } from "./pages/master/GoldenQrSetupPage";
 import { BuildingPage } from "./pages/master/BuildingPage";
 import { WingPage } from "./pages/master/WingPage";
 import { AreaPage } from "./pages/master/AreaPage";
@@ -1306,6 +1310,7 @@ import MyInboxPage from "./features/inbox/MyInboxPage.tsx";
 import { ExpenseEditPage } from "./pages/ExpenseEditPage.tsx";
 import TaxSetupTabView from "./pages/ClubManagement/TaxSetupTabView.tsx";
 import { BillEdit } from "./pages/ClubManagement/BillEdit.tsx";
+import { RecurringBillEdit } from "./pages/ClubManagement/RecurringBillEdit.tsx";
 
 const queryClient = new QueryClient();
 
@@ -2114,659 +2119,655 @@ function App() {
                             path="/business-compass/tasks-and-issues"
                             element={<BusinessCompassTasksAndIssues />}
                           /> */}
-                        <Route
-                          path="/business-compass/tasks"
-                          element={<ProjectTasksPage />}
-                        />
-                        <Route
-                          path="/business-compass/tasks/:taskId"
-                          element={<ProjectTaskDetails />}
-                        />
-                        <Route
-                          path="/business-compass/issues"
-                          element={<IssuesListPage />}
-                        />
-                        <Route
-                          path="/business-compass/issues/:id"
-                          element={<IssueDetailsPage />}
-                        />
-                        <Route
-                          path="/business-compass/channels"
-                          element={<ChannelsLayout />}
-                        >
                           <Route
-                            index
-                            element={
-                              <div
-                                className={`flex justify-center items-center ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
-                              >
-                                Select a Chat/Group to view messages
-                              </div>
-                            }
+                            path="/business-compass/tasks"
+                            element={<ProjectTasksPage />}
                           />
                           <Route
-                            path="/business-compass/channels/messages/:id"
-                            element={<DMConversation />}
+                            path="/business-compass/tasks/:taskId"
+                            element={<ProjectTaskDetails />}
                           />
                           <Route
-                            path="/business-compass/channels/groups/:id"
-                            element={<GroupConversation />}
+                            path="/business-compass/issues"
+                            element={<IssuesListPage />}
                           />
-                        </Route>
-                        <Route
-                          path="/business-compass/directory-and-chat"
-                          element={<DirectoryAndChat />}
-                        />
-                        <Route
-                          path="/business-compass/feedback"
-                          element={<Feedback />}
-                        />
-                        <Route
-                          path="/business-compass/announcements"
-                          element={<Announcement />}
-                        />
-                        <Route
-                          path="/business-compass/leaderboard"
-                          element={<Leaderboard />}
-                        />
-                        <Route
-                          path="/business-compass/disc-personality-assessment"
-                          element={<DiscPersonalityAssessment />}
-                        />
-                        <Route
-                          path="/business-compass/help-center"
-                          element={<HelpCenter />}
-                        />
-                        <Route
-                          path="/business-compass/bug-reports"
-                          element={<BugReports />}
-                        />
-                        <Route
-                          path="/admin-compass/business-plan-goals"
-                          element={<BusinessPlanAndGoles />}
-                        />
-                        <Route
-                          path="/admin-compass/weekly-meetings"
-                          element={<WeeklyMeetings />}
-                        />
-                        <Route
-                          path="/admin-compass/team-dashboard"
-                          element={<TeamDashboard />}
-                        />
-                        <Route
-                          path="/admin-compass/feedback-dashboard"
-                          element={<FeedbackDashboard />}
-                        />
-                        <Route
-                          path="/admin-compass/systems-sops"
-                          element={<SystemAndSOP />}
-                        />
-                        <Route
-                          path="/admin-compass/disc-report"
-                          element={<DiscReport />}
-                        />
-                        <Route
-                          path="/admin-compass/daily-meeting"
-                          element={<DailyMeeting />}
-                        />
-                        <Route path="/admin-compass/kpi" element={<KPI />} />
-                        {/* Dashboard Routes */}
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route
-                          path="/dashboard/configuration"
-                          element={<DashboardConfiguration />}
-                        />
-                        {/* Holiday Calendar Route */}
-                        <Route
-                          path="/holiday-calendar"
-                          element={<HolidayCalendarPage />}
-                        />
-                        <Route path="/sitemap" element={<Sitemap />} />
-                        {/* Rule Engine Routes */}
-                        <Route
-                          path="/rule-engine/rule-list"
-                          element={<RuleListPage />}
-                        />
-                        <Route
-                          path="/loyalty-rule-engine"
-                          element={<LoyaltyRuleEngineDashboard />}
-                        />
-                        {/* Settings Routes */}
-                        <Route
-                          path="/settings/users"
-                          element={<FMUsersDashboard />}
-                        />
-                        <Route
-                          path="/settings/users/edit-details/:id"
-                          element={<EditFMUserDetailsPage />}
-                        />
-                        <Route
-                          path="/settings/users/clone-role"
-                          element={<CloneRolePage />}
-                        />
-                        <Route
-                          path="/settings/account"
-                          element={<AccountDashboard />}
-                        />
-                        <Route
-                          path="/settings/approval-matrix"
-                          element={<ApprovalMatrixDashboard />}
-                        />
-                        <Route
-                          path="/settings/approval-matrix/add"
-                          element={<AddApprovalMatrixDashboard />}
-                        />
-                        <Route
-                          path="/settings/approval-matrix/edit/:id"
-                          element={<EditApprovalMatrixDashboard />}
-                        />
-                        <Route
-                          path="/settings/account/report-setup"
-                          element={<PDFDownloadPage />}
-                        />
-                        <Route
-                          path="/settings/roles/department"
-                          element={<DepartmentDashboard />}
-                        />
-                        <Route
-                          path="/settings/roles/role"
-                          element={<RoleDashboard />}
-                        />
-                        <Route
-                          path="/settings/roles/role/add"
-                          element={<AddRolePage />}
-                        />
-                        <Route
-                          path="/settings/vi-roles/role/add"
-                          element={<AddRolePageVi />}
-                        />
-                        <Route
-                          path="/settings/users/edit-details/:id"
-                          element={<EditFMUserDetailsPage />}
-                        />
-                        <Route
-                          path="/settings/users/clone-role"
-                          element={<CloneRolePage />}
-                        />
-                        <Route
-                          path="/settings/account"
-                          element={<AccountDashboard />}
-                        />
-                        <Route
-                          path="/settings/account/holiday-calendar"
-                          element={<SettingsHolidayCalendarPage />}
-                        />
-                        <Route
-                          path="/settings/account/shift"
-                          element={<AccountShiftDashboard />}
-                        />
-                        <Route
-                          path="/settings/account/roster"
-                          element={<AccountRosterDashboard />}
-                        />
-                        <Route
-                          path="/settings/account/roster/create"
-                          element={<RosterCreatePage />}
-                        />
-                        <Route
-                          path="/settings/account/roster/detail/:id"
-                          element={<RosterDetailPage />}
-                        />
-                        <Route
-                          path="/settings/account/roster/edit/:id"
-                          element={<RosterEditPage />}
-                        />
-                        <Route
-                          path="/settings/approval-matrix"
-                          element={<ApprovalMatrixDashboard />}
-                        />
-                        <Route
-                          path="/settings/approval-matrix/add"
-                          element={<AddApprovalMatrixDashboard />}
-                        />
-                        <Route
-                          path="/settings/approval-matrix/edit/:id"
-                          element={<EditApprovalMatrixDashboard />}
-                        />
-                        <Route
-                          path="/settings/roles/department"
-                          element={<DepartmentDashboard />}
-                        />
-                        <Route
-                          path="/settings/roles/role"
-                          element={<RoleDashboard />}
-                        />
-                        <Route
-                          path="/settings/roles/role/add"
-                          element={<AddRolePage />}
-                        />
-                        {/* Settings Asset Setup Routes */}
-                        <Route
-                          path="/accounting/asset-setup/approval-matrix"
-                          element={<InvoiceApprovalsPage />}
-                        />
-                        <Route
-                          path="/settings/asset-setup/asset-groups"
-                          element={<AssetGroupsPageNew />}
-                        />
-                        {/* Payments Made Routes */}
-                        <Route
-                          path="/accounting/payments-made"
-                          element={<PaymentsMadePage />}
-                        />
-                        <Route
-                          path="/accounting/payments-made/create"
-                          element={<CreatePaymentPage />}
-                        />
-                        <Route
-                          path="/accounting/payments-made/:id"
-                          element={<PaymentDetailPage />}
-                        />
-                        -{/* Settings Checklist Setup Routes */}
-                        <Route
-                          path="/settings/checklist-setup/groups"
-                          element={<ChecklistGroupsPage />}
-                        />
-                        <Route
-                          path="/settings/currency"
-                          element={<CurrencyPage />}
-                        />
-                        <Route
-                          path="/master/checklist"
-                          element={<ChecklistListPage />}
-                        />
-                        <Route
-                          path="/master/checklist-master"
-                          element={<ChecklistMasterDashboard />}
-                        />
-                        <Route
-                          path="/master/checklist-master/add"
-                          element={<ChecklistMasterPage />}
-                        />
-                        <Route
-                          path="/master/checklist-master/edit/:id"
-                          element={<EditChecklistMasterPage />}
-                        />
-                        <Route
-                          path="/master/checklist-master/view/:id"
-                          element={<ViewChecklistMasterPage />}
-                        />
-                        <Route
-                          path="/master/checklist/create"
-                          element={<ChecklistMasterPage />}
-                        />
-                        <Route
-                          path="/master/checklist/edit/:id"
-                          element={<ChecklistMasterPage />}
-                        />
-                        <Route
-                          path="/settings/masters/unit"
-                          element={<UnitMasterPage />}
-                        />
-                        <Route
-                          path="/settings/masters/address"
-                          element={<AddressMasterPage />}
-                        />
-                        <Route
-                          path="/settings/masters/address/add"
-                          element={<AddAddressPage />}
-                        />
-                        <Route
-                          path="/settings/masters/address/edit"
-                          element={<EditAddressPage />}
-                        />
-                        {/* Master Routes */}
-                        <Route
-                          path="/master/checklist"
-                          element={<ChecklistListPage />}
-                        />
-                        <Route
-                          path="/master/checklist/create"
-                          element={<ChecklistMasterPage />}
-                        />
-                        <Route
-                          path="/master/checklist/edit/:id"
-                          element={<ChecklistMasterPage />}
-                        />
-                        <Route
-                          path="/master/address"
-                          element={<AddressMasterPage />}
-                        />
-                        <Route
-                          path="/master/address/add"
-                          element={<AddAddressMaster />}
-                        />
-                        <Route
-                          path="/master/address/edit/:id"
-                          element={<EditAddressMaster />}
-                        />
-                        <Route
-                          path="/master/unit-default"
-                          element={<UnitMasterByDefaultPage />}
-                        />
-                        <Route
-                          path="/master/user/occupant-users/add"
-                          element={<AddOccupantUserPage />}
-                        />
-                        <Route
-                          path="/master/user/occupant-users/view/:id"
-                          element={<ViewOccupantUserPage />}
-                        />
-                        <Route
-                          path="/master/user/occupant-users/edit/:id"
-                          element={<EditOccupantUserPage />}
-                        />
-                        {/* Finance Master Routes */}
-                        <Route
-                          path="/master/finance"
-                          element={<FinanceMasterPage />}
-                        />
-                        <Route
-                          path="/master/plant-detail"
-                          element={<PlantDetailSetupPage />}
-                        />
-                        <Route
-                          path="/master/fields-setup"
-                          element={<FieldsSetupPage />}
-                        />
-                        {/* CRM Routes */}
-                        <Route
-                          path="/crm/campaign"
-                          element={<CRMCampaignPage />}
-                        />
-                        <Route
-                          path="/crm/campaign/add"
-                          element={<AddLeadPage />}
-                        />
-                        <Route
-                          path="/crm/campaign/details/:id"
-                          element={<LeadDetailsPage />}
-                        />
-                        <Route
-                          path="/crm/customers"
-                          element={<CRMCustomersDashboard />}
-                        />
-                        <Route
-                          path="/crm/fm-users"
-                          element={<CRMFMUserDashboard />}
-                        />
-                        <Route
-                          path="/crm/occupant-users"
-                          element={<CRMOccupantUsersDashboard />}
-                        />
-                        <Route
-                          path="/crm/events"
-                          element={<CRMEventsPage />}
-                        />
-                        <Route
-                          path="/crm/events/add"
-                          element={<AddEventPage />}
-                        />
-                        <Route
-                          path="/crm/events/details/:id"
-                          element={<CRMEventDetailsPage />}
-                        />
-                        <Route
-                          path="/crm/broadcast"
-                          element={<BroadcastDashboard />}
-                        />
-                        <Route
-                          path="/crm/broadcast/add"
-                          element={<AddBroadcastPage />}
-                        />
-                        <Route
-                          path="/crm/broadcast/details/:id"
-                          element={<BroadcastDetailsPage />}
-                        />
-                        <Route path="/crm/polls" element={<CRMPollsPage />} />
-                        <Route
-                          path="/crm/polls/add"
-                          element={<AddPollPage />}
-                        />
-                        <Route
-                          path="/crm/groups/details/:id"
-                          element={<CRMGroupDetailsPage />}
-                        />
-                        <Route
-                          path="/crm/occupant-users/:id"
-                          element={<CRMOccupantUserDetailPage />}
-                        />
-                        <Route
-                          path="/crm/occupant-users/:id/edit"
-                          element={<CRMOccupantUserEditPage />}
-                        />
-                        <Route
-                          path="/crm/customers/add"
-                          element={<AddCRMCustomerPage />}
-                        />
-                        <Route
-                          path="/crm/customers/:id"
-                          element={<CrmCustomerDetails />}
-                        />
-                        <Route
-                          path="/crm/customers/edit/:id"
-                          element={<EditCrmCustomer />}
-                        />
-                        <Route
-                          path="/crm/wallet-list"
-                          element={<CRMWalletList />}
-                        />
-                        <Route
-                          path="/crm/wallet-list/:id"
-                          element={<CRMWalletDetails />}
-                        />
-                        <Route
-                          path="/msafedashboard"
-                          element={<MsafeDashboardVI />}
-                        />
-                        <Route
-                          path="/crm/point-expiry"
-                          element={<CRMWalletPointExpiry />}
-                        />
-                        <Route
-                          path="/crm/point-expiry/edit"
-                          element={<EditCRMWalletPointExpiry />}
-                        />
-                        {/* Club Management Routes */}
-                        <Route
-                          path="/settings/vas/booking/setup"
-                          element={<BookingSetupDashboard />}
-                        />
-                        <Route
-                          path="/settings/vas/booking/setup/add"
-                          element={<AddBookingSetupPage />}
-                        />
-                        <Route
-                          path="/settings/vas/booking/setup/details/:id"
-                          element={<BookingSetupDetailPage />}
-                        />
-                        <Route
-                          path="/settings/vas/booking/setup/edit/:id"
-                          element={<EditBookingSetupPage />}
-                        />
-                        {/* new rountes for amenity setup for recess */}
-                        <Route
-                          path="/settings/vas/booking-club/setup"
-                          element={<BookingSetupClubDashboard />}
-                        />
-                        <Route
-                          path="/settings/vas/booking-club/setup/add"
-                          element={<AddBookingSetupClubPage />}
-                        />
-                        <Route
-                          path="/settings/vas/booking-club/setup/details/:id"
-                          element={<BookingSetupDetailClubPage />}
-                        />
-                        <Route
-                          path="/settings/vas/booking-club/setup/edit/:id"
-                          element={<EditBookingSetupClubPage />}
-                        />
-                        {/* .... */}
-                        <Route
-                          path="/settings/vas/membership-plan/setup"
-                          element={<MembershipPlanDashboard />}
-                        />
-                        <Route
-                          path="/settings/vas/membership-plan/setup/add"
-                          element={<AddMembershipPlanPage />}
-                        />
-                        <Route
-                          path="/settings/vas/membership-plan/setup/edit/:id"
-                          element={<EditMembershipPlanPage />}
-                        />
-                        <Route
-                          path="/settings/vas/membership-plan/setup/details/:id"
-                          element={<MembershipPlanDetailsPage />}
-                        />
-                        <Route
-                          path="/settings/accessories"
-                          element={<AccessoriesSetup />}
-                        />
-                        <Route
-                          path="/settings/accessories/:id"
-                          element={<AccessoriesDetailsPage />}
-                        />
-                        <Route
-                          path="/settings/payment-plan/setup"
-                          element={<PaymentPlanSetup />}
-                        />
-                        <Route
-                          path="/settings/payment-plan/add"
-                          element={<AddPaymentPlan />}
-                        />
-                        <Route
-                          path="/settings/payment-plan/edit/:id"
-                          element={<AddPaymentPlan />}
-                        />
-                        <Route
-                          path="/settings/payment-plan/details/:id"
-                          element={<PaymentPlanDetails />}
-                        />
-                        <Route
-                          path="/settings/payment-management"
-                          element={<PaymentManagementDashboard />}
-                        />
-                        <Route
-                          path="/settings/payment-management/:id"
-                          element={<PaymentDetailPage />}
-                        />
-                        <Route
-                          path="/settings/house/setup"
-                          element={<HouseSetupPage />}
-                        />
-                        <Route
-                          path="/settings/hsn-code/setup"
-                          element={<HSNCodeSetup />}
-                        />
-                        <Route
-                          path="/club-management/membership"
-                          element={<ClubMembershipDashboard />}
-                        />
-                        <Route
-                          path="/club-management/membership/groups"
-                          element={<ClubGroupMembershipDashboard />}
-                        />
-                        <Route
-                          path="/club-management/membership/add"
-                          element={<AddClubMembershipPage />}
-                        />
-                        <Route
-                          path="/club-management/membership/add-group"
-                          element={<AddGroupMembershipPage />}
-                        />
-                        <Route
-                          path="/club-management/group-membership/:id/edit"
-                          element={<AddGroupMembershipPage />}
-                        />
-                        <Route
-                          path="/club-management/membership/group-details/:id"
-                          element={<ClubGroupMembershipDetails />}
-                        />
-                        <Route
-                          path="/club-management/membership/:id"
-                          element={<ClubMembershipDetailPage />}
-                        />
-                        <Route
-                          path="/club-management/membership/:id/edit"
-                          element={<AddClubMembershipPage />}
-                        />
-                        {/* Club Management - FM Users */}
-                        <Route
-                          path="/club-management/users/fm-users"
-                          element={<FMUserMasterDashboard />}
-                        />
-                        <Route
-                          path="/club-management/users/fm-users/add"
-                          element={<AddFMUserPage />}
-                        />
-                        <Route
-                          path="/club-management/users/fm-users/edit/:id"
-                          element={<EditFMUserPage />}
-                        />
-                        <Route
-                          path="/club-management/users/fm-users/view/:id"
-                          element={<ViewFMUserPage />}
-                        />
-                        <Route
-                          path="/accounting/manual-journal"
-                          element={<ManualJournalDashboard />}
-                        />
-                        <Route
-                          path="/accounting/manual-journal/add"
-                          element={<ManualJournalAdd />}
-                        />
-                        <Route
-                          path="/accounting/manual-journal/details/:id"
-                          element={<ManualJournalDetails />}
-                        />
-                        <Route
-                          path="/accounting/manual-journal/edit/:id"
-                          element={<ManualJournalEdit />}
-                        />
-                        <Route
-                          path="/accounting/recurring-journal"
-                          element={<RecurringJournalDashboard />}
-                        />
-                        <Route
-                          path="/accounting/recurring-journal/add"
-                          element={<RecurringJournalAdd />}
-                        />
-                        <Route
-                          path="/accounting/recurring-journal/details"
-                          element={<RecurringJournalDetails />}
-                        />
-                        <Route
-                          path="/accounting/vendor-credits"
-                          element={<VendorCreditsListPage />}
-                        />
-                        <Route
-                          path="/accounting/vendor-credits/add"
-                          element={<VendorCreditsAdd />}
-                        />
-                        <Route
-                          path="/accounting/vendor-credits/details/:id"
-                          element={<VendorCreditDetails />}
-                        />
-                        <Route
-                          path="/accounting/vendor-credits/edit/:id"
-                          element={<VendorCreditsEdit />}
-                        />
-                        <Route
-                          path="/accounting/chart-journal"
-                          element={<ChartOfAccountsDashboard />}
-                        />
-                        <Route
-                          path="/accounting/chart-journal/details/:id"
-                          element={<ChartOfAccountDetails />}
-                        />
-                        <Route
-                          path="/accounting/opening-balance"
-                          element={<OpeningBalance />}
-                        />
-                        <Route
-                          path="/accounting/tax-setup"
-                          element={<TaxSetup />}
-                        />
+                          <Route
+                            path="/business-compass/issues/:id"
+                            element={<IssueDetailsPage />}
+                          />
+                          <Route
+                            path="/business-compass/channels"
+                            element={<ChannelsLayout />}
+                          >
+                            <Route
+                              index
+                              element={
+                                <div
+                                  className={`flex justify-center items-center ${localStorage.getItem("user_role_name") === "Employee" ? "h-[calc(100vh-64px)]" : "h-[calc(100vh-112px)]"} w-[calc(100vw-32rem)]`}
+                                >
+                                  Select a Chat/Group to view messages
+                                </div>
+                              }
+                            />
+                            <Route
+                              path="/business-compass/channels/messages/:id"
+                              element={<DMConversation />}
+                            />
+                            <Route
+                              path="/business-compass/channels/groups/:id"
+                              element={<GroupConversation />}
+                            />
+                          </Route>
+                          <Route
+                            path="/business-compass/directory-and-chat"
+                            element={<DirectoryAndChat />}
+                          />
+                          <Route
+                            path="/business-compass/feedback"
+                            element={<Feedback />}
+                          />
+                          <Route
+                            path="/business-compass/announcements"
+                            element={<Announcement />}
+                          />
+                          <Route
+                            path="/business-compass/leaderboard"
+                            element={<Leaderboard />}
+                          />
+                          <Route
+                            path="/business-compass/disc-personality-assessment"
+                            element={<DiscPersonalityAssessment />}
+                          />
+                          <Route
+                            path="/business-compass/help-center"
+                            element={<HelpCenter />}
+                          />
+                          <Route
+                            path="/business-compass/bug-reports"
+                            element={<BugReports />}
+                          />
+                          <Route
+                            path="/admin-compass/business-plan-goals"
+                            element={<BusinessPlanAndGoles />}
+                          />
+                          <Route
+                            path="/admin-compass/weekly-meetings"
+                            element={<WeeklyMeetings />}
+                          />
+                          <Route
+                            path="/admin-compass/team-dashboard"
+                            element={<TeamDashboard />}
+                          />
+                          <Route
+                            path="/admin-compass/feedback-dashboard"
+                            element={<FeedbackDashboard />}
+                          />
+                          <Route
+                            path="/admin-compass/systems-sops"
+                            element={<SystemAndSOP />}
+                          />
+                          <Route
+                            path="/admin-compass/disc-report"
+                            element={<DiscReport />}
+                          />
+                          <Route
+                            path="/admin-compass/daily-meeting"
+                            element={<DailyMeeting />}
+                          />
+                          <Route path="/admin-compass/kpi" element={<KPI />} />
+                          {/* Dashboard Routes */}
+                          <Route path="/dashboard" element={<Dashboard />} />
+                          <Route
+                            path="/dashboard/configuration"
+                            element={<DashboardConfiguration />}
+                          />
+                          {/* Holiday Calendar Route */}
+                          <Route
+                            path="/holiday-calendar"
+                            element={<HolidayCalendarPage />}
+                          />
+                          <Route path="/sitemap" element={<Sitemap />} />
+                          {/* Rule Engine Routes */}
+                          <Route
+                            path="/rule-engine/rule-list"
+                            element={<RuleListPage />}
+                          />
+                          <Route
+                            path="/loyalty-rule-engine"
+                            element={<LoyaltyRuleEngineDashboard />}
+                          />
+                          {/* Settings Routes */}
+                          <Route
+                            path="/settings/users"
+                            element={<FMUsersDashboard />}
+                          />
+                          <Route
+                            path="/settings/users/edit-details/:id"
+                            element={<EditFMUserDetailsPage />}
+                          />
+                          <Route
+                            path="/settings/users/clone-role"
+                            element={<CloneRolePage />}
+                          />
+                          <Route
+                            path="/settings/account"
+                            element={<AccountDashboard />}
+                          />
+                          <Route
+                            path="/settings/approval-matrix"
+                            element={<ApprovalMatrixDashboard />}
+                          />
+                          <Route
+                            path="/settings/approval-matrix/add"
+                            element={<AddApprovalMatrixDashboard />}
+                          />
+                          <Route
+                            path="/settings/approval-matrix/edit/:id"
+                            element={<EditApprovalMatrixDashboard />}
+                          />
+                          <Route
+                            path="/settings/account/report-setup"
+                            element={<PDFDownloadPage />}
+                          />
+                          <Route
+                            path="/settings/roles/department"
+                            element={<DepartmentDashboard />}
+                          />
+                          <Route
+                            path="/settings/roles/role"
+                            element={<RoleDashboard />}
+                          />
+                          <Route
+                            path="/settings/roles/role/add"
+                            element={<AddRolePage />}
+                          />
+                          <Route
+                            path="/settings/vi-roles/role/add"
+                            element={<AddRolePageVi />}
+                          />
+                          <Route
+                            path="/settings/users/edit-details/:id"
+                            element={<EditFMUserDetailsPage />}
+                          />
+                          <Route
+                            path="/settings/users/clone-role"
+                            element={<CloneRolePage />}
+                          />
+                          <Route
+                            path="/settings/account"
+                            element={<AccountDashboard />}
+                          />
+                          <Route
+                            path="/settings/account/holiday-calendar"
+                            element={<SettingsHolidayCalendarPage />}
+                          />
+                          <Route
+                            path="/settings/account/shift"
+                            element={<AccountShiftDashboard />}
+                          />
+                          <Route
+                            path="/settings/account/roster"
+                            element={<AccountRosterDashboard />}
+                          />
+                          <Route
+                            path="/settings/account/roster/create"
+                            element={<RosterCreatePage />}
+                          />
+                          <Route
+                            path="/settings/account/roster/detail/:id"
+                            element={<RosterDetailPage />}
+                          />
+                          <Route
+                            path="/settings/account/roster/edit/:id"
+                            element={<RosterEditPage />}
+                          />
+                          <Route
+                            path="/settings/approval-matrix"
+                            element={<ApprovalMatrixDashboard />}
+                          />
+                          <Route
+                            path="/settings/approval-matrix/add"
+                            element={<AddApprovalMatrixDashboard />}
+                          />
+                          <Route
+                            path="/settings/approval-matrix/edit/:id"
+                            element={<EditApprovalMatrixDashboard />}
+                          />
+                          <Route
+                            path="/settings/roles/department"
+                            element={<DepartmentDashboard />}
+                          />
+                          <Route
+                            path="/settings/roles/role"
+                            element={<RoleDashboard />}
+                          />
+                          <Route
+                            path="/settings/roles/role/add"
+                            element={<AddRolePage />}
+                          />
+                          {/* Settings Asset Setup Routes */}
+                          <Route
+                            path="/settings/asset-setup/approval-matrix"
+                            element={<InvoiceApprovalsPage />}
+                          />
+                          <Route
+                            path="/settings/asset-setup/asset-groups"
+                            element={<AssetGroupsPageNew />}
+                          />
+                          {/* Payments Made Routes */}
+                          <Route
+                            path="/accounting/payments-made"
+                            element={<PaymentsMadePage />}
+                          />
+                          <Route
+                            path="/accounting/payments-made/create"
+                            element={<CreatePaymentPage />}
+                          />
+                          <Route
+                            path="/accounting/payments-made/:id"
+                            element={<PaymentDetailPage />}
+                          />
+                          -{/* Settings Checklist Setup Routes */}
+                          <Route
+                            path="/settings/checklist-setup/groups"
+                            element={<ChecklistGroupsPage />}
+                          />
+                          <Route
+                            path="/settings/currency"
+                            element={<CurrencyPage />}
+                          />
+                          <Route
+                            path="/master/checklist"
+                            element={<ChecklistListPage />}
+                          />
+                          <Route
+                            path="/master/checklist-master"
+                            element={<ChecklistMasterDashboard />}
+                          />
+                          <Route
+                            path="/master/checklist-master/add"
+                            element={<ChecklistMasterPage />}
+                          />
+                          <Route
+                            path="/master/checklist-master/edit/:id"
+                            element={<EditChecklistMasterPage />}
+                          />
+                          <Route
+                            path="/master/checklist-master/view/:id"
+                            element={<ViewChecklistMasterPage />}
+                          />
+                          <Route
+                            path="/master/checklist/create"
+                            element={<ChecklistMasterPage />}
+                          />
+                          <Route
+                            path="/master/checklist/edit/:id"
+                            element={<ChecklistMasterPage />}
+                          />
+                          <Route
+                            path="/settings/masters/unit"
+                            element={<UnitMasterPage />}
+                          />
+                          <Route
+                            path="/settings/masters/address"
+                            element={<AddressMasterPage />}
+                          />
+                          <Route
+                            path="/settings/masters/address/add"
+                            element={<AddAddressPage />}
+                          />
+                          <Route
+                            path="/settings/masters/address/edit"
+                            element={<EditAddressPage />}
+                          />
+                          {/* Master Routes */}
+                          <Route
+                            path="/master/checklist"
+                            element={<ChecklistListPage />}
+                          />
+                          <Route
+                            path="/master/checklist/create"
+                            element={<ChecklistMasterPage />}
+                          />
+                          <Route
+                            path="/master/checklist/edit/:id"
+                            element={<ChecklistMasterPage />}
+                          />
+                          <Route
+                            path="/master/address"
+                            element={<AddressMasterPage />}
+                          />
+                          <Route
+                            path="/master/address/add"
+                            element={<AddAddressMaster />}
+                          />
+                          <Route
+                            path="/master/address/edit/:id"
+                            element={<EditAddressMaster />}
+                          />
+                          <Route
+                            path="/master/unit-default"
+                            element={<UnitMasterByDefaultPage />}
+                          />
+                          <Route
+                            path="/master/user/occupant-users/add"
+                            element={<AddOccupantUserPage />}
+                          />
+                          <Route
+                            path="/master/user/occupant-users/view/:id"
+                            element={<ViewOccupantUserPage />}
+                          />
+                          <Route
+                            path="/master/user/occupant-users/edit/:id"
+                            element={<EditOccupantUserPage />}
+                          />
+                          {/* Finance Master Routes */}
+                          <Route
+                            path="/master/finance"
+                            element={<FinanceMasterPage />}
+                          />
+                          <Route
+                            path="/master/plant-detail"
+                            element={<PlantDetailSetupPage />}
+                          />
+                          <Route
+                            path="/master/fields-setup"
+                            element={<FieldsSetupPage />}
+                          />
+                          {/* CRM Routes */}
+                          <Route
+                            path="/crm/campaign"
+                            element={<CRMCampaignPage />}
+                          />
+                          <Route
+                            path="/crm/campaign/add"
+                            element={<AddLeadPage />}
+                          />
+                          <Route
+                            path="/crm/campaign/details/:id"
+                            element={<LeadDetailsPage />}
+                          />
+                          <Route
+                            path="/crm/customers"
+                            element={<CRMCustomersDashboard />}
+                          />
+                          <Route
+                            path="/crm/fm-users"
+                            element={<CRMFMUserDashboard />}
+                          />
+                          <Route
+                            path="/crm/occupant-users"
+                            element={<CRMOccupantUsersDashboard />}
+                          />
+                          <Route
+                            path="/crm/events"
+                            element={<CRMEventsPage />}
+                          />
+                          <Route
+                            path="/crm/events/add"
+                            element={<AddEventPage />}
+                          />
+                          <Route
+                            path="/crm/events/details/:id"
+                            element={<CRMEventDetailsPage />}
+                          />
+                          <Route
+                            path="/crm/broadcast"
+                            element={<BroadcastDashboard />}
+                          />
+                          <Route
+                            path="/crm/broadcast/add"
+                            element={<AddBroadcastPage />}
+                          />
+                          <Route
+                            path="/crm/broadcast/details/:id"
+                            element={<BroadcastDetailsPage />}
+                          />
+                          <Route path="/crm/polls" element={<CRMPollsPage />} />
+                          <Route
+                            path="/crm/polls/add"
+                            element={<AddPollPage />}
+                          />
+                          <Route
+                            path="/crm/groups/details/:id"
+                            element={<CRMGroupDetailsPage />}
+                          />
+                          <Route
+                            path="/crm/occupant-users/:id"
+                            element={<CRMOccupantUserDetailPage />}
+                          />
+                          <Route
+                            path="/crm/occupant-users/:id/edit"
+                            element={<CRMOccupantUserEditPage />}
+                          />
+                          <Route
+                            path="/crm/customers/add"
+                            element={<AddCRMCustomerPage />}
+                          />
+                          <Route
+                            path="/crm/customers/:id"
+                            element={<CrmCustomerDetails />}
+                          />
+                          <Route
+                            path="/crm/customers/edit/:id"
+                            element={<EditCrmCustomer />}
+                          />
+                          <Route
+                            path="/crm/wallet-list"
+                            element={<CRMWalletList />}
+                          />
+                          <Route
+                            path="/crm/wallet-list/:id"
+                            element={<CRMWalletDetails />}
+                          />
+                          <Route
+                            path="/crm/point-expiry"
+                            element={<CRMWalletPointExpiry />}
+                          />
+                          <Route
+                            path="/crm/point-expiry/edit"
+                            element={<EditCRMWalletPointExpiry />}
+                          />
+                          {/* Club Management Routes */}
+                          <Route
+                            path="/settings/vas/booking/setup"
+                            element={<BookingSetupDashboard />}
+                          />
+                          <Route
+                            path="/settings/vas/booking/setup/add"
+                            element={<AddBookingSetupPage />}
+                          />
+                          <Route
+                            path="/settings/vas/booking/setup/details/:id"
+                            element={<BookingSetupDetailPage />}
+                          />
+                          <Route
+                            path="/settings/vas/booking/setup/edit/:id"
+                            element={<EditBookingSetupPage />}
+                          />
+                          {/* new rountes for amenity setup for recess */}
+                          <Route
+                            path="/settings/vas/booking-club/setup"
+                            element={<BookingSetupClubDashboard />}
+                          />
+                          <Route
+                            path="/settings/vas/booking-club/setup/add"
+                            element={<AddBookingSetupClubPage />}
+                          />
+                          <Route
+                            path="/settings/vas/booking-club/setup/details/:id"
+                            element={<BookingSetupDetailClubPage />}
+                          />
+                          <Route
+                            path="/settings/vas/booking-club/setup/edit/:id"
+                            element={<EditBookingSetupClubPage />}
+                          />
+                          {/* .... */}
+                          <Route
+                            path="/settings/vas/membership-plan/setup"
+                            element={<MembershipPlanDashboard />}
+                          />
+                          <Route
+                            path="/settings/vas/membership-plan/setup/add"
+                            element={<AddMembershipPlanPage />}
+                          />
+                          <Route
+                            path="/settings/vas/membership-plan/setup/edit/:id"
+                            element={<EditMembershipPlanPage />}
+                          />
+                          <Route
+                            path="/settings/vas/membership-plan/setup/details/:id"
+                            element={<MembershipPlanDetailsPage />}
+                          />
+                          <Route
+                            path="/settings/accessories"
+                            element={<AccessoriesSetup />}
+                          />
+                          <Route
+                            path="/settings/accessories/:id"
+                            element={<AccessoriesDetailsPage />}
+                          />
+                          <Route
+                            path="/settings/payment-plan/setup"
+                            element={<PaymentPlanSetup />}
+                          />
+                          <Route
+                            path="/settings/payment-plan/add"
+                            element={<AddPaymentPlan />}
+                          />
+                          <Route
+                            path="/settings/payment-plan/edit/:id"
+                            element={<AddPaymentPlan />}
+                          />
+                          <Route
+                            path="/settings/payment-plan/details/:id"
+                            element={<PaymentPlanDetails />}
+                          />
+                          <Route
+                            path="/settings/payment-management"
+                            element={<PaymentManagementDashboard />}
+                          />
+                          <Route
+                            path="/settings/payment-management/:id"
+                            element={<PaymentDetailPage />}
+                          />
+                          <Route
+                            path="/settings/house/setup"
+                            element={<HouseSetupPage />}
+                          />
+                          <Route
+                            path="/settings/hsn-code/setup"
+                            element={<HSNCodeSetup />}
+                          />
+                          <Route
+                            path="/club-management/membership"
+                            element={<ClubMembershipDashboard />}
+                          />
+                          <Route
+                            path="/club-management/membership/groups"
+                            element={<ClubGroupMembershipDashboard />}
+                          />
+                          <Route
+                            path="/club-management/membership/add"
+                            element={<AddClubMembershipPage />}
+                          />
+                          <Route
+                            path="/club-management/membership/add-group"
+                            element={<AddGroupMembershipPage />}
+                          />
+                          <Route
+                            path="/club-management/group-membership/:id/edit"
+                            element={<AddGroupMembershipPage />}
+                          />
+                          <Route
+                            path="/club-management/membership/group-details/:id"
+                            element={<ClubGroupMembershipDetails />}
+                          />
+                          <Route
+                            path="/club-management/membership/:id"
+                            element={<ClubMembershipDetailPage />}
+                          />
+                          <Route
+                            path="/club-management/membership/:id/edit"
+                            element={<AddClubMembershipPage />}
+                          />
+                          {/* Club Management - FM Users */}
+                          <Route
+                            path="/club-management/users/fm-users"
+                            element={<FMUserMasterDashboard />}
+                          />
+                          <Route
+                            path="/club-management/users/fm-users/add"
+                            element={<AddFMUserPage />}
+                          />
+                          <Route
+                            path="/club-management/users/fm-users/edit/:id"
+                            element={<EditFMUserPage />}
+                          />
+                          <Route
+                            path="/club-management/users/fm-users/view/:id"
+                            element={<ViewFMUserPage />}
+                          />
+                          <Route
+                            path="/accounting/manual-journal"
+                            element={<ManualJournalDashboard />}
+                          />
+                          <Route
+                            path="/accounting/manual-journal/add"
+                            element={<ManualJournalAdd />}
+                          />
+                          <Route
+                            path="/accounting/manual-journal/details/:id"
+                            element={<ManualJournalDetails />}
+                          />
+                          <Route
+                            path="/accounting/manual-journal/edit/:id"
+                            element={<ManualJournalEdit />}
+                          />
+                          <Route
+                            path="/accounting/recurring-journal"
+                            element={<RecurringJournalDashboard />}
+                          />
+                          <Route
+                            path="/accounting/recurring-journal/add"
+                            element={<RecurringJournalAdd />}
+                          />
+                          <Route
+                            path="/accounting/recurring-journal/details"
+                            element={<RecurringJournalDetails />}
+                          />
+                          <Route
+                            path="/accounting/vendor-credits"
+                            element={<VendorCreditsListPage />}
+                          />
+                          <Route
+                            path="/accounting/vendor-credits/add"
+                            element={<VendorCreditsAdd />}
+                          />
+                          <Route
+                            path="/accounting/vendor-credits/details/:id"
+                            element={<VendorCreditDetails />}
+                          />
+                          <Route
+                            path="/accounting/vendor-credits/edit/:id"
+                            element={<VendorCreditsEdit />}
+                          />
+                          <Route
+                            path="/accounting/chart-journal"
+                            element={<ChartOfAccountsDashboard />}
+                          />
+                          <Route
+                            path="/accounting/chart-journal/details/:id"
+                            element={<ChartOfAccountDetails />}
+                          />
+                          <Route
+                            path="/accounting/opening-balance"
+                            element={<OpeningBalance />}
+                          />
+                          <Route
+                            path="/accounting/tax-setup"
+                            element={<TaxSetup />}
+                          />
                            <Route
                             path="/accounting/tax-setup-tab"
                             element={<TaxSetupTabView />}
@@ -3418,6 +3419,10 @@ function App() {
                           path="/accounting/recurring-bills/details/:id"
                           element={<RecurringBillDetails />}
                         />
+                          <Route
+                            path="/accounting/recurring-bills/edit/:id"
+                            element={<RecurringBillEdit />}
+                          />
                         <Route
                           path="/accounting/recurring-expenses"
                           element={<RecurringExpensesListPage />}
@@ -5372,6 +5377,11 @@ function App() {
                           element={<PaymentRedirectPage />}
                         />
                         {/* Payments Made Routes */}
+                          {/* Master Ticket Routes */}
+                          <Route
+                            path="/master/ticket/golden-qr"
+                            element={<GoldenQrSetupPage />}
+                          />
                         {/* Master Location Routes */}
                         <Route
                           path="/master/location/building"
@@ -5584,6 +5594,10 @@ function App() {
                           path="/settings/company-hub/team-setup"
                           element={<TeamSetup />}
                         />
+                          <Route
+                            path="/settings/company-hub/face-authentication"
+                            element={<FaceAuthenticationSetup />}
+                          />
                         <Route
                           path="/settings/company-hub/jobs"
                           element={<JobsPage />}
@@ -5809,6 +5823,10 @@ function App() {
                           path="/product/vi-miles"
                           element={<ViMilesPage />}
                         />
+                          <Route
+                            path="/product/:productSlug/landing"
+                            element={<ProductLandingPage />}
+                          />
                         <Route path="*" element={<NotFound />} />
                       </Route>
 

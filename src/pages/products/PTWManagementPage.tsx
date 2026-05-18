@@ -305,7 +305,7 @@ const PTWManagementPage: React.FC = () => {
             Residential · Commercial · Industrial · Hospitality
           </div>
           <h1 className="text-4xl font-semibold text-[#2C2C2C] mb-4 tracking-tight lg:text-5xl font-poppins">
-            Permit to Work
+            PTW (Permit to Work)
           </h1>
           <p className="text-sm text-[#2C2C2C]/70 leading-relaxed max-w-3xl mx-auto font-poppins">
             Digital PTW system — Issue, approve, and track work permits for

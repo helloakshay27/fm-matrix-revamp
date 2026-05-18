@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { GoogleReCaptchaProvider } from "react-google-recaptcha-v3";
 import { LoginPage } from "@/pages/LoginPage";
 import { registerServiceWorker, isPWARoute } from "@/utils/pwa";
 
@@ -37,15 +38,23 @@ export const LoginPageWrapper: React.FC<LoginPageWrapperProps> = ({
 
   // Apply mobile styling for PWA routes or mobile devices
   const isPWA = isPWARoute(location.pathname, location.search);
+  const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "";
+
   if (isMobile || isPWA) {
     return (
-      <div className="mobile-login-wrapper min-h-screen bg-gray-50">
-        <div className="w-full max-w-full">
-          <LoginPage setBaseUrl={setBaseUrl} setToken={setToken} />
+      <GoogleReCaptchaProvider reCaptchaKey={siteKey}>
+        <div className="mobile-login-wrapper min-h-screen bg-gray-50">
+          <div className="w-full max-w-full">
+            <LoginPage setBaseUrl={setBaseUrl} setToken={setToken} />
+          </div>
         </div>
-      </div>
+      </GoogleReCaptchaProvider>
     );
   }
 
-  return <LoginPage setBaseUrl={setBaseUrl} setToken={setToken} />;
+  return (
+    <GoogleReCaptchaProvider reCaptchaKey={siteKey}>
+      <LoginPage setBaseUrl={setBaseUrl} setToken={setToken} />
+    </GoogleReCaptchaProvider>
+  );
 };

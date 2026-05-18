@@ -276,7 +276,7 @@ const modulesByPackage = {
         // { name: "Delivery Challans", href: "/accounting/delivery-challans" },
         // { name: "Payment Links", href: "/accounting/payment-links" },
         { name: "Payments Received", href: "/accounting/payments-received" },
-        { name: "Credit Note", href: "/accounting/credit-note" }
+        { name: "Credit Note", href: "/accounting/credit-note" },
       ],
     },
 
@@ -409,7 +409,7 @@ const modulesByPackage = {
             // },
           ],
         },
-                {
+        {
           name: "Account",
           subItems: [
             // {
@@ -523,7 +523,6 @@ const modulesByPackage = {
         //   href: "/accounting/reports/receivable-details",
         // },
 
-
         {
           name: "Receivables",
           subItems: [
@@ -589,7 +588,6 @@ const modulesByPackage = {
             //   name: "Refund History",
             //   href: "/accounting/reports/refund-history",
             // },
-
           ],
         },
 
@@ -801,7 +799,6 @@ const modulesByPackage = {
         //   ],
         // },
 
-
         // {
         //   name: "Fixed Asset",
         //   subItems: [
@@ -848,7 +845,6 @@ const modulesByPackage = {
         //     },
         //   ],
         // },
-
       ],
     },
   ],
@@ -981,6 +977,7 @@ export const ClubSidebar: React.FC = () => {
     setIsSidebarCollapsed,
     currentSection,
     setCurrentSection,
+    isMobileSidebarOpen,
   } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
@@ -1139,8 +1136,9 @@ export const ClubSidebar: React.FC = () => {
       <button
         key={key}
         onClick={() => handleNavigation(item.href)}
-        className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
-          }`}
+        className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${
+          item.color || "text-[#1a1a1a]"
+        }`}
       >
         {isActive && (
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]" />
@@ -1152,7 +1150,13 @@ export const ClubSidebar: React.FC = () => {
     );
   };
 
-  const CollapsedMenuItem = ({ item, level = 0 }: { item: SidebarItem; level?: number }) => {
+  const CollapsedMenuItem = ({
+    item,
+    level = 0,
+  }: {
+    item: SidebarItem;
+    level?: number;
+  }) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isStaticItem = !hasSubItems && !item.href;
     const isExpanded = expandedItems.includes(item.name);
@@ -1185,10 +1189,11 @@ export const ClubSidebar: React.FC = () => {
               handleNavigation(item.href, item.blank);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
-            ? "bg-[#f0e8dc] shadow-inner"
-            : "hover:bg-[#DBC2A9]"
-            }`}
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+            active || isExpanded
+              ? "bg-[#f0e8dc] shadow-inner"
+              : "hover:bg-[#DBC2A9]"
+          }`}
           title={item.name}
         >
           {(active || isExpanded) && (
@@ -1217,8 +1222,11 @@ export const ClubSidebar: React.FC = () => {
 
   return (
     <div
-      className={`${isSidebarCollapsed ? "w-16" : "w-64"
-        } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${
+        isSidebarCollapsed ? "w-16" : "w-64"
+      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${
+        isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      } md:translate-x-0`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -1272,8 +1280,8 @@ export const ClubSidebar: React.FC = () => {
         <nav className="space-y-2">
           {isSidebarCollapsed
             ? currentModules.map((item) => (
-              <CollapsedMenuItem key={item.name} item={item} level={0} />
-            ))
+                <CollapsedMenuItem key={item.name} item={item} level={0} />
+              ))
             : currentModules.map((item) => renderMenuItem(item))}
         </nav>
       </div>

@@ -145,7 +145,8 @@ export const WBSElementDashboard = () => {
     <div className="flex gap-3">
       <Button
         style={{ backgroundColor: '#C72030' }}
-        className="text-white hover:bg-[#C72030]/90"
+        className="fm-button-fix fm-button-brand px-4 py-2"
+        variant="ghost"
         onClick={() => setIsAddDialogOpen(true)}
       >
         <Plus className="h-4 w-4 mr-2" />
@@ -153,7 +154,7 @@ export const WBSElementDashboard = () => {
       </Button>
       <Button
         variant="outline"
-        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+        className="fm-button-fix fm-button-brand px-4 py-2"
         onClick={() => setIsBulkUploadOpen(true)}
       >
         <Download className="h-4 w-4 mr-2" />

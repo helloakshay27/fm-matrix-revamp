@@ -214,11 +214,14 @@ export const AddMaterialPRDashboard = () => {
                 sacHsnCode: item.sac_hsn_code || "",
                 sacHsnCodeId: item.hsn_id || "",
                 productDescription: item.prod_desc || "",
+                glAccount: item.gl_account || "",
+                taxCode: item.tax_code || "",
                 each: item.rate || "",
                 quantity: item.quantity || "",
                 expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
                 amount: item.total_value || "",
                 wbsCode: item.wbs_code || "",
+                generalStorage: item.general_storage || "GNST",
               }))
             );
             setWbsSelection("individual");
@@ -345,7 +348,7 @@ export const AddMaterialPRDashboard = () => {
           setSupplierDetails({
             supplier: response.supplier?.id,
             plantDetail: response.plant_detail?.id,
-            type: "",
+            type: response.pr_type,
             prDate: response.po_date ? response.po_date.split("T")[0] : "",
             billingAddress: response.billing_address_id,
             deliveryAddress: response.shipping_address_id,
@@ -366,11 +369,14 @@ export const AddMaterialPRDashboard = () => {
               sacHsnCode: item.sac_hsn_code,
               sacHsnCodeId: item.hsn_id,
               productDescription: item.prod_desc,
+              glAccount: item.gl_account || "",
+              taxCode: item.tax_code || "",
               each: item.rate,
               quantity: item.quantity,
               expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
               amount: item.total_value,
               wbsCode: item.wbs_code,
+              generalStorage: item.general_storage || "GNST",
             }))
           );
         } catch (error) {

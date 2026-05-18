@@ -937,7 +937,7 @@ const IssueDetailsPage = () => {
                 milestone_id: issueDetail.milestone_id || "",
                 task_management_name: issueDetail.task_management_name || "",
                 task_management_id: issueDetail.task_management_id || "",
-                tags: issueDetail.tags || [],
+                tags: issueDetail.task_tags || [],
                 attachments: issueDetail.attachments || [],
                 comments: sortCommentsDesc(issueDetail.comments || []),
             };

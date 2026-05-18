@@ -25,6 +25,7 @@ import {
   Calendar,
   BarChart3,
   Settings,
+  Plus,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AddVisitModal } from "@/components/AddVisitModal";
@@ -62,6 +63,10 @@ interface AMCDetailsData {
   remarks: string;
   asset_name?: string;
   amc_type?: string;
+  checklist_type?: string;
+  resource_type?: string;
+  coverage_type?: string;
+  amc_coverage_type?: string;
   amc_assets?: any[];
   service_name?: string;
   service_code?: string;
@@ -136,6 +141,19 @@ export const AMCDetailsPage = () => {
   );
   const [showAddVisitModal, setShowAddVisitModal] = useState(false);
   const amcDetails: AMCDetailsData | null = amcData as AMCDetailsData;
+  const normalizedAmcType = (amcDetails?.amc_type || "").toString().toLowerCase();
+  const normalizedChecklistType = (amcDetails?.checklist_type || "").toString().toLowerCase();
+  const normalizedResourceType = (amcDetails?.resource_type || "").toString().toLowerCase();
+  const isServiceAmc =
+    normalizedAmcType === "service" ||
+    normalizedChecklistType === "service" ||
+    normalizedResourceType.includes("service") ||
+    ((amcDetails?.amc_services?.length || 0) > 0 && !(amcDetails?.amc_assets?.length || 0));
+  const isAssetAmc =
+    normalizedAmcType === "asset" ||
+    normalizedChecklistType === "asset" ||
+    normalizedResourceType.includes("asset") ||
+    ((amcDetails?.amc_assets?.length || 0) > 0 && !isServiceAmc);
   const amcVisitData = amcData?.amc_visit_logs?.map((visit) => visit) ?? [];
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -486,7 +504,7 @@ export const AMCDetailsPage = () => {
               { label: "Attachments", value: "attachments" },
               { label: "Scheduled Tasks", value: "scheduled-amc" },
               { label: "Tickets", value: "tickets" },
-              { label: "AMC Visits History", value: "amc-visits-history" },
+              { label: "AMC Visits", value: "amc-visits" },
               { label: "Association", value: "association" },
             ].map((tab) => (
               <TabsTrigger
@@ -1428,7 +1446,7 @@ export const AMCDetailsPage = () => {
 
           {/* AMC Visits History */}
           <TabsContent
-            value="amc-visits-history"
+            value="amc-visits"
             className="p-3 sm:p-6"
             style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
           >
@@ -1445,7 +1463,7 @@ export const AMCDetailsPage = () => {
                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] mr-3">
                     <Calendar className="w-5 h-5 text-[#C72030]" />
                   </div>
-                  AMC VISITS HISTORY
+                  AMC VISITS
                 </CardTitle>
               </CardHeader>
               <CardContent
@@ -1815,7 +1833,7 @@ export const AMCDetailsPage = () => {
           </TabsContent>
 
           {/* Asset Information */}
-          {amcDetails.amc_type === "Asset" && (
+          {isAssetAmc && (
             <TabsContent value="asset-information" className="p-3 sm:p-6">
               <Card className="border">
                 <CardHeader>
@@ -1894,7 +1912,7 @@ export const AMCDetailsPage = () => {
             </TabsContent>
           )}
 
-          {amcDetails.amc_type === "Service" && (
+          {isServiceAmc && (
             <TabsContent value="asset-information" className="p-3 sm:p-6">
               <Card className="border">
                 <CardHeader>
@@ -2008,7 +2026,7 @@ export const AMCDetailsPage = () => {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-[#EDEAE3]">
-                        {amcDetails.amc_type === "Service" ? (
+                        {isServiceAmc ? (
                           <>
                             <TableHead className="font-semibold text-[#1a1a1a]">
                               Action
@@ -2057,7 +2075,7 @@ export const AMCDetailsPage = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody className="bg-white">
-                      {amcDetails.amc_type === "Service" ? (
+                      {isServiceAmc ? (
                         amcDetails.amc_services?.length > 0 ? (
                           amcDetails.amc_services.map((service) => (
                             <TableRow
@@ -2221,71 +2239,15 @@ export const AMCDetailsPage = () => {
 
             {/* Right: action buttons */}
             <div className="flex items-center ml-6">
-              {/* Edit */}
+              {/* Add Visit */}
               <Button
                 variant="ghost"
                 size="sm"
                 className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 h-auto mr-6"
-                onClick={() => {
-                  const visit = amcVisitData.find((v) => v.id === selectedVisitId);
-                  setVisitEditVisitNumber(String((visit as any)?.visit_number ?? ""));
-                  setVisitEditVisitDate((visit as any)?.visit_date ? (() => {
-                    const raw = (visit as any).visit_date as string;
-                    if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
-                      const [d, m, y] = raw.split("/");
-                      return `${y}-${m}-${d}`;
-                    }
-                    return raw.slice(0, 10);
-                  })() : "");
-                  setVisitEditActualVisitDate((visit as any)?.actual_visit_date ? (() => {
-                    const raw = (visit as any).actual_visit_date as string;
-                    if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
-                      const [d, m, y] = raw.split("/");
-                      return `${y}-${m}-${d}`;
-                    }
-                    return raw.slice(0, 10);
-                  })() : "");
-                  setVisitEditTechnicianId(String(visit?.technician?.id ?? ""));
-                  setVisitEditRemarks((visit as any)?.remarks || "");
-                  setVisitEditStatus((visit as any)?.status || "");
-                  setVisitEditDocument(null);
-                  // Pre-select assets that were already covered in this visit
-                  const existingAssetIds: number[] = (
-                    (visit as any)?.asset_ids ||
-                    (visit as any)?.amc_asset_ids ||
-                    (visit as any)?.covered_asset_ids ||
-                    []
-                  ).map(Number).filter(Boolean);
-                  setVisitEditSelectedAssetIds(existingAssetIds);
-                  fetchVisitTechnicians();
-                  setShowVisitEditModal(true);
-                }}
+                onClick={() => setShowAddVisitModal(true)}
               >
-                <svg
-                  className="w-5 h-5 mt-3"
-                  viewBox="0 0 21 21"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <mask
-                    id="visit-sel-edit-mask"
-                    style={{ maskType: "alpha" }}
-                    maskUnits="userSpaceOnUse"
-                    x="0"
-                    y="0"
-                    width="21"
-                    height="21"
-                  >
-                    <rect width="21" height="21" fill="#1C1B1F" />
-                  </mask>
-                  <g mask="url(#visit-sel-edit-mask)">
-                    <path
-                      d="M4.375 16.625H5.47881L14.4358 7.66806L13.3319 6.56425L4.375 15.5212V16.625ZM3.0625 17.9375V14.9761L14.6042 3.43941C14.7365 3.31924 14.8825 3.22642 15.0423 3.16094C15.2023 3.09531 15.37 3.0625 15.5455 3.0625C15.7209 3.0625 15.8908 3.09364 16.0552 3.15591C16.2197 3.21818 16.3653 3.3172 16.492 3.45297L17.5606 4.53491C17.6964 4.66164 17.7931 4.80747 17.8509 4.97241C17.9086 5.13734 17.9375 5.30228 17.9375 5.46722C17.9375 5.64324 17.9075 5.81117 17.8474 5.971C17.7873 6.13098 17.6917 6.2771 17.5606 6.40937L6.02394 17.9375H3.0625ZM13.8742 7.12578L13.3319 6.56425L14.4358 7.66806L13.8742 7.12578Z"
-                      fill="#1C1B1F"
-                    />
-                  </g>
-                </svg>
-                <span className="text-xs font-medium">Edit</span>
+                <Plus className="w-5 h-5 mt-3" />
+                <span className="text-xs font-medium">Add Visit</span>
               </Button>
 
               <div className="w-px h-8 bg-gray-300 mr-6" />

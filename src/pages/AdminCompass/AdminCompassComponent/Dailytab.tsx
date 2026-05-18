@@ -287,6 +287,37 @@ const getItemStatus = (item: any): string => {
   return item.status || "open";
 };
 
+const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
+  const merged: any[] = [];
+  const seen = new Set<string>();
+  [...primary, ...fallback].forEach((item) => {
+    const title = getItemTitle(item).trim();
+    const key = title.toLowerCase();
+    if (!title || seen.has(key)) return;
+    seen.add(key);
+    merged.push(item);
+  });
+  return merged;
+};
+
+const getReportTotalScore = (report: any, rawSource: any = null) => {
+  const score =
+    report?.daily_report?.report_data?.total_score ??
+    report?.report_data?.total_score ??
+    rawSource?.total_score ??
+    report?.score;
+
+  if (score === null || score === undefined || score === "") return null;
+  const numericScore = Number(score);
+  return Number.isFinite(numericScore) ? numericScore : null;
+};
+
+const formatSelfRating = (rating: any): string => {
+  if (rating === null || rating === undefined || rating === "") return "";
+  const ratingText = String(rating).trim();
+  return ratingText.includes("/") ? ratingText : `${ratingText}/10`;
+};
+
 // ── Strip missed-members prefix from textarea value before saving ──
 const stripMissedMembersPrefix = (text: string): string => {
   const missedHeaderMatch = text.match(
@@ -301,39 +332,59 @@ const stripMissedMembersPrefix = (text: string): string => {
 // ── Resolve the "true" raw source for a report ──
 const resolveRawSource = (report: any) => {
   const rd = report.report_data || {};
-  const draftRaw = report.daily_report?.report_data || {};
+  const draftReport = report.daily_report || {};
+  const draftRaw = draftReport.report_data || {};
   const hasDraft = !!report.daily_report;
   const hasReportData = rd && Object.keys(rd).length > 0;
 
+  const normalizeDraftRaw = (raw: any) => ({
+    ...raw,
+    accomplishments:
+      raw.accomplishments?.items ||
+      (Array.isArray(raw.accomplishments) ? raw.accomplishments : []),
+    self_rating:
+      raw.self_rating ??
+      draftReport.self_rating ??
+      raw.details?.self_rating ??
+      raw.sections?.self_rating ??
+      null,
+    total_score: raw.total_score ?? null,
+    is_absent:
+      raw.is_absent ??
+      draftReport.is_absent ??
+      raw.details?.is_absent ??
+      raw.sections?.is_absent ??
+      false,
+  });
+
   if (!hasReportData && hasDraft) {
-    return {
-      ...draftRaw,
-      accomplishments:
-        draftRaw.accomplishments?.items ||
-        (Array.isArray(draftRaw.accomplishments)
-          ? draftRaw.accomplishments
-          : []),
-      self_rating:
-        draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? null,
-      total_score: draftRaw.total_score ?? null,
-      is_absent:
-        draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent ?? null,
-    };
+    return normalizeDraftRaw(draftRaw);
   }
 
   if (report.status === "pending" && hasDraft) {
+    return normalizeDraftRaw(draftRaw);
+  }
+
+  if (hasReportData && hasDraft) {
+    const normalizedDraft = normalizeDraftRaw(draftRaw);
+
     return {
-      ...draftRaw,
+      ...normalizedDraft,
+      ...rd,
+      tasks_issues: Array.isArray(rd.tasks_issues)
+        ? mergeUniqueItems(rd.tasks_issues, normalizedDraft.tasks_issues || [])
+        : normalizedDraft.tasks_issues || [],
+      tomorrow_plan: Array.isArray(rd.tomorrow_plan)
+        ? mergeUniqueItems(rd.tomorrow_plan, normalizedDraft.tomorrow_plan || [])
+        : normalizedDraft.tomorrow_plan || [],
       accomplishments:
-        draftRaw.accomplishments?.items ||
-        (Array.isArray(draftRaw.accomplishments)
-          ? draftRaw.accomplishments
-          : []),
-      self_rating:
-        draftRaw.details?.self_rating ?? draftRaw.sections?.self_rating ?? null,
-      total_score: draftRaw.total_score ?? null,
-      is_absent:
-        draftRaw.details?.is_absent ?? draftRaw.sections?.is_absent ?? null,
+        rd.accomplishments?.items ||
+        (Array.isArray(rd.accomplishments)
+          ? rd.accomplishments
+          : normalizedDraft.accomplishments || []),
+      self_rating: normalizedDraft.self_rating,
+      total_score: rd.total_score ?? normalizedDraft.total_score,
+      is_absent: rd.is_absent ?? normalizedDraft.is_absent,
     };
   }
 
@@ -482,7 +533,9 @@ const DailyTab = ({
           if (meetingJournalReport) {
             let savedDiscussion = DEFAULT_DISCUSSION;
 
-            const notesData = meetingJournalReport?.report_data?.meeting_notes;
+            const notesData =
+              json.data?.report_data?.meeting_notes ||
+              meetingJournalReport?.report_data?.meeting_notes;
             if (notesData) {
               if (Array.isArray(notesData)) {
                 savedDiscussion =
@@ -583,16 +636,25 @@ const DailyTab = ({
     }
 
     const rawSource = resolveRawSource(report);
+    const baseReportData =
+      report.report_data ||
+      report.daily_report?.report_data ||
+      rawSource ||
+      {};
 
     if (patch.tomorrow_plan_item) {
-      const existingPlan: any[] = Array.isArray(rawSource.tomorrow_plan)
-        ? rawSource.tomorrow_plan
+      const existingPlan: any[] = Array.isArray(baseReportData.tomorrow_plan)
+        ? baseReportData.tomorrow_plan
         : [];
 
       const updatedPlan = [
         ...existingPlan,
         { title: patch.tomorrow_plan_item.trim() },
       ];
+      const updatedReportData = {
+        ...baseReportData,
+        tomorrow_plan: updatedPlan,
+      };
 
       try {
         const res = await fetch(
@@ -604,10 +666,7 @@ const DailyTab = ({
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              report_data: {
-                ...rawSource,
-                tomorrow_plan: updatedPlan,
-              },
+              report_data: updatedReportData,
             }),
           }
         );
@@ -739,7 +798,8 @@ const DailyTab = ({
         combinedKpis.planning += p;
         combinedKpis.timing += tim;
 
-        if (report.score) combinedKpis.score += parseInt(report.score) || 0;
+        const totalScore = getReportTotalScore(report, rawSource);
+        if (totalScore !== null) combinedKpis.score += totalScore;
       });
 
     return {
@@ -753,7 +813,7 @@ const DailyTab = ({
     };
   };
 
-const buildMeetingNotesObject = (
+  const buildMeetingNotesObject = (
     allReports: any[],
     allMissed: any[],
     meetingNotesText: string
@@ -830,6 +890,14 @@ const buildMeetingNotesObject = (
     try {
       const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
+      const { selectedReportRows, selectedMissedMembers, selectedUserIds } =
+        getSelectedMeetingScope(allReports, allMissed);
+
+      if (!ensureSelectedMembersForPayload(selectedUserIds)) {
+        setIsSavingMeeting(false);
+        return;
+      }
+
       const {
         allAccomplishments,
         allTasksIssues,
@@ -837,11 +905,11 @@ const buildMeetingNotesObject = (
         combinedBigWin,
         avgSelfRating,
         combinedKpis,
-      } = buildCombinedData(allReports);
+      } = buildCombinedData(selectedReportRows);
 
       const meetingNotesObj = buildMeetingNotesObject(
-        allReports,
-        allMissed,
+        selectedReportRows,
+        selectedMissedMembers,
         meetingNotes
       );
 
@@ -877,6 +945,8 @@ const buildMeetingNotesObject = (
       const payload = {
         meeting_config_id: parseInt(selectedMeetingId, 10),
         report_date: activeDate,
+        user_ids: selectedUserIds,
+        member_ids: selectedUserIds,
         self_rating: avgSelfRating,
         is_absent: false,
         status: "submitted",
@@ -936,10 +1006,17 @@ const buildMeetingNotesObject = (
     try {
       const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
+      const { selectedReportRows, selectedMissedMembers, selectedUserIds } =
+        getSelectedMeetingScope(allReports, allMissed);
+
+      if (!ensureSelectedMembersForPayload(selectedUserIds)) {
+        setIsSavingMeeting(false);
+        return;
+      }
 
       const meetingNotesObj = buildMeetingNotesObject(
-        allReports,
-        allMissed,
+        selectedReportRows,
+        selectedMissedMembers,
         meetingNotes
       );
 
@@ -950,6 +1027,8 @@ const buildMeetingNotesObject = (
         )?.report_data || {};
 
       const payload = {
+        user_ids: selectedUserIds,
+        member_ids: selectedUserIds,
         report_data: {
           ...existingRd,
           meeting_notes: meetingNotesObj,
@@ -994,6 +1073,14 @@ const buildMeetingNotesObject = (
     try {
       const allReports = dailyData?.member_reports || dailyData?.reports || [];
       const allMissed = dailyData?.missed_members || [];
+      const { selectedReportRows, selectedMissedMembers, selectedUserIds } =
+        getSelectedMeetingScope(allReports, allMissed);
+
+      if (!ensureSelectedMembersForPayload(selectedUserIds)) {
+        setIsSavingMeeting(false);
+        return;
+      }
+
       const {
         allAccomplishments,
         allTasksIssues,
@@ -1001,11 +1088,11 @@ const buildMeetingNotesObject = (
         combinedBigWin,
         avgSelfRating,
         combinedKpis,
-      } = buildCombinedData(allReports);
+      } = buildCombinedData(selectedReportRows);
 
       const meetingNotesObj = buildMeetingNotesObject(
-        allReports,
-        allMissed,
+        selectedReportRows,
+        selectedMissedMembers,
         meetingNotes
       );
 
@@ -1032,6 +1119,8 @@ const buildMeetingNotesObject = (
       };
 
       const payload = {
+        user_ids: selectedUserIds,
+        member_ids: selectedUserIds,
         self_rating: avgSelfRating,
         status: "submitted",
         report_data: reportDataPayload,
@@ -1082,7 +1171,13 @@ const buildMeetingNotesObject = (
 
   const notesChanged = meetingNotes.trim() !== savedMeetingNotes.trim();
 
-  let memberReports = dailyData?.member_reports || dailyData?.reports || [];
+  let memberReports = (dailyData?.member_reports || dailyData?.reports || [])
+    .slice()
+    .sort((a: any, b: any) =>
+      (a.name || "").localeCompare(b.name || "", undefined, {
+        sensitivity: "base",
+      })
+    );
   let failedMembers = dailyData?.missed_members || [];
   if (selectedMember !== "all") {
     memberReports = memberReports.filter(
@@ -1092,6 +1187,35 @@ const buildMeetingNotesObject = (
       (m: any) => String(m.id) === selectedMember
     );
   }
+
+  const getReportSelectionKey = (report: any) =>
+    String(report?.journal_id || report?.user_id || "");
+
+  const getSelectedMeetingScope = (reports: any[], missedMembers: any[]) => {
+    const selectedKeys = new Set(selectedReports.map((id) => String(id)));
+    const selectedReportRows = reports.filter((report: any) =>
+      selectedKeys.has(getReportSelectionKey(report))
+    );
+    const selectedUserIds = Array.from(
+      new Set(
+        selectedReportRows
+          .map((report: any) => Number(report.user_id))
+          .filter((id: number) => Number.isFinite(id) && id > 0)
+      )
+    );
+    const selectedUserIdSet = new Set(selectedUserIds.map(String));
+    const selectedMissedMembers = missedMembers.filter((member: any) =>
+      selectedUserIdSet.has(String(member.id))
+    );
+
+    return { selectedReportRows, selectedMissedMembers, selectedUserIds };
+  };
+
+  const ensureSelectedMembersForPayload = (selectedUserIds: number[]) => {
+    if (selectedUserIds.length > 0) return true;
+    toast.error("Please select at least one user.");
+    return false;
+  };
 
   const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.checked) {
@@ -1112,6 +1236,15 @@ const buildMeetingNotesObject = (
   const handleFeedback = () => {
     navigate("/admin-compass/feedback-dashboard");
   };
+
+  const visibleReportIds = memberReports.map((r: any) =>
+    String(r.journal_id || r.user_id)
+  );
+  const areAllVisibleReportsSelected =
+    visibleReportIds.length > 0 &&
+    visibleReportIds.every((id: string) =>
+      selectedReports.map((selectedId) => String(selectedId)).includes(id)
+    );
 
   const noMeetings = meetingsLoaded && meetingsList.length === 0;
 
@@ -1542,10 +1675,7 @@ const buildMeetingNotesObject = (
                     <label className="flex items-center gap-2 cursor-pointer select-none">
                       <input
                         type="checkbox"
-                        checked={
-                          memberReports.length > 0 &&
-                          selectedReports.length === memberReports.length
-                        }
+                        checked={areAllVisibleReportsSelected}
                         onChange={handleSelectAll}
                         className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer"
                       />
@@ -1606,7 +1736,8 @@ const buildMeetingNotesObject = (
                       const isExpanded = expandedReports.includes(rId);
                       const isPending = report.status === "pending";
                       const hasDraft = !!report.daily_report;
-                      const isPermanentlyChecked = report.checked_in_meeting === true;
+                      const isPermanentlyChecked =
+                        report.checked_in_meeting === true;
                       const draftRaw = report.daily_report?.report_data || {};
 
                       const rawDisplayRd = resolveRawSource(report);
@@ -1639,26 +1770,49 @@ const buildMeetingNotesObject = (
                       );
 
                       // ── NEW LOGIC FOR SCORING ──
-                      const sections = draftRaw?.sections || rawDisplayRd?.sections || displayRd?.sections || report?.report_data?.sections || {};
-                      const kpisFallback = report.kpis || report.report_data?.kpis || rawDisplayRd?.kpis || {};
+                      const sections =
+                        draftRaw?.sections ||
+                        rawDisplayRd?.sections ||
+                        displayRd?.sections ||
+                        report?.report_data?.sections ||
+                        {};
+                      const kpisFallback =
+                        report.kpis ||
+                        report.report_data?.kpis ||
+                        rawDisplayRd?.kpis ||
+                        {};
 
                       // Explicit strict checker to prevent `0` from failing over to fallback values
                       const getScore = (val1: any, val2: any) => {
-                        if (val1 !== undefined && val1 !== null && val1 !== "") return Number(val1);
-                        if (val2 !== undefined && val2 !== null && val2 !== "") return Number(val2);
+                        if (val1 !== undefined && val1 !== null && val1 !== "")
+                          return Number(val1);
+                        if (val2 !== undefined && val2 !== null && val2 !== "")
+                          return Number(val2);
                         return 0;
                       };
 
-                      const kpiAchieved = getScore(sections.kpi_achievement, kpisFallback.score);
+                      const kpiAchieved = getScore(
+                        sections.kpi_achievement,
+                        kpisFallback.score
+                      );
                       const kpiStr = `${kpiAchieved}/20`;
 
-                      const tasksIssuesAchieved = getScore(sections.tasks_issues, kpisFallback.tasks);
+                      const tasksIssuesAchieved = getScore(
+                        sections.tasks_issues,
+                        kpisFallback.tasks
+                      );
                       const tasksIssuesStr = `${tasksIssuesAchieved}/20`;
 
-                      const planAchieved = getScore(sections.planning, kpisFallback.planning);
+                      const planAchieved = getScore(
+                        sections.planning,
+                        kpisFallback.planning
+                      );
                       const planStr = `${planAchieved}/20`;
 
-                      const timeAchieved = getScore(sections.timing, kpisFallback.timing);
+                      const timeAchieved = getScore(
+                        sections.timing,
+                        kpisFallback.timing
+                      );
                       const timeStr = `${timeAchieved}/20`;
 
                       const selfRating =
@@ -1666,13 +1820,13 @@ const buildMeetingNotesObject = (
                         draftRaw?.details?.self_rating ??
                         draftRaw?.sections?.self_rating ??
                         null;
+                      const selfRatingText = formatSelfRating(selfRating);
 
-                      const totalScoreStr = Math.round(
-                        report.score ??
-                          rawDisplayRd?.total_score ??
-                          draftRaw?.total_score ??
-                          0
+                      const totalScoreValue = getReportTotalScore(
+                        report,
+                        rawDisplayRd
                       );
+                      const totalScoreStr = Math.round(totalScoreValue ?? 0);
 
                       const canExpand = !isPending || hasDraft;
                       const isSelected = selectedReports.includes(rId);
@@ -1722,9 +1876,9 @@ const buildMeetingNotesObject = (
                                 <div className="flex items-center justify-center w-11 h-11 rounded-full border-[1.5px] border-[#CE7A5A] text-[#CE7A5A] font-extrabold text-[16px] shrink-0 bg-white">
                                   {totalScoreStr}
                                 </div>
-                                {selfRating != null && (
+                                {selfRatingText && (
                                   <span className="text-[9px] font-bold text-yellow-600 bg-yellow-50 border border-yellow-200 rounded-full px-1.5 py-0.5 whitespace-nowrap">
-                                    ⭐ {selfRating}/10
+                                    ⭐ {selfRatingText}
                                   </span>
                                 )}
                               </div>
@@ -1847,18 +2001,18 @@ const buildMeetingNotesObject = (
                             <div className="bg-[#FFFAF8] border-t border-[#EAE3DF]">
                               <div className="p-5 space-y-5">
                                 <div className="flex flex-wrap gap-3">
-                                  {selfRating != null && (
+                                  {selfRatingText && (
                                     <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-100 rounded-xl px-4 py-2.5">
                                       <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                                       <span className="text-sm font-bold text-yellow-800">
-                                        Self Rating: {selfRating}/10
+                                        Self Rating: {selfRatingText}
                                       </span>
                                     </div>
                                   )}
-                                  {rawDisplayRd?.total_score != null && (
+                                  {totalScoreValue != null && (
                                     <div className="flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-xl px-4 py-2.5">
                                       <span className="text-sm font-bold text-purple-800">
-                                        Total Score: {rawDisplayRd.total_score}
+                                        Total Score: {totalScoreStr}
                                       </span>
                                     </div>
                                   )}

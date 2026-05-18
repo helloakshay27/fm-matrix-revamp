@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  ArrowLeft,
   Plus,
   X,
   Star,
@@ -884,6 +885,15 @@ export const AddSurveyPage = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
+      {/* Back Button */}
+      <button
+        onClick={() => navigate("/master/survey/list")}
+        className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        <span className="text-sm font-medium">Back to list</span>
+      </button>
+
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Add Question</h1>

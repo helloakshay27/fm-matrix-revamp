@@ -152,6 +152,22 @@ type RemarkChipId =
     | "clientFeedback"
     | "employeeFeedback";
 
+interface WeeklyReportDraft {
+    wins?: string[];
+    checkedWins?: Record<number, boolean>;
+    starredWins?: Record<number, boolean>;
+    dayPlans?: Record<string, { id: string; text: string; starred?: boolean }[]>;
+    remarksText?: string;
+    remarksList?: { type: RemarkChipId | null; text: string }[];
+    activeRemarkChip?: RemarkChipId | null;
+    remarksInteracted?: boolean;
+    kpiEntries?: { [key: number]: string };
+    plannedEntries?: { [key: number]: string };
+    selectedTasksIssues?: { [key: string]: boolean };
+    selectedFileNames?: string[];
+    uploadedFilesCount?: number;
+}
+
 const REMARK_CHIP_META: Record<
     RemarkChipId,
     {
@@ -343,6 +359,69 @@ const WeeklyReports = () => {
             : {};
     const userId =
         localStorage.getItem("userId") || localStorage.getItem("user_id") || user?.id;
+    const weekDraftKey = React.useMemo(
+        () =>
+            `business-compass-weekly-report-draft:${userId || "guest"}:${format(weekStart, "yyyy-MM-dd")}`,
+        [userId, weekStart]
+    );
+    const canPersistDraftRef = React.useRef(false);
+    const suppressDraftPersistenceRef = React.useRef(false);
+
+    const getStoredDraft = React.useCallback(
+        (key = weekDraftKey): WeeklyReportDraft | null => {
+            try {
+                const rawDraft = localStorage.getItem(key);
+                return rawDraft ? JSON.parse(rawDraft) : null;
+            } catch {
+                return null;
+            }
+        },
+        [weekDraftKey]
+    );
+
+    const clearStoredDraft = React.useCallback(
+        (key = weekDraftKey) => {
+            localStorage.removeItem(key);
+        },
+        [weekDraftKey]
+    );
+
+    const applyStoredDraft = React.useCallback((draft: WeeklyReportDraft | null) => {
+        if (!draft) return;
+        if (Array.isArray(draft.wins)) setWins(draft.wins);
+        if (draft.checkedWins && typeof draft.checkedWins === "object")
+            setCheckedWins(draft.checkedWins);
+        if (draft.starredWins && typeof draft.starredWins === "object")
+            setStarredWins(draft.starredWins);
+        if (draft.dayPlans && typeof draft.dayPlans === "object")
+            setDayPlans(draft.dayPlans);
+        if (typeof draft.remarksText === "string")
+            setRemarksText(draft.remarksText);
+        if (Array.isArray(draft.remarksList))
+            setRemarksList(draft.remarksList);
+        if (
+            draft.activeRemarkChip === null ||
+            typeof draft.activeRemarkChip === "string"
+        ) {
+            setActiveRemarkChip(draft.activeRemarkChip);
+        }
+        if (typeof draft.remarksInteracted === "boolean")
+            setRemarksInteracted(draft.remarksInteracted);
+        if (draft.kpiEntries && typeof draft.kpiEntries === "object")
+            setKpiEntries(draft.kpiEntries);
+        if (draft.plannedEntries && typeof draft.plannedEntries === "object")
+            setPlannedEntries(draft.plannedEntries);
+        if (
+            draft.selectedTasksIssues &&
+            typeof draft.selectedTasksIssues === "object"
+        ) {
+            setSelectedTasksIssues(draft.selectedTasksIssues);
+        }
+        if (Array.isArray(draft.selectedFileNames))
+            setSelectedFileNames(draft.selectedFileNames);
+        if (typeof draft.uploadedFilesCount === "number")
+            setUploadedFilesCount(draft.uploadedFilesCount);
+    }, []);
 
     const myIssuesFilter = `
       q[status_in][]=open
@@ -1072,6 +1151,7 @@ const WeeklyReports = () => {
     );
 
     const fetchHistory = React.useCallback(async () => {
+        canPersistDraftRef.current = false;
         setIsLoadingHistory(true);
         try {
             const response = await apiClient.get(
@@ -1087,16 +1167,62 @@ const WeeklyReports = () => {
             if (existing) {
                 populateForm(existing);
             }
+            applyStoredDraft(getStoredDraft());
         } catch (error) {
             console.error("Failed to fetch weekly reports history:", error);
+            applyStoredDraft(getStoredDraft());
         } finally {
+            canPersistDraftRef.current = true;
             setIsLoadingHistory(false);
         }
-    }, [weekStart, populateForm]);
+    }, [weekStart, populateForm, getStoredDraft, applyStoredDraft]);
+
+    React.useEffect(() => {
+        canPersistDraftRef.current = false;
+        suppressDraftPersistenceRef.current = false;
+    }, [weekDraftKey]);
 
     React.useEffect(() => {
         fetchHistory();
     }, [fetchHistory]);
+
+    React.useEffect(() => {
+        if (activeTab !== "submit") return;
+        if (suppressDraftPersistenceRef.current) return;
+        if (!canPersistDraftRef.current) return;
+        const draft: WeeklyReportDraft = {
+            wins,
+            checkedWins,
+            starredWins,
+            dayPlans,
+            remarksText,
+            remarksList,
+            activeRemarkChip,
+            remarksInteracted,
+            kpiEntries,
+            plannedEntries,
+            selectedTasksIssues,
+            selectedFileNames,
+            uploadedFilesCount,
+        };
+        localStorage.setItem(weekDraftKey, JSON.stringify(draft));
+    }, [
+        wins,
+        checkedWins,
+        starredWins,
+        dayPlans,
+        remarksText,
+        remarksList,
+        activeRemarkChip,
+        remarksInteracted,
+        kpiEntries,
+        plannedEntries,
+        selectedTasksIssues,
+        selectedFileNames,
+        uploadedFilesCount,
+        weekDraftKey,
+        activeTab,
+    ]);
 
     const handleAddWin = () => {
         const newIndex = wins.length;
@@ -1561,9 +1687,11 @@ const WeeklyReports = () => {
                     ? "Weekly report updated successfully"
                     : "Weekly report submitted successfully"
             );
-            fetchHistory();
-
+            suppressDraftPersistenceRef.current = true;
+            canPersistDraftRef.current = false;
+            clearStoredDraft();
             setActiveTab("history");
+            fetchHistory();
             setTimeout(() => {
                 window.scrollTo({ top: 0, behavior: "smooth" });
             }, 100);
