@@ -1049,7 +1049,33 @@ export const TicketDashboard = () => {
     key: 'site_name',
     label: 'Site',
     sortable: true
-  }, {
+  }, 
+  {
+    key: 'building_name',
+    label: 'Building',
+    sortable: true
+  },
+  {
+    key: 'wing_name',
+    label: 'Wing',
+    sortable: true
+  },
+  {
+    key: 'area_name',
+    label: 'Area',
+    sortable: true
+  },
+  {
+    key: 'floor_name',
+    label: 'Floor',
+    sortable: true
+  },
+  {
+    key: 'room_name',
+    label: 'Room',
+    sortable: true
+  },
+  {
     key: 'created_at',
     label: 'Created On',
     sortable: true

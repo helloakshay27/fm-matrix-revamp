@@ -282,7 +282,7 @@ export const EditSurveyPage = () => {
       setCheckType(mappedCheckType);
 
       // Set form view flag
-      setFormView(surveyData.form_view || false);
+      setFormView(surveyData.form_view === true || surveyData.form_view === "true");
 
       // Check if ticket creation is enabled based on existing data
       const hasTicketConfig =

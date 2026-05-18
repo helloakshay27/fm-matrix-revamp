@@ -28,7 +28,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createChatTask, sendMessage, updateMessage } from "@/store/slices/channelSlice";
 import { useParams } from "react-router-dom";
 
-const Chats = ({ messages, onReply, bottomRef }) => {
+const Chats = ({ messages, onReply, bottomRef, fetchMessages }) => {
     const { id } = useParams();
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
@@ -114,11 +114,13 @@ const Chats = ({ messages, onReply, bottomRef }) => {
                 await dispatch(
                     updateMessage({ baseUrl, token, id: message.id, data: { message: { is_pinned: false } } })
                 ).unwrap();
+                fetchMessages();
                 toast.success("Message unpinned");
             } else {
                 await dispatch(
                     updateMessage({ baseUrl, token, id: message.id, data: { message: { is_pinned: true } } })
                 ).unwrap();
+                fetchMessages();
                 toast.success("Message pinned");
             }
         } catch (error) {
