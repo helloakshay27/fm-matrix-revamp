@@ -25,10 +25,10 @@ const adminCompassNavigation: Record<string, any> = {
     href: "/admin-compass/business-plan-goals",
   },
   "Daily Meeting": {
-    icon: MessageSquare, 
+    icon: MessageSquare,
     href: "/admin-compass/daily-meeting",
   },
-  "KPI": {
+  KPI: {
     icon: BarChart3,
     href: "/admin-compass/kpi",
   },
@@ -57,7 +57,8 @@ const adminCompassNavigation: Record<string, any> = {
 export const AdminCompassSidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isSidebarCollapsed, setIsSidebarCollapsed } = useLayout();
+  const { isSidebarCollapsed, setIsSidebarCollapsed, isMobileSidebarOpen } =
+    useLayout();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
   const toggleSection = (section: string) => {
@@ -85,7 +86,7 @@ export const AdminCompassSidebar: React.FC = () => {
     <aside
       className={`fixed left-0 top-14 sm:top-16 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-4rem)] bg-[#f6f4ee] border-r border-[#D5DbDB] transition-all duration-300 z-40 overflow-y-auto ${
         isSidebarCollapsed ? "w-12 sm:w-16" : "w-56 sm:w-64"
-      }`}
+      } ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
     >
       {/* Toggle Button */}
       <button

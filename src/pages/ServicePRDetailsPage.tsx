@@ -23,7 +23,7 @@ import {
   ClipboardList,
   Images,
   Loader2,
-  Download,
+  Download
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
@@ -114,6 +114,8 @@ interface ServiceItem {
   product_description: string;
   rate: number;
   wbs_code: string;
+  tax_code: string;
+  gl_account: string;
   cgst_rate: number;
   cgst_amount: number;
   sgst_rate: number;
@@ -169,12 +171,7 @@ const serviceColumns: ColumnConfig[] = [
   { key: "boq_details", label: "BOQ Details", sortable: true, draggable: true },
   { key: "gl_account", label: "GL Account", sortable: true, draggable: true },
   { key: "tax_code", label: "Tax Code", sortable: true, draggable: true },
-  {
-    key: "general_storage",
-    label: "General Storage",
-    sortable: true,
-    draggable: true,
-  },
+  { key: "general_storage", label: "General Storage", sortable: true, draggable: true },
 
   { key: "quantity", label: "Quantity", sortable: true, draggable: true },
   { key: "uom", label: "UOM", sortable: true, draggable: true },
@@ -222,7 +219,7 @@ export const ServicePRDetailsPage = () => {
   const requestId = searchParams.get("request_id");
   const shouldShowButtons = Boolean(levelId && userId);
 
-  const [isDeletionRequest, setIsDeletionRequest] = useState(false);
+  const [isDeletionRequest, setIsDeletionRequest] = useState(false)
   const [servicePR, setServicePR] = useState<ServicePR>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
@@ -232,23 +229,34 @@ export const ServicePRDetailsPage = () => {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [showEditWbsModal, setShowEditWbsModal] = useState(false);
   const [wbsCodes, setWbsCodes] = useState([]);
-  const [openDeletionModal, setOpenDeletionModal] = useState(false);
-  const [printing, setPrinting] = useState(false);
-  const [testRunLoading, setTestRunLoading] = useState(false);
+  const [openDeletionModal, setOpenDeletionModal] = useState(false)
+  const [printing, setPrinting] = useState(false)
+  const [testRunLoading, setTestRunLoading] = useState(false)
+  const [sapPushDisabled, setSapPushDisabled] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
-  }>({});
+  }>({})
+  const [updatedGlAccounts, setUpdatedGlAccounts] = useState<{
+    [key: string]: string;
+  }>({})
+  const [updatedTaxCodes, setUpdatedTaxCodes] = useState<{
+    [key: string]: string;
+  }>({})
+  const [updatedHsnCodes, setUpdatedHsnCodes] = useState<{
+    [key: string]: string;
+  }>({})
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
     editWbsCode: false,
+    canEditAll: false,
   });
   const [externalApiCalls, setExternalApiCalls] = useState<any[]>([]);
 
   useEffect(() => {
     if (searchParams.get("type") === "delete-request") {
-      setIsDeletionRequest(true);
+      setIsDeletionRequest(true)
     }
-  }, []);
+  }, [])
 
   // Fetch service PR data
   useEffect(() => {
@@ -273,8 +281,10 @@ export const ServicePRDetailsPage = () => {
         setButtonCondition({
           showSap: response.show_send_sap_yes,
           editWbsCode: response.can_edit_wbs_codes,
+          canEditAll: response.can_edit,
         });
-        // Set external API calls if available
+        // Set external API calls if avai
+        // lable
         console.log("response.page", response.page.api_responses);
         if (response.page?.api_responses && Array.isArray(response.page.api_responses)) {
           setExternalApiCalls(response.page.api_responses);
@@ -290,6 +300,25 @@ export const ServicePRDetailsPage = () => {
           {}
         );
         setUpdatedWbsCodes(initialWbsCodes || {});
+        const initialGlAccounts = response.page?.inventories?.reduce(
+          (acc: { [key: string]: string }, item: ServiceItem) => {
+            const key = item.id || item.sno.toString();
+            acc[key] = item.gl_account || "";
+            return acc;
+          },
+          {}
+        );
+
+        const initialTaxCodes = response.page?.inventories?.reduce(
+          (acc: { [key: string]: string }, item: ServiceItem) => {
+            const key = item.id || item.sno.toString();
+            acc[key] = item.tax_code || "";
+            return acc;
+          },
+          {}
+        );
+        setUpdatedGlAccounts(initialGlAccounts || {});
+        setUpdatedTaxCodes(initialTaxCodes || {});
       } catch (error: any) {
         toast.error(error.message || "Failed to fetch service PR");
       } finally {
@@ -313,14 +342,56 @@ export const ServicePRDetailsPage = () => {
   }, []);
 
   // Handle WBS code change
-  const handleWbsCodeChange = useCallback((event, item: ServiceItem) => {
+  // Handle Tax Code change
+  const handleTaxCodeChange = useCallback((event, item: ServiceItem) => {
+    const newTaxCode = event.target.value as string;
+    const itemKey = (item.id || item.sno).toString();
+    setUpdatedTaxCodes((prev) => ({
+      ...prev,
+      [itemKey]: newTaxCode,
+    }));
+  }, []);
+
+  // Handle WBS code change with GL fetch
+  const handleWbsCodeChangeWithGlFetch = useCallback(async (event, item: ServiceItem) => {
     const newWbsCode = event.target.value as string;
     const itemKey = (item.id || item.sno).toString();
+
     setUpdatedWbsCodes((prev) => ({
       ...prev,
       [itemKey]: newWbsCode,
     }));
-  }, []);
+
+    if (newWbsCode) {
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/wbs_costs/get_gl_code.json?wbs_code=${newWbsCode}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (response.data?.gl_code) {
+          setUpdatedGlAccounts((prev) => ({
+            ...prev,
+            [itemKey]: response.data.gl_code,
+          }));
+          toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
+        }
+      } catch (error) {
+        console.error("Error fetching GL code for WBS:", error);
+        toast.error("Failed to fetch GL code");
+      }
+    }
+  }, [baseUrl, token]);
+  const handleWbsCodeChange = useCallback(
+    (event, item: ServiceItem) => {
+      const newWbsCode = event.target.value as string;
+      const itemKey = (item.id || item.sno).toString();
+      setUpdatedWbsCodes((prev) => ({
+        ...prev,
+        [itemKey]: newWbsCode,
+      }));
+    },
+    []
+  );
 
   // Handle update WBS codes to backend
   const handleUpdateWbsCodes = useCallback(async () => {
@@ -334,13 +405,13 @@ export const ServicePRDetailsPage = () => {
 
     try {
       const updates = {
-        pms_po_inventory_updates: Object.entries(updatedWbsCodes).map(
-          ([itemKey, wbsCode]) => ({
-            id: itemKey,
-            wbs_code: wbsCode,
-          })
-        ),
-      };
+        pms_po_inventory_updates: Object.entries(updatedWbsCodes).map(([itemKey]) => ({
+          id: itemKey,
+          wbs_code: updatedWbsCodes[itemKey],
+          gl_account: updatedGlAccounts[itemKey],  // ← add this
+          tax_code: updatedTaxCodes[itemKey],       // ← add this
+        }))
+      }
 
       await axios.patch(
         `https://${baseUrl}/pms/purchase_orders/bulk_update_wbs_codes.json`,
@@ -352,10 +423,33 @@ export const ServicePRDetailsPage = () => {
 
       toast.success("WBS Codes updated successfully");
       setShowEditWbsModal(false);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const detailsResponse = await axios.get(
+        `https://${baseUrl}/pms/work_orders/${id}.json`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (detailsResponse.data?.page) {
+        setServicePR(detailsResponse.data.page);
+
+        if (
+          detailsResponse.data.page?.api_responses &&
+          Array.isArray(detailsResponse.data.page.api_responses)
+        ) {
+          setExternalApiCalls(detailsResponse.data.page.api_responses);
+        }
+
+        toast.success("Data refreshed after test run");
+      }
+
+
     } catch (error: any) {
       toast.error(error.message || "Failed to update WBS Codes");
     }
-  }, [id, updatedWbsCodes]);
+  }, [id, updatedWbsCodes, updatedGlAccounts, updatedTaxCodes]); // ← add missing deps
 
   // Handle print
   const handlePrint = useCallback(async () => {
@@ -365,7 +459,7 @@ export const ServicePRDetailsPage = () => {
       toast.error("Missing required configuration");
       return;
     }
-    setPrinting(true);
+    setPrinting(true)
     try {
       const response = await axios.get(
         `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
@@ -387,7 +481,7 @@ export const ServicePRDetailsPage = () => {
     } catch (error: any) {
       toast.error(error.message || "Failed to download PDF");
     } finally {
-      setPrinting(false);
+      setPrinting(false)
     }
   }, [id]);
 
@@ -395,11 +489,13 @@ export const ServicePRDetailsPage = () => {
   const handleSendToSap = useCallback(async () => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
+
+
     if (!baseUrl || !token || !id) {
       toast.error("Missing required configuration");
       return;
     }
-
+    setSapPushDisabled(true);
     try {
       const response = await axios.get<{ message: string }>(
         `https://${baseUrl}/pms/work_orders/${id}.json?send_sap=yes`,
@@ -407,9 +503,46 @@ export const ServicePRDetailsPage = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      toast.success(response.data.message);
+
+      toast.success(response.data.message || "Sent to SAP successfully");
+
+      // wait for server-side processing
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const detailsResponse = await axios.get(
+        `https://${baseUrl}/pms/work_orders/${id}.json`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (detailsResponse.data?.page) {
+        setServicePR(detailsResponse.data.page);
+
+        if (
+          detailsResponse.data.page?.api_responses &&
+          Array.isArray(detailsResponse.data.page.api_responses)
+        ) {
+          setExternalApiCalls(detailsResponse.data.page.api_responses);
+          console.log(
+            "API Calls updated after send to SAP:",
+            detailsResponse.data.page.api_responses
+          );
+        }
+
+        toast.success("Data refreshed after send to SAP");
+      }
+
+      // Disable the button after successful push
+
     } catch (error: any) {
-      toast.error(error.message || "Failed to send to SAP");
+      console.error("Send to SAP error:", error);
+
+      toast.error(
+        error?.response?.data?.message ||
+        error.message ||
+        "Failed to send to SAP"
+      );
     }
   }, [id]);
 
@@ -417,6 +550,7 @@ export const ServicePRDetailsPage = () => {
   const handleTestRun = useCallback(async () => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
+
     if (!baseUrl || !token || !id) {
       toast.error("Missing required configuration");
       return;
@@ -424,15 +558,48 @@ export const ServicePRDetailsPage = () => {
 
     try {
       setTestRunLoading(true);
+
       const response = await axios.get<{ message: string }>(
         `https://${baseUrl}/pms/work_orders/test_run?id=${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      toast.success(response.data.message || "Test run completed successfully");
+
+      toast.success(
+        response.data.message || "Test run completed successfully"
+      );
+
+      // wait for server-side processing
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const detailsResponse = await axios.get(
+        `https://${baseUrl}/pms/work_orders/${id}.json`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (detailsResponse.data?.page) {
+        setServicePR(detailsResponse.data.page);
+
+        if (
+          detailsResponse.data.page?.api_responses &&
+          Array.isArray(detailsResponse.data.page.api_responses)
+        ) {
+          setExternalApiCalls(detailsResponse.data.page.api_responses);
+        }
+
+        toast.success("Data refreshed after test run");
+      }
     } catch (error: any) {
-      toast.error(error.message || "Failed to run test run");
+      console.error("Test run error:", error);
+
+      toast.error(
+        error?.response?.data?.message ||
+        error.message ||
+        "Failed to run test run"
+      );
     } finally {
       setTestRunLoading(false);
     }
@@ -443,18 +610,16 @@ export const ServicePRDetailsPage = () => {
       level_id: Number(levelId),
       user_id: Number(userId),
       approve: true,
-      redirect: false,
-    };
+      redirect: false
+    }
     try {
-      await dispatch(
-        approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })
-      ).unwrap();
+      await dispatch(approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })).unwrap();
       toast.success("Deletion request approved successfully");
       navigate(-1);
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
-  };
+  }
 
   const handleRejectDeletionRequest = async () => {
     const payload = {
@@ -462,18 +627,17 @@ export const ServicePRDetailsPage = () => {
       user_id: Number(userId),
       approve: false,
       redirect: false,
-      rejection_reason: rejectComment,
-    };
+      rejection_reason: rejectComment
+    }
     try {
-      await dispatch(
-        approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })
-      ).unwrap();
+      await dispatch(approveDeletionRequest({ baseUrl, token, id: requestId, data: payload })).unwrap();
       toast.success("Deletion request rejected successfully");
       navigate(-1);
     } catch (error) {
-      console.log(error);
+      console.log(error)
     }
-  };
+  }
+
 
   // Handle approve
   const handleApprove = async () => {
@@ -492,13 +656,15 @@ export const ServicePRDetailsPage = () => {
       };
 
       try {
-        await dispatch(
+        const response = await dispatch(
           approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
-        toast.success("Work Order approved successfully");
+
+        toast.success(response?.message || "Service PR approved successfully");
+        
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
-        toast.error(error.message || "Failed to approve Work Order");
+        toast.error(error.message || "Failed to approve Service PR");
       }
     }
   };
@@ -526,13 +692,14 @@ export const ServicePRDetailsPage = () => {
       };
 
       try {
-        await dispatch(
-          approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
-        ).unwrap();
-        toast.success("Work Order rejected successfully");
+       const response = await dispatch(
+  approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+).unwrap();
+        // toast.success("Service PR rejected successfully");
+        toast.success(response?.message || "Service PR rejected successfully");
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
-        toast.error(error.message || "Failed to reject Work Order");
+        toast.error(error.message || "Failed to reject Service PR");
       } finally {
         setOpenRejectDialog(false);
         setRejectComment("");
@@ -545,23 +712,23 @@ export const ServicePRDetailsPage = () => {
       deletion_request: {
         resource_id: id,
         resource_type: "Pms::WorkOrder",
-        approve: false,
-      },
-    };
+        approve: false
+      }
+    }
     try {
       await axios.post(`https://${baseUrl}/deletion_requests.json`, payload, {
         headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+          Authorization: `Bearer ${token}`
+        }
+      })
 
-      toast.success("Deletion request raised successfully");
-      setOpenDeletionModal(false);
+      toast.success("Deletion request raised successfully")
+      setOpenDeletionModal(false)
     } catch (error) {
-      console.log(error);
-      toast.error(error.response.data.error);
+      console.log(error)
+      toast.error(error.response.data.error)
     }
-  };
+  }
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -600,7 +767,8 @@ export const ServicePRDetailsPage = () => {
       total_amount: item.total_amount || 0,
       general_storage: item.general_storage || "-",
       gl_account: item.gl_account || "-",
-      tax_code: item.tax_code || "-",
+      tax_code: item.tax_code || "-"
+
     })) || [];
 
   const renderCell = (item: ServiceItem, columnKey: string) => {
@@ -644,55 +812,55 @@ export const ServicePRDetailsPage = () => {
               >
                 Deleted
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrint}
-                disabled={printing}
-              >
-                {printing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Print
-                  </>
-                ) : (
-                  <>
-                    <Printer className="w-4 h-4 mr-2" />
-                    Print
-                  </>
-                )}
+              <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
+                {
+                  printing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Print
+                    </>
+                  ) : (
+                    <>
+                      <Printer className="w-4 h-4 mr-2" />
+                      Print
+                    </>
+                  )
+                }
               </Button>
             </>
           ) : (
             <>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-gray-300 bg-blue-600 text-white"
-                onClick={handleTestRun}
-                disabled={testRunLoading}
-              >
-                {testRunLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Running...
-                  </>
-                ) : (
-                  "Test Run"
-                )}
-              </Button>
+              {(buttonCondition.canEditAll) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-blue-600 text-white"
+                  onClick={handleTestRun}
+                  disabled={testRunLoading}
+                >
+                  {testRunLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Running...
+                    </>
+                  ) : (
+                    "Test Run"
+                  )}
+                </Button>
+              )}
               {buttonCondition.showSap && (
                 <Button
                   size="sm"
                   variant="outline"
                   className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                   onClick={handleSendToSap}
+                  disabled={sapPushDisabled}
                 >
                   Push To SAP
                 </Button>
               )}
 
-              {servicePR?.all_level_approved === null && !shouldShowButtons && (
+              {servicePR?.all_level_approved === null && buttonCondition.canEditAll && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -710,31 +878,26 @@ export const ServicePRDetailsPage = () => {
                     size="sm"
                     variant="outline"
                     className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                    onClick={() =>
-                      navigate(`/finance/service-pr/add?clone=${id}`)
-                    }
+                    onClick={() => navigate(`/finance/service-pr/add?clone=${id}`)}
                   >
                     <Copy className="w-4 h-4 mr-1" />
                     Clone
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePrint}
-                    disabled={printing}
-                  >
-                    {printing ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Print
-                      </>
-                    ) : (
-                      <>
-                        <Printer className="w-4 h-4 mr-2" />
-                        Print
-                      </>
-                    )}
+                  <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
+                    {
+                      printing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Print
+                        </>
+                      ) : (
+                        <>
+                          <Printer className="w-4 h-4 mr-2" />
+                          Print
+                        </>
+                      )
+                    }
                   </Button>
                 </>
               )}
@@ -749,7 +912,7 @@ export const ServicePRDetailsPage = () => {
                 Feeds
               </Button>
 
-              {servicePR?.all_level_approved && !shouldShowButtons && (
+              {(buttonCondition.canEditAll) && (
                 <>
                   <Button
                     size="sm"
@@ -759,19 +922,20 @@ export const ServicePRDetailsPage = () => {
                   >
                     Edit WBS Codes
                   </Button>
-                  <Button
+                  {/* <Button
                     size="sm"
                     variant="outline"
                     className="border-gray-300 btn-primary"
                     onClick={() => setOpenDeletionModal(true)}
                   >
                     Raise Deletion Request
-                  </Button>
+                  </Button> */}
                 </>
               )}
             </>
           )}
         </div>
+
       </div>
 
       <TooltipProvider>
@@ -824,9 +988,7 @@ export const ServicePRDetailsPage = () => {
             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
               <Contact className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              {servicePR.company?.site_name || "Company Details"}
-            </h3>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">{servicePR.company?.site_name || "Company Details"}</h3>
           </div>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -881,9 +1043,7 @@ export const ServicePRDetailsPage = () => {
             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
               <ScrollText className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              Service Purchase Request
-            </h3>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Service Purchase Request</h3>
           </div>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -895,9 +1055,7 @@ export const ServicePRDetailsPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">
-                  Reference No.
-                </span>
+                <span className="text-gray-500 min-w-[140px]">Reference No.</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {servicePR.work_order?.reference_no ?? "-"}
@@ -908,10 +1066,7 @@ export const ServicePRDetailsPage = () => {
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {servicePR.work_order?.wo_date
-                    ? format(
-                        new Date(servicePR.work_order.wo_date),
-                        "dd-MM-yyyy"
-                      )
+                    ? format(new Date(servicePR.work_order.wo_date), "dd-MM-yyyy")
                     : "-"}
                 </span>
               </div>
@@ -923,9 +1078,7 @@ export const ServicePRDetailsPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">
-                  Kind Attention
-                </span>
+                <span className="text-gray-500 min-w-[140px]">Kind Attention</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {servicePR.work_order?.kind_attention ?? "-"}
@@ -967,9 +1120,7 @@ export const ServicePRDetailsPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">
-                  Payment Tenure
-                </span>
+                <span className="text-gray-500 min-w-[140px]">Payment Tenure</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {servicePR.work_order?.payment_terms?.payment_tenure ?? "-"}
@@ -983,9 +1134,7 @@ export const ServicePRDetailsPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">
-                  Retention(%)
-                </span>
+                <span className="text-gray-500 min-w-[140px]">Retention(%)</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {servicePR.work_order?.payment_terms?.retention ?? "-"}
@@ -1020,27 +1169,21 @@ export const ServicePRDetailsPage = () => {
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">
-                  Work Category
-                </span>
+                <span className="text-gray-500 min-w-[140px]">Work Category</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {servicePR.work_order?.work_category ?? "-"}
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">
-                  Advance Amount
-                </span>
+                <span className="text-gray-500 min-w-[140px]">Advance Amount</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {servicePR.work_order?.advance_amount ?? "-"}
                 </span>
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">
-                  Plant Detail
-                </span>
+                <span className="text-gray-500 min-w-[140px]">Plant Detail</span>
                 <span className="text-gray-500 mx-2">:</span>
                 <span className="text-gray-900 font-medium">
                   {servicePR.work_order?.plant_detail ?? "-"}
@@ -1065,9 +1208,7 @@ export const ServicePRDetailsPage = () => {
                 )}
               </div>
               <div className="flex items-start">
-                <span className="text-gray-500 min-w-[140px]">
-                  Amc Declation
-                </span>
+                <span className="text-gray-500 min-w-[140px]">Amc Declation</span>
                 <span className="text-gray-500 mx-2">:</span>
                 {servicePR.amc_declaration ? (
                   <span className="text-gray-900 font-medium px-3 text-sm rounded-[5px] w-max cursor-pointer ">
@@ -1086,9 +1227,7 @@ export const ServicePRDetailsPage = () => {
             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
               <ClipboardList className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              Service Items Details
-            </h3>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Service Items Details</h3>
           </div>
           <CardContent>
             <EnhancedTable
@@ -1155,9 +1294,7 @@ export const ServicePRDetailsPage = () => {
             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
               <ScrollText className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              Terms & Conditions
-            </h3>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Terms & Conditions</h3>
           </div>
           <CardContent className="text-wrap break-words">
             <p className="text-muted-foreground">
@@ -1189,13 +1326,11 @@ export const ServicePRDetailsPage = () => {
             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
               <Images className="w-4 h-4" />
             </div>
-            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-              Attachments
-            </h3>
+            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Attachments</h3>
           </div>
           <CardContent>
             {Array.isArray(servicePR.attachments) &&
-            servicePR.attachments.length > 0 ? (
+              servicePR.attachments.length > 0 ? (
               <div className="flex items-center flex-wrap gap-4">
                 {servicePR.attachments.map((attachment: Attachment) => {
                   const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(
@@ -1314,11 +1449,7 @@ export const ServicePRDetailsPage = () => {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>
-            {isDeletionRequest
-              ? "Reject Deletion Request"
-              : "Reject Work Order"}
-          </DialogTitle>
+          <DialogTitle>{isDeletionRequest ? "Reject Deletion Request" : "Reject Work Order"}</DialogTitle>
           <DialogContent>
             <TextField
               autoFocus
@@ -1376,36 +1507,85 @@ export const ServicePRDetailsPage = () => {
         >
           <DialogTitle>Edit WBS Codes</DialogTitle>
           <DialogContent>
-            <div className="space-y-4 mt-4">
+            <div className="space-y-6 mt-4">
+
               {servicePR.inventories?.map((item) => (
-                <FormControl fullWidth key={item.id || item.sno}>
-                  <InputLabel>
-                    WBS Code for {item.boq_details || `Item ${item.sno}`}
-                  </InputLabel>
-                  <Select
-                    value={
-                      updatedWbsCodes[(item.id || item.sno).toString()] ||
-                      item.wbs_code
-                    }
-                    onChange={(e) => handleWbsCodeChange(e, item)}
-                    label={`WBS Code for ${item.boq_details || `Item ${item.sno}`}`}
-                  >
-                    <MenuItem value="">
-                      <em>Select WBS Code</em>
-                    </MenuItem>
-                    {wbsCodes.map((wbs: { wbs_code: string }) => (
-                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                        {wbs.wbs_code}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <div key={item.id || item.toString()} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="font-semibold text-gray-900 text-sm mb-4">
+                    {item.boq_details || `Item ${item.id}`}
+                  </div>
+
+                  {/* Grid for fields in rows */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormControl fullWidth key={item.id || item.sno}>
+                      <InputLabel>
+                        WBS Code for {item.boq_details || `Item ${item.sno}`}
+                      </InputLabel>
+                      <Select
+                        value={updatedWbsCodes[(item.id || item.sno).toString()] || item.wbs_code}
+                        onChange={(e) => handleWbsCodeChangeWithGlFetch(e, item)}   // ← changed
+                        label={`WBS Code for ${item.boq_details || `Item ${item.sno}`}`}
+                      >
+                        <MenuItem value="">
+                          <em>Select WBS Code</em>
+                        </MenuItem>
+                        {wbsCodes.map((wbs: { wbs_code: string }) => (
+                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                            {wbs.wbs_code}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+
+
+                    <TextField
+                      fullWidth
+                      label="GL Account"
+                      value={
+                        updatedGlAccounts[(item.id || item.sno).toString()] ||
+                        item.gl_account ||
+                        ""
+                      }
+                      disabled
+                      variant="outlined"
+                      size="small"
+                    />
+
+                    {/* Tax Code Dropdown */}
+                    <FormControl fullWidth>
+                      <InputLabel>Tax Code</InputLabel>
+                      <Select
+                        value={
+                          updatedTaxCodes[(item.id || item.sno).toString()] ||
+                          item.tax_code ||
+                          ""
+                        }
+                        onChange={(e) => handleTaxCodeChange(e, item)}
+
+                        label="Tax Code"
+                        size="small"
+                      >
+                        <MenuItem value="">
+                          <em>Select Tax Code</em>
+                        </MenuItem>
+                        <MenuItem value="V0">V0</MenuItem>
+                        <MenuItem value="V1">V1</MenuItem>
+                        <MenuItem value="V2">V2</MenuItem>
+                        <MenuItem value="V3">V3</MenuItem>
+                        <MenuItem value="V4">V4</MenuItem>
+                        <MenuItem value="V5">V5</MenuItem>
+                      </Select>
+                    </FormControl>
+
+
+
+                  </div>
+                </div>
+
               ))}
-              {(!servicePR.inventories ||
-                servicePR.inventories.length === 0) && (
-                <p className="text-muted-foreground">
-                  No inventory items available
-                </p>
+              {(!servicePR.inventories || servicePR.inventories.length === 0) && (
+                <p className="text-muted-foreground">No inventory items available</p>
               )}
             </div>
           </DialogContent>
@@ -1431,27 +1611,22 @@ export const ServicePRDetailsPage = () => {
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
         >
-          <DialogTitle
-            id="alert-dialog-title"
-            sx={{ display: "flex", alignItems: "center", gap: 1 }}
-          >
+          <DialogTitle id="alert-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <AlertTriangle size={24} color="#d32f2f" />
             Confirm Deletion Request
           </DialogTitle>
           <DialogContent>
             <DialogContentText id="alert-dialog-description">
-              Are you sure you want to raise a deletion request? This action
-              will initiate the deletion process.
+              Are you sure you want to raise a deletion request? This action will initiate the deletion process.
             </DialogContentText>
           </DialogContent>
           <DialogActions sx={{ p: 2, pt: 0 }}>
-            <Button
-              onClick={() => setOpenDeletionModal(false)}
-              variant="outline"
-            >
+            <Button onClick={() => setOpenDeletionModal(false)} variant="outline">
               Cancel
             </Button>
-            <Button onClick={handleDelete}>Yes</Button>
+            <Button onClick={handleDelete}>
+              Yes
+            </Button>
           </DialogActions>
         </Dialog>
 
@@ -1469,55 +1644,38 @@ export const ServicePRDetailsPage = () => {
               <Rss className="w-5 h-5" />
               External API Calls
             </h3>
-            <div className="space-y-4">
-              {externalApiCalls.map((apiCall, index) => (
-                <div
-                  key={apiCall.id || index}
-                  className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-                >
+            {(() => {
+              const apiCall = externalApiCalls[externalApiCalls.length - 1];
+              return (
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="text-sm text-gray-600 font-semibold">
-                        Provider
-                      </p>
-                      <p className="text-sm font-medium">
-                        {apiCall.api_provider || "-"}
-                      </p>
+                      <p className="text-sm text-gray-600 font-semibold">Provider</p>
+                      <p className="text-sm font-medium">{apiCall.api_provider || '-'}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600 font-semibold">
-                        Response Status Code
-                      </p>
-                      <p
-                        className={`text-sm font-medium ${
-                          apiCall.response_status === 200
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {apiCall.response_status || "-"}
+                      <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
+                      <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'}`}>
+                        {apiCall.response_status || '-'}
                       </p>
                     </div>
                     <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600 font-semibold">
-                        Message
-                      </p>
+                      <p className="text-sm text-gray-600 font-semibold">Message</p>
                       <p className="text-sm bg-white p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
-                        {apiCall.message || "-"}
+                        {apiCall.message || '-'}
                       </p>
                     </div>
                     {apiCall.created_at && (
                       <div className="md:col-span-2">
                         <p className="text-xs text-gray-500">
-                          Created:{" "}
-                          {new Date(apiCall.created_at).toLocaleString()}
+                          Created: {new Date(apiCall.created_at).toLocaleString()}
                         </p>
                       </div>
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </div>
         )}
       </div>

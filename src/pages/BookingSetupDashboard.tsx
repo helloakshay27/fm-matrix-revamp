@@ -31,6 +31,7 @@ interface BookingSetup {
   advanceBooking: string;
   createdOn: string;
   createdBy: string;
+  location: string;
   status: boolean;
 }
 
@@ -98,6 +99,7 @@ export const BookingSetupDashboard = () => {
             createdOn: item.created_at.split(" ")[0],
             createdBy: item.create_by_user || "",
             status: item.active || false,
+            location: item.location || "",
           })
         );
         setBookingSetupData(formattedData);
@@ -182,12 +184,12 @@ export const BookingSetupDashboard = () => {
       sortable: true,
       draggable: true,
     },
-    // {
-    //   key: 'department',
-    //   label: 'Department',
-    //   sortable: true,
-    //   draggable: true,
-    // },
+    {
+      key: 'location',
+      label: 'Location',
+      sortable: true,
+      draggable: true,
+    },
     {
       key: 'bookBefore',
       label: 'Book before',
@@ -228,8 +230,8 @@ export const BookingSetupDashboard = () => {
         return item.name || '';
       case 'type':
         return item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : '';
-      case 'department':
-        return item.department || 'All';
+      case 'location':
+        return item?.location;
       case 'bookBy':
         return item.bookBy || '';
       case 'bookBefore':

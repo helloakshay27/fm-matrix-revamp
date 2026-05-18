@@ -586,11 +586,10 @@ export const BhagSection = () => {
         extra_field: {
           group_name: "business_plan_bhag",
           values: [tempStatement.trim()],
+          video_url: tempVideoUrl.trim(),
         },
       };
       if (tempGoal?.ownerId) payload.goal.owner_id = Number(tempGoal.ownerId);
-      if (tempVideoUrl.trim())
-        payload.extra_field.video_url = tempVideoUrl.trim();
       if (apiDate) payload.extra_field.target_date = apiDate;
       const res = await fetch(apiUrl("/extra_fields/bulk_upsert"), {
         method: "POST",

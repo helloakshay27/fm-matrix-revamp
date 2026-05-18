@@ -276,7 +276,7 @@ const modulesByPackage = {
         // { name: "Delivery Challans", href: "/accounting/delivery-challans" },
         // { name: "Payment Links", href: "/accounting/payment-links" },
         { name: "Payments Received", href: "/accounting/payments-received" },
-        { name: "Credit Note", href: "/accounting/credit-note" }
+        { name: "Credit Note", href: "/accounting/credit-note" },
       ],
     },
 
@@ -310,7 +310,7 @@ const modulesByPackage = {
         { name: "Chart Of Accounts", href: "/accounting/chart-journal" },
         { name: "Opening Balance", href: "/accounting/opening-balance" },
         // { name: "Budget", href: "/accounting/budget" },
-        { name: "Tax Setup", href: "/accounting/tax-setup" },
+        { name: "Tax Setup", href: "/accounting/tax-setup-tab" },
       ],
     },
 
@@ -326,29 +326,26 @@ const modulesByPackage = {
           name: "Payment Terms",
           href: "/accounting/payment-terms",
         },
-        {
-          name: "Tax Sections",
-          href: "/accounting/section",
-        },
+        // {
+        //   name: "Tax Sections",
+        //   href: "/accounting/section",
+        // },
 
-        {
-          name: "Direct Taxes",
-          href: "/accounting/tax-setup-master",
-        },
-        {
-          name: "Tax Rates Setup",
-          href: "/accounting/tax-rates-setup",
-        },
+        // {
+        //   name: "Direct Taxes",
+        //   href: "/accounting/tax-setup-master",
+        // },
+        // {
+        //   name: "Tax Rates Setup",
+        //   href: "/accounting/tax-rates-setup",
+        // },
         {
           name: "Default Tax Preferences",
           href: "/accounting/default-tax-preferences",
         },
         {
           name: " Approval Matrix",
-           href: "/settings/asset-setup/approval-matrix",
-         
-
-          
+          href: "/settings/asset-setup/approval-matrix",
         },
         {
           name: "Organization",
@@ -363,7 +360,7 @@ const modulesByPackage = {
       name: "Reports",
       icon: BarChart3,
       subItems: [
-          {
+        {
           name: "Business Overview",
           // icon: TrendingUp,
           subItems: [
@@ -410,6 +407,36 @@ const modulesByPackage = {
           ],
         },
         {
+          name: "Account",
+          subItems: [
+            // {
+            //   name: "Account Transactions",
+            //   href: "/accounting/reports/account-transactions",
+            // },
+            // {
+            //   name: "Day Book",
+            //   href: "/accounting/reports/day-book",
+            // },
+            // {
+            //   name: "Journal Report",
+            //   href: "/accounting/reports/journal-report",
+            // },
+            // {
+            //   name: "General Ledger",
+            //   href: "/accounting/reports/general-ledger",
+            // },
+            // {
+            //   name: "Detailed General Ledger",
+            //   href: "/accounting/reports/detailed-general-ledger",
+            // },
+            {
+              name: "Trial Balance",
+              href: "/accounting/reports/trial-balance",
+            },
+          ],
+        },
+
+        {
           name: "Sales Reports",
           subItems: [
             {
@@ -434,11 +461,6 @@ const modulesByPackage = {
           name: "Debtors & Creditors ",
           href: "/accounting/reports/debtors-creditors",
         },
-
-      
-
-
-
 
         // {
         //   name: "Account Type Summary",
@@ -492,7 +514,6 @@ const modulesByPackage = {
         //   name: "Receivable Details",
         //   href: "/accounting/reports/receivable-details",
         // },
-
 
         {
           name: "Receivables",
@@ -559,7 +580,6 @@ const modulesByPackage = {
             //   name: "Refund History",
             //   href: "/accounting/reports/refund-history",
             // },
-
           ],
         },
 
@@ -581,15 +601,15 @@ const modulesByPackage = {
               name: "Vendor Balance Summary",
               href: "/accounting/reports/vendor-balance-summary",
             },
-             {
+            {
               name: "AP Aging Summary",
               href: "/accounting/reports/ap-aging-summary",
             },
-             {
+            {
               name: "AP Aging Details",
               href: "/accounting/reports/ap-aging-details",
             },
-             {
+            {
               name: "Bill Details",
               href: "/accounting/reports/bill-details",
             },
@@ -601,7 +621,7 @@ const modulesByPackage = {
               name: "Payments Made",
               href: "/accounting/reports/payments-made",
             },
-              {
+            {
               name: "Purchase Order Details",
               href: "/accounting/reports/purchase-order-details",
             },
@@ -609,7 +629,7 @@ const modulesByPackage = {
               name: "Purchases by Vendor",
               href: "/accounting/reports/purchase-orders-by-vendor",
             },
-              {
+            {
               name: "Payable Summary",
               href: "/accounting/reports/payable-summary",
             },
@@ -617,12 +637,12 @@ const modulesByPackage = {
               name: "Payable Details",
               href: "/accounting/reports/payable-details",
             },
-           
+
             // {
             //   name: "Refund History",
             //   href: "/accounting/reports/payable-refund-history",
             // },
-          
+
             // {
             //   name: "Expense Details",
             //   href: "/accounting/reports/expense-details",
@@ -643,17 +663,13 @@ const modulesByPackage = {
             //   name: "Billable Expense Details",
             //   href: "/accounting/reports/billable-expense-details",
             // },
-            
-          
-           
-           
           ],
         },
 
         {
           name: "Purchases and Expenses",
           subItems: [
-             {
+            {
               name: "Purchases by Vendor",
               href: "/accounting/purchases-and-expenses/purchases-by-vendor",
             },
@@ -661,7 +677,7 @@ const modulesByPackage = {
               name: "Purchases by Item",
               href: "/accounting/purchases-and-expenses/purchases-by-item",
             },
-           
+
             {
               name: "Expense Details",
               href: "/accounting/purchases-and-expenses/expense-details",
@@ -682,7 +698,7 @@ const modulesByPackage = {
             //   name: "Expenses by Employee",
             //   href: "/accounting/purchases-and-expenses/expenses-by-employee",
             // },
-           
+
             {
               name: "Billable Expense Details",
               href: "/accounting/purchases-and-expenses/billable-expense-details",
@@ -697,7 +713,7 @@ const modulesByPackage = {
               name: "Tax Summary",
               href: "/accounting/reports/tax-summary",
             },
-             {
+            {
               name: "TDS Summary",
               href: "/accounting/reports/tds-summary",
             },
@@ -712,7 +728,7 @@ const modulesByPackage = {
             {
               name: "GSTR-3B Summary",
               href: "/accounting/reports/gstr-3b-summary",
-           },
+            },
             // {
             //   name: "Summary of Inward Supplies",
             //   href: "/accounting/reports/summary-of-inward-supplies",
@@ -737,7 +753,6 @@ const modulesByPackage = {
             //   name: "TCS Summary (Form No. 27EQ)",
             //   href: "/accounting/reports/tcs-summary-form-27eq",
             // },
-           
           ],
         },
 
@@ -770,36 +785,6 @@ const modulesByPackage = {
         //     },
         //   ],
         // },
-
-        {
-          name: "Account",
-          subItems: [
-            // {
-            //   name: "Account Transactions",
-            //   href: "/accounting/reports/account-transactions",
-            // },
-            // {
-            //   name: "Day Book",
-            //   href: "/accounting/reports/day-book",
-            // },
-            // {
-            //   name: "Journal Report",
-            //   href: "/accounting/reports/journal-report",
-            // },
-            // {
-            //   name: "General Ledger",
-            //   href: "/accounting/reports/general-ledger",
-            // },
-            // {
-            //   name: "Detailed General Ledger",
-            //   href: "/accounting/reports/detailed-general-ledger",
-            // },
-            {
-              name: "Trial Balance",
-              href: "/accounting/reports/trial-balance",
-            },
-          ],
-        },
 
         // {
         //   name: "Fixed Asset",
@@ -847,7 +832,6 @@ const modulesByPackage = {
         //     },
         //   ],
         // },
-
       ],
     },
   ],
@@ -980,6 +964,7 @@ export const ClubSidebar: React.FC = () => {
     setIsSidebarCollapsed,
     currentSection,
     setCurrentSection,
+    isMobileSidebarOpen,
   } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
@@ -1138,8 +1123,9 @@ export const ClubSidebar: React.FC = () => {
       <button
         key={key}
         onClick={() => handleNavigation(item.href)}
-        className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
-          }`}
+        className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#DBC2A9] relative ${
+          item.color || "text-[#1a1a1a]"
+        }`}
       >
         {isActive && (
           <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]" />
@@ -1151,7 +1137,13 @@ export const ClubSidebar: React.FC = () => {
     );
   };
 
-  const CollapsedMenuItem = ({ item, level = 0 }: { item: SidebarItem; level?: number }) => {
+  const CollapsedMenuItem = ({
+    item,
+    level = 0,
+  }: {
+    item: SidebarItem;
+    level?: number;
+  }) => {
     const hasSubItems = item.subItems && item.subItems.length > 0;
     const isStaticItem = !hasSubItems && !item.href;
     const isExpanded = expandedItems.includes(item.name);
@@ -1184,10 +1176,11 @@ export const ClubSidebar: React.FC = () => {
               handleNavigation(item.href, item.blank);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
-            ? "bg-[#f0e8dc] shadow-inner"
-            : "hover:bg-[#DBC2A9]"
-            }`}
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+            active || isExpanded
+              ? "bg-[#f0e8dc] shadow-inner"
+              : "hover:bg-[#DBC2A9]"
+          }`}
           title={item.name}
         >
           {(active || isExpanded) && (
@@ -1216,8 +1209,11 @@ export const ClubSidebar: React.FC = () => {
 
   return (
     <div
-      className={`${isSidebarCollapsed ? "w-16" : "w-64"
-        } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${
+        isSidebarCollapsed ? "w-16" : "w-64"
+      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${
+        isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      } md:translate-x-0`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -1271,8 +1267,8 @@ export const ClubSidebar: React.FC = () => {
         <nav className="space-y-2">
           {isSidebarCollapsed
             ? currentModules.map((item) => (
-              <CollapsedMenuItem key={item.name} item={item} level={0} />
-            ))
+                <CollapsedMenuItem key={item.name} item={item} level={0} />
+              ))
             : currentModules.map((item) => renderMenuItem(item))}
         </nav>
       </div>

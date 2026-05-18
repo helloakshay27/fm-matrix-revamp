@@ -58,7 +58,7 @@ interface SurveyMapping {
     id: number;
     name: string;
     questions_count: number;
-    form_view: boolean;
+    form_view: boolean | string;
     snag_attach?: string;
     survey_attachment?: SurveyAttach;
     snag_questions: SurveyQuestion[];
@@ -1801,7 +1801,7 @@ export const MobileSurveyLanding: React.FC = () => {
   const isMultiQuestion = (surveyData?.snag_checklist?.questions_count ?? 0) > 1;
   const isLastStep =
     currentQuestionIndex >= (surveyData?.snag_checklist?.questions_count ?? 0);
-  const isFormView = surveyData?.snag_checklist?.form_view === true;
+  const isFormView = surveyData?.snag_checklist?.form_view === true || surveyData?.snag_checklist?.form_view === "true";
 
   // Debug current question data
   if (currentQuestion) {

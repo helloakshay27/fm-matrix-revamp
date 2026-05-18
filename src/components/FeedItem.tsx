@@ -6,6 +6,9 @@ interface FeedData {
   date: string;
   time: string;
   user?: string;
+  recipientName?: string;
+  rating_to_name?: string;
+  ratingToName?: string;
   description: string;
   type: string;
   status: string;
@@ -18,6 +21,12 @@ interface FeedItemProps {
 }
 
 export const FeedItem: React.FC<FeedItemProps> = ({ feed, index }) => {
+  const displayUser =
+    feed.rating_to_name?.trim() ||
+    feed.ratingToName?.trim() ||
+    feed.recipientName?.trim() ||
+    feed.user?.trim();
+
   const getStatusIcon = () => {
     if (feed.status === 'Approved') {
       return <CheckCircle className="w-4 h-4 text-green-600" />;
@@ -59,12 +68,12 @@ export const FeedItem: React.FC<FeedItemProps> = ({ feed, index }) => {
       </div>
 
       {/* User information */}
-      {feed.user && (
+      {displayUser && (
         <div className="flex items-center space-x-2 mb-3">
           <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
             <User className="w-4 h-4 text-gray-600" />
           </div>
-          <span className="text-sm font-medium text-gray-900">{feed.user}</span>
+          <span className="text-sm font-medium text-gray-900">{displayUser}</span>
         </div>
       )}
 

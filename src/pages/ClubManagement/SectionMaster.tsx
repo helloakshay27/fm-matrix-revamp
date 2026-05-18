@@ -221,7 +221,7 @@ export const SectionMaster: React.FC = () => {
   });
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-2 space-y-6">
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Sections </h1>
       </header>
@@ -263,7 +263,7 @@ export const SectionMaster: React.FC = () => {
 
       {/* Add Modal */}
       <Dialog open={addModalOpen} onOpenChange={(open) => { setAddModalOpen(open); if (!open) { setAddErrors({}); setAddForm({ name: '', tax_type: 'tds', group_name: '' }); } }}>
-        <DialogContent>
+        <DialogContent className="bg-white data-[state=open]:animate-in">
           <DialogHeader>
             <DialogTitle>Add Section</DialogTitle>
           </DialogHeader>
@@ -324,7 +324,7 @@ export const SectionMaster: React.FC = () => {
 
       {/* Edit Modal */}
       <Dialog open={editModalOpen} onOpenChange={(open) => { setEditModalOpen(open); if (!open) setEditErrors({}); }}>
-        <DialogContent>
+        <DialogContent className="bg-white data-[state=open]:animate-in">
           <DialogHeader>
             <DialogTitle>Edit Section</DialogTitle>
           </DialogHeader>

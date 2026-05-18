@@ -107,7 +107,8 @@ export const AssetAuditDashboard = () => {
     inProgress: 0,
     completed: 0,
     overdue: 0,
-    closed: 0
+    closed: 0,
+    paused_count: 0,
   });
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -200,7 +201,8 @@ export const AssetAuditDashboard = () => {
         inProgress: data.in_progress_count || 0,
         completed: data.completed_count || 0,
         overdue: data.overdue_count || 0,
-        closed: data.closed_count || 0
+        closed: data.closed_count || 0,
+        paused_count: data.paused_count || 0,
       });
 
       // Set pagination from API response
@@ -913,6 +915,23 @@ export const AssetAuditDashboard = () => {
                   </div>
                 </div>
               </div>
+
+              <div
+                className={`bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'paused' ? 'ring-2 ring-[#D92818] ring-offset-2' : ''
+                  }`}
+                onClick={() => handleCardClick('paused')}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center">
+                    <Hourglass className="w-6 h-6 text-[#D92818]" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-2xl font-bold">{stats.paused_count}</span>
+                    <span className="font-medium text-sm text-black">Paused</span>
+                  </div>
+                </div>
+              </div>
+
 
               <div
                 className={`bg-[#F2F0EB] text-[#D92818] rounded-lg p-4 shadow-[0px_2px_18px_rgba(45,45,45,0.1)] cursor-pointer transition-all hover:shadow-lg ${selectedStatusFilter === 'closed' ? 'ring-2 ring-[#D92818] ring-offset-2' : ''

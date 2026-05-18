@@ -16,6 +16,23 @@ import apiClient from "@/utils/apiClient";
 import { getUser } from "@/utils/auth";
 import { toast } from "@/components/ui/sonner";
 
+const RATINGS_COLLECTION_ENDPOINTS = ["/ratings.json", "/ratings"];
+
+const getResponseStatus = (error: unknown) =>
+  error && typeof error === "object" && "response" in error
+    ? (error.response as { status?: number })?.status
+    : undefined;
+
+const getErrorMessage = (error: unknown) => {
+  if (error && typeof error === "object" && "response" in error) {
+    const data = (error.response as { data?: { message?: string; error?: string } })
+      ?.data;
+    return data?.message || data?.error || "Failed to submit feedback";
+  }
+
+  return "An unexpected error occurred";
+};
+
 interface GiveFeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -32,59 +49,95 @@ export function GiveFeedbackModal({
   receiver,
   onSuccess,
 }: GiveFeedbackModalProps) {
-  const [score, setScore] = useState(5);
+  const [score, setScore] = useState(0);
   const [positiveOpening, setPositiveOpening] = useState("");
   const [constructiveFeedback, setConstructiveFeedback] = useState("");
   const [positiveClosing, setPositiveClosing] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const getCurrentUserId = () => {
+    const currentUser = getUser();
+    const authUserId = Number(currentUser?.id ?? 0);
+    if (authUserId) return authUserId;
+
+    for (const key of ["user_id", "userId", "id"]) {
+      const value = Number(
+        localStorage.getItem(key) || sessionStorage.getItem(key) || "0"
+      );
+      if (value) return value;
+    }
+
+    return null;
+  };
+
   const handleSubmit = async () => {
     if (!receiver) return;
 
-    const currentUser = getUser();
-    if (!currentUser) {
+    const currentUserId = getCurrentUserId();
+    if (!currentUserId) {
       toast.error("You must be logged in to give feedback.");
+      return;
+    }
+    if (score === 0) {
+      toast.error("Please select a rating.");
       return;
     }
 
     setIsSubmitting(true);
 
     const payload = {
-      id: receiver.user_id,
-      score: score,
-      reviewer: `${currentUser.firstname} ${currentUser.lastname}`.trim(),
-      rating_from_id: currentUser.id,
+      resource_type: "User",
+      resource_id: receiver.user_id,
+      score,
       rating_from_type: "User",
+      rating_from_id: currentUserId,
       created_at: new Date().toISOString(),
-      fields: {
-        positive_opening: positiveOpening,
-        constructive_feedback: constructiveFeedback,
-        positive_closing: positiveClosing,
-      },
+      positive_opening: positiveOpening,
+      constructive_feedback: constructiveFeedback,
+      positive_closing: positiveClosing,
+      reviews: "",
     };
 
     try {
-      const response = await apiClient.post("/ratings", payload);
+      let submitted = false;
+      let lastError: unknown = null;
 
-      if (response.status === 201 || response.status === 200) {
+      for (const endpoint of RATINGS_COLLECTION_ENDPOINTS) {
+        try {
+          const response = await apiClient.post(endpoint, payload, {
+            headers: { "Content-Type": "application/json" },
+          });
+
+          if (response.status === 201 || response.status === 200) {
+            submitted = true;
+            break;
+          }
+        } catch (error) {
+          lastError = error;
+          const status = getResponseStatus(error);
+          if (status === 401 || status === 403 || status === 429) {
+            throw error;
+          }
+        }
+      }
+
+      if (submitted) {
         toast.success(`Feedback submitted for ${receiver.name}`);
         onSuccess?.();
         handleClose();
+      } else {
+        throw lastError || new Error("Failed to submit feedback");
       }
     } catch (err: unknown) {
       console.error("Feedback submission error:", err);
-      const errorMessage =
-        err && typeof err === "object" && "response" in err
-          ? (err.response as any)?.data?.message || "Failed to submit feedback"
-          : "An unexpected error occurred";
-      toast.error(errorMessage);
+      toast.error(getErrorMessage(err));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleClose = () => {
-    setScore(5);
+    setScore(0);
     setPositiveOpening("");
     setConstructiveFeedback("");
     setPositiveClosing("");
@@ -93,8 +146,8 @@ export function GiveFeedbackModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] border-[#DA7756]/20 bg-white shadow-xl rounded-2xl overflow-hidden focus:outline-none">
-        <DialogHeader className="p-6 pb-0">
+      <DialogContent className="flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden rounded-2xl border-[#DA7756]/20 bg-white p-0 shadow-xl focus:outline-none sm:max-w-[500px]">
+        <DialogHeader className="shrink-0 p-6 pb-4">
           <DialogTitle className="flex items-center gap-2 text-xl font-bold text-neutral-900">
             <Star className="h-5 w-5 fill-[#DA7756] text-[#DA7756]" />
             Feedback for {receiver?.name}
@@ -104,7 +157,8 @@ export function GiveFeedbackModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-6 p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+          <div className="grid gap-6">
           {/* Rating Selection */}
           <div className="space-y-3">
             <Label className="text-sm font-semibold text-neutral-700">Rating Score</Label>
@@ -128,13 +182,13 @@ export function GiveFeedbackModal({
                 </button>
               ))}
               <span className="ml-2 text-sm font-bold text-[#DA7756]">
-                {score === 5 ? "Excellent" : score === 4 ? "Great" : score === 3 ? "Good" : score === 2 ? "Needs Improvement" : "Poor"}
+                {score === 0 ? "Select rating" : score === 5 ? "Excellent" : score === 4 ? "Great" : score === 3 ? "Good" : score === 2 ? "Needs Improvement" : "Poor"}
               </span>
             </div>
           </div>
 
           {/* Feedback Fields */}
-          <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
+          <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="positive_opening" className="text-sm font-semibold text-neutral-700">
                 Positive Opening
@@ -174,9 +228,10 @@ export function GiveFeedbackModal({
               />
             </div>
           </div>
+          </div>
         </div>
 
-        <DialogFooter className="bg-neutral-50/50 p-6 pt-4 gap-3 sm:gap-0">
+        <DialogFooter className="shrink-0 gap-3 border-t border-neutral-100 bg-neutral-50/50 p-4 sm:gap-0 sm:p-6 sm:pt-4">
           <Button
             variant="ghost"
             onClick={handleClose}
@@ -186,7 +241,7 @@ export function GiveFeedbackModal({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || !positiveOpening || !constructiveFeedback || !positiveClosing}
+            disabled={isSubmitting || score === 0}
             className="bg-[#DA7756] hover:bg-[#DA7756]/90 text-white shadow-lg shadow-[#DA7756]/20"
           >
             {isSubmitting ? (

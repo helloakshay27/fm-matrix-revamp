@@ -1111,6 +1111,10 @@ export const PurchaseOrderCreatePage: React.FC = () => {
         const files = event.target.files;
         if (files) {
             const newFiles = Array.from(files).filter(file => {
+                if (file.type !== 'application/pdf') {
+                    alert(`${file.name}: Only PDF files are accepted`);
+                    return false;
+                }
                 if (file.size > 5 * 1024 * 1024) {
                     alert(`${file.name} exceeds 5MB limit`);
                     return false;

@@ -675,7 +675,7 @@ const modulesByPackage = {
       name: "Currency",
       icon: DollarSign,
       href: "/settings/currency",
-    }
+    },
   ],
 };
 
@@ -687,6 +687,7 @@ export const OmanSidebar = () => {
     setCurrentSection,
     isSidebarCollapsed,
     setIsSidebarCollapsed,
+    isMobileSidebarOpen,
   } = useLayout();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [selectedDepartment, setSelectedRole] = useState("");
@@ -860,8 +861,9 @@ export const OmanSidebar = () => {
                                   currentSection
                                 )
                               }
-                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || "text-[#1a1a1a]"
-                                }`}
+                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${
+                                nestedItem.color || "text-[#1a1a1a]"
+                              }`}
                             >
                               {isActiveRoute(nestedItem.href) && (
                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -877,8 +879,9 @@ export const OmanSidebar = () => {
                       onClick={() =>
                         handleNavigation(subItem.href, currentSection)
                       }
-                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || "text-[#1a1a1a]"
-                        }`}
+                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+                        subItem.color || "text-[#1a1a1a]"
+                      }`}
                     >
                       {isActiveRoute(subItem.href) && (
                         <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -900,8 +903,9 @@ export const OmanSidebar = () => {
           onClick={() =>
             item.href && handleNavigation(item.href, currentSection)
           }
-          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || "text-[#1a1a1a]"
-            }`}
+          className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
+            item.color || "text-[#1a1a1a]"
+          }`}
         >
           {level === 0 && (
             <>
@@ -980,10 +984,11 @@ export const OmanSidebar = () => {
               handleNavigation(module.href, currentSection);
             }
           }}
-          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
+          className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+            active || isExpanded
               ? "bg-[#f0e8dc] shadow-inner"
               : "hover:bg-[#DBC2A9]"
-            }`}
+          }`}
           title={module.name}
         >
           {(active || isExpanded) && (
@@ -991,13 +996,15 @@ export const OmanSidebar = () => {
           )}
           {level === 0 ? (
             <module.icon
-              className={`w-5 h-5 ${active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
-                }`}
+              className={`w-5 h-5 ${
+                active || isExpanded ? "text-[#C72030]" : "text-[#1a1a1a]"
+              }`}
             />
           ) : (
             <div
-              className={`w-${3 - level} h-${3 - level
-                } rounded-full bg-[#1a1a1a]`}
+              className={`w-${3 - level} h-${
+                3 - level
+              } rounded-full bg-[#1a1a1a]`}
             ></div>
           )}
         </button>
@@ -1016,8 +1023,11 @@ export const OmanSidebar = () => {
 
   return (
     <div
-      className={`${isSidebarCollapsed ? "w-16" : "w-64"
-        } bg-[#f6f4ee] border-r border-\[\#D5DbDB\]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      className={`${
+        isSidebarCollapsed ? "w-16" : "w-64"
+      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${
+        isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      } md:translate-x-0`}
       style={{ top: "4rem", height: "91vh" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
@@ -1039,8 +1049,9 @@ export const OmanSidebar = () => {
         {currentSection && (
           <div className={`mb-4 ${isSidebarCollapsed ? "text-center" : ""}`}>
             <h3
-              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? "text-center" : "tracking-wide"
-                }`}
+              className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${
+                isSidebarCollapsed ? "text-center" : "tracking-wide"
+              }`}
             >
               {isSidebarCollapsed ? "" : currentSection}
             </h3>
@@ -1076,20 +1087,22 @@ export const OmanSidebar = () => {
                       handleNavigation(module.href, currentSection);
                     }
                   }}
-                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
+                  className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
+                    isActiveRoute(module.href)
                       ? "bg-[#f0e8dc] shadow-inner"
                       : "hover:bg-[#DBC2A9]"
-                    }`}
+                  }`}
                   title={module.name}
                 >
                   {isActiveRoute(module.href) && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                   )}
                   <module.icon
-                    className={`w-5 h-5 ${isActiveRoute(module.href)
+                    className={`w-5 h-5 ${
+                      isActiveRoute(module.href)
                         ? "text-[#C72030]"
                         : "text-[#1a1a1a]"
-                      }`}
+                    }`}
                   />
                 </button>
               ))}

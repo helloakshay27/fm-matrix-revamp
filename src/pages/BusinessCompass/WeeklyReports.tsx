@@ -29,6 +29,8 @@ import {
     Clock,
     Loader2,
     FileText,
+    Pencil,
+    ListTodo,
 } from "lucide-react";
 import {
     addDays,
@@ -50,6 +52,14 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { AddTaskOrIssueDialog } from "@/components/BusinessCompass/AddTaskOrIssueDialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -72,10 +82,12 @@ import {
 import axios from "axios";
 import { Menu, MenuItem } from "@mui/material";
 import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
+import ProjectTaskEditModal from "@/components/ProjectTaskEditModal";
 import AddIssueModal from "@/components/AddIssueModal";
+import EditIssueModal from "@/components/EditIssueModal";
+import TodoDetailsModal from "@/components/TodoDetailsModal";
+import AddToDoModal from "@/components/AddToDoModal";
 import { TransitionProps } from "@mui/material/transitions";
-import { useTasks } from "@/hooks/useTasks";
-import { useIssues } from "@/hooks/useIssues";
 import { useNavigate } from "react-router-dom";
 
 const Transition = forwardRef(function Transition(
@@ -144,6 +156,22 @@ type RemarkChipId =
     | "clientFeedback"
     | "employeeFeedback";
 
+interface WeeklyReportDraft {
+    wins?: string[];
+    checkedWins?: Record<number, boolean>;
+    starredWins?: Record<number, boolean>;
+    dayPlans?: Record<string, { id: string; text: string; starred?: boolean }[]>;
+    remarksText?: string;
+    remarksList?: { type: RemarkChipId | null; text: string }[];
+    activeRemarkChip?: RemarkChipId | null;
+    remarksInteracted?: boolean;
+    kpiEntries?: { [key: number]: string };
+    plannedEntries?: { [key: number]: string };
+    selectedTasksIssues?: { [key: string]: boolean };
+    selectedFileNames?: string[];
+    uploadedFilesCount?: number;
+}
+
 const REMARK_CHIP_META: Record<
     RemarkChipId,
     {
@@ -211,6 +239,22 @@ const normalizeToString = (w: any): string => {
     return String(w ?? "");
 };
 
+const SOP_STATUS_OPTIONS = ["To Start", "Broken", "Running"] as const;
+
+const normalizeSopStatus = (status: any) =>
+    String(status || "")
+        .toLowerCase()
+        .replace(/\s+/g, "_");
+
+const getSopStatusValue = (status: any) => {
+    const normalizedStatus = normalizeSopStatus(status);
+    if (normalizedStatus === "running") return "Running";
+    if (normalizedStatus === "broken") return "Broken";
+    return "To Start";
+};
+
+const roundScore = (score: number) => Number(score.toFixed(2));
+
 const WeeklyReports = () => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -237,6 +281,12 @@ const WeeklyReports = () => {
     const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
     const [hasMoreTasks, setHasMoreTasks] = useState(true);
     const [hasMoreIssues, setHasMoreIssues] = useState(true);
+    const [tasksData, setTasksData] = useState<any>(null);
+    const [issuesData, setIssuesData] = useState<any>(null);
+    const [tasksLoading, setTasksLoading] = useState(false);
+    const [issuesLoading, setIssuesLoading] = useState(false);
+    const [todosData, setTodosData] = useState<any[]>([]);
+    const [todosLoading, setTodosLoading] = useState(false);
     const [kpis, setKpis] = useState<any[]>([]);
     const [kpiLoading, setKpiLoading] = useState(false);
     const [kpiEntries, setKpiEntries] = useState<{ [key: number]: string }>({});
@@ -266,6 +316,15 @@ const WeeklyReports = () => {
     const remarksTextareaRef = React.useRef<HTMLTextAreaElement>(null);
     const [openTaskModal, setOpenTaskModal] = useState(false);
     const [openIssueModal, setOpenIssueModal] = useState(false);
+    const [openTodoModal, setOpenTodoModal] = useState(false);
+    const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
+    const [editTaskData, setEditTaskData] = useState<any>(null);
+    const [isEditIssueModalOpen, setIsEditIssueModalOpen] = useState(false);
+    const [editIssueData, setEditIssueData] = useState<any>(null);
+    const [isEditTodoModalOpen, setIsEditTodoModalOpen] = useState(false);
+    const [editTodoData, setEditTodoData] = useState<any>(null);
+    const [isTodoDetailsModalOpen, setIsTodoDetailsModalOpen] = useState(false);
+    const [selectedTodo, setSelectedTodo] = useState<any>(null);
     const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] =
         useState<null | HTMLElement>(null);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -284,7 +343,41 @@ const WeeklyReports = () => {
         []
     );
     const [selectedWeekOffset, setSelectedWeekOffset] = React.useState(0);
+    const [systemSops, setSystemSops] = React.useState<any[]>([]);
+    const [isLoadingSops, setIsLoadingSops] = React.useState(false);
+    const [sopsError, setSopsError] = React.useState<string | null>(null);
+    const [tasksIssuesRefreshKey, setTasksIssuesRefreshKey] = React.useState(0);
+    const [updatingSopStatus, setUpdatingSopStatus] = React.useState<
+        Record<number, boolean>
+    >({});
+    const [updatingSopHealth, setUpdatingSopHealth] = React.useState<
+        Record<number, boolean>
+    >({});
     const refDate = React.useMemo(() => new Date(), []);
+
+    useEffect(() => {
+        if (!taskIssueMenuAnchor) return;
+
+        const closeTaskIssueMenuOnScroll = () => {
+            setTaskIssueMenuAnchor(null);
+        };
+        const listenerOptions = { capture: true, passive: true } as AddEventListenerOptions;
+
+        window.addEventListener("scroll", closeTaskIssueMenuOnScroll, listenerOptions);
+        document.addEventListener("scroll", closeTaskIssueMenuOnScroll, listenerOptions);
+        window.addEventListener("wheel", closeTaskIssueMenuOnScroll, listenerOptions);
+        document.addEventListener("wheel", closeTaskIssueMenuOnScroll, listenerOptions);
+        window.addEventListener("touchmove", closeTaskIssueMenuOnScroll, listenerOptions);
+        document.addEventListener("touchmove", closeTaskIssueMenuOnScroll, listenerOptions);
+        return () => {
+            window.removeEventListener("scroll", closeTaskIssueMenuOnScroll, listenerOptions);
+            document.removeEventListener("scroll", closeTaskIssueMenuOnScroll, listenerOptions);
+            window.removeEventListener("wheel", closeTaskIssueMenuOnScroll, listenerOptions);
+            document.removeEventListener("wheel", closeTaskIssueMenuOnScroll, listenerOptions);
+            window.removeEventListener("touchmove", closeTaskIssueMenuOnScroll, listenerOptions);
+            document.removeEventListener("touchmove", closeTaskIssueMenuOnScroll, listenerOptions);
+        };
+    }, [taskIssueMenuAnchor]);
 
     const currentWeekStart = React.useMemo(
         () => startOfWeek(refDate, { weekStartsOn: 1 }),
@@ -308,36 +401,247 @@ const WeeklyReports = () => {
         typeof localStorage !== "undefined"
             ? JSON.parse(localStorage.getItem("user") || "{}")
             : {};
-    const userId = user?.id;
+    const userId =
+        localStorage.getItem("userId") || localStorage.getItem("user_id") || user?.id;
+    const normalizedBaseUrl = React.useMemo(() => {
+        const raw = String(baseUrl || "").trim().replace(/\/+$/, "");
+        if (!raw) return "";
+        return raw.startsWith("http://") || raw.startsWith("https://")
+            ? raw
+            : `https://${raw}`;
+    }, [baseUrl]);
+    const weekDraftKey = React.useMemo(
+        () =>
+            `business-compass-weekly-report-draft:${userId || "guest"}:${format(weekStart, "yyyy-MM-dd")}`,
+        [userId, weekStart]
+    );
+    const canPersistDraftRef = React.useRef(false);
+    const suppressDraftPersistenceRef = React.useRef(false);
 
-    const myIssuesFilter = `
-      q[status_in][]=open
-      &q[status_in][]=overdued
-      &q[status_in][]=completed
-      ${userId ? `&q[responsible_person_id_eq]=${userId}` : ""}
-    `.replace(/\s+/g, "");
-
-    const { data: tasksData, isLoading: tasksLoading } = useTasks({
-        taskType: "my",
-        page: currentTasksPage,
-        filters: {
-            "q[expected_start_date_gteq]": format(weekStart, "yyyy-MM-dd"),
-            "q[target_date_lteq]": format(weekEnd, "yyyy-MM-dd"),
+    const getStoredDraft = React.useCallback(
+        (key = weekDraftKey): WeeklyReportDraft | null => {
+            try {
+                const rawDraft = localStorage.getItem(key);
+                return rawDraft ? JSON.parse(rawDraft) : null;
+            } catch {
+                return null;
+            }
         },
-    });
+        [weekDraftKey]
+    );
 
-    const { data: issuesData, isLoading: issuesLoading } = useIssues({
-        baseUrl,
-        token,
-        page: currentIssuesPage,
-        filters: myIssuesFilter,
-        enabled: !!token && !!userId,
-    });
+    const clearStoredDraft = React.useCallback(
+        (key = weekDraftKey) => {
+            localStorage.removeItem(key);
+        },
+        [weekDraftKey]
+    );
+
+    const applyStoredDraft = React.useCallback((draft: WeeklyReportDraft | null) => {
+        if (!draft) return;
+        if (Array.isArray(draft.wins)) setWins(draft.wins);
+        if (draft.checkedWins && typeof draft.checkedWins === "object")
+            setCheckedWins(draft.checkedWins);
+        if (draft.starredWins && typeof draft.starredWins === "object")
+            setStarredWins(draft.starredWins);
+        if (draft.dayPlans && typeof draft.dayPlans === "object")
+            setDayPlans(draft.dayPlans);
+        if (typeof draft.remarksText === "string")
+            setRemarksText(draft.remarksText);
+        if (Array.isArray(draft.remarksList))
+            setRemarksList(draft.remarksList);
+        if (
+            draft.activeRemarkChip === null ||
+            typeof draft.activeRemarkChip === "string"
+        ) {
+            setActiveRemarkChip(draft.activeRemarkChip);
+        }
+        if (typeof draft.remarksInteracted === "boolean")
+            setRemarksInteracted(draft.remarksInteracted);
+        if (draft.kpiEntries && typeof draft.kpiEntries === "object")
+            setKpiEntries(draft.kpiEntries);
+        if (draft.plannedEntries && typeof draft.plannedEntries === "object")
+            setPlannedEntries(draft.plannedEntries);
+        if (
+            draft.selectedTasksIssues &&
+            typeof draft.selectedTasksIssues === "object"
+        ) {
+            setSelectedTasksIssues(draft.selectedTasksIssues);
+        }
+        if (Array.isArray(draft.selectedFileNames))
+            setSelectedFileNames(draft.selectedFileNames);
+        if (typeof draft.uploadedFilesCount === "number")
+            setUploadedFilesCount(draft.uploadedFilesCount);
+    }, []);
+
+    useEffect(() => {
+        setCurrentTasksPage(1);
+        setCurrentIssuesPage(1);
+        setMergedTasksIssues([]);
+        setTodosData([]);
+    }, [weekEnd, userId]);
+
+    useEffect(() => {
+        const fetchWeeklyTasks = async () => {
+            if (!normalizedBaseUrl) {
+                setTasksData(null);
+                return;
+            }
+
+            setTasksLoading(true);
+            try {
+                const params = new URLSearchParams();
+                params.append("page", String(currentTasksPage));
+                params.append("q[status_in][]", "open");
+                params.append("q[status_in][]", "overdue");
+                params.append("q[status_in][]", "overdued");
+                params.append("q[status_in][]", "in_progress");
+                params.append("q[status_in][]", "completed");
+                params.append(
+                    "q[start_date_or_target_date_or_completed_at_lteq]",
+                    format(weekEnd, "yyyy-MM-dd")
+                );
+                params.append("q[completed_at_gteq]", format(weekStart, "yyyy-MM-dd"));
+
+                const response = await fetch(
+                    `${normalizedBaseUrl}/task_managements/my_tasks.json?${params.toString()}`,
+                    {
+                        headers: {
+                            Accept: "application/json",
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Tasks API failed with ${response.status}`);
+                }
+
+                setTasksData(await response.json());
+            } catch (error) {
+                console.error("Failed to fetch weekly tasks:", error);
+                setTasksData(null);
+            } finally {
+                setTasksLoading(false);
+            }
+        };
+
+        fetchWeeklyTasks();
+    }, [normalizedBaseUrl, token, weekEnd, weekStart, currentTasksPage, tasksIssuesRefreshKey]);
+
+    useEffect(() => {
+        const fetchWeeklyIssues = async () => {
+            if (!normalizedBaseUrl || !userId) {
+                setIssuesData(null);
+                return;
+            }
+
+            setIssuesLoading(true);
+            try {
+                const params = new URLSearchParams();
+                params.append("page", String(currentIssuesPage));
+                params.append("q[status_in][]", "open");
+                params.append("q[status_in][]", "overdue");
+                params.append("q[status_in][]", "overdued");
+                params.append("q[status_in][]", "in_progress");
+                params.append("q[status_in][]", "completed");
+                params.append(
+                    "q[start_date_or_target_date_or_completed_at_lteq]",
+                    format(weekEnd, "yyyy-MM-dd")
+                );
+                params.append("q[completed_at_gteq]", format(weekStart, "yyyy-MM-dd"));
+                params.append("q[responsible_person_id_eq]", String(userId));
+
+                const response = await fetch(
+                    `${normalizedBaseUrl}/issues.json?${params.toString()}`,
+                    {
+                        headers: {
+                            Accept: "application/json",
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Issues API failed with ${response.status}`);
+                }
+
+                setIssuesData(await response.json());
+            } catch (error) {
+                console.error("Failed to fetch weekly issues:", error);
+                setIssuesData(null);
+            } finally {
+                setIssuesLoading(false);
+            }
+        };
+
+        fetchWeeklyIssues();
+    }, [normalizedBaseUrl, token, userId, weekEnd, weekStart, currentIssuesPage, tasksIssuesRefreshKey]);
+
+    useEffect(() => {
+        const fetchTodos = async () => {
+            if (!normalizedBaseUrl || !userId) {
+                setTodosData([]);
+                return;
+            }
+
+            setTodosLoading(true);
+            try {
+                const params = new URLSearchParams();
+                params.append("q[user_id_eq]", String(userId));
+                params.append("q[target_date_lteq]", format(weekEnd, "yyyy-MM-dd"));
+                params.append("q[status_in][]", "open");
+                params.append("q[status_in][]", "overdue");
+                params.append("q[status_in][]", "overdued");
+                params.append("q[status_in][]", "in_progress");
+                params.append("q[status_in][]", "completed");
+
+                const response = await fetch(
+                    `${normalizedBaseUrl}/todos.json?${params.toString()}`,
+                    {
+                        headers: {
+                            Accept: "application/json",
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Todos API failed with ${response.status}`);
+                }
+
+                const json = await response.json();
+                const todos =
+                    (Array.isArray(json) && json) ||
+                    json?.todos ||
+                    json?.data?.todos ||
+                    json?.data ||
+                    [];
+
+                setTodosData(Array.isArray(todos) ? todos : []);
+            } catch (error) {
+                console.error("Failed to fetch weekly todos:", error);
+                setTodosData([]);
+            } finally {
+                setTodosLoading(false);
+            }
+        };
+
+        fetchTodos();
+    }, [normalizedBaseUrl, token, userId, weekEnd, tasksIssuesRefreshKey]);
 
     useEffect(() => {
         const tasks =
-            tasksData?.data?.task_managements || tasksData?.task_managements || [];
-        const issues = issuesData?.issues || [];
+            tasksData?.data?.task_managements ||
+            tasksData?.task_managements ||
+            tasksData?.tasks ||
+            (Array.isArray(tasksData?.data) ? tasksData.data : []) ||
+            (Array.isArray(tasksData) ? tasksData : []);
+        const issues =
+            issuesData?.issues ||
+            issuesData?.data?.issues ||
+            (Array.isArray(issuesData?.data) ? issuesData.data : []) ||
+            (Array.isArray(issuesData) ? issuesData : []);
 
         const tasksPagination =
             tasksData?.data?.pagination || tasksData?.pagination;
@@ -348,9 +652,9 @@ const WeeklyReports = () => {
 
         const transformedTasks = tasks.map((task: any) => ({
             id: `task-${task.id}`,
-            title: task.title, // <-- API mein field name "title" hai ya "name"?
+            title: task.title || task.name || task.heading || "Untitled Task",
             type: "task",
-            status: task.status || "open",
+            status: String(task.status || "open").toLowerCase().replace(/\s+/g, "_"),
             priority: task.priority || "Medium",
             created_at: task.created_at,
             responsible: task.responsible_person_id,
@@ -359,16 +663,33 @@ const WeeklyReports = () => {
 
         const transformedIssues = issues.map((issue: any) => ({
             id: `issue-${issue.id}`,
-            title: issue.title,
+            title: issue.title || issue.name || issue.heading || "Untitled Issue",
             type: "issue",
-            status: issue.status || "open",
+            status: String(issue.status || "open").toLowerCase().replace(/\s+/g, "_"),
             priority: issue.priority || "Medium",
             created_at: issue.created_at,
             responsible: issue.responsible_person_id,
             originalData: issue,
         }));
 
-        const newData = [...transformedTasks, ...transformedIssues].sort(
+        const transformedTodos = todosData.map((todo: any) => ({
+            id: `todo-${todo.id}`,
+            title:
+                todo.title ||
+                todo.name ||
+                todo.heading ||
+                todo.description ||
+                todo.body ||
+                "Untitled Todo",
+            type: "todo",
+            status: String(todo.status || "open").toLowerCase().replace(/\s+/g, "_"),
+            priority: todo.priority || "Medium",
+            created_at: todo.created_at || todo.target_date,
+            responsible: todo.user_id,
+            originalData: todo,
+        }));
+
+        const newData = [...transformedTasks, ...transformedIssues, ...transformedTodos].sort(
             (a, b) =>
                 new Date(b.created_at || 0).getTime() -
                 new Date(a.created_at || 0).getTime()
@@ -392,7 +713,7 @@ const WeeklyReports = () => {
         }
 
         setIsLoadingMore(false);
-    }, [tasksData, issuesData, currentTasksPage, currentIssuesPage]);
+    }, [tasksData, issuesData, todosData, currentTasksPage, currentIssuesPage]);
 
     useEffect(() => {
         const completedItems: { [key: string]: boolean } = {};
@@ -412,7 +733,7 @@ const WeeklyReports = () => {
             const { scrollTop, scrollHeight, clientHeight } = container;
             const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
 
-            if (isNearBottom && !isLoadingMore && !tasksLoading && !issuesLoading) {
+            if (isNearBottom && !isLoadingMore && !tasksLoading && !issuesLoading && !todosLoading) {
                 setIsLoadingMore(true);
                 if (hasMoreTasks) setCurrentTasksPage((prev) => prev + 1);
                 if (hasMoreIssues) setCurrentIssuesPage((prev) => prev + 1);
@@ -422,7 +743,7 @@ const WeeklyReports = () => {
 
         container.addEventListener("scroll", handleScroll);
         return () => container.removeEventListener("scroll", handleScroll);
-    }, [isLoadingMore, tasksLoading, issuesLoading, hasMoreTasks, hasMoreIssues]);
+    }, [isLoadingMore, tasksLoading, issuesLoading, todosLoading, hasMoreTasks, hasMoreIssues]);
 
     const taskIssueCounts = useMemo(() => {
         const completed = mergedTasksIssues.filter(
@@ -432,7 +753,7 @@ const WeeklyReports = () => {
             (item) => item.status === "open" || item.status === "reopen"
         ).length;
         const overdue = mergedTasksIssues.filter(
-            (item) => item.status === "overdue"
+            (item) => item.status === "overdue" || item.status === "overdued"
         ).length;
         const onHold = mergedTasksIssues.filter(
             (item) => item.status === "on_hold"
@@ -440,6 +761,9 @@ const WeeklyReports = () => {
         const inProgress = mergedTasksIssues.filter(
             (item) => item.status === "in_progress"
         ).length;
+        const tasks = mergedTasksIssues.filter((item) => item.type === "task").length;
+        const issues = mergedTasksIssues.filter((item) => item.type === "issue").length;
+        const todos = mergedTasksIssues.filter((item) => item.type === "todo").length;
 
         return {
             completed,
@@ -447,6 +771,9 @@ const WeeklyReports = () => {
             overdue,
             onHold,
             inProgress,
+            tasks,
+            issues,
+            todos,
             total: mergedTasksIssues.length,
         };
     }, [mergedTasksIssues]);
@@ -495,6 +822,51 @@ const WeeklyReports = () => {
 
     const currentUser = getUser();
 
+    const sopMetrics = React.useMemo(() => {
+        const total = systemSops.length;
+        const healthValues = systemSops
+            .map((sop) => Number(sop.health_score ?? sop.healthPercent ?? sop.health ?? 0))
+            .filter((value) => Number.isFinite(value));
+        const averageHealth =
+            healthValues.length > 0
+                ? healthValues.reduce((sum, value) => sum + value, 0) / healthValues.length
+                : 0;
+        const totalHealth = healthValues.reduce((sum, value) => sum + value, 0);
+        const healthScore = Math.min((totalHealth / 100) * 10, 10);
+        const runningCount = systemSops.filter(
+            (sop) => String(sop.status || "").toLowerCase() === "running"
+        ).length;
+        const runningRatio = total > 0 ? runningCount / total : 0;
+        const totalStatusScore = systemSops.reduce((score, sop) => {
+            const normalizedStatus = normalizeSopStatus(sop.status);
+
+            if (normalizedStatus === "running") return score + 5;
+            if (normalizedStatus === "broken") return score - 5;
+            if (normalizedStatus === "to_start") return score - 2;
+
+            return score;
+        }, 0);
+        const statusScore = Math.min(Math.max(totalStatusScore, 0), 10);
+        const status =
+            total === 0
+                ? "No SOPs"
+                : runningCount === total
+                    ? "Running"
+                    : runningCount > 0
+                        ? "Partially Running"
+                        : "Needs Attention";
+
+        return {
+            total,
+            averageHealth: Math.round(averageHealth),
+            healthScore: roundScore(healthScore),
+            runningCount,
+            runningRatio,
+            statusScore: roundScore(statusScore),
+            status,
+        };
+    }, [systemSops]);
+
     // ─── Automated Score Calculation ──────────────────────────────────────────
     const weeklyScore = React.useMemo(() => {
         // 1. Weekly KPI Achievement (Max 20 points)
@@ -539,7 +911,7 @@ const WeeklyReports = () => {
             (item) => item.status === "open" || item.status === "reopen"
         ).length;
         const overdueTasks = mergedTasksIssues.filter(
-            (item) => item.status === "overdue"
+            (item) => item.status === "overdue" || item.status === "overdued"
         ).length;
 
         const taskPositive = closedTasks * 2;
@@ -551,11 +923,9 @@ const WeeklyReports = () => {
         );
 
         // 5. SOPs Health & Status (Max 20 points)
-        const sopHealth = 100; // Placeholder
-        const sopStatus = "Running"; // Placeholder
-        let sopScore = (sopHealth / 100) * 10;
-        if (sopStatus === "Running") sopScore += 5;
+        let sopScore = sopMetrics.healthScore + sopMetrics.statusScore;
         sopScore = Math.min(Math.max(sopScore, 0), 20);
+        sopScore = roundScore(sopScore);
 
         // 6. Items Planned for Coming Week (Max 20 points)
         const totalPlanned = Object.values(dayPlans).reduce((acc, tasks) => {
@@ -611,7 +981,7 @@ const WeeklyReports = () => {
                 remarks: remarksScore,
             },
         };
-    }, [kpis, kpiEntries, dailyKpiSummary, starredWins, mergedTasksIssues, dayPlans, remarksList]);
+    }, [kpis, kpiEntries, dailyKpiSummary, starredWins, mergedTasksIssues, sopMetrics, dayPlans, remarksList]);
 
     const closureFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -723,6 +1093,8 @@ const WeeklyReports = () => {
     const weekRangeLabel = `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d")}`;
     const weekNumLabel = String(getISOWeek(weekStart));
     const submitRangeLabel = `${format(weekStart, "d MMM")} - ${format(weekEnd, "d MMM")}`;
+    const currentDateValue = format(new Date(), "yyyy-MM-dd");
+    const weekEndDateValue = format(weekEnd, "yyyy-MM-dd");
 
     const prevWeekStart = React.useMemo(
         () => subDays(currentWeekStart, 7),
@@ -776,6 +1148,53 @@ const WeeklyReports = () => {
         }
         return labels;
     }, [weekEnd]);
+
+    useEffect(() => {
+        const fetchSystemSops = async () => {
+            const assignedUserIds = new Set(
+                [
+                    localStorage.getItem("userId"),
+                    localStorage.getItem("user_id"),
+                    userId,
+                ]
+                    .filter((id) => id !== null && id !== undefined && String(id).trim() !== "")
+                    .map((id) => String(id).trim())
+            );
+
+            if (assignedUserIds.size === 0) {
+                setSystemSops([]);
+                setSopsError("User id not found");
+                return;
+            }
+
+            try {
+                setIsLoadingSops(true);
+                setSopsError(null);
+                const response = await apiClient.get("/system_sops.json");
+                const payload = response.data;
+                const records = Array.isArray(payload)
+                    ? payload
+                    : Array.isArray(payload?.data?.system_sops)
+                        ? payload.data.system_sops
+                        : Array.isArray(payload?.data)
+                            ? payload.data
+                            : payload?.system_sops || [];
+                const assignedSops = records.filter(
+                    (sop: any) => assignedUserIds.has(String(sop.assignee_id).trim())
+                );
+
+                setSystemSops(assignedSops);
+            } catch (error) {
+                console.error("Failed to fetch SOPs:", error);
+                setSystemSops([]);
+                setSopsError("Failed to load SOPs");
+            } finally {
+                setIsLoadingSops(false);
+            }
+        };
+
+        fetchSystemSops();
+    }, [userId]);
 
     useEffect(() => {
         const fetchKpis = async () => {
@@ -948,6 +1367,7 @@ const WeeklyReports = () => {
     );
 
     const fetchHistory = React.useCallback(async () => {
+        canPersistDraftRef.current = false;
         setIsLoadingHistory(true);
         try {
             const response = await apiClient.get(
@@ -963,16 +1383,62 @@ const WeeklyReports = () => {
             if (existing) {
                 populateForm(existing);
             }
+            applyStoredDraft(getStoredDraft());
         } catch (error) {
             console.error("Failed to fetch weekly reports history:", error);
+            applyStoredDraft(getStoredDraft());
         } finally {
+            canPersistDraftRef.current = true;
             setIsLoadingHistory(false);
         }
-    }, [weekStart, populateForm]);
+    }, [weekStart, populateForm, getStoredDraft, applyStoredDraft]);
+
+    React.useEffect(() => {
+        canPersistDraftRef.current = false;
+        suppressDraftPersistenceRef.current = false;
+    }, [weekDraftKey]);
 
     React.useEffect(() => {
         fetchHistory();
     }, [fetchHistory]);
+
+    React.useEffect(() => {
+        if (activeTab !== "submit") return;
+        if (suppressDraftPersistenceRef.current) return;
+        if (!canPersistDraftRef.current) return;
+        const draft: WeeklyReportDraft = {
+            wins,
+            checkedWins,
+            starredWins,
+            dayPlans,
+            remarksText,
+            remarksList,
+            activeRemarkChip,
+            remarksInteracted,
+            kpiEntries,
+            plannedEntries,
+            selectedTasksIssues,
+            selectedFileNames,
+            uploadedFilesCount,
+        };
+        localStorage.setItem(weekDraftKey, JSON.stringify(draft));
+    }, [
+        wins,
+        checkedWins,
+        starredWins,
+        dayPlans,
+        remarksText,
+        remarksList,
+        activeRemarkChip,
+        remarksInteracted,
+        kpiEntries,
+        plannedEntries,
+        selectedTasksIssues,
+        selectedFileNames,
+        uploadedFilesCount,
+        weekDraftKey,
+        activeTab,
+    ]);
 
     const handleAddWin = () => {
         const newIndex = wins.length;
@@ -995,6 +1461,104 @@ const WeeklyReports = () => {
         const newWins = [...wins];
         newWins[index] = value;
         setWins(newWins);
+    };
+
+    const buildSopUpdatePayload = (sop: any, updates: Record<string, any>) => ({
+        system_sop: {
+            system_name: updates.system_name ?? sop.system_name ?? "",
+            status: updates.status ?? getSopStatusValue(sop.status),
+            priority: updates.priority ?? sop.priority ?? "",
+            health_score: Number(updates.health_score ?? sop.health_score ?? 0),
+            documentation_url:
+                updates.documentation_url ?? sop.documentation_url ?? null,
+            kpis: Array.isArray(updates.kpis)
+                ? updates.kpis
+                : Array.isArray(sop.kpis)
+                    ? sop.kpis
+                    : [],
+        },
+    });
+
+    const handleSopStatusChange = async (sop: any, nextStatus: string) => {
+        if (!sop?.id) return;
+
+        setUpdatingSopStatus((prev) => ({ ...prev, [sop.id]: true }));
+        try {
+            const response = await apiClient.put(
+                `/system_sops/${sop.id}.json`,
+                buildSopUpdatePayload(sop, { status: nextStatus })
+            );
+            const updatedSop =
+                response.data?.data?.system_sop ||
+                response.data?.data ||
+                response.data?.system_sop ||
+                null;
+
+            setSystemSops((prev) =>
+                prev.map((item) =>
+                    item.id === sop.id
+                        ? {
+                            ...item,
+                            ...(updatedSop && typeof updatedSop === "object"
+                                ? updatedSop
+                                : {}),
+                            status: nextStatus,
+                        }
+                        : item
+                )
+            );
+            toast.success("SOP status updated");
+        } catch (error) {
+            console.error("Failed to update SOP status:", error);
+            toast.error("Failed to update SOP status");
+        } finally {
+            setUpdatingSopStatus((prev) => ({ ...prev, [sop.id]: false }));
+        }
+    };
+
+    const handleSopHealthPreview = (sopId: number, nextHealth: number) => {
+        setSystemSops((prev) =>
+            prev.map((item) =>
+                item.id === sopId ? { ...item, health_score: nextHealth } : item
+            )
+        );
+    };
+
+    const handleSopHealthCommit = async (sop: any, nextHealth: number) => {
+        if (!sop?.id) return;
+
+        setUpdatingSopHealth((prev) => ({ ...prev, [sop.id]: true }));
+        try {
+            const response = await apiClient.put(
+                `/system_sops/${sop.id}.json`,
+                buildSopUpdatePayload(sop, { health_score: nextHealth })
+            );
+            const updatedSop =
+                response.data?.data?.system_sop ||
+                response.data?.data ||
+                response.data?.system_sop ||
+                null;
+
+            setSystemSops((prev) =>
+                prev.map((item) =>
+                    item.id === sop.id
+                        ? {
+                            ...item,
+                            ...(updatedSop && typeof updatedSop === "object"
+                                ? updatedSop
+                                : {}),
+                            health_score: nextHealth,
+                        }
+                        : item
+                )
+            );
+            toast.success("SOP health updated");
+        } catch (error) {
+            console.error("Failed to update SOP health:", error);
+            toast.error("Failed to update SOP health");
+        } finally {
+            setUpdatingSopHealth((prev) => ({ ...prev, [sop.id]: false }));
+        }
     };
 
     // --- MODIFIED: Remove carried forward achievements from the current list ---
@@ -1339,9 +1903,11 @@ const WeeklyReports = () => {
                     ? "Weekly report updated successfully"
                     : "Weekly report submitted successfully"
             );
-            fetchHistory();
-
+            suppressDraftPersistenceRef.current = true;
+            canPersistDraftRef.current = false;
+            clearStoredDraft();
             setActiveTab("history");
+            fetchHistory();
             setTimeout(() => {
                 window.scrollTo({ top: 0, behavior: "smooth" });
             }, 100);
@@ -1927,21 +2493,33 @@ const WeeklyReports = () => {
                                     <div className="flex flex-wrap items-center gap-2">
                                         <AlertTriangle className="h-5 w-5 shrink-0 text-[#DA7756]" />
                                         <h3 className="font-bold text-neutral-900">
-                                            Tasks & Issues
+                                            Tasks, Issues & Todos
                                         </h3>
-                                        <Badge className="border-0 bg-neutral-200 px-2 py-0 text-[10px] font-bold uppercase text-neutral-700">
+                                        <Badge className="border-0 bg-neutral-200 px-2 py-0 text-[10px] font-bold uppercase text-neutral-700 hover:bg-neutral-200 hover:text-neutral-700">
                                             Optional
                                         </Badge>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        <Badge className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800">
-                                            Closed: 0
+                                        <Badge className="border-0 bg-[#DA7756]/10 px-3 py-1 text-[10px] font-bold text-[#9e4f36] hover:bg-[#DA7756]/10 hover:text-[#9e4f36]">
+                                            Tasks: {taskIssueCounts.tasks}
                                         </Badge>
-                                        <Badge className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800">
-                                            Open: 0
+                                        <Badge className="border-0 bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-800 hover:bg-violet-100 hover:text-violet-800">
+                                            Issues: {taskIssueCounts.issues}
                                         </Badge>
-                                        <Badge className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800">
-                                            Overdue: 0
+                                        <Badge className="border-0 bg-yellow-100 px-3 py-1 text-[10px] font-bold text-yellow-800 hover:bg-yellow-100 hover:text-yellow-800">
+                                            Todos: {taskIssueCounts.todos}
+                                        </Badge>
+                                        <Badge className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800 hover:bg-emerald-100 hover:text-emerald-800">
+                                            Closed: {taskIssueCounts.completed}
+                                        </Badge>
+                                        <Badge className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 hover:bg-sky-100 hover:text-sky-800">
+                                            Open: {taskIssueCounts.open}
+                                        </Badge>
+                                        <Badge className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 hover:bg-red-100 hover:text-red-800">
+                                            Overdue: {taskIssueCounts.overdue}
+                                        </Badge>
+                                        <Badge className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 hover:bg-amber-100 hover:text-amber-800">
+                                            In Progress: {taskIssueCounts.inProgress}
                                         </Badge>
                                     </div>
                                 </div>
@@ -1955,20 +2533,20 @@ const WeeklyReports = () => {
                                     Add
                                 </Button>
                             </div>
-                            <div className="flex flex-col items-center justify-center space-y-4 p-6 text-center">
+                            <div className="p-6">
                                 {/* <CheckSquare className="h-12 w-12 text-neutral-200" />
                                 <p className="text-lg text-neutral-400">
                                     No open tasks or issues.
                                 </p> */}
 
-                                {tasksLoading || issuesLoading ? (
+                                {tasksLoading || issuesLoading || todosLoading ? (
                                     <div className="flex flex-col items-center justify-center text-center py-10">
                                         <Loader2
                                             size={40}
                                             className="text-[#b91c1c]/30 animate-spin mb-3"
                                         />
                                         <p className="text-sm font-bold text-gray-500">
-                                            Loading tasks and issues...
+                                            Loading tasks, issues and todos...
                                         </p>
                                     </div>
                                 ) : mergedTasksIssues.length === 0 ? (
@@ -1997,6 +2575,7 @@ const WeeklyReports = () => {
                                                         item.status === "closed"
                                                         ? "bg-green-50/50 border-green-200/50"
                                                         : item.status === "overdue" ||
+                                                            item.status === "overdued" ||
                                                             item.status === "on_hold"
                                                             ? "bg-red-50/50 border-red-200/50"
                                                             : item.status === "in_progress"
@@ -2016,6 +2595,20 @@ const WeeklyReports = () => {
                                                             item.status !== "completed" &&
                                                             item.status !== "closed"
                                                         ) {
+                                                            if (item.type === "todo") {
+                                                                setMergedTasksIssues((prev) =>
+                                                                    prev.map((existing) =>
+                                                                        existing.id === item.id
+                                                                            ? { ...existing, status: "completed" }
+                                                                            : existing
+                                                                    )
+                                                                );
+                                                                setSelectedTasksIssues((prev) => ({
+                                                                    ...prev,
+                                                                    [item.id]: true,
+                                                                }));
+                                                                return;
+                                                            }
                                                             setClosureItem(item);
                                                             setShowClosureModal(true);
                                                         } else {
@@ -2029,6 +2622,12 @@ const WeeklyReports = () => {
                                                 />
                                                 <button
                                                     onClick={() => {
+                                                        if (item.type === "todo") {
+                                                            setSelectedTodo(item.originalData);
+                                                            setIsTodoDetailsModalOpen(true);
+                                                            return;
+                                                        }
+
                                                         const detailsUrl =
                                                             item.type === "task"
                                                                 ? `/vas/tasks/${item.originalData?.id}`
@@ -2043,6 +2642,25 @@ const WeeklyReports = () => {
                                                         className="text-gray-600 hover:text-gray-800"
                                                     />
                                                 </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (item.type === "task") {
+                                                            setEditTaskData(item.originalData);
+                                                            setIsEditTaskModalOpen(true);
+                                                        } else if (item.type === "issue") {
+                                                            setEditIssueData(item.originalData);
+                                                            setIsEditIssueModalOpen(true);
+                                                        } else if (item.type === "todo") {
+                                                            setEditTodoData(item.originalData);
+                                                            setIsEditTodoModalOpen(true);
+                                                        }
+                                                    }}
+                                                    className="flex-shrink-0 p-1 text-gray-600 hover:text-[#DA7756] transition-colors"
+                                                    title={`Edit ${item.type}`}
+                                                >
+                                                    <Pencil size={14} />
+                                                </button>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white text-gray-600 uppercase">
                                                         {item.type}
@@ -2054,6 +2672,7 @@ const WeeklyReports = () => {
                                                             className="text-green-600"
                                                         />
                                                     ) : item.status === "overdue" ||
+                                                        item.status === "overdued" ||
                                                         item.status === "on_hold" ? (
                                                         <AlertCircle
                                                             size={16}
@@ -2065,10 +2684,10 @@ const WeeklyReports = () => {
                                                         <Info size={16} className="text-blue-600" />
                                                     )}
                                                 </div>
-                                                <div className="flex-1 min-w-0">
+                                                <div className="flex-1 min-w-0 text-left">
                                                     <p
                                                         className={cn(
-                                                            "text-sm font-medium truncate",
+                                                            "text-sm font-medium truncate text-left",
                                                             (item.status === "completed" ||
                                                                 item.status === "closed") &&
                                                             "line-through text-gray-400"
@@ -2076,7 +2695,7 @@ const WeeklyReports = () => {
                                                     >
                                                         {item.title}
                                                     </p>
-                                                    <p className="text-xs text-gray-500 capitalize">
+                                                    <p className="text-xs text-gray-500 capitalize text-left">
                                                         {item.status.replace(/_/g, " ")}
                                                     </p>
                                                 </div>
@@ -2150,11 +2769,119 @@ const WeeklyReports = () => {
                                     {weeklyScore.breakdown.sop}/20 pts
                                 </Badge>
                             </div>
-                            <div className="flex flex-col items-center justify-center px-6 py-8 text-center">
-                                <p className="text-sm text-neutral-400">
-                                    SOP performance metrics will be automatically fetched and
-                                    displayed here.
-                                </p>
+                            <div className="px-6 py-6">
+                                {isLoadingSops ? (
+                                    <div className="flex items-center justify-center gap-2 py-4 text-sm text-neutral-500">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Loading SOP status...
+                                    </div>
+                                ) : sopsError ? (
+                                    <p className="py-4 text-center text-sm text-red-500">
+                                        {sopsError}
+                                    </p>
+                                ) : systemSops.length === 0 ? (
+                                    <p className="py-4 text-center text-sm text-neutral-500">
+                                        No SOPs assigned to you.
+                                    </p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        <div className="grid gap-3 sm:grid-cols-3">
+                                            <div className="rounded-xl border border-neutral-200 bg-white p-4 text-center">
+                                                <p className="text-xs font-semibold uppercase text-neutral-500">
+                                                    Health
+                                                </p>
+                                                <p className="mt-1 text-2xl font-bold text-neutral-900">
+                                                    {sopMetrics.averageHealth}%
+                                                </p>
+                                            </div>
+                                            <div className="rounded-xl border border-neutral-200 bg-white p-4 text-center">
+                                                <p className="text-xs font-semibold uppercase text-neutral-500">
+                                                    Status
+                                                </p>
+                                                <p className="mt-1 text-sm font-bold text-neutral-900">
+                                                    {sopMetrics.status}
+                                                </p>
+                                            </div>
+                                            <div className="rounded-xl border border-neutral-200 bg-white p-4 text-center">
+                                                <p className="text-xs font-semibold uppercase text-neutral-500">
+                                                    SOPs
+                                                </p>
+                                                <p className="mt-1 text-2xl font-bold text-neutral-900">
+                                                    {sopMetrics.total}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            {systemSops.map((sop) => (
+                                                <div
+                                                    key={sop.id}
+                                                    className="rounded-xl border border-neutral-200 bg-white p-3"
+                                                >
+                                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                                        <div className="min-w-0">
+                                                            <p className="truncate text-sm font-bold text-neutral-900">
+                                                                {sop.system_name || "Untitled SOP"}
+                                                            </p>
+                                                            <p className="text-xs text-neutral-500">
+                                                                {sop.department_name || "No department"}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-xs font-semibold">
+                                                            <Select
+                                                                value={getSopStatusValue(sop.status)}
+                                                                disabled={!!updatingSopStatus[sop.id]}
+                                                                onValueChange={(value) =>
+                                                                    handleSopStatusChange(sop, value)
+                                                                }
+                                                            >
+                                                                <SelectTrigger className="h-9 w-[120px] rounded-lg border-neutral-200 bg-white text-xs font-bold text-neutral-700 focus:ring-[#DA7756]/25">
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent className="rounded-xl border-neutral-200">
+                                                                    {SOP_STATUS_OPTIONS.map((status) => (
+                                                                        <SelectItem key={status} value={status}>
+                                                                            {status}
+                                                                        </SelectItem>
+                                                                    ))}
+                                                                </SelectContent>
+                                                            </Select>
+                                                            {updatingSopStatus[sop.id] && (
+                                                                <Loader2 className="h-4 w-4 animate-spin text-neutral-400" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="mt-3 space-y-2">
+                                                        <div className="flex items-center justify-between text-xs font-semibold text-neutral-600">
+                                                            <span>Health</span>
+                                                            <span className="text-neutral-800">
+                                                                {Number(sop.health_score ?? 0)}%
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <Slider
+                                                                min={0}
+                                                                max={100}
+                                                                step={1}
+                                                                value={[Number(sop.health_score ?? 0)]}
+                                                                disabled={!!updatingSopHealth[sop.id]}
+                                                                onValueChange={(value) =>
+                                                                    handleSopHealthPreview(sop.id, value[0] ?? 0)
+                                                                }
+                                                                onValueCommit={(value) =>
+                                                                    handleSopHealthCommit(sop, value[0] ?? 0)
+                                                                }
+                                                                className="[&>span:first-child]:bg-neutral-200 [&>span:first-child>span]:bg-[#DA7756] [&_[role=slider]]:border-[#DA7756] [&_[role=slider]]:bg-white"
+                                                            />
+                                                            {updatingSopHealth[sop.id] && (
+                                                                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-neutral-400" />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </Card>
 
@@ -3360,23 +4087,143 @@ const WeeklyReports = () => {
                         <hr className="border border-[#E95420] mt-4" />
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                        <ProjectTaskCreateModal isEdit={false} onCloseModal={() => setOpenTaskModal(false)} />
+                        <ProjectTaskCreateModal
+                            isEdit={false}
+                            onCloseModal={() => setOpenTaskModal(false)}
+                            prefillData={{
+                                start_date: currentDateValue,
+                                target_date: weekEndDateValue,
+                            }}
+                        />
                     </div>
                 </MuiDialogContent>
             </MuiDialog>
 
-            <AddIssueModal openDialog={openIssueModal} handleCloseDialog={() => setOpenIssueModal(false)} />
+            <AddIssueModal
+                openDialog={openIssueModal}
+                handleCloseDialog={() => setOpenIssueModal(false)}
+                prefillData={{
+                    start_date: currentDateValue,
+                    target_date: weekEndDateValue,
+                }}
+            />
+
+            <AddToDoModal
+                isModalOpen={openTodoModal}
+                setIsModalOpen={() => {
+                    setOpenTodoModal(false);
+                    setTasksIssuesRefreshKey((key) => key + 1);
+                }}
+                getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                prefillData={{
+                    start_date: weekEndDateValue,
+                    target_date: weekEndDateValue,
+                }}
+            />
+
+            <TodoDetailsModal
+                isModalOpen={isTodoDetailsModalOpen}
+                setIsModalOpen={setIsTodoDetailsModalOpen}
+                todo={selectedTodo}
+                onEditClick={() => {
+                    setIsTodoDetailsModalOpen(false);
+                    setEditTodoData(selectedTodo);
+                    setIsEditTodoModalOpen(true);
+                }}
+            />
+
+            <MuiDialog
+                open={isEditTaskModalOpen}
+                onClose={() => {
+                    setIsEditTaskModalOpen(false);
+                    setEditTaskData(null);
+                }}
+                TransitionComponent={Transition}
+                maxWidth={false}
+            >
+                <MuiDialogContent
+                    className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                    style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+                    sx={{ padding: "0 !important" }}
+                >
+                    <div className="sticky top-0 bg-white z-10">
+                        <h3 className="text-[14px] font-medium text-center mt-8">Edit Task</h3>
+                        <X
+                            className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
+                            onClick={() => {
+                                setIsEditTaskModalOpen(false);
+                                setEditTaskData(null);
+                            }}
+                        />
+                        <hr className="border border-[#E95420] mt-4" />
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                        <ProjectTaskEditModal
+                            taskId={editTaskData?.id}
+                            onCloseModal={() => {
+                                setIsEditTaskModalOpen(false);
+                                setEditTaskData(null);
+                                setTasksIssuesRefreshKey((key) => key + 1);
+                            }}
+                        />
+                    </div>
+                </MuiDialogContent>
+            </MuiDialog>
+
+            <EditIssueModal
+                openDialog={isEditIssueModalOpen}
+                handleCloseDialog={() => {
+                    setIsEditIssueModalOpen(false);
+                    setEditIssueData(null);
+                }}
+                issueData={editIssueData}
+                onIssueUpdated={() => setTasksIssuesRefreshKey((key) => key + 1)}
+            />
+
+            <AddToDoModal
+                isModalOpen={isEditTodoModalOpen}
+                setIsModalOpen={() => {
+                    setIsEditTodoModalOpen(false);
+                    setEditTodoData(null);
+                    setTasksIssuesRefreshKey((key) => key + 1);
+                }}
+                getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                editingTodo={editTodoData}
+                isEditMode={!!editTodoData}
+                prefillData={editTodoData || {}}
+            />
 
             <Menu
                 anchorEl={taskIssueMenuAnchor}
                 open={Boolean(taskIssueMenuAnchor)}
                 onClose={() => setTaskIssueMenuAnchor(null)}
+                disableScrollLock
+                slotProps={{
+                    paper: {
+                        sx: {
+                            borderRadius: "12px",
+                            boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                            minWidth: "240px",
+                            overflow: "visible",
+                            maxHeight: "none",
+                            mt: 1,
+                        },
+                    },
+                    list: {
+                        sx: {
+                            py: 0.5,
+                            overflow: "visible",
+                            maxHeight: "none",
+                        },
+                    },
+                }}
                 sx={{
                     "& .MuiPaper-root": {
                         borderRadius: "12px",
                         boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
-                        minWidth: "220px",
+                        minWidth: "240px",
                         overflow: "visible",
+                        maxHeight: "none !important",
                         "&::before": {
                             content: '""',
                             display: "block",
@@ -3403,7 +4250,7 @@ const WeeklyReports = () => {
                     sx={{
                         py: 1.5,
                         px: 2,
-                        margin: "8px 8px 4px 8px",
+                        margin: "6px 8px 4px 8px",
                         borderRadius: "10px",
                         "&:hover": {
                             backgroundColor: "#f0f4ff",
@@ -3431,7 +4278,7 @@ const WeeklyReports = () => {
                     sx={{
                         py: 1.5,
                         px: 2,
-                        margin: "4px 8px 8px 8px",
+                        margin: "4px 8px 6px 8px",
                         borderRadius: "10px",
                         "&:hover": {
                             backgroundColor: "#fef2f2",
@@ -3447,6 +4294,34 @@ const WeeklyReports = () => {
                             <span className="font-bold text-gray-900 text-sm">Add Issue</span>
                             <span className="text-xs text-gray-500 font-medium">
                                 Report a problem
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        setOpenTodoModal(true);
+                        setTaskIssueMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "4px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#fffbeb",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-amber-50 rounded-lg">
+                            <ListTodo size={18} className="text-amber-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                Add a quick follow-up
                             </span>
                         </div>
                     </div>

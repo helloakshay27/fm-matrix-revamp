@@ -156,6 +156,17 @@ export const AssetStats: React.FC<AssetStatsProps> = ({
 }) => {
   const [showDisposed, setShowDisposed] = React.useState(false);
 
+  // Check if current organization is PANCHSHIL (via hostname or localStorage)
+  const hostname = window.location.hostname;
+  const isPanchshilOrg =
+    hostname.includes("panchshil.com") ||
+    (localStorage.getItem("selectedOrg") || "")
+      .toUpperCase()
+      .includes("PANCHSHIL");
+
+  // Cards to hide for PANCHSHIL organization
+  const hiddenFilterTypes = isPanchshilOrg ? ["it", "in_store"] : [];
+
   const statData = [
     {
       label: "Total Assets",
@@ -214,7 +225,7 @@ export const AssetStats: React.FC<AssetStatsProps> = ({
       filterType: showDisposed ? "disposed" : "allocated",
       isSwappable: true,
     },
-  ];
+  ].filter((item) => !hiddenFilterTypes.includes(item.filterType));
 
   const handleCardClick = (filterType: string) => {
     onCardClick?.(filterType);

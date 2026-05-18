@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Upload, X, Copy, Info } from 'lucide-react';
+import { ArrowLeft, Upload, X, Copy, Info, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     TextField,
@@ -24,6 +24,26 @@ import { getFullUrl, getAuthenticatedFetchOptions, API_CONFIG } from '@/config/a
 import { getToken } from '@/utils/auth';
 import axios from 'axios';
 import Invoice from '@/components/Invoice';
+
+// Helper function to detect file type
+const getFileType = (filename: string): 'image' | 'pdf' | 'other' => {
+    const imageExtensions = /\.(jpg|jpeg|png|webp|gif|svg)$/i;
+    const pdfExtension = /\.pdf$/i;
+
+    if (imageExtensions.test(filename)) return 'image';
+    if (pdfExtension.test(filename)) return 'pdf';
+    return 'other';
+};
+
+// Helper function to get file display info
+const getFileDisplayInfo = (filename: string) => {
+    const fileType = getFileType(filename);
+    return {
+        type: fileType,
+        isPdf: fileType === 'pdf',
+        isImage: fileType === 'image',
+    };
+};
 
 // Interfaces
 interface OccupantUserResponse {
@@ -2703,8 +2723,16 @@ export const AddGroupMembershipPage = () => {
                                                         <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.idCardFile || member.idCardPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
                                                             {(member.idCardFile || member.idCardPreview) ? (
                                                                 <div>
-                                                                    {member.idCardPreview && (
+                                                                    {member.idCardPreview && getFileDisplayInfo(member.idCardFile?.name || member.idCardPreview).isImage && (
                                                                         <img src={member.idCardPreview} alt="ID Card" className="max-h-40 mx-auto rounded mb-3" />
+                                                                    )}
+                                                                    {member.idCardPreview && getFileDisplayInfo(member.idCardFile?.name || member.idCardPreview).isPdf && (
+                                                                        <div className="flex flex-col items-center justify-center mb-3">
+                                                                            <div className="w-14 h-14 flex items-center justify-center border-2 border-red-300 rounded-lg bg-red-50 mb-2">
+                                                                                <FileText className="w-8 h-8 text-red-600" />
+                                                                            </div>
+                                                                            <span className="text-xs text-red-600 font-semibold">PDF Document</span>
+                                                                        </div>
                                                                     )}
                                                                     <div className="flex items-center justify-between">
                                                                         <span className="text-sm text-gray-600">{member.idCardFile?.name || 'Existing ID Card'}</span>
@@ -2717,7 +2745,7 @@ export const AddGroupMembershipPage = () => {
                                                                 <div>
                                                                     <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
                                                                     <p className="text-sm text-gray-500 mb-2">Upload ID Card</p>
-                                                                    <input type="file" accept="image/*" onChange={(e) => handleIdCardUpload(member.id, e)} className="hidden" id={`id-card-${member.id}`} />
+                                                                    <input type="file" accept="image/*,.pdf" onChange={(e) => handleIdCardUpload(member.id, e)} className="hidden" id={`id-card-${member.id}`} />
                                                                     <label htmlFor={`id-card-${member.id}`}>
                                                                         <Button variant="outline" className="cursor-pointer" asChild><span>Choose File</span></Button>
                                                                     </label>
@@ -2734,8 +2762,16 @@ export const AddGroupMembershipPage = () => {
                                                         <div className={`border-2 border-dashed rounded-lg p-6 text-center ${member.residentPhotoFile || member.residentPhotoPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-[#C72030]'}`}>
                                                             {(member.residentPhotoFile || member.residentPhotoPreview) ? (
                                                                 <div>
-                                                                    {member.residentPhotoPreview && (
+                                                                    {member.residentPhotoPreview && getFileDisplayInfo(member.residentPhotoFile?.name || member.residentPhotoPreview).isImage && (
                                                                         <img src={member.residentPhotoPreview} alt="Photo" className="max-h-40 mx-auto rounded mb-3" />
+                                                                    )}
+                                                                    {member.residentPhotoPreview && getFileDisplayInfo(member.residentPhotoFile?.name || member.residentPhotoPreview).isPdf && (
+                                                                        <div className="flex flex-col items-center justify-center mb-3">
+                                                                            <div className="w-14 h-14 flex items-center justify-center border-2 border-red-300 rounded-lg bg-red-50 mb-2">
+                                                                                <FileText className="w-8 h-8 text-red-600" />
+                                                                            </div>
+                                                                            <span className="text-xs text-red-600 font-semibold">PDF Document</span>
+                                                                        </div>
                                                                     )}
                                                                     <div className="flex items-center justify-between">
                                                                         <span className="text-sm text-gray-600">{member.residentPhotoFile?.name || 'Existing Photo'}</span>
@@ -2748,7 +2784,7 @@ export const AddGroupMembershipPage = () => {
                                                                 <div>
                                                                     <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
                                                                     <p className="text-sm text-gray-500 mb-2">Upload Photo</p>
-                                                                    <input type="file" accept="image/*" onChange={(e) => handleResidentPhotoUpload(member.id, e)} className="hidden" id={`photo-${member.id}`} />
+                                                                    <input type="file" accept="image/*,.pdf" onChange={(e) => handleResidentPhotoUpload(member.id, e)} className="hidden" id={`photo-${member.id}`} />
                                                                     <label htmlFor={`photo-${member.id}`}>
                                                                         <Button variant="outline" className="cursor-pointer" asChild><span>Choose File</span></Button>
                                                                     </label>

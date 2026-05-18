@@ -959,7 +959,32 @@ export const TaskDetailsPage = () => {
           </span>
         );
       case "input": {
-        // Pair values array with userData array
+        // Handle radio-group type with color coding
+        if (item.type === "radio-group" && item.values && Array.isArray(item.values)) {
+          const selectedValue = item.input?.[0] || item.userData?.[0] || "-";
+          if (selectedValue !== "-") {
+            // Find the value object to get its type (positive/negative)
+            const valueObj = item.values.find((v: any) => v.value === selectedValue || v.label === selectedValue);
+            const valueType = valueObj?.type || "neutral";
+
+            // Determine badge color based on value type
+            let badgeColor = "bg-gray-100 text-gray-800";
+            if (valueType === "positive" || selectedValue === "Yes" || selectedValue === "OK" || selectedValue === "Pass") {
+              badgeColor = "bg-green-100 text-green-800";
+            } else if (valueType === "negative" || selectedValue === "No" || selectedValue === "Not OK" || selectedValue === "Fail") {
+              badgeColor = "bg-red-100 text-red-800";
+            }
+
+            return (
+              <Badge className={`${badgeColor} px-2 py-1 text-xs`}>
+                {selectedValue}
+              </Badge>
+            );
+          }
+          return <span className="text-xs text-gray-400">-</span>;
+        }
+
+        // Pair values array with userData array for other types
         let inputText = "-";
 
         if (Array.isArray(item.input) && item.input.length > 0) {
@@ -969,7 +994,11 @@ export const TaskDetailsPage = () => {
             inputText = item.input
               .map((data: string, index: number) => {
                 if (!data || data === "-") return null;
-                const key = item.values[index] || `Item ${index + 1}`;
+                const valueObj = item.values[index];
+                // Handle both string and object values
+                const key = typeof valueObj === "string"
+                  ? valueObj
+                  : (valueObj?.label || valueObj?.value || `Item ${index + 1}`);
                 return `${key}: ${data}`;
               })
               .filter((text: string | null) => text !== null)
@@ -1052,23 +1081,23 @@ export const TaskDetailsPage = () => {
             </button>
             <button
               className={`p-1 hover:bg-gray-100 rounded transition-colors ${item.is_flagged
-                  ? "text-red-500 hover:text-red-600"
-                  : "text-gray-400 hover:text-red-400"
+                ? "text-red-500 hover:text-red-600"
+                : "text-gray-400 hover:text-red-400"
                 }`}
               onClick={() => handleTicketFlag(item.id, item.is_flagged)}
               title={item.is_flagged ? "Remove flag" : "Flag ticket"}
             >
               <Flag
                 className={`w-4 h-4 transition-all duration-200 ${item.is_flagged
-                    ? "text-red-500 fill-red-500"
-                    : "text-gray-600"
+                  ? "text-red-500 fill-red-500"
+                  : "text-gray-600"
                   }`}
               />
             </button>
             <button
               className={`p-1 hover:bg-gray-100 rounded transition-colors ${item.is_golden_ticket
-                  ? "text-yellow-500 hover:text-yellow-600"
-                  : "text-gray-400 hover:text-yellow-400"
+                ? "text-yellow-500 hover:text-yellow-600"
+                : "text-gray-400 hover:text-yellow-400"
                 }`}
               onClick={() =>
                 handleTicketGoldenTicket(item.id, item.is_golden_ticket)
@@ -1081,8 +1110,8 @@ export const TaskDetailsPage = () => {
             >
               <Star
                 className={`w-4 h-4 transition-all duration-200 hover:scale-110 ${item.is_golden_ticket
-                    ? "text-yellow-500 fill-yellow-500"
-                    : "text-gray-600"
+                  ? "text-yellow-500 fill-yellow-500"
+                  : "text-gray-600"
                   }`}
               />
             </button>
@@ -1118,12 +1147,12 @@ export const TaskDetailsPage = () => {
           <div className="space-y-1">
             <Badge
               className={`px-2 py-1 text-xs ${item.priority === "P1"
-                  ? "bg-red-100 text-red-700"
-                  : item.priority === "P2"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : item.priority === "P3"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-100 text-gray-700"
+                ? "bg-red-100 text-red-700"
+                : item.priority === "P2"
+                  ? "bg-yellow-100 text-yellow-700"
+                  : item.priority === "P3"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-700"
                 }`}
             >
               {item.priority || "N/A"}
@@ -1176,16 +1205,16 @@ export const TaskDetailsPage = () => {
           <div className="space-y-1">
             <div
               className={`text-xs px-2 py-1 rounded ${item.response_escalation === "Breached"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-green-100 text-green-700"
+                ? "bg-red-100 text-red-700"
+                : "bg-green-100 text-green-700"
                 }`}
             >
               Response: {item.response_escalation || "N/A"}
             </div>
             <div
               className={`text-xs px-2 py-1 rounded ${item.resolution_escalation === "Breached"
-                  ? "bg-red-100 text-red-700"
-                  : "bg-green-100 text-green-700"
+                ? "bg-red-100 text-red-700"
+                : "bg-green-100 text-green-700"
                 }`}
             >
               Resolution: {item.resolution_escalation || "N/A"}

@@ -25,7 +25,7 @@ const fieldStyles = {
       borderColor: '#1A1A1A',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+      borderColor: '#da7756',
       borderWidth: 2,
     },
   },
@@ -33,7 +33,7 @@ const fieldStyles = {
     color: '#666666',
     fontSize: '16px',
     '&.Mui-focused': {
-      color: '#C72030',
+      color: '#da7756',
     },
     '&.MuiInputLabel-shrink': {
       transform: 'translate(14px, -9px) scale(0.75)',
@@ -205,7 +205,7 @@ export const AddMasterChecklistPage = () => {
       <form onSubmit={handleSubmit} className="space-y-8">
         <div className="bg-white border rounded-lg p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-sm">1</div>
+            <div className="w-6 h-6 bg-[#da7756] text-white rounded-full flex items-center justify-center text-sm">1</div>
             <h2 className="font-semibold text-lg">Basic Info</h2>
           </div>
 
@@ -280,7 +280,7 @@ export const AddMasterChecklistPage = () => {
           <div key={section.id} className="bg-white border rounded-lg p-4 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-sm">2</div>
+                <div className="w-6 h-6 bg-[#da7756] text-white rounded-full flex items-center justify-center text-sm">2</div>
                 <h2 className="font-semibold text-lg">Task</h2>
               </div>
               {taskSections.length > 1 && (
@@ -289,7 +289,7 @@ export const AddMasterChecklistPage = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => removeTaskSection(section.id)}
-                  className="text-red-600"
+                  className="text-[#da7756]"
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -390,7 +390,7 @@ export const AddMasterChecklistPage = () => {
               <Button
                 type="button"
                 onClick={() => addQuestion(section.id)}
-                className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium flex items-center gap-2"
+                className="!bg-[#da7756] !text-white hover:!bg-[#C4623C] h-9 px-4 text-sm font-medium flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" /> Action Question
               </Button>
@@ -402,14 +402,14 @@ export const AddMasterChecklistPage = () => {
           <Button
             type="button"
             onClick={addTaskSection}
-            className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium flex items-center gap-2"
+            className="!bg-[#da7756] !text-white hover:!bg-[#C4623C] h-9 px-4 text-sm font-medium flex items-center gap-2"
           >
             <Plus className="w-4 h-4" /> Action Section
           </Button>
 
           <Button
             type="submit"
-            className="bg-red-600 text-white px-6"
+            className="!bg-[#da7756] !text-white hover:!bg-[#C4623C] h-9 px-4 text-sm font-medium flex items-center gap-2"
           >
             Submit
           </Button>

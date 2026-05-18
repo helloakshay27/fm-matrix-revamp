@@ -20,7 +20,8 @@ interface Asset {
   name: string;
 }
 
-interface AssetSelectionPanelProps {getAuthHeader
+interface AssetSelectionPanelProps {
+  getAuthHeader;
   selectedCount: number;
   selectedAssets: Asset[]; // For display purposes
   selectedAssetIds: string[]; // For API operations
@@ -194,112 +195,115 @@ export const AssetSelectionPanel: React.FC<AssetSelectionPanelProps> = ({
   //   }
   // };
 
-const waitForPdfReady = async (fileName: string, baseUrl: string): Promise<Response> => {
-  while (true) {
-    const res = await fetch(
-      `https://${baseUrl}/asset/download_qr_pdf?file_name=${encodeURIComponent(fileName)}`,
-      {
-        headers: { Authorization: getAuthHeader() },
+  const waitForPdfReady = async (
+    fileName: string,
+    baseUrl: string
+  ): Promise<Response> => {
+    while (true) {
+      const res = await fetch(
+        `https://${baseUrl}/asset/download_qr_pdf?file_name=${encodeURIComponent(fileName)}`,
+        {
+          headers: { Authorization: getAuthHeader() },
+        }
+      );
+
+      // Backend sends PDF when ready
+      const contentType = res.headers.get("content-type");
+
+      if (contentType?.includes("application/pdf")) {
+        return res; // ✅ PDF is ready
       }
-    );
 
-    // Backend sends PDF when ready
-    const contentType = res.headers.get("content-type");
+      // Otherwise backend returns JSON status
+      const data = await res.json();
 
-    if (contentType?.includes("application/pdf")) {
-      return res; // ✅ PDF is ready
+      if (data.status === "failed") {
+        throw new Error("QR PDF generation failed");
+      }
+
+      // ⏳ still processing → wait silently
+      await new Promise((r) => setTimeout(r, 1500));
+    }
+  };
+
+  const handlePrintQRCode = async () => {
+    if (selectedAssetIds.length === 0) {
+      toast.error("No assets selected", {
+        description: "Please select at least one asset to print QR codes.",
+      });
+      return;
     }
 
-    // Otherwise backend returns JSON status
-    const data = await res.json();
-
-    if (data.status === "failed") {
-      throw new Error("QR PDF generation failed");
+    const baseUrl = localStorage.getItem("baseUrl");
+    if (!baseUrl) {
+      toast.error("Configuration Error", {
+        description: "Base URL not set. Please log in again.",
+      });
+      return;
     }
 
-    // ⏳ still processing → wait silently
-    await new Promise((r) => setTimeout(r, 1500));
-  }
-};
+    setIsPrintingQR(true);
 
+    try {
+      // STEP 1: Start PDF generation
+      const response = await fetch(
+        `https://${baseUrl}/pms/assets/print_qr_codes`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: getAuthHeader(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            asset_ids: selectedAssetIds,
+            base_url: baseUrl, // Send base URL without https://
+          }),
+        }
+      );
 
+      if (!response.ok) {
+        throw new Error("Failed to start QR generation");
+      }
 
-const handlePrintQRCode = async () => {
-  if (selectedAssetIds.length === 0) {
-    toast.error("No assets selected", {
-      description: "Please select at least one asset to print QR codes.",
-    });
-    return;
-  }
+      const { file_name } = await response.json();
+      if (!file_name) {
+        throw new Error("File name not returned from server");
+      }
 
-  const baseUrl = localStorage.getItem("baseUrl");
-  if (!baseUrl) {
-    toast.error("Configuration Error", {
-      description: "Base URL not set. Please log in again.",
-    });
-    return;
-  }
+      toast("Generating QR PDF", {
+        description: "Please wait while the PDF is being prepared…",
+      });
 
-  setIsPrintingQR(true);
+      // STEP 2: ⏳ Wait until PDF is READY
+      const pdfResponse = await waitForPdfReady(file_name, baseUrl);
 
-  try {
-    // STEP 1: Start PDF generation
-    const response = await fetch(`https://${baseUrl}/pms/assets/print_qr_codes`, {
-      method: "POST",
-      headers: {
-        Authorization: getAuthHeader(),
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ 
-        asset_ids: selectedAssetIds,
-        base_url: baseUrl // Send base URL without https://
-      }),
-    });
+      // STEP 3: Download PDF (only once, guaranteed ready)
+      const blob = await pdfResponse.blob();
+      const url = URL.createObjectURL(blob);
 
-    if (!response.ok) {
-      throw new Error("Failed to start QR generation");
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = file_name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success("Download complete", {
+        description: "QR codes downloaded successfully.",
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("QR code generation failed", {
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsPrintingQR(false);
     }
-
-    const { file_name } = await response.json();
-    if (!file_name) {
-      throw new Error("File name not returned from server");
-    }
-
-    toast("Generating QR PDF", {
-      description: "Please wait while the PDF is being prepared…",
-    });
-
-    // STEP 2: ⏳ Wait until PDF is READY
-    const pdfResponse = await waitForPdfReady(file_name, baseUrl);
-
-    // STEP 3: Download PDF (only once, guaranteed ready)
-    const blob = await pdfResponse.blob();
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = file_name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    toast.success("Download complete", {
-      description: "QR codes downloaded successfully.",
-    });
-  } catch (error) {
-    console.error(error);
-    toast.error("QR code generation failed", {
-      description:
-        error instanceof Error
-          ? error.message
-          : "Something went wrong. Please try again.",
-    });
-  } finally {
-    setIsPrintingQR(false);
-  }
-};
-
+  };
 
   const getDisplayText = () => {
     if (selectedAssets.length === 0) return "";
@@ -333,11 +337,11 @@ const handlePrintQRCode = async () => {
       return `${selectedCount} item(s) selected`;
     }
     return getDisplayText();
-  }
+  };
 
   return (
     <div
-      className="fixed bg-white border border-gray-200 rounded-sm shadow-lg z-50"
+      className="selection-panel bg-white"
       style={{ top: "50%", left: "30%", width: "863px", height: "105px" }}
     >
       <div className="flex items-center justify-between w-full h-full pr-6">

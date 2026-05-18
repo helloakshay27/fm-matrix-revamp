@@ -334,10 +334,29 @@ const saveCoreValuesToApi = async (
 // ─────────────────────────────────────────────
 //  Overview Media API helpers
 // ─────────────────────────────────────────────
-interface OverviewMedia {
-  images: string[];
-  videos: string[];
+interface OverviewMediaItem {
+  id: number | null;
+  url: string;
 }
+
+interface OverviewMedia {
+  images: OverviewMediaItem[];
+  videos: OverviewMediaItem[];
+}
+
+const normalizeImageUrl = (url: string): string => {
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    const directImageUrl = parsed.searchParams.get("imgurl");
+    if (parsed.hostname.includes("google.") && directImageUrl) {
+      return directImageUrl;
+    }
+  } catch {
+    return url;
+  }
+  return url;
+};
 
 const fetchOverviewMediaFromApi = async (): Promise<OverviewMedia> => {
   const url = `${BASE_URL}/business_compass/overview_media`;
@@ -350,13 +369,18 @@ const fetchOverviewMediaFromApi = async (): Promise<OverviewMedia> => {
   } catch {
     json = {};
   }
-  const parseUrlArray = (arr: any[]): string[] =>
+  const parseMediaArray = (arr: any[]): OverviewMediaItem[] =>
     arr
-      .map((item) => (typeof item === "string" ? item : (item?.url ?? "")))
-      .filter(Boolean);
+      .map((item) =>
+        typeof item === "string"
+          ? { id: null, url: item }
+          : { id: item?.id ?? null, url: item?.url ?? "" }
+      )
+      .map((item) => ({ ...item, url: normalizeImageUrl(item.url) }))
+      .filter((item) => Boolean(item.url));
   return {
-    images: Array.isArray(json?.images) ? parseUrlArray(json.images) : [],
-    videos: Array.isArray(json?.videos) ? parseUrlArray(json.videos) : [],
+    images: Array.isArray(json?.images) ? parseMediaArray(json.images) : [],
+    videos: Array.isArray(json?.videos) ? parseMediaArray(json.videos) : [],
   };
 };
 
@@ -1321,6 +1345,21 @@ interface KPI {
   name: string;
 }
 
+type AiBuilderStage = "questions" | "building" | "plan";
+
+const AI_PLAN_FIELDS = [
+  { key: "purpose", label: "Purpose" },
+  { key: "core_values", label: "Core Values" },
+  { key: "brand_promises", label: "Brand Promises" },
+  { key: "bhag", label: "BHAG" },
+  { key: "three_year_vision", label: "Three Year Vision" },
+  { key: "annual_goals", label: "Annual Goals" },
+  { key: "target_markets", label: "Target Markets" },
+  { key: "key_initiatives", label: "Key Initiatives" },
+  { key: "key_metrics", label: "Key Metrics" },
+  { key: "people_process", label: "People & Process" },
+] as const;
+
 const TOOLTIP_CONTENT: Record<
   string,
   { title: string; desc: string; example: string }
@@ -1376,6 +1415,18 @@ const BusinessPlanAndGoles = () => {
   const [showAddContent, setShowAddContent] = useState(true);
   const [addContentTab, setAddContentTab] = useState("images");
   const [activeTopModal, setActiveTopModal] = useState<string | null>(null);
+  const [isAiBuilderOpen, setIsAiBuilderOpen] = useState(false);
+  const [aiBuilderStage, setAiBuilderStage] =
+    useState<AiBuilderStage>("questions");
+  const [aiQuestionIndex, setAiQuestionIndex] = useState(0);
+  const [aiAnswers, setAiAnswers] = useState<string[]>(
+    AI_PLAN_FIELDS.map(() => "")
+  );
+  const [generatedAiPlan, setGeneratedAiPlan] = useState("");
+  const [aiPlanJobId, setAiPlanJobId] = useState("");
+  const [aiBuilderError, setAiBuilderError] = useState<string | null>(null);
+  const aiPlanAbortRef = useRef<AbortController | null>(null);
+  const aiPlanCancelledRef = useRef(false);
 
   // Info hover state for main header
   const [isInfoHovered, setIsInfoHovered] = useState(false);
@@ -1473,8 +1524,12 @@ const BusinessPlanAndGoles = () => {
   const [dragBrandOverIdx, setDragBrandOverIdx] = useState<number | null>(null);
 
   // Overview Media
-  const [overviewImages, setOverviewImages] = useState<string[]>([]);
-  const [overviewVideos, setOverviewVideos] = useState<string[]>([]);
+  const [overviewImages, setOverviewImages] = useState<OverviewMediaItem[]>(
+    []
+  );
+  const [overviewVideos, setOverviewVideos] = useState<OverviewMediaItem[]>(
+    []
+  );
   const [isFetchingMedia, setIsFetchingMedia] = useState(false);
   const [mediaFetchError, setMediaFetchError] = useState<string | null>(null);
   const [newImageUrl, setNewImageUrl] = useState("");
@@ -1827,6 +1882,243 @@ const BusinessPlanAndGoles = () => {
   };
 
   // ── AI Prompt Copy Handlers ──
+  const resetAiBuilder = () => {
+    setAiBuilderStage("questions");
+    setAiQuestionIndex(0);
+    setAiAnswers(AI_PLAN_FIELDS.map(() => ""));
+    setGeneratedAiPlan("");
+    setAiPlanJobId("");
+    setAiBuilderError(null);
+  };
+
+  const openAiBuilder = () => {
+    resetAiBuilder();
+    setIsAiBuilderOpen(true);
+  };
+
+  const stopAiPlanGeneration = () => {
+    aiPlanCancelledRef.current = true;
+    aiPlanAbortRef.current?.abort();
+    aiPlanAbortRef.current = null;
+  };
+
+  const closeAiBuilder = () => {
+    stopAiPlanGeneration();
+    setIsAiBuilderOpen(false);
+  };
+
+  const updateAiAnswer = (value: string) => {
+    setAiAnswers((prev) =>
+      prev.map((answer, idx) => (idx === aiQuestionIndex ? value : answer))
+    );
+    setAiBuilderError(null);
+  };
+
+  const createAiPlanPayload = () => ({
+    purpose: aiAnswers[0]?.trim() || "",
+    core_values: aiAnswers[1]?.trim() || "",
+    brand_promises: aiAnswers[2]?.trim() || "",
+    bhag: aiAnswers[3]?.trim() || "",
+    three_year_vision: aiAnswers[4]?.trim() || "",
+    annual_goals: aiAnswers[5]?.trim() || "",
+    target_markets: aiAnswers[6]?.trim() || "",
+    key_initiatives: aiAnswers[7]?.trim() || "",
+    key_metrics: aiAnswers[8]?.trim() || "",
+    people_process: aiAnswers[9]?.trim() || "",
+  });
+
+  const createAiPlanPreview = () => {
+    const answer = (idx: number) => aiAnswers[idx]?.trim() || "Not specified";
+    return [
+      "AI BUSINESS PLAN",
+      "=".repeat(60),
+      "",
+      `Company: ${answer(0)}`,
+      `Industry: ${answer(1)}`,
+      `Target Customers: ${answer(2)}`,
+      "",
+      "EXECUTIVE SUMMARY",
+      "-".repeat(60),
+      `${answer(0)} operates in ${answer(1)} and serves ${answer(2)}. The plan focuses on ${answer(3)} while building toward the next major company milestone.`,
+      "",
+      "STRATEGIC DIRECTION",
+      "-".repeat(60),
+      `Current stage: ${answer(4)}`,
+      `12 month goal: ${answer(5)}`,
+      `3 to 5 year ambition: ${answer(6)}`,
+      "",
+      "POSITIONING",
+      "-".repeat(60),
+      `Differentiator: ${answer(8)}`,
+      `Core offer: ${answer(3)}`,
+      "",
+      "RISKS AND FOCUS AREAS",
+      "-".repeat(60),
+      answer(7),
+      "",
+      "MONTHLY LEADERSHIP SCORECARD",
+      "-".repeat(60),
+      answer(9),
+      "",
+      "90 DAY EXECUTION PLAN",
+      "-".repeat(60),
+      "1. Align leadership around the 12 month goal.",
+      "2. Turn customer focus into weekly sales and marketing actions.",
+      "3. Assign owners to the biggest risks and review progress weekly.",
+      "4. Review scorecard numbers monthly and correct misses quickly.",
+    ].join("\n");
+  };
+
+  const extractAiPlanText = (response: any): string => {
+    const candidates = [
+      response?.plan,
+      response?.ai_plan,
+      response?.business_plan,
+      response?.summary,
+      response?.data?.plan,
+      response?.data?.ai_plan,
+      response?.data?.business_plan,
+      response?.data?.summary,
+      response?.result?.plan,
+      response?.result?.ai_plan,
+      response?.result?.business_plan,
+      response?.result?.summary,
+    ];
+    const text = candidates.find(
+      (candidate) => typeof candidate === "string" && candidate.trim()
+    );
+    return text || createAiPlanPreview();
+  };
+
+  const waitForAiPlan = (ms: number, signal: AbortSignal) =>
+    new Promise<void>((resolve, reject) => {
+      if (signal.aborted) {
+        reject(new DOMException("AI plan generation cancelled.", "AbortError"));
+        return;
+      }
+
+      const timeoutId = window.setTimeout(resolve, ms);
+      signal.addEventListener(
+        "abort",
+        () => {
+          window.clearTimeout(timeoutId);
+          reject(new DOMException("AI plan generation cancelled.", "AbortError"));
+        },
+        { once: true }
+      );
+    });
+
+  const pollAiPlan = async (jobId: string, signal: AbortSignal) => {
+    while (true) {
+      if (signal.aborted || aiPlanCancelledRef.current) {
+        throw new DOMException("AI plan generation cancelled.", "AbortError");
+      }
+
+      const res = await fetch(
+        `${BASE_URL}/extra_fields/poll_ai_plan?job_id=${encodeURIComponent(jobId)}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+          signal,
+        }
+      );
+      const json = await res.json().catch(() => ({}));
+      console.log("AI plan poll response:", json);
+
+      if (!res.ok) {
+        throw new Error(json?.message || json?.error || `HTTP ${res.status}`);
+      }
+
+      const status = String(json?.status || "").toLowerCase();
+      if (status === "processing") {
+        await waitForAiPlan(5000, signal);
+        continue;
+      }
+
+      if (status === "error") {
+        throw new Error(json?.message || json?.error || "AI plan generation failed.");
+      }
+
+      return json;
+    }
+  };
+
+  const generateAiPlan = async () => {
+    stopAiPlanGeneration();
+    const controller = new AbortController();
+    aiPlanAbortRef.current = controller;
+    aiPlanCancelledRef.current = false;
+
+    setAiBuilderStage("building");
+    setAiBuilderError(null);
+    setAiPlanJobId("");
+
+    try {
+      const res = await fetch(`${BASE_URL}/extra_fields/generate_ai_plan`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(createAiPlanPayload()),
+        signal: controller.signal,
+      });
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok || !json?.success || !json?.job_id) {
+        throw new Error(json?.message || json?.error || "Failed to start AI plan generation.");
+      }
+
+      setAiPlanJobId(json.job_id);
+      const pollResponse = await pollAiPlan(json.job_id, controller.signal);
+      if (controller.signal.aborted || aiPlanCancelledRef.current) return;
+      setGeneratedAiPlan(extractAiPlanText(pollResponse));
+      setAiBuilderStage("plan");
+    } catch (err: any) {
+      if (err?.name === "AbortError" || aiPlanCancelledRef.current) {
+        return;
+      }
+
+      setAiBuilderError(err.message || "Failed to generate AI plan.");
+      setAiBuilderStage("questions");
+    } finally {
+      if (aiPlanAbortRef.current === controller) {
+        aiPlanAbortRef.current = null;
+      }
+    }
+  };
+
+  const goToNextAiQuestion = () => {
+    if (!aiAnswers[aiQuestionIndex]?.trim()) {
+      setAiBuilderError("Please answer this question before continuing.");
+      return;
+    }
+
+    if (aiQuestionIndex < AI_PLAN_FIELDS.length - 1) {
+      setAiQuestionIndex((idx) => idx + 1);
+      setAiBuilderError(null);
+      return;
+    }
+
+    generateAiPlan();
+  };
+
+  const downloadAiPlan = () => {
+    if (!generatedAiPlan) return;
+    const blob = new Blob([generatedAiPlan], {
+      type: "text/plain;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ai-business-plan.txt";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const saveAiPlan = () => {
+    toast.success("AI plan saved in this session.");
+  };
+
   const handleCopyAiPrompt = async (
     type: "overview" | "detailed" | "script"
   ) => {
@@ -1857,15 +2149,18 @@ const BusinessPlanAndGoles = () => {
 
   // ── Overview Media Handlers ──
   const handleAddImage = async () => {
-    const trimmed = newImageUrl.trim();
+    const trimmed = normalizeImageUrl(newImageUrl.trim());
     if (!trimmed) return;
     setIsSavingImages(true);
     setMediaSaveError(null);
     try {
-      const updated = [...(overviewImages || []), trimmed];
+      const updated = [
+        ...(overviewImages || []).map((item) => item.url),
+        trimmed,
+      ];
       await saveOverviewImagesApi(updated);
-      setOverviewImages(updated);
       setNewImageUrl("");
+      await loadOverviewMedia();
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to save image.");
     } finally {
@@ -1874,12 +2169,19 @@ const BusinessPlanAndGoles = () => {
   };
 
   const handleDeleteImage = async (index: number) => {
-    const updated = (overviewImages || []).filter((_, i) => i !== index);
+    const media = (overviewImages || [])[index];
     setIsSavingImages(true);
     setMediaSaveError(null);
     try {
-      await saveOverviewImagesApi(updated);
-      setOverviewImages(updated);
+      if (media?.id) {
+        await deleteExtraFieldFromApi(media.id);
+      } else {
+        const updated = (overviewImages || [])
+          .filter((_, i) => i !== index)
+          .map((item) => item.url);
+        await saveOverviewImagesApi(updated);
+      }
+      setOverviewImages((prev) => prev.filter((_, i) => i !== index));
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to delete image.");
     } finally {
@@ -1893,10 +2195,13 @@ const BusinessPlanAndGoles = () => {
     setIsSavingVideos(true);
     setMediaSaveError(null);
     try {
-      const updated = [...(overviewVideos || []), trimmed];
+      const updated = [
+        ...(overviewVideos || []).map((item) => item.url),
+        trimmed,
+      ];
       await saveOverviewVideosApi(updated);
-      setOverviewVideos(updated);
       setNewVideoUrl("");
+      await loadOverviewMedia();
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to save video.");
     } finally {
@@ -1905,12 +2210,19 @@ const BusinessPlanAndGoles = () => {
   };
 
   const handleDeleteVideo = async (index: number) => {
-    const updated = (overviewVideos || []).filter((_, i) => i !== index);
+    const media = (overviewVideos || [])[index];
     setIsSavingVideos(true);
     setMediaSaveError(null);
     try {
-      await saveOverviewVideosApi(updated);
-      setOverviewVideos(updated);
+      if (media?.id) {
+        await deleteExtraFieldFromApi(media.id);
+      } else {
+        const updated = (overviewVideos || [])
+          .filter((_, i) => i !== index)
+          .map((item) => item.url);
+        await saveOverviewVideosApi(updated);
+      }
+      setOverviewVideos((prev) => prev.filter((_, i) => i !== index));
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to delete video.");
     } finally {
@@ -2243,7 +2555,7 @@ const BusinessPlanAndGoles = () => {
               "Copy Plan"
             )}
           </BtnOutline>
-          <BtnPrimary>✨ Create with AI</BtnPrimary>
+          <BtnPrimary onClick={openAiBuilder}>Create with A.I</BtnPrimary>
         </div>
       </div>
 
@@ -2498,7 +2810,7 @@ const BusinessPlanAndGoles = () => {
                       </div>
                     ) : (
                       <InlineImageSlider
-                        images={overviewImages}
+                        images={(overviewImages || []).map((item) => item.url)}
                         onDelete={handleDeleteImage}
                         isSaving={isSavingImages}
                       />
@@ -2596,7 +2908,7 @@ const BusinessPlanAndGoles = () => {
                       </div>
                     ) : (
                       <InlineVideoPlayer
-                        videos={overviewVideos}
+                        videos={(overviewVideos || []).map((item) => item.url)}
                         onDelete={handleDeleteVideo}
                         isSaving={isSavingVideos}
                       />
@@ -2958,6 +3270,202 @@ const BusinessPlanAndGoles = () => {
       )}
 
       {activeMainTab === "goals" && <GoalsView />}
+
+      {isAiBuilderOpen && (
+        <Modal onClose={closeAiBuilder}>
+          <div className="bp-modal-box" style={{ maxWidth: 760 }}>
+            <div
+              className="flex items-center justify-between gap-4 px-6 py-5 border-b"
+              style={{ background: C.cardBg, borderColor: C.primaryBord }}
+            >
+              <div>
+                <div
+                  className="text-[10px] font-black uppercase tracking-[0.18em]"
+                  style={{ color: C.primary }}
+                >
+                  AI Plan Builder
+                </div>
+                <h2
+                  className="mt-1 text-[20px] font-black"
+                  style={{ color: C.textMain }}
+                >
+                  Create Business Plan with A.I
+                </h2>
+              </div>
+              <BtnIcon onClick={closeAiBuilder} title="Close">
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </BtnIcon>
+            </div>
+
+            <div className="p-6 flex-1 overflow-y-auto bp-scroll">
+              {aiBuilderStage === "questions" && (
+                <div className="space-y-5">
+                  <div>
+                    <div className="mb-2 flex items-center justify-between text-xs font-black">
+                      <span style={{ color: C.textMuted }}>
+                        Question {aiQuestionIndex + 1} of {AI_PLAN_FIELDS.length}
+                      </span>
+                      <span style={{ color: C.primary }}>
+                        {Math.round(
+                          ((aiQuestionIndex + 1) / AI_PLAN_FIELDS.length) * 100
+                        )}
+                        %
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-white">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${((aiQuestionIndex + 1) / AI_PLAN_FIELDS.length) * 100}%`,
+                          background: C.primary,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    className="rounded-2xl border bg-white p-5 shadow-sm"
+                    style={{ borderColor: C.primaryBord }}
+                  >
+                    <label
+                      className="mb-3 block text-[15px] font-black leading-snug"
+                      style={{ color: C.textMain }}
+                    >
+                      {AI_PLAN_FIELDS[aiQuestionIndex].label}
+                    </label>
+                    <textarea
+                      value={aiAnswers[aiQuestionIndex]}
+                      onChange={(e) => updateAiAnswer(e.target.value)}
+                      className="bp-input resize-y"
+                      style={{ minHeight: 150 }}
+                      placeholder="Type your answer here..."
+                      autoFocus
+                    />
+                  </div>
+
+                  {aiBuilderError && (
+                    <div className="bp-error-banner">{aiBuilderError}</div>
+                  )}
+                </div>
+              )}
+
+              {aiBuilderStage === "building" && (
+                <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
+                  <div
+                    className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
+                    style={{ background: C.primaryBg, color: C.primary }}
+                  >
+                    <LoaderIcon className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-black" style={{ color: C.textMain }}>
+                    Building your AI plan
+                  </h3>
+                  <p
+                    className="mt-2 max-w-md text-sm font-semibold"
+                    style={{ color: C.textMuted }}
+                  >
+                    Creating a polished business plan from your answers.
+                  </p>
+                </div>
+              )}
+
+              {aiBuilderStage === "plan" && (
+                <div
+                  className="rounded-2xl border bg-white p-4"
+                  style={{ borderColor: C.primaryBord }}
+                >
+                  <h3
+                    className="text-base font-black"
+                    style={{ color: C.textMain }}
+                  >
+                    Generated Business Plan
+                  </h3>
+                  <p
+                    className="mb-3 text-xs font-semibold"
+                    style={{ color: C.textMuted }}
+                  >
+                    Review the plan before saving or downloading.
+                  </p>
+                  <pre
+                    className="bp-scroll max-h-[430px] whitespace-pre-wrap rounded-xl p-4 text-[12px] font-semibold leading-relaxed"
+                    style={{
+                      background: C.primaryBg,
+                      color: C.textMain,
+                      border: `1px solid ${C.primaryBord}`,
+                    }}
+                  >
+                    {generatedAiPlan}
+                  </pre>
+                </div>
+              )}
+            </div>
+
+            <div
+              className="flex flex-wrap items-center justify-between gap-3 border-t p-5"
+              style={{ background: C.cardBg, borderColor: C.primaryBord }}
+            >
+              {aiBuilderStage === "questions" ? (
+                <>
+                  <BtnOutline
+                    onClick={() =>
+                      aiQuestionIndex === 0
+                        ? closeAiBuilder()
+                        : setAiQuestionIndex((idx) => idx - 1)
+                    }
+                  >
+                    {aiQuestionIndex === 0 ? "Cancel" : "Back"}
+                  </BtnOutline>
+                  <button
+                    onClick={goToNextAiQuestion}
+                    className="px-6 py-2 text-[13px] font-black text-white rounded-xl transition-colors shadow-sm active:scale-[0.97]"
+                    style={{ background: "#1a1a1a", fontFamily: C.font }}
+                  >
+                    {aiQuestionIndex === AI_PLAN_FIELDS.length - 1
+                      ? "Build AI Plan"
+                      : "Next"}
+                  </button>
+                </>
+              ) : aiBuilderStage === "building" ? (
+                <>
+                  <BtnOutline onClick={closeAiBuilder}>Cancel</BtnOutline>
+                  <div
+                    className="flex items-center justify-center gap-2 text-sm font-black"
+                    style={{ color: C.primary }}
+                  >
+                    <LoaderIcon /> Generating plan...
+                  </div>
+                </>
+              ) : (
+                <>
+                  <BtnOutline onClick={downloadAiPlan}>Download</BtnOutline>
+                  <div className="flex gap-3">
+                    <BtnOutline onClick={closeAiBuilder}>Close</BtnOutline>
+                    <button
+                      onClick={saveAiPlan}
+                      className="px-6 py-2 text-[13px] font-black text-white rounded-xl transition-colors shadow-sm active:scale-[0.97]"
+                      style={{ background: "#1a1a1a", fontFamily: C.font }}
+                    >
+                      Save
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* ══ MODALS ══ */}
       {activeTopModal && (

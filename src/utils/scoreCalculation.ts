@@ -281,7 +281,10 @@ function calculatePlanningScore(
 ): { score: number; details: PlanningDetails } {
     const maxPoints = 20;
 
-    if (!planningItems || planningItems.length === 0) {
+    // Filter items with actual text content (non-empty strings)
+    const validItems = planningItems.filter((p) => p.text && p.text.trim().length > 0);
+
+    if (!validItems || validItems.length === 0) {
         return {
             score: 0,
             details: {
@@ -299,12 +302,12 @@ function calculatePlanningScore(
 
     // Count starred items, max 3
     starredItems = Math.min(
-        planningItems.filter((p) => p.starred).length,
+        validItems.filter((p) => p.starred).length,
         3
     );
 
     // Regular items = total - starred
-    regularItems = planningItems.length - starredItems;
+    regularItems = validItems.length - starredItems;
 
     const regularPoints = regularItems * 2;
     const starredPoints = starredItems * 4;
