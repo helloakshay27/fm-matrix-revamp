@@ -297,7 +297,7 @@ export function GoldenQrSetupPage() {
             onClick={handleDownloadPdf}
             disabled={selectedIds.size === 0 || isDownloading}
             variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+            className="bg-[#C72030] hover:bg-[#a01828] text-white"
           >
             {isDownloading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
