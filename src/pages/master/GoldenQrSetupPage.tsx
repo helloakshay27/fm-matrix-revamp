@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Loader2, Download, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Loader2, Download, ChevronLeft, ChevronRight, Upload, FileSpreadsheet, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -58,6 +58,12 @@ export function GoldenQrSetupPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const perPage = 20;
+
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const [isDownloadingSample, setIsDownloadingSample] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [selectedBuilding, setSelectedBuilding] = useState<string>('');
   const [selectedWing, setSelectedWing] = useState<string>('');
@@ -215,6 +221,61 @@ export function GoldenQrSetupPage() {
     });
   };
 
+  const handleDownloadSample = async () => {
+    setIsDownloadingSample(true);
+    try {
+      const baseUrl = getBaseUrl();
+      const token = getToken();
+      const response = await fetch(
+        `${baseUrl}/pms/account_setups/import_additional_fields_template`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'golden_qr_sample.xlsx';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Failed to download sample file');
+    } finally {
+      setIsDownloadingSample(false);
+    }
+  };
+
+  const handleImport = async () => {
+    if (!importFile) {
+      toast.error('Please select a file to import');
+      return;
+    }
+    setIsImporting(true);
+    try {
+      const baseUrl = getBaseUrl();
+      const token = getToken();
+      const formData = new FormData();
+      formData.append('file', importFile);
+      const response = await fetch(
+        `${baseUrl}/pms/account_setups/import_additional_fields`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
+      if (!response.ok) throw new Error('Import failed');
+      toast.success('Import successful');
+      setShowImportDialog(false);
+      setImportFile(null);
+      loadTableData(1);
+    } catch {
+      toast.error('Failed to import file');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   const resetForm = () => {
     setSelectedBuilding('');
     setSelectedWing('');
@@ -305,6 +366,14 @@ export function GoldenQrSetupPage() {
               <Download className="w-4 h-4 mr-2" />
             )}
             Download QR PDF {selectedIds.size > 0 && `(${selectedIds.size})`}
+          </Button>
+          <Button
+            onClick={() => setShowImportDialog(true)}
+            variant="outline"
+            className="border-gray-300 text-gray-700 hover:bg-gray-50"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Import
           </Button>
           <Button
             onClick={() => setShowDialog(true)}
@@ -481,6 +550,94 @@ export function GoldenQrSetupPage() {
               className="w-64 h-64 object-contain mt-2"
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Dialog */}
+      <Dialog
+        open={showImportDialog}
+        onOpenChange={(open) => {
+          if (!open) { setImportFile(null); }
+          setShowImportDialog(open);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-gray-900">
+              Import Golden QR
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* File Input */}
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Select Excel File</p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={(e) => setImportFile(e.target.files?.[0] ?? null)}
+              />
+              {importFile ? (
+                <div className="flex items-center justify-between p-3 rounded-lg border border-[#C72030] bg-red-50">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <FileSpreadsheet className="w-4 h-4 text-[#C72030] shrink-0" />
+                    <span className="text-sm text-gray-700 truncate">{importFile.name}</span>
+                  </div>
+                  <button
+                    onClick={() => { setImportFile(null); if (fileInputRef.current) fileInputRef.current.value = ''; }}
+                    className="ml-2 text-gray-400 hover:text-gray-600 shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex flex-col items-center justify-center gap-2 p-6 rounded-lg border-2 border-dashed border-gray-300 hover:border-[#C72030] hover:bg-red-50 transition-colors cursor-pointer"
+                >
+                  <Upload className="w-6 h-6 text-gray-400" />
+                  <span className="text-sm text-gray-500">Click to browse .xlsx / .xls / .csv</span>
+                </button>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownloadSample}
+                disabled={isDownloadingSample}
+                className="border-green-600 text-green-600 hover:bg-green-50"
+              >
+                {isDownloadingSample ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Download Sample
+              </Button>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => { setImportFile(null); setShowImportDialog(false); }}
+                  disabled={isImporting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleImport}
+                  disabled={!importFile || isImporting}
+                  className="bg-[#C72030] hover:bg-[#a01828] text-white"
+                >
+                  {isImporting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Import
+                </Button>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 

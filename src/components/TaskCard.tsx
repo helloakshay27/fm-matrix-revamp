@@ -101,7 +101,7 @@ const TaskCard = ({
                 className="mb-2 truncate cursor-pointer text-start hover:text-blue-600 transition-colors"
                 onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`${task.id}`);
+                    navigate(`/vas/tasks/${task.id}`);
                 }}
             >
                 <span className="text-blue-500">T-{task.id}</span> {task.title}

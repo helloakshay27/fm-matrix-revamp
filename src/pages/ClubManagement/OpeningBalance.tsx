@@ -249,7 +249,7 @@ const totalCredit = filteredAccounts.reduce((sum, acc) => {
           {/* Date Field */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-[#C72030] mb-2">
-              Opening Balance Date
+              Opening Balance Date*
             </label>
             <TextField
               type="date"
