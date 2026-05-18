@@ -4,6 +4,7 @@ import TextField from "@mui/material/TextField";
 import { Button } from "@/components/ui/button";
 import { API_CONFIG } from '@/config/apiConfig';
 import { Search, X } from "lucide-react";
+import { toast } from 'sonner';
 interface AccountOption {
   id: number;
   name: string;
@@ -56,12 +57,31 @@ const OpeningBalance = () => {
           }))
           : [];
         setAccountOptions(options);
+        // setAccountValues(
+        //   options.reduce((acc, option) => {
+        //     acc[option.name] = { debit: "", credit: "" };
+        //     return acc;
+        //   }, {} as Record<string, { debit: string; credit: string }>)
+        // );
+
+
         setAccountValues(
-          options.reduce((acc, option) => {
-            acc[option.name] = { debit: "", credit: "" };
-            return acc;
-          }, {} as Record<string, { debit: string; credit: string }>)
-        );
+  options.reduce((acc, option) => {
+    acc[option.name] = {
+      debit: option.current_total_debits
+        ? Number(option.current_total_debits).toFixed(2)
+        : "",
+
+      credit: option.current_total_credits
+        ? Math.abs(
+            Number(option.current_total_credits)
+          ).toFixed(2)
+        : "",
+    };
+
+    return acc;
+  }, {})
+);
       } catch (error) {
         setAccountOptions([]);
         console.error('Error fetching account options:', error);
@@ -72,19 +92,52 @@ const OpeningBalance = () => {
     fetchAccounts();
   }, []);
 
+  // const handleValueChange = (
+  //   accountName: string,
+  //   field: "debit" | "credit",
+  //   value: string,
+  // ) => {
+  //   setAccountValues((prev) => ({
+  //     ...prev,
+  //     [accountName]: {
+  //       ...prev[accountName],
+  //       [field]: value,
+  //     },
+  //   }));
+  // };
+
+
   const handleValueChange = (
-    accountName: string,
-    field: "debit" | "credit",
-    value: string,
-  ) => {
-    setAccountValues((prev) => ({
-      ...prev,
-      [accountName]: {
-        ...prev[accountName],
-        [field]: value,
-      },
-    }));
-  };
+  accountName: string,
+  field: "debit" | "credit",
+  value: string,
+) => {
+
+  // remove negative sign
+  value = value.replace(/-/g, "");
+
+  // limit decimal to 2 digits
+  if (value.includes(".")) {
+    const [intPart, decPart] = value.split(".");
+    value = `${intPart}.${(decPart || "").slice(0, 2)}`;
+  }
+
+  setAccountValues((prev) => ({
+    ...prev,
+    [accountName]: {
+      ...prev[accountName],
+
+      // current field value
+      [field]: value,
+
+      // opposite field reset
+      [field === "debit" ? "credit" : "debit"]:
+        Number(value) > 0 ? "0.00" : prev[accountName]?.[
+          field === "debit" ? "credit" : "debit"
+        ],
+    },
+  }));
+};
 
   const calculateTotal = (field: "debit" | "credit") => {
     return Object.values(accountValues).reduce((sum, account) => {
@@ -95,19 +148,46 @@ const OpeningBalance = () => {
   const filteredAccounts = accountOptions.filter((acc) =>
     acc.name.toLowerCase().includes(search.toLowerCase())
   );
-  const totalDebit = filteredAccounts.reduce(
-    (sum, acc) => sum + Number(acc.current_total_debits || 0),
-    0
-  );
+  // const totalDebit = filteredAccounts.reduce(
+  //   (sum, acc) => sum + Number(acc.current_total_debits || 0),
+  //   0
+  // );
 
-  const totalCredit = filteredAccounts.reduce(
-    (sum, acc) => sum + Math.abs(Number(acc.current_total_credits || 0)),
-    0
+  // const totalCredit = filteredAccounts.reduce(
+  //   (sum, acc) => sum + Math.abs(Number(acc.current_total_credits || 0)),
+  //   0
+  // );
+
+
+  const totalDebit = filteredAccounts.reduce((sum, acc) => {
+  return (
+    sum +
+    Number(accountValues[acc.name]?.debit || 0)
   );
+}, 0);
+
+const totalCredit = filteredAccounts.reduce((sum, acc) => {
+  return (
+    sum +
+    Number(accountValues[acc.name]?.credit || 0)
+  );
+}, 0);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+     const today = new Date().toISOString().split("T")[0];
+
+  if (!date) {
+    toast.error("Opening Balance Date is required");
+    return;
+  }
+
+  // if (date > today) {
+  //   toast.error("Future dates are not allowed");
+  //   return;
+  // }
+
     const baseUrl = API_CONFIG.BASE_URL;
     const token = API_CONFIG.TOKEN;
     // Build payload
@@ -289,32 +369,107 @@ const OpeningBalance = () => {
 
 
 
-                <tbody>
+                {/* <tbody>
                   {filteredAccounts.map((account) => (
                     <tr key={account.id} className="hover:bg-gray-50">
 
                       {/* Account Name */}
-                      <td className="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+                      {/* <td className="border border-gray-300 px-4 py-2 text-sm text-gray-700">
                         {account.name}
-                      </td>
+                      </td> */}
 
                       {/* Debit (READ ONLY) */}
-                      <td className="border border-gray-300 px-4 py-2 text-center text-sm text-green-700 font-medium">
+                      {/* <td className="border border-gray-300 px-4 py-2 text-center text-sm text-green-700 font-medium">
                         {Number(account.current_total_debits || 0).toLocaleString("en-IN", {
                           minimumFractionDigits: 2,
                         })}
-                      </td>
+                      </td> */}
 
                       {/* Credit (READ ONLY) */}
-                      <td className="border border-gray-300 px-4 py-2 text-center text-sm text-red-600 font-medium">
+                      {/* <td className="border border-gray-300 px-4 py-2 text-center text-sm text-red-600 font-medium">
                         {Math.abs(Number(account.current_total_credits || 0)).toLocaleString("en-IN", {
                           minimumFractionDigits: 2,
                         })}
-                      </td>
+                      </td> */}
 
-                    </tr>
+                    {/* </tr>
                   ))}
-                </tbody>
+                </tbody> */}
+
+                <tbody>
+  {filteredAccounts.map((account) => (
+    <tr key={account.id} className="hover:bg-gray-50">
+
+      {/* Account Name */}
+      <td className="border border-gray-300 px-4 py-2 text-sm text-gray-700">
+        {account.name}
+      </td>
+
+      {/* Editable Debit */}
+      <td className="border border-gray-300 px-4 py-2">
+        <TextField
+          size="small"
+          variant="outlined"
+          type="number"
+          value={
+            accountValues[account.name]?.debit ??
+            Number(account.current_total_debits || 0).toFixed(2)
+          }
+          onChange={(e) => {
+            let value = e.target.value.replace(/-/g, "");
+
+            handleValueChange(
+              account.name,
+              "debit",
+              value
+            );
+          }}
+          className="w-full"
+          inputProps={{
+            min: 0,
+            step: "0.01",
+            onKeyDown: (e) => {
+              if (e.key === "-") e.preventDefault();
+            },
+          }}
+        />
+      </td>
+
+      {/* Editable Credit */}
+      <td className="border border-gray-300 px-4 py-2">
+        <TextField
+          size="small"
+          variant="outlined"
+          type="number"
+          value={
+            accountValues[account.name]?.credit ??
+            Math.abs(
+              Number(account.current_total_credits || 0)
+            ).toFixed(2)
+          }
+          onChange={(e) => {
+            let value = e.target.value.replace(/-/g, "");
+
+            handleValueChange(
+              account.name,
+              "credit",
+              value
+            );
+          }}
+          className="w-full"
+          inputProps={{
+            min: 0,
+            step: "0.01",
+            onKeyDown: (e) => {
+              if (e.key === "-") e.preventDefault();
+            },
+          }}
+        />
+      </td>
+
+    </tr>
+  ))}
+</tbody>
               </table>
             )}
 
@@ -368,7 +523,7 @@ const OpeningBalance = () => {
           </div>
 
           {/* Action Buttons */}
-          {/* <div className="flex gap-3 pt-4 justify-center">
+          <div className="flex gap-3 pt-4 justify-center">
             <Button
               type="submit"
               className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[140px]"
@@ -384,7 +539,7 @@ const OpeningBalance = () => {
               Cancel
             </Button>
 
-          </div> */}
+          </div>
         </form>
       </div>
     </div>
