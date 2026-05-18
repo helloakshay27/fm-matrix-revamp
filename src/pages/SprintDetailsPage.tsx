@@ -22,23 +22,22 @@ interface SprintDetails {
 }
 
 interface Task {
+  id?: string | number;
   task_title?: string;
   status?: string;
   responsible_person?: string;
-  start_date?: string;
-  end_date?: string;
-  duration?: string;
+  target_date?: string;
   priority?: string;
+  estimated_hour?: number;
 }
 
 const taskColumns: ColumnConfig[] = [
   { key: "task_title", label: "Task Title", sortable: true, draggable: true, defaultVisible: true },
   { key: "status", label: "Status", sortable: true, draggable: true, defaultVisible: true },
   { key: "responsible_person", label: "Responsible Person", sortable: true, draggable: true, defaultVisible: true },
-  { key: "start_date", label: "Start Date", sortable: true, draggable: true, defaultVisible: true },
-  { key: "end_date", label: "End Date", sortable: true, draggable: true, defaultVisible: true },
-  { key: "duration", label: "Duration", sortable: true, draggable: true, defaultVisible: true },
+  { key: "target_date", label: "Target Date", sortable: true, draggable: true, defaultVisible: true },
   { key: "priority", label: "Priority", sortable: true, draggable: true, defaultVisible: true },
+  { key: "estimated_hour", label: "Estimated Hours", sortable: true, draggable: true, defaultVisible: true },
 ];
 
 function formatToDDMMYYYY_AMPM(dateString: string | undefined) {
@@ -86,20 +85,27 @@ const CountdownTimer = ({ startDate, targetDate }: { startDate?: string; targetD
 };
 
 // Define API shapes based on backend response
+interface TaskManagement {
+  id: number;
+  title?: string;
+  status?: string;
+  priority?: string;
+  target_date?: string;
+  started_at?: string;
+  completed_at?: string;
+  responsible_person_id?: number;
+  responsible_person_name?: string;
+  milestone_id?: number;
+  estimated_hour?: number;
+  [key: string]: any;
+}
+
 interface ApiSprintTask {
   id: number;
   sprint_id?: number;
   task_id?: number;
   created_at?: string;
-  status?: string;
-  title?: string;
-  name?: string;
-  responsible_person?: string;
-  owner_name?: string;
-  start_date?: string;
-  end_date?: string;
-  duration?: string | null;
-  priority?: string | null;
+  task_management?: TaskManagement;
 }
 
 interface ApiSprint {
@@ -180,15 +186,18 @@ const mapApiToDetails = (api: ApiSprint): SprintDetails => ({
 // Map API sprint_tasks -> table rows
 const mapApiTasks = (api: ApiSprint): Task[] => {
   const list = api.sprint_tasks ?? [];
-  return list.map((t) => ({
-    task_title: t.title ?? t.name ?? `Task #${t.task_id ?? t.id}`,
-    status: mapStatusToDisplay(t.status),
-    responsible_person: t.responsible_person ?? t.owner_name ?? "-",
-    start_date: t.start_date ?? "",
-    end_date: t.end_date ?? "",
-    duration: t.duration ?? "",
-    priority: t.priority ?? "",
-  }));
+  return list.map((t) => {
+    const taskMgmt = t.task_management;
+    return {
+      id: t.id,
+      task_title: taskMgmt?.title ?? `Task #${t.task_id ?? t.id}`,
+      status: mapStatusToDisplay(taskMgmt?.status),
+      responsible_person: taskMgmt?.responsible_person_name ?? "-",
+      target_date: taskMgmt?.target_date ?? "",
+      priority: taskMgmt?.priority ?? "-",
+      estimated_hour: taskMgmt?.estimated_hour ?? 0,
+    };
+  });
 };
 
 export const SprintDetailsPage = () => {
@@ -255,7 +264,36 @@ export const SprintDetailsPage = () => {
     toast.success("Status updated successfully");
   };
 
-  const renderTaskCell = (item: Task, columnKey: string) => item[columnKey as keyof Task] ?? "-";
+  const renderTaskCell = (item: Task, columnKey: string) => {
+    const value = item[columnKey as keyof Task];
+
+    // Format dates
+    if (columnKey === "target_date" && value) {
+      return new Date(value as string).toLocaleDateString("en-IN", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    }
+
+    // Color-code status
+    if (columnKey === "status" && value) {
+      const statusKey = mapDisplayToApiStatus(value as string).toLowerCase();
+      const colorClass = STATUS_COLORS[statusKey as keyof typeof STATUS_COLORS] || "bg-gray-200 text-gray-800";
+      return (
+        <span className={`px-3 py-1 rounded-full text-sm font-medium ${colorClass}`}>
+          {value}
+        </span>
+      );
+    }
+
+    // Format estimated hours
+    if (columnKey === "estimated_hour" && value) {
+      return `${value}h`;
+    }
+
+    return value ?? "-";
+  };
 
   return (
     <div className="m-4">
@@ -379,7 +417,6 @@ export const SprintDetailsPage = () => {
             <EnhancedTable
               data={tasks}
               columns={taskColumns}
-              storageKey="sprint-tasks-table"
               hideColumnsButton={true}
               hideTableExport={true}
               hideTableSearch={true}
