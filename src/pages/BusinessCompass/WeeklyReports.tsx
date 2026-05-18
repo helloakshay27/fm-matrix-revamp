@@ -29,6 +29,8 @@ import {
     Clock,
     Loader2,
     FileText,
+    Pencil,
+    ListTodo,
 } from "lucide-react";
 import {
     addDays,
@@ -80,10 +82,12 @@ import {
 import axios from "axios";
 import { Menu, MenuItem } from "@mui/material";
 import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
+import ProjectTaskEditModal from "@/components/ProjectTaskEditModal";
 import AddIssueModal from "@/components/AddIssueModal";
+import EditIssueModal from "@/components/EditIssueModal";
+import TodoDetailsModal from "@/components/TodoDetailsModal";
+import AddToDoModal from "@/components/AddToDoModal";
 import { TransitionProps } from "@mui/material/transitions";
-import { useTasks } from "@/hooks/useTasks";
-import { useIssues } from "@/hooks/useIssues";
 import { useNavigate } from "react-router-dom";
 
 const Transition = forwardRef(function Transition(
@@ -277,6 +281,12 @@ const WeeklyReports = () => {
     const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
     const [hasMoreTasks, setHasMoreTasks] = useState(true);
     const [hasMoreIssues, setHasMoreIssues] = useState(true);
+    const [tasksData, setTasksData] = useState<any>(null);
+    const [issuesData, setIssuesData] = useState<any>(null);
+    const [tasksLoading, setTasksLoading] = useState(false);
+    const [issuesLoading, setIssuesLoading] = useState(false);
+    const [todosData, setTodosData] = useState<any[]>([]);
+    const [todosLoading, setTodosLoading] = useState(false);
     const [kpis, setKpis] = useState<any[]>([]);
     const [kpiLoading, setKpiLoading] = useState(false);
     const [kpiEntries, setKpiEntries] = useState<{ [key: number]: string }>({});
@@ -306,6 +316,15 @@ const WeeklyReports = () => {
     const remarksTextareaRef = React.useRef<HTMLTextAreaElement>(null);
     const [openTaskModal, setOpenTaskModal] = useState(false);
     const [openIssueModal, setOpenIssueModal] = useState(false);
+    const [openTodoModal, setOpenTodoModal] = useState(false);
+    const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
+    const [editTaskData, setEditTaskData] = useState<any>(null);
+    const [isEditIssueModalOpen, setIsEditIssueModalOpen] = useState(false);
+    const [editIssueData, setEditIssueData] = useState<any>(null);
+    const [isEditTodoModalOpen, setIsEditTodoModalOpen] = useState(false);
+    const [editTodoData, setEditTodoData] = useState<any>(null);
+    const [isTodoDetailsModalOpen, setIsTodoDetailsModalOpen] = useState(false);
+    const [selectedTodo, setSelectedTodo] = useState<any>(null);
     const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] =
         useState<null | HTMLElement>(null);
     const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -327,6 +346,7 @@ const WeeklyReports = () => {
     const [systemSops, setSystemSops] = React.useState<any[]>([]);
     const [isLoadingSops, setIsLoadingSops] = React.useState(false);
     const [sopsError, setSopsError] = React.useState<string | null>(null);
+    const [tasksIssuesRefreshKey, setTasksIssuesRefreshKey] = React.useState(0);
     const [updatingSopStatus, setUpdatingSopStatus] = React.useState<
         Record<number, boolean>
     >({});
@@ -334,6 +354,30 @@ const WeeklyReports = () => {
         Record<number, boolean>
     >({});
     const refDate = React.useMemo(() => new Date(), []);
+
+    useEffect(() => {
+        if (!taskIssueMenuAnchor) return;
+
+        const closeTaskIssueMenuOnScroll = () => {
+            setTaskIssueMenuAnchor(null);
+        };
+        const listenerOptions = { capture: true, passive: true } as AddEventListenerOptions;
+
+        window.addEventListener("scroll", closeTaskIssueMenuOnScroll, listenerOptions);
+        document.addEventListener("scroll", closeTaskIssueMenuOnScroll, listenerOptions);
+        window.addEventListener("wheel", closeTaskIssueMenuOnScroll, listenerOptions);
+        document.addEventListener("wheel", closeTaskIssueMenuOnScroll, listenerOptions);
+        window.addEventListener("touchmove", closeTaskIssueMenuOnScroll, listenerOptions);
+        document.addEventListener("touchmove", closeTaskIssueMenuOnScroll, listenerOptions);
+        return () => {
+            window.removeEventListener("scroll", closeTaskIssueMenuOnScroll, listenerOptions);
+            document.removeEventListener("scroll", closeTaskIssueMenuOnScroll, listenerOptions);
+            window.removeEventListener("wheel", closeTaskIssueMenuOnScroll, listenerOptions);
+            document.removeEventListener("wheel", closeTaskIssueMenuOnScroll, listenerOptions);
+            window.removeEventListener("touchmove", closeTaskIssueMenuOnScroll, listenerOptions);
+            document.removeEventListener("touchmove", closeTaskIssueMenuOnScroll, listenerOptions);
+        };
+    }, [taskIssueMenuAnchor]);
 
     const currentWeekStart = React.useMemo(
         () => startOfWeek(refDate, { weekStartsOn: 1 }),
@@ -359,6 +403,13 @@ const WeeklyReports = () => {
             : {};
     const userId =
         localStorage.getItem("userId") || localStorage.getItem("user_id") || user?.id;
+    const normalizedBaseUrl = React.useMemo(() => {
+        const raw = String(baseUrl || "").trim().replace(/\/+$/, "");
+        if (!raw) return "";
+        return raw.startsWith("http://") || raw.startsWith("https://")
+            ? raw
+            : `https://${raw}`;
+    }, [baseUrl]);
     const weekDraftKey = React.useMemo(
         () =>
             `business-compass-weekly-report-draft:${userId || "guest"}:${format(weekStart, "yyyy-MM-dd")}`,
@@ -423,34 +474,174 @@ const WeeklyReports = () => {
             setUploadedFilesCount(draft.uploadedFilesCount);
     }, []);
 
-    const myIssuesFilter = `
-      q[status_in][]=open
-      &q[status_in][]=overdued
-      &q[status_in][]=completed
-      ${userId ? `&q[responsible_person_id_eq]=${userId}` : ""}
-    `.replace(/\s+/g, "");
+    useEffect(() => {
+        setCurrentTasksPage(1);
+        setCurrentIssuesPage(1);
+        setMergedTasksIssues([]);
+        setTodosData([]);
+    }, [weekEnd, userId]);
 
-    const { data: tasksData, isLoading: tasksLoading } = useTasks({
-        taskType: "my",
-        page: currentTasksPage,
-        filters: {
-            "q[expected_start_date_gteq]": format(weekStart, "yyyy-MM-dd"),
-            "q[target_date_lteq]": format(weekEnd, "yyyy-MM-dd"),
-        },
-    });
+    useEffect(() => {
+        const fetchWeeklyTasks = async () => {
+            if (!normalizedBaseUrl) {
+                setTasksData(null);
+                return;
+            }
 
-    const { data: issuesData, isLoading: issuesLoading } = useIssues({
-        baseUrl,
-        token,
-        page: currentIssuesPage,
-        filters: myIssuesFilter,
-        enabled: !!token && !!userId,
-    });
+            setTasksLoading(true);
+            try {
+                const params = new URLSearchParams();
+                params.append("page", String(currentTasksPage));
+                params.append("q[status_in][]", "open");
+                params.append("q[status_in][]", "overdue");
+                params.append("q[status_in][]", "overdued");
+                params.append("q[status_in][]", "in_progress");
+                params.append("q[status_in][]", "completed");
+                params.append(
+                    "q[start_date_or_target_date_or_completed_at_lteq]",
+                    format(weekEnd, "yyyy-MM-dd")
+                );
+                params.append("q[completed_at_gteq]", format(weekStart, "yyyy-MM-dd"));
+
+                const response = await fetch(
+                    `${normalizedBaseUrl}/task_managements/my_tasks.json?${params.toString()}`,
+                    {
+                        headers: {
+                            Accept: "application/json",
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Tasks API failed with ${response.status}`);
+                }
+
+                setTasksData(await response.json());
+            } catch (error) {
+                console.error("Failed to fetch weekly tasks:", error);
+                setTasksData(null);
+            } finally {
+                setTasksLoading(false);
+            }
+        };
+
+        fetchWeeklyTasks();
+    }, [normalizedBaseUrl, token, weekEnd, weekStart, currentTasksPage, tasksIssuesRefreshKey]);
+
+    useEffect(() => {
+        const fetchWeeklyIssues = async () => {
+            if (!normalizedBaseUrl || !userId) {
+                setIssuesData(null);
+                return;
+            }
+
+            setIssuesLoading(true);
+            try {
+                const params = new URLSearchParams();
+                params.append("page", String(currentIssuesPage));
+                params.append("q[status_in][]", "open");
+                params.append("q[status_in][]", "overdue");
+                params.append("q[status_in][]", "overdued");
+                params.append("q[status_in][]", "in_progress");
+                params.append("q[status_in][]", "completed");
+                params.append(
+                    "q[start_date_or_target_date_or_completed_at_lteq]",
+                    format(weekEnd, "yyyy-MM-dd")
+                );
+                params.append("q[completed_at_gteq]", format(weekStart, "yyyy-MM-dd"));
+                params.append("q[responsible_person_id_eq]", String(userId));
+
+                const response = await fetch(
+                    `${normalizedBaseUrl}/issues.json?${params.toString()}`,
+                    {
+                        headers: {
+                            Accept: "application/json",
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Issues API failed with ${response.status}`);
+                }
+
+                setIssuesData(await response.json());
+            } catch (error) {
+                console.error("Failed to fetch weekly issues:", error);
+                setIssuesData(null);
+            } finally {
+                setIssuesLoading(false);
+            }
+        };
+
+        fetchWeeklyIssues();
+    }, [normalizedBaseUrl, token, userId, weekEnd, weekStart, currentIssuesPage, tasksIssuesRefreshKey]);
+
+    useEffect(() => {
+        const fetchTodos = async () => {
+            if (!normalizedBaseUrl || !userId) {
+                setTodosData([]);
+                return;
+            }
+
+            setTodosLoading(true);
+            try {
+                const params = new URLSearchParams();
+                params.append("q[user_id_eq]", String(userId));
+                params.append("q[target_date_lteq]", format(weekEnd, "yyyy-MM-dd"));
+                params.append("q[status_in][]", "open");
+                params.append("q[status_in][]", "overdue");
+                params.append("q[status_in][]", "overdued");
+                params.append("q[status_in][]", "in_progress");
+                params.append("q[status_in][]", "completed");
+
+                const response = await fetch(
+                    `${normalizedBaseUrl}/todos.json?${params.toString()}`,
+                    {
+                        headers: {
+                            Accept: "application/json",
+                            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                        },
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Todos API failed with ${response.status}`);
+                }
+
+                const json = await response.json();
+                const todos =
+                    (Array.isArray(json) && json) ||
+                    json?.todos ||
+                    json?.data?.todos ||
+                    json?.data ||
+                    [];
+
+                setTodosData(Array.isArray(todos) ? todos : []);
+            } catch (error) {
+                console.error("Failed to fetch weekly todos:", error);
+                setTodosData([]);
+            } finally {
+                setTodosLoading(false);
+            }
+        };
+
+        fetchTodos();
+    }, [normalizedBaseUrl, token, userId, weekEnd, tasksIssuesRefreshKey]);
 
     useEffect(() => {
         const tasks =
-            tasksData?.data?.task_managements || tasksData?.task_managements || [];
-        const issues = issuesData?.issues || [];
+            tasksData?.data?.task_managements ||
+            tasksData?.task_managements ||
+            tasksData?.tasks ||
+            (Array.isArray(tasksData?.data) ? tasksData.data : []) ||
+            (Array.isArray(tasksData) ? tasksData : []);
+        const issues =
+            issuesData?.issues ||
+            issuesData?.data?.issues ||
+            (Array.isArray(issuesData?.data) ? issuesData.data : []) ||
+            (Array.isArray(issuesData) ? issuesData : []);
 
         const tasksPagination =
             tasksData?.data?.pagination || tasksData?.pagination;
@@ -461,9 +652,9 @@ const WeeklyReports = () => {
 
         const transformedTasks = tasks.map((task: any) => ({
             id: `task-${task.id}`,
-            title: task.title, // <-- API mein field name "title" hai ya "name"?
+            title: task.title || task.name || task.heading || "Untitled Task",
             type: "task",
-            status: task.status || "open",
+            status: String(task.status || "open").toLowerCase().replace(/\s+/g, "_"),
             priority: task.priority || "Medium",
             created_at: task.created_at,
             responsible: task.responsible_person_id,
@@ -472,16 +663,33 @@ const WeeklyReports = () => {
 
         const transformedIssues = issues.map((issue: any) => ({
             id: `issue-${issue.id}`,
-            title: issue.title,
+            title: issue.title || issue.name || issue.heading || "Untitled Issue",
             type: "issue",
-            status: issue.status || "open",
+            status: String(issue.status || "open").toLowerCase().replace(/\s+/g, "_"),
             priority: issue.priority || "Medium",
             created_at: issue.created_at,
             responsible: issue.responsible_person_id,
             originalData: issue,
         }));
 
-        const newData = [...transformedTasks, ...transformedIssues].sort(
+        const transformedTodos = todosData.map((todo: any) => ({
+            id: `todo-${todo.id}`,
+            title:
+                todo.title ||
+                todo.name ||
+                todo.heading ||
+                todo.description ||
+                todo.body ||
+                "Untitled Todo",
+            type: "todo",
+            status: String(todo.status || "open").toLowerCase().replace(/\s+/g, "_"),
+            priority: todo.priority || "Medium",
+            created_at: todo.created_at || todo.target_date,
+            responsible: todo.user_id,
+            originalData: todo,
+        }));
+
+        const newData = [...transformedTasks, ...transformedIssues, ...transformedTodos].sort(
             (a, b) =>
                 new Date(b.created_at || 0).getTime() -
                 new Date(a.created_at || 0).getTime()
@@ -505,7 +713,7 @@ const WeeklyReports = () => {
         }
 
         setIsLoadingMore(false);
-    }, [tasksData, issuesData, currentTasksPage, currentIssuesPage]);
+    }, [tasksData, issuesData, todosData, currentTasksPage, currentIssuesPage]);
 
     useEffect(() => {
         const completedItems: { [key: string]: boolean } = {};
@@ -525,7 +733,7 @@ const WeeklyReports = () => {
             const { scrollTop, scrollHeight, clientHeight } = container;
             const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
 
-            if (isNearBottom && !isLoadingMore && !tasksLoading && !issuesLoading) {
+            if (isNearBottom && !isLoadingMore && !tasksLoading && !issuesLoading && !todosLoading) {
                 setIsLoadingMore(true);
                 if (hasMoreTasks) setCurrentTasksPage((prev) => prev + 1);
                 if (hasMoreIssues) setCurrentIssuesPage((prev) => prev + 1);
@@ -535,7 +743,7 @@ const WeeklyReports = () => {
 
         container.addEventListener("scroll", handleScroll);
         return () => container.removeEventListener("scroll", handleScroll);
-    }, [isLoadingMore, tasksLoading, issuesLoading, hasMoreTasks, hasMoreIssues]);
+    }, [isLoadingMore, tasksLoading, issuesLoading, todosLoading, hasMoreTasks, hasMoreIssues]);
 
     const taskIssueCounts = useMemo(() => {
         const completed = mergedTasksIssues.filter(
@@ -545,7 +753,7 @@ const WeeklyReports = () => {
             (item) => item.status === "open" || item.status === "reopen"
         ).length;
         const overdue = mergedTasksIssues.filter(
-            (item) => item.status === "overdue"
+            (item) => item.status === "overdue" || item.status === "overdued"
         ).length;
         const onHold = mergedTasksIssues.filter(
             (item) => item.status === "on_hold"
@@ -553,6 +761,9 @@ const WeeklyReports = () => {
         const inProgress = mergedTasksIssues.filter(
             (item) => item.status === "in_progress"
         ).length;
+        const tasks = mergedTasksIssues.filter((item) => item.type === "task").length;
+        const issues = mergedTasksIssues.filter((item) => item.type === "issue").length;
+        const todos = mergedTasksIssues.filter((item) => item.type === "todo").length;
 
         return {
             completed,
@@ -560,6 +771,9 @@ const WeeklyReports = () => {
             overdue,
             onHold,
             inProgress,
+            tasks,
+            issues,
+            todos,
             total: mergedTasksIssues.length,
         };
     }, [mergedTasksIssues]);
@@ -697,7 +911,7 @@ const WeeklyReports = () => {
             (item) => item.status === "open" || item.status === "reopen"
         ).length;
         const overdueTasks = mergedTasksIssues.filter(
-            (item) => item.status === "overdue"
+            (item) => item.status === "overdue" || item.status === "overdued"
         ).length;
 
         const taskPositive = closedTasks * 2;
@@ -879,6 +1093,8 @@ const WeeklyReports = () => {
     const weekRangeLabel = `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d")}`;
     const weekNumLabel = String(getISOWeek(weekStart));
     const submitRangeLabel = `${format(weekStart, "d MMM")} - ${format(weekEnd, "d MMM")}`;
+    const currentDateValue = format(new Date(), "yyyy-MM-dd");
+    const weekEndDateValue = format(weekEnd, "yyyy-MM-dd");
 
     const prevWeekStart = React.useMemo(
         () => subDays(currentWeekStart, 7),
@@ -2277,21 +2493,33 @@ const WeeklyReports = () => {
                                     <div className="flex flex-wrap items-center gap-2">
                                         <AlertTriangle className="h-5 w-5 shrink-0 text-[#DA7756]" />
                                         <h3 className="font-bold text-neutral-900">
-                                            Tasks & Issues
+                                            Tasks, Issues & Todos
                                         </h3>
-                                        <Badge className="border-0 bg-neutral-200 px-2 py-0 text-[10px] font-bold uppercase text-neutral-700">
+                                        <Badge className="border-0 bg-neutral-200 px-2 py-0 text-[10px] font-bold uppercase text-neutral-700 hover:bg-neutral-200 hover:text-neutral-700">
                                             Optional
                                         </Badge>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
-                                        <Badge className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800">
-                                            Closed: 0
+                                        <Badge className="border-0 bg-[#DA7756]/10 px-3 py-1 text-[10px] font-bold text-[#9e4f36] hover:bg-[#DA7756]/10 hover:text-[#9e4f36]">
+                                            Tasks: {taskIssueCounts.tasks}
                                         </Badge>
-                                        <Badge className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800">
-                                            Open: 0
+                                        <Badge className="border-0 bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-800 hover:bg-violet-100 hover:text-violet-800">
+                                            Issues: {taskIssueCounts.issues}
                                         </Badge>
-                                        <Badge className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800">
-                                            Overdue: 0
+                                        <Badge className="border-0 bg-yellow-100 px-3 py-1 text-[10px] font-bold text-yellow-800 hover:bg-yellow-100 hover:text-yellow-800">
+                                            Todos: {taskIssueCounts.todos}
+                                        </Badge>
+                                        <Badge className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800 hover:bg-emerald-100 hover:text-emerald-800">
+                                            Closed: {taskIssueCounts.completed}
+                                        </Badge>
+                                        <Badge className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 hover:bg-sky-100 hover:text-sky-800">
+                                            Open: {taskIssueCounts.open}
+                                        </Badge>
+                                        <Badge className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 hover:bg-red-100 hover:text-red-800">
+                                            Overdue: {taskIssueCounts.overdue}
+                                        </Badge>
+                                        <Badge className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 hover:bg-amber-100 hover:text-amber-800">
+                                            In Progress: {taskIssueCounts.inProgress}
                                         </Badge>
                                     </div>
                                 </div>
@@ -2305,20 +2533,20 @@ const WeeklyReports = () => {
                                     Add
                                 </Button>
                             </div>
-                            <div className="flex flex-col items-center justify-center space-y-4 p-6 text-center">
+                            <div className="p-6">
                                 {/* <CheckSquare className="h-12 w-12 text-neutral-200" />
                                 <p className="text-lg text-neutral-400">
                                     No open tasks or issues.
                                 </p> */}
 
-                                {tasksLoading || issuesLoading ? (
+                                {tasksLoading || issuesLoading || todosLoading ? (
                                     <div className="flex flex-col items-center justify-center text-center py-10">
                                         <Loader2
                                             size={40}
                                             className="text-[#b91c1c]/30 animate-spin mb-3"
                                         />
                                         <p className="text-sm font-bold text-gray-500">
-                                            Loading tasks and issues...
+                                            Loading tasks, issues and todos...
                                         </p>
                                     </div>
                                 ) : mergedTasksIssues.length === 0 ? (
@@ -2347,6 +2575,7 @@ const WeeklyReports = () => {
                                                         item.status === "closed"
                                                         ? "bg-green-50/50 border-green-200/50"
                                                         : item.status === "overdue" ||
+                                                            item.status === "overdued" ||
                                                             item.status === "on_hold"
                                                             ? "bg-red-50/50 border-red-200/50"
                                                             : item.status === "in_progress"
@@ -2366,6 +2595,20 @@ const WeeklyReports = () => {
                                                             item.status !== "completed" &&
                                                             item.status !== "closed"
                                                         ) {
+                                                            if (item.type === "todo") {
+                                                                setMergedTasksIssues((prev) =>
+                                                                    prev.map((existing) =>
+                                                                        existing.id === item.id
+                                                                            ? { ...existing, status: "completed" }
+                                                                            : existing
+                                                                    )
+                                                                );
+                                                                setSelectedTasksIssues((prev) => ({
+                                                                    ...prev,
+                                                                    [item.id]: true,
+                                                                }));
+                                                                return;
+                                                            }
                                                             setClosureItem(item);
                                                             setShowClosureModal(true);
                                                         } else {
@@ -2379,6 +2622,12 @@ const WeeklyReports = () => {
                                                 />
                                                 <button
                                                     onClick={() => {
+                                                        if (item.type === "todo") {
+                                                            setSelectedTodo(item.originalData);
+                                                            setIsTodoDetailsModalOpen(true);
+                                                            return;
+                                                        }
+
                                                         const detailsUrl =
                                                             item.type === "task"
                                                                 ? `/vas/tasks/${item.originalData?.id}`
@@ -2393,6 +2642,25 @@ const WeeklyReports = () => {
                                                         className="text-gray-600 hover:text-gray-800"
                                                     />
                                                 </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (item.type === "task") {
+                                                            setEditTaskData(item.originalData);
+                                                            setIsEditTaskModalOpen(true);
+                                                        } else if (item.type === "issue") {
+                                                            setEditIssueData(item.originalData);
+                                                            setIsEditIssueModalOpen(true);
+                                                        } else if (item.type === "todo") {
+                                                            setEditTodoData(item.originalData);
+                                                            setIsEditTodoModalOpen(true);
+                                                        }
+                                                    }}
+                                                    className="flex-shrink-0 p-1 text-gray-600 hover:text-[#DA7756] transition-colors"
+                                                    title={`Edit ${item.type}`}
+                                                >
+                                                    <Pencil size={14} />
+                                                </button>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white text-gray-600 uppercase">
                                                         {item.type}
@@ -2404,6 +2672,7 @@ const WeeklyReports = () => {
                                                             className="text-green-600"
                                                         />
                                                     ) : item.status === "overdue" ||
+                                                        item.status === "overdued" ||
                                                         item.status === "on_hold" ? (
                                                         <AlertCircle
                                                             size={16}
@@ -2415,10 +2684,10 @@ const WeeklyReports = () => {
                                                         <Info size={16} className="text-blue-600" />
                                                     )}
                                                 </div>
-                                                <div className="flex-1 min-w-0">
+                                                <div className="flex-1 min-w-0 text-left">
                                                     <p
                                                         className={cn(
-                                                            "text-sm font-medium truncate",
+                                                            "text-sm font-medium truncate text-left",
                                                             (item.status === "completed" ||
                                                                 item.status === "closed") &&
                                                             "line-through text-gray-400"
@@ -2426,7 +2695,7 @@ const WeeklyReports = () => {
                                                     >
                                                         {item.title}
                                                     </p>
-                                                    <p className="text-xs text-gray-500 capitalize">
+                                                    <p className="text-xs text-gray-500 capitalize text-left">
                                                         {item.status.replace(/_/g, " ")}
                                                     </p>
                                                 </div>
@@ -3818,23 +4087,143 @@ const WeeklyReports = () => {
                         <hr className="border border-[#E95420] mt-4" />
                     </div>
                     <div className="flex-1 overflow-y-auto">
-                        <ProjectTaskCreateModal isEdit={false} onCloseModal={() => setOpenTaskModal(false)} />
+                        <ProjectTaskCreateModal
+                            isEdit={false}
+                            onCloseModal={() => setOpenTaskModal(false)}
+                            prefillData={{
+                                start_date: currentDateValue,
+                                target_date: weekEndDateValue,
+                            }}
+                        />
                     </div>
                 </MuiDialogContent>
             </MuiDialog>
 
-            <AddIssueModal openDialog={openIssueModal} handleCloseDialog={() => setOpenIssueModal(false)} />
+            <AddIssueModal
+                openDialog={openIssueModal}
+                handleCloseDialog={() => setOpenIssueModal(false)}
+                prefillData={{
+                    start_date: currentDateValue,
+                    target_date: weekEndDateValue,
+                }}
+            />
+
+            <AddToDoModal
+                isModalOpen={openTodoModal}
+                setIsModalOpen={() => {
+                    setOpenTodoModal(false);
+                    setTasksIssuesRefreshKey((key) => key + 1);
+                }}
+                getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                prefillData={{
+                    start_date: weekEndDateValue,
+                    target_date: weekEndDateValue,
+                }}
+            />
+
+            <TodoDetailsModal
+                isModalOpen={isTodoDetailsModalOpen}
+                setIsModalOpen={setIsTodoDetailsModalOpen}
+                todo={selectedTodo}
+                onEditClick={() => {
+                    setIsTodoDetailsModalOpen(false);
+                    setEditTodoData(selectedTodo);
+                    setIsEditTodoModalOpen(true);
+                }}
+            />
+
+            <MuiDialog
+                open={isEditTaskModalOpen}
+                onClose={() => {
+                    setIsEditTaskModalOpen(false);
+                    setEditTaskData(null);
+                }}
+                TransitionComponent={Transition}
+                maxWidth={false}
+            >
+                <MuiDialogContent
+                    className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+                    style={{ margin: 0, maxHeight: "100vh", display: "flex", flexDirection: "column" }}
+                    sx={{ padding: "0 !important" }}
+                >
+                    <div className="sticky top-0 bg-white z-10">
+                        <h3 className="text-[14px] font-medium text-center mt-8">Edit Task</h3>
+                        <X
+                            className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
+                            onClick={() => {
+                                setIsEditTaskModalOpen(false);
+                                setEditTaskData(null);
+                            }}
+                        />
+                        <hr className="border border-[#E95420] mt-4" />
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                        <ProjectTaskEditModal
+                            taskId={editTaskData?.id}
+                            onCloseModal={() => {
+                                setIsEditTaskModalOpen(false);
+                                setEditTaskData(null);
+                                setTasksIssuesRefreshKey((key) => key + 1);
+                            }}
+                        />
+                    </div>
+                </MuiDialogContent>
+            </MuiDialog>
+
+            <EditIssueModal
+                openDialog={isEditIssueModalOpen}
+                handleCloseDialog={() => {
+                    setIsEditIssueModalOpen(false);
+                    setEditIssueData(null);
+                }}
+                issueData={editIssueData}
+                onIssueUpdated={() => setTasksIssuesRefreshKey((key) => key + 1)}
+            />
+
+            <AddToDoModal
+                isModalOpen={isEditTodoModalOpen}
+                setIsModalOpen={() => {
+                    setIsEditTodoModalOpen(false);
+                    setEditTodoData(null);
+                    setTasksIssuesRefreshKey((key) => key + 1);
+                }}
+                getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
+                editingTodo={editTodoData}
+                isEditMode={!!editTodoData}
+                prefillData={editTodoData || {}}
+            />
 
             <Menu
                 anchorEl={taskIssueMenuAnchor}
                 open={Boolean(taskIssueMenuAnchor)}
                 onClose={() => setTaskIssueMenuAnchor(null)}
+                disableScrollLock
+                slotProps={{
+                    paper: {
+                        sx: {
+                            borderRadius: "12px",
+                            boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                            minWidth: "240px",
+                            overflow: "visible",
+                            maxHeight: "none",
+                            mt: 1,
+                        },
+                    },
+                    list: {
+                        sx: {
+                            py: 0.5,
+                            overflow: "visible",
+                            maxHeight: "none",
+                        },
+                    },
+                }}
                 sx={{
                     "& .MuiPaper-root": {
                         borderRadius: "12px",
                         boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
-                        minWidth: "220px",
+                        minWidth: "240px",
                         overflow: "visible",
+                        maxHeight: "none !important",
                         "&::before": {
                             content: '""',
                             display: "block",
@@ -3861,7 +4250,7 @@ const WeeklyReports = () => {
                     sx={{
                         py: 1.5,
                         px: 2,
-                        margin: "8px 8px 4px 8px",
+                        margin: "6px 8px 4px 8px",
                         borderRadius: "10px",
                         "&:hover": {
                             backgroundColor: "#f0f4ff",
@@ -3889,7 +4278,7 @@ const WeeklyReports = () => {
                     sx={{
                         py: 1.5,
                         px: 2,
-                        margin: "4px 8px 8px 8px",
+                        margin: "4px 8px 6px 8px",
                         borderRadius: "10px",
                         "&:hover": {
                             backgroundColor: "#fef2f2",
@@ -3905,6 +4294,34 @@ const WeeklyReports = () => {
                             <span className="font-bold text-gray-900 text-sm">Add Issue</span>
                             <span className="text-xs text-gray-500 font-medium">
                                 Report a problem
+                            </span>
+                        </div>
+                    </div>
+                </MenuItem>
+                <MenuItem
+                    onClick={() => {
+                        setOpenTodoModal(true);
+                        setTaskIssueMenuAnchor(null);
+                    }}
+                    sx={{
+                        py: 1.5,
+                        px: 2,
+                        margin: "4px 8px",
+                        borderRadius: "10px",
+                        "&:hover": {
+                            backgroundColor: "#fffbeb",
+                            transform: "translateX(4px)",
+                        },
+                    }}
+                >
+                    <div className="flex items-center gap-3 w-full">
+                        <div className="p-2 bg-amber-50 rounded-lg">
+                            <ListTodo size={18} className="text-amber-600" />
+                        </div>
+                        <div className="flex flex-col gap-0.5">
+                            <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+                            <span className="text-xs text-gray-500 font-medium">
+                                Add a quick follow-up
                             </span>
                         </div>
                     </div>
