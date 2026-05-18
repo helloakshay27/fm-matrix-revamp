@@ -257,7 +257,7 @@ export function GoldenQrSetupPage() {
       const formData = new FormData();
       formData.append('file', importFile);
       const response = await fetch(
-        `${baseUrl}/pms/account_setups/import_golden_qr`,
+        `${baseUrl}/pms/account_setups/import_additional_fields`,
         {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
