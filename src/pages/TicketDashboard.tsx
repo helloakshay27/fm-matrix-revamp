@@ -1135,6 +1135,10 @@ export const TicketDashboard = () => {
     key: 'escalation_resolution_name',
     label: 'Resolution Escalation Level',
     sortable: true
+  },{
+    key: 'completed_at',
+    label: 'Completed On',
+    sortable: true
   }];
   const renderCustomActions = () => (
     <div className="flex gap-3">
