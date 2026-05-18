@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -50,8 +50,14 @@ export function GoldenQrSetupPage() {
   const [showDialog, setShowDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingTable, setIsLoadingTable] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [tableData, setTableData] = useState<GoldenQrRecord[]>([]);
   const [qrModalUrl, setQrModalUrl] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const perPage = 20;
 
   const [selectedBuilding, setSelectedBuilding] = useState<string>('');
   const [selectedWing, setSelectedWing] = useState<string>('');
@@ -63,7 +69,7 @@ export function GoldenQrSetupPage() {
 
   useEffect(() => {
     dispatch(fetchBuildings());
-    loadTableData();
+    loadTableData(1);
   }, [dispatch]);
 
   useEffect(() => {
@@ -118,13 +124,14 @@ export function GoldenQrSetupPage() {
     }
   }, [dispatch, selectedFloor]);
 
-  const loadTableData = async () => {
+  const loadTableData = async (page = 1) => {
     setIsLoadingTable(true);
+    setSelectedIds(new Set());
     try {
       const baseUrl = getBaseUrl();
       const token = getToken();
       const response = await fetch(
-        `${baseUrl}/pms/account_setups/get_additional_fields.json?q[fields_for_eq]=complaint_golden_ticket`,
+        `${baseUrl}/pms/account_setups/get_additional_fields.json?q[fields_for_eq]=complaint_golden_ticket&page=${page}&per_page=${perPage}`,
         {
           method: 'GET',
           headers: {
@@ -139,11 +146,73 @@ export function GoldenQrSetupPage() {
         ? data
         : data.additional_fields || data.data || data.records || [];
       setTableData(records);
+      setCurrentPage(data.current_page ?? page);
+      setTotalPages(data.total_pages ?? 1);
+      setTotalCount(data.total_count ?? records.length);
     } catch {
       toast.error('Failed to load Golden QR records');
     } finally {
       setIsLoadingTable(false);
     }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (selectedIds.size === 0) return;
+    setIsDownloading(true);
+    try {
+      const baseUrl = getBaseUrl();
+      const token = getToken();
+      const params = Array.from(selectedIds)
+        .map((id) => `ids[]=${id}`)
+        .join('&');
+      const response = await fetch(
+        `${baseUrl}/pms/account_setups/download_golden_qr_pdf?${params}`,
+        {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'golden_qr_codes.pdf';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error('Failed to download QR PDF');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const allCurrentSelected =
+    tableData.length > 0 && tableData.every((r) => r.id != null && selectedIds.has(r.id));
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        tableData.forEach((r) => { if (r.id != null) next.add(r.id); });
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        tableData.forEach((r) => { if (r.id != null) next.delete(r.id); });
+        return next;
+      });
+    }
+  };
+
+  const toggleRow = (id: number, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
   };
 
   const resetForm = () => {
@@ -223,13 +292,28 @@ export function GoldenQrSetupPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Golden QR Setup</h1>
-        <Button
-          onClick={() => setShowDialog(true)}
-          className="bg-[#C72030] hover:bg-[#a01828] text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={handleDownloadPdf}
+            disabled={selectedIds.size === 0 || isDownloading}
+            variant="outline"
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          >
+            {isDownloading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 mr-2" />
+            )}
+            Download QR PDF {selectedIds.size > 0 && `(${selectedIds.size})`}
+          </Button>
+          <Button
+            onClick={() => setShowDialog(true)}
+            className="bg-[#C72030] hover:bg-[#a01828] text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
@@ -239,9 +323,17 @@ export function GoldenQrSetupPage() {
             <Loader2 className="w-6 h-6 animate-spin text-[#C72030]" />
           </div>
         ) : (
+          <>
           <Table>
             <TableHeader>
               <TableRow className="bg-[#F5F5F5]">
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allCurrentSelected}
+                    onCheckedChange={(checked) => toggleSelectAll(Boolean(checked))}
+                    aria-label="Select all"
+                  />
+                </TableHead>
                 <TableHead className="font-semibold text-gray-700">Sr. No.</TableHead>
                 <TableHead className="font-semibold text-gray-700">Building</TableHead>
                 <TableHead className="font-semibold text-gray-700">Wing</TableHead>
@@ -256,16 +348,26 @@ export function GoldenQrSetupPage() {
             <TableBody>
               {tableData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={10} className="text-center py-8 text-gray-500">
                     No records found
                   </TableCell>
                 </TableRow>
               ) : (
                 tableData.map((record, index) => {
                   const content = record.content || record;
+                  const rowChecked = record.id != null && selectedIds.has(record.id);
                   return (
                     <TableRow key={record.id ?? index} className="hover:bg-gray-50">
-                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>
+                        <Checkbox
+                          checked={rowChecked}
+                          onCheckedChange={(checked) =>
+                            record.id != null && toggleRow(record.id, Boolean(checked))
+                          }
+                          aria-label={`Select row ${record.id}`}
+                        />
+                      </TableCell>
+                      <TableCell>{(currentPage - 1) * perPage + index + 1}</TableCell>
                       <TableCell>{getBuildingName(content.building_id)}</TableCell>
                       <TableCell>{getWingName(content.wing_id) || '-'}</TableCell>
                       <TableCell>{getAreaName(content.area_id) || '-'}</TableCell>
@@ -311,6 +413,58 @@ export function GoldenQrSetupPage() {
               )}
             </TableBody>
           </Table>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, totalCount)} of {totalCount} records
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { loadTableData(currentPage - 1); setCurrentPage(currentPage - 1); }}
+                  disabled={currentPage <= 1 || isLoadingTable}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                  .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((item, idx) =>
+                    item === 'ellipsis' ? (
+                      <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">…</span>
+                    ) : (
+                      <Button
+                        key={item}
+                        variant={item === currentPage ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => { loadTableData(item as number); setCurrentPage(item as number); }}
+                        disabled={isLoadingTable}
+                        className={`h-8 w-8 p-0 ${item === currentPage ? 'bg-[#C72030] hover:bg-[#a01828] text-white border-[#C72030]' : ''}`}
+                      >
+                        {item}
+                      </Button>
+                    )
+                  )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { loadTableData(currentPage + 1); setCurrentPage(currentPage + 1); }}
+                  disabled={currentPage >= totalPages || isLoadingTable}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+          </>
         )}
       </div>
 
