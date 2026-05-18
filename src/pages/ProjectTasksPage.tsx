@@ -601,6 +601,93 @@ const ProjectTasksPage = () => {
     const statusDropdownRef = useRef<HTMLDivElement>(null);
     const filterModalRef = useRef<HTMLDivElement>(null);
 
+    /**
+     * Helper function to update URL query parameters
+     * Deletes params if value is null/undefined/empty array
+     */
+    const updateQueryParams = useCallback(
+        (updates: Record<string, any>, replace = false) => {
+            const params = new URLSearchParams(searchParams);
+
+            Object.entries(updates).forEach(([key, value]) => {
+                if (
+                    value === undefined ||
+                    value === null ||
+                    value === "" ||
+                    (Array.isArray(value) && value.length === 0)
+                ) {
+                    params.delete(key);
+                } else if (Array.isArray(value)) {
+                    // Remove old array params
+                    for (const [paramKey] of params) {
+                        if (paramKey.startsWith(key)) {
+                            params.delete(paramKey);
+                        }
+                    }
+                    // Add new array values
+                    value.forEach((val) => {
+                        params.append(key, String(val));
+                    });
+                } else {
+                    params.set(key, String(value));
+                }
+            });
+
+            setSearchParams(params, { replace });
+        },
+        [searchParams, setSearchParams]
+    );
+
+    // Initialize filter states from URL on mount
+    useEffect(() => {
+        const urlStatuses = searchParams.getAll("status");
+        const urlResponsible = searchParams.getAll("responsible");
+        const urlCreators = searchParams.getAll("created_by");
+        const urlProjects = searchParams.getAll("project");
+        const urlWorkflowStatus = searchParams.getAll("workflow_status");
+        const urlTags = searchParams.getAll("tags");
+        const urlStartDate = searchParams.get("start_date") || "";
+        const urlEndDate = searchParams.get("end_date") || "";
+        const urlCompletedAt = searchParams.get("completed_at") || "";
+
+        if (urlStatuses.length > 0) {
+            setSelectedStatuses(urlStatuses);
+        }
+        if (urlResponsible.length > 0) {
+            setSelectedResponsible(urlResponsible.map(Number));
+        }
+        if (urlCreators.length > 0) {
+            setSelectedCreators(urlCreators.map(Number));
+        }
+        if (urlProjects.length > 0) {
+            setSelectedProjects(urlProjects.map(Number));
+        }
+        if (urlWorkflowStatus.length > 0) {
+            setSelectedWorkflowStatus(urlWorkflowStatus);
+        }
+        if (urlTags.length > 0) {
+            setSelectedTags(urlTags.map(Number));
+        }
+        if (urlStartDate || urlEndDate || urlCompletedAt) {
+            setDates({
+                startDate: urlStartDate,
+                endDate: urlEndDate,
+                completedAt: urlCompletedAt,
+            });
+        }
+
+        const urlView = (searchParams.get("view") || "List") as "Kanban" | "List";
+        if (urlView !== selectedView) {
+            setSelectedView(urlView);
+        }
+    }, []);
+
+    // Sync view preference to URL and localStorage
+    useEffect(() => {
+        localStorage.setItem("taskPageViewPreference", selectedView);
+        updateQueryParams({ view: selectedView }, true);
+    }, [selectedView, updateQueryParams]);
+
     // Handle click outside for view dropdown
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -897,6 +984,19 @@ const ProjectTasksPage = () => {
                 params['q[milestone_id_eq]'] = mid;
             }
 
+            // Update URL with current filter state
+            updateQueryParams({
+                status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
+                workflow_status: selectedWorkflowStatus.length > 0 ? selectedWorkflowStatus : undefined,
+                responsible: selectedResponsible.length > 0 ? selectedResponsible : undefined,
+                created_by: selectedCreators.length > 0 ? selectedCreators : undefined,
+                project: selectedProjects.length > 0 ? selectedProjects : undefined,
+                tags: selectedTags.length > 0 ? selectedTags : undefined,
+                start_date: dates.startDate || undefined,
+                end_date: dates.endDate || undefined,
+                completed_at: dates.completedAt || undefined,
+            }, true);
+
             setIsFilterModalOpen(false);
             setCurrentPage(1);
             // Filters automatically applied through useTasks hook
@@ -997,6 +1097,20 @@ const ProjectTasksPage = () => {
         setDates({ startDate: '', endDate: '', completedAt: '' });
         setSearchTerms({ status: '', workflowStatus: '', responsiblePerson: '', createdBy: '', project: '', tags: '' });
         localStorage.removeItem('taskFilters');
+        
+        // Clear URL params for all filters
+        updateQueryParams({
+            status: undefined,
+            workflow_status: undefined,
+            responsible: undefined,
+            created_by: undefined,
+            project: undefined,
+            tags: undefined,
+            start_date: undefined,
+            end_date: undefined,
+            completed_at: undefined,
+        }, true);
+        
         setCurrentPage(1);
         // Filters automatically cleared and refetched through useTasks hook
     };

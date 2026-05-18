@@ -19,6 +19,7 @@ import { X } from "lucide-react";
 import { Button } from "./ui/button";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
+import axios from "axios";
 
 const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
@@ -83,8 +84,12 @@ const CreateChatTask = ({
 
     const fetchInternalUsers = async () => {
         try {
-            const response = await dispatch(fetchFMUsers()).unwrap();
-            setUsers(response.users.filter((user: User) => user.employee_type === "internal"));
+            const response = await axios.get(`https://${localStorage.getItem("baseUrl")}/pms/users/get_escalate_to_users.json?type=Task`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                }
+            });
+            setUsers(response.data.users);
         } catch (error) {
             console.error("Failed to fetch users:", error);
         }

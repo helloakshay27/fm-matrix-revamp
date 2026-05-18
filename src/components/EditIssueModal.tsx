@@ -1285,13 +1285,13 @@ const EditIssueModal = ({
                         </Box>
 
                         {/* Attachments */}
-                        <Box sx={{ mb: 2 }}>
+                        {/* <Box sx={{ mb: 2 }}>
                             <Box sx={{ fontSize: "12px", mb: 1 }}>Attachments</Box>
                             <Attachments
                                 attachments={attachments}
                                 setAttachments={setAttachments}
                             />
-                        </Box>
+                        </Box> */}
 
                         {/* Submit Button */}
                         <Box

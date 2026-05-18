@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useDroppable } from '@dnd-kit/core';
 import { debounce } from 'lodash';
+import axios from 'axios';
 import {
     CalendarDays,
     ChevronDown,
@@ -95,13 +96,47 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
     const [subCardVisibility, setSubCardVisibility] = useState({});
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isCreatedByDropdownOpen, setIsCreatedByDropdownOpen] = useState(false);
+    const [isAssignedToDropdownOpen, setIsAssignedToDropdownOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState<any>('All');
+    const [selectedCreatedBy, setSelectedCreatedBy] = useState<any>('All');
+    const [selectedAssignedTo, setSelectedAssignedTo] = useState<any>('All');
     const [searchTerm, setSearchTerm] = useState('');
+    const [createdBySearchTerm, setCreatedBySearchTerm] = useState('');
+    const [assignedToSearchTerm, setAssignedToSearchTerm] = useState('');
     const [hasFetchedInitial, setHasFetchedInitial] = useState(false);
+    const [escalateUsers, setEscalateUsers] = useState<any[]>([]);
     const dropdownRef = useRef(null);
+    const createdByDropdownRef = useRef(null);
+    const assignedToDropdownRef = useRef(null);
 
     const contributors =
         selectedSprint?.contributors || ['S', 'A', 'B', 'M', 'K', 'D', 'CB'];
+
+    // Fetch escalate users on component mount
+    useEffect(() => {
+        const fetchEscalateUsers = async () => {
+            try {
+                const response = await axios.get(
+                    `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                if (response.data?.users) {
+                    setEscalateUsers(response.data.users);
+                }
+            } catch (error) {
+                console.error('Failed to fetch escalate users:', error);
+            }
+        };
+
+        if (baseUrl && token) {
+            fetchEscalateUsers();
+        }
+    }, [baseUrl, token]);
 
     // Fetch projects on component mount
     useEffect(() => {
@@ -130,6 +165,12 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
         const handler = (e: MouseEvent) => {
             if (!dropdownRef.current?.contains(e.target as Node)) {
                 setIsDropdownOpen(false);
+            }
+            if (!createdByDropdownRef.current?.contains(e.target as Node)) {
+                setIsCreatedByDropdownOpen(false);
+            }
+            if (!assignedToDropdownRef.current?.contains(e.target as Node)) {
+                setIsAssignedToDropdownOpen(false);
             }
         };
         document.addEventListener('mousedown', handler);
@@ -164,6 +205,8 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
                         baseUrl,
                         token,
                         id: selectedProject === 'All' ? '' : selectedProject?.id,
+                        created_by_id: selectedCreatedBy?.id,
+                        responsible_person_id: selectedAssignedTo?.id,
                     }) as any
                 ).unwrap();
                 setTasksOfSelectedProject(response);
@@ -175,7 +218,7 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
         if (selectedProject) {
             getTasks();
         }
-    }, [selectedProject, dispatch, token]);
+    }, [selectedProject, selectedCreatedBy, selectedAssignedTo, dispatch, token, baseUrl]);
 
     const debouncedUpdateTaskField = useCallback(
         debounce(
@@ -461,6 +504,42 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
         project.title.toLowerCase().includes(searchTerm.toLowerCase())
     ) || [];
 
+    // Use escalate users from API for creators and assignees
+    const creators = escalateUsers;
+    const assignees = escalateUsers;
+
+    const filteredCreators = creators.filter((person: any) =>
+        person.full_name?.toLowerCase().includes(createdBySearchTerm.toLowerCase()) ||
+        person.email?.toLowerCase().includes(createdBySearchTerm.toLowerCase())
+    );
+
+    const filteredAssignees = assignees.filter((person: any) =>
+        person.full_name?.toLowerCase().includes(assignedToSearchTerm.toLowerCase()) ||
+        person.email?.toLowerCase().includes(assignedToSearchTerm.toLowerCase())
+    );
+
+    const handleCreatedBySelect = (person: any) => {
+        setSelectedCreatedBy(person);
+        setIsCreatedByDropdownOpen(false);
+        setCreatedBySearchTerm('');
+    };
+
+    const handleAssignedToSelect = (person: any) => {
+        setSelectedAssignedTo(person);
+        setIsAssignedToDropdownOpen(false);
+        setAssignedToSearchTerm('');
+    };
+
+    const handleResetFilters = () => {
+        setSelectedProject('All');
+        setSelectedCreatedBy('All');
+        setSelectedAssignedTo('All');
+        setSearchTerm('');
+        setCreatedBySearchTerm('');
+        setAssignedToSearchTerm('');
+    };
+
+
     const { setNodeRef, isOver } = useDroppable({
         id: 'sprint-board-dropzone',
         data: {
@@ -478,63 +557,197 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
             )}
 
             {/* Project Selector Dropdown */}
-            <div className="flex items-center justify-end mx-4 mt-3 mb-4 gap-2">
-                <div className="w-[20rem] relative" ref={dropdownRef}>
-                    <div
-                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        className="flex justify-between select-none items-center w-full border px-4 py-2 cursor-pointer text-sm bg-white rounded-md"
-                    >
-                        <span>
-                            {selectedProject === 'All'
-                                ? 'All Projects'
-                                : selectedProject?.title || 'Select project'}
-                        </span>
-                        <ChevronDown className="w-4 h-4" />
+            <div className="flex items-center justify-end mx-4 mt-3 mb-4">
+                <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <div className="w-[18rem] relative" ref={dropdownRef}>
+                        <div
+                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                            className="flex justify-between select-none items-center w-full border px-4 py-2 cursor-pointer text-sm bg-white rounded-md"
+                        >
+                            <span>
+                                {selectedProject === 'All'
+                                    ? 'All Projects'
+                                    : selectedProject?.title || 'Select project'}
+                            </span>
+                            <ChevronDown className="w-4 h-4" />
+                        </div>
+
+                        {isDropdownOpen && (
+                            <div className="absolute top-full left-0 w-full bg-white shadow-lg border rounded-md z-20 mt-2 max-h-60 overflow-y-auto">
+                                <div className="flex items-center border px-3 py-2 sticky top-0 bg-white z-30">
+                                    <Search className="w-4 h-4 text-red-600 mr-2" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search project..."
+                                        className="w-full text-sm outline-none"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <ul className="text-sm divide-y">
+                                    <li
+                                        className={`cursor-pointer px-3 py-2 transition-colors ${selectedProject === 'All'
+                                            ? 'bg-red-50 text-red-600'
+                                            : 'hover:bg-red-50 hover:text-red-600'
+                                            }`}
+                                        onClick={() => handleProjectSelect('All')}
+                                    >
+                                        All Projects
+                                    </li>
+                                    {filteredProjects?.length ? (
+                                        filteredProjects.map((project: any) => (
+                                            <li
+                                                key={project.id}
+                                                className={`cursor-pointer px-3 py-2 transition-colors ${selectedProject?.id === project.id
+                                                    ? 'bg-red-50 text-red-600'
+                                                    : 'hover:bg-red-50 hover:text-red-600'
+                                                    }`}
+                                                onClick={() => handleProjectSelect(project)}
+                                            >
+                                                {project.title}
+                                            </li>
+                                        ))
+                                    ) : (
+                                        <li className="px-3 py-2 text-gray-500">No projects found</li>
+                                    )}
+                                </ul>
+                            </div>
+                        )}
                     </div>
 
-                    {isDropdownOpen && (
-                        <div className="absolute top-full left-0 w-full bg-white shadow-lg border rounded-md z-20 mt-2 max-h-60 overflow-y-auto">
-                            <div className="flex items-center border px-3 py-2 sticky top-0 bg-white z-30">
-                                <Search className="w-4 h-4 text-red-600 mr-2" />
-                                <input
-                                    type="text"
-                                    placeholder="Search project..."
-                                    className="w-full text-sm outline-none"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    autoFocus
-                                />
-                            </div>
-
-                            <ul className="text-sm divide-y">
-                                <li
-                                    className={`cursor-pointer px-3 py-2 transition-colors ${selectedProject === 'All'
-                                        ? 'bg-red-50 text-red-600'
-                                        : 'hover:bg-red-50 hover:text-red-600'
-                                        }`}
-                                    onClick={() => handleProjectSelect('All')}
-                                >
-                                    All Projects
-                                </li>
-                                {filteredProjects?.length ? (
-                                    filteredProjects.map((project: any) => (
-                                        <li
-                                            key={project.id}
-                                            className={`cursor-pointer px-3 py-2 transition-colors ${selectedProject?.id === project.id
-                                                ? 'bg-red-50 text-red-600'
-                                                : 'hover:bg-red-50 hover:text-red-600'
-                                                }`}
-                                            onClick={() => handleProjectSelect(project)}
-                                        >
-                                            {project.title}
-                                        </li>
-                                    ))
-                                ) : (
-                                    <li className="px-3 py-2 text-gray-500">No projects found</li>
-                                )}
-                            </ul>
+                    {/* Created By Dropdown */}
+                    <div className="w-[18rem] relative" ref={createdByDropdownRef}>
+                        <div
+                            onClick={() => setIsCreatedByDropdownOpen(!isCreatedByDropdownOpen)}
+                            className="flex justify-between select-none items-center w-full border px-4 py-2 cursor-pointer text-sm bg-white rounded-md"
+                        >
+                            <span>
+                                {selectedCreatedBy === 'All'
+                                    ? 'Select Created By'
+                                    : selectedCreatedBy?.full_name || 'Select creator'}
+                            </span>
+                            <ChevronDown className="w-4 h-4" />
                         </div>
-                    )}
+
+                        {isCreatedByDropdownOpen && (
+                            <div className="absolute top-full left-0 w-full bg-white shadow-lg border rounded-md z-20 mt-2 max-h-60 overflow-y-auto">
+                                <div className="flex items-center border px-3 py-2 sticky top-0 bg-white z-30">
+                                    <Search className="w-4 h-4 text-red-600 mr-2" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search creator..."
+                                        className="w-full text-sm outline-none"
+                                        value={createdBySearchTerm}
+                                        onChange={(e) => setCreatedBySearchTerm(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <ul className="text-sm divide-y">
+                                    <li
+                                        className={`cursor-pointer px-3 py-2 transition-colors ${selectedCreatedBy === 'All'
+                                            ? 'bg-red-50 text-red-600'
+                                            : 'hover:bg-red-50 hover:text-red-600'
+                                            }`}
+                                        onClick={() => {
+                                            setSelectedCreatedBy('All');
+                                            setIsCreatedByDropdownOpen(false);
+                                            setCreatedBySearchTerm('');
+                                        }}
+                                    >
+                                        All Created By
+                                    </li>
+                                    {filteredCreators?.length ? (
+                                        filteredCreators.map((person: any) => (
+                                            <li
+                                                key={person.id}
+                                                className={`cursor-pointer px-3 py-2 transition-colors ${selectedCreatedBy?.id === person.id
+                                                    ? 'bg-red-50 text-red-600'
+                                                    : 'hover:bg-red-50 hover:text-red-600'
+                                                    }`}
+                                                onClick={() => handleCreatedBySelect(person)}
+                                            >
+                                                {person.full_name}
+                                            </li>
+                                        ))
+                                    ) : (
+                                        <li className="px-3 py-2 text-gray-500">No creators found</li>
+                                    )}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Assigned To Dropdown */}
+                    <div className="w-[18rem] relative" ref={assignedToDropdownRef}>
+                        <div
+                            onClick={() => setIsAssignedToDropdownOpen(!isAssignedToDropdownOpen)}
+                            className="flex justify-between select-none items-center w-full border px-4 py-2 cursor-pointer text-sm bg-white rounded-md"
+                        >
+                            <span>
+                                {selectedAssignedTo === 'All'
+                                    ? 'Select Assigned To'
+                                    : selectedAssignedTo?.full_name || 'Select assignee'}
+                            </span>
+                            <ChevronDown className="w-4 h-4" />
+                        </div>
+
+                        {isAssignedToDropdownOpen && (
+                            <div className="absolute top-full left-0 w-full bg-white shadow-lg border rounded-md z-20 mt-2 max-h-60 overflow-y-auto">
+                                <div className="flex items-center border px-3 py-2 sticky top-0 bg-white z-30">
+                                    <Search className="w-4 h-4 text-red-600 mr-2" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search assignee..."
+                                        className="w-full text-sm outline-none"
+                                        value={assignedToSearchTerm}
+                                        onChange={(e) => setAssignedToSearchTerm(e.target.value)}
+                                        autoFocus
+                                    />
+                                </div>
+
+                                <ul className="text-sm divide-y">
+                                    <li
+                                        className={`cursor-pointer px-3 py-2 transition-colors ${selectedAssignedTo === 'All'
+                                            ? 'bg-red-50 text-red-600'
+                                            : 'hover:bg-red-50 hover:text-red-600'
+                                            }`}
+                                        onClick={() => {
+                                            setSelectedAssignedTo('All');
+                                            setIsAssignedToDropdownOpen(false);
+                                            setAssignedToSearchTerm('');
+                                        }}
+                                    >
+                                        All Assigned To
+                                    </li>
+                                    {filteredAssignees?.length ? (
+                                        filteredAssignees.map((person: any) => (
+                                            <li
+                                                key={person.id}
+                                                className={`cursor-pointer px-3 py-2 transition-colors ${selectedAssignedTo?.id === person.id
+                                                    ? 'bg-red-50 text-red-600'
+                                                    : 'hover:bg-red-50 hover:text-red-600'
+                                                    }`}
+                                                onClick={() => handleAssignedToSelect(person)}
+                                            >
+                                                {person.full_name}
+                                            </li>
+                                        ))
+                                    ) : (
+                                        <li className="px-3 py-2 text-gray-500">No assignees found</li>
+                                    )}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                    <button
+                        onClick={handleResetFilters}
+                        className="px-4 py-2 bg-red-100 text-red-600 text-sm font-medium rounded-md hover:bg-red-200 transition-colors border border-red-300"
+                    >
+                        Reset Filters
+                    </button>
                 </div>
             </div>
 
