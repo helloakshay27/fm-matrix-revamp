@@ -277,6 +277,9 @@ const WeeklyReports = () => {
     const [closureRemarks, setClosureRemarks] = useState("");
     const [closureAttachments, setClosureAttachments] = useState<any[]>([]);
     const [isClosureSubmitting, setIsClosureSubmitting] = useState(false);
+    const [completingTaskIssueIds, setCompletingTaskIssueIds] = useState<
+        Record<string, boolean>
+    >({});
     const [currentTasksPage, setCurrentTasksPage] = useState(1);
     const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
     const [hasMoreTasks, setHasMoreTasks] = useState(true);
@@ -1086,6 +1089,77 @@ const WeeklyReports = () => {
             );
         } finally {
             setIsClosureSubmitting(false);
+        }
+    };
+
+    const handleCompleteTaskIssueTodo = async (item: any) => {
+        if (!item || !normalizedBaseUrl) return;
+
+        const realId = String(item.id || "")
+            .replace("task-", "")
+            .replace("issue-", "")
+            .replace("todo-", "");
+        const previousStatus = item.status;
+
+        setCompletingTaskIssueIds((prev) => ({ ...prev, [item.id]: true }));
+        setMergedTasksIssues((prev) =>
+            prev.map((existing) =>
+                existing.id === item.id ? { ...existing, status: "completed" } : existing
+            )
+        );
+        setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
+
+        try {
+            const headers = {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            };
+
+            if (item.type === "task") {
+                await axios.put(
+                    `${normalizedBaseUrl}/task_managements/${realId}.json`,
+                    { task_management: { status: "completed" } },
+                    { headers }
+                );
+            } else if (item.type === "issue") {
+                await axios.put(
+                    `${normalizedBaseUrl}/issues/${realId}.json`,
+                    { issue: { status: "completed" } },
+                    { headers }
+                );
+            } else {
+                await axios.put(
+                    `${normalizedBaseUrl}/todos/${realId}.json`,
+                    { todo: { status: "completed" } },
+                    { headers }
+                );
+            }
+
+            toast.success(
+                `${String(item.type).charAt(0).toUpperCase() + String(item.type).slice(1)} completed successfully`
+            );
+            setTasksIssuesRefreshKey((key) => key + 1);
+        } catch (error) {
+            console.error("Error completing weekly task/issue/todo:", error);
+            toast.error(`Failed to complete ${item.type}`);
+            setMergedTasksIssues((prev) =>
+                prev.map((existing) =>
+                    existing.id === item.id
+                        ? { ...existing, status: previousStatus }
+                        : existing
+                )
+            );
+            setSelectedTasksIssues((prev) => ({
+                ...prev,
+                [item.id]: previousStatus === "completed" || previousStatus === "closed",
+            }));
+        } finally {
+            setCompletingTaskIssueIds((prev) => {
+                const next = { ...prev };
+                delete next[item.id];
+                return next;
+            });
         }
     };
 
@@ -2589,28 +2663,14 @@ const WeeklyReports = () => {
                                                         item.status === "completed" ||
                                                         item.status === "closed"
                                                     }
+                                                    disabled={!!completingTaskIssueIds[item.id]}
                                                     onCheckedChange={(checked) => {
                                                         if (
                                                             checked &&
                                                             item.status !== "completed" &&
                                                             item.status !== "closed"
                                                         ) {
-                                                            if (item.type === "todo") {
-                                                                setMergedTasksIssues((prev) =>
-                                                                    prev.map((existing) =>
-                                                                        existing.id === item.id
-                                                                            ? { ...existing, status: "completed" }
-                                                                            : existing
-                                                                    )
-                                                                );
-                                                                setSelectedTasksIssues((prev) => ({
-                                                                    ...prev,
-                                                                    [item.id]: true,
-                                                                }));
-                                                                return;
-                                                            }
-                                                            setClosureItem(item);
-                                                            setShowClosureModal(true);
+                                                            handleCompleteTaskIssueTodo(item);
                                                         } else {
                                                             setSelectedTasksIssues((prev) => ({
                                                                 ...prev,
