@@ -192,7 +192,7 @@ export const EditInvoiceApprovalsPage = () => {
         : `/pms/admin/invoice_approvals/${id}.json`;
       await apiClient.put(updateUrl, payload);
       toast.success('Invoice approval matrix updated successfully');
-      navigate('/settings/asset-setup/approval-matrix');
+      navigate('/accounting/asset-setup/approval-matrix');
     } catch (error) {
       console.error('Error updating invoice approval matrix:', error);
       toast.error(getApiErrorMessage(error, 'Failed to update invoice approval matrix'));
@@ -302,7 +302,7 @@ export const EditInvoiceApprovalsPage = () => {
           </div>
 
           <div className="flex gap-4 pt-6">
-            <Button variant="outline" onClick={() => navigate('/settings/asset-setup/approval-matrix')}>
+            <Button variant="outline" onClick={() => navigate('/accounting/asset-setup/approval-matrix')}>
               Back
             </Button>
             <Button onClick={handleUpdate} disabled={submitting} className="bg-destructive hover:bg-destructive/90 text-destructive-foreground">

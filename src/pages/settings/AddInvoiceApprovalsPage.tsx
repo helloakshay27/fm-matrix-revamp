@@ -163,7 +163,7 @@ export const AddInvoiceApprovalsPage = () => {
       toast.success('Invoice approval matrix created successfully');
       
       // Navigate to invoice approvals list page
-      navigate('/settings/asset-setup/approval-matrix');
+      navigate('/accounting/asset-setup/approval-matrix');
       
     } catch (error) {
       console.error('Error creating invoice approval matrix:', error);
@@ -326,7 +326,7 @@ export const AddInvoiceApprovalsPage = () => {
           <div className="flex gap-4 pt-6">
             <Button
               variant="outline"
-              onClick={() => navigate('/settings/asset-setup/approval-matrix')}
+              onClick={() => navigate('/accounting/asset-setup/approval-matrix')}
             >
               Back
             </Button>

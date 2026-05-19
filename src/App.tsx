@@ -2350,6 +2350,18 @@ function App() {
                             path="/settings/asset-setup/approval-matrix"
                             element={<InvoiceApprovalsPage />}
                           />
+                           <Route
+                            path="/accounting/asset-setup/approval-matrix"
+                            element={<InvoiceApprovalsPage />}
+                          />
+                          <Route
+                          path="/accounting/invoice-approvals/add"
+                          element={<AddInvoiceApprovalsPage />}
+                        />
+                        <Route
+                          path="/accounting/invoice-approvals/edit/:id"
+                          element={<EditInvoiceApprovalsPage />}
+                        />
                           <Route
                             path="/settings/asset-setup/asset-groups"
                             element={<AssetGroupsPageNew />}

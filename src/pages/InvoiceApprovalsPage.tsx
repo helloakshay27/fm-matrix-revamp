@@ -198,7 +198,7 @@ export const InvoiceApprovalsPage = () => {
       <div className="flex items-center justify-between">
         <Button
           className="bg-purple-600 hover:bg-purple-700 text-white"
-          onClick={() => navigate('/settings/invoice-approvals/add')}
+          onClick={() => navigate('/accounting/invoice-approvals/add')}
         >
           <Plus className="w-4 h-4 mr-2" />
           Add
@@ -243,7 +243,7 @@ export const InvoiceApprovalsPage = () => {
                       variant="ghost"
                       size="sm"
                       className="p-1"
-                      onClick={() => navigate(`/settings/invoice-approvals/edit/${item.id}`)}
+                      onClick={() => navigate(`/accounting/invoice-approvals/edit/${item.id}`)}
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
