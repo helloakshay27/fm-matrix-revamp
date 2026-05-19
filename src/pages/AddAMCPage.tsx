@@ -14,6 +14,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
 import { fetchInventoryAssets } from '@/store/slices/inventoryAssetsSlice';
 import { TimeSetupStep } from '@/components/schedule/TimeSetupStep';
+import { Autocomplete } from "@mui/material";
+import Select from "react-select";
 // Removed Material-UI checkbox imports - using custom styled components
 
 interface Service {
@@ -556,17 +558,17 @@ export const AddAMCPage = () => {
     // }
 
     if (step === 3) {
-  if (!attachments.contracts || attachments.contracts.length === 0) {
-    isValid = false;
-    toast.error("Please upload at least one AMC Contract.");
-  } else if (
-    !attachments.invoices ||
-    attachments.invoices.length === 0
-  ) {
-    isValid = false;
-    toast.error("Please upload at least one AMC Invoice.");
-  }
-}
+      if (!attachments.contracts || attachments.contracts.length === 0) {
+        isValid = false;
+        toast.error("Please upload at least one AMC Contract.");
+      } else if (
+        !attachments.invoices ||
+        attachments.invoices.length === 0
+      ) {
+        isValid = false;
+        toast.error("Please upload at least one AMC Invoice.");
+      }
+    }
 
     setErrors(newErrors);
     return isValid;
@@ -689,7 +691,7 @@ export const AddAMCPage = () => {
       } else {
         toast.error("Please fill all required fields in the AMC Details step.");
       }
-    } 
+    }
     // else {
     //   toast.error("Please fill all required fields in the current step.");
     // }
@@ -1411,7 +1413,7 @@ export const AddAMCPage = () => {
                             value="Asset"
                             checked={formData.details === 'Asset'}
                             readOnly
-                                                    disabled
+                            disabled
                             className="mr-2 w-4 h-4"
                             style={{ accentColor: '#C72030' }}
                           />
@@ -1424,7 +1426,7 @@ export const AddAMCPage = () => {
                             value="Service"
                             checked={formData.details === 'Service'}
                             readOnly
-                                                    disabled
+                            disabled
                             className="mr-2 w-4 h-4"
                             style={{ accentColor: '#C72030' }}
                           />
@@ -1475,7 +1477,7 @@ export const AddAMCPage = () => {
                             value="Individual"
                             checked={formData.type === 'Individual'}
                             readOnly
-                                                    disabled
+                            disabled
                             className="mr-2 w-4 h-4"
                             style={{ accentColor: '#C72030' }}
                           />
@@ -1488,7 +1490,7 @@ export const AddAMCPage = () => {
                             value="Group"
                             checked={formData.type === 'Group'}
                             readOnly
-                                                    disabled
+                            disabled
                             className="mr-2 w-4 h-4"
                             style={{ accentColor: '#C72030' }}
                           />
@@ -1509,7 +1511,7 @@ export const AddAMCPage = () => {
                               displayEmpty
                               value={formData.asset_ids}
                               readOnly
-                                                      disabled
+                              disabled
                               renderValue={(selected) => {
                                 if (!selected || selected.length === 0) {
                                   return <span style={{ color: '#aaa' }}>Select Assets</span>;
@@ -1539,7 +1541,7 @@ export const AddAMCPage = () => {
                               displayEmpty
                               value={formData.service_ids}
                               readOnly
-                                                      disabled
+                              disabled
                               renderValue={renderServiceSelectValue}
                             >
                               <MenuItem value=""><em>Select a Service...</em></MenuItem>
@@ -1559,7 +1561,7 @@ export const AddAMCPage = () => {
                             displayEmpty
                             value={formData.supplier}
                             readOnly
-                                                    disabled
+                            disabled
                           >
                             <MenuItem value=""><em>Select Supplier</em></MenuItem>
                             {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
@@ -1577,7 +1579,7 @@ export const AddAMCPage = () => {
                             displayEmpty
                             value={formData.technician}
                             readOnly
-                                                    disabled
+                            disabled
                           >
                             <MenuItem value=""><em>Select Technician</em></MenuItem>
                             {Array.isArray(technicianOptions) && technicianOptions.map((technician) => (
@@ -1598,7 +1600,7 @@ export const AddAMCPage = () => {
                               displayEmpty
                               value={formData.group}
                               readOnly
-                                                      disabled
+                              disabled
                             >
                               <MenuItem value=""><em>Select Group</em></MenuItem>
                               {Array.isArray(assetGroups) && assetGroups.map((group) => (
@@ -1616,7 +1618,7 @@ export const AddAMCPage = () => {
                               displayEmpty
                               value={formData.subgroup}
                               readOnly
-                                                      disabled
+                              disabled
                             >
                               <MenuItem value=""><em>Select Sub Group</em></MenuItem>
                               {Array.isArray(subGroups) && subGroups.map((subGroup) => (
@@ -1634,7 +1636,7 @@ export const AddAMCPage = () => {
                               displayEmpty
                               value={formData.supplier}
                               readOnly
-                                                      disabled
+                              disabled
                             >
                               <MenuItem value=""><em>Select Supplier</em></MenuItem>
                               {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
@@ -1652,7 +1654,7 @@ export const AddAMCPage = () => {
                               displayEmpty
                               value={formData.technician}
                               readOnly
-                                                      disabled
+                              disabled
                             >
                               <MenuItem value=""><em>Select Technician</em></MenuItem>
                               {Array.isArray(technicianOptions) && technicianOptions.map((technician) => (
@@ -2662,200 +2664,852 @@ export const AddAMCPage = () => {
                 {formData.type === 'Individual' ? (
                   <>
                     {formData.details === 'Asset' ? (
-                      <FormControl fullWidth variant="outlined" error={!!errors.asset_ids} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Assets <span style={{ color: '#C72030' }}>*</span></InputLabel>
-                        <MuiSelect
-                          multiple
-                          label="Assets"
-                          notched
-                          displayEmpty
-                          value={formData.asset_ids}
-                          onChange={(e) => {
-                            const val = e.target.value as (string[] | number[]);
-                            const ids = (Array.isArray(val) ? val : []).map(v => Number(v));
-                            setFormData(prev => ({ ...prev, asset_ids: ids }));
-                            setErrors(prev => ({ ...prev, asset_ids: '' }));
-                          }}
-                          renderValue={(selected) => {
-                            if (!selected || selected.length === 0) {
-                              return <span style={{ color: '#aaa' }}>Select Assets</span>;
-                            }
-                            const all = [...(assetList || []), ...(assetOptions || [])];
-                            const map = new Map<number, string>();
-                            all.forEach(a => map.set(Number(a.id), a.name));
-                            const labels = (selected as number[]).map(id => map.get(Number(id)) || String(id));
-                            return labels.join(', ');
-                          }}
-                          disabled={isSubmitting}
-                        >
-                          <MenuItem disabled>
-                            {assetQuery.length > 0 && assetQuery.length < 3
-                              ? 'Type at least 3 characters…'
-                              : (assetSearchLoading ? 'Searching…' : 'Select assets')}
-                          </MenuItem>
-                          {assetOptions.map((a) => (
-                            <MenuItem key={a.id} value={Number(a.id)}>
-                              {a.name}
-                            </MenuItem>
-                          ))}
-                          {!assetSearchLoading && assetOptions.length === 0 && (
-                            <MenuItem disabled>No results</MenuItem>
-                          )}
-                        </MuiSelect>
-                        {errors.asset_ids && <FormHelperText>{errors.asset_ids}</FormHelperText>}
-                      </FormControl>
+                    
+
+
+
+
+
+
+<FormControl fullWidth error={!!errors.asset_ids}>
+  <Typography
+    sx={{
+      fontSize: "14px",
+      mb: 1,
+      fontWeight: 500,
+      color: "#444",
+    }}
+  >
+    Assets <span style={{ color: "#C72030" }}>*</span>
+  </Typography>
+
+  <Select
+    isMulti
+    options={(assetOptions || []).map((item) => ({
+      value: item.id,
+      label: item.name,
+    }))}
+    value={(assetOptions || [])
+      .filter((item) =>
+        formData.asset_ids.includes(item.id)
+      )
+      .map((item) => ({
+        value: item.id,
+        label: item.name,
+      }))}
+    onChange={(selected: any) => {
+      setFormData((prev) => ({
+        ...prev,
+        asset_ids: selected
+          ? selected.map((item: any) => item.value)
+          : [],
+      }));
+
+      setErrors((prev: any) => ({
+        ...prev,
+        asset_ids: "",
+      }));
+    }}
+    isClearable
+    closeMenuOnSelect={false}
+    hideSelectedOptions={false}
+    placeholder="Search Assets"
+    styles={{
+      control: (base, state) => ({
+        ...base,
+        minHeight: "56px",
+        borderRadius: "4px",
+        borderColor: errors.asset_ids
+          ? "#d32f2f"
+          : state.isFocused
+          ? "#C72030"
+          : "#c4c4c4",
+        boxShadow: "none",
+        "&:hover": {
+          borderColor: "#C72030",
+        },
+      }),
+
+      menu: (base) => ({
+        ...base,
+        zIndex: 9999,
+      }),
+
+      // option: (base, state) => ({
+      //   ...base,
+      //   backgroundColor: state.isFocused
+      //     ? "rgba(199,32,48,0.08)"
+      //     : "#fff",
+      //   color: "#000",
+      //   cursor: "pointer",
+      // }),
+
+      option: (base, state) => ({
+  ...base,
+  backgroundColor: state.isFocused
+    ? "#eff6ff" // faint blue on hover
+    : "#fff",
+  color: "#000",
+  cursor: "pointer",
+}),
+
+      placeholder: (base) => ({
+        ...base,
+        color: "#999",
+      }),
+
+      multiValue: (base) => ({
+        ...base,
+        backgroundColor: "rgba(199,32,48,0.08)",
+      }),
+
+      multiValueLabel: (base) => ({
+        ...base,
+        color: "#C72030",
+        fontWeight: 500,
+      }),
+
+      multiValueRemove: (base) => ({
+        ...base,
+        color: "#C72030",
+        ":hover": {
+          backgroundColor: "#C72030",
+          color: "#fff",
+        },
+      }),
+    }}
+    
+  />
+
+  {errors.asset_ids && (
+    <FormHelperText>
+      {errors.asset_ids}
+    </FormHelperText>
+  )}
+</FormControl>
+
                     ) : (
-                      <FormControl fullWidth variant="outlined" error={!!errors.service_ids} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Service <span style={{ color: '#C72030' }}>*</span></InputLabel>
-                        <MuiSelect
-                          label="Service"
-                          displayEmpty
-                          multiple
-                          value={formData.service_ids}
-                          onChange={e => {
-                            const values = Array.isArray(e.target.value) ? e.target.value : [e.target.value];
-                            const serviceIdArray: number[] = [];
-                            values.forEach(v => {
-                              const num = typeof v === 'string' ? parseInt(v, 10) : v;
-                              if (!isNaN(num)) serviceIdArray.push(num);
-                            });
-                            setFormData(prev => ({
-                              ...prev,
-                              service_ids: serviceIdArray
-                            }));
-                          }}
-                          disabled={loading || servicesLoading || isSubmitting}
-                        >
-                          <MenuItem value=""><em>Select Services...</em></MenuItem>
-                          {Array.isArray(services) && services.map((service) => (
-                            <MenuItem key={service.id} value={service.id}>
-                              {service.service_name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                        {errors.service_ids && <FormHelperText>{errors.service_ids}</FormHelperText>}
-                      </FormControl>
+
+
+
+
+<FormControl fullWidth error={!!errors.service_ids}>
+  <Typography
+    sx={{
+      fontSize: "14px",
+      mb: 1,
+      fontWeight: 500,
+      color: "#444",
+    }}
+  >
+    Services <span style={{ color: "#C72030" }}>*</span>
+  </Typography>
+
+  <Select
+    isMulti
+    options={(services || []).map((item) => ({
+      value: item.id,
+      label: item.service_name,
+    }))}
+    value={(services || [])
+      .filter((item) =>
+        formData.service_ids.includes(item.id)
+      )
+      .map((item) => ({
+        value: item.id,
+        label: item.service_name,
+      }))}
+    onChange={(selected: any) => {
+      setFormData((prev) => ({
+        ...prev,
+        service_ids: selected
+          ? selected.map((item: any) => item.value)
+          : [],
+      }));
+
+      setErrors((prev: any) => ({
+        ...prev,
+        service_ids: "",
+      }));
+    }}
+    isClearable
+    closeMenuOnSelect={false}
+    hideSelectedOptions={false}
+    placeholder="Search Services"
+    styles={{
+      control: (base, state) => ({
+        ...base,
+        minHeight: "56px",
+        borderRadius: "4px",
+        borderColor: errors.service_ids
+          ? "#d32f2f"
+          : state.isFocused
+          ? "#C72030"
+          : "#c4c4c4",
+        boxShadow: "none",
+        "&:hover": {
+          borderColor: "#C72030",
+        },
+      }),
+
+      menu: (base) => ({
+        ...base,
+        zIndex: 9999,
+      }),
+
+      // option: (base, state) => ({
+      //   ...base,
+      //   backgroundColor: state.isFocused
+      //     ? "rgba(199,32,48,0.08)"
+      //     : "#fff",
+      //   color: "#000",
+      //   cursor: "pointer",
+      // }),
+      option: (base, state) => ({
+  ...base,
+  backgroundColor: state.isFocused
+    ? "#eff6ff" // faint blue on hover
+    : "#fff",
+  color: "#000",
+  cursor: "pointer",
+}),
+
+      placeholder: (base) => ({
+        ...base,
+        color: "#999",
+      }),
+
+      multiValue: (base) => ({
+        ...base,
+        backgroundColor: "rgba(199,32,48,0.08)",
+      }),
+
+      multiValueLabel: (base) => ({
+        ...base,
+        color: "#C72030",
+        fontWeight: 500,
+      }),
+
+      multiValueRemove: (base) => ({
+        ...base,
+        color: "#C72030",
+        ":hover": {
+          backgroundColor: "#C72030",
+          color: "#fff",
+        },
+      }),
+    }}
+  />
+
+  {errors.service_ids && (
+    <FormHelperText>
+      {errors.service_ids}
+    </FormHelperText>
+  )}
+</FormControl>
                     )}
 
-                    <FormControl fullWidth variant="outlined" error={!!errors.supplier} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
-                      <MuiSelect
-                        label="Supplier"
-                        displayEmpty
-                        value={formData.supplier}
-                        onChange={e => handleInputChange('supplier', e.target.value)}
-                        disabled={loading || suppliersLoading || isSubmitting}
-                      >
-                        <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                        {supplierSearchLoading && <MenuItem disabled>Searching…</MenuItem>}
-                        {!supplierSearchLoading && supplierOptions.length === 0 && (
-                          <MenuItem disabled>No results</MenuItem>
-                        )}
-                        {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
-                          <MenuItem key={supplier.id} value={supplier.id?.toString?.() || String(supplier.id)}>
-                            {supplier.company_name || supplier.name}
-                          </MenuItem>
-                        ))}
-                      </MuiSelect>
-                      {errors.supplier && <FormHelperText>{errors.supplier}</FormHelperText>}
-                    </FormControl>
 
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Technician</InputLabel>
-                      <MuiSelect
-                        label="Technician"
-                        displayEmpty
-                        value={formData.technician}
-                        onChange={e => handleInputChange('technician', e.target.value)}
-                        disabled={loading || techniciansLoading || isSubmitting}
-                      >
-                        <MenuItem value=""><em>Select Technician</em></MenuItem>
-                        {Array.isArray(technicianOptions) && technicianOptions.map((technician) => (
-                          <MenuItem key={technician.id} value={technician.id.toString()}>
-                            {technician.full_name || technician.name}
-                          </MenuItem>
-                        ))}
-                      </MuiSelect>
-                    </FormControl>
+
+
+
+<FormControl fullWidth error={!!errors.supplier}>
+  <Typography
+    sx={{
+      fontSize: "14px",
+      mb: 1,
+      fontWeight: 500,
+      color: "#444",
+    }}
+  >
+    Supplier <span style={{ color: "#C72030" }}>*</span>
+  </Typography>
+
+  <Select
+    options={(supplierOptions || []).map((item) => ({
+      value: item.id,
+      label: item.company_name || item.name,
+    }))}
+    value={
+      supplierOptions
+        ?.filter(
+          (item) =>
+            String(item.id) === String(formData.supplier)
+        )
+        ?.map((item) => ({
+          value: item.id,
+          label: item.company_name || item.name,
+        }))[0] || null
+    }
+    onChange={(selected: any) => {
+      handleInputChange(
+        "supplier",
+        selected ? String(selected.value) : ""
+      );
+
+      setErrors((prev: any) => ({
+        ...prev,
+        supplier: "",
+      }));
+    }}
+    isDisabled={
+      loading || suppliersLoading || isSubmitting
+    }
+    isClearable
+    placeholder="Search Supplier"
+    styles={{
+      control: (base, state) => ({
+        ...base,
+        minHeight: "56px",
+        borderRadius: "4px",
+        borderColor: errors.supplier
+          ? "#d32f2f"
+          : state.isFocused
+          ? "#C72030"
+          : "#c4c4c4",
+        boxShadow: "none",
+        "&:hover": {
+          borderColor: "#C72030",
+        },
+      }),
+
+      menu: (base) => ({
+        ...base,
+        zIndex: 9999,
+      }),
+
+      // option: (base, state) => ({
+      //   ...base,
+      //   backgroundColor: state.isFocused
+      //     ? "rgba(199,32,48,0.08)"
+      //     : "#fff",
+      //   color: "#000",
+      //   cursor: "pointer",
+      // }),
+
+      option: (base, state) => ({
+  ...base,
+  backgroundColor: state.isFocused
+    ? "#eff6ff" // faint blue on hover
+    : "#fff",
+  color: "#000",
+  cursor: "pointer",
+}),
+
+      placeholder: (base) => ({
+        ...base,
+        color: "#999",
+      }),
+    }}
+  />
+
+  {errors.supplier && (
+    <FormHelperText>
+      {errors.supplier}
+    </FormHelperText>
+  )}
+</FormControl>
+
+
+
+
+
+
+                  
+
+
+<FormControl fullWidth error={!!errors.technician}>
+  <Typography
+    sx={{
+      fontSize: "14px",
+      mb: 1,
+      fontWeight: 500,
+      color: "#444",
+    }}
+  >
+    Technician
+  </Typography>
+
+  <Select
+    options={(technicianOptions || []).map((item) => ({
+      value: item.id,
+      label: item.full_name || item.name,
+    }))}
+    value={
+      (technicianOptions || [])
+        .filter(
+          (item) =>
+            String(item.id) ===
+            String(formData.technician)
+        )
+        .map((item) => ({
+          value: item.id,
+          label: item.full_name || item.name,
+        }))[0] || null
+    }
+    onChange={(selected: any) => {
+      handleInputChange(
+        "technician",
+        selected ? String(selected.value) : ""
+      );
+
+      setErrors((prev: any) => ({
+        ...prev,
+        technician: "",
+      }));
+    }}
+    isDisabled={
+      loading || techniciansLoading || isSubmitting
+    }
+    isClearable
+    placeholder="Search Technician"
+    styles={{
+      control: (base, state) => ({
+        ...base,
+        minHeight: "56px",
+        borderRadius: "4px",
+        borderColor: errors.technician
+          ? "#d32f2f"
+          : state.isFocused
+          ? "#C72030"
+          : "#c4c4c4",
+        boxShadow: "none",
+        "&:hover": {
+          borderColor: "#C72030",
+        },
+      }),
+
+      menu: (base) => ({
+        ...base,
+        zIndex: 9999,
+      }),
+
+      // option: (base, state) => ({
+      //   ...base,
+      //   backgroundColor: state.isFocused
+      //     ? "rgba(199,32,48,0.08)"
+      //     : "#fff",
+      //   color: "#000",
+      //   cursor: "pointer",
+      // }),
+
+
+      option: (base, state) => ({
+  ...base,
+  backgroundColor: state.isFocused
+    ? "#eff6ff" // faint blue on hover
+    : "#fff",
+  color: "#000",
+  cursor: "pointer",
+}),
+
+      placeholder: (base) => ({
+        ...base,
+        color: "#999",
+      }),
+
+      singleValue: (base) => ({
+        ...base,
+        color: "#000",
+      }),
+    }}
+  />
+
+  {errors.technician && (
+    <FormHelperText>
+      {errors.technician}
+    </FormHelperText>
+  )}
+</FormControl>
                   </>
                 ) : (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <FormControl fullWidth variant="outlined" error={!!errors.group} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Group</InputLabel>
-                        <MuiSelect
-                          label="Group"
-                          displayEmpty
-                          value={formData.group}
-                          onChange={e => handleGroupChange(e.target.value)}
-                          disabled={loading || isSubmitting}
-                        >
-                          <MenuItem value=""><em>Select Group</em></MenuItem>
-                          {Array.isArray(assetGroups) && assetGroups.map((group) => (
-                            <MenuItem key={group.id} value={group.id.toString()}>
-                              {group.name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                        {errors.group && <FormHelperText>{errors.group}</FormHelperText>}
-                      </FormControl>
+                  // <>
+                  //   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  //     <FormControl fullWidth variant="outlined" error={!!errors.group} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  //       <InputLabel shrink>Group</InputLabel>
+                  //       <MuiSelect
+                  //         label="Group"
+                  //         displayEmpty
+                  //         value={formData.group}
+                  //         onChange={e => handleGroupChange(e.target.value)}
+                  //         disabled={loading || isSubmitting}
+                  //       >
+                  //         <MenuItem value=""><em>Select Group</em></MenuItem>
+                  //         {Array.isArray(assetGroups) && assetGroups.map((group) => (
+                  //           <MenuItem key={group.id} value={group.id.toString()}>
+                  //             {group.name}
+                  //           </MenuItem>
+                  //         ))}
+                  //       </MuiSelect>
+                  //       {errors.group && <FormHelperText>{errors.group}</FormHelperText>}
+                  //     </FormControl>
 
-                      <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>SubGroup</InputLabel>
-                        <MuiSelect
-                          label="SubGroup"
-                          displayEmpty
-                          value={formData.subgroup}
-                          onChange={e => handleInputChange('subgroup', e.target.value)}
-                          disabled={!formData.group || loading || isSubmitting}
-                        >
-                          <MenuItem value=""><em>Select Sub Group</em></MenuItem>
-                          {Array.isArray(subGroups) && subGroups.map((subGroup) => (
-                            <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
-                              {subGroup.name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
+                  //     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  //       <InputLabel shrink>SubGroup</InputLabel>
+                  //       <MuiSelect
+                  //         label="SubGroup"
+                  //         displayEmpty
+                  //         value={formData.subgroup}
+                  //         onChange={e => handleInputChange('subgroup', e.target.value)}
+                  //         disabled={!formData.group || loading || isSubmitting}
+                  //       >
+                  //         <MenuItem value=""><em>Select Sub Group</em></MenuItem>
+                  //         {Array.isArray(subGroups) && subGroups.map((subGroup) => (
+                  //           <MenuItem key={subGroup.id} value={subGroup.id.toString()}>
+                  //             {subGroup.name}
+                  //           </MenuItem>
+                  //         ))}
+                  //       </MuiSelect>
+                  //     </FormControl>
 
-                      <FormControl fullWidth variant="outlined" error={!!errors.supplier} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
-                        <MuiSelect
-                          label="Supplier"
-                          displayEmpty
-                          value={formData.supplier}
-                          onChange={e => handleInputChange('supplier', e.target.value)}
-                          disabled={loading || suppliersLoading || isSubmitting}
-                        >
-                          <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                          {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
-                            <MenuItem key={supplier.id} value={supplier.id.toString()}>
-                              {supplier.company_name || supplier.name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                        {errors.supplier && <FormHelperText>{errors.supplier}</FormHelperText>}
-                      </FormControl>
+                  //     <FormControl fullWidth variant="outlined" error={!!errors.supplier} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  //       <InputLabel shrink>Supplier <span style={{ color: '#C72030' }}>*</span></InputLabel>
+                  //       <MuiSelect
+                  //         label="Supplier"
+                  //         displayEmpty
+                  //         value={formData.supplier}
+                  //         onChange={e => handleInputChange('supplier', e.target.value)}
+                  //         disabled={loading || suppliersLoading || isSubmitting}
+                  //       >
+                  //         <MenuItem value=""><em>Select Supplier</em></MenuItem>
+                  //         {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
+                  //           <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                  //             {supplier.company_name || supplier.name}
+                  //           </MenuItem>
+                  //         ))}
+                  //       </MuiSelect>
+                  //       {errors.supplier && <FormHelperText>{errors.supplier}</FormHelperText>}
+                  //     </FormControl>
 
-                      <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Technician</InputLabel>
-                        <MuiSelect
-                          label="Technician"
-                          displayEmpty
-                          value={formData.technician}
-                          onChange={e => handleInputChange('technician', e.target.value)}
-                          disabled={loading || techniciansLoading || isSubmitting}
-                        >
-                          <MenuItem value=""><em>Select Technician</em></MenuItem>
-                          {Array.isArray(technicianOptions) && technicianOptions.map((technician) => (
-                            <MenuItem key={technician.id} value={technician.id.toString()}>
-                              {technician.full_name || technician.name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                    </div>
-                  </>
+                  //     <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  //       <InputLabel shrink>Technician</InputLabel>
+                  //       <MuiSelect
+                  //         label="Technician"
+                  //         displayEmpty
+                  //         value={formData.technician}
+                  //         onChange={e => handleInputChange('technician', e.target.value)}
+                  //         disabled={loading || techniciansLoading || isSubmitting}
+                  //       >
+                  //         <MenuItem value=""><em>Select Technician</em></MenuItem>
+                  //         {Array.isArray(technicianOptions) && technicianOptions.map((technician) => (
+                  //           <MenuItem key={technician.id} value={technician.id.toString()}>
+                  //             {technician.full_name || technician.name}
+                  //           </MenuItem>
+                  //         ))}
+                  //       </MuiSelect>
+                  //     </FormControl>
+                  //   </div>
+                  // </>
+
+
+<>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    {/* Group */}
+    <FormControl fullWidth error={!!errors.group}>
+      <Typography
+        sx={{
+          fontSize: "14px",
+          mb: 1,
+          fontWeight: 500,
+          color: "#444",
+        }}
+      >
+        Group
+      </Typography>
+
+      <Select
+        options={(assetGroups || []).map((group) => ({
+          value: group.id,
+          label: group.name,
+        }))}
+        value={
+          (assetGroups || [])
+            .filter(
+              (group) =>
+                String(group.id) === String(formData.group)
+            )
+            .map((group) => ({
+              value: group.id,
+              label: group.name,
+            }))[0] || null
+        }
+        onChange={(selected: any) => {
+          handleGroupChange(
+            selected ? String(selected.value) : ""
+          );
+        }}
+        isDisabled={loading || isSubmitting}
+        placeholder="Search Group"
+        isClearable
+        styles={{
+          control: (base, state) => ({
+            ...base,
+            minHeight: "56px",
+            borderRadius: "4px",
+            borderColor: errors.group
+              ? "#d32f2f"
+              : state.isFocused
+              ? "#C72030"
+              : "#c4c4c4",
+            boxShadow: "none",
+            "&:hover": {
+              borderColor: "#C72030",
+            },
+          }),
+
+          option: (base, state) => ({
+            ...base,
+            backgroundColor: state.isFocused
+              ? "#eff6ff"
+              : "#fff",
+            color: "#000",
+            cursor: "pointer",
+          }),
+
+          menu: (base) => ({
+            ...base,
+            zIndex: 9999,
+          }),
+        }}
+      />
+
+      {errors.group && (
+        <FormHelperText>
+          {errors.group}
+        </FormHelperText>
+      )}
+    </FormControl>
+
+    {/* SubGroup */}
+    <FormControl fullWidth>
+      <Typography
+        sx={{
+          fontSize: "14px",
+          mb: 1,
+          fontWeight: 500,
+          color: "#444",
+        }}
+      >
+        SubGroup
+      </Typography>
+
+      <Select
+        options={(subGroups || []).map((subGroup) => ({
+          value: subGroup.id,
+          label: subGroup.name,
+        }))}
+        value={
+          (subGroups || [])
+            .filter(
+              (subGroup) =>
+                String(subGroup.id) === String(formData.subgroup)
+            )
+            .map((subGroup) => ({
+              value: subGroup.id,
+              label: subGroup.name,
+            }))[0] || null
+        }
+        onChange={(selected: any) => {
+          handleInputChange(
+            "subgroup",
+            selected ? String(selected.value) : ""
+          );
+        }}
+        isDisabled={
+          !formData.group || loading || isSubmitting
+        }
+        isClearable
+        placeholder="Search SubGroup"
+        styles={{
+          control: (base, state) => ({
+            ...base,
+            minHeight: "56px",
+            borderRadius: "4px",
+            borderColor: state.isFocused
+              ? "#C72030"
+              : "#c4c4c4",
+            boxShadow: "none",
+            "&:hover": {
+              borderColor: "#C72030",
+            },
+          }),
+
+          option: (base, state) => ({
+            ...base,
+            backgroundColor: state.isFocused
+              ? "#eff6ff"
+              : "#fff",
+            color: "#000",
+            cursor: "pointer",
+          }),
+
+          menu: (base) => ({
+            ...base,
+            zIndex: 9999,
+          }),
+        }}
+      />
+    </FormControl>
+
+    {/* Supplier */}
+    <FormControl fullWidth error={!!errors.supplier}>
+      <Typography
+        sx={{
+          fontSize: "14px",
+          mb: 1,
+          fontWeight: 500,
+          color: "#444",
+        }}
+      >
+        Supplier <span style={{ color: "#C72030" }}>*</span>
+      </Typography>
+
+      <Select
+        options={(supplierOptions || []).map((item) => ({
+          value: item.id,
+          label: item.company_name || item.name,
+        }))}
+        value={
+          (supplierOptions || [])
+            .filter(
+              (item) =>
+                String(item.id) === String(formData.supplier)
+            )
+            .map((item) => ({
+              value: item.id,
+              label: item.company_name || item.name,
+            }))[0] || null
+        }
+        onChange={(selected: any) => {
+          handleInputChange(
+            "supplier",
+            selected ? String(selected.value) : ""
+          );
+        }}
+        isDisabled={
+          loading || suppliersLoading || isSubmitting
+        }
+        isClearable
+        placeholder="Search Supplier"
+        styles={{
+          control: (base, state) => ({
+            ...base,
+            minHeight: "56px",
+            borderRadius: "4px",
+            borderColor: errors.supplier
+              ? "#d32f2f"
+              : state.isFocused
+              ? "#C72030"
+              : "#c4c4c4",
+            boxShadow: "none",
+            "&:hover": {
+              borderColor: "#C72030",
+            },
+          }),
+
+          option: (base, state) => ({
+            ...base,
+            backgroundColor: state.isFocused
+              ? "#eff6ff"
+              : "#fff",
+            color: "#000",
+            cursor: "pointer",
+          }),
+
+          menu: (base) => ({
+            ...base,
+            zIndex: 9999,
+          }),
+        }}
+      />
+
+      {errors.supplier && (
+        <FormHelperText>
+          {errors.supplier}
+        </FormHelperText>
+      )}
+    </FormControl>
+
+    {/* Technician */}
+    <FormControl fullWidth error={!!errors.technician}>
+      <Typography
+        sx={{
+          fontSize: "14px",
+          mb: 1,
+          fontWeight: 500,
+          color: "#444",
+        }}
+      >
+        Technician
+      </Typography>
+
+      <Select
+        options={(technicianOptions || []).map((item) => ({
+          value: item.id,
+          label: item.full_name || item.name,
+        }))}
+        value={
+          (technicianOptions || [])
+            .filter(
+              (item) =>
+                String(item.id) === String(formData.technician)
+            )
+            .map((item) => ({
+              value: item.id,
+              label: item.full_name || item.name,
+            }))[0] || null
+        }
+        onChange={(selected: any) => {
+          handleInputChange(
+            "technician",
+            selected ? String(selected.value) : ""
+          );
+        }}
+        isDisabled={
+          loading || techniciansLoading || isSubmitting
+        }
+        isClearable
+        placeholder="Search Technician"
+        styles={{
+          control: (base, state) => ({
+            ...base,
+            minHeight: "56px",
+            borderRadius: "4px",
+            borderColor: state.isFocused
+              ? "#C72030"
+              : "#c4c4c4",
+            boxShadow: "none",
+            "&:hover": {
+              borderColor: "#C72030",
+            },
+          }),
+
+          option: (base, state) => ({
+            ...base,
+            backgroundColor: state.isFocused
+              ? "#eff6ff"
+              : "#fff",
+            color: "#000",
+            cursor: "pointer",
+          }),
+
+          menu: (base) => ({
+            ...base,
+            zIndex: 9999,
+          }),
+        }}
+      />
+
+      {errors.technician && (
+        <FormHelperText>
+          {errors.technician}
+        </FormHelperText>
+      )}
+    </FormControl>
+
+  </div>
+</>
                 )}
               </CardContent>
             </Card>
