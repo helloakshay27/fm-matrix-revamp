@@ -571,11 +571,18 @@ const BusinessCompassDailyReport: React.FC = () => {
       originalData: todo,
     }));
 
-    const newData = [...transformedTasks, ...transformedIssues, ...transformedTodos].sort(
-      (a, b) =>
-        new Date(b.created_at || 0).getTime() -
-        new Date(a.created_at || 0).getTime()
-    );
+    const sortItems = (items: any[]) =>
+      items.sort((a, b) => {
+        const aOverdue = a.status === "overdue" ? 0 : 1;
+        const bOverdue = b.status === "overdue" ? 0 : 1;
+        if (aOverdue !== bOverdue) return aOverdue - bOverdue;
+        return (
+          new Date(b.created_at || 0).getTime() -
+          new Date(a.created_at || 0).getTime()
+        );
+      });
+
+    const newData = sortItems([...transformedTasks, ...transformedIssues, ...transformedTodos]);
 
     if (currentTasksPage === 1 && currentIssuesPage === 1) {
       setMergedTasksIssues(newData);
@@ -585,12 +592,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         const uniqueNewData = newData.filter(
           (item) => !existingIds.has(item.id)
         );
-        const merged = [...prev, ...uniqueNewData].sort(
-          (a, b) =>
-            new Date(b.created_at || 0).getTime() -
-            new Date(a.created_at || 0).getTime()
-        );
-        return merged;
+        return sortItems([...prev, ...uniqueNewData]);
       });
     }
 
