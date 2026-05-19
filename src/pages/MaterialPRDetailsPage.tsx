@@ -917,7 +917,7 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
                   </Button>
                 )}
                 {
-                  (pr.all_level_approved === null || buttonCondition.canEditAll) && (
+                  (buttonCondition.canEditAll) && (
                     <Button
                       size="sm"
                       variant="outline"
