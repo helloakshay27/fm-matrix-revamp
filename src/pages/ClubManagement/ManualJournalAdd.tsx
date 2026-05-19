@@ -19,6 +19,7 @@ import dayjs from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { ArrowLeft, User, DollarSign, NotepadText } from "lucide-react";
 
 
 const initialRow = { account: '', description: '', contact: '', debit: '', credit: '' };
@@ -101,21 +102,15 @@ const ManualJournalAdd = () => {
 	// 	}));
 	// };
 	const handleRowChange = (idx, field, value) => {
-		// Prevent negative values for debit/credit
-		if ((field === 'debit' || field === 'credit')) {
+		if (field === 'debit' || field === 'credit') {
 			let val = value;
-			// Remove minus sign if present
 			if (typeof val === 'string') {
 				val = val.replace(/-/g, '');
 			}
-			// Prevent negative numbers
 			if (Number(val) < 0) val = '';
-			// Format to 2 decimal places if not empty and is a number
-			if (val !== '' && !isNaN(Number(val))) {
-				// Only format if not typing decimal point
-				if (!val.endsWith('.')) {
-					val = Number(val).toFixed(2);
-				}
+			if (val && val.includes('.')) {
+				const [intPart, decPart] = val.split('.');
+				val = intPart + '.' + (decPart ? decPart.slice(0, 2) : '');
 			}
 			setRows(prevRows => prevRows.map((row, i) => {
 				if (i !== idx) return row;
@@ -249,6 +244,10 @@ const ManualJournalAdd = () => {
 				`lock_account_transaction_records[${index}][ledger_id]`,
 				row.account
 			);
+			formData.append(
+				`lock_account_transaction_records[${index}][description]`,
+				row.description || ""
+			);
 
 			if (row.contact) {
 				formData.append(
@@ -291,6 +290,7 @@ const ManualJournalAdd = () => {
 		});
 
 
+
 		const baseUrl = API_CONFIG.BASE_URL;
 		const token = API_CONFIG.TOKEN;
 		try {
@@ -312,9 +312,25 @@ const ManualJournalAdd = () => {
 		}
 	};
 
+	const handleClose = () => {
+		navigate("/accounting/manual-journal");
+	};
 	return (
 		<div className="w-full min-h-screen bg-gray-50 p-0 m-0">
 			<div className="w-full max-w-full px-8 py-8 mx-auto">
+				<div className="mb-6">
+					<div className="flex items-end justify-between gap-2">
+						<Button
+							variant="ghost"
+							onClick={handleClose}
+							className="p-0"
+						>
+							<ArrowLeft className="w-4 h-4 mr-2" />
+							Back to Manual Journal List
+						</Button>
+
+					</div>
+				</div>
 				<h2 className="text-2xl font-semibold text-[#1a1a1a] mb-6">New Journal</h2>
 				<form className="space-y-6" onSubmit={handleSubmit}>
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-6">

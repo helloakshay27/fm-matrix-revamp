@@ -6,8 +6,8 @@ import {
   Calendar,
   Clock,
   AlertCircle,
-  FolderKanban, // Added for Project Tasks
-  Ticket, // Added for Tickets
+  FolderKanban,
+  Ticket,
   Globe,
   Home,
   Bell,
@@ -21,6 +21,9 @@ import {
   Megaphone,
   Car,
   Activity,
+  Mail,
+  Menu,
+  X,
 } from "lucide-react";
 import recessLogo from "@/assets/recess-logo";
 import { useSelector } from "react-redux";
@@ -154,6 +157,12 @@ const navMenuOptions: Record<
       href: "/directory",
     },
     {
+      title: "Mail",
+      description: "Access your mail",
+      icon: <Mail className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
+      href: "/my-inbox",
+    },
+    {
       title: "Ask AI",
       description: "Get help from our AI assistant",
       icon: <Bot className="w-5 h-5 text-[#E67E5F]" strokeWidth={1.5} />,
@@ -275,6 +284,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   const [availableBalance, setAvailableBalance] = useState(0);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [userRoleName, setUserRoleName] = useState<string | null>(null);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
@@ -345,7 +355,9 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
     for (const module of userRole.lock_modules) {
       if (
         module.module_name === "Employee Sidebar" ||
-        module.module_name === "Employee Projects Sidebar"
+        module.module_name === "Employee Projects Sidebar" ||
+        module.module_name === "Employee Business Compass" ||
+        module.module_name === "Employee Admin Compass"
       )
         continue;
       const firstActiveFunction = module.lock_functions.find(
@@ -399,8 +411,8 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   return (
     <>
       {/* --- TOP NAV BAR --- */}
-      <div className="flex items-center justify-between px-8 py-4 bg-[#FAF9F6]/80 backdrop-blur-md sticky top-0 z-50 border-b border-[rgba(211,209,199,1)]">
-        <div className="flex items-center gap-12">
+      <div className="flex items-center justify-between px-3 sm:px-6 lg:px-8 py-3 sm:py-4 bg-[#FAF9F6]/80 backdrop-blur-md fixed top-0 left-0 right-0 z-50 border-b border-[rgba(211,209,199,1)]">
+        <div className="flex items-center gap-3 sm:gap-6 lg:gap-12">
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
             {isOmanSite ? (
               <svg
@@ -535,6 +547,19 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
               </svg>
             )}
           </div>
+          {/* Mobile hamburger */}
+          <button
+            className="lg:hidden p-2 rounded-lg hover:bg-[#f0ede6] transition-colors"
+            onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+            aria-label="Toggle navigation"
+          >
+            {isMobileNavOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
+          </button>
+
           <nav ref={navRef} className="hidden lg:flex items-center gap-6">
             <div
               onClick={() => {
@@ -747,11 +772,11 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                       localStorage.removeItem("tempType");
                       window.location.href = getFirstAdminLink();
                     }}
-                    className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm bg-white hover:bg-[#C72030] text-gray-700 hover:text-white transition-all duration-200 border border-gray-200 hover:border-[#C72030] group shadow-sm"
+                    className="fm-button-fix fm-button-brand px-4 py-2 rounded-lg text-sm font-medium group shadow-sm"
                   >
                     <div className="flex items-center gap-2">
                       <Shield className="w-4 h-4" />
-                      <span className="font-medium">Admin View</span>
+                      <span>Admin View</span>
                     </div>
                     <ChevronDown className="w-4 h-4 -rotate-90 group-hover:translate-x-0.5 transition-transform" />
                   </button>
@@ -788,11 +813,54 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
         </div>
       </div>
 
+      {/* --- MOBILE NAV DRAWER --- */}
+      {isMobileNavOpen && (
+        <div className="lg:hidden fixed top-[57px] sm:top-[65px] left-0 right-0 bg-[#FAF9F6] border-b border-[rgba(211,209,199,1)] z-40 shadow-md animate-in slide-in-from-top-2 fade-in duration-200">
+          <div className="flex flex-col px-4 py-3 gap-1">
+            <button
+              onClick={() => {
+                navigate("/employee/company-hub");
+                setIsMobileNavOpen(false);
+              }}
+              className="text-left px-3 py-2.5 text-sm font-medium text-gray-800 hover:bg-[#f0ede6] rounded-lg transition-colors"
+            >
+              Company Hub
+            </button>
+            {[
+              "Create",
+              "Work",
+              "Communicate",
+              "Workspace",
+              "Operations",
+              "Insight",
+            ].map((item) => (
+              <button
+                key={item}
+                onClick={() => {
+                  setActiveNavMenu(activeNavMenu === item ? null : item);
+                  setIsMobileNavOpen(false);
+                }}
+                className={`text-left px-3 py-2.5 text-sm font-medium rounded-lg transition-colors flex items-center justify-between ${
+                  activeNavMenu === item
+                    ? "text-[#DA7756] bg-[#f0ede6]"
+                    : "text-gray-800 hover:bg-[#f0ede6]"
+                }`}
+              >
+                {item}
+                <ChevronRight
+                  className={`w-4 h-4 transition-transform ${activeNavMenu === item ? "rotate-90 text-[#DA7756]" : "text-gray-400"}`}
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* --- NAV MENU DROPDOWN --- */}
       {activeNavMenu && filteredNavMenuOptions[activeNavMenu] && (
         <div
           ref={dropdownRef}
-          className="fixed top-[65px] left-0 right-0 bg-white border-b border-gray-200 shadow-md z-50 px-8 py-8 animate-in slide-in-from-top-2 fade-in duration-200"
+          className="fixed top-[57px] sm:top-[65px] left-0 right-0 bg-white border-b border-gray-200 shadow-md z-50 px-4 sm:px-8 py-6 sm:py-8 animate-in slide-in-from-top-2 fade-in duration-200"
         >
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-6">
             {activeNavMenu}

@@ -117,7 +117,7 @@ const SummaryTab: React.FC<SummaryTabProps> = ({ productData }) => {
     : productData.name;
   const currentFeatureSummary = hasPerspectives
     ? productData.extendedContent?.productSummaryNew?.perspectives?.[activePerspective]?.featureSummary
-    : undefined;
+    : productData.extendedContent?.productSummaryNew?.featureSummary;
 
   return (
     <div className="space-y-8 animate-fade-in overflow-x-auto">

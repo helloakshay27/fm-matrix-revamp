@@ -764,11 +764,7 @@ export const AddAssetAuditPage = () => {
   const [auditTypeExpanded, setAuditTypeExpanded] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  const {
-    sites,
-    selectedSite,
-    loading: siteLoading,
-  } = useSelector((state: RootState) => state.site);
+  const { selectedSite } = useSelector((state: RootState) => state.site);
 
   const [users, setUsers] = useState<any[]>([]);
   const [buildings, setBuildings] = useState<any[]>([]);
@@ -786,7 +782,6 @@ export const AddAssetAuditPage = () => {
     conductedBy: '',
     basedOn: 'Location',
 
-    site: '',
     building: [] as string[],
     wing: [] as string[],
     area: [] as string[],
@@ -950,10 +945,10 @@ export const AddAssetAuditPage = () => {
   }, []);
 
   useEffect(() => {
-    if (formData.site) fetchBuildings(formData.site);
+    if (selectedSite?.id) fetchBuildings(selectedSite.id);
     else setBuildings([]);
     setFormData(prev => ({ ...prev, building: [], wing: [], area: [], floor: [] }));
-  }, [formData.site]);
+  }, [selectedSite?.id]);
 
   useEffect(() => {
     if (formData.building?.length > 0) fetchWings(formData.building[0]);
@@ -980,36 +975,140 @@ export const AddAssetAuditPage = () => {
   }, [formData.assetGroup]);
 
   // Multi-select Dropdown Component
-  const fieldsToRender = formData.basedOn === 'Asset' ? [
-    { name: 'assetGroup', label: 'Asset Group*', values: assetGroups, multiple: true },
-    { name: 'assetSubGroup', label: 'Subgroup', values: assetSubGroups, multiple: true },
-    { name: 'site', label: 'Site*', values: sites, multiple: false },
-    { name: 'building', label: 'Building*', values: buildings, multiple: true },
+  // const fieldsToRender = formData.basedOn === 'Asset' ? [
+  //   { name: 'assetGroup', label: 'Asset Group*', values: assetGroups, multiple: true },
+  //   { name: 'assetSubGroup', label: 'Subgroup', values: assetSubGroups, multiple: true },
+  //   { name: 'site', label: 'Site*', values: sites, multiple: false },
+  //   { name: 'building', label: 'Building*', values: buildings, multiple: true },
+  //   { name: 'wing', label: 'Wing', values: wings, multiple: true },
+  //   { name: 'area', label: 'Area', values: areas, multiple: true },
+  //   { name: 'floor', label: 'Floor', values: floors, multiple: true },
+  //   { name: 'department', label: 'Department', values: departments, multiple: true },
+  // ] : [
+  //   { name: 'site', label: 'Site*', values: sites, multiple: false },
+  //   { name: 'building', label: 'Building*', values: buildings, multiple: true },
+  //   { name: 'wing', label: 'Wing', values: wings, multiple: true },
+  //   { name: 'area', label: 'Area', values: areas, multiple: true },
+  //   { name: 'floor', label: 'Floor', values: floors, multiple: true },
+  //   { name: 'department', label: 'Department', values: departments, multiple: true },
+  //   { name: 'assetGroup', label: 'Asset Group*', values: assetGroups, multiple: true },
+  //   { name: 'assetSubGroup', label: 'Asset Subgroup', values: assetSubGroups, multiple: true },
+  // ];
+  const fieldsToRender = formData.basedOn === 'Location' ? [
+    { name: 'building', label: <>Building <span className="text-red-500">*</span></>, values: buildings, multiple: true },
     { name: 'wing', label: 'Wing', values: wings, multiple: true },
     { name: 'area', label: 'Area', values: areas, multiple: true },
     { name: 'floor', label: 'Floor', values: floors, multiple: true },
     { name: 'department', label: 'Department', values: departments, multiple: true },
-  ] : [
-    { name: 'site', label: 'Site*', values: sites, multiple: false },
-    { name: 'building', label: 'Building*', values: buildings, multiple: true },
-    { name: 'wing', label: 'Wing', values: wings, multiple: true },
-    { name: 'area', label: 'Area', values: areas, multiple: true },
-    { name: 'floor', label: 'Floor', values: floors, multiple: true },
-    { name: 'department', label: 'Department', values: departments, multiple: true },
-    { name: 'assetGroup', label: 'Asset Group*', values: assetGroups, multiple: true },
+    { name: 'assetGroup', label: 'Asset Group', values: assetGroups, multiple: true },
     { name: 'assetSubGroup', label: 'Asset Subgroup', values: assetSubGroups, multiple: true },
+  ] : [
+    { name: 'assetGroup', label: <>Asset Group <span className="text-red-500">*</span></>, values: assetGroups, multiple: true },
+    { name: 'assetSubGroup', label: <>Asset Subgroup <span className="text-red-500">*</span></>, values: assetSubGroups, multiple: true },
+    { name: 'building', label: <>Building <span className="text-red-500">*</span></>, values: buildings, multiple: true },
+    { name: 'wing', label: 'Wing', values: wings, multiple: true },
+    { name: 'area', label: 'Area', values: areas, multiple: true },
+    { name: 'floor', label: 'Floor', values: floors, multiple: true },
+    { name: 'department', label: 'Department', values: departments, multiple: true },
   ];
 
+  // const handleSubmit = async (type: 'create' | 'saveAndCreate') => {
+  //   if (!formData.auditName.trim()) return toast.error('Audit Name is required');
+  //   if (!formData.startDate) return toast.error('Start Date is required');
+  //   if (!formData.endDate) return toast.error('End Date is required');
+  //   if (new Date(formData.endDate) < new Date(formData.startDate)) return toast.error('End Date cannot be before Start Date');
+  //   if (!formData.conductedBy) return toast.error('Conducted By is required');
+
+  //   if (formData.basedOn === 'Location' && !formData.site) return toast.error('Site is required');
+  //   if (formData.basedOn === 'Asset' && (!formData.assetGroup || formData.assetGroup.length === 0)) return toast.error('Asset Group is required');
+  //   if (!formData.building || formData.building.length === 0) return toast.error('Building is required');
+
+  //   setIsLoading(true);
+
+  //   try {
+  //     const baseUrl = localStorage.getItem('baseUrl') || '';
+  //     const token = localStorage.getItem('token') || '';
+
+  //     const payload: any = {
+  //       pms_asset_audit: {
+  //         name: formData.auditName,
+  //         start_date: formData.startDate,
+  //         end_date: formData.endDate,
+  //         conducted_by_ids: [formData.conductedBy],
+  //         audit_type: formData.basedOn === 'Location' ? 'Location-based' : 'Asset-based',
+  //         site_ids: formData.site ? [formData.site] : [],
+  //         building_ids: formData.building,
+  //         wing_ids: formData.wing,
+  //         area_ids: formData.area,
+  //         floor_ids: formData.floor,
+  //         department_ids: formData.department,
+  //         asset_group_ids: formData.assetGroup,
+  //         asset_sub_group_ids: formData.assetSubGroup,
+  //       }
+  //     };
+
+  //     const response = await fetch(`https://${baseUrl}/pms/asset_audits.json`, {
+  //       method: 'POST',
+  //       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+  //       body: JSON.stringify(payload),
+  //     });
+
+  //     if (!response.ok) {
+  //       const errorData = await response.json();
+  //       throw new Error(errorData.message || 'Failed to create audit');
+  //     }
+
+  //     const result = await response.json();
+  //     if (result.message?.includes('No Asset found')) {
+  //       toast.error(result.message);
+  //       return;
+  //     }
+
+  //     toast.success('Audit created successfully');
+
+  //     if (type === 'saveAndCreate') {
+  //       setFormData({
+  //         auditName: '', startDate: '', endDate: '', conductedBy: '', basedOn: 'Location',
+  //         site: '', building: [], wing: [], area: [], floor: [], department: [],
+  //         assetGroup: [], assetSubGroup: []
+  //       });
+  //     } else {
+  //       navigate('/maintenance/audit/assets');
+  //     }
+  //   } catch (error: any) {
+  //     toast.error(error.message || 'Failed to create audit');
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+
   const handleSubmit = async (type: 'create' | 'saveAndCreate') => {
+    // Basic common validations
     if (!formData.auditName.trim()) return toast.error('Audit Name is required');
     if (!formData.startDate) return toast.error('Start Date is required');
     if (!formData.endDate) return toast.error('End Date is required');
-    if (new Date(formData.endDate) < new Date(formData.startDate)) return toast.error('End Date cannot be before Start Date');
+    if (new Date(formData.endDate) < new Date(formData.startDate))
+      return toast.error('End Date cannot be before Start Date');
     if (!formData.conductedBy) return toast.error('Conducted By is required');
 
-    if (formData.basedOn === 'Location' && !formData.site) return toast.error('Site is required');
-    if (formData.basedOn === 'Asset' && (!formData.assetGroup || formData.assetGroup.length === 0)) return toast.error('Asset Group is required');
-    if (!formData.building || formData.building.length === 0) return toast.error('Building is required');
+    // Location-based validations
+    if (formData.basedOn === 'Location') {
+      if (!formData.building || formData.building.length === 0)
+        return toast.error('Building is required');
+    }
+
+    // Asset-based validations
+    if (formData.basedOn === 'Asset') {
+      if (!formData.assetGroup || formData.assetGroup.length === 0)
+        return toast.error('Asset Group is required');
+
+      if (!formData.assetSubGroup || formData.assetSubGroup.length === 0)
+        return toast.error('Asset Sub Group is required');
+
+      if (!formData.building || formData.building.length === 0)
+        return toast.error('Building is required');
+    }
 
     setIsLoading(true);
 
@@ -1024,7 +1123,7 @@ export const AddAssetAuditPage = () => {
           end_date: formData.endDate,
           conducted_by_ids: [formData.conductedBy],
           audit_type: formData.basedOn === 'Location' ? 'Location-based' : 'Asset-based',
-          site_ids: formData.site ? [formData.site] : [],
+          site_ids: selectedSite?.id ? [selectedSite.id] : [],
           building_ids: formData.building,
           wing_ids: formData.wing,
           area_ids: formData.area,
@@ -1042,11 +1141,12 @@ export const AddAssetAuditPage = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || 'Failed to create audit');
       }
 
       const result = await response.json();
+
       if (result.message?.includes('No Asset found')) {
         toast.error(result.message);
         return;
@@ -1055,10 +1155,20 @@ export const AddAssetAuditPage = () => {
       toast.success('Audit created successfully');
 
       if (type === 'saveAndCreate') {
+        // Reset form
         setFormData({
-          auditName: '', startDate: '', endDate: '', conductedBy: '', basedOn: 'Location',
-          site: '', building: [], wing: [], area: [], floor: [], department: [],
-          assetGroup: [], assetSubGroup: []
+          auditName: '',
+          startDate: '',
+          endDate: '',
+          conductedBy: '',
+          basedOn: 'Location',
+          building: [],
+          wing: [],
+          area: [],
+          floor: [],
+          department: [],
+          assetGroup: [],
+          assetSubGroup: []
         });
       } else {
         navigate('/maintenance/audit/assets');
@@ -1069,7 +1179,6 @@ export const AddAssetAuditPage = () => {
       setIsLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8">
       {/* Breadcrumb */}
@@ -1118,12 +1227,12 @@ export const AddAssetAuditPage = () => {
             <div className="p-4 sm:p-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <TextField
-                  label="Audit Name *" value={formData.auditName}
+                  label={<>Audit Name <span className="text-red-500">*</span></>} value={formData.auditName}
                   onChange={(e) => updateFormData('auditName', e.target.value)}
                   fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={fieldStyles}
                 />
                 <TextField
-                  label="Start Date *" type="date" value={formData.startDate}
+                  label={<>Start Date <span className="text-red-500">*</span></>} type="date" value={formData.startDate}
                   onChange={(e) => {
                     const newStartDate = e.target.value;
                     updateFormData('startDate', newStartDate);
@@ -1138,7 +1247,7 @@ export const AddAssetAuditPage = () => {
                   }}
                 />
                 <TextField
-                  label="End Date *" type="date" value={formData.endDate}
+                  label={<>End Date <span className="text-red-500">*</span></>} type="date" value={formData.endDate}
                   onChange={(e) => {
                     const newEndDate = e.target.value;
                     // Prevent selecting end date before start date
@@ -1154,7 +1263,7 @@ export const AddAssetAuditPage = () => {
                 />
 
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Conducted By *</InputLabel>
+                  <InputLabel shrink>Conducted By <span className="text-red-500">*</span></InputLabel>
                   <MuiSelect
                     value={formData.conductedBy}
                     onChange={(e) => updateFormData('conductedBy', e.target.value)}

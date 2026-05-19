@@ -207,7 +207,7 @@ const UserSelect = ({
   const selectedUser = users.find((u: any) => u.id === value);
   const displayValue = selectedUser
     ? selectedUser.full_name ||
-      `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
+    `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
     : "";
 
   const filteredUsers = users.filter((u: any) => {
@@ -317,11 +317,13 @@ interface Goal {
 }
 
 interface StrategicGoalData {
+  id?: number;
   title: string;
-  goalType: string;
+  period: string;
   targetDate: string;
   revenueTarget: string;
   profitTarget: string;
+  linkedInitiatives?: number[];
 }
 
 const Modal = ({
@@ -372,7 +374,6 @@ const getPeriodBadgeLabel = (period: string): string => {
     this_quarter: "This Quarter",
     quarterly: "Quarterly",
     long_term: "Long Term",
-    BHAG: "BHAG",
   };
   return map[period] || period || "";
 };
@@ -388,32 +389,19 @@ export const ShortTermSection = () => {
 
   const [goals, setGoals] = useState<Goal[]>([]);
   const [allGoals, setAllGoals] = useState<Goal[]>([]);
-
-  // Users list state for dropdown
   const [usersList, setUsersList] = useState<any[]>([]);
 
-  const [strategicGoal, setStrategicGoal] = useState<StrategicGoalData>({
-    title: "",
-    goalType: "Short-term (This Year)",
-    targetDate: "",
-    revenueTarget: "",
-    profitTarget: "",
-  });
-
+  // 🟢 Updated to multiple strategic goals
+  const [strategicGoals, setStrategicGoals] = useState<StrategicGoalData[]>([]);
   const [strategicGoalId, setStrategicGoalId] = useState<number | null>(null);
 
-  const [tempStrategic, setTempStrategic] = useState<StrategicGoalData | null>(
-    null
-  );
-  const [linkedStrategicInitiatives, setLinkedStrategicInitiatives] = useState<
-    number[]
-  >([]);
+  const [tempStrategic, setTempStrategic] = useState<StrategicGoalData | null>(null);
+  const [linkedStrategicInitiatives, setLinkedStrategicInitiatives] = useState<number[]>([]);
 
   const [isFetching, setIsFetching] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [tempGoal, setTempGoal] = useState<Goal | null>(null);
 
-  // Using native HTML input type date -> expects YYYY-MM-DD
   const [tempGoalDate, setTempGoalDate] = useState("");
 
   const [isSaving, setIsSaving] = useState(false);
@@ -449,55 +437,30 @@ export const ShortTermSection = () => {
 
   const fetchStrategicGoal = useCallback(async () => {
     try {
-      const res = await fetch(`${BASE_URL}/goals`, {
+      const res = await fetch(`${BASE_URL}/goals?q[goal_category_eq]=strategic`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
       if (!res.ok) return;
       const json = await res.json();
-      const records: any[] = Array.isArray(json)
-        ? json
-        : json.goals || json.data || [];
+      const records: any[] = Array.isArray(json) ? json : json.goals || json.data || [];
 
-      const strategic =
-        records.find(
-          (g: any) =>
-            g.period === SHORT_TERM_PERIOD &&
-            (g.revenue_target != null || g.profit_target != null)
-        ) ||
-        records.find(
-          (g: any) =>
-            g.period === SHORT_TERM_PERIOD &&
-            g.description === "Strategic objective for this year"
-        ) ||
-        null;
+      const mappedStrategic = records.map((sg: any) => ({
+        id: sg.id,
+        title: sg.title || "",
+        period: sg.period || "this_year",
+        targetDate: sg.target_date || "",
+        revenueTarget: String(sg.revenue_target ?? ""),
+        profitTarget: String(sg.profit_target ?? ""),
+        linkedInitiatives: Array.isArray(sg.key_initiative_goals)
+          ? sg.key_initiative_goals.map((ki: any) => ki.id).filter(Boolean)
+          : [],
+      }));
 
-      if (strategic) {
-        setStrategicGoalId(strategic.id ?? null);
-        setStrategicGoal({
-          title: strategic.title || "",
-          goalType: "Short-term (This Year)",
-          targetDate: strategic.target_date || "", // Keeps native YYYY-MM-DD
-          revenueTarget: String(strategic.revenue_target ?? ""),
-          profitTarget: String(strategic.profit_target ?? ""),
-        });
-        const linked = Array.isArray(strategic.key_initiative_goals)
-          ? strategic.key_initiative_goals
-              .map((ki: any) => ki.id)
-              .filter(Boolean)
-          : [];
-        setLinkedStrategicInitiatives(linked);
-      } else {
-        setStrategicGoalId(null);
-        setStrategicGoal({
-          title: "",
-          goalType: "Short-term (This Year)",
-          targetDate: "",
-          revenueTarget: "",
-          profitTarget: "",
-        });
-        setLinkedStrategicInitiatives([]);
-      }
+      // 🟢 Filter: Only show this year strategic goals in the UI
+      const shortTermStrategic = mappedStrategic.filter(sg => sg.period === SHORT_TERM_PERIOD);
+      setStrategicGoals(shortTermStrategic);
+
     } catch (err) {
       console.error("[ShortTermSection] fetchStrategicGoal:", err);
     }
@@ -507,15 +470,13 @@ export const ShortTermSection = () => {
     setIsFetching(true);
     setFetchError(null);
     try {
-      const res = await fetch(`${BASE_URL}/goals`, {
+      const res = await fetch(`${BASE_URL}/goals?q[goal_category_eq]=operational`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      const records: any[] = Array.isArray(json)
-        ? json
-        : json.goals || json.data || [];
+      const records: any[] = Array.isArray(json) ? json : json.goals || json.data || [];
 
       const mapRecord = (g: any, idx: number): Goal => ({
         id: g.id ?? idx + 1,
@@ -525,7 +486,8 @@ export const ShortTermSection = () => {
         targetValue: String(g.target_value ?? "100"),
         currentValue: String(g.current_value ?? "0"),
         unit: g.unit || "%",
-        period: g.period || SHORT_TERM_PERIOD,
+        period: g.period || "",
+        periodLabel: g.period_label || getPeriodBadgeLabel(g.period || ""),
         targetDate: g.target_date || "",
         ownerName: g.owner_name || "",
         ownerId: g.owner_id || "",
@@ -533,15 +495,12 @@ export const ShortTermSection = () => {
         updateRemarks: g.update_remarks || "",
       });
 
-      setAllGoals(records.map(mapRecord));
+      const mappedRecords = records.map(mapRecord);
+      setAllGoals(mappedRecords);
 
-      // Filter only this_year goals, exclude the strategic marker goal
-      const yearGoals = records.filter(
-        (g: any) =>
-          g.period === SHORT_TERM_PERIOD &&
-          g.description !== "Strategic objective for this year"
-      );
-      setGoals(yearGoals.map(mapRecord));
+      // 🟢 Filter: Only show this year operational goals in the UI
+      const shortTermGoals = mappedRecords.filter(g => g.period === SHORT_TERM_PERIOD);
+      setGoals(shortTermGoals);
     } catch (err: any) {
       setFetchError(err.message || "Failed to load goals");
     } finally {
@@ -581,22 +540,33 @@ export const ShortTermSection = () => {
     setTempGoalDate("");
     setEditingGoalId(null);
     setTempStrategic(null);
+    setStrategicGoalId(null);
   };
 
-  const openStrategicModal = () => {
+  const openStrategicModal = (sg?: StrategicGoalData) => {
     setSaveError(null);
-    setTempStrategic({
-      title: strategicGoal.title,
-      goalType: strategicGoal.goalType || "Short-term (This Year)",
-      targetDate: strategicGoal.targetDate, // Native YYYY-MM-DD
-      revenueTarget: strategicGoal.revenueTarget,
-      profitTarget: strategicGoal.profitTarget,
-    });
+    if (sg) {
+      setStrategicGoalId(sg.id || null);
+      setTempStrategic({ ...sg });
+      setLinkedStrategicInitiatives(sg.linkedInitiatives || []);
+    } else {
+      setStrategicGoalId(null);
+      setTempStrategic({
+        title: "",
+        period: "this_year", // Default Period
+        targetDate: "",
+        revenueTarget: "",
+        profitTarget: "",
+      });
+      setLinkedStrategicInitiatives([]);
+    }
     setActiveModal("edit_strategic");
   };
 
-  const confirmDeleteStrategic = () =>
+  const confirmDeleteStrategic = (id: number) => {
+    setStrategicGoalId(id);
     setActiveModal("confirm_delete_strategic");
+  }
 
   const executeDeleteStrategic = async () => {
     if (!strategicGoalId) {
@@ -610,16 +580,9 @@ export const ShortTermSection = () => {
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error(`API error ${res.status}`);
-      setStrategicGoal({
-        title: "",
-        goalType: "Short-term (This Year)",
-        targetDate: "",
-        revenueTarget: "",
-        profitTarget: "",
-      });
       setStrategicGoalId(null);
       setLinkedStrategicInitiatives([]);
-      fetchGoals();
+      fetchStrategicGoal();
     } catch (err: any) {
       alert("Failed to delete: " + (err.message || "Unknown error"));
     } finally {
@@ -630,7 +593,7 @@ export const ShortTermSection = () => {
 
   const openEditGoalModal = (goal: Goal) => {
     setTempGoal({ ...goal });
-    setTempGoalDate(goal.targetDate || ""); // Native YYYY-MM-DD
+    setTempGoalDate(goal.targetDate || "");
     setEditingGoalId(goal.id ?? null);
     setSaveError(null);
     setActiveModal("goal_details");
@@ -673,6 +636,7 @@ export const ShortTermSection = () => {
 
       const payload = {
         goal: {
+          goal_category: "strategic",
           title: tempStrategic.title.trim(),
           description: "Strategic objective for this year",
           target_date: apiTargetDate,
@@ -681,7 +645,7 @@ export const ShortTermSection = () => {
           target_value: 100,
           current_value: 0,
           unit: "percent",
-          period: SHORT_TERM_PERIOD,
+          period: tempStrategic.period, // Dynamic Period
           status: "on_track",
           owner_id: null,
           update_remarks: "",
@@ -726,6 +690,7 @@ export const ShortTermSection = () => {
 
     const payload = {
       goal: {
+        goal_category: "operational",
         title: tempGoal.title.trim(),
         description: tempGoal.description || "",
         target_value: Number(tempGoal.targetValue) || 100,
@@ -743,15 +708,15 @@ export const ShortTermSection = () => {
     try {
       const res = editingGoalId
         ? await fetch(`${BASE_URL}/goals/${editingGoalId}`, {
-            method: "PUT",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(payload),
-          })
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        })
         : await fetch(`${BASE_URL}/goals`, {
-            method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(payload),
-          });
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       closeModal();
       fetchGoals();
@@ -791,7 +756,7 @@ export const ShortTermSection = () => {
     );
   };
 
-  const isEditingStrategic = !!strategicGoal.title;
+  const isEditingStrategic = !!strategicGoalId;
 
   const modalBtnBase: React.CSSProperties = {
     border: "none",
@@ -845,14 +810,14 @@ export const ShortTermSection = () => {
           </div>
 
           {isInfoHovered && ReactDOM.createPortal(
-            <div 
+            <div
               style={{
                 position: "absolute",
                 top: infoPos.top,
                 left: infoPos.left,
                 transform: infoPos.transform,
                 zIndex: 99999,
-                background: "#16102b", // Dark purple/blue tint
+                background: "#16102b",
                 color: "#fff",
                 borderRadius: 12,
                 boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
@@ -889,66 +854,94 @@ export const ShortTermSection = () => {
         </div>
 
         <div className="p-6">
-          {/* ── Strategic Goal block ── */}
+          {/* ── Multiple Strategic Goals Block ── */}
           <div className="mb-8">
             {isFetching ? (
               <div className="st-skeleton h-24 w-full rounded-xl" />
-            ) : strategicGoal.title ? (
-              <div
-                className="bg-white rounded-xl p-5 flex justify-between items-center group transition-all"
-                style={{
-                  border: `1px solid ${C.borderLgt}`,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-                }}
-              >
-                <div>
-                  <h3
-                    className="font-bold text-[16px] m-0"
-                    style={{ color: C.textMain }}
+            ) : strategicGoals.length > 0 ? (
+              <div className="space-y-4">
+                {strategicGoals.map((sg) => (
+                  <div
+                    key={sg.id}
+                    className="bg-white rounded-xl p-5 flex justify-between items-center group transition-all"
+                    style={{
+                      border: `1px solid ${C.borderLgt}`,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+                    }}
                   >
-                    {strategicGoal.title}
-                  </h3>
-                  {(strategicGoal.revenueTarget ||
-                    strategicGoal.profitTarget) && (
-                    <div
-                      className="text-[12px] mt-1.5 flex gap-3"
-                      style={{ color: C.textMuted }}
-                    >
-                      {strategicGoal.revenueTarget &&
-                        strategicGoal.revenueTarget !== "0" && (
-                          <span>Revenue: ₹{strategicGoal.revenueTarget}Cr</span>
+                    <div>
+                      <h3
+                        className="font-bold text-[16px] m-0"
+                        style={{ color: C.textMain }}
+                      >
+                        {sg.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-2">
+                        {sg.period && (
+                          <span
+                            className="inline-block px-2 py-0.5 text-[10px] font-black rounded-full uppercase tracking-wider"
+                            style={{
+                              background: C.primaryTint,
+                              color: C.primary,
+                            }}
+                          >
+                            {getPeriodBadgeLabel(sg.period)}
+                          </span>
                         )}
-                      {strategicGoal.profitTarget &&
-                        strategicGoal.profitTarget !== "0" && (
-                          <span>Profit: ₹{strategicGoal.profitTarget}Cr</span>
+                        {(sg.revenueTarget || sg.profitTarget) && (
+                          <div className="text-[12px] flex gap-3 font-medium" style={{ color: C.textMuted }}>
+                            {sg.revenueTarget && sg.revenueTarget !== "0" && (
+                              <span>Revenue: ₹{sg.revenueTarget}Cr</span>
+                            )}
+                            {sg.profitTarget && sg.profitTarget !== "0" && (
+                              <span>Profit: ₹{sg.profitTarget}Cr</span>
+                            )}
+                          </div>
                         )}
+                      </div>
+                      {sg.targetDate && (
+                        <div
+                          className="text-[11px] mt-1.5"
+                          style={{ color: C.textMuted }}
+                        >
+                          📅 Target: {apiDateToDisplay(sg.targetDate)}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {strategicGoal.targetDate && (
-                    <div
-                      className="text-[11px] mt-1"
-                      style={{ color: C.textMuted }}
-                    >
-                      📅 Target: {apiDateToDisplay(strategicGoal.targetDate)}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openStrategicModal(sg)}
+                        className="p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors text-gray-500 border"
+                        style={{ borderColor: C.borderLgt }}
+                        title="Edit Goal"
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        onClick={() => confirmDeleteStrategic(sg.id as number)}
+                        className="p-2 bg-gray-50 hover:bg-red-50 rounded-lg cursor-pointer transition-colors text-gray-500 hover:text-red-500 border"
+                        style={{ borderColor: C.borderLgt }}
+                        title="Delete Goal"
+                      >
+                        <TrashIcon />
+                      </button>
                     </div>
-                  )}
-                </div>
-                <div className="flex gap-2">
+                  </div>
+                ))}
+
+                <div className="flex justify-end mt-4">
                   <button
-                    onClick={openStrategicModal}
-                    className="p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors text-gray-500 border"
-                    style={{ borderColor: C.borderLgt }}
-                    title="Edit Goal"
+                    onClick={() => openStrategicModal()}
+                    className="text-sm font-black px-4 py-2 rounded-xl transition-colors"
+                    style={{ color: C.primary, background: "transparent" }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = C.primaryTint)
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "transparent")
+                    }
                   >
-                    <EditIcon />
-                  </button>
-                  <button
-                    onClick={confirmDeleteStrategic}
-                    className="p-2 bg-gray-50 hover:bg-red-50 rounded-lg cursor-pointer transition-colors text-gray-500 hover:text-red-500 border"
-                    style={{ borderColor: C.borderLgt }}
-                    title="Delete Goal"
-                  >
-                    <TrashIcon />
+                    + Add Annual Goal
                   </button>
                 </div>
               </div>
@@ -971,7 +964,7 @@ export const ShortTermSection = () => {
                   What are your top goals this year?
                 </p>
                 <button
-                  onClick={openStrategicModal}
+                  onClick={() => openStrategicModal()}
                   className="px-5 py-2.5 rounded-lg font-bold text-[13px] transition-colors shadow-sm flex items-center justify-center mx-auto gap-2 text-white"
                   style={{ background: C.primary }}
                   onMouseEnter={(e) =>
@@ -1304,20 +1297,20 @@ export const ShortTermSection = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="st-label">Goal Type</label>
+                    <label className="st-label">Period</label>
                     <select
-                      value={tempStrategic.goalType}
+                      value={tempStrategic.period}
                       onChange={(e) =>
                         setTempStrategic({
                           ...tempStrategic,
-                          goalType: e.target.value,
+                          period: e.target.value,
                         })
                       }
                       className="st-select"
                     >
-                      <option>Short-term (This Year)</option>
-                      <option>Short-term (Quarterly)</option>
-                      <option>Medium-term (1-3 years)</option>
+                      <option value="this_quarter">This Quarter</option>
+                      <option value="this_year">This Year</option>
+                      <option value="three_to_five_years">3-5 Years</option>
                     </select>
                   </div>
                   <div>
@@ -1403,12 +1396,22 @@ export const ShortTermSection = () => {
                             className="mt-0.5 w-4 h-4"
                             style={{ accentColor: C.primary }}
                           />
-                          <span
-                            className="text-[13px] font-medium leading-tight"
-                            style={{ color: C.textMain }}
-                          >
-                            {g.title}
-                          </span>
+                          <div className="flex-1 min-w-0">
+                            <div
+                              className="text-[13px] font-medium leading-tight"
+                              style={{ color: C.textMain }}
+                            >
+                              {g.title}
+                            </div>
+                            {g.period && (
+                              <span
+                                className="inline-block mt-1 px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wide"
+                                style={{ background: C.primaryTint, color: C.primary }}
+                              >
+                                {getPeriodBadgeLabel(g.period)}
+                              </span>
+                            )}
+                          </div>
                         </label>
                       ))
                     )}
@@ -1788,7 +1791,7 @@ export const ShortTermSection = () => {
                     if (!isSaving) e.currentTarget.style.background = C.primary;
                   }}
                 >
-                  {isSaving && <LoaderIcon />}
+                  {isSaving && <LoaderIcon className="w-4 h-4" />}
                   {isSaving
                     ? "Saving..."
                     : editingGoalId

@@ -39,6 +39,10 @@ type ClubMarketAnalysis = NonNullable<
 };
 
 const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
+  if (productData.extendedContent?.rawMarketTable) {
+    return <div className="w-full mt-4">{productData.extendedContent.rawMarketTable}</div>;
+  }
+
   const detailedMarketAnalysis =
     productData.extendedContent?.detailedMarketAnalysis;
   const clubMarketAnalysis = detailedMarketAnalysis as
@@ -77,14 +81,7 @@ const MarketTab: React.FC<MarketTabProps> = ({ productData }) => {
   const isClubMarketSheet = !!clubMarketAnalysis?.isClubMarket;
 
   // Snag360-specific format detection
-  const isSnag360Format =
-    productData.name === "Snag 360" ||
-    !!detailedMarketAnalysis?.topIndustries?.some(
-      (ind) => ind.buyReason || ind.scale || ind.decisionMaker || ind.dealSize
-    ) ||
-    !!detailedMarketAnalysis?.competitors?.some(
-      (comp) => comp.sovereignty || comp.segment
-    );
+  const isSnag360Format = productData.name === "Snag 360";
 
   return (
     <>

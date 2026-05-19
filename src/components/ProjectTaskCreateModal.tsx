@@ -1141,7 +1141,11 @@ const TaskForm = ({
                 return (
                   <div
                     key={idx}
-                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-white hover:shadow-sm transition-shadow"
+                    className="flex items-center justify-between p-3 rounded-lg border border-gray-200 bg-white hover:shadow-sm transition-shadow cursor-pointer"
+                    onClick={() => {
+                      const url = URL.createObjectURL(file);
+                      window.open(url, "_blank");
+                    }}
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div
@@ -1171,7 +1175,8 @@ const TaskForm = ({
 
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setAttachments(attachments.filter((_, i) => i !== idx));
                       }}
                       disabled={isReadOnly}
@@ -1233,12 +1238,35 @@ const ProjectTaskCreateModal = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalWorkingHours, setTotalWorkingHours] = useState(0);
   const [dateWiseHours, setDateWiseHours] = useState([]);
-  const [startDate, setStartDate] = useState(null);
   const [recurringData, setRecurringData] = useState(null);
   const [isRecurring, setIsRecurring] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isTagModalOpen, setIsTagModalOpen] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [startDate, setStartDate] = useState(() => {
+    const startDate = prefillData?.start_date;
+    if (!startDate) return null;
+
+    if (typeof startDate === "string") {
+      // Handle YYYY-MM-DD format manually to avoid timezone issues
+      const parts = startDate.split("-");
+      if (parts.length === 3) {
+        return {
+          year: parseInt(parts[0], 10),
+          month: parseInt(parts[1], 10) - 1,
+          date: parseInt(parts[2], 10),
+        };
+      }
+
+      const date = new Date(startDate);
+      return {
+        date: date.getDate(),
+        month: date.getMonth(),
+        year: date.getFullYear(),
+      };
+    }
+    return startDate;
+  });
   const [endDate, setEndDate] = useState(() => {
     const targetDate = prefillData?.target_date;
     if (!targetDate) return null;
@@ -1294,7 +1322,7 @@ const ProjectTaskCreateModal = ({
 
   const getTags = async () => {
     try {
-      const response = await dispatch(fetchProjectsTags()).unwrap();
+      const response = await dispatch(fetchProjectsTags({ active: true })).unwrap();
       setTags(response);
     } catch (error) {
       console.log(error);
@@ -1440,13 +1468,30 @@ const ProjectTaskCreateModal = ({
     formDatatoSend.append("task_management[milestone_id]", mid || formData.milestone);
     formDatatoSend.append("task_management[active]", "true");
     formDatatoSend.append("task_management[estimated_hour]", totalWorkingHours.toString());
-    dateWiseHours.forEach((item, index) => {
+
+    // Build task allocation times attributes with proper structure
+    let taskAllocationTimesAttributes: any[] = [];
+    if (Array.isArray(dateWiseHours) && dateWiseHours.length > 0) {
+      taskAllocationTimesAttributes = dateWiseHours.map((item) => ({
+        date: item.date,
+        hours: item.hours,
+        minutes: item.minutes || 0,
+        id: item.id || null,
+        _destroy: false,
+      }));
+    }
+
+    // Append allocation times
+    taskAllocationTimesAttributes.forEach((item, index) => {
       if (item.id) {
         formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][id]`, item.id);
       }
       formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][date]`, item.date);
       formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][hours]`, item.hours);
+      formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][minutes]`, item.minutes);
+      formDatatoSend.append(`task_management[task_allocation_times_attributes][${index}][_destroy]`, item._destroy);
     });
+
     if (opportunityId) {
       formDatatoSend.append("task_management[opportunity_id]", opportunityId);
     }

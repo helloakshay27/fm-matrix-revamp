@@ -3,7 +3,11 @@
 // ─────────────────────────────────────────────
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import Axios from "axios";
-import { BookOpen, Plus, BarChart3 } from "lucide-react";
+import {
+  BookOpen, Plus, BarChart3,
+  Archive, AlertTriangle, Clock, Settings2, HelpCircle,
+  TrendingUp, Loader2, Activity,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -2195,15 +2199,21 @@ const KPI = () => {
     await loadHistoryKpis();
   };
 
-  const { totalKPIs, onTargetCount, atRiskCount } = useMemo(() => {
+  const { totalKPIs, onTargetCount, atRiskCount, offTargetCount } = useMemo(() => {
     const onTargetCount = kpis.filter((k) => k.status === "on-target").length;
     const atRiskCount = kpis.filter((k) => k.status === "at-risk").length;
-    return { totalKPIs: kpis.length, onTargetCount, atRiskCount };
+    const offTargetCount = kpis.filter((k) => k.status === "off-target").length;
+    return { totalKPIs: kpis.length, onTargetCount, atRiskCount, offTargetCount };
   }, [kpis]);
 
   // ─────────────────────────────────────────────
-  // RENDER — new design matching BhagSection / BusinessPlan
+  // RENDER
   // ─────────────────────────────────────────────
+
+  const onTargetPct  = totalKPIs > 0 ? Math.round((onTargetCount  / totalKPIs) * 100) : 0;
+  const atRiskPct    = totalKPIs > 0 ? Math.round((atRiskCount    / totalKPIs) * 100) : 0;
+  const offTargetPct = totalKPIs > 0 ? Math.round((offTargetCount / totalKPIs) * 100) : 0;
+
   return (
     <div
       style={{
@@ -2212,10 +2222,343 @@ const KPI = () => {
         color: T.textMain,
         fontFamily: T.font,
         padding: "24px 16px",
+        boxSizing: "border-box",
       }}
     >
-      {/* Global font import */}
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap'); * { font-family: 'Poppins', sans-serif !important; }`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
+        *, *::before, *::after { box-sizing: border-box; }
+        * { font-family: 'Poppins', sans-serif !important; }
+
+        /* ── Layout ── */
+        .kpi-root-inner {
+          max-width: 1280px;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          gap: 22px;
+        }
+
+        /* ── Header banner ── */
+        .kpi-header-card {
+          background: ${T.cardBg};
+          border-radius: 18px;
+          border: 1px solid ${T.primaryBord};
+          padding: 0;
+          display: flex;
+          overflow: hidden;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+          position: relative;
+        }
+        .kpi-header-accent {
+          width: 5px;
+          flex-shrink: 0;
+          background: linear-gradient(180deg, ${T.primary} 0%, #e8956d 100%);
+          border-radius: 18px 0 0 18px;
+        }
+        .kpi-header-body {
+          flex: 1;
+          padding: 20px 24px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          flex-wrap: wrap;
+          min-width: 0;
+        }
+        .kpi-header-left {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          flex: 1;
+          min-width: 0;
+        }
+        .kpi-header-icon {
+          width: 52px;
+          height: 52px;
+          border-radius: 15px;
+          background: rgba(218,119,86,0.10);
+          border: 1.5px solid rgba(218,119,86,0.22);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          position: relative;
+        }
+        .kpi-header-icon::after {
+          content: '';
+          position: absolute;
+          inset: -3px;
+          border-radius: 18px;
+          border: 1px dashed rgba(218,119,86,0.20);
+          pointer-events: none;
+        }
+        .kpi-header-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          padding: 2px 8px;
+          border-radius: 20px;
+          background: rgba(218,119,86,0.08);
+          border: 1px solid rgba(218,119,86,0.20);
+          font-size: 10px;
+          font-weight: 700;
+          color: ${T.primary};
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          margin-top: 5px;
+        }
+        .kpi-header-actions {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .kpi-btn-ghost {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 9px 18px;
+          border-radius: 12px;
+          border: 1.5px solid ${T.primaryBord};
+          background: ${T.cardBg};
+          color: ${T.primary};
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          transition: background 0.15s, border-color 0.15s, transform 0.15s;
+          white-space: nowrap;
+        }
+        .kpi-btn-ghost:hover {
+          background: rgba(218,119,86,0.06);
+          border-color: rgba(218,119,86,0.40);
+          transform: translateY(-1px);
+        }
+        .kpi-btn-primary {
+          display: inline-flex;
+          align-items: center;
+          gap: 7px;
+          padding: 9px 22px;
+          border-radius: 12px;
+          border: none;
+          background: ${T.primary};
+          color: #fff;
+          font-size: 13px;
+          font-weight: 700;
+          cursor: pointer;
+          box-shadow: 0 3px 10px rgba(218,119,86,0.30);
+          transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+          white-space: nowrap;
+        }
+        .kpi-btn-primary:hover {
+          background: ${T.primaryHov};
+          transform: translateY(-1px);
+          box-shadow: 0 6px 18px rgba(218,119,86,0.36);
+        }
+
+        /* ── Section heading ── */
+        .kpi-section-label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 11px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.10em;
+          color: ${T.textMuted};
+          margin: 0;
+        }
+        .kpi-section-label::after {
+          content: '';
+          flex: 1;
+          height: 1px;
+          background: ${T.borderLgt};
+        }
+
+        /* ── Stat cards ── */
+        .kpi-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 14px;
+        }
+        .kpi-stat-card {
+          background: ${T.cardBg};
+          border-radius: 16px;
+          border: 1.5px solid ${T.primaryBord};
+          padding: 0;
+          overflow: hidden;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+          transition: transform 0.18s ease, box-shadow 0.18s ease;
+          display: flex;
+          flex-direction: column;
+        }
+        .kpi-stat-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 10px 28px rgba(0,0,0,0.10);
+        }
+        .kpi-stat-card-inner {
+          padding: 18px 20px 14px;
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          flex: 1;
+        }
+        .kpi-stat-icon {
+          width: 48px;
+          height: 48px;
+          border-radius: 13px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .kpi-stat-label {
+          font-size: 10px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          margin: 0 0 3px;
+        }
+        .kpi-stat-value {
+          font-size: 34px;
+          font-weight: 900;
+          margin: 0;
+          line-height: 1;
+        }
+        .kpi-stat-sub {
+          font-size: 10px;
+          font-weight: 600;
+          margin: 4px 0 0;
+        }
+        .kpi-stat-bar-wrap {
+          height: 4px;
+          width: 100%;
+          background: rgba(0,0,0,0.06);
+          border-radius: 0 0 16px 16px;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        .kpi-stat-bar {
+          height: 100%;
+          border-radius: 0 2px 2px 0;
+          transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* ── Skeleton ── */
+        .kpi-skeleton {
+          background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+          background-size: 200% 100%;
+          animation: kpi-shimmer 1.4s infinite;
+          border-radius: 10px;
+        }
+        @keyframes kpi-shimmer {
+          0%  { background-position: 200% 0; }
+          100%{ background-position: -200% 0; }
+        }
+
+        /* ── Summary strip ── */
+        .kpi-summary-strip {
+          background: ${T.cardBg};
+          border: 1px solid ${T.primaryBord};
+          border-radius: 14px;
+          padding: 14px 20px;
+          display: flex;
+          align-items: center;
+          gap: 0;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+          overflow: hidden;
+        }
+        .kpi-summary-item {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 2px;
+          padding: 0 12px;
+          text-align: center;
+          min-width: 0;
+        }
+        .kpi-summary-divider {
+          width: 1px;
+          height: 36px;
+          background: ${T.borderLgt};
+          flex-shrink: 0;
+        }
+        .kpi-health-bar-bg {
+          width: 100%;
+          height: 6px;
+          border-radius: 99px;
+          background: #f3f4f6;
+          overflow: hidden;
+          margin-top: 10px;
+        }
+        .kpi-health-bar-fill {
+          height: 100%;
+          border-radius: 99px;
+          background: linear-gradient(90deg, #22c55e 0%, #86efac 100%);
+          transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        /* ── Tab bar ── */
+        .kpi-tab-bar {
+          background: ${T.cardBg};
+          border-radius: 14px;
+          border: 1px solid ${T.primaryBord};
+          padding: 5px 6px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+        .kpi-tab-bar::-webkit-scrollbar { display: none; }
+        .kpi-tab-count {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-width: 18px;
+          height: 18px;
+          border-radius: 99px;
+          font-size: 10px;
+          font-weight: 800;
+          padding: 0 5px;
+          margin-left: 4px;
+          background: rgba(218,119,86,0.12);
+          color: ${T.primary};
+          transition: background 0.15s, color 0.15s;
+        }
+        [data-state="active"] .kpi-tab-count {
+          background: rgba(255,255,255,0.22);
+          color: #fff;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 1024px) {
+          .kpi-stats-grid { grid-template-columns: repeat(2, 1fr); }
+          .kpi-summary-strip { flex-wrap: wrap; gap: 10px; }
+          .kpi-summary-divider { display: none; }
+          .kpi-summary-item { flex: 0 0 calc(50% - 12px); align-items: flex-start; }
+        }
+        @media (max-width: 640px) {
+          .kpi-root-inner { gap: 14px; }
+          .kpi-header-body { padding: 16px 18px; gap: 14px; }
+          .kpi-header-left { gap: 10px; }
+          .kpi-header-icon { width: 44px; height: 44px; border-radius: 12px; }
+          .kpi-header-actions { width: 100%; justify-content: flex-start; }
+          .kpi-btn-ghost, .kpi-btn-primary { flex: 1; justify-content: center; padding: 9px 12px; font-size: 12px; }
+          .kpi-stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+          .kpi-stat-card-inner { padding: 14px 14px 10px; gap: 10px; }
+          .kpi-stat-icon { width: 40px; height: 40px; border-radius: 11px; }
+          .kpi-stat-value { font-size: 26px; }
+          .kpi-summary-strip { padding: 12px 14px; }
+          .kpi-summary-item { flex: 0 0 100%; align-items: flex-start; padding: 0; }
+        }
+        @media (max-width: 380px) {
+          .kpi-stat-card-inner { padding: 12px; gap: 8px; }
+          .kpi-stat-icon { width: 36px; height: 36px; }
+          .kpi-stat-value { font-size: 22px; }
+        }
+      `}</style>
 
       <CreateKPIDialog
         open={createKpiOpen}
@@ -2237,391 +2580,242 @@ const KPI = () => {
         onSubmit={handleUpdateKpi}
       />
 
-      <div
-        style={{
-          maxWidth: 1280,
-          margin: "0 auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: 24,
-        }}
-      >
-        {/* ── Header (icon/logo like FeedbackDashboard.tsx) ── */}
-        <header
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 6,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 14,
-            }}
-          >
-            <div
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 999,
-                border: "2px solid #DA7756",
-                background: "rgba(218,119,86,0.12)",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <BarChart3 size={24} color={T.primary} strokeWidth={2} aria-hidden />
+      <div className="kpi-root-inner">
+
+        {/* ── HEADER ── */}
+        <div className="kpi-header-card">
+          <div className="kpi-header-accent" />
+          <div className="kpi-header-body">
+            <div className="kpi-header-left">
+              <div className="kpi-header-icon">
+                <BarChart3 size={24} color={T.primary} strokeWidth={2} aria-hidden />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                  <h1 style={{ fontSize: 20, fontWeight: 900, color: T.textMain, margin: 0, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+                    KPI Dashboard
+                  </h1>
+                  {isLoading ? (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, color: T.textMuted, background: "#f3f4f6", borderRadius: 20, padding: "2px 8px" }}>
+                      <Loader2 size={10} style={{ animation: "kpi-spin 0.8s linear infinite" }} /> Syncing…
+                    </span>
+                  ) : (
+                    <span className="kpi-header-badge">
+                      <Activity size={9} /> Live
+                    </span>
+                  )}
+                </div>
+                <p style={{ margin: "3px 0 0", fontSize: 12, color: T.textMuted, fontWeight: 500 }}>
+                  Monitor and manage your key performance indicators
+                </p>
+              </div>
             </div>
-            <div>
-              <h1
-                style={{
-                  fontSize: 28,
-                  fontWeight: 900,
-                  letterSpacing: "-0.02em",
-                  color: "#111",
-                  margin: 0,
-                  lineHeight: 1.2,
-                }}
-              >
-                KPIs
-              </h1>
-              <p
-                style={{
-                  marginTop: 6,
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: T.textMuted,
-                }}
-              >
-                Monitor and manage performance metrics
-              </p>
+            <div className="kpi-header-actions">
+              <button className="kpi-btn-ghost" onClick={() => setActiveTab("KPI Guide")}>
+                <HelpCircle size={14} />
+                KPI Guide
+              </button>
+              <button className="kpi-btn-primary" onClick={() => setCreateKpiOpen(true)}>
+                <Plus size={14} />
+                New KPI
+              </button>
             </div>
-          </div>
-        </header>
-
-        {/* ── Action Bar (tinted panel) ── */}
-        <div
-          style={{
-            borderRadius: 20,
-            overflow: "hidden",
-            border: `1px solid ${T.primaryBord}`,
-            background: `rgba(218,119,86,0.10)`,
-            boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
-            padding: "28px 32px",
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 20,
-          }}
-        >
-          <div>
-            <p
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: T.textMuted,
-                margin: 0,
-              }}
-            >
-              Quick actions
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              flexWrap: "wrap",
-            }}
-          >
-            {/* KPI Guide button — ghost style */}
-            <button
-              onClick={() => setActiveTab("KPI Guide")}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "10px 20px",
-                borderRadius: 14,
-                border: `1px solid ${T.primaryBord}`,
-                background: T.cardBg,
-                color: T.primary,
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer",
-                boxShadow: "0 1px 3px rgba(0,0,0,0.07)",
-                transition: "all 0.15s",
-                fontFamily: T.font,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = T.primaryBg;
-                e.currentTarget.style.borderColor = T.primaryBordStr;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = T.cardBg;
-                e.currentTarget.style.borderColor = T.primaryBord;
-              }}
-            >
-              <BookOpen size={15} />
-              KPI Guide
-            </button>
-
-            {/* New KPI button — filled */}
-            <button
-              onClick={() => setCreateKpiOpen(true)}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "10px 24px",
-                borderRadius: 14,
-                border: "none",
-                background: T.primary,
-                color: "#fff",
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer",
-                boxShadow: "0 2px 8px rgba(218,119,86,0.30)",
-                transition: "background 0.15s",
-                fontFamily: T.font,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = T.primaryHov;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = T.primary;
-              }}
-            >
-              <Plus size={15} />
-              New KPI
-            </button>
           </div>
         </div>
 
-        {/* ── STAT CARDS — styled like BhagSection card style ── */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-            gap: 16,
-          }}
-        >
+        {/* ── SECTION LABEL ── */}
+        <p className="kpi-section-label">
+          <TrendingUp size={11} />
+          Performance Overview
+        </p>
+
+        {/* ── STAT CARDS ── */}
+        <div className="kpi-stats-grid">
+
           {/* Total KPIs */}
-          <div
-            style={{
-              background: T.cardBg,
-              borderRadius: 20,
-              border: `1px solid ${T.primaryBord}`,
-              borderTop: `4px solid ${T.primary}`,
-              padding: "20px 22px",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-            }}
-          >
-            <div>
-              <p
-                style={{
-                  fontSize: 11,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  color: T.textMuted,
-                  marginBottom: 6,
-                }}
-              >
-                Total KPIs
-              </p>
-              <p
-                style={{
-                  fontSize: 36,
-                  fontWeight: 900,
-                  color: T.textMain,
-                  margin: 0,
-                  lineHeight: 1,
-                }}
-              >
-                {totalKPIs}
-              </p>
+          {isLoading ? (
+            <div className="kpi-stat-card" style={{ border: `1.5px solid ${T.primaryBord}` }}>
+              <div className="kpi-stat-card-inner" style={{ gap: 14 }}>
+                <div className="kpi-skeleton kpi-stat-icon" style={{ background: undefined }} />
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div className="kpi-skeleton" style={{ height: 10, width: "55%", borderRadius: 6 }} />
+                  <div className="kpi-skeleton" style={{ height: 28, width: "40%", borderRadius: 6 }} />
+                  <div className="kpi-skeleton" style={{ height: 8, width: "35%", borderRadius: 6 }} />
+                </div>
+              </div>
+              <div className="kpi-stat-bar-wrap"><div className="kpi-skeleton kpi-stat-bar" style={{ width: "60%", background: undefined }} /></div>
             </div>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: "50%",
-                background: `rgba(218,119,86,0.12)`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <BarChart3 size={22} color={T.primary} />
+          ) : (
+            <div className="kpi-stat-card">
+              <div className="kpi-stat-card-inner">
+                <div className="kpi-stat-icon" style={{ background: "rgba(218,119,86,0.10)", border: "1px solid rgba(218,119,86,0.18)" }}>
+                  <BarChart3 size={22} color={T.primary} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p className="kpi-stat-label" style={{ color: T.textMuted }}>Total KPIs</p>
+                  <p className="kpi-stat-value" style={{ color: T.textMain }}>{totalKPIs}</p>
+                  <p className="kpi-stat-sub" style={{ color: T.textMuted }}>All active metrics</p>
+                </div>
+              </div>
+              <div className="kpi-stat-bar-wrap">
+                <div className="kpi-stat-bar" style={{ width: "100%", background: `linear-gradient(90deg, ${T.primary}, #e8956d)` }} />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* On Target */}
-          <div
-            style={{
-              background: "#f0fdf4",
-              borderRadius: 20,
-              border: "1px solid rgba(134,239,172,0.5)",
-              borderTop: "4px solid #22c55e",
-              padding: "20px 22px",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-            }}
-          >
-            <div>
-              <p
-                style={{
-                  fontSize: 11,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  color: "#166534",
-                  marginBottom: 6,
-                }}
-              >
-                On Target
-              </p>
-              <p
-                style={{
-                  fontSize: 36,
-                  fontWeight: 900,
-                  color: "#14532d",
-                  margin: 0,
-                  lineHeight: 1,
-                }}
-              >
-                {onTargetCount}
-              </p>
+          {isLoading ? (
+            <div className="kpi-stat-card" style={{ background: "#f0fdf4", border: "1.5px solid rgba(134,239,172,0.45)" }}>
+              <div className="kpi-stat-card-inner" style={{ gap: 14 }}>
+                <div className="kpi-skeleton" style={{ width: 48, height: 48, borderRadius: 13, flexShrink: 0 }} />
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div className="kpi-skeleton" style={{ height: 10, width: "55%", borderRadius: 6 }} />
+                  <div className="kpi-skeleton" style={{ height: 28, width: "40%", borderRadius: 6 }} />
+                  <div className="kpi-skeleton" style={{ height: 8, width: "35%", borderRadius: 6 }} />
+                </div>
+              </div>
+              <div className="kpi-stat-bar-wrap"><div className="kpi-skeleton kpi-stat-bar" style={{ width: "60%", background: undefined }} /></div>
             </div>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: "50%",
-                background: "#dcfce7",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <span
-                style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: "50%",
-                  background: "#22c55e",
-                  display: "block",
-                }}
-              />
+          ) : (
+            <div className="kpi-stat-card" style={{ background: "#f0fdf4", border: "1.5px solid rgba(134,239,172,0.45)" }}>
+              <div className="kpi-stat-card-inner">
+                <div className="kpi-stat-icon" style={{ background: "#dcfce7", border: "1px solid rgba(74,222,128,0.28)" }}>
+                  <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden>
+                    <circle cx="11" cy="11" r="9" stroke="#22c55e" strokeWidth="2"/>
+                    <path d="M7 11.5l3 3 5-5" stroke="#22c55e" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p className="kpi-stat-label" style={{ color: "#166534" }}>On Target</p>
+                  <p className="kpi-stat-value" style={{ color: "#14532d" }}>{onTargetCount}</p>
+                  <p className="kpi-stat-sub" style={{ color: "#16a34a" }}>{onTargetPct}% of total</p>
+                </div>
+              </div>
+              <div className="kpi-stat-bar-wrap" style={{ background: "rgba(34,197,94,0.12)" }}>
+                <div className="kpi-stat-bar" style={{ width: `${onTargetPct}%`, background: "linear-gradient(90deg,#22c55e,#86efac)" }} />
+              </div>
             </div>
-          </div>
+          )}
 
           {/* At Risk */}
-          <div
-            style={{
-              background: "#fff1f2",
-              borderRadius: 20,
-              border: "1px solid rgba(252,165,165,0.5)",
-              borderTop: "4px solid #ef4444",
-              padding: "20px 22px",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.07)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
-            }}
-          >
-            <div>
-              <p
-                style={{
-                  fontSize: 11,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  color: "#991b1b",
-                  marginBottom: 6,
-                }}
-              >
-                At Risk
-              </p>
-              <p
-                style={{
-                  fontSize: 36,
-                  fontWeight: 900,
-                  color: "#7f1d1d",
-                  margin: 0,
-                  lineHeight: 1,
-                }}
-              >
-                {atRiskCount}
-              </p>
+          {isLoading ? (
+            <div className="kpi-stat-card" style={{ background: "#fffbeb", border: "1.5px solid rgba(253,224,71,0.45)" }}>
+              <div className="kpi-stat-card-inner" style={{ gap: 14 }}>
+                <div className="kpi-skeleton" style={{ width: 48, height: 48, borderRadius: 13, flexShrink: 0 }} />
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div className="kpi-skeleton" style={{ height: 10, width: "55%", borderRadius: 6 }} />
+                  <div className="kpi-skeleton" style={{ height: 28, width: "40%", borderRadius: 6 }} />
+                  <div className="kpi-skeleton" style={{ height: 8, width: "35%", borderRadius: 6 }} />
+                </div>
+              </div>
+              <div className="kpi-stat-bar-wrap"><div className="kpi-skeleton kpi-stat-bar" style={{ width: "40%", background: undefined }} /></div>
             </div>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: "50%",
-                background: "#fee2e2",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <span
-                style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: "50%",
-                  background: "#ef4444",
-                  display: "block",
-                }}
-              />
+          ) : (
+            <div className="kpi-stat-card" style={{ background: "#fffbeb", border: "1.5px solid rgba(253,224,71,0.45)" }}>
+              <div className="kpi-stat-card-inner">
+                <div className="kpi-stat-icon" style={{ background: "#fef9c3", border: "1px solid rgba(234,179,8,0.28)" }}>
+                  <AlertTriangle size={20} color="#eab308" strokeWidth={2} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p className="kpi-stat-label" style={{ color: "#854d0e" }}>At Risk</p>
+                  <p className="kpi-stat-value" style={{ color: "#713f12" }}>{atRiskCount}</p>
+                  <p className="kpi-stat-sub" style={{ color: "#ca8a04" }}>{atRiskPct}% of total</p>
+                </div>
+              </div>
+              <div className="kpi-stat-bar-wrap" style={{ background: "rgba(234,179,8,0.12)" }}>
+                <div className="kpi-stat-bar" style={{ width: `${atRiskPct}%`, background: "linear-gradient(90deg,#eab308,#fde047)" }} />
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Off Target */}
+          {isLoading ? (
+            <div className="kpi-stat-card" style={{ background: "#fff1f2", border: "1.5px solid rgba(252,165,165,0.45)" }}>
+              <div className="kpi-stat-card-inner" style={{ gap: 14 }}>
+                <div className="kpi-skeleton" style={{ width: 48, height: 48, borderRadius: 13, flexShrink: 0 }} />
+                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div className="kpi-skeleton" style={{ height: 10, width: "55%", borderRadius: 6 }} />
+                  <div className="kpi-skeleton" style={{ height: 28, width: "40%", borderRadius: 6 }} />
+                  <div className="kpi-skeleton" style={{ height: 8, width: "35%", borderRadius: 6 }} />
+                </div>
+              </div>
+              <div className="kpi-stat-bar-wrap"><div className="kpi-skeleton kpi-stat-bar" style={{ width: "20%", background: undefined }} /></div>
+            </div>
+          ) : (
+            <div className="kpi-stat-card" style={{ background: "#fff1f2", border: "1.5px solid rgba(252,165,165,0.45)" }}>
+              <div className="kpi-stat-card-inner">
+                <div className="kpi-stat-icon" style={{ background: "#fee2e2", border: "1px solid rgba(248,113,113,0.28)" }}>
+                  <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden>
+                    <circle cx="11" cy="11" r="9" stroke="#ef4444" strokeWidth="2"/>
+                    <path d="M8 8l6 6M14 8l-6 6" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p className="kpi-stat-label" style={{ color: "#991b1b" }}>Off Target</p>
+                  <p className="kpi-stat-value" style={{ color: "#7f1d1d" }}>{offTargetCount}</p>
+                  <p className="kpi-stat-sub" style={{ color: "#dc2626" }}>{offTargetPct}% of total</p>
+                </div>
+              </div>
+              <div className="kpi-stat-bar-wrap" style={{ background: "rgba(239,68,68,0.10)" }}>
+                <div className="kpi-stat-bar" style={{ width: `${offTargetPct}%`, background: "linear-gradient(90deg,#ef4444,#fca5a5)" }} />
+              </div>
+            </div>
+          )}
         </div>
 
+        {/* ── SECTION LABEL ── */}
+        <p className="kpi-section-label" style={{ marginTop: 2 }}>
+          <BookOpen size={11} />
+          Sections
+        </p>
+
+        {/* ── TABS ── */}
         <Tabs
           value={activeTab}
-          onValueChange={(v) =>
-            setActiveTab(v as (typeof tabs)[number]["name"])
-          }
+          onValueChange={(v) => setActiveTab(v as (typeof tabs)[number]["name"])}
           className="w-full"
         >
-          {/* Pill tabs — match Feedback.tsx */}
-          <TabsList className="inline-flex h-12 w-fit max-w-full items-center justify-start gap-2 overflow-x-auto rounded-full border border-[#DA7756]/20 bg-[#f6f4ee] px-2 shadow-sm">
-            {tabs.map(({ name }) => (
-              <TabsTrigger
-                key={name}
-                value={name}
-                className="h-9 rounded-full px-5 text-sm font-semibold text-neutral-500 transition-colors hover:text-neutral-700 data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm"
-              >
-                {name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+          <div className="kpi-tab-bar">
+            <TabsList className="flex h-auto w-full items-center justify-start gap-1 rounded-xl border-0 bg-transparent p-0 shadow-none [&>button]:flex-1 [&>button]:justify-center">
 
-          <div
-            style={{
-              background: T.pageBg,
-              borderRadius: 20,
-            }}
-          >
-            <TabsContent value="KPI Management" className="mt-6">
+              <TabsTrigger value="KPI Management" className="group h-9 whitespace-nowrap rounded-xl px-4 text-[13px] font-semibold text-neutral-500 transition-all hover:bg-[rgba(218,119,86,0.06)] hover:text-[#DA7756] data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm">
+                <BarChart3 size={13} style={{ marginRight: 5, display: "inline" }} />
+                KPI Management
+                <span className="kpi-tab-count">{kpis.length}</span>
+              </TabsTrigger>
+
+              <TabsTrigger value="Archived KPIs" className="group h-9 whitespace-nowrap rounded-xl px-4 text-[13px] font-semibold text-neutral-500 transition-all hover:bg-[rgba(218,119,86,0.06)] hover:text-[#DA7756] data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm">
+                <Archive size={13} style={{ marginRight: 5, display: "inline" }} />
+                Archived KPIs
+                {archivedKpis.length > 0 && <span className="kpi-tab-count">{archivedKpis.length}</span>}
+              </TabsTrigger>
+
+              <TabsTrigger value="Missed Entries" className="group h-9 whitespace-nowrap rounded-xl px-4 text-[13px] font-semibold text-neutral-500 transition-all hover:bg-[rgba(218,119,86,0.06)] hover:text-[#DA7756] data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm">
+                <AlertTriangle size={13} style={{ marginRight: 5, display: "inline" }} />
+                Missed Entries
+              </TabsTrigger>
+
+              <TabsTrigger value="KPI History" className="group h-9 whitespace-nowrap rounded-xl px-4 text-[13px] font-semibold text-neutral-500 transition-all hover:bg-[rgba(218,119,86,0.06)] hover:text-[#DA7756] data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm">
+                <Clock size={13} style={{ marginRight: 5, display: "inline" }} />
+                KPI History
+                {historyKpis.length > 0 && <span className="kpi-tab-count">{historyKpis.length}</span>}
+              </TabsTrigger>
+
+              <TabsTrigger value="Settings" className="group h-9 whitespace-nowrap rounded-xl px-4 text-[13px] font-semibold text-neutral-500 transition-all hover:bg-[rgba(218,119,86,0.06)] hover:text-[#DA7756] data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm">
+                <Settings2 size={13} style={{ marginRight: 5, display: "inline" }} />
+                Settings
+              </TabsTrigger>
+
+              <TabsTrigger value="KPI Guide" className="group h-9 whitespace-nowrap rounded-xl px-4 text-[13px] font-semibold text-neutral-500 transition-all hover:bg-[rgba(218,119,86,0.06)] hover:text-[#DA7756] data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm">
+                <HelpCircle size={13} style={{ marginRight: 5, display: "inline" }} />
+                KPI Guide
+              </TabsTrigger>
+
+            </TabsList>
+          </div>
+
+          <div style={{ marginTop: 8 }}>
+            <TabsContent value="KPI Management" className="mt-4">
               <KPIManagementTab
                 kpis={kpis}
                 setKpis={setKpis}
@@ -2633,21 +2827,21 @@ const KPI = () => {
                 departments={companyDepartments}
               />
             </TabsContent>
-            <TabsContent value="Archived KPIs" className="mt-6">
+            <TabsContent value="Archived KPIs" className="mt-4">
               <ArchivedKPIsTab
                 archived={archivedKpis}
                 onRestoreKpi={handleRestoreArchivedKpi}
                 onDeleteArchivedKpi={handleDeleteArchivedKpi}
               />
             </TabsContent>
-            <TabsContent value="Missed Entries" className="mt-6">
+            <TabsContent value="Missed Entries" className="mt-4">
               <MissedEntitiesTab
                 users={companyUsers}
                 departments={companyDepartments}
                 kpis={kpis.map((kpi) => ({ id: kpi.id, name: kpi.name }))}
               />
             </TabsContent>
-            <TabsContent value="KPI History" className="mt-6">
+            <TabsContent value="KPI History" className="mt-4">
               <KPIHistoryTab
                 users={companyUsers}
                 departments={companyDepartments}
@@ -2656,7 +2850,7 @@ const KPI = () => {
                 onDeleteSelected={handleDeleteSelectedHistory}
               />
             </TabsContent>
-            <TabsContent value="Settings" className="mt-6">
+            <TabsContent value="Settings" className="mt-4">
               <KPISettingsTab
                 units={kpiUnits}
                 isSaving={isSavingKpiUnits}
@@ -2665,7 +2859,7 @@ const KPI = () => {
                 onDeleteUnit={handleDeleteKpiUnit}
               />
             </TabsContent>
-            <TabsContent value="KPI Guide" className="mt-6">
+            <TabsContent value="KPI Guide" className="mt-4">
               <KPIGuideTab
                 onGoToManagement={() => setActiveTab("KPI Management")}
               />
@@ -2673,6 +2867,9 @@ const KPI = () => {
           </div>
         </Tabs>
       </div>
+
+      {/* Spin keyframe for loader */}
+      <style>{`@keyframes kpi-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

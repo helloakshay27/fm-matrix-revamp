@@ -47,12 +47,14 @@ const IssueFilterModal = ({
                     selectedAssignees: [],
                     selectedCreators: [],
                     selectedProjects: [],
+                    selectedTags: [],
                     dates: { startDate: "", endDate: "" },
                     statusSearch: "",
                     typeSearch: "",
                     assigneeSearch: "",
                     creatorSearch: "",
                     projectSearch: "",
+                    tagSearch: "",
                 };
         } catch (error) {
             console.error("Error parsing issueFilters from localStorage:", error);
@@ -63,12 +65,14 @@ const IssueFilterModal = ({
                 selectedAssignees: [],
                 selectedCreators: [],
                 selectedProjects: [],
+                selectedTags: [],
                 dates: { startDate: "", endDate: "" },
                 statusSearch: "",
                 typeSearch: "",
                 assigneeSearch: "",
                 creatorSearch: "",
                 projectSearch: "",
+                tagSearch: "",
             };
         }
     };
@@ -91,6 +95,9 @@ const IssueFilterModal = ({
     const [selectedProjects, setSelectedProjects] = useState(
         getInitialFilters().selectedProjects
     );
+    const [selectedTags, setSelectedTags] = useState(
+        getInitialFilters().selectedTags
+    );
     const [dates, setDates] = useState(getInitialFilters().dates);
     const [statusSearch, setStatusSearch] = useState(
         getInitialFilters().statusSearch
@@ -105,6 +112,10 @@ const IssueFilterModal = ({
     const [projectSearch, setProjectSearch] = useState(
         getInitialFilters().projectSearch
     );
+    const [tagSearch, setTagSearch] = useState(
+        getInitialFilters().tagSearch
+    );
+    const [tags, setTags] = useState<any[]>([]);
 
     // Save filters to localStorage
     useEffect(() => {
@@ -115,12 +126,14 @@ const IssueFilterModal = ({
             selectedAssignees,
             selectedCreators,
             selectedProjects,
+            selectedTags,
             dates,
             statusSearch,
             typeSearch,
             assigneeSearch,
             creatorSearch,
             projectSearch,
+            tagSearch,
         };
         if (
             selectedStatuses.length > 0 ||
@@ -129,11 +142,13 @@ const IssueFilterModal = ({
             selectedAssignees.length > 0 ||
             selectedCreators.length > 0 ||
             selectedProjects.length > 0 ||
+            selectedTags.length > 0 ||
             statusSearch ||
             typeSearch ||
             assigneeSearch ||
             creatorSearch ||
             projectSearch ||
+            tagSearch ||
             dates.startDate ||
             dates.endDate
         ) {
@@ -146,12 +161,14 @@ const IssueFilterModal = ({
         selectedAssignees,
         selectedCreators,
         selectedProjects,
+        selectedTags,
         dates,
         statusSearch,
         typeSearch,
         assigneeSearch,
         creatorSearch,
         projectSearch,
+        tagSearch,
     ]);
 
     // Dropdown open/close state
@@ -162,6 +179,7 @@ const IssueFilterModal = ({
         assignee: false,
         createdBy: false,
         project: false,
+        tags: false,
         startDate: false,
         endDate: false,
     });
@@ -181,6 +199,7 @@ const IssueFilterModal = ({
                 project: false,
                 startDate: false,
                 endDate: false,
+                tags: false,
                 [key]: true,
             };
         });
@@ -192,7 +211,7 @@ const IssueFilterModal = ({
         selected: string[],
         setSelected: (selected: string[]) => void
     ) => {
-        if (selected.includes(value)) {
+        if (selected?.includes(value)) {
             setSelected(selected.filter((v) => v !== value));
         } else {
             setSelected([...selected, value]);
@@ -213,8 +232,8 @@ const IssueFilterModal = ({
     ) => {
         const filtered = options.filter((opt) =>
             typeof opt === "string"
-                ? opt.toLowerCase().includes(searchTerm.toLowerCase())
-                : opt.label?.toLowerCase().includes(searchTerm?.toLowerCase())
+                ? opt.toLowerCase()?.includes(searchTerm.toLowerCase())
+                : opt.label?.toLowerCase()?.includes(searchTerm?.toLowerCase())
         );
 
         return (
@@ -231,7 +250,7 @@ const IssueFilterModal = ({
                             <div className="flex items-center gap-2">
                                 <input
                                     type="checkbox"
-                                    checked={selected.includes(value)}
+                                    checked={selected?.includes(value)}
                                     onChange={() => toggleOption(value, selected, setSelected)}
                                 />
                                 <span>{label}</span>
@@ -260,11 +279,13 @@ const IssueFilterModal = ({
         setSelectedAssignees([]);
         setSelectedCreators([]);
         setSelectedProjects([]);
+        setSelectedTags([]);
         setStatusSearch("");
         setTypeSearch("");
         setAssigneeSearch("");
         setCreatorSearch("");
         setProjectSearch("");
+        setTagSearch("");
         setDates({ startDate: "", endDate: "" });
         localStorage.removeItem("issueFilters");
 
@@ -276,6 +297,7 @@ const IssueFilterModal = ({
             "q[responsible_person_id_in][]": [],
             "q[created_by_id_in][]": [],
             "q[project_management_id_in][]": [],
+            "q[tags_id_in][]": [],
             "q[start_date_eq]": "",
             "q[end_date_eq]": "",
         };
@@ -302,6 +324,7 @@ const IssueFilterModal = ({
             "q[responsible_person_id_in][]": selectedAssignees,
             "q[created_by_id_in][]": selectedCreators,
             "q[project_management_id_in][]": selectedProjects,
+            "q[task_tags_company_tag_id_in][]": selectedTags,
             "q[start_date_eq]": dates.startDate || "",
             "q[end_date_eq]": dates.endDate || "",
         };
@@ -331,6 +354,40 @@ const IssueFilterModal = ({
             ? projects.map((project: any) => ({
                 label: project.title || project.project_code,
                 value: project.id,
+            }))
+            : [];
+
+    // Fetch tags
+    useEffect(() => {
+        const fetchTags = async () => {
+            try {
+                const response = await axios.get(
+                    `https://${baseUrl}/company_tags.json`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                const tagsList = response.data || [];
+                setTags(tagsList);
+            } catch (error) {
+                console.log("Error fetching tags:", error);
+                // If the endpoint doesn't exist, tags can be empty
+                setTags([]);
+            }
+        };
+
+        if (token && baseUrl) {
+            fetchTags();
+        }
+    }, [baseUrl, token]);
+
+    const tagOptions =
+        tags && tags.length > 0
+            ? tags.map((tag: any) => ({
+                label: tag.name || tag.label,
+                value: tag.id,
             }))
             : [];
 
@@ -492,6 +549,44 @@ const IssueFilterModal = ({
                                     selectedProjects,
                                     setSelectedProjects,
                                     projectSearch
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Tags Filter */}
+                    <div className="p-6 py-3">
+                        <div
+                            className="flex items-center justify-between cursor-pointer"
+                            onClick={() => toggleDropdown("tags")}
+                        >
+                            <span className="font-medium text-sm select-none">Tags</span>
+                            {dropdowns.tags ? (
+                                <ChevronDown className="text-gray-400" />
+                            ) : (
+                                <ChevronRight className="text-gray-400" />
+                            )}
+                        </div>
+                        {dropdowns.tags && (
+                            <div className="mt-4 border">
+                                <div className="relative border-b">
+                                    <Search
+                                        className="absolute left-3 top-2.5 text-red-400"
+                                        size={16}
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="Filter tags..."
+                                        className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
+                                        value={tagSearch}
+                                        onChange={(e) => setTagSearch(e.target.value)}
+                                    />
+                                </div>
+                                {renderCheckboxList(
+                                    tagOptions,
+                                    selectedTags,
+                                    setSelectedTags,
+                                    tagSearch
                                 )}
                             </div>
                         )}

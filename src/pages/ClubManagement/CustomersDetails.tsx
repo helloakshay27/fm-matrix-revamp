@@ -131,14 +131,14 @@ export const CustomersDetails = () => {
     const fetchCustomerDetails = async () => {
         setLoading(true);
         try {
-                // Use provided API endpoint
-                const apiUrl = `https://${baseUrl}/lock_account_customers/${id}.json`;
-                const response = await axios.get(apiUrl, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                });
-                setCustomerData(response.data);
+            // Use provided API endpoint
+            const apiUrl = `https://${baseUrl}/lock_account_customers/${id}.json`;
+            const response = await axios.get(apiUrl, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            setCustomerData(response.data);
         } catch (error) {
             console.error("Error fetching customer details:", error);
             toast.error("Failed to fetch customer details");
@@ -215,17 +215,11 @@ export const CustomersDetails = () => {
                                 <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
                                     Customer Details
                                 </h3>
-                                {/* <p className="text-sm text-gray-500">
-                                    {customerData.name || customerData.company_name}
-                                </p> */}
                             </div>
                         </div>
 
-                        {/* Customer Basic Information */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            {/* Left Column */}
                             <div className="space-y-4">
-                                {/* Customer Type */}
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">Customer Type</span>
                                     <span className="text-gray-500 mx-2">:</span>
@@ -234,7 +228,6 @@ export const CustomersDetails = () => {
                                     </span>
                                 </div>
 
-                                {/* Company Name */}
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">Company Name</span>
                                     <span className="text-gray-500 mx-2">:</span>
@@ -243,7 +236,6 @@ export const CustomersDetails = () => {
                                     </span>
                                 </div>
 
-                                {/* Display Name */}
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">Display Name</span>
                                     <span className="text-gray-500 mx-2">:</span>
@@ -252,7 +244,6 @@ export const CustomersDetails = () => {
                                     </span>
                                 </div>
 
-                                {/* First Name */}
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">First Name</span>
                                     <span className="text-gray-500 mx-2">:</span>
@@ -261,7 +252,6 @@ export const CustomersDetails = () => {
                                     </span>
                                 </div>
 
-                                {/* Last Name */}
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">Last Name</span>
                                     <span className="text-gray-500 mx-2">:</span>
@@ -270,7 +260,6 @@ export const CustomersDetails = () => {
                                     </span>
                                 </div>
 
-                                {/* PAN */}
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">PAN</span>
                                     <span className="text-gray-500 mx-2">:</span>
@@ -280,9 +269,7 @@ export const CustomersDetails = () => {
                                 </div>
                             </div>
 
-                            {/* Right Column */}
                             <div className="space-y-4">
-                                {/* Email */}
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">Email</span>
                                     <span className="text-gray-500 mx-2">:</span>
@@ -293,7 +280,6 @@ export const CustomersDetails = () => {
                                     </span>
                                 </div>
 
-                                {/* Work Phone */}
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">Work Phone</span>
                                     <span className="text-gray-500 mx-2">:</span>
@@ -302,7 +288,6 @@ export const CustomersDetails = () => {
                                     </span>
                                 </div>
 
-                                {/* Mobile */}
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">Mobile</span>
                                     <span className="text-gray-500 mx-2">:</span>
@@ -311,7 +296,6 @@ export const CustomersDetails = () => {
                                     </span>
                                 </div>
 
-                                {/* Language */}
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">Language</span>
                                     <span className="text-gray-500 mx-2">:</span>
@@ -320,7 +304,6 @@ export const CustomersDetails = () => {
                                     </span>
                                 </div>
 
-                                {/* Currency */}
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">Currency</span>
                                     <span className="text-gray-500 mx-2">:</span>
@@ -329,7 +312,6 @@ export const CustomersDetails = () => {
                                     </span>
                                 </div>
 
-                                {/* Account Receivable */}
                                 <div className="flex items-start">
                                     <span className="text-gray-500 min-w-[140px]">Account Receivable</span>
                                     <span className="text-gray-500 mx-2">:</span>
@@ -337,21 +319,10 @@ export const CustomersDetails = () => {
                                         {customerData.account_receivable || "-"}
                                     </span>
                                 </div>
-
-                                {/* Opening Balance */}
-                                <div className="flex items-start">
-                                    <span className="text-gray-500 min-w-[140px]">Opening Balance</span>
-                                    <span className="text-gray-500 mx-2">:</span>
-                                    <span className="text-gray-900 font-medium">
-                                        ₹ {Number(customerData.opening_balance || 0).toFixed(2)}
-                                    </span>
-                                </div>
                             </div>
                         </div>
 
-                        {/* Portal Access and Remarks */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4 pt-4 border-t">
-                            {/* Portal Access */}
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Portal Access</span>
                                 <span className="text-gray-500 mx-2">:</span>
@@ -360,7 +331,6 @@ export const CustomersDetails = () => {
                                 </span>
                             </div>
 
-                            {/* Created On */}
                             <div className="flex items-start">
                                 <span className="text-gray-500 min-w-[140px]">Created On</span>
                                 <span className="text-gray-500 mx-2">:</span>
@@ -372,7 +342,6 @@ export const CustomersDetails = () => {
                             </div>
                         </div>
 
-                        {/* Remarks */}
                         {customerData.remarks && (
                             <div className="mt-4 pt-4 border-t">
                                 <div className="flex items-start">
@@ -386,7 +355,52 @@ export const CustomersDetails = () => {
                         )}
                     </div>
 
-                    {/* Billing Address Section */}
+
+                    {customerData?.opening_balances && customerData?.opening_balances.length > 0 && (
+                        <div className="bg-white rounded-lg border-2 p-6">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                                    ₹
+                                </div>
+                                <h3 className="text-lg font-semibold text-[#1A1A1A]">
+                                    Opening Balances
+                                </h3>
+                            </div>
+
+                            <div className="overflow-x-auto">
+                                <table className="w-full border-separate border-spacing-y-1">
+                                    <thead>
+                                        <tr className="bg-[#E5E0D3] text-[#1A1A1A] text-sm">
+                                            <th className="px-3 py-2 text-left rounded-l-lg">Bill No</th>
+                                            <th className="px-3 py-2 text-left">Bill Date</th>
+                                            <th className="px-3 py-2 text-left">Due Date</th>
+                                            <th className="px-3 py-2 text-left rounded-r-lg">Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {customerData.opening_balances.map((item, idx) => (
+                                            <tr key={idx} className="bg-white text-sm border-t border-gray-200">
+                                                <td className="px-3 py-2">{item.bill_no || "-"}</td>
+                                                <td className="px-3 py-2">
+                                                    {item.date
+                                                        ? new Date(item.date).toLocaleDateString("en-GB")
+                                                        : "-"}
+                                                </td>
+                                                <td className="px-3 py-2">
+                                                    {item.due_date
+                                                        ? new Date(item.due_date).toLocaleDateString("en-GB")
+                                                        : "-"}
+                                                </td>
+                                                <td className="px-3 py-2 font-medium">
+                                                    ₹ {item.amount || 0}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                     {customerData.billing_address && (
                         <div className="bg-white rounded-lg border-2 p-6">
                             <div className="flex items-center gap-3 mb-6">
@@ -498,7 +512,6 @@ export const CustomersDetails = () => {
                         </div>
                     )}
 
-                    {/* Shipping Address Section */}
                     {customerData.shipping_address && (
                         <div className="bg-white rounded-lg border-2 p-6">
                             <div className="flex items-center gap-3 mb-6">
@@ -610,7 +623,6 @@ export const CustomersDetails = () => {
                         </div>
                     )}
 
-                    {/* Contact Persons Section */}
                     {customerData.contact_persons && customerData.contact_persons.length > 0 && (
                         <div className="bg-white rounded-lg border-2 p-6">
                             <div className="flex items-center gap-3 mb-6">

@@ -76,14 +76,14 @@ export const fetchGoals = async (): Promise<GoalsResponse> => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
     const protocol = baseUrl.startsWith("http") ? "" : "https://";
-    
+
     const response = await axios.get(
-      `${protocol}${baseUrl}/goals.json`,
+      `${protocol}${baseUrl}/goals.json?q[goal_category_eq]=strategic&q[status_not_eq]=achieved&per_page=5&page=1`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    
+
     return response.data;
   } catch (error) {
     console.error("Failed to fetch goals:", error);
@@ -94,14 +94,14 @@ export const fetchGoals = async (): Promise<GoalsResponse> => {
 export const fetchKRAs = async (email: string): Promise<KRAEvaluation[]> => {
   try {
     const token = localStorage.getItem("token");
-    
+
     const response = await axios.get(
       `https://life-api.lockated.com/kra_evaluations/by_email?email=${encodeURIComponent(email)}`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
     );
-    
+
     return response.data;
   } catch (error) {
     console.error("Failed to fetch KRAs:", error);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -98,6 +98,16 @@ interface Invoice {
     attachments?: Attachment[];
     approval_levels?: ApprovalLevel[];
     debit_notes?: DebitNote[];
+    external_api_calls?: ExternalApiCall[];
+}
+
+interface ExternalApiCall {
+    api_provider?: string;
+    response_status?: number | null;
+    message?: any;
+    date?: string;
+    eval_status?: string | null;
+    response_string?: any;
 }
 
 // Column configurations for tables
@@ -172,6 +182,8 @@ export const InvoiceDetails = () => {
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
     const [openDebitModal, setOpenDebitModal] = useState(false)
     const [printing, setPrinting] = useState(false)
+    const [showSapButton, setShowSapButton] = useState(false)
+    const [sapPushDisabled, setSapPushDisabled] = useState(false)
     const [debitCreditForm, setDebitCreditForm] = useState({
         type: "",
         amount: "",
@@ -184,6 +196,7 @@ export const InvoiceDetails = () => {
                 getInvoiceById({ baseUrl, token, id })
             ).unwrap();
             setInvoice(response);
+            setShowSapButton((response as any).show_send_sap_yes === true);
         } catch (error) {
             console.error("Error fetching invoice:", error);
             toast.error(String(error) || "Failed to fetch invoice");
@@ -195,6 +208,33 @@ export const InvoiceDetails = () => {
             fetchData();
         }
     }, [dispatch, baseUrl, token, id]);
+
+    const handleSendToSap = useCallback(async () => {
+        if (!baseUrl || !token || !id) {
+            toast.error("Missing required configuration");
+            return;
+        }
+        setSapPushDisabled(true);
+        try {
+            const response = await axios.get<{ message: string }>(
+                `https://${baseUrl}/pms/work_order_invoices/${id}.json?send_sap=yes`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            toast.success(response.data.message || "Sent to SAP successfully");
+
+            // Wait for server-side processing then refresh
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            await fetchData();
+        } catch (error: any) {
+            console.error("Send to SAP error:", error);
+            setSapPushDisabled(false);
+            toast.error(
+                error?.response?.data?.message ||
+                error.message ||
+                "Failed to send to SAP"
+            );
+        }
+    }, [id, baseUrl, token]);
 
     const handlePrint = async () => {
         setPrinting(true)
@@ -228,7 +268,7 @@ export const InvoiceDetails = () => {
         }
     };
 
-    const handleDebitCreditChange = (e) => {
+    const handleDebitCreditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setDebitCreditForm((prev) => ({ ...prev, [name]: value }));
     };
@@ -349,6 +389,17 @@ export const InvoiceDetails = () => {
                             </Button>
                         )
                     }
+                    {showSapButton && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                            onClick={handleSendToSap}
+                            disabled={sapPushDisabled}
+                        >
+                            Push To SAP
+                        </Button>
+                    )}
                     <Button
                         size="sm"
                         variant="outline"
@@ -737,6 +788,50 @@ export const InvoiceDetails = () => {
                     />
                 </div>
             </div>
+
+            {/* External API Calls */}
+            {(invoice as any)?.external_api_calls?.length > 0 && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
+                    <div className="flex items-center gap-3 pb-4">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
+                            <Rss className="w-4 h-4" />
+                        </div>
+                        <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">External API Calls</h3>
+                    </div>
+                    <div className="space-y-4">
+                        {(invoice as any).external_api_calls.map((apiCall: ExternalApiCall, idx: number) => (
+                            <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                                    <div>
+                                        <p className="text-xs text-gray-500 font-semibold mb-1">Provider</p>
+                                        <p className="text-sm font-medium">{apiCall.api_provider || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 font-semibold mb-1">Response Status</p>
+                                        <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'}`}>
+                                            {apiCall.response_status ?? '-'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-gray-500 font-semibold mb-1">Date</p>
+                                        <p className="text-sm font-medium">
+                                            {apiCall.date ? new Date(apiCall.date).toLocaleString() : '-'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 font-semibold mb-1">Message</p>
+                                    <pre className="text-sm bg-white p-2 rounded border border-gray-200 font-mono whitespace-pre-wrap break-words">
+                                        {typeof apiCall.message === 'object'
+                                            ? JSON.stringify(apiCall.message, null, 2)
+                                            : apiCall.message || '-'}
+                                    </pre>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {shouldShowButtons && (
                 <div className="flex items-center justify-center gap-4">

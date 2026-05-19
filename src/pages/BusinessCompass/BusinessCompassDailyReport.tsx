@@ -29,6 +29,9 @@ import {
   Edit,
   Trash2,
   Eye,
+  Pencil,
+  Play,
+  Pause,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -48,8 +51,12 @@ import { useTasks } from "@/hooks/useTasks";
 import { useIssues } from "@/hooks/useIssues";
 import { Dialog, DialogContent, Slide, Menu, MenuItem } from "@mui/material";
 import ProjectTaskCreateModal from "@/components/ProjectTaskCreateModal";
+import ProjectTaskEditModal from "@/components/ProjectTaskEditModal";
 import { TransitionProps } from "@mui/material/transitions";
 import AddIssueModal from "@/components/AddIssueModal";
+import EditIssueModal from "@/components/EditIssueModal";
+import AddToDoModal from "@/components/AddToDoModal";
+import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -130,6 +137,111 @@ interface AccomplishmentItem {
   fromYesterday?: boolean;
 }
 
+interface DailyReportDraft {
+  reportId?: number | null;
+  accomplishments?: AccomplishmentItem[];
+  planningItems?: { id: string; text: string; starred: boolean }[];
+  selfRating?: number[];
+  isAbsent?: boolean;
+  absenceReason?: string;
+  kpiEntries?: { [key: number]: string };
+  selectedTasksIssues?: { [key: string]: boolean };
+}
+
+interface ApplyDraftOptions {
+  allowEmptyLists?: boolean;
+}
+
+const cleanReportText = (value: unknown) =>
+  String(value ?? "")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<\/?[^>]+>/g, "")
+    .trim();
+
+const getReportItemText = (item: any) =>
+  cleanReportText(typeof item === "string" ? item : item?.title ?? item?.text);
+
+const getReportDateKey = (date: unknown) => cleanReportText(date).slice(0, 10);
+
+const getNonEmptyReportItems = (
+  items: any[] | { items?: any[] } | undefined | null
+) => {
+  const sourceItems = Array.isArray(items)
+    ? items
+    : Array.isArray(items?.items)
+      ? items.items
+      : [];
+
+  return sourceItems.filter((item) => getReportItemText(item) !== "");
+};
+
+const normalizeReportForUi = (report: DailyReport): DailyReport => {
+  if (!report?.report_data) return report;
+  const accomplishments = report.report_data.accomplishments as any;
+  const normalizedAccomplishments = accomplishments
+    ? {
+      ...(Array.isArray(accomplishments)
+        ? { attachments: [] }
+        : accomplishments),
+      items: getNonEmptyReportItems(accomplishments).map((item: any) => ({
+        ...(typeof item === "object" && item !== null ? item : {}),
+        title: getReportItemText(item),
+      })),
+    }
+    : accomplishments;
+
+  return {
+    ...report,
+    report_data: {
+      ...report.report_data,
+      accomplishments: normalizedAccomplishments,
+      tomorrow_plan: getNonEmptyReportItems(
+        report.report_data.tomorrow_plan
+      ).map((item: any) => ({
+        ...(typeof item === "object" && item !== null ? item : {}),
+        title: getReportItemText(item),
+      })),
+    },
+  };
+};
+
+const isReportBackedDraft = (draft: DailyReportDraft | null) =>
+  Boolean(draft?.reportId) ||
+  Boolean(
+    draft?.accomplishments?.some((item) =>
+      String(item.id).startsWith("fetched-")
+    )
+  ) ||
+  Boolean(
+    draft?.planningItems?.some((item) =>
+      String(item.id).startsWith("fetched-")
+    )
+  );
+
+const hasMeaningfulDraftData = (draft: DailyReportDraft | null) => {
+  if (!draft) return false;
+  const hasAccomplishments = getNonEmptyReportItems(draft.accomplishments).length > 0;
+  const hasPlanning = getNonEmptyReportItems(draft.planningItems).length > 0;
+  const hasKpis = Object.values(draft.kpiEntries ?? {}).some(
+    (value) => cleanReportText(value) !== ""
+  );
+  const hasSelectedTasks = Object.values(draft.selectedTasksIssues ?? {}).some(Boolean);
+  const hasCustomRating =
+    Array.isArray(draft.selfRating) && draft.selfRating.some((value) => value !== 2);
+
+  return (
+    hasAccomplishments ||
+    hasPlanning ||
+    hasKpis ||
+    hasSelectedTasks ||
+    hasCustomRating ||
+    draft.isAbsent === true ||
+    cleanReportText(draft.absenceReason) !== ""
+  );
+};
+
 const BusinessCompassDailyReport: React.FC = () => {
   const navigate = useNavigate();
   const now = new Date();
@@ -172,13 +284,32 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [openTaskModal, setOpenTaskModal] = useState(false);
   const [openIssueModal, setOpenIssueModal] = useState(false);
+  const [openTodoModal, setOpenTodoModal] = useState(false);
+  const [isEditTaskModalOpen, setIsEditTaskModalOpen] = useState(false);
+  const [editTaskData, setEditTaskData] = useState<any>(null);
+  const [isEditIssueModalOpen, setIsEditIssueModalOpen] = useState(false);
+  const [editIssueData, setEditIssueData] = useState<any>(null);
+  const [isEditTodoModalOpen, setIsEditTodoModalOpen] = useState(false);
+  const [editTodoData, setEditTodoData] = useState<any>(null);
   const [taskIssueMenuAnchor, setTaskIssueMenuAnchor] =
     useState<null | HTMLElement>(null);
+  const [planningMenuAnchor, setPlanningMenuAnchor] =
+    useState<null | HTMLElement>(null);
+  const [preFillDate, setPreFillDate] = useState<string | null>(null);
   const [showClosureModal, setShowClosureModal] = useState(false);
   const [closureItem, setClosureItem] = useState<any>(null);
   const [closureRemarks, setClosureRemarks] = useState("");
   const [closureAttachments, setClosureAttachments] = useState<any[]>([]);
   const [isClosureSubmitting, setIsClosureSubmitting] = useState(false);
+  const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
+  const [overdueItemId, setOverdueItemId] = useState<string | null>(null);
+  const [isOverdueLoading, setIsOverdueLoading] = useState(false);
+  const [overdueReason, setOverdueReason] = useState("");
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedTodo, setSelectedTodo] = useState<any>(null);
+  const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+  const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
+  const [isPauseLoading, setIsPauseLoading] = useState(false);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -193,6 +324,8 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
   const [hasMoreTasks, setHasMoreTasks] = useState(true);
   const [hasMoreIssues, setHasMoreIssues] = useState(true);
+  const [todosData, setTodosData] = useState<any>(null);
+  const [todosLoading, setTodosLoading] = useState(false);
 
   const user =
     typeof localStorage !== "undefined"
@@ -200,18 +333,187 @@ const BusinessCompassDailyReport: React.FC = () => {
       : {};
   const userId = user?.id;
 
+  // Fetch todos with same date and completed filter as tasks and issues
+
+  const fetchTasks = async () => {
+    if (!baseUrl || !token || !userId) return;
+
+    try {
+      // Reset pagination for fresh fetch
+      setCurrentTasksPage(1);
+      // Tasks are fetched via the useTasks hook with currentTasksPage
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+
+  const fetchIssues = async () => {
+    if (!baseUrl || !token || !userId) return;
+
+    try {
+      // Reset pagination for fresh fetch
+      setCurrentIssuesPage(1);
+      // Issues are fetched via the useIssues hook with currentIssuesPage
+    } catch (error) {
+      console.error("Error fetching issues:", error);
+    }
+  };
+
+  const fetchTodos = async () => {
+    if (!baseUrl || !token || !userId) return;
+
+    try {
+      setTodosLoading(true);
+      // Build query parameters for todos - filter by date and include both open and completed
+      const queryParams = new URLSearchParams();
+      queryParams.append("q[user_id_eq]", userId.toString());
+      queryParams.append("for_date", startDate);
+
+      const url = `https://${baseUrl}/todos.json?${queryParams.toString()}`;
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setTodosData(response.data);
+    } catch (error) {
+      console.error("Error fetching todos:", error);
+      setTodosData(null);
+    } finally {
+      setTodosLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTodos();
+  }, [startDate, baseUrl, token, userId]);
+
+  const buildDraftStorageKey = React.useCallback(
+    (date: string, draftUserId: string | number | null | undefined = userId) =>
+      `business-compass-daily-report-draft:${draftUserId || "guest"}:${date}`,
+    [userId]
+  );
+  const draftStorageKey = useMemo(
+    () => buildDraftStorageKey(startDate),
+    [buildDraftStorageKey, startDate]
+  );
+  const canPersistDraftRef = useRef(false);
+  const draftDirtyRef = useRef(false);
+  const deletedReportIdsRef = useRef<Set<number>>(new Set());
+  const deletedReportDatesRef = useRef<Set<string>>(new Set());
+
+  const markDraftDirty = React.useCallback(() => {
+    draftDirtyRef.current = true;
+    canPersistDraftRef.current = true;
+  }, []);
+
+  const getStoredDraft = React.useCallback(
+    (key = draftStorageKey): DailyReportDraft | null => {
+      try {
+        const rawDraft = localStorage.getItem(key);
+        return rawDraft ? JSON.parse(rawDraft) : null;
+      } catch {
+        return null;
+      }
+    },
+    [draftStorageKey]
+  );
+
+  const clearStoredDraft = React.useCallback((key = draftStorageKey) => {
+    localStorage.removeItem(key);
+  }, [draftStorageKey]);
+
+  const clearStoredDraftsForDate = React.useCallback(
+    (date: string) => {
+      const dateKey = getReportDateKey(date);
+      const draftPrefix = "business-compass-daily-report-draft:";
+
+      [
+        buildDraftStorageKey(dateKey),
+        buildDraftStorageKey(dateKey, userId),
+        buildDraftStorageKey(dateKey, "guest"),
+      ].forEach((key) => localStorage.removeItem(key));
+
+      for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+        const key = localStorage.key(i);
+        if (
+          key?.startsWith(draftPrefix) &&
+          getReportDateKey(key.split(":").pop()) === dateKey
+        ) {
+          localStorage.removeItem(key);
+        }
+      }
+    },
+    [buildDraftStorageKey, userId]
+  );
+
+  const isLocallyDeletedReport = React.useCallback((report: any) => {
+    const reportId = Number(report?.id);
+    const reportDate = getReportDateKey(report?.start_date);
+    return (
+      (Number.isFinite(reportId) && deletedReportIdsRef.current.has(reportId)) ||
+      (!!reportDate && deletedReportDatesRef.current.has(reportDate))
+    );
+  }, []);
+
+  const applyStoredDraft = React.useCallback((
+    draft: DailyReportDraft | null,
+    options: ApplyDraftOptions = {}
+  ) => {
+    if (!draft) return;
+    if (!hasMeaningfulDraftData(draft)) return;
+    const allowEmptyLists = options.allowEmptyLists ?? false;
+    if (Array.isArray(draft.accomplishments)) {
+      const cleanAccomplishments = draft.accomplishments
+        .filter((a) => cleanReportText(a.text) !== "")
+        .map((a) => ({ ...a, text: cleanReportText(a.text) }));
+      if (cleanAccomplishments.length || allowEmptyLists) {
+        setAccomplishments(cleanAccomplishments);
+      }
+    }
+    if (Array.isArray(draft.planningItems)) {
+      const cleanPlanningItems = draft.planningItems
+        .filter((p) => cleanReportText(p.text) !== "")
+        .map((p) => ({ ...p, text: cleanReportText(p.text) }));
+      if (cleanPlanningItems.length || allowEmptyLists) {
+        setPlanningItems(cleanPlanningItems);
+      }
+    }
+    if (Array.isArray(draft.selfRating)) setSelfRating(draft.selfRating);
+    if (typeof draft.isAbsent === "boolean") setIsAbsent(draft.isAbsent);
+    if (typeof draft.absenceReason === "string")
+      setAbsenceReason(draft.absenceReason);
+    if (draft.kpiEntries && typeof draft.kpiEntries === "object")
+      setKpiEntries(draft.kpiEntries);
+    if (
+      draft.selectedTasksIssues &&
+      typeof draft.selectedTasksIssues === "object"
+    ) {
+      setSelectedTasksIssues(draft.selectedTasksIssues);
+    }
+  }, []);
+
+  const applyDraftForMissingReport = React.useCallback(() => {
+    const draft = getStoredDraft();
+    if (!draft) return;
+    if (isReportBackedDraft(draft)) {
+      clearStoredDraft();
+      return;
+    }
+    applyStoredDraft(draft, { allowEmptyLists: true });
+  }, [applyStoredDraft, clearStoredDraft, getStoredDraft]);
+
   const myIssuesFilter = `
-  q[status_in][]=open
-  &q[status_in][]=overdued
-  &q[status_in][]=completed
+  for_date=${startDate}
   ${userId ? `&q[responsible_person_id_eq]=${userId}` : ""}
 `.replace(/\s+/g, "");
 
-  const { data: tasksData, isLoading: tasksLoading } = useTasks({
+  const { data: tasksData, isLoading: tasksLoading, refetch: refetchTasks } = useTasks({
     taskType: "my",
     page: currentTasksPage,
     filters: {
-      "q[start_date_or_target_date_eq]": startDate,
+      "for_date": startDate,
     },
   });
 
@@ -227,6 +529,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     const tasks =
       tasksData?.data?.task_managements || tasksData?.task_managements || [];
     const issues = issuesData?.issues || [];
+    const todos = todosData?.todos || [];
 
     const tasksPagination =
       tasksData?.data?.pagination || tasksData?.pagination;
@@ -257,11 +560,29 @@ const BusinessCompassDailyReport: React.FC = () => {
       originalData: issue,
     }));
 
-    const newData = [...transformedTasks, ...transformedIssues].sort(
-      (a, b) =>
-        new Date(b.created_at || 0).getTime() -
-        new Date(a.created_at || 0).getTime()
-    );
+    const transformedTodos = todos.map((todo: any) => ({
+      id: `todo-${todo.id}`,
+      title: todo.title,
+      type: "todo",
+      status: todo.status || "open",
+      priority: todo.priority || "Medium",
+      created_at: todo.created_at,
+      responsible: todo.user_id,
+      originalData: todo,
+    }));
+
+    const sortItems = (items: any[]) =>
+      items.sort((a, b) => {
+        const aOverdue = a.status === "overdue" ? 0 : 1;
+        const bOverdue = b.status === "overdue" ? 0 : 1;
+        if (aOverdue !== bOverdue) return aOverdue - bOverdue;
+        return (
+          new Date(b.created_at || 0).getTime() -
+          new Date(a.created_at || 0).getTime()
+        );
+      });
+
+    const newData = sortItems([...transformedTasks, ...transformedIssues, ...transformedTodos]);
 
     if (currentTasksPage === 1 && currentIssuesPage === 1) {
       setMergedTasksIssues(newData);
@@ -271,17 +592,12 @@ const BusinessCompassDailyReport: React.FC = () => {
         const uniqueNewData = newData.filter(
           (item) => !existingIds.has(item.id)
         );
-        const merged = [...prev, ...uniqueNewData].sort(
-          (a, b) =>
-            new Date(b.created_at || 0).getTime() -
-            new Date(a.created_at || 0).getTime()
-        );
-        return merged;
+        return sortItems([...prev, ...uniqueNewData]);
       });
     }
 
     setIsLoadingMore(false);
-  }, [tasksData, issuesData, currentTasksPage, currentIssuesPage]);
+  }, [tasksData, issuesData, todosData, currentTasksPage, currentIssuesPage]);
 
   useEffect(() => {
     const completedItems: { [key: string]: boolean } = {};
@@ -301,7 +617,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
       const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
 
-      if (isNearBottom && !isLoadingMore && !tasksLoading && !issuesLoading) {
+      if (isNearBottom && !isLoadingMore && !tasksLoading && !issuesLoading && !todosLoading) {
         setIsLoadingMore(true);
         if (hasMoreTasks) setCurrentTasksPage((prev) => prev + 1);
         if (hasMoreIssues) setCurrentIssuesPage((prev) => prev + 1);
@@ -311,7 +627,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [isLoadingMore, tasksLoading, issuesLoading, hasMoreTasks, hasMoreIssues]);
+  }, [isLoadingMore, tasksLoading, issuesLoading, todosLoading, hasMoreTasks, hasMoreIssues]);
 
   const taskIssueCounts = useMemo(() => {
     const completed = mergedTasksIssues.filter(
@@ -349,11 +665,17 @@ const BusinessCompassDailyReport: React.FC = () => {
       ...kpi,
       actual_value: kpiEntries[kpi.kpi_id] || 0,
     }));
+    const nonEmptyAccomplishments = accomplishments.filter(
+      (a) => cleanReportText(a.text) !== ""
+    );
+    const nonEmptyPlanningItems = planningItems.filter(
+      (p) => cleanReportText(p.text) !== ""
+    );
     return calculateLivePreviewScore(
       kpisWithActualValues,
-      accomplishments,
+      nonEmptyAccomplishments,
       mergedTasksIssues,
-      planningItems
+      nonEmptyPlanningItems
     );
   }, [kpis, kpiEntries, accomplishments, mergedTasksIssues, planningItems]);
 
@@ -411,6 +733,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const addAccomplishment = () => {
+    markDraftDirty();
     setAccomplishments([
       ...accomplishments,
       {
@@ -424,10 +747,12 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const removeAccomplishment = (id: string) => {
+    markDraftDirty();
     setAccomplishments(accomplishments.filter((a) => a.id !== id));
   };
 
   const toggleAccomplishment = (id: string) => {
+    markDraftDirty();
     setAccomplishments(
       accomplishments.map((a) =>
         a.id === id ? { ...a, completed: !a.completed } : a
@@ -436,6 +761,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const toggleStar = (id: string) => {
+    markDraftDirty();
     setAccomplishments(
       accomplishments.map((a) =>
         a.id === id ? { ...a, starred: !a.starred } : a
@@ -444,6 +770,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const addPlanningItem = () => {
+    markDraftDirty();
     setPlanningItems([
       ...planningItems,
       { id: Date.now().toString(), text: "", starred: false },
@@ -451,10 +778,12 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const removePlanningItem = (id: string) => {
+    markDraftDirty();
     setPlanningItems(planningItems.filter((p) => p.id !== id));
   };
 
   const togglePlanningStar = (id: string) => {
+    markDraftDirty();
     setPlanningItems(
       planningItems.map((p) =>
         p.id === id ? { ...p, starred: !p.starred } : p
@@ -463,18 +792,21 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const updatePlanningText = (id: string, text: string) => {
+    markDraftDirty();
     setPlanningItems(
       planningItems.map((p) => (p.id === id ? { ...p, text } : p))
     );
   };
 
   const updateAccomplishmentText = (id: string, text: string) => {
+    markDraftDirty();
     setAccomplishments(
       accomplishments.map((a) => (a.id === id ? { ...a, text } : a))
     );
   };
 
   const transferUncheckedToTomorrow = () => {
+    markDraftDirty();
     const unchecked = accomplishments.filter((a) => !a.completed);
     const newPlanItems = unchecked.map((a) => ({
       id: `transferred-${Date.now()}-${a.id}`,
@@ -493,6 +825,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   ) => {
     const files = event.target.files;
     if (!files) return;
+    markDraftDirty();
     const newFiles = await Promise.all(
       Array.from(files).map(async (file) => {
         const base64 = await new Promise<string>((resolve) => {
@@ -546,14 +879,16 @@ const BusinessCompassDailyReport: React.FC = () => {
     try {
       const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
       const isTask = closureItem.type === "task";
+      const isTodo = closureItem.type === "todo";
       const urlBase = `https://${baseUrl}`;
-      const realId = closureItem.id.replace("task-", "").replace("issue-", "");
+      const realId = closureItem.id.replace("task-", "").replace("issue-", "").replace("todo-", "");
 
       setMergedTasksIssues((prev) =>
         prev.map((item) =>
           item.id === closureItem.id ? { ...item, status: "completed" } : item
         )
       );
+      markDraftDirty();
       setSelectedTasksIssues((prev) => ({ ...prev, [closureItem.id]: true }));
 
       const formDataToSend = new FormData();
@@ -568,6 +903,12 @@ const BusinessCompassDailyReport: React.FC = () => {
         await axios.put(
           `${urlBase}/task_managements/${realId}.json`,
           formDataToSend,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else if (isTodo) {
+        // Handle todo completion
+        await axios.put(`${urlBase}/todos/${realId}.json`,
+          { todo: { status: "completed" } },
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
@@ -587,7 +928,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             comment: {
               body: `Closure Remarks: ${closureRemarks}`,
               commentable_id: realId,
-              commentable_type: isTask ? "TaskManagement" : "Issue",
+              commentable_type: isTask ? "TaskManagement" : isTodo ? "Todo" : "Issue",
               commentor_id: userId,
               active: true,
             },
@@ -616,6 +957,188 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   };
 
+  // Check if date is overdue
+  const isDateOverdue = (dateStr: string | undefined) => {
+    if (!dateStr) return false;
+    const itemDate = new Date(dateStr);
+    const today = new Date();
+    itemDate.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    return itemDate < today;
+  };
+
+  // Handle item completion with overdue check
+  const handleCompleteItem = async (item: any) => {
+    try {
+      const isTask = item.type === "task";
+      const isTodo = item.type === "todo";
+      const urlBase = `https://${baseUrl}`;
+      const realId = item.id.replace("task-", "").replace("issue-", "").replace("todo-", "");
+      const targetDate = item.originalData?.target_date || item.originalData?.due_date;
+
+      // Check if item is overdue
+      if (isDateOverdue(targetDate)) {
+        setOverdueItemId(item.id);
+        setIsOverdueModalOpen(true);
+        return;
+      }
+
+      // Item is not overdue, complete it directly
+      setMergedTasksIssues((prev) =>
+        prev.map((i) =>
+          i.id === item.id ? { ...i, status: "completed" } : i
+        )
+      );
+      setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
+
+      if (isTask) {
+        await axios.put(
+          `${urlBase}/task_managements/${realId}.json`,
+          { task_management: { status: "completed" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else if (isTodo) {
+        await axios.put(`${urlBase}/todos/${realId}.json`,
+          { todo: { status: "completed" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await axios.put(`${urlBase}/issues/${realId}.json`,
+          { issue: { status: "completed" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
+      toast.success(`${item.type.charAt(0).toUpperCase() + item.type.slice(1)} completed successfully`);
+    } catch (error) {
+      console.error("Error completing item:", error);
+      toast.error(`Failed to complete ${item.type}`);
+      // Revert the UI change
+      setMergedTasksIssues((prev) =>
+        prev.map((i) =>
+          i.id === item.id ? { ...i, status: item.status } : i
+        )
+      );
+    }
+  };
+
+  // Handle overdue reason submission
+  const handleOverdueReasonSubmit = async (reason: string) => {
+    if (!overdueItemId) return;
+
+    setIsOverdueLoading(true);
+    try {
+      const item = mergedTasksIssues.find(i => i.id === overdueItemId);
+      if (!item) return;
+
+      const isTask = item.type === "task";
+      const isTodo = item.type === "todo";
+      const urlBase = `https://${baseUrl}`;
+      const realId = item.id.replace("task-", "").replace("issue-", "").replace("todo-", "");
+      const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
+
+      // Complete the item
+      setMergedTasksIssues((prev) =>
+        prev.map((i) =>
+          i.id === item.id ? { ...i, status: "completed" } : i
+        )
+      );
+      setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
+
+      if (isTask) {
+        await axios.put(
+          `${urlBase}/task_managements/${realId}.json`,
+          { task_management: { status: "completed" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else if (isTodo) {
+        await axios.put(`${urlBase}/todos/${realId}.json`,
+          { todo: { status: "completed" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await axios.put(`${urlBase}/issues/${realId}.json`,
+          { issue: { status: "completed" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
+      // Save overdue reason as comment
+      await axios.post(
+        `${urlBase}/comments.json`,
+        {
+          comment: {
+            body: `Overdue reason: ${reason}`,
+            commentable_id: realId,
+            commentable_type: isTask ? "TaskManagement" : isTodo ? "Todo" : "Issue",
+            commentor_id: userId,
+            active: true,
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success(`${item.type.charAt(0).toUpperCase() + item.type.slice(1)} completed with overdue reason`);
+      setIsOverdueModalOpen(false);
+      setOverdueItemId(null);
+      setOverdueReason("");
+    } catch (error) {
+      console.error("Error submitting overdue reason:", error);
+      toast.error("Failed to complete item");
+    } finally {
+      setIsOverdueLoading(false);
+    }
+  };
+
+  const handlePlayTask = async (taskId: number) => {
+    try {
+      await axios.put(
+        `https://${baseUrl}/task_managements/${taskId}/update_status.json`,
+        { status: "started" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Task started successfully");
+      refetchTasks();
+    } catch (error) {
+      console.error("Failed to start task:", error);
+      toast.error("Failed to start task");
+    }
+  };
+
+  const handlePauseTaskSubmit = async (reason: string, taskId: number) => {
+    if (!taskId) return;
+    setIsPauseLoading(true);
+    try {
+      await axios.put(
+        `https://${baseUrl}/task_managements/${taskId}/update_status.json`,
+        { status: "stopped" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await axios.post(
+        `https://${baseUrl}/comments.json`,
+        {
+          comment: {
+            body: `Paused with reason: ${reason}`,
+            commentable_id: taskId,
+            commentable_type: "TaskManagement",
+            commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
+            active: true,
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Task paused successfully");
+      setIsPauseModalOpen(false);
+      setPauseTaskId(null);
+      refetchTasks();
+    } catch (error) {
+      console.error("Failed to pause task:", error);
+      toast.error(`Failed to pause task: ${error?.response?.data?.error || error?.message || "Server error"}`);
+    } finally {
+      setIsPauseLoading(false);
+    }
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -624,10 +1147,27 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("submit");
 
+  const resetReportFormState = React.useCallback(() => {
+    canPersistDraftRef.current = false;
+    draftDirtyRef.current = false;
+    setCurrentReportId(null);
+    setAccomplishments([]);
+    setPlanningItems([]);
+    setUploadedFiles([]);
+    setReportAttachments([]);
+    setSelectedTasksIssues({});
+    setKpiEntries({});
+    setIsAbsent(false);
+    setAbsenceReason("");
+    setSelfRating([2]);
+    setSubmitError(null);
+    setSubmitSuccess(false);
+  }, []);
+
   const [viewStartDate, setViewStartDate] = useState(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - 3);
+    d.setDate(d.getDate() - 6);
     return d;
   });
 
@@ -642,7 +1182,11 @@ const BusinessCompassDailyReport: React.FC = () => {
       const isPast = date.getTime() < today.getTime();
       const isFuture = date.getTime() > today.getTime();
       const isWeekend = date.getDay() === 0 || date.getDay() === 6;
-      const report = reportsList.find((r) => r.start_date === dateStr);
+      const report = reportsList.find(
+        (r) =>
+          getReportDateKey(r.start_date) === dateStr &&
+          !isLocallyDeletedReport(r)
+      );
       let type: "filled" | "missed" | "holiday" | "upcoming" = "upcoming";
       let status = "";
       if (report) {
@@ -672,7 +1216,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       date.setDate(date.getDate() + 1);
     }
     return result;
-  }, [viewStartDate, reportsList]);
+  }, [viewStartDate, reportsList, isLocallyDeletedReport]);
 
   const handlePrevWeek = () => {
     const newDate = new Date(viewStartDate);
@@ -687,8 +1231,13 @@ const BusinessCompassDailyReport: React.FC = () => {
   const handleNextWeek = () => {
     const newDate = new Date(viewStartDate);
     newDate.setDate(newDate.getDate() + 7);
-    setViewStartDate(newDate);
-    const midWeek = new Date(newDate);
+    const maxStartDate = new Date();
+    maxStartDate.setHours(0, 0, 0, 0);
+    maxStartDate.setDate(maxStartDate.getDate() - 6);
+    const nextStartDate =
+      newDate.getTime() > maxStartDate.getTime() ? maxStartDate : newDate;
+    setViewStartDate(nextStartDate);
+    const midWeek = new Date(nextStartDate);
     midWeek.setDate(midWeek.getDate() + 3);
     setSelectedMonth(midWeek.toLocaleString("default", { month: "long" }));
     setSelectedYear(midWeek.getFullYear().toString());
@@ -702,25 +1251,42 @@ const BusinessCompassDailyReport: React.FC = () => {
     );
     setSelectedYear(item.actualDate.getFullYear().toString());
 
-    const report = reportsList.find((r) => r.start_date === item.fullDate);
+    const selectedDateKey = getReportDateKey(item.fullDate);
+    if (deletedReportDatesRef.current.has(selectedDateKey)) {
+      clearStoredDraftsForDate(selectedDateKey);
+      resetReportFormState();
+      return;
+    }
+
+    const report = reportsList.find(
+      (r) =>
+        getReportDateKey(r.start_date) === selectedDateKey &&
+        !isLocallyDeletedReport(r)
+    );
 
     // Get previous day's plan regardless of if today's report exists
     const prevDate = new Date(item.actualDate);
     prevDate.setDate(prevDate.getDate() - 1);
     const prevDateStr = prevDate.toLocaleDateString("en-CA");
-    const prevReport = reportsList.find((r) => r.start_date === prevDateStr);
+    const prevReport = reportsList.find(
+      (r) =>
+        getReportDateKey(r.start_date) === getReportDateKey(prevDateStr) &&
+        !isLocallyDeletedReport(r)
+    );
 
     let carriedPlanItems: AccomplishmentItem[] = [];
-    if (prevReport?.report_data?.tomorrow_plan?.length) {
-      carriedPlanItems = prevReport.report_data.tomorrow_plan.map(
-        (p: any, idx: number) => ({
+    const previousPlanItems = getNonEmptyReportItems(
+      prevReport?.report_data?.tomorrow_plan
+    );
+    if (previousPlanItems.length) {
+      carriedPlanItems = previousPlanItems
+        .map((p: any, idx: number) => ({
           id: `carried-${idx}-${Date.now()}`,
-          text: p.title || "",
+          text: getReportItemText(p),
           completed: false,
           starred: false,
           fromYesterday: true,
-        })
-      );
+        }));
     }
 
     if (report && report.id) {
@@ -728,15 +1294,16 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       let currentAccomplishments: AccomplishmentItem[] = [];
       if (report.report_data?.accomplishments?.items) {
-        currentAccomplishments = report.report_data.accomplishments.items.map(
-          (ach: any, idx: number) => ({
+        currentAccomplishments = getNonEmptyReportItems(
+          report.report_data.accomplishments.items
+        )
+          .map((ach: any, idx: number) => ({
             id: `fetched-ach-${idx}`,
-            text: ach.title || "",
+            text: getReportItemText(ach),
             completed: true,
             starred: false,
             fromYesterday: false,
-          })
-        );
+          }));
       }
 
       // Merge existing accomplishments with carried items to prevent overwriting
@@ -757,11 +1324,12 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       if (report.report_data?.tomorrow_plan) {
         setPlanningItems(
-          report.report_data.tomorrow_plan.map((p: any, idx: number) => ({
-            id: `fetched-plan-${idx}`,
-            text: p.title || "",
-            starred: false,
-          }))
+          getNonEmptyReportItems(report.report_data.tomorrow_plan)
+            .map((p: any, idx: number) => ({
+              id: `fetched-plan-${idx}`,
+              text: getReportItemText(p),
+              starred: p.is_starred ?? false,
+            }))
         );
       } else {
         setPlanningItems([]);
@@ -816,12 +1384,67 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   }, [selectedDate, selectedMonth, selectedYear]);
 
+  // Get next day's date in YYYY-MM-DD format for APIs
+  const getNextDayDate = () => {
+    const nextDate = new Date(startDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    // Skip weekends for task/issue dates
+    if (nextDate.getDay() === 0) nextDate.setDate(nextDate.getDate() + 1);
+    return nextDate.toLocaleDateString("en-CA");
+  };
+
+  React.useEffect(() => {
+    canPersistDraftRef.current = false;
+    draftDirtyRef.current = false;
+  }, [draftStorageKey]);
+
+  React.useEffect(() => {
+    if (!draftDirtyRef.current) return;
+    if (!canPersistDraftRef.current) return;
+    const draft: DailyReportDraft = {
+      reportId: currentReportId,
+      accomplishments: accomplishments
+        .filter((item) => cleanReportText(item.text) !== "")
+        .map((item) => ({
+          ...item,
+          text: cleanReportText(item.text),
+        })),
+      planningItems: planningItems
+        .filter((item) => cleanReportText(item.text) !== "")
+        .map((item) => ({
+          ...item,
+          text: cleanReportText(item.text),
+        })),
+      selfRating,
+      isAbsent,
+      absenceReason,
+      kpiEntries,
+      selectedTasksIssues,
+    };
+    localStorage.setItem(draftStorageKey, JSON.stringify(draft));
+  }, [
+    accomplishments,
+    planningItems,
+    selfRating,
+    isAbsent,
+    absenceReason,
+    kpiEntries,
+    selectedTasksIssues,
+    draftStorageKey,
+    currentReportId,
+  ]);
+
   React.useEffect(() => {
     const fetchExistingReport = async () => {
       try {
+        canPersistDraftRef.current = false;
         const baseUrl = getBaseUrl() ?? "https://fm-uat-api.lockated.com";
         const token = getToken();
-        if (!token) return;
+        if (!token) {
+          applyStoredDraft(getStoredDraft(), { allowEmptyLists: true });
+          canPersistDraftRef.current = true;
+          return;
+        }
 
         // Safely extract year, month, and day to avoid Javascript Date UTC shift bugs
         const [year, month, day] = startDate.split("-");
@@ -870,19 +1493,23 @@ const BusinessCompassDailyReport: React.FC = () => {
             ? prevData
             : prevData.user_journals || [];
           const prevReport = prevJournals.find(
-            (j: any) => j.start_date === prevDateStr
+            (j: any) =>
+              getReportDateKey(j.start_date) === getReportDateKey(prevDateStr) &&
+              !isLocallyDeletedReport(j)
           );
 
-          if (prevReport?.report_data?.tomorrow_plan?.length) {
-            carriedPlanItems = prevReport.report_data.tomorrow_plan.map(
-              (p: any, idx: number) => ({
+          const previousPlanItems = getNonEmptyReportItems(
+            prevReport?.report_data?.tomorrow_plan
+          );
+          if (previousPlanItems.length) {
+            carriedPlanItems = previousPlanItems
+              .map((p: any, idx: number) => ({
                 id: `carried-${idx}-${Date.now()}`,
-                text: p.title || "",
+                text: getReportItemText(p),
                 completed: false,
                 starred: false,
                 fromYesterday: true,
-              })
-            );
+              }));
           }
         }
 
@@ -891,12 +1518,14 @@ const BusinessCompassDailyReport: React.FC = () => {
           const journals = Array.isArray(data)
             ? data
             : data.user_journals || [];
-          const existingReport = journals.find(
+          const existingReport = journals.map(normalizeReportForUi).find(
             (j: {
               id: number;
               start_date: string;
               report_data?: Record<string, unknown>;
-            }) => j.start_date === startDate
+            }) =>
+              getReportDateKey(j.start_date) === getReportDateKey(startDate) &&
+              !isLocallyDeletedReport(j)
           );
 
           if (existingReport?.id) {
@@ -906,15 +1535,16 @@ const BusinessCompassDailyReport: React.FC = () => {
 
               let currentAccomplishments: AccomplishmentItem[] = [];
               if (rData.accomplishments?.items) {
-                currentAccomplishments = rData.accomplishments.items.map(
-                  (ach: any, idx: number) => ({
+                currentAccomplishments = getNonEmptyReportItems(
+                  rData.accomplishments.items
+                )
+                  .map((ach: any, idx: number) => ({
                     id: `fetched-ach-${idx}`,
-                    text: ach.title || "",
+                    text: getReportItemText(ach),
                     completed: true,
                     starred: false,
                     fromYesterday: false,
-                  })
-                );
+                  }));
               }
 
               // Merge logic
@@ -934,11 +1564,12 @@ const BusinessCompassDailyReport: React.FC = () => {
               }
               if (rData.tomorrow_plan) {
                 setPlanningItems(
-                  rData.tomorrow_plan.map((p: any, idx: number) => ({
-                    id: `fetched-plan-${idx}`,
-                    text: p.title || "",
-                    starred: false,
-                  }))
+                  getNonEmptyReportItems(rData.tomorrow_plan)
+                    .map((p: any, idx: number) => ({
+                      id: `fetched-plan-${idx}`,
+                      text: getReportItemText(p),
+                      starred: p.is_starred ?? false,
+                    }))
                 );
               }
               if (rData.past_kpis) {
@@ -957,6 +1588,7 @@ const BusinessCompassDailyReport: React.FC = () => {
               if (existingReport.self_rating !== undefined)
                 setSelfRating([existingReport.self_rating]);
               setSelectedTasksIssues({});
+              applyStoredDraft(getStoredDraft());
             }
           } else {
             setCurrentReportId(null);
@@ -971,14 +1603,25 @@ const BusinessCompassDailyReport: React.FC = () => {
 
             // No report today, just apply carried items
             setAccomplishments(carriedPlanItems);
+            applyDraftForMissingReport();
           }
         }
       } catch (err) {
         console.error("Failed to fetch existing report:", err);
+        applyStoredDraft(getStoredDraft(), { allowEmptyLists: true });
+      } finally {
+        canPersistDraftRef.current = true;
       }
     };
     fetchExistingReport();
-  }, [startDate]);
+  }, [
+    startDate,
+    draftStorageKey,
+    getStoredDraft,
+    applyStoredDraft,
+    applyDraftForMissingReport,
+    isLocallyDeletedReport,
+  ]);
 
   const fetchReportsList = async () => {
     try {
@@ -1004,7 +1647,14 @@ const BusinessCompassDailyReport: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-      setReportsList(response.data || []);
+      const reports = Array.isArray(response.data)
+        ? response.data
+        : response.data?.user_journals || [];
+      setReportsList(
+        reports
+          .map(normalizeReportForUi)
+          .filter((report: DailyReport) => !isLocallyDeletedReport(report))
+      );
     } catch (err) {
       console.error("Failed to fetch reports history:", err);
     } finally {
@@ -1014,15 +1664,67 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   React.useEffect(() => {
     fetchReportsList();
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, isLocallyDeletedReport]);
 
   const handleSubmit = async () => {
     // Only completed items should count towards submitting successfully
-    const completedAccomplishments = accomplishments.filter(
-      (a) => a.completed && a.text.trim() !== ""
+    const accomplishmentItemsPayload = accomplishments
+      .filter((a) => a.completed)
+      .map((a) => ({
+        title: cleanReportText(a.text),
+        star: a.starred,
+      }))
+      .filter((a) => a.title !== "");
+    const manualTomorrowPlan = planningItems
+      .map((p) => ({
+        title: cleanReportText(p.text),
+        is_starred: p.starred,
+      }))
+      .filter((p) => p.title !== "");
+    const uncheckedAccomplishmentPlan = accomplishments
+      .filter((a) => !a.completed)
+      .map((a) => ({
+        title: cleanReportText(a.text),
+        is_starred: a.starred,
+      }))
+      .filter((p) => p.title !== "");
+    const tomorrowPlanPayload = [
+      ...manualTomorrowPlan,
+      ...uncheckedAccomplishmentPlan,
+    ]
+      .filter((item) => item.title.trim() !== "")
+      .filter((item, index, arr) => {
+        const key = item.title.toLowerCase();
+        return (
+          arr.findIndex(
+            (candidate) => candidate.title.toLowerCase() === key
+          ) === index
+        );
+      });
+    const finalPlanningItemsForScore = tomorrowPlanPayload.map((p, index) => ({
+      id: `submit-plan-${index}`,
+      text: p.title,
+      starred: p.is_starred,
+    }));
+    const finalAccomplishmentsForScore = accomplishmentItemsPayload.map(
+      (a, index) => ({
+        id: `submit-ach-${index}`,
+        text: a.title,
+        completed: true,
+        starred: a.star,
+      })
+    );
+    const finalDailyScore = calculateLivePreviewScore(
+      kpis.map((kpi) => ({
+        ...kpi,
+        actual_value: kpiEntries[kpi.kpi_id] || 0,
+      })),
+      finalAccomplishmentsForScore,
+      mergedTasksIssues,
+      finalPlanningItemsForScore
     );
 
-    if (!isAbsent && completedAccomplishments.length === 0) {
+    if (!isAbsent && accomplishmentItemsPayload.length === 0) {
       setSubmitError(
         "Please add and complete at least one accomplishment before submitting."
       );
@@ -1053,10 +1755,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           report_data: {
             accomplishments: {
               // Ensure we only save items that were actually completed!
-              items: completedAccomplishments.map((a) => ({
-                title: a.text,
-                star: a.starred,
-              })),
+              items: accomplishmentItemsPayload,
               attachments: uploadedFiles.map((f) => ({
                 filename: f.name,
                 content_type: f.type,
@@ -1072,8 +1771,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                   item.title ||
                   "",
                 status: "completed",
+                type: item.type,
               })),
-            tomorrow_plan: planningItems.map((p) => ({ title: p.text })),
+            tomorrow_plan: tomorrowPlanPayload,
             past_kpis: kpis.map((kpi) => ({
               kpi_id: kpi.kpi_id,
               actual_value: kpiEntries[kpi.kpi_id]
@@ -1082,6 +1782,16 @@ const BusinessCompassDailyReport: React.FC = () => {
               target_value: parseFloat(kpi.target_value),
               notes: kpi.kpi_name,
             })),
+            // Score snapshot — same pattern as WeeklyReports
+            score_override: true,
+            total_score: Math.round(finalDailyScore.totalScore),
+            sections: {
+              kpi_achievement: finalDailyScore.kpiScore,
+              accomplishments: finalDailyScore.accomplishmentsScore,
+              tasks_issues: finalDailyScore.tasksIssuesScore,
+              planning: finalDailyScore.planningScore,
+              timing: finalDailyScore.timingScore,
+            },
           },
         },
       };
@@ -1113,6 +1823,11 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       const data = response.data;
       if (!currentReportId && data.id) setCurrentReportId(data.id);
+      deletedReportDatesRef.current.delete(getReportDateKey(startDate));
+      if (data?.id) deletedReportIdsRef.current.delete(Number(data.id));
+      draftDirtyRef.current = false;
+      canPersistDraftRef.current = false;
+      clearStoredDraftsForDate(startDate);
       setSubmitSuccess(true);
       fetchReportsList();
       setTimeout(() => {
@@ -1132,10 +1847,13 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   };
 
+  const badgePoints =
+    "border-0 bg-[#DA7756] px-3 py-1 text-xs text-white hover:bg-[#DA7756]";
+
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins pb-20 text-[#1a1a1a]">
       {/* Interactive Info Banner Card */}
-      {isBannerVisible && (
+      {/* {isBannerVisible && (
         <Card
           className={cn(
             "bg-[#eff6ff] border-blue-200 rounded-[12px] shadow-sm overflow-hidden border transition-all duration-300",
@@ -1241,7 +1959,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             )}
           </CardContent>
         </Card>
-      )}
+      )} */}
 
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1268,7 +1986,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
           <TabsContent value="submit" className="space-y-6 mt-0">
             {/* Calendar Card */}
-            <Card className="rounded-[16px] border border-gray-200 shadow-sm overflow-hidden bg-[#DA7756]/15">
+            <Card className="rounded-[16px] border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm overflow-hidden">
               <CardContent className="p-8">
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-3">
@@ -1289,15 +2007,15 @@ const BusinessCompassDailyReport: React.FC = () => {
                       className={cn(
                         "min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 cursor-pointer border-2 transition-all shrink-0 snap-center shadow-sm relative group",
                         item.isFuture &&
-                          "opacity-40 grayscale cursor-not-allowed pointer-events-none",
+                        "opacity-40 grayscale cursor-not-allowed pointer-events-none",
                         item.type === "missed" &&
-                          "bg-[#ef4444] text-white border-[#ef4444]/20 hover:bg-[#dc2626]",
+                        "bg-[#ef4444] text-white border-[#ef4444]/20 hover:bg-[#dc2626]",
                         item.type === "holiday" &&
-                          "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 hover:bg-[#facc15]",
+                        "bg-[#facd55] text-[#854d0e] border-[#facd55]/20 hover:bg-[#facc15]",
                         item.type === "upcoming" &&
-                          "bg-[#f8fafc] text-[#94a3b8] border-gray-100 hover:bg-gray-100",
+                        "bg-[#f8fafc] text-[#94a3b8] border-gray-100 hover:bg-gray-100",
                         item.type === "filled" &&
-                          "bg-[#22c55e] text-white border-[#22c55e]/20 hover:bg-[#16a34a]",
+                        "bg-[#22c55e] text-white border-[#22c55e]/20 hover:bg-[#16a34a]",
                         selectedDate === item.date && !item.isFuture
                           ? "ring-4 ring-blue-500/20 scale-105 z-10 text-white"
                           : "border-transparent"
@@ -1318,7 +2036,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               ? "bg-white/20 text-white"
                               : "bg-black/10 text-[#854d0e]",
                             selectedDate === item.date &&
-                              "bg-white/20 text-white"
+                            "bg-white/20 text-white"
                           )}
                         >
                           {item.status}
@@ -1363,78 +2081,126 @@ const BusinessCompassDailyReport: React.FC = () => {
               <div className="space-y-6 animate-in fade-in duration-500">
                 {/* Daily KPIs Card */}
                 {kpis.length > 0 && (
-                  <Card className="rounded-[16px] border-2 border-[#f59e0b] overflow-hidden bg-white shadow-sm">
-                    <div className="bg-[#fffbeb] p-5 flex items-center justify-between border-b border-[#f59e0b]/10">
+                  <Card className="rounded-[16px] border border-[#DA7756]/20 bg-white overflow-hidden shadow-sm">
+                    <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
                       <div className="flex items-center gap-3">
-                        <div className="bg-white p-1 rounded-full border border-[#f59e0b]/30">
-                          <TrendingUp size={18} className="text-[#f59e0b]" />
-                        </div>
+                        {/* <div className="bg-[#fef6f4] p-1.5 rounded-full border border-[#DA7756]/25"> */}
+                        <TrendingUp className="h-5 w-5 text-[#DA7756]" />
+                        {/* </div> */}
                         <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
                           Daily KPIs
                         </h3>
                       </div>
+                      {/* Total KPI score badge */}
+                      <Badge className={badgePoints}>
+                        {dailyScore.kpiScore}/20 pts
+                      </Badge>
                     </div>
                     <CardContent className="p-6 space-y-4">
-                      {kpis.map((kpi) => (
-                        <div
-                          key={kpi.kpi_id}
-                          className="flex items-center gap-4 p-4 rounded-lg bg-[#fafafa] border border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="text-sm font-bold text-[#1a1a1a] truncate">
-                                {kpi.kpi_name}
-                              </h4>
-                              {!kpi.submitted && (
-                                <Badge className="bg-[#ef4444] text-white px-2 py-0.5 rounded-[4px] text-[10px] font-bold border-none shadow-sm whitespace-nowrap">
-                                  new
-                                </Badge>
-                              )}
+                      {kpis.map((kpi) => {
+                        const target = parseFloat(kpi.target_value) || 0;
+                        const actual = parseFloat(kpiEntries[kpi.kpi_id] || "0") || 0;
+                        const hasEntry = !!kpiEntries[kpi.kpi_id] && kpiEntries[kpi.kpi_id] !== "";
+
+                        let achievementPct = 0;
+                        if (target === 0 && actual > 0) {
+                          achievementPct = 100;
+                        } else if (target > 0) {
+                          achievementPct = Math.min((actual / target) * 100, 100);
+                        }
+
+                        // Points this KPI contributes out of 20 (equal share per KPI × achievement)
+                        const kpiPts = (20 / kpis.length) * (achievementPct / 100);
+
+                        const pctColor =
+                          achievementPct >= 100
+                            ? "bg-[#22c55e] text-white"
+                            : achievementPct >= 75
+                              ? "bg-[#84cc16] text-white"
+                              : achievementPct >= 50
+                                ? "bg-[#f59e0b] text-white"
+                                : "bg-[#ef4444] text-white";
+
+                        return (
+                          <div
+                            key={kpi.kpi_id}
+                            className="flex items-center gap-3 p-4 rounded-[10px] bg-[#fafafa] border border-[#f3f4f6] hover:bg-[#f9fafb] transition-colors"
+                          >
+                            {/* KPI name + meta */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="text-sm font-bold text-[#1a1a1a] truncate">
+                                  {kpi.kpi_name}
+                                </h4>
+                                {!kpi.submitted && (
+                                  <Badge className="bg-[#ef4444] text-white px-2 py-0.5 rounded-[4px] text-[10px] font-bold border-none shadow-sm whitespace-nowrap">
+                                    new
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2 text-xs text-gray-600">
+                                <span className="text-gray-400">•</span>
+                                <span className="text-gray-500">
+                                  {kpi.frequency_label}
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-gray-600">
-                              <span className="font-medium">
-                                Target: {kpi.unit} {kpi.target_value}
+
+                            {/* Target label */}
+                            <div className="flex flex-col items-center shrink-0">
+                              <span className="text-sm font-black text-[#6366f1]">
+                                {kpi.target_value}
                               </span>
-                              <span className="text-gray-400">•</span>
-                              <span className="text-gray-500">
-                                {kpi.frequency_label}
+                              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                Target
                               </span>
                             </div>
+
+                            {/* Actual input */}
+                            <div className="w-24 shrink-0">
+                              <input
+                                type="number"
+                                value={kpiEntries[kpi.kpi_id] || ""}
+                                onChange={(e) => {
+                                  markDraftDirty();
+                                  setKpiEntries((prev) => ({
+                                    ...prev,
+                                    [kpi.kpi_id]: e.target.value,
+                                  }));
+                                }}
+                                placeholder="0"
+                                className="w-full px-3 py-2 border border-[#e5e7eb] rounded-[10px] text-sm font-bold text-center bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/30 focus:border-[#f59e0b]"
+                              />
+                            </div>
+
+                            {/* Achievement % badge */}
+                            {hasEntry && (
+                              <div className="shrink-0 flex items-center gap-2">
+                                <span
+                                  className={`inline-flex items-center justify-center px-3 py-1.5 rounded-[8px] text-sm font-black tracking-tight ${pctColor}`}
+                                >
+                                  {achievementPct.toFixed(0)}%
+                                </span>
+                              </div>
+                            )}
                           </div>
-                          <div className="w-32">
-                            <input
-                              type="number"
-                              value={kpiEntries[kpi.kpi_id] || ""}
-                              onChange={(e) =>
-                                setKpiEntries((prev) => ({
-                                  ...prev,
-                                  [kpi.kpi_id]: e.target.value,
-                                }))
-                              }
-                              placeholder="0"
-                              className="w-full px-3 py-2 border border-[#e5e7eb] rounded-[10px] text-sm font-bold text-right bg-white focus:outline-none focus:ring-2 focus:ring-[#f59e0b]/30 focus:border-[#f59e0b]"
-                            />
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </CardContent>
                   </Card>
                 )}
 
                 {/* ─── Today's Accomplishments Card ──────────────────────────────────── */}
-                <Card className="rounded-[16px] border-2 border-white overflow-hidden bg-white shadow-sm">
-                  <div className="p-5 flex items-center justify-between ">
+                <Card className="rounded-[16px] border border-[#DA7756]/20 bg-white overflow-hidden shadow-sm">
+                  <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
                     <div className="flex items-center gap-3">
-                      <div className="bg-white p-1 rounded-full border border-[#10b981]/30">
-                        <CheckCircle2 size={18} className="text-[#10b981]" />
-                      </div>
+                      <CheckCircle2 className="h-6 w-6 shrink-0 text-[#DA7756]" />
                       <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
                         Today's Accomplishments
                       </h3>
                     </div>
-                    <Badge className="bg-[#8b5cf6] hover:bg-[#7c3aed] text-white px-3 py-1 rounded-[6px] text-[10px] font-black tracking-widest border-none shadow-sm">
-                      {accomplishments.filter((a) => a.completed).length * 5}/25
-                      PTS
+                    <Badge className={badgePoints}>
+                      {dailyScore.accomplishmentsScore}/20 PTS
                     </Badge>
                   </div>
 
@@ -1449,12 +2215,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                             className={cn(
                               "flex flex-col gap-1 bg-white border rounded-[10px] p-3 transition-all",
                               item.completed
-                                ? "border-[#10b981] bg-green-50/10"
+                                ? "border-[#DA7756]/10 bg-[#DA7756]/10"
                                 : "border-gray-200",
                               // Highlight carried-over items with a subtle amber tint
                               item.fromYesterday &&
-                                !item.completed &&
-                                "border-amber-300 bg-amber-50/30"
+                              !item.completed &&
+                              "border-amber-300 bg-amber-50/30"
                             )}
                           >
                             <div className="flex items-center gap-4">
@@ -1481,7 +2247,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   "cursor-pointer transition-all shrink-0",
                                   item.starred
                                     ? "text-[#eab308] fill-[#eab308]"
-                                    : "text-gray-300 hover:text-gray-400"
+                                    : "text-[#DA7756]/70 hover:text-[#DA7756]"
                                 )}
                                 onClick={() => toggleStar(item.id)}
                               />
@@ -1557,19 +2323,26 @@ const BusinessCompassDailyReport: React.FC = () => {
                           Add Item
                         </Button>
                         {accomplishments.some((a) => !a.completed) && (
-                          <Button
-                            variant="outline"
-                            className="h-11 border-blue-200 text-blue-600 font-bold text-xs bg-white hover:bg-blue-50 rounded-[8px] px-4"
+                          <button
+                            type="button"
+                            style={{
+                              backgroundColor: "#DA7756",
+                              color: "#ffffff",
+                              cursor: "pointer",
+                              opacity: 1,
+                            }}
+                            className="flex h-10 items-center gap-2 rounded-[8px] border-none px-6 text-xs font-black shadow-md transition-all"
                             onClick={transferUncheckedToTomorrow}
                           >
+                            <CalendarCheck size={16} />
                             Transfer unchecked to tomorrow
-                          </Button>
+                          </button>
                         )}
                       </div>
                     </div>
 
                     <div className="pt-6 border-t border-gray-50 flex items-center justify-between">
-                      <div className="flex items-center gap-2 text-[10px] text-[#059669] font-black uppercase tracking-widest bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+                      <div className="flex items-center gap-2 text-[10px] text-[#DA7756] font-black uppercase tracking-widest bg-[#DA7756]/10 px-3 py-1.5 rounded-full border border-[#DA7756]/20">
                         <Info size={14} />
                         <span>Limits: Images 2MB, Others 5MB</span>
                       </div>
@@ -1584,21 +2357,20 @@ const BusinessCompassDailyReport: React.FC = () => {
                           multiple
                           className="hidden"
                         />
-                        <Button
-                          disabled={
-                            uploadedFiles.length + reportAttachments.length >= 5
-                          }
-                          className={cn(
-                            "bg-[#10b981] text-white font-black px-6 h-10 rounded-[8px] flex items-center gap-2 text-xs shadow-md transition-all border-none",
-                            uploadedFiles.length + reportAttachments.length >= 5
-                              ? "opacity-50 cursor-not-allowed bg-gray-400 hover:bg-gray-400"
-                              : "hover:bg-[#059669]"
-                          )}
+                        <button
+                          disabled={uploadedFiles.length + reportAttachments.length >= 5}
                           onClick={triggerFileUpload}
+                          style={{
+                            backgroundColor: uploadedFiles.length + reportAttachments.length >= 5 ? '#d1d5db' : '#DA7756',
+                            color: '#ffffff',
+                            cursor: uploadedFiles.length + reportAttachments.length >= 5 ? 'not-allowed' : 'pointer',
+                            opacity: uploadedFiles.length + reportAttachments.length >= 5 ? 0.5 : 1,
+                          }}
+                          className="flex items-center gap-2 px-6 h-10 rounded-[8px] text-xs font-black shadow-md transition-all border-none"
                         >
                           <Upload size={16} />
                           File Upload
-                        </Button>
+                        </button>
                       </div>
                     </div>
 
@@ -1607,11 +2379,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                         {uploadedFiles.map((file) => (
                           <div
                             key={file.id}
-                            className="flex items-center justify-between bg-gray-50/80 p-3 rounded-[10px] border border-gray-100 animate-in fade-in duration-300"
+                            className="flex items-center justify-between bg-[#fef6f4] p-3 rounded-[10px] border border-[#DA7756]/20 animate-in fade-in duration-300"
                           >
                             <div className="flex items-center gap-3">
-                              <ImageIcon size={16} className="text-blue-500" />
-                              <span className="text-sm font-medium text-blue-600 hover:underline cursor-pointer">
+                              <ImageIcon size={16} className="text-[#DA7756]" />
+                              <span className="text-sm font-medium text-[#DA7756]/80 hover:underline cursor-pointer">
                                 {file.name}
                               </span>
                             </div>
@@ -1710,67 +2482,60 @@ const BusinessCompassDailyReport: React.FC = () => {
                 </Card>
 
                 {/* Tasks & Issues Card */}
-                <Card className="rounded-[8px] border-2 border-white overflow-hidden bg-white shadow-sm mt-6">
-                  <div className="bg-[#fef2f2] p-4 border-b border-[#b91c1c]/10">
+                <Card className="rounded-2xl border border-[#DA7756]/20 overflow-hidden bg-[#fff] shadow-sm mt-6">
+                  <div className="bg-white p-4 border-b border-[#b91c1c]/10">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                          <div className="bg-white p-1 rounded-md border border-[#b91c1c]/30">
-                            <CheckSquare size={16} className="text-[#b91c1c]" />
-                          </div>
+                          <CheckSquare className="h-6 w-6 text-[#DA7756]" />
                           <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
-                            Tasks & Issues
+                            Tasks, Issues & Todos
                           </h3>
                         </div>
-                        <p className="text-[11px] text-gray-500 font-medium">
+                        {/* <p className="text-[11px] text-gray-500 font-medium">
                           {tasksLoading || issuesLoading
                             ? "Loading..."
                             : `Total: ${taskIssueCounts.total} items`}
-                        </p>
+                        </p> */}
                         <div className="flex flex-wrap gap-2 pt-1">
                           <Badge
                             variant="outline"
-                            className="bg-[#ecfdf5] text-[#047857] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
+                            className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
                           >
-                            <CheckSquare size={10} />
                             Completed: {taskIssueCounts.completed}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className="bg-[#eff6ff] text-[#1d4ed8] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
+                            className="border-0 bg-blue-100 px-3 py-1 text-[10px] font-bold text-blue-800"
                           >
-                            <Info size={10} />
                             Open: {taskIssueCounts.open}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className="bg-[#fef2f2] text-[#b91c1c] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
+                            className="border-0 bg-rose-100 px-3 py-1 text-[10px] font-bold text-rose-800"
                           >
-                            <Clock size={10} />
                             Overdue: {taskIssueCounts.overdue}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className="bg-[#fef3c7] text-[#92400e] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
+                            className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
                           >
-                            <Clock size={10} />
                             In Progress: {taskIssueCounts.inProgress}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className="bg-[#f3e8ff] text-[#6b21a8] border-none rounded-[4px] px-2 py-0.5 font-bold text-[9px] flex items-center gap-1 shadow-sm"
+                            className="border-0 bg-purple-100 px-3 py-1 text-[10px] font-bold text-purple-800"
                           >
-                            <Clock size={10} />
                             On Hold: {taskIssueCounts.onHold}
                           </Badge>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <div className="bg-[#ea580c] text-white px-3 py-1 rounded-[4px] text-[9px] font-black tracking-widest shadow-md">
+                        <Badge className={badgePoints}>
                           {taskIssueCounts.completed}/20 PTS
-                        </div>
+                        </Badge>
                         <Button
-                          className="bg-[#b91c1c] hover:bg-[#991b1b] text-white font-black px-4 h-8 rounded-[4px] flex items-center gap-2 text-[10px] shadow-md transition-all border-none"
+                          className="rounded-[8px] shadow-lg font-semibold text-sm"
                           onClick={(e) =>
                             setTaskIssueMenuAnchor(e.currentTarget)
                           }
@@ -1798,7 +2563,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <div className="flex flex-col items-center gap-3 opacity-30">
                           <CheckSquare
                             size={40}
-                            className="text-[#b91c1c]/20"
+                            className="text-[#DA7756]/20"
                           />
                           <p className="text-base font-bold text-gray-400 tracking-tight">
                             No open tasks or issues
@@ -1817,12 +2582,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                               "flex items-center gap-3 p-3 rounded-[10px] border transition-all",
                               item.status === "completed" ||
                                 item.status === "closed"
-                                ? "bg-green-50/50 border-green-200/50"
+                                ? "bg-[#DA7756]/10 border-[#DA7756]/20"
                                 : item.status === "overdue" ||
-                                    item.status === "on_hold"
-                                  ? "bg-red-50/50 border-red-200/50"
+                                  item.status === "on_hold"
+                                  ? "bg-[#DA7756]/10 border-[#DA7756]/20"
                                   : item.status === "in_progress"
-                                    ? "bg-amber-50/50 border-amber-200/50"
+                                    ? "bg-[#DA7756]/10 border-[#DA7756]/20"
                                     : "bg-blue-50/50 border-blue-200/50"
                             )}
                           >
@@ -1833,14 +2598,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 item.status === "closed"
                               }
                               onCheckedChange={(checked) => {
-                                if (
-                                  checked &&
-                                  item.status !== "completed" &&
-                                  item.status !== "closed"
-                                ) {
-                                  setClosureItem(item);
-                                  setShowClosureModal(true);
+                                if (checked && item.status !== "completed" && item.status !== "closed") {
+                                  // Call API directly to complete the item
+                                  handleCompleteItem(item);
                                 } else {
+                                  markDraftDirty();
                                   setSelectedTasksIssues((prev) => ({
                                     ...prev,
                                     [item.id]: checked as boolean,
@@ -1851,26 +2613,104 @@ const BusinessCompassDailyReport: React.FC = () => {
                             />
                             <button
                               onClick={() => {
-                                const detailsUrl =
-                                  item.type === "task"
-                                    ? `/vas/tasks/${item.originalData?.id}`
-                                    : `/vas/issues/${item.originalData?.id}`;
-                                navigate(detailsUrl);
+                                if (item.type === "todo") {
+                                  setSelectedTodo(item.originalData);
+                                  setIsDetailsModalOpen(true);
+                                } else {
+                                  const detailsUrl =
+                                    item.type === "task"
+                                      ? `/vas/tasks/${item.originalData?.id}`
+                                      : `/vas/issues/${item.originalData?.id}`;
+                                  navigate(detailsUrl);
+                                }
                               }}
                               className="p-1.5 hover:bg-gray-200 rounded-[6px] transition-colors"
                               title={`View ${item.type} details`}
                             >
                               <Eye
                                 size={16}
-                                className="text-gray-600 hover:text-gray-800"
+                                className="text-[#DA7756] hover:text-[#DA7756]"
                               />
                             </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (item.type === "task") {
+                                  setEditTaskData(item.originalData);
+                                  setIsEditTaskModalOpen(true);
+                                } else if (item.type === "issue") {
+                                  setEditIssueData(item.originalData);
+                                  setIsEditIssueModalOpen(true);
+                                } else if (item.type === "todo") {
+                                  setEditTodoData(item.originalData);
+                                  setIsEditTodoModalOpen(true);
+                                }
+                              }}
+                              className="flex-shrink-0 p-1 text-gray-600 hover:text-[#DA7756] transition-colors"
+                              title={`Edit ${item.type}`}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            {/* Play/Pause buttons for task-type items */}
+                            {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
+                              item.originalData?.is_started ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPauseTaskId(item.originalData.id);
+                                    setIsPauseModalOpen(true);
+                                  }}
+                                  className="p-1 hover:bg-gray-200 rounded transition"
+                                  title="Pause task"
+                                >
+                                  <Pause size={16} className="text-orange-500" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePlayTask(item.originalData.id);
+                                  }}
+                                  className="p-1 hover:bg-gray-200 rounded transition"
+                                  title="Play task"
+                                >
+                                  <Play size={16} className="text-green-500" />
+                                </button>
+                              )
+                            )}
+                            {/* Play/Pause for todo-type items linked to a task */}
+                            {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
+                              item.originalData?.task_management?.is_started ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPauseTaskId(item.originalData.task_management_id);
+                                    setIsPauseModalOpen(true);
+                                  }}
+                                  className="p-1 hover:bg-gray-200 rounded transition"
+                                  title="Pause task"
+                                >
+                                  <Pause size={16} className="text-orange-500" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePlayTask(item.originalData.task_management_id);
+                                  }}
+                                  className="p-1 hover:bg-gray-200 rounded transition"
+                                  title="Play task"
+                                >
+                                  <Play size={16} className="text-green-500" />
+                                </button>
+                              )
+                            )}
                             <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white text-gray-600 uppercase">
+                              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[#DA7756] text-[#fff] uppercase">
                                 {item.type}
                               </span>
                               {item.status === "completed" ||
-                              item.status === "closed" ? (
+                                item.status === "closed" ? (
                                 <CheckCircle2
                                   size={16}
                                   className="text-green-600"
@@ -1893,12 +2733,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   "text-sm font-medium truncate",
                                   (item.status === "completed" ||
                                     item.status === "closed") &&
-                                    "line-through text-gray-400"
+                                  "line-through text-[#DA7756]"
                                 )}
                               >
                                 {item.title}
                               </p>
-                              <p className="text-xs text-gray-500 capitalize">
+                              <p className="text-xs text-[#DA7756] capitalize">
                                 {item.status.replace(/_/g, " ")}
                               </p>
                             </div>
@@ -1940,7 +2780,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                 </Card>
 
                 {/* Bottom Tip Banner */}
-                <div className="mt-6 bg-[#fffde7] border border-[#fef08a] p-4 rounded-[12px] flex items-center gap-3 shadow-sm">
+                {/* <div className="mt-6 bg-[#fffde7] border border-[#fef08a] p-4 rounded-[12px] flex items-center gap-3 shadow-sm">
                   <div className="bg-white p-1.5 rounded-full shadow-inner border border-[#fef08a]">
                     <Lightbulb size={18} className="text-[#ca8a04]" />
                   </div>
@@ -1950,100 +2790,110 @@ const BusinessCompassDailyReport: React.FC = () => {
                     </span>{" "}
                     Look at your list. What doesn't actually need doing?
                   </p>
-                </div>
+                </div> */}
 
                 {/* Plan Card */}
-                <Card className="rounded-[16px] border-2 border-white overflow-hidden bg-white shadow-sm mt-6">
-                  <div className="bg-[#eff6ff] p-5 flex items-center justify-between border-b border-[#3b82f6]/10">
+                <Card className="rounded-[16px] border border-[#DA7756]/20 overflow-hidden bg-white shadow-sm mt-6">
+                  <div className="p-5 flex items-center justify-between border-b-2 border-neutral-200/40">
                     <div className="flex items-center gap-3">
-                      <div className="bg-white p-1 rounded-full border border-[#3b82f6]/30">
-                        <CheckCircle2 size={18} className="text-[#3b82f6]" />
-                      </div>
-                      <h3 className="text-sm font-bold tracking-tight text-blue-900">
+                      <Calendar className="h-5 w-5 text-[#DA7756]" />
+                      <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
                         Plan for {nextDayLabel || "Tomorrow"}
                       </h3>
                     </div>
-                    <Badge className="bg-[#0891b2] hover:bg-[#0e7490] text-white px-3 py-1 rounded-[6px] text-[10px] font-black tracking-widest border-none shadow-sm">
-                      {dailyScore.planningScore}/25 PTS{" "}
+                    <Badge className={badgePoints}>
+                      {dailyScore.planningScore}/20 PTS
                     </Badge>
                   </div>
 
-                  <CardContent
-                    className={cn("p-6", planningItems.length === 0 && "py-10")}
-                  >
-                    {planningItems.length > 0 ? (
-                      <div className="space-y-4 mb-4">
-                        {planningItems.map((item) => (
-                          <div
-                            key={item.id}
-                            className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
-                          >
-                            <div className="flex items-center gap-4 bg-white border border-[#3b82f6]/30 rounded-[10px] p-3 shadow-sm hover:border-[#3b82f6] transition-all">
-                              <Star
-                                size={18}
-                                className={cn(
-                                  "cursor-pointer transition-all shrink-0",
-                                  item.starred
-                                    ? "text-[#eab308] fill-[#eab308]"
-                                    : "text-gray-300 hover:text-gray-400"
-                                )}
-                                onClick={() => togglePlanningStar(item.id)}
-                              />
-                              <input
-                                type="text"
-                                value={item.text}
-                                onChange={(e) =>
-                                  updatePlanningText(item.id, e.target.value)
-                                }
-                                placeholder="What's your strategic priority?"
-                                className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
-                              />
-                              <div className="flex items-center gap-2">
-                                <Calendar
+                  <CardContent className="p-6">
+                    {/* Manual planning items */}
+                    {planningItems.length > 0 && (
+                      <div className="mb-4">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">
+                          Your plan
+                        </h4>
+                        <div className="space-y-4">
+                          {planningItems.map((item) => (
+                            <div
+                              key={item.id}
+                              className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
+                            >
+                              <div className="flex items-center gap-4 bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] hover:border-[#DA7756]/30 transition-all">
+                                <Star
                                   size={18}
-                                  className="text-[#3b82f6] cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                                  className={cn(
+                                    "cursor-pointer transition-all shrink-0",
+                                    item.starred
+                                      ? "text-[#eab308] fill-[#eab308]"
+                                      : "text-gray-300 hover:text-gray-400"
+                                  )}
+                                  onClick={() => togglePlanningStar(item.id)}
                                 />
-                                <X
-                                  size={18}
-                                  className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
-                                  onClick={() => removePlanningItem(item.id)}
+                                <input
+                                  type="text"
+                                  value={item.text}
+                                  onChange={(e) =>
+                                    updatePlanningText(item.id, e.target.value)
+                                  }
+                                  placeholder="What's your strategic priority?"
+                                  className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
                                 />
+                                <div className="flex items-center gap-2">
+                                  <X
+                                    size={18}
+                                    className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                                    onClick={() => removePlanningItem(item.id)}
+                                  />
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center gap-4 text-center mb-8">
-                        <div className="h-16 w-16 rounded-full bg-[#eff6ff] border-2 border-[#3b82f6]/20 flex items-center justify-center">
-                          <Calendar size={32} className="text-[#3b82f6]/30" />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-base font-bold text-blue-900">
-                            Plan your next working day!
-                          </p>
-                          <p className="text-xs text-gray-500 font-medium">
-                            List 3-5 key tasks for {nextDayLabel || "tomorrow"}{" "}
-                            to stay focused.
-                          </p>
+                          ))}
                         </div>
                       </div>
                     )}
-                    <Button
-                      variant="outline"
-                      className="w-full h-11 border-[#3b82f6]/30 text-[#3b82f6] font-bold text-sm bg-white hover:bg-[#eff6ff] rounded-[8px] flex items-center justify-center gap-2"
-                      onClick={addPlanningItem}
-                    >
-                      <Plus size={18} />
-                      Add Item
-                    </Button>
+
+                    {planningItems.length === 0 && (
+                      <div className="flex flex-col items-center gap-4 text-center mb-8">
+                        <div className="flex flex-col items-center gap-3 opacity-30">
+                          <Calendar
+                            size={40}
+                            className="text-[#DA7756]/20"
+                          />
+                          <p className="text-base font-bold text-gray-400 tracking-tight">
+                            Plan your next working day!
+                          </p>
+                        </div>
+                        <p className="text-xs text-gray-500 font-medium -mt-2">
+                          List 3-5 key tasks for {nextDayLabel || "tomorrow"}{" "}
+                          to stay focused.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        className="rounded-[8px] shadow-md font-semibold text-sm flex-1"
+                        onClick={addPlanningItem}
+                      >
+                        <Plus size={14} />
+                        Add Item
+                      </Button>
+                      <Button
+                        className="rounded-[8px] shadow-md font-semibold text-sm px-4"
+                        onClick={(e) => setPlanningMenuAnchor(e.currentTarget)}
+                        title="Add Task, Issue, or Todo for next day"
+                      >
+                        <Plus size={14} />
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
             )}
 
             {/* Submission Section */}
-            <Card className="rounded-[16px] border border-gray-100 shadow-sm bg-white p-6 mt-6">
+            <Card className="rounded-[16px] border border-[#DA7756]/20 shadow-sm bg-white p-6 mt-6">
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="flex-1 w-full space-y-4">
@@ -2051,26 +2901,30 @@ const BusinessCompassDailyReport: React.FC = () => {
                       <Label className="text-sm font-bold text-black">
                         Self Rating (1-10)
                       </Label>
-                      <span className="text-sm font-black text-green-700">
+                      <span className="text-sm font-black text-[#DA7756]">
                         {selfRating[0]}/10
                       </span>
                     </div>
                     <Slider
                       value={selfRating}
-                      onValueChange={setSelfRating}
+                      onValueChange={(value) => {
+                        markDraftDirty();
+                        setSelfRating(value);
+                      }}
                       max={10}
                       step={1}
-                      className="cursor-pointer [&_[role=slider]]:bg-black [&_[role=slider]]:border-black [&_[data-orientation=horizontal]]:h-1 [&_[data-orientation=horizontal]_span:first-child]:bg-black"
+                      className="cursor-pointer [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer [&_[role=slider]]:outline-none [&_[data-orientation=horizontal]]:h-1.5 [&_[data-orientation=horizontal]_span:first-child]:bg-[#DA7756]"
                     />
                   </div>
-                  <div className="flex items-center gap-3 bg-gray-50 px-4 py-3 rounded-[10px] border border-gray-100 min-w-[150px] justify-center">
+                  <div className="flex items-center gap-3 bg-[#DA7756]/5 px-4 py-3 rounded-[10px] border border-[#DA7756]/20 min-w-[150px] justify-center">
                     <Checkbox
                       id="absent"
                       checked={isAbsent}
-                      onCheckedChange={(checked) =>
-                        setIsAbsent(checked as boolean)
-                      }
-                      className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a]"
+                      onCheckedChange={(checked) => {
+                        markDraftDirty();
+                        setIsAbsent(checked as boolean);
+                      }}
+                      className="h-5 w-5 rounded-[4px] border-[#DA7756]/40 data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
                     />
                     <label
                       htmlFor="absent"
@@ -2089,7 +2943,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                     <Input
                       placeholder="Why are you absent today?"
                       value={absenceReason}
-                      onChange={(e) => setAbsenceReason(e.target.value)}
+                      onChange={(e) => {
+                        markDraftDirty();
+                        setAbsenceReason(e.target.value);
+                      }}
                       className="h-12 rounded-[10px] border-gray-200 focus:ring-[#22c55e]/20"
                     />
                   </div>
@@ -2115,10 +2972,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                       "w-full h-[56px] font-black text-[18px] rounded-[14px] transition-all duration-200 ease-in-out border-none flex items-center justify-center gap-2",
                       isSubmitting
                         ? "opacity-60 cursor-not-allowed"
-                        : "cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.15)] active:translate-y-0 active:shadow-sm",
+                        : "cursor-pointer hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(218,119,86,0.35)] active:translate-y-0 active:shadow-sm",
                       currentReportId
-                        ? "!bg-[#2563eb] hover:!bg-[#1d4ed8]"
-                        : "!bg-[#16a34a] hover:!bg-[#15803d]"
+                        ? "!bg-[#c45f3a] hover:!bg-[#b3532f]"
+                        : "!bg-[#DA7756] hover:!bg-[#c45f3a]"
                     )}
                     style={{ color: "#ffffff" }}
                     onClick={handleSubmit}
@@ -2156,52 +3013,57 @@ const BusinessCompassDailyReport: React.FC = () => {
             {/* Live Score Preview Section */}
             {!isAbsent && (
               <div className="mt-8 space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <Card className="rounded-[20px] border border-purple-100 shadow-sm overflow-hidden bg-[#fdfaff]">
+                <Card className="rounded-[16px] border border-[#DA7756]/20 shadow-sm overflow-hidden bg-white">
                   <CardContent className="p-6 space-y-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="bg-purple-100 p-1.5 rounded-full">
-                          <Target size={18} className="text-[#8b5cf6]" />
+                        <div className="bg-[#DA7756]/10 p-1.5 rounded-full">
+                          <Target size={18} className="text-[#DA7756]" />
                         </div>
                         <h3 className="text-sm font-bold text-[#1a1a1a] flex items-center gap-1.5">
                           Live Score Preview
                           <HelpCircle
                             size={14}
-                            className="text-blue-500 cursor-pointer"
+                            className="text-[#DA7756]/60 cursor-pointer"
                           />
                         </h3>
                       </div>
-                      <span className="text-3xl font-black text-[#8b5cf6] tracking-tighter">
+                      <span className="text-3xl font-black text-[#DA7756] tracking-tighter">
                         {dailyScore.totalScore}/100
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                       {[
                         {
+                          label: "KPIs",
+                          score: `${dailyScore.kpiScore}/20`,
+                          color: "text-green-600",
+                        },
+                        {
                           label: "Accomplishments",
-                          score: `${dailyScore.accomplishmentsScore}/25`,
+                          score: `${dailyScore.accomplishmentsScore}/20`,
                           color: "text-purple-600",
                         },
                         {
                           label: "Tasks",
-                          score: `${dailyScore.tasksIssuesScore}/25`,
+                          score: `${dailyScore.tasksIssuesScore}/20`,
                           color: "text-[#ea580c]",
                         },
                         {
                           label: "Planning",
-                          score: `${dailyScore.planningScore}/25`,
+                          score: `${dailyScore.planningScore}/20`,
                           color: "text-blue-600",
                         },
                         {
                           label: "Timing",
-                          score: `${dailyScore.timingScore}/25`,
+                          score: `${dailyScore.timingScore}/20`,
                           color: "text-orange-600",
                         },
                       ].map((item, idx) => (
                         <div
                           key={idx}
-                          className="bg-white p-4 rounded-[14px] border border-purple-50 flex flex-col items-center gap-1 shadow-sm"
+                          className="bg-[#fafafa] p-4 rounded-[10px] border border-[#f3f4f6] flex flex-col items-center gap-1 shadow-sm"
                         >
                           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
                             {item.label}
@@ -2218,9 +3080,9 @@ const BusinessCompassDailyReport: React.FC = () => {
                       ))}
                     </div>
 
-                    <div className="pt-4 border-t border-purple-50">
+                    <div className="pt-4 border-t border-[#DA7756]/10">
                       <div
-                        className="flex items-center justify-between text-gray-400 group cursor-pointer hover:text-purple-600 transition-colors"
+                        className="flex items-center justify-between text-gray-400 group cursor-pointer hover:text-[#DA7756] transition-colors"
                         onClick={() =>
                           setIsDetailedScoreExpanded(!isDetailedScoreExpanded)
                         }
@@ -2244,7 +3106,7 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                     {isDetailedScoreExpanded && (
                       <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-top-4 duration-500">
-                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                        <div className="bg-[#fafafa] rounded-[10px] border border-[#f3f4f6] p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Target size={16} className="text-green-600" />
@@ -2292,7 +3154,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                        <div className="bg-[#fafafa] rounded-[10px] border border-[#f3f4f6] p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <ListTodo size={16} className="text-purple-600" />
@@ -2305,7 +3167,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {dailyScore.details.accomplishments.maxPoints} pts
                             </span>
                           </div>
-                          <div className="space-y-2.5 pl-6 border-l-2 border-purple-50">
+                          <div className="space-y-2.5 pl-6 border-l-2 border-[#DA7756]/10">
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                               <span>• Completed items:</span>
                               <span className="text-gray-900">
@@ -2336,7 +3198,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                        <div className="bg-[#fafafa] rounded-[10px] border border-[#f3f4f6] p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <CheckSquare
@@ -2344,7 +3206,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 className="text-[#ea580c]"
                               />
                               <span className="text-xs font-black text-[#ea580c] uppercase tracking-widest">
-                                Tasks & Issues
+                                Tasks, Issues & Todos
                               </span>
                             </div>
                             <span className="text-xs font-black text-[#ea580c]">
@@ -2456,7 +3318,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                        <div className="bg-[#fafafa] rounded-[10px] border border-[#f3f4f6] p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <CalendarCheck
@@ -2472,7 +3334,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               {dailyScore.details.planning.maxPoints} pts
                             </span>
                           </div>
-                          <div className="space-y-2.5 pl-6 border-l-2 border-blue-50">
+                          <div className="space-y-2.5 pl-6 border-l-2 border-[#DA7756]/10">
                             <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
                               <span>• Regular items:</span>
                               <span className="text-gray-900">
@@ -2508,7 +3370,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="bg-white rounded-[14px] border border-purple-50 p-6 space-y-4">
+                        <div className="bg-[#fafafa] rounded-[10px] border border-[#f3f4f6] p-6 space-y-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <Clock size={16} className="text-orange-600" />
@@ -2544,7 +3406,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                     )}
 
                     <div className="flex justify-center">
-                      <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-purple-50/50 px-4 py-1.5 rounded-full">
+                      <div className="flex items-center gap-1.5 text-[10px] text-gray-400 font-bold uppercase tracking-wider bg-[#DA7756]/5 px-4 py-1.5 rounded-full">
                         <Zap
                           size={12}
                           className="text-orange-700 fill-orange-700"
@@ -2563,32 +3425,32 @@ const BusinessCompassDailyReport: React.FC = () => {
             <div className="mt-8">
               <div
                 className={cn(
-                  "bg-[#eff6ff] border border-blue-100 rounded-[14px] overflow-hidden transition-all duration-300 shadow-sm",
+                  "bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[14px] overflow-hidden transition-all duration-300 shadow-sm",
                   isScoreInfoExpanded ? "max-h-[3000px]" : "max-h-[80px]"
                 )}
               >
                 <div
-                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-blue-100/50 transition-all border-b border-transparent"
+                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-[#DA7756]/10 transition-all border-b border-transparent"
                   onClick={() => setIsScoreInfoExpanded(!isScoreInfoExpanded)}
                 >
                   <div className="flex items-center gap-3">
                     <div className="bg-white p-1.5 rounded-full shadow-sm">
-                      <HelpCircle size={18} className="text-blue-600" />
+                      <HelpCircle size={18} className="text-[#DA7756]" />
                     </div>
-                    <span className="text-sm font-bold text-[#1e40af] tracking-tight">
+                    <span className="text-sm font-bold text-[#1a1a1a] tracking-tight">
                       How is the Automated Daily Score Calculated?
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     {!isScoreInfoExpanded && (
-                      <span className="text-xs font-bold text-blue-500 uppercase tracking-wider">
+                      <span className="text-xs font-bold text-[#DA7756] uppercase tracking-wider">
                         Click to Expand
                       </span>
                     )}
                     <ChevronRight
                       size={18}
                       className={cn(
-                        "text-blue-400 transition-transform duration-300",
+                        "text-[#DA7756]/60 transition-transform duration-300",
                         isScoreInfoExpanded ? "-rotate-90" : "rotate-90"
                       )}
                     />
@@ -2601,11 +3463,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                       {[
                         {
                           icon: (
-                            <TrendingUp size={20} className="text-[#3b82f6]" />
+                            <TrendingUp size={20} className="text-[#DA7756]" />
                           ),
-                          bg: "bg-[#eff6ff] border-blue-100",
+                          bg: "bg-[#DA7756]/10 border-[#DA7756]/20",
                           title: "1. Daily KPI Achievement (Max 20 points)",
-                          titleColor: "text-[#1e40af]",
+                          titleColor: "text-[#1a1a1a]",
                           desc: (
                             <>
                               Calculated as:{" "}
@@ -2637,11 +3499,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                         },
                         {
                           icon: (
-                            <ListTodo size={20} className="text-[#8b5cf6]" />
+                            <ListTodo size={20} className="text-[#DA7756]" />
                           ),
-                          bg: "bg-[#f5f3ff] border-purple-100",
+                          bg: "bg-[#DA7756]/10 border-[#DA7756]/20",
                           title: "3. Accomplishments (Max 10 points)",
-                          titleColor: "text-purple-900",
+                          titleColor: "text-[#1a1a1a]",
                           desc: "Points awarded proportionally based on percentage of accomplishments marked as completed.",
                         },
                       ].map(
@@ -2678,7 +3540,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 </ul>
                               )}
                               {note && (
-                                <p className="text-[11px] text-[#1e40af] font-bold italic opacity-70">
+                                <p className="text-[11px] text-[#DA7756] font-bold italic opacity-70">
                                   {note}
                                 </p>
                               )}
@@ -2784,29 +3646,29 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="bg-[#eff6ff] border border-blue-100 rounded-[14px] p-6 space-y-3">
+                    <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[14px] p-6 space-y-3">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="bg-white p-1 rounded-md shadow-sm">
-                          <BarChart3 size={16} className="text-blue-600" />
+                          <BarChart3 size={16} className="text-[#DA7756]" />
                         </div>
-                        <span className="text-sm font-black text-[#1e40af] uppercase tracking-widest">
+                        <span className="text-sm font-black text-[#1a1a1a] uppercase tracking-widest">
                           Dynamic Point Allocation
                         </span>
                       </div>
-                      <ul className="space-y-2 text-xs text-[#1e40af] font-medium leading-relaxed">
+                      <ul className="space-y-2 text-xs text-[#1a1a1a]/70 font-medium leading-relaxed">
                         <li className="flex items-start gap-2">
-                          <span className="font-bold">•</span>
+                          <span className="font-bold text-[#DA7756]">•</span>
                           <span>
-                            <span className="font-black">
+                            <span className="font-black text-[#1a1a1a]">
                               No Checklist Items:
                             </span>{" "}
                             Accomplishments get +10 bonus points (max 20)
                           </span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="font-bold">•</span>
+                          <span className="font-bold text-[#DA7756]">•</span>
                           <span>
-                            <span className="font-black">No Daily KPIs:</span>{" "}
+                            <span className="font-black text-[#1a1a1a]">No Daily KPIs:</span>{" "}
                             Accomplishments, Tasks, Planning, and Timing each
                             get +5 bonus points
                           </span>
@@ -2824,7 +3686,7 @@ const BusinessCompassDailyReport: React.FC = () => {
               <Card className="p-20 flex flex-col items-center justify-center bg-white border border-gray-100 rounded-[16px]">
                 <Loader2
                   size={40}
-                  className="text-blue-500 animate-spin mb-4"
+                  className="text-[#DA7756]/40 animate-spin mb-4"
                 />
                 <p className="text-gray-500 font-bold">
                   Loading your report history...
@@ -2836,7 +3698,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                   {reportsList.map((report) => (
                     <Card
                       key={report.id}
-                      className="bg-white border border-gray-200 rounded-[12px] shadow-sm overflow-hidden transition-all"
+                      className="bg-white border border-[#DA7756]/20 rounded-[16px] shadow-sm overflow-hidden transition-all"
                     >
                       <div className="p-6">
                         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-6">
@@ -2884,7 +3746,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 px-4 text-blue-600 border-gray-200 hover:bg-blue-50 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
+                                className="h-8 px-4 text-[#DA7756] border-[#DA7756]/30 hover:bg-[#DA7756]/5 text-xs font-medium rounded-[4px] flex items-center justify-center gap-2 shadow-sm min-w-[85px]"
                                 onClick={() => {
                                   const date = new Date(report.start_date);
                                   const formattedDate =
@@ -2906,28 +3768,30 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     report.report_data?.accomplishments?.items
                                   ) {
                                     setAccomplishments(
-                                      report.report_data.accomplishments.items.map(
-                                        (ach: any, idx: number) => ({
+                                      getNonEmptyReportItems(
+                                        report.report_data.accomplishments.items
+                                      )
+                                        .map((ach: any, idx: number) => ({
                                           id: `fetched-ach-${idx}`,
-                                          text: ach.title || "",
+                                          text: getReportItemText(ach),
                                           completed: true,
                                           starred: false,
                                           fromYesterday: false,
-                                        })
-                                      )
+                                        }))
                                     );
                                   } else {
                                     setAccomplishments([]);
                                   }
                                   if (report.report_data?.tomorrow_plan) {
                                     setPlanningItems(
-                                      report.report_data.tomorrow_plan.map(
-                                        (p: any, idx: number) => ({
-                                          id: `fetched-plan-${idx}`,
-                                          text: p.title || "",
-                                          starred: false,
-                                        })
+                                      getNonEmptyReportItems(
+                                        report.report_data.tomorrow_plan
                                       )
+                                        .map((p: any, idx: number) => ({
+                                          id: `fetched-plan-${idx}`,
+                                          text: getReportItemText(p),
+                                          starred: false,
+                                        }))
                                     );
                                   } else {
                                     setPlanningItems([]);
@@ -2958,7 +3822,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   });
                                 }}
                               >
-                                <Edit size={14} className="text-blue-500" />{" "}
+                                <Edit size={14} className="text-[#DA7756]" />{" "}
                                 Edit
                               </Button>
                               <Button
@@ -2985,9 +3849,49 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         },
                                       }
                                     );
-                                    fetchReportsList();
+                                    const deletedDateKey = getReportDateKey(
+                                      report.start_date
+                                    );
+                                    deletedReportIdsRef.current.add(
+                                      Number(report.id)
+                                    );
+                                    deletedReportDatesRef.current.add(
+                                      deletedDateKey
+                                    );
+                                    clearStoredDraftsForDate(deletedDateKey);
+                                    setReportsList((prev) =>
+                                      prev.filter(
+                                        (item) =>
+                                          item.id !== report.id &&
+                                          getReportDateKey(item.start_date) !==
+                                          deletedDateKey
+                                      )
+                                    );
+                                    const deletedDate = new Date(
+                                      `${deletedDateKey}T00:00:00`
+                                    );
+                                    if (!Number.isNaN(deletedDate.getTime())) {
+                                      setStartDate(deletedDateKey);
+                                      setSelectedDate(
+                                        deletedDate
+                                          .getDate()
+                                          .toString()
+                                          .padStart(2, "0")
+                                      );
+                                      setSelectedMonth(
+                                        deletedDate.toLocaleString("default", {
+                                          month: "long",
+                                        })
+                                      );
+                                      setSelectedYear(
+                                        deletedDate.getFullYear().toString()
+                                      );
+                                    }
+                                    resetReportFormState();
+                                    toast.success("Report deleted");
                                   } catch (err) {
                                     console.error("Delete failed:", err);
+                                    toast.error("Failed to delete report");
                                   }
                                 }}
                               >
@@ -2998,45 +3902,63 @@ const BusinessCompassDailyReport: React.FC = () => {
                           </div>
                         </div>
 
-                        <div className="bg-[#f8fafc] border border-gray-200 rounded-[8px] p-4 mb-6">
-                          <div className="flex items-center gap-2 mb-3">
-                            <BarChart3 size={14} className="text-blue-500" />
-                            <span className="text-xs font-bold text-slate-700">
-                              Score Breakdown
+                        <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-2">
+                              <BarChart3 size={14} className="text-[#DA7756]" />
+                              <span className="text-xs font-bold text-[#1a1a1a]">
+                                Score Breakdown
+                              </span>
+                            </div>
+                            <span className="text-sm font-black text-[#DA7756]">
+                              Total: {report.report_data?.total_score ?? 0}/100
                             </span>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
                             {[
                               {
+                                label: "KPIs",
+                                value: report.report_data?.sections?.kpi_achievement ?? 0,
+                                color: "text-[#DA7756]",
+                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
+                              },
+                              {
                                 label: "Accomplishments",
-                                value: `${report.report_data?.sections?.accomplishments ?? report.report_data?.sections?.tasks_completed ?? 0}/25`,
-                                color: "text-[#c026d3]",
+                                value: report.report_data?.sections?.accomplishments ?? 0,
+                                color: "text-[#DA7756]",
+                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
                               {
                                 label: "Tasks & Issues",
-                                value: `${report.report_data?.sections?.tasks_issues ?? report.report_data?.sections?.attendance ?? 0}/25`,
-                                color: "text-[#ea580c]",
+                                value: report.report_data?.sections?.tasks_issues ?? 0,
+                                color: "text-[#DA7756]",
+                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
                               {
                                 label: "Planning",
-                                value: `${report.report_data?.sections?.planning ?? report.report_data?.sections?.collaboration ?? 0}/25`,
-                                color: "text-[#0d9488]",
+                                value: report.report_data?.sections?.planning ?? 0,
+                                color: "text-[#DA7756]",
+                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
                               {
                                 label: "Timing",
-                                value: `${report.report_data?.sections?.timing ?? 0}/25`,
-                                color: "text-[#d97706]",
+                                value: report.report_data?.sections?.timing ?? 0,
+                                color: "text-[#DA7756]",
+                                bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },
-                            ].map(({ label, value, color }) => (
+                            ].map(({ label, value, color, bg }) => (
                               <div
                                 key={label}
-                                className="bg-white border border-gray-200 rounded-[6px] py-3 flex flex-col items-center justify-center shadow-sm"
+                                className={cn(
+                                  "border rounded-[8px] py-3 px-2 flex flex-col items-center justify-center shadow-sm gap-0.5",
+                                  bg
+                                )}
                               >
-                                <p className="text-[10px] text-gray-500 font-medium mb-1">
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider text-center">
                                   {label}
                                 </p>
-                                <p className={cn("text-base font-bold", color)}>
-                                  {value}
+                                <p className={cn("text-lg font-black", color)}>
+                                  {value}/20
                                 </p>
                               </div>
                             ))}
@@ -3045,13 +3967,13 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                         {report.report_data?.past_kpis &&
                           report.report_data.past_kpis.length > 0 && (
-                            <div className="bg-[#fffbeb] border border-amber-200 rounded-[8px] p-4 mb-6">
+                            <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
                               <div className="flex items-center gap-2 mb-3">
                                 <TrendingUp
                                   size={14}
-                                  className="text-amber-500"
+                                  className="text-[#DA7756]"
                                 />
-                                <span className="text-xs font-bold text-slate-700">
+                                <span className="text-xs font-bold text-[#1a1a1a]">
                                   Daily KPIs
                                 </span>
                               </div>
@@ -3061,8 +3983,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     const achievement =
                                       parseFloat(kpi.target_value) > 0
                                         ? (parseFloat(kpi.actual_value) /
-                                            parseFloat(kpi.target_value)) *
-                                          100
+                                          parseFloat(kpi.target_value)) *
+                                        100
                                         : 0;
                                     const displayAchievement = Math.min(
                                       achievement,
@@ -3077,13 +3999,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                           <span className="text-sm font-semibold text-gray-800">
                                             {kpi.notes}
                                           </span>
-                                          <Badge className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 border-none rounded-[4px]">
+                                          <Badge className="bg-[#DA7756]/10 text-[#DA7756] text-[10px] font-bold px-2 py-0.5 border-none rounded-[4px]">
                                             {displayAchievement.toFixed(0)}%
                                           </Badge>
                                         </div>
                                         <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                                           <div
-                                            className="bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full transition-all"
+                                            className="bg-gradient-to-r from-[#DA7756] to-[#c45f3a] h-full rounded-full transition-all"
                                             style={{
                                               width: `${displayAchievement}%`,
                                             }}
@@ -3103,13 +4025,13 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                         {report.report_data?.tasks_issues &&
                           report.report_data.tasks_issues.length > 0 && (
-                            <div className="bg-[#fef2f2] border border-red-200 rounded-[8px] p-4 mb-6">
+                            <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
                               <div className="flex items-center gap-2 mb-3">
                                 <CheckSquare
                                   size={14}
-                                  className="text-red-600"
+                                  className="text-[#DA7756]"
                                 />
-                                <span className="text-xs font-bold text-slate-700">
+                                <span className="text-xs font-bold text-[#1a1a1a]">
                                   Completed Tasks & Issues
                                 </span>
                               </div>
@@ -3139,36 +4061,38 @@ const BusinessCompassDailyReport: React.FC = () => {
                           )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="border border-green-200 rounded-[8px] overflow-hidden bg-[#f0fdf4]">
-                            <div className="px-4 py-3 border-b border-green-200/50 flex items-center gap-2">
+                          <div className="border border-[#DA7756]/20 rounded-[10px] overflow-hidden bg-[#DA7756]/5">
+                            <div className="px-4 py-3 border-b border-[#DA7756]/20 flex items-center gap-2">
                               <CheckCircle2
                                 size={16}
-                                className="text-green-600"
+                                className="text-[#DA7756]"
                               />
                               <span className="text-sm font-semibold text-[#1a1a1a]">
                                 Accomplishments
                               </span>
                             </div>
                             <div className="p-4">
-                              {report.report_data?.accomplishments?.items
-                                ?.length ? (
+                              {getNonEmptyReportItems(
+                                report.report_data?.accomplishments?.items
+                              ).length ? (
                                 <ul className="space-y-2">
-                                  {report.report_data.accomplishments.items.map(
-                                    (ach: any, idx: number) => (
+                                  {getNonEmptyReportItems(
+                                    report.report_data?.accomplishments?.items
+                                  )
+                                    .map((ach: any, idx: number) => (
                                       <li
                                         key={idx}
-                                        className="bg-white border border-green-100 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
+                                        className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
                                       >
                                         <span className="text-gray-400 font-medium">
                                           ✓
                                         </span>
-                                        {ach.title}
+                                        {getReportItemText(ach)}
                                       </li>
-                                    )
-                                  )}
+                                    ))}
                                 </ul>
                               ) : (
-                                <div className="bg-white border border-green-100 rounded-[6px] px-3 py-2 text-sm shadow-sm">
+                                <div className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm shadow-sm">
                                   <p className="text-gray-400 italic">
                                     No accomplishments.
                                   </p>
@@ -3176,32 +4100,35 @@ const BusinessCompassDailyReport: React.FC = () => {
                               )}
                             </div>
                           </div>
-                          <div className="border border-purple-200 rounded-[8px] overflow-hidden bg-[#faf5ff]">
-                            <div className="px-4 py-3 border-b border-purple-200/50 flex items-center gap-2">
-                              <Target size={16} className="text-purple-600" />
+                          <div className="border border-[#DA7756]/20 rounded-[10px] overflow-hidden bg-[#DA7756]/5">
+                            <div className="px-4 py-3 border-b border-[#DA7756]/20 flex items-center gap-2">
+                              <Calendar size={16} className="text-[#DA7756]" />
                               <span className="text-sm font-semibold text-[#1a1a1a]">
                                 Tomorrow's Plan
                               </span>
                             </div>
                             <div className="p-4">
-                              {report.report_data?.tomorrow_plan?.length ? (
+                              {getNonEmptyReportItems(
+                                report.report_data?.tomorrow_plan
+                              ).length ? (
                                 <ul className="space-y-2">
-                                  {report.report_data.tomorrow_plan.map(
-                                    (task: any, idx: number) => (
+                                  {getNonEmptyReportItems(
+                                    report.report_data?.tomorrow_plan
+                                  )
+                                    .map((task: any, idx: number) => (
                                       <li
                                         key={idx}
-                                        className="bg-white border border-purple-100 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
+                                        className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm text-gray-700 shadow-sm flex items-start gap-2"
                                       >
                                         <span className="text-gray-400 font-bold mt-0.5">
                                           •
                                         </span>
-                                        {task.title}
+                                        {getReportItemText(task)}
                                       </li>
-                                    )
-                                  )}
+                                    ))}
                                 </ul>
                               ) : (
-                                <div className="bg-white border border-purple-100 rounded-[6px] px-3 py-2 text-sm shadow-sm">
+                                <div className="bg-white border border-[#DA7756]/20 rounded-[6px] px-3 py-2 text-sm shadow-sm">
                                   <p className="text-gray-400 italic">
                                     No plan for tomorrow.
                                   </p>
@@ -3215,7 +4142,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           report.attachments.length > 0 && (
                             <div className="space-y-3 mt-6 pt-6 border-t border-gray-100">
                               <div className="flex items-center gap-2">
-                                <Upload size={16} className="text-purple-600" />
+                                <Upload size={16} className="text-[#DA7756]" />
                                 <span className="text-sm font-bold text-[#1a1a1a]">
                                   Linked Files ({report.attachments.length})
                                 </span>
@@ -3230,18 +4157,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     return (
                                       <div
                                         key={attachment.id || idx}
-                                        className="flex items-center justify-between bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-[10px] border border-purple-100 hover:shadow-md transition-all group cursor-pointer"
+                                        className="flex items-center justify-between bg-[#DA7756]/5 p-4 rounded-[10px] border border-[#DA7756]/20 hover:shadow-md transition-all group cursor-pointer"
                                       >
                                         <div className="flex items-center gap-3 flex-1 min-w-0">
                                           {isImage ? (
                                             <ImageIcon
                                               size={20}
-                                              className="text-purple-600 shrink-0"
+                                              className="text-[#DA7756] shrink-0"
                                             />
                                           ) : (
                                             <FileText
                                               size={20}
-                                              className="text-blue-600 shrink-0"
+                                              className="text-[#DA7756] shrink-0"
                                             />
                                           )}
                                           <div className="flex flex-col gap-1 min-w-0 flex-1">
@@ -3249,7 +4176,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                               href={attachment.document_url}
                                               target="_blank"
                                               rel="noopener noreferrer"
-                                              className="text-sm font-semibold text-purple-600 hover:text-purple-700 hover:underline line-clamp-2"
+                                              className="text-sm font-semibold text-[#DA7756] hover:text-[#c45f3a] hover:underline line-clamp-2"
                                             >
                                               {attachment.document_file_name}
                                             </a>
@@ -3331,7 +4258,20 @@ const BusinessCompassDailyReport: React.FC = () => {
           <div className="flex-1 overflow-y-auto">
             <ProjectTaskCreateModal
               isEdit={false}
-              onCloseModal={() => setOpenTaskModal(false)}
+              onCloseModal={() => {
+                setOpenTaskModal(false);
+                setPreFillDate(null);
+              }}
+              prefillData={{
+                title: "",
+                description: "",
+                responsible_person: {
+                  id: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").id : "",
+                },
+                tags: [],
+                start_date: preFillDate,
+                target_date: preFillDate,
+              }}
             />
           </div>
         </DialogContent>
@@ -3339,7 +4279,39 @@ const BusinessCompassDailyReport: React.FC = () => {
 
       <AddIssueModal
         openDialog={openIssueModal}
-        handleCloseDialog={() => setOpenIssueModal(false)}
+        handleCloseDialog={() => {
+          setOpenIssueModal(false);
+          setPreFillDate(null);
+        }}
+        prefillData={{
+          title: "",
+          description: "",
+          responsible_person: {
+            id: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").id : "",
+          },
+          tags: [],
+          start_date: preFillDate,
+          target_date: preFillDate,
+        }}
+      />
+
+
+      <AddToDoModal
+        isModalOpen={openTodoModal}
+        setIsModalOpen={() => {
+          setOpenTodoModal(false);
+          setPreFillDate(null);
+        }}
+        getTodos={fetchTodos}
+        prefillData={{
+          title: "",
+          description: "",
+          responsible_person: {
+            id: localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user") || "{}").id : "",
+          },
+          tags: [],
+          start_date: preFillDate,
+        }}
       />
 
       {/* Closure Remarks Modal */}
@@ -3560,7 +4532,7 @@ const BusinessCompassDailyReport: React.FC = () => {
           sx={{
             py: 1.5,
             px: 2,
-            margin: "4px 8px 8px 8px",
+            margin: "4px 8px 4px 8px",
             borderRadius: "10px",
             "&:hover": {
               backgroundColor: "#fef2f2",
@@ -3580,7 +4552,373 @@ const BusinessCompassDailyReport: React.FC = () => {
             </div>
           </div>
         </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setOpenTodoModal(true);
+            setTaskIssueMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "4px 8px 8px 8px",
+            borderRadius: "10px",
+            "&:hover": {
+              backgroundColor: "#fef9f0",
+              transform: "translateX(4px)",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-amber-50 rounded-lg">
+              <ListTodo size={18} className="text-amber-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+              <span className="text-xs text-gray-500 font-medium">
+                Create a quick todo
+              </span>
+            </div>
+          </div>
+        </MenuItem>
       </Menu>
+
+      <Menu
+        anchorEl={planningMenuAnchor}
+        open={Boolean(planningMenuAnchor)}
+        onClose={() => setPlanningMenuAnchor(null)}
+        sx={{
+          "& .MuiPaper-root": {
+            borderRadius: "12px",
+            boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+            minWidth: "220px",
+            overflow: "visible",
+            "&::before": {
+              content: '""',
+              display: "block",
+              position: "absolute",
+              top: -8,
+              right: 20,
+              width: 12,
+              height: 12,
+              backgroundColor: "#ffffff",
+              transform: "translateY(-50%) rotate(45deg)",
+              zIndex: 0,
+              boxShadow: "-4px -4px 8px rgba(0, 0, 0, 0.08)",
+            },
+          },
+        }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <MenuItem
+          onClick={() => {
+            setPreFillDate(getNextDayDate());
+            setOpenTaskModal(true);
+            setPlanningMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "8px 8px 4px 8px",
+            borderRadius: "10px",
+            "&:hover": {
+              backgroundColor: "#f0f4ff",
+              transform: "translateX(4px)",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <CheckSquare size={18} className="text-blue-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Task</span>
+              <span className="text-xs text-gray-500 font-medium">
+                For {nextDayLabel || "tomorrow"}
+              </span>
+            </div>
+          </div>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setPreFillDate(getNextDayDate());
+            setOpenIssueModal(true);
+            setPlanningMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "4px 8px 4px 8px",
+            borderRadius: "10px",
+            "&:hover": {
+              backgroundColor: "#fef2f2",
+              transform: "translateX(4px)",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-red-50 rounded-lg">
+              <AlertCircle size={18} className="text-red-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Issue</span>
+              <span className="text-xs text-gray-500 font-medium">
+                For {nextDayLabel || "tomorrow"}
+              </span>
+            </div>
+          </div>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setPreFillDate(getNextDayDate());
+            setOpenTodoModal(true);
+            setPlanningMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "4px 8px 8px 8px",
+            borderRadius: "10px",
+            "&:hover": {
+              backgroundColor: "#fef9f0",
+              transform: "translateX(4px)",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-amber-50 rounded-lg">
+              <ListTodo size={18} className="text-amber-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Todo</span>
+              <span className="text-xs text-gray-500 font-medium">
+                For {nextDayLabel || "tomorrow"}
+              </span>
+            </div>
+          </div>
+        </MenuItem>
+      </Menu>
+
+      {/* Overdue Reason Modal */}
+      <Dialog
+        open={isOverdueModalOpen}
+        onClose={() => {
+          setIsOverdueModalOpen(false);
+          setOverdueItemId(null);
+          setOverdueReason("");
+        }}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          className: "rounded-[16px]",
+          sx: {
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.15)",
+          },
+        }}
+      >
+        <DialogContent className="pt-6">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900">Item is Overdue</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                This item is past its target date. Please provide a reason for the delay.
+              </p>
+            </div>
+
+            <textarea
+              value={overdueReason}
+              onChange={(e) => setOverdueReason(e.target.value)}
+              placeholder="Enter reason for overdue..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#DA7756]/50 resize-none"
+              rows={4}
+              disabled={isOverdueLoading}
+            />
+
+            <div className="flex gap-2 justify-end pt-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsOverdueModalOpen(false);
+                  setOverdueItemId(null);
+                  setOverdueReason("");
+                }}
+                disabled={isOverdueLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="bg-[#DA7756] hover:bg-[#c45f3a] text-white"
+                onClick={() => handleOverdueReasonSubmit(overdueReason)}
+                disabled={!overdueReason.trim() || isOverdueLoading}
+              >
+                {isOverdueLoading ? "Submitting..." : "Complete & Submit"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Todo Details Modal */}
+      <TodoDetailsModal
+        isModalOpen={isDetailsModalOpen}
+        setIsModalOpen={setIsDetailsModalOpen}
+        todo={selectedTodo}
+        onEditClick={() => {
+          setIsDetailsModalOpen(false);
+          // Can add edit functionality here if needed
+        }}
+      />
+
+      {/* Edit Task Modal */}
+      <Dialog
+        open={isEditTaskModalOpen}
+        onClose={() => {
+          setIsEditTaskModalOpen(false);
+          setEditTaskData(null);
+        }}
+        TransitionComponent={Transition}
+        maxWidth={false}
+      >
+        <DialogContent
+          className="w-1/2 fixed right-0 top-0 rounded-none bg-[#fff] text-sm overflow-y-auto"
+          style={{
+            margin: 0,
+            maxHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+          }}
+          sx={{
+            padding: "0 !important",
+            "& .MuiDialogContent-root": {
+              padding: "0 !important",
+              overflow: "auto",
+            },
+          }}
+        >
+          <div className="sticky top-0 bg-white z-10">
+            <h3 className="text-[14px] font-medium text-center mt-8">
+              Edit Task
+            </h3>
+            <X
+              className="absolute top-[26px] right-8 cursor-pointer w-4 h-4"
+              onClick={() => {
+                setIsEditTaskModalOpen(false);
+                setEditTaskData(null);
+              }}
+            />
+            <hr className="border border-[#E95420] mt-4" />
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            <ProjectTaskEditModal
+              taskId={editTaskData?.id}
+              onCloseModal={() => {
+                setIsEditTaskModalOpen(false);
+                setEditTaskData(null);
+                fetchTasks();
+              }}
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Issue Modal */}
+      <EditIssueModal
+        openDialog={isEditIssueModalOpen}
+        handleCloseDialog={() => {
+          setIsEditIssueModalOpen(false);
+          setEditIssueData(null);
+        }}
+        issueData={editIssueData}
+        onIssueUpdated={() => {
+          fetchIssues();
+        }}
+      />
+
+      {/* Edit Todo Modal */}
+      <AddToDoModal
+        isModalOpen={isEditTodoModalOpen}
+        setIsModalOpen={() => {
+          setIsEditTodoModalOpen(false);
+          setEditTodoData(null);
+          fetchTodos();
+        }}
+        getTodos={fetchTodos}
+        editingTodo={editTodoData}
+        isEditMode={!!editTodoData}
+        prefillData={editTodoData || {}}
+      />
+
+      {/* Pause Reason Modal */}
+      <PauseReasonModal
+        isOpen={isPauseModalOpen}
+        onClose={() => {
+          setIsPauseModalOpen(false);
+          setPauseTaskId(null);
+        }}
+        onSubmit={handlePauseTaskSubmit}
+        isLoading={isPauseLoading}
+        taskId={pauseTaskId}
+      />
+    </div>
+  );
+};
+
+const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
+  const [reason, setReason] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) setReason("");
+  }, [isOpen]);
+
+  const handleSubmit = () => {
+    if (!reason.trim()) {
+      toast.error("Please enter a reason for pausing the task");
+      return;
+    }
+    onSubmit(reason, taskId);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] border border-gray-200">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-1 h-8 bg-[#C72030] rounded-sm"></div>
+          <h2 className="text-lg font-bold text-gray-900">Pause Task</h2>
+        </div>
+        <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+          Please provide a reason for pausing this task. This will help track the pause history.
+        </p>
+        <div className="mb-6">
+          <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Reason</label>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Enter reason for pausing this task..."
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
+            rows={4}
+            disabled={isLoading}
+          />
+        </div>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
+          >
+            {isLoading ? "Processing..." : "Pause Task"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

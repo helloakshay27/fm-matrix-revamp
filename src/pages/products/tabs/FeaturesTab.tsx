@@ -140,6 +140,11 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
                     <th className="border border-[#E5E7EB] p-3 text-left w-[18%]">
                       Sub Feature
                     </th>
+                    {featureItems.some((f) => f.description?.trim()) && (
+                      <th className="border border-[#E5E7EB] p-3 text-left w-[22%]">
+                        Description
+                      </th>
+                    )}
                     <th className="border border-[#E5E7EB] p-3 text-left w-[33%]">
                       How It Currently Works
                     </th>
@@ -204,6 +209,11 @@ const FeaturesTab: React.FC<FeaturesTabProps> = ({ productData }) => {
                             <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C] font-medium text-[13px] whitespace-pre-line break-words">
                               {f.subFeatures}
                             </td>
+                            {featureItems.some((item) => item.description?.trim()) && (
+                              <td className="border border-[#E5E7EB] p-3 text-[#2C2C2C]/80 font-medium text-[13px] whitespace-pre-line break-words leading-relaxed">
+                                {f.description}
+                              </td>
+                            )}
                             <td
                               className={`border border-[#E5E7EB] p-3 text-[13px] whitespace-pre-line break-words leading-relaxed ${f.usp ? "text-[#DA7756] font-semibold" : "text-[#2C2C2C]/80 font-medium"}`}
                             >

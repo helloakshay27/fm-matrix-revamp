@@ -395,44 +395,74 @@ const BusinessWeeklyReport = () => {
                     </Card>
 
                     {/* Tasks & Issues Card */}
-                    <Card className="border-2 border-[#C05621] rounded-[16px] overflow-hidden bg-white shadow-sm">
-                        <div className="bg-[#FFF5F5] p-4 flex justify-between items-start border-b border-[#C05621]/20">
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2">
-                                    <AlertTriangle className="w-5 h-5 text-[#C05621]" />
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="font-bold text-[#1a1a1a]">Tasks & Issues</h3>
-                                        <Badge className="bg-[#E65100] hover:bg-[#E65100] text-white px-2 py-0.5 rounded-[6px] text-[10px] font-bold">
-                                            0/10 pts
+                    <Card className="rounded-2xl border border-[#DA7756]/20 overflow-hidden bg-white shadow-sm">
+                        <div className="bg-white p-4 border-b border-[#b91c1c]/10">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-3">
+                                        <CheckSquare className="h-6 w-6 text-[#DA7756]" />
+                                        <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                                            Tasks & Issues
+                                        </h3>
+                                    </div>
+                                    <p className="text-[11px] text-gray-500 font-medium">
+                                        Check the box for completed items to mark them completed.
+                                    </p>
+                                    <div className="flex flex-wrap gap-2 pt-1">
+                                        <Badge variant="outline" className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800">
+                                            Completed: 0
+                                        </Badge>
+                                        <Badge variant="outline" className="border-0 bg-blue-100 px-3 py-1 text-[10px] font-bold text-blue-800">
+                                            Open: 0
+                                        </Badge>
+                                        <Badge variant="outline" className="border-0 bg-rose-100 px-3 py-1 text-[10px] font-bold text-rose-800">
+                                            Overdue: 0
                                         </Badge>
                                     </div>
                                 </div>
-                                <p className="text-xs text-gray-600">
-                                    Check the box for completed items to mark them completed.
-                                </p>
-                                <div className="flex gap-2">
-                                    <Badge variant="outline" className="bg-[#E1F5FE] text-[#0288D1] border-none rounded-[6px] px-3 py-1 font-bold text-[10px] flex items-center gap-1">
-                                        <CheckSquare className="w-3 h-3" /> Closed: 0
+                                <div className="flex items-center gap-4">
+                                    <Badge className="bg-[#DA7756] hover:bg-[#DA7756] text-white px-3 py-1 rounded-[6px] text-xs font-bold">
+                                        0/10 PTS
                                     </Badge>
-                                    <Badge variant="outline" className="bg-[#E3F2FD] text-[#1976D2] border-none rounded-[6px] px-3 py-1 font-bold text-[10px] flex items-center gap-1">
-                                        <Info className="w-3 h-3" /> Open: 0
-                                    </Badge>
-                                    <Badge variant="outline" className="bg-[#FFEBEE] text-[#D32F2F] border-none rounded-[6px] px-3 py-1 font-bold text-[10px] flex items-center gap-1">
-                                        <AlertCircle className="w-3 h-3" /> Overdue: 0
-                                    </Badge>
+                                    <Button className="rounded-[8px] shadow-lg font-semibold text-sm bg-[#DA7756] hover:bg-[#c9673f] text-white">
+                                        <Plus size={14} />
+                                        Add
+                                    </Button>
                                 </div>
                             </div>
-                            <Button
-                                className="bg-[#E65100] hover:bg-[#D84315] text-white rounded-[8px] px-6 font-bold"
-                            >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Add
-                            </Button>
                         </div>
 
-                        <div className="p-16 flex flex-col items-center justify-center text-center space-y-4">
-                            <CheckSquare className="w-12 h-12 text-gray-200" />
-                            <p className="text-gray-400 text-lg">No open tasks or issues</p>
+                        <div className="p-6 text-left">
+                            <div className="space-y-2 text-left">
+                                {["Weekly Task 1", "Weekly Task 2"].map((title, index) => (
+                                    <div
+                                        key={title}
+                                        className="flex items-center gap-3 p-3 rounded-[10px] border transition-all bg-blue-50/50 border-blue-200/50"
+                                    >
+                                        <Checkbox className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a]" />
+                                        <button
+                                            className="p-1.5 hover:bg-gray-200 rounded-[6px] transition-colors"
+                                            title={`View ${index === 0 ? "task" : "issue"} details`}
+                                        >
+                                            <Info size={16} className="text-[#DA7756]" />
+                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[#DA7756] text-white uppercase">
+                                                {index === 0 ? "task" : "issue"}
+                                            </span>
+                                            <Info size={16} className="text-blue-600" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate text-left">
+                                                {title}
+                                            </p>
+                                            <p className="text-xs text-[#DA7756] capitalize text-left">
+                                                Open
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </Card>
 

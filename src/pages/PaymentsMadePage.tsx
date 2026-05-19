@@ -71,6 +71,7 @@ interface LockPayment {
   payment_date?: string;
   payment_amount?: string | number;
   deposit_to_ledger_name?: string;
+  deposit_to_ledger?: string;
   bill_payments?: { formatted_number?: string; payment_date?: string }[];
 }
 
@@ -132,7 +133,7 @@ const mapLockPayment = (lp: LockPayment): Payment => {
     amount: parseFloat(String(lp.paid_amount ?? lp.payment_amount ?? lp.total_amount ?? "0")) || 0,
     unused_amount: 0,
     bank_reference_number: lp.neft_reference || lp.order_number || lp.pg_transaction_id || "",
-    paid_through_account: lp.deposit_to_ledger_name || lp.payment_gateway || lp.bank_name || "-",
+    paid_through_account: lp.deposit_to_ledger_name || lp.deposit_to_ledger || lp.payment_gateway || lp.bank_name || "-",
     currency_symbol: "₹",
     tds_percentage: parseFloat(lp.tds_percentage || "0") || 0,
     tds_amount: parseFloat(lp.tds_amount || "0") || 0,
@@ -214,10 +215,19 @@ export const PaymentsMadePage: React.FC = () => {
           sonnerToast.error("API not configured. Please log in.");
           return;
         }
-        // Accounting API always hits club-uat-api.lockated.com
-        const url = new URL(
-          "https://club-uat-api.lockated.com/lock_payments.json"
-        );
+        // Build payments endpoint URL (use configured base or fall back to club UAT)
+        const base = API_CONFIG.BASE_URL || "https://club-uat-api.lockated.com";
+        const url = new URL(`${base.replace(/\/+$/, "")}/lock_payments.json`);
+
+        // Attach lock account id if available
+        const lockAccountId = localStorage.getItem("lock_account_id");
+        if (lockAccountId) {
+          url.searchParams.append("lock_account_id", lockAccountId);
+        }
+
+        // Indicate we want payments made (1). For received payments use 0.
+        url.searchParams.append("q[payment_made_eq]", "1");
+
         url.searchParams.append("page", String(page));
         url.searchParams.append("per_page", String(perPage));
 

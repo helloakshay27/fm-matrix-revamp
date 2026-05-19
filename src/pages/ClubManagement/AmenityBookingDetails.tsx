@@ -104,7 +104,7 @@ export const AmenityBookingDetailsClubPage = () => {
   // Payment modal state
   const [openPaymentModal, setOpenPaymentModal] = useState(false);
   const [paymentMode, setPaymentMode] = useState('online');
-  const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [paymentMethod, setPaymentMethod] = useState('');
   const [transactionId, setTransactionId] = useState('');
   const [paymentLoading, setPaymentLoading] = useState(false);
 
@@ -1151,10 +1151,21 @@ export const AmenityBookingDetailsClubPage = () => {
                       <SelectValue placeholder="Select Payment Method" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="upi">UPI</SelectItem>
-                      <SelectItem value="card">Card</SelectItem>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="netbanking">Net Banking</SelectItem>
+                      {
+                        paymentMode === "online" ? (
+                          <>
+                            <SelectItem value="upi">UPI</SelectItem>
+                            <SelectItem value="card">Card</SelectItem>
+                            <SelectItem value="cash">Cash</SelectItem>
+                            <SelectItem value="netbanking">Net Banking</SelectItem>
+                          </>
+                        ) : (
+                          <>
+                            <SelectItem value="offline">Offline</SelectItem>
+                          </>
+                        )
+                      }
+
                     </SelectContent>
                   </Select>
                 </div>
@@ -1196,8 +1207,8 @@ export const AmenityBookingDetailsClubPage = () => {
                     onDrop={handleDrop}
                     onClick={() => !paymentLoading && fileInputRef.current?.click()}
                     className={`relative p-6 rounded-lg border-2 border-dashed transition-all cursor-pointer ${isDragActive
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
                       } ${paymentLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   >
                     <div className="flex flex-col items-center justify-center">

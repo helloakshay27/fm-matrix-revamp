@@ -67,6 +67,7 @@ interface ClubMember {
 interface GroupMembershipData {
   id: number;
   membership_plan_id: number;
+  status: string;
   pms_site_id: number;
   start_date: string | null;
   end_date: string | null;
@@ -686,8 +687,38 @@ export const ClubGroupMembershipDashboard = () => {
       return siteName || <span className="text-gray-400">-</span>;
     }
 
-    if (columnKey === 'membershipStatus') {
-      return renderStatusBadge(item.start_date, item.end_date, false);
+    if (columnKey === "membershipStatus") {
+      const status = item.status?.toLowerCase();
+
+      const statusMap = {
+        pending: {
+          label: "Pending",
+          className: "bg-yellow-500 text-black",
+        },
+        approved: {
+          label: "Approved",
+          className: "bg-green-500 text-black",
+        },
+        rejected: {
+          label: "Rejected",
+          className: "bg-red-500 text-white",
+        },
+        draft: {
+          label: "Draft",
+          className: "bg-gray-500 text-white",
+        },
+      };
+
+      const currentStatus = statusMap[status] || {
+        label: "Unknown",
+        className: "bg-gray-500 text-white",
+      };
+
+      return (
+        <Badge className={currentStatus.className}>
+          {currentStatus.label}
+        </Badge>
+      );
     }
 
     if (columnKey === 'start_date' || columnKey === 'end_date') {

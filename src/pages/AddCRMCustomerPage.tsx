@@ -529,8 +529,8 @@ export const AddCRMCustomerPage = () => {
             ))}
             <Button
               onClick={addNewDomain}
-              variant="outline"
-              className="mt-4 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+              className="fm-button-fix fm-button-brand px-4 py-2"
+              variant="ghost"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Domain
@@ -691,8 +691,8 @@ export const AddCRMCustomerPage = () => {
             {/* Add Lease Button */}
             <Button
               onClick={addNewLease}
-              variant="outline"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+              variant="ghost"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Lease

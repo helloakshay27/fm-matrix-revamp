@@ -1,12 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useProductSecurity } from "./useProductSecurity";
-import {
-  CameraPermissionPending,
-  CameraPermissionDenied,
-  ModelLoadingScreen,
-  SecurityOverlays,
-  AlwaysMountedVideos,
-} from "./SecurityOverlays";
+import { SecurityOverlays } from "./SecurityOverlays";
 import {
   ArrowLeft,
   Monitor,
@@ -754,7 +748,7 @@ const productData = {
         },
         {
           rank: 2,
-          industry: "EPC Contractors and Infrastructure Firms",
+          industry: "EPC Contractors and Infrastructure Firms (EPCE)",
           buyReason:
             "Large multi-site projects require structured QC; government contracts demand audit trails; stage-wise inspection mandatory",
           scale:
@@ -774,7 +768,7 @@ const productData = {
         },
         {
           rank: 4,
-          industry: "Industrial and Warehousing Construction",
+          industry: "Industrial and Warehousing Construction (Warehousing)",
           buyReason:
             "Quality checks for fit-out, MEP, safety compliance before occupancy; lease agreement quality clauses",
           scale:
@@ -784,7 +778,7 @@ const productData = {
         },
         {
           rank: 5,
-          industry: "Facility Management Organizations",
+          industry: "Facility Management",
           buyReason:
             "Post-handover snag tracking; maintenance request management; asset condition documentation at takeover",
           scale:
@@ -794,7 +788,8 @@ const productData = {
         },
         {
           rank: 6,
-          industry: "Government and Public Infrastructure (PWD, NHAI, Metro)",
+          industry:
+            "Government and Public Infrastructure (PWD, NHAI, Metro) (EPCE)",
           buyReason:
             "Mandatory quality audits for public works; third-party inspection documentation; anti-corruption audit trail",
           scale:
@@ -804,7 +799,7 @@ const productData = {
         },
         {
           rank: 7,
-          industry: "Healthcare and Education Facility Construction",
+          industry: "Healthcare and Education Facility Construction (EPCE)",
           buyReason:
             "High compliance standards; infection control QC; zero-defect medical-grade finishing requirements",
           scale:
@@ -814,7 +809,7 @@ const productData = {
         },
         {
           rank: 8,
-          industry: "Data Center and Technology Campus Construction",
+          industry: "Data Center and Technology Campus Construction (IT/ITES)",
           buyReason:
             "Precision QC for raised floors, cooling, electrical; clean room standards; strict commissioning protocols",
           scale:
@@ -824,7 +819,8 @@ const productData = {
         },
         {
           rank: 9,
-          industry: "Affordable Housing (PMAY, State Housing Schemes)",
+          industry:
+            "Affordable Housing (PMAY, State Housing Schemes) (Residential Real Estate)",
           buyReason:
             "Volume delivery with standardized quality benchmarks; government audit compliance; digital handover required",
           scale:
@@ -834,7 +830,7 @@ const productData = {
         },
         {
           rank: 10,
-          industry: "Special Economic Zones and Industrial Parks",
+          industry: "Special Economic Zones and Industrial Parks (IT Parks)",
           buyReason:
             "Multi-building phased delivery; tenant-specific finishing quality; pre-occupancy punch list",
           scale:
@@ -1311,7 +1307,7 @@ const productData = {
         },
         {
           rank: 2,
-          industry: "EPC Contractors and Infrastructure Firms",
+          industry: "EPC Contractors and Infrastructure Firms (EPCE)",
           useCase:
             "Multi-site quality monitoring across highway, bridge, or large infrastructure project stages",
           workflow:
@@ -1335,7 +1331,7 @@ const productData = {
         },
         {
           rank: 4,
-          industry: "Industrial and Warehousing Construction",
+          industry: "Industrial and Warehousing Construction (Warehousing)",
           useCase:
             "MEP and civil quality inspection for large-format logistics park units before occupancy",
           workflow:
@@ -1347,7 +1343,7 @@ const productData = {
         },
         {
           rank: 5,
-          industry: "Facility Management Organizations",
+          industry: "Facility Management",
           useCase:
             "Post-handover snag tracking and asset condition documentation for FM takeover",
           workflow:
@@ -1359,7 +1355,7 @@ const productData = {
         },
         {
           rank: 6,
-          industry: "Government and Public Infrastructure",
+          industry: "Government and Public Infrastructure (EPCE)",
           useCase:
             "Third-party quality audit documentation for PWD or NHAI project inspections",
           workflow:
@@ -1371,7 +1367,7 @@ const productData = {
         },
         {
           rank: 7,
-          industry: "Healthcare and Education Facility Construction",
+          industry: "Healthcare and Education Facility Construction (EPCE)",
           useCase:
             "Infection control and finish quality inspection for hospital or university construction before commissioning",
           workflow:
@@ -1383,7 +1379,7 @@ const productData = {
         },
         {
           rank: 8,
-          industry: "Data Center and Technology Campus Construction",
+          industry: "Data Center and Technology Campus Construction (IT/ITES)",
           useCase:
             "Precision commissioning inspection for raised floor, cooling, power, and cable management before go-live",
           workflow:
@@ -1407,7 +1403,7 @@ const productData = {
         },
         {
           rank: 10,
-          industry: "SEZs and Industrial Parks",
+          industry: "SEZs and Industrial Parks (SEZ/ IT Parks)",
           useCase:
             "Multi-building phased delivery inspection with tenant-specific punch lists before lease commencement",
           workflow:
@@ -3986,32 +3982,6 @@ const Snag360Page: React.FC = () => {
   const navigate = useNavigate();
   const security = useProductSecurity();
   const snagTabsScrollRef = useRef<HTMLDivElement>(null);
-
-  // Security checks
-  if (security.cameraPermission === "pending") {
-    return (
-      <>
-        <AlwaysMountedVideos security={security} />
-        <CameraPermissionPending />
-      </>
-    );
-  }
-  if (security.cameraPermission === "denied") {
-    return (
-      <>
-        <AlwaysMountedVideos security={security} />
-        <CameraPermissionDenied />
-      </>
-    );
-  }
-  if (security.modelLoading) {
-    return (
-      <>
-        <AlwaysMountedVideos security={security} />
-        <ModelLoadingScreen />
-      </>
-    );
-  }
 
   // Extract use cases data for custom component
   const industryUseCases =

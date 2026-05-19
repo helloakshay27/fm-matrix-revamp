@@ -19,12 +19,7 @@ import {
   TabsTrigger,
 } from "../../components/ui/tabs";
 import { useProductSecurity } from "./useProductSecurity";
-import {
-  CameraPermissionPending,
-  CameraPermissionDenied,
-  ModelLoadingScreen,
-  SecurityOverlays,
-} from "./SecurityOverlays";
+import { SecurityOverlays } from "./SecurityOverlays";
 import FMMatrixUseCasesTab from "./tabs/FMMatrixUseCasesTab";
 import FMMatrixSWOTTab from "./tabs/FMMatrixSWOTTab";
 import FMMatrixRoadmapTab from "./tabs/FMMatrixRoadmapTab";
@@ -4882,17 +4877,6 @@ const FacilityManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const tabsScrollRef = useRef<HTMLDivElement>(null);
   const security = useProductSecurity();
-
-  // Camera permission states
-  if (security.cameraPermission === "pending") {
-    return <CameraPermissionPending />;
-  }
-  if (security.cameraPermission === "denied") {
-    return <CameraPermissionDenied />;
-  }
-  if (security.modelLoading) {
-    return <ModelLoadingScreen />;
-  }
 
   return (
     <div className="min-h-screen bg-[#F6F4EE] pb-20 select-none font-poppins transition-all duration-300">

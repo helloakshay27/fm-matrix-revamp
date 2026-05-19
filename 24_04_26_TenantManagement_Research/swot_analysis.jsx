@@ -1,0 +1,884 @@
+export default function TenantSwotAnalysisContent() {
+  return (
+    <>
+      <div className="ritz grid-container" dir="ltr">
+        <table className="waffle" cellSpacing="0" cellPadding="0">
+          <thead>
+            <tr>
+              <th className="row-header freezebar-origin-ltr"></th>
+              <th
+                id="1828711946C0"
+                style={{ width: 699 }}
+                className="column-headers-background"
+              >
+                A
+              </th>
+              <th
+                id="1828711946C1"
+                style={{ width: 60 }}
+                className="column-headers-background"
+              >
+                B
+              </th>
+              <th
+                id="1828711946C2"
+                style={{ width: 60 }}
+                className="column-headers-background"
+              >
+                C
+              </th>
+              <th
+                id="1828711946C3"
+                style={{ width: 60 }}
+                className="column-headers-background"
+              >
+                D
+              </th>
+              <th
+                id="1828711946C4"
+                style={{ width: 60 }}
+                className="column-headers-background"
+              >
+                E
+              </th>
+              <th
+                id="1828711946C5"
+                style={{ width: 60 }}
+                className="column-headers-background"
+              >
+                F
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style={{ height: 39 }}>
+              <th
+                id="1828711946R0"
+                style={{ height: 39 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 39 }}>
+                  1
+                </div>
+              </th>
+              <td className="s0" colSpan="6">
+                LOCKATED TENANT MANAGEMENT | SWOT Analysis 2026
+              </td>
+            </tr>
+            <tr style={{ height: 23 }}>
+              <th
+                id="1828711946R1"
+                style={{ height: 23 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 23 }}>
+                  2
+                </div>
+              </th>
+              <td className="s1" colSpan="6">
+                10 points per quadrant. Each point: bold headline + explanatory
+                sentence.
+              </td>
+            </tr>
+            <tr style={{ height: 28 }}>
+              <th
+                id="1828711946R2"
+                style={{ height: 28 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 28 }}>
+                  3
+                </div>
+              </th>
+              <td className="s2" colSpan="6">
+                STRENGTHS - 10 Structural and Product Advantages
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R3"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  4
+                </div>
+              </th>
+              <td className="s3" colSpan="6">
+                Data Sovereignty Architecture: On-premise deployment means
+                client data never touches Lockated servers - a structural
+                compliance advantage that no cloud-native competitor can
+                replicate without rebuilding from scratch.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R4"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  5
+                </div>
+              </th>
+              <td className="s3" colSpan="6">
+                All-in-One Product Breadth: Wallet, OSR, community, loyalty,
+                visitor management, amenity booking, and event management in a
+                single platform eliminates the multi-vendor complexity that
+                landlords currently face.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R5"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  6
+                </div>
+              </th>
+              <td className="s3" colSpan="6">
+                India-First Payment Stack: UPI, Razorpay/PayU integration, and
+                Aadhaar e-sign compatibility makes the platform immediately
+                usable for India&#39;s digital payment behavior without
+                workarounds.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R6"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  7
+                </div>
+              </th>
+              <td className="s3" colSpan="6">
+                Access Card Identity Binding: Onboarding tied to physical access
+                card prevents ghost accounts, unauthorized access, and ensures
+                accurate user-to-company mapping that global competitors do not
+                offer.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R7"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  8
+                </div>
+              </th>
+              <td className="s3" colSpan="6">
+                DPDP Act 2023 Native Compliance: India&#39;s Data Protection law
+                enforcement creates a structural tailwind for Lockated that
+                intensifies as enterprise tenants demand compliance
+                documentation from their landlords.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R8"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  9
+                </div>
+              </th>
+              <td className="s3" colSpan="6">
+                Closed-Loop Digital Wallet: Creates a financial ecosystem within
+                the property that generates transaction data, drives cashless
+                campus adoption, and opens ancillary revenue streams for
+                landlords.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R9"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  10
+                </div>
+              </th>
+              <td className="s3" colSpan="6">
+                Offer Retargeting Engine: Behavioral retargeting based on offer
+                view history is a MarTech capability no other India CRE platform
+                offers, giving landlords and F&amp;B tenants a
+                direct-to-consumer marketing channel they fully own.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R10"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  11
+                </div>
+              </th>
+              <td className="s3" colSpan="6">
+                Multi-Park Architecture: Cross-property access and loyalty
+                portability serves the real operational need of enterprise
+                tenants with multi-campus presence - a feature set global
+                players have but India platforms lack.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R11"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  12
+                </div>
+              </th>
+              <td className="s3" colSpan="6">
+                White-Label Capability: Enables FM channel partners to deploy
+                Lockated as their branded product, unlocking a distribution
+                channel that multiplies reach without proportional sales cost.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R12"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  13
+                </div>
+              </th>
+              <td className="s3" colSpan="6">
+                ESG and CSR Module: Institutional landlords and REIT portfolios
+                now have ESG reporting mandated by investors; Lockated&#39;s CSR
+                engagement module creates data that directly feeds GRESB and
+                LEED reporting.
+              </td>
+            </tr>
+            <tr style={{ height: 19 }}>
+              <th
+                id="1828711946R13"
+                style={{ height: 19 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 19 }}>
+                  14
+                </div>
+              </th>
+              <td className="s4"></td>
+              <td className="s4"></td>
+              <td className="s4"></td>
+              <td className="s4"></td>
+              <td className="s4"></td>
+              <td className="s4"></td>
+            </tr>
+            <tr style={{ height: 28 }}>
+              <th
+                id="1828711946R14"
+                style={{ height: 28 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 28 }}>
+                  15
+                </div>
+              </th>
+              <td className="s2" colSpan="6">
+                WEAKNESSES - 10 Gaps That Require Mitigation
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R15"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  16
+                </div>
+              </th>
+              <td className="s5" colSpan="6">
+                On-Premise Deployment Complexity: While data sovereignty is a
+                differentiator, on-premise deployment increases implementation
+                time (4-8 weeks vs 1-2 days for cloud SaaS), raises
+                implementation cost, and limits the addressable market to
+                clients with IT infrastructure.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R16"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  17
+                </div>
+              </th>
+              <td className="s5" colSpan="6">
+                No Native AI Features in Current Product: Phase 2 roadmap AI
+                features (lease renewal scoring, predictive maintenance,
+                chatbot) are not yet live; competitors like Facilio are already
+                deploying IoT-AI integrations that reduce this gap in facility
+                management.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R17"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  18
+                </div>
+              </th>
+              <td className="s5" colSpan="6">
+                Limited Integration Ecosystem vs Global Competitors: HqO and
+                Yardi have 200+ integrations; Lockated&#39;s API marketplace is
+                in Phase 3 roadmap; this limits appeal to large FM firms already
+                running IBM TRIRIGA or Archibus.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R18"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  19
+                </div>
+              </th>
+              <td className="s5" colSpan="6">
+                Brand Awareness Below Global Competitors: HqO, Facilio, and
+                Yardi are known brands in the CRE industry; Lockated needs
+                significant marketing investment in PropTech events and analyst
+                reports to achieve comparable consideration in enterprise sales.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R19"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  20
+                </div>
+              </th>
+              <td className="s5" colSpan="6">
+                Hardware Dependency for Some Features: Access card binding,
+                biometric visitor management, and IoT integration require
+                coordination with hardware providers, adding procurement
+                complexity to enterprise deals.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R20"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  21
+                </div>
+              </th>
+              <td className="s5" colSpan="6">
+                No Self-Serve Pricing or Free Trial for Enterprise Tier:
+                Enterprise landlords cannot evaluate the platform without a
+                sales engagement; a self-serve demo environment or sandbox would
+                shorten the sales cycle.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R21"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  22
+                </div>
+              </th>
+              <td className="s5" colSpan="6">
+                Customer Support Scalability Risk: On-premise deployments
+                require dedicated implementation support; as deployment count
+                grows from 15 to 100+ properties, support team must scale
+                proportionally or quality degrades.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R22"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  23
+                </div>
+              </th>
+              <td className="s5" colSpan="6">
+                Residential Platform Confusion Risk: India has strong
+                residential society apps (Mygate, NoBrokerHood); Lockated must
+                clearly differentiate its commercial CRE positioning to avoid
+                being evaluated against the wrong reference class.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R23"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  24
+                </div>
+              </th>
+              <td className="s5" colSpan="6">
+                Limited International Case Studies: Global expansion to
+                Southeast Asia and the Middle East requires international client
+                references that do not yet exist; the India-first focus is right
+                but limits global credibility.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R24"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  25
+                </div>
+              </th>
+              <td className="s5" colSpan="6">
+                Churn Risk from Implementation Partners: If FM channel partners
+                (CBRE, JLL) develop competitive capabilities internally or
+                switch to a global vendor, Lockated could lose a distribution
+                channel that represents significant ARR.
+              </td>
+            </tr>
+            <tr style={{ height: 20 }}>
+              <th
+                id="1828711946R25"
+                style={{ height: 20 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 20 }}>
+                  26
+                </div>
+              </th>
+              <td className="s4"></td>
+              <td className="s4"></td>
+              <td className="s4"></td>
+              <td className="s4"></td>
+              <td className="s4"></td>
+              <td className="s4"></td>
+            </tr>
+            <tr style={{ height: 28 }}>
+              <th
+                id="1828711946R26"
+                style={{ height: 28 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 28 }}>
+                  27
+                </div>
+              </th>
+              <td className="s2" colSpan="6">
+                OPPORTUNITIES - 10 Market and Timing Advantages
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R27"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  28
+                </div>
+              </th>
+              <td className="s6" colSpan="6">
+                DPDP Act 2023 Enforcement Intensification: As the Data
+                Protection Board issues the first penalties in 2025-2026,
+                enterprise landlords with BFSI, pharma, and defense tenants will
+                face compliance audits that force a switch from US-cloud
+                platforms to on-premise solutions.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R28"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  29
+                </div>
+              </th>
+              <td className="s6" colSpan="6">
+                India PropTech Market at USD 1.72B Growing 19.5% CAGR: The India
+                PropTech market is in hyper-growth with institutional capital
+                flowing in; Lockated is positioned to capture the commercial CRE
+                tenant experience sub-segment before larger players establish
+                India operations.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R29"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  30
+                </div>
+              </th>
+              <td className="s6" colSpan="6">
+                Grade A Office Supply Expanding Aggressively: India is adding
+                40-50 mn sq ft of Grade A office supply annually in Bengaluru,
+                Hyderabad, Pune, and NCR; each new property is a greenfield
+                deployment opportunity with no incumbent vendor.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R30"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  31
+                </div>
+              </th>
+              <td className="s6" colSpan="6">
+                MNC Tenant Mandates Creating Buyer Urgency: Global MNCs now
+                include digital workplace experience requirements in India lease
+                RFPs; landlords who cannot demonstrate a tenant app lose leasing
+                deals to tech-enabled competitors.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R31"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  32
+                </div>
+              </th>
+              <td className="s6" colSpan="6">
+                FM Channel Partner White-Label Distribution: One partnership
+                with CBRE India or JLL India can unlock 50-100 property
+                deployments simultaneously; this leverage is unmatched by any
+                direct sales effort.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R32"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  33
+                </div>
+              </th>
+              <td className="s6" colSpan="6">
+                Co-working Expansion Outside Metros: Tier 2 cities (Coimbatore,
+                Nagpur, Kochi, Jaipur) are seeing co-working expansion;
+                Lockated&#39;s lighter Starter tier can capture this market
+                before global players establish presence.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R33"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  34
+                </div>
+              </th>
+              <td className="s6" colSpan="6">
+                Smart Cities Mission and Green Building Mandates:
+                Government-mandated smart building requirements for new
+                commercial construction create institutional tailwinds for
+                platform adoption in government-leased commercial properties and
+                SEZs.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R34"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  35
+                </div>
+              </th>
+              <td className="s6" colSpan="6">
+                GRESB and ESG Reporting Requirements: Institutional REITs must
+                now publish GRESB scores; Lockated&#39;s ESG module directly
+                supports data collection for this compliance requirement, making
+                it a board-level priority purchase.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R35"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  36
+                </div>
+              </th>
+              <td className="s6" colSpan="6">
+                Southeast Asia and Middle East Data Residency Alignment:
+                Singapore&#39;s PDPA and UAE&#39;s DIFC data residency
+                requirements mirror India&#39;s DPDP; Lockated&#39;s
+                architecture is globally replicable for data-sovereign
+                deployments in these high-value markets.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R36"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  37
+                </div>
+              </th>
+              <td className="s6" colSpan="6">
+                AI and IoT Integration Market Window: Phase 2 AI features (lease
+                renewal scoring, predictive maintenance, occupancy intelligence)
+                can be built and launched before global competitors build
+                India-compliant versions of their AI tools.
+              </td>
+            </tr>
+            <tr style={{ height: 20 }}>
+              <th
+                id="1828711946R37"
+                style={{ height: 20 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 20 }}>
+                  38
+                </div>
+              </th>
+              <td className="s4"></td>
+              <td className="s4"></td>
+              <td className="s4"></td>
+              <td className="s4"></td>
+              <td className="s4"></td>
+              <td className="s4"></td>
+            </tr>
+            <tr style={{ height: 28 }}>
+              <th
+                id="1828711946R38"
+                style={{ height: 28 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 28 }}>
+                  39
+                </div>
+              </th>
+              <td className="s2" colSpan="6">
+                THREATS - 10 Competitive and Market Risks
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R39"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  40
+                </div>
+              </th>
+              <td className="s7" colSpan="6">
+                HqO India Entry with Data Residency Option: If HqO invests in
+                AWS India or Azure India region deployment and creates a local
+                data residency architecture, the compliance moat narrows
+                significantly; their brand and product depth would then be
+                direct competition.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R40"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  41
+                </div>
+              </th>
+              <td className="s7" colSpan="6">
+                Facilio Adding Tenant Experience Layer: Facilio is
+                India-founded, has strong CRE relationships, and already has FM
+                and IoT capabilities; adding a wallet, loyalty, and community
+                module would make them a direct competitor in 12-18 months.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R41"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  42
+                </div>
+              </th>
+              <td className="s7" colSpan="6">
+                Google Workspace / Microsoft Teams PropTech Plugins: If
+                Microsoft or Google releases building management integrations
+                within Teams or Workspace (already happening in the US),
+                landlords may choose the path of least resistance for their MNC
+                tenants.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R42"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  43
+                </div>
+              </th>
+              <td className="s7" colSpan="6">
+                DPDP Act Implementation Delays Reducing Urgency: If DPDP
+                enforcement is delayed or enforcement is weak, the compliance
+                urgency driver weakens and the sales pitch reverts to a feature
+                comparison where Lockated&#39;s implementation complexity is a
+                disadvantage.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R43"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  44
+                </div>
+              </th>
+              <td className="s7" colSpan="6">
+                Landlord Build-vs-Buy Decision for Large Portfolios: Embassy
+                REIT, Brookfield India, and Mindspace have technology budgets to
+                build proprietary apps; if they do, they become self-sufficient
+                and the addressable market shrinks by 20-30%.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R44"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  45
+                </div>
+              </th>
+              <td className="s7" colSpan="6">
+                Mygate or NoBrokerHood Launching Commercial Product: Both
+                platforms have strong India brand recognition, large user bases,
+                and distribution; a strategic pivot to commercial CRE would
+                create a competitive threat with lower price points.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R45"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  46
+                </div>
+              </th>
+              <td className="s7" colSpan="6">
+                Economic Slowdown Compressing CRE Tech Budgets: A real estate
+                sector downturn reduces landlord capex on technology;
+                Lockated&#39;s subscription model provides some protection but
+                new deal flow would slow significantly.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R46"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  47
+                </div>
+              </th>
+              <td className="s7" colSpan="6">
+                Talent Acquisition Competition for Product and Engineering:
+                Bengaluru and Hyderabad engineering talent is in high demand
+                from global SaaS companies; competitive salaries from HqO,
+                Yardi, or Facilio could draw key product engineers.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R47"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  48
+                </div>
+              </th>
+              <td className="s7" colSpan="6">
+                Integration Partner Dependency Risk: Over-reliance on GoKhana
+                for F&amp;B, a single payment gateway, or a single IoT provider
+                creates single-point failures that could disrupt the platform
+                experience for all tenants simultaneously.
+              </td>
+            </tr>
+            <tr style={{ height: 45 }}>
+              <th
+                id="1828711946R48"
+                style={{ height: 45 }}
+                className="row-headers-background"
+              >
+                <div className="row-header-wrapper" style={{ lineHeight: 45 }}>
+                  49
+                </div>
+              </th>
+              <td className="s7" colSpan="6">
+                Data Breach on a Client&#39;s On-Premise Server: If a large
+                landlord client experiences a data breach on their own server
+                where Lockated is deployed, the resulting PR coverage could
+                create reputational damage for Lockated despite the breach being
+                on client infrastructure.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}

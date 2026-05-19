@@ -191,6 +191,7 @@ export const QuotesDetails = () => {
             declined: "bg-red-100 text-red-800 border-red-200",
             expired: "bg-orange-100 text-orange-800 border-orange-200",
             converted: "bg-purple-100 text-purple-800 border-purple-200",
+            pending_approval: 'bg-orange-100 text-orange-800',
         };
         return colors[status] || colors.draft;
     };
@@ -325,7 +326,7 @@ export const QuotesDetails = () => {
 
                     <div className="flex items-center gap-2 flex-wrap">
                         <Badge className={`${getStatusColor(quoteData.status)} border`}>
-                            {quoteData.status?.toUpperCase()}
+                            {quoteData.status?.replace(/_/g, " ").toUpperCase()}
                         </Badge>
 
                         {quoteData?.approval_status?.approval_levels?.length > 0 && (
@@ -786,7 +787,7 @@ export const QuotesDetails = () => {
                                     <div>
                                         <p className="text-sm font-medium text-muted-foreground">Status</p>
                                         <Badge className={`${getStatusColor(quoteData.status)} border mt-1`}>
-                                            {quoteData.status.toUpperCase()}
+                                            {quoteData.status?.replace(/_/g, " ").toUpperCase()}
                                         </Badge>
                                     </div>
                                 </div>

@@ -36,6 +36,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "po_number",
+    label: "PO Number",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "referenceNo",
     label: "Reference No.",
     sortable: true,
@@ -45,6 +52,20 @@ const columns: ColumnConfig[] = [
   {
     key: "supplierName",
     label: "Supplier Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+   {
+    key: "lastApprovedBy",
+    label: "Last Approved By",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "approvedStatus",
+    label: "Approved Status",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -63,20 +84,7 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
-  {
-    key: "lastApprovedBy",
-    label: "Last Approved By",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "approvedStatus",
-    label: "Approved Status",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
+ 
   {
     key: "prAmount",
     label: "PR Amount",
@@ -125,6 +133,7 @@ export const MaterialPRDashboard = () => {
       const formatedResponse = response.purchase_orders.map((item: any) => ({
         id: item.id,
         prNo: item.external_id,
+        po_number: item.po_number,
         referenceNo: item.reference_number,
         supplierName: item.supplier?.company_name,
         createdBy: item.user.full_name,
@@ -471,7 +480,7 @@ export const MaterialPRDashboard = () => {
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
-        storageKey="material-pr-dashboard-columns"
+        storageKey="material-pr-dashboard-columns-v2"
         className="min-w-[1000px]"
         emptyMessage="No material PR data available"
         selectAllLabel="Select all Material PRs"

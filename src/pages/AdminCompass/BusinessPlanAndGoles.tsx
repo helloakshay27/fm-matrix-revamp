@@ -9,9 +9,10 @@ import { KeyProcessesSection } from "./AdminCompassComponent/KeyProcessesSection
 import SWOTAnalysis from "./AdminCompassComponent/SWOTAnalysis";
 import { GoalsView } from "./AdminCompassComponent/GoalsView";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
-import { toast } from "sonner"; // Assuming you have sonner installed based on your previous tab
+import { toast } from "sonner";
+import GoalsPage from "./AdminCompassComponent/goalsPage";
 
-// ── Design Tokens — reduced orange, neutral-first ──
+// ── Design Tokens ──
 const C = {
   primary: "#DA7756",
   primaryHov: "#c9673f",
@@ -19,7 +20,7 @@ const C = {
   primaryTint: "rgba(218,119,86,0.06)",
   primaryBord: "#F6F4EE",
   primaryBordStrong: "#d4cdc6",
-  pageBg: "#ffffff",   // 👈 यहाँ #f6f4ee से #ffffff किया
+  pageBg: "#ffffff",
   cardBg: "#ffffff",
   tealBg: "#9EC8BA",
   textMain: "#1a1a1a",
@@ -53,7 +54,6 @@ const getAuthHeaders = (): Record<string, string> => {
 const safeParseJSON = (data: any): Record<string, any> => {
   if (!data) return {};
   let parsed = data;
-
   while (typeof parsed === "string") {
     try {
       const next = JSON.parse(parsed);
@@ -63,7 +63,6 @@ const safeParseJSON = (data: any): Record<string, any> => {
       break;
     }
   }
-
   if (typeof parsed === "object" && !Array.isArray(parsed) && parsed !== null) {
     return parsed;
   }
@@ -141,13 +140,9 @@ const saveBrandPromisesToApi = async (
   videoUrl: string
 ): Promise<void> => {
   const promiseKpis: Record<string, string[]> = {};
-
   promises.forEach((p, idx) => {
-    if (p.kpis && p.kpis.length > 0) {
-      promiseKpis[`item_${idx + 1}`] = p.kpis;
-    }
+    if (p.kpis && p.kpis.length > 0) promiseKpis[`item_${idx + 1}`] = p.kpis;
   });
-
   const payload = {
     extra_field: {
       group_name: "business_plan_brand_promises",
@@ -156,13 +151,11 @@ const saveBrandPromisesToApi = async (
       promise_kpis: promiseKpis,
     },
   };
-
   const res = await fetch(`${BASE_URL}/extra_fields/bulk_upsert`, {
     method: "POST",
     headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
-
   const rawText = await res.text();
   if (!res.ok)
     throw new Error(`API error ${res.status}: ${rawText || res.statusText}`);
@@ -341,10 +334,29 @@ const saveCoreValuesToApi = async (
 // ─────────────────────────────────────────────
 //  Overview Media API helpers
 // ─────────────────────────────────────────────
-interface OverviewMedia {
-  images: string[];
-  videos: string[];
+interface OverviewMediaItem {
+  id: number | null;
+  url: string;
 }
+
+interface OverviewMedia {
+  images: OverviewMediaItem[];
+  videos: OverviewMediaItem[];
+}
+
+const normalizeImageUrl = (url: string): string => {
+  if (!url) return "";
+  try {
+    const parsed = new URL(url);
+    const directImageUrl = parsed.searchParams.get("imgurl");
+    if (parsed.hostname.includes("google.") && directImageUrl) {
+      return directImageUrl;
+    }
+  } catch {
+    return url;
+  }
+  return url;
+};
 
 const fetchOverviewMediaFromApi = async (): Promise<OverviewMedia> => {
   const url = `${BASE_URL}/business_compass/overview_media`;
@@ -357,13 +369,18 @@ const fetchOverviewMediaFromApi = async (): Promise<OverviewMedia> => {
   } catch {
     json = {};
   }
-  const parseUrlArray = (arr: any[]): string[] =>
+  const parseMediaArray = (arr: any[]): OverviewMediaItem[] =>
     arr
-      .map((item) => (typeof item === "string" ? item : (item?.url ?? "")))
-      .filter(Boolean);
+      .map((item) =>
+        typeof item === "string"
+          ? { id: null, url: item }
+          : { id: item?.id ?? null, url: item?.url ?? "" }
+      )
+      .map((item) => ({ ...item, url: normalizeImageUrl(item.url) }))
+      .filter((item) => Boolean(item.url));
   return {
-    images: Array.isArray(json?.images) ? parseUrlArray(json.images) : [],
-    videos: Array.isArray(json?.videos) ? parseUrlArray(json.videos) : [],
+    images: Array.isArray(json?.images) ? parseMediaArray(json.images) : [],
+    videos: Array.isArray(json?.videos) ? parseMediaArray(json.videos) : [],
   };
 };
 
@@ -415,7 +432,6 @@ const InfoIcon = () => (
     />
   </svg>
 );
-// Accept color prop, otherwise default to C.primary
 const EyeIcon = ({ color }: { color?: string }) => (
   <svg
     className="w-4 h-4"
@@ -749,7 +765,6 @@ const InlineImageSlider = ({
           )}
         </button>
       </div>
-
       {images.length > 1 && (
         <button
           onClick={prev}
@@ -794,7 +809,6 @@ const InlineImageSlider = ({
           </svg>
         </button>
       )}
-
       {images.length > 1 && (
         <button
           onClick={next}
@@ -839,7 +853,6 @@ const InlineImageSlider = ({
           </svg>
         </button>
       )}
-
       {images.length > 1 && (
         <div
           style={{
@@ -970,7 +983,6 @@ const InlineVideoPlayer: React.FC<{
   if (!videos || videos.length === 0) return null;
 
   const url = videos[safeIdx] ?? "";
-
   const getYouTubeId = (u: string): string | null => {
     if (!u || typeof u !== "string") return null;
     const m = u.match(
@@ -978,7 +990,6 @@ const InlineVideoPlayer: React.FC<{
     );
     return m ? m[1] : null;
   };
-
   const videoId = getYouTubeId(url);
   const prev = () => setCurrent((p) => (p > 0 ? p - 1 : videos.length - 1));
   const next = () => setCurrent((p) => (p < videos.length - 1 ? p + 1 : 0));
@@ -1029,7 +1040,6 @@ const InlineVideoPlayer: React.FC<{
           />
         )}
       </div>
-
       <div
         style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}
       >
@@ -1066,7 +1076,6 @@ const InlineVideoPlayer: React.FC<{
             </svg>
           </button>
         )}
-
         {videos.length > 1 && (
           <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
             {videos.map((_, i) => (
@@ -1087,7 +1096,6 @@ const InlineVideoPlayer: React.FC<{
             ))}
           </div>
         )}
-
         {videos.length > 1 && (
           <button
             onClick={next}
@@ -1121,7 +1129,6 @@ const InlineVideoPlayer: React.FC<{
             </svg>
           </button>
         )}
-
         <p
           style={{
             flex: 1,
@@ -1138,7 +1145,6 @@ const InlineVideoPlayer: React.FC<{
         >
           {safeIdx + 1}/{videos.length} — {url}
         </p>
-
         <button
           onClick={() => onDelete(safeIdx)}
           disabled={isSaving}
@@ -1273,70 +1279,27 @@ const ThemeStyle = () => (
   <style>{`
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap');
     .bp-wrap * { font-family: 'Poppins', sans-serif !important; }
-    .bp-modal-portal {
-      position: fixed; inset: 0; z-index: 99999;
-      display: flex; align-items: center; justify-content: center;
-      padding: 16px;
-      background: rgba(0,0,0,0.40);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-    }
-    .bp-modal-box {
-      background: #f6f4ee;
-      border-radius: 20px;
-      border: 1px solid rgba(218,119,86,0.20);
-      box-shadow: 0 30px 80px rgba(0,0,0,0.20);
-      width: 100%; max-width: 540px;
-      display: flex; flex-direction: column;
-      max-height: 90vh; overflow: hidden;
-    }
-    .bp-input {
-      width: 100%;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 9px 12px;
-      font-size: 13px; font-weight: 600;
-      color: #1a1a1a;
-      background: #fffaf8;
-      transition: border-color .15s, box-shadow .15s;
-      outline: none;
-      box-sizing: border-box;
-      font-family: 'Poppins', sans-serif !important;
-    }
+    .bp-modal-portal { position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,0.40); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+    .bp-modal-box { background: #f6f4ee; border-radius: 20px; border: 1px solid rgba(218,119,86,0.20); box-shadow: 0 30px 80px rgba(0,0,0,0.20); width: 100%; max-width: 540px; display: flex; flex-direction: column; max-height: 90vh; overflow: hidden; }
+    .bp-input { width: 100%; border: 1px solid #e5e7eb; border-radius: 12px; padding: 9px 12px; font-size: 13px; font-weight: 600; color: #1a1a1a; background: #fffaf8; transition: border-color .15s, box-shadow .15s; outline: none; box-sizing: border-box; font-family: 'Poppins', sans-serif !important; }
     .bp-input:focus { border-color: #DA7756; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
     .bp-input::placeholder { color: #a3a3a3; font-weight: 500; }
-    .bp-select {
-      width: 100%;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 9px 36px 9px 12px;
-      font-size: 13px; font-weight: 600;
-      color: #1a1a1a;
-      background: #fffaf8;
-      appearance: none; -webkit-appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a3a3a3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      background-size: 16px;
-      cursor: pointer; outline: none; box-sizing: border-box;
-      font-family: 'Poppins', sans-serif !important;
-    }
+    .bp-select { width: 100%; border: 1px solid #e5e7eb; border-radius: 12px; padding: 9px 36px 9px 12px; font-size: 13px; font-weight: 600; color: #1a1a1a; background: #fffaf8; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23a3a3a3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 16px; cursor: pointer; outline: none; box-sizing: border-box; font-family: 'Poppins', sans-serif !important; }
     .bp-select:focus { border-color: #DA7756; box-shadow: 0 0 0 3px rgba(218,119,86,0.15); }
     .bp-select:disabled { opacity: 0.6; cursor: not-allowed; }
     .bp-scroll::-webkit-scrollbar { width: 6px; }
     .bp-scroll::-webkit-scrollbar-track { background: transparent; }
     .bp-scroll::-webkit-scrollbar-thumb { background: #C4B89D; border-radius: 10px; }
     .bp-scroll::-webkit-scrollbar-thumb:hover { background: #DA7756; }
-    .bp-error-banner {
-      background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b;
-      border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 600;
-    }
+    .bp-error-banner { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 600; }
     .bp-card-lift { transition: box-shadow .2s, transform .2s; }
     .bp-card-lift:hover { box-shadow: 0 8px 32px rgba(218,119,86,0.12); transform: translateY(-1px); }
     .bp-tab-active { background: #fff !important; color: #DA7756 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
     .bp-tab-inactive { background: transparent !important; color: rgba(255,255,255,0.80) !important; }
     .bp-tab-inactive:hover { background: rgba(255,255,255,0.12) !important; color: #fff !important; }
     .drag-over { border: 2px dashed ${C.primary} !important; opacity: 0.5; }
+    .bp-heading-coral { color: #DA7756 !important; }
+    @keyframes bp-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
   `}</style>
 );
 
@@ -1382,6 +1345,21 @@ interface KPI {
   name: string;
 }
 
+type AiBuilderStage = "questions" | "building" | "plan";
+
+const AI_PLAN_FIELDS = [
+  { key: "purpose", label: "Purpose / Why do we exist?" },
+  { key: "core_values", label: "Core Values" },
+  { key: "brand_promises", label: "Brand Promises & Promise KPIs" },
+  { key: "target_segments", label: "Target Segments" },
+  { key: "bhag", label: "BHAG / 10-Year Goal" },
+  { key: "three_year_vision", label: "3-Year Goals & Initiatives" },
+  { key: "annual_goals", label: "1-Year Goals & Initiatives" },
+  { key: "quarterly_priorities", label: "Quarterly Goals, Theme, Initiatives & Rewards" },
+  { key: "critical_numbers", label: "Critical Numbers" },
+  { key: "drivers_swot", label: "People Drivers, Process Drivers & SWOT" },
+] as const;
+
 const TOOLTIP_CONTENT: Record<
   string,
   { title: string; desc: string; example: string }
@@ -1409,7 +1387,6 @@ const TOOLTIP_CONTENT: Record<
 // ─────────────────────────────────
 //  CoreValuesInlineCard
 // ─────────────────────────────────
-
 const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
   values,
 }) => {
@@ -1435,9 +1412,24 @@ const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
 // ==========================================
 const BusinessPlanAndGoles = () => {
   const [activeMainTab, setActiveMainTab] = useState("strategic");
-  const [showAddContent, setShowAddContent] = useState(false);
+  const [showAddContent, setShowAddContent] = useState(true);
   const [addContentTab, setAddContentTab] = useState("images");
   const [activeTopModal, setActiveTopModal] = useState<string | null>(null);
+  const [isAiBuilderOpen, setIsAiBuilderOpen] = useState(false);
+  const [aiBuilderStage, setAiBuilderStage] =
+    useState<AiBuilderStage>("questions");
+  const [aiQuestionIndex, setAiQuestionIndex] = useState(0);
+  const [aiAnswers, setAiAnswers] = useState<string[]>(
+    AI_PLAN_FIELDS.map(() => "")
+  );
+  const [generatedAiPlan, setGeneratedAiPlan] = useState("");
+  const [generatedAiPlanPayload, setGeneratedAiPlanPayload] =
+    useState<Record<string, any> | null>(null);
+  const [isSavingAiPlan, setIsSavingAiPlan] = useState(false);
+  const [aiPlanJobId, setAiPlanJobId] = useState("");
+  const [aiBuilderError, setAiBuilderError] = useState<string | null>(null);
+  const aiPlanAbortRef = useRef<AbortController | null>(null);
+  const aiPlanCancelledRef = useRef(false);
 
   // Info hover state for main header
   const [isInfoHovered, setIsInfoHovered] = useState(false);
@@ -1461,8 +1453,6 @@ const BusinessPlanAndGoles = () => {
     const rect = e.currentTarget.getBoundingClientRect();
     let left = rect.left + window.scrollX + rect.width / 2;
     let transform = "translateX(-50%)";
-
-    // Align tooltips so they don't break outside the screen
     if (type === "core") {
       left = rect.left + window.scrollX;
       transform = "translateX(0%)";
@@ -1470,7 +1460,6 @@ const BusinessPlanAndGoles = () => {
       left = rect.right + window.scrollX;
       transform = "translateX(-100%)";
     }
-
     setCardInfoCoords({
       top: rect.bottom + window.scrollY + 10,
       left,
@@ -1480,6 +1469,9 @@ const BusinessPlanAndGoles = () => {
   };
 
   const [isCopyingPlan, setIsCopyingPlan] = useState(false);
+  const [isCopyingAiPrompt, setIsCopyingAiPrompt] = useState<
+    "overview" | "detailed" | "script" | null
+  >(null);
 
   // KPIs
   const [availableKpis, setAvailableKpis] = useState<KPI[]>([]);
@@ -1535,8 +1527,12 @@ const BusinessPlanAndGoles = () => {
   const [dragBrandOverIdx, setDragBrandOverIdx] = useState<number | null>(null);
 
   // Overview Media
-  const [overviewImages, setOverviewImages] = useState<string[]>([]);
-  const [overviewVideos, setOverviewVideos] = useState<string[]>([]);
+  const [overviewImages, setOverviewImages] = useState<OverviewMediaItem[]>(
+    []
+  );
+  const [overviewVideos, setOverviewVideos] = useState<OverviewMediaItem[]>(
+    []
+  );
   const [isFetchingMedia, setIsFetchingMedia] = useState(false);
   const [mediaFetchError, setMediaFetchError] = useState<string | null>(null);
   const [newImageUrl, setNewImageUrl] = useState("");
@@ -1596,8 +1592,7 @@ const BusinessPlanAndGoles = () => {
   const loadKpis = useCallback(async () => {
     setIsFetchingKpis(true);
     try {
-      const url = `${BASE_URL}/kpis`;
-      const res = await fetch(url, {
+      const res = await fetch(`${BASE_URL}/kpis`, {
         method: "GET",
         headers: getAuthHeaders(),
       });
@@ -1608,13 +1603,14 @@ const BusinessPlanAndGoles = () => {
         list = json.data.kpis;
       else if (Array.isArray(json?.data)) list = json.data;
       else if (Array.isArray(json)) list = json;
-      const formatted = list
-        .filter((item) => item?.id && (item?.name || item?.title))
-        .map((item) => ({
-          id: item.id,
-          name: item.name || item.title || "Unnamed KPI",
-        }));
-      setAvailableKpis(formatted);
+      setAvailableKpis(
+        list
+          .filter((item) => item?.id && (item?.name || item?.title))
+          .map((item) => ({
+            id: item.id,
+            name: item.name || item.title || "Unnamed KPI",
+          }))
+      );
     } catch (e) {
       console.error(e);
     } finally {
@@ -1650,245 +1646,235 @@ const BusinessPlanAndGoles = () => {
     loadOverviewMedia,
   ]);
 
-  // ── COPY PLAN (SMART FORMATTING DOM EXTRACTION) ──
-  const handleCopyPlan = async () => {
-    setIsCopyingPlan(true);
+  // ─────────────────────────────────────────────
+  //  Shared DOM Extraction helper
+  // ─────────────────────────────────────────────
+  const extractSectionFromDOM = (
+    headingRegex: RegExp,
+    defaultTitle: string
+  ) => {
+    const allElements = Array.from(
+      document.querySelectorAll(
+        "h2, h3, h4, p, span, div.text-lg, div.font-bold"
+      )
+    );
+    const header = allElements.find(
+      (el) =>
+        headingRegex.test((el as HTMLElement).innerText || "") &&
+        el.children.length === 0
+    );
+    if (!header) return `--- ${defaultTitle} ---\n(No data found)\n\n`;
+    const container =
+      header.closest(".border, .shadow-sm, section, .p-5, .p-6") ||
+      header.parentElement;
+    if (!container) return `--- ${defaultTitle} ---\n(No data found)\n\n`;
+    const clone = container.cloneNode(true) as HTMLElement;
+    clone
+      .querySelectorAll(
+        "button, input, select, textarea, svg, img, a, .bp-modal-portal"
+      )
+      .forEach((el) => el.remove());
+    clone
+      .querySelectorAll("div, p, li, h1, h2, h3, h4")
+      .forEach((el) => el.appendChild(document.createTextNode("\n")));
+    clone
+      .querySelectorAll("span, strong, b")
+      .forEach((el) => el.appendChild(document.createTextNode(" ")));
+    const rawText = clone.textContent || "";
+    const lines = rawText
+      .split("\n")
+      .map((line) => line.replace(/\s+/g, " ").trim())
+      .filter((line) => line.length > 0);
+    let formattedText = `--- ${defaultTitle} ---\n`;
+    lines.forEach((line, idx) => {
+      if (idx === 0 && headingRegex.test(line)) return;
+      const lowerLine = line.toLowerCase();
+      if (
+        lowerLine.includes("revenue:") ||
+        lowerLine.includes("profit:") ||
+        line.includes("Target:")
+      ) {
+        formattedText += `  • ${line}\n`;
+      } else if (lowerLine.includes("initiatives")) {
+        formattedText += `\n  [ ${line.toUpperCase()} ]\n`;
+      } else if (
+        line.startsWith("•") ||
+        line.startsWith("📅") ||
+        line.match(/^\d+%$/)
+      ) {
+        formattedText += `      ${line}\n`;
+      } else {
+        formattedText += `\n    > ${line}\n`;
+      }
+    });
+    return formattedText + `\n`;
+  };
+
+  // ─────────────────────────────────────────────
+  //  Build Full Plan Text (async — fetches all data)
+  // ─────────────────────────────────────────────
+  const buildFullPlanText = async (): Promise<string> => {
+    const headers = getAuthHeaders();
+
+    // Fetch KPIs
+    let kpis: any[] = [];
     try {
-      const headers = getAuthHeaders();
+      const res = await fetch(`${BASE_URL}/kpis`, { headers });
+      const json = await res.json();
+      kpis = Array.isArray(json?.data?.kpis)
+        ? json.data.kpis
+        : Array.isArray(json?.data)
+          ? json.data
+          : Array.isArray(json)
+            ? json
+            : [];
+    } catch (e) {
+      console.error("KPI fetch error", e);
+    }
 
-      // 1. Fetch auxiliary items directly
-      let kpis: any[] = [];
-      try {
-        const res = await fetch(`${BASE_URL}/kpis`, { headers });
-        const json = await res.json();
-        kpis = Array.isArray(json?.data?.kpis)
-          ? json.data.kpis
-          : Array.isArray(json?.data)
-            ? json.data
-            : Array.isArray(json)
-              ? json
-              : [];
-      } catch (e) {
-        console.error("KPI fetch error", e);
-      }
+    // Fetch SOPs
+    let sops: any[] = [];
+    try {
+      const res = await fetch(`${BASE_URL}/system_sops`, { headers });
+      const json = await res.json();
+      sops = Array.isArray(json?.data?.system_sops)
+        ? json.data.system_sops
+        : Array.isArray(json?.data)
+          ? json.data
+          : Array.isArray(json)
+            ? json
+            : [];
+    } catch (e) {
+      console.error("SOP fetch error", e);
+    }
 
-      let sops: any[] = [];
-      try {
-        const res = await fetch(`${BASE_URL}/system_sops`, { headers });
-        const json = await res.json();
-        sops = Array.isArray(json?.data?.system_sops)
-          ? json.data.system_sops
-          : Array.isArray(json?.data)
-            ? json.data
-            : Array.isArray(json)
-              ? json
-              : [];
-      } catch (e) {
-        console.error("SOP fetch error", e);
-      }
-
-      let swotData = {
-        strengths: [] as string[],
-        weaknesses: [] as string[],
-        opportunities: [] as string[],
-        threats: [] as string[],
+    // Fetch SWOT
+    let swotData = {
+      strengths: [] as string[],
+      weaknesses: [] as string[],
+      opportunities: [] as string[],
+      threats: [] as string[],
+    };
+    try {
+      const res = await fetch(
+        `${BASE_URL}/extra_fields?include_grouped=true&q[group_name_in][]=business_plan_strengths&q[group_name_in][]=business_plan_weaknesses&q[group_name_in][]=business_plan_opportunities&q[group_name_in][]=business_plan_threats`,
+        { headers }
+      );
+      const json = await res.json();
+      swotData = {
+        strengths: json?.grouped_data?.business_plan_strengths?.values || [],
+        weaknesses: json?.grouped_data?.business_plan_weaknesses?.values || [],
+        opportunities:
+          json?.grouped_data?.business_plan_opportunities?.values || [],
+        threats: json?.grouped_data?.business_plan_threats?.values || [],
       };
-      try {
-        const res = await fetch(
-          `${BASE_URL}/extra_fields?include_grouped=true&q[group_name_in][]=business_plan_strengths&q[group_name_in][]=business_plan_weaknesses&q[group_name_in][]=business_plan_opportunities&q[group_name_in][]=business_plan_threats`,
-          { headers }
-        );
-        const json = await res.json();
-        swotData = {
-          strengths: json?.grouped_data?.business_plan_strengths?.values || [],
-          weaknesses:
-            json?.grouped_data?.business_plan_weaknesses?.values || [],
-          opportunities:
-            json?.grouped_data?.business_plan_opportunities?.values || [],
-          threats: json?.grouped_data?.business_plan_threats?.values || [],
-        };
-      } catch (e) {
-        console.error("SWOT fetch error", e);
-      }
+    } catch (e) {
+      console.error("SWOT fetch error", e);
+    }
 
-      // 2. 🔴 THE ULTIMATE FIX: Smart Formatting from UI Elements
-      const extractSectionFromDOM = (
-        headingRegex: RegExp,
-        defaultTitle: string
-      ) => {
-        const allElements = Array.from(
-          document.querySelectorAll(
-            "h2, h3, h4, p, span, div.text-lg, div.font-bold"
-          )
-        );
-        const header = allElements.find(
-          (el) =>
-            headingRegex.test(el.innerText || "") && el.children.length === 0
-        );
+    // Build text
+    const d = new Date();
+    const dateStr = d.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+    let text = `BUSINESS PLAN\nHAVEN INFOLINE PRIVATE LIMITED\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
 
-        if (!header) return `--- ${defaultTitle} ---\n(No data found)\n\n`;
+    text += `PURPOSE\n${"=".repeat(60)}\n`;
+    text += purposeText ? `${purposeText}\n\n` : `(No purpose defined)\n\n`;
 
-        const container =
-          header.closest(".border, .shadow-sm, section, .p-5, .p-6") ||
-          header.parentElement;
-        if (!container) return `--- ${defaultTitle} ---\n(No data found)\n\n`;
+    text += `CORE VALUES\n${"=".repeat(60)}\n`;
+    coreValues.length
+      ? coreValues.forEach((v, i) => {
+        text += `${i + 1}. ${v.value}\n`;
+      })
+      : (text += `(No core values)\n`);
+    text += `\n`;
 
-        const clone = container.cloneNode(true) as HTMLElement;
+    text += `BRAND PROMISES\n${"=".repeat(60)}\n`;
+    brandPromises.length
+      ? brandPromises.forEach((p, i) => {
+        text += `${i + 1}. ${p.text}\n`;
+        if (p.kpis?.length) text += `   Tracked by: ${p.kpis.join(", ")}\n`;
+      })
+      : (text += `(No brand promises)\n`);
+    text += `\n`;
 
-        // Remove UI elements (Icons, Buttons, Dropdowns)
-        clone
-          .querySelectorAll(
-            "button, input, select, textarea, svg, img, a, .bp-modal-portal"
-          )
-          .forEach((el) => el.remove());
+    // DOM-extracted sections
+    text += extractSectionFromDOM(
+      /BHAG|Big Hairy Audacious/i,
+      "BHAG (BIG HAIRY AUDACIOUS GOAL)"
+    );
+    text += extractSectionFromDOM(
+      /Medium Term|3.*Year|5.*Year/i,
+      "MEDIUM TERM PLAN (3-5 YEARS)"
+    );
+    text += extractSectionFromDOM(
+      /Short Term|1.*Year|Annual/i,
+      "SHORT TERM GOALS (THIS YEAR)"
+    );
+    text += extractSectionFromDOM(
+      /Quarterly|Rocks|90.*Day/i,
+      "IMMEDIATE GOALS (THIS QUARTER)"
+    );
 
-        // 🟢 Force spacing so words don't stick together
-        clone.querySelectorAll("div, p, li, h1, h2, h3, h4").forEach((el) => {
-          el.appendChild(document.createTextNode("\n")); // Add line break after blocks
-        });
-        clone.querySelectorAll("span, strong, b").forEach((el) => {
-          el.appendChild(document.createTextNode(" ")); // Add space after inline tags
-        });
+    // KPIs
+    text += `CRITICAL NUMBERS\n${"=".repeat(60)}\n`;
+    kpis.length
+      ? kpis.forEach((kpi: any, i: number) => {
+        text += `${i + 1}. ${kpi.name || kpi.title || "Unnamed"}\n`;
+        text += `   Current: ${kpi.current_value || 0} / Target: ${kpi.target_value || 0} ${kpi.unit || "#"}\n`;
+        text += `   Frequency: ${kpi.frequency || "N/A"}\n`;
+        const owner =
+          kpi.owner ||
+          kpi.assignee?.name ||
+          kpi.assignee?.full_name ||
+          kpi.assignee?.email;
+        if (owner) text += `   Owner: ${owner}\n`;
+      })
+      : (text += `(No KPIs)\n`);
+    text += `\n`;
 
-        // Get raw text with injected spaces/newlines
-        const rawText = clone.textContent || "";
+    // SOPs / Key Processes
+    text += `KEY PROCESSES\n${"=".repeat(60)}\n`;
+    sops.length
+      ? sops.forEach((sop: any, i: number) => {
+        text += `${i + 1}. ${sop.system_name || sop.name || "Unnamed"}\n`;
+        text += `   Status: ${sop.status || "to_start"}\n`;
+        const owner =
+          sop.owner ||
+          sop.assignee?.name ||
+          sop.assignee?.full_name ||
+          sop.assignee?.email;
+        if (owner) text += `   Owner: ${owner}\n`;
+      })
+      : (text += `(No SOPs)\n`);
+    text += `\n`;
 
-        // Clean lines (Remove excessive gaps)
-        const lines = rawText
-          .split("\n")
-          .map((line) => line.replace(/\s+/g, " ").trim()) // Fix spacing
-          .filter((line) => line.length > 0);
-
-        let formattedText = `--- ${defaultTitle} ---\n`;
-
-        // Structure the output properly
-        lines.forEach((line, idx) => {
-          if (idx === 0 && headingRegex.test(line)) return; // Skip main header repetition
-
-          const lowerLine = line.toLowerCase();
-
-          if (
-            lowerLine.includes("revenue:") ||
-            lowerLine.includes("profit:") ||
-            line.includes("Target:")
-          ) {
-            // Metrics (Line them up nicely)
-            formattedText += `  • ${line}\n`;
-          } else if (lowerLine.includes("initiatives")) {
-            // Section Divider
-            formattedText += `\n  [ ${line.toUpperCase()} ]\n`;
-          } else if (
-            line.startsWith("•") ||
-            line.startsWith("📅") ||
-            line.match(/^\d+%$/)
-          ) {
-            // Bullet points, Dates, and Progress (Indent these)
-            formattedText += `      ${line}\n`;
-          } else {
-            // Main item title (like "money", "one man show", "namdba")
-            formattedText += `\n    > ${line}\n`;
-          }
-        });
-
-        return formattedText + `\n`;
-      };
-
-      // Format Document
-      const d = new Date();
-      const dateStr = d.toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-      let text = `BUSINESS PLAN\nHAVEN INFOLINE PRIVATE LIMITED\nGenerated on: ${dateStr}\n${"=".repeat(60)}\n\n`;
-
-      // Core Values
-      text += `--- CORE VALUES ---\n`;
-      coreValues.length
-        ? coreValues.forEach((v, i) => {
-            text += `${i + 1}. ${v.value}\n`;
-          })
-        : (text += `(No core values)\n`);
-      text += `\n`;
-
-      // Purpose
-      text += `--- PURPOSE ---\n`;
-      text += purposeText ? `${purposeText}\n\n` : `(No purpose defined)\n\n`;
-
-      // Brand Promises
-      text += `--- BRAND PROMISES ---\n`;
-      brandPromises.length
-        ? brandPromises.forEach((p, i) => {
-            text += `${i + 1}. ${p.text}\n`;
-            if (p.kpis && p.kpis.length)
-              text += `   KPIs: ${p.kpis.join(", ")}\n`;
-          })
-        : (text += `(No brand promises)\n`);
-      text += `\n`;
-
-      // Goals Extracted properly from Screen
-      text += extractSectionFromDOM(/BHAG|Big Hairy Audacious/i, "BHAG");
-      text += extractSectionFromDOM(
-        /Medium Term|3.*Year|5.*Year/i,
-        "MEDIUM TERM PLAN"
-      );
-      text += extractSectionFromDOM(
-        /Short Term|1.*Year|Annual/i,
-        "SHORT TERM PLAN (1 YEAR)"
-      );
-      text += extractSectionFromDOM(
-        /Quarterly|Rocks|90.*Day/i,
-        "QUARTERLY PLAN (ROCKS)"
-      );
-
-      // KPIs
-      text += `--- CRITICAL NUMBERS ---\n`;
-      kpis.length
-        ? kpis.forEach((kpi: any, i: number) => {
-            text += `${i + 1}. ${kpi.name || kpi.title || "Unnamed"}\n`;
-            text += `   Current: ${kpi.current_value || 0} / Target: ${kpi.target_value || 0} ${kpi.unit || "#"}\n`;
-            text += `   Frequency: ${kpi.frequency || "N/A"}\n`;
-            const owner =
-              kpi.owner ||
-              kpi.assignee?.name ||
-              kpi.assignee?.full_name ||
-              kpi.assignee?.email;
-            if (owner) text += `   Owner: ${owner}\n`;
-          })
-        : (text += `(No KPIs)\n`);
-      text += `\n`;
-
-      // SOPs
-      text += `--- KEY PROCESSES ---\n`;
-      sops.length
-        ? sops.forEach((sop: any, i: number) => {
-            text += `${i + 1}. ${sop.system_name || sop.name || "Unnamed"}\n`;
-            text += `   Status: ${sop.status || "to_start"}\n`;
-            const owner =
-              sop.owner ||
-              sop.assignee?.name ||
-              sop.assignee?.full_name ||
-              sop.assignee?.email;
-            if (owner) text += `   Owner: ${owner}\n`;
-          })
-        : (text += `(No SOPs)\n`);
-      text += `\n`;
-
-      // SWOT
-      text += `--- SWOT ANALYSIS ---\n\n`;
-      (
-        ["strengths", "weaknesses", "opportunities", "threats"] as const
-      ).forEach((key) => {
+    // SWOT
+    text += `SWOT ANALYSIS\n${"=".repeat(60)}\n\n`;
+    (["strengths", "weaknesses", "opportunities", "threats"] as const).forEach(
+      (key) => {
         text += `${key.charAt(0).toUpperCase() + key.slice(1)}:\n`;
         swotData[key].length
           ? swotData[key].forEach((item, i) => {
-              text += `  ${i + 1}. ${item}\n`;
-            })
+            text += `  ${i + 1}. ${item}\n`;
+          })
           : (text += `  (No items)\n`);
         text += `\n`;
-      });
+      }
+    );
 
-      await navigator.clipboard.writeText(text.trim());
+    return text.trim();
+  };
+
+  // ── COPY PLAN ──
+  const handleCopyPlan = async () => {
+    setIsCopyingPlan(true);
+    try {
+      const text = await buildFullPlanText();
+      await navigator.clipboard.writeText(text);
       toast.success("Business Plan copied to clipboard!");
     } catch (err) {
       console.error("Copy failed", err);
@@ -1898,17 +1884,544 @@ const BusinessPlanAndGoles = () => {
     }
   };
 
+  // ── AI Prompt Copy Handlers ──
+  const resetAiBuilder = () => {
+    setAiBuilderStage("questions");
+    setAiQuestionIndex(0);
+    setAiAnswers(AI_PLAN_FIELDS.map(() => ""));
+    setGeneratedAiPlan("");
+    setGeneratedAiPlanPayload(null);
+    setAiPlanJobId("");
+    setAiBuilderError(null);
+  };
+
+  const openAiBuilder = () => {
+    resetAiBuilder();
+    setIsAiBuilderOpen(true);
+  };
+
+  const stopAiPlanGeneration = () => {
+    aiPlanCancelledRef.current = true;
+    aiPlanAbortRef.current?.abort();
+    aiPlanAbortRef.current = null;
+  };
+
+  const closeAiBuilder = () => {
+    stopAiPlanGeneration();
+    setIsAiBuilderOpen(false);
+  };
+
+  const updateAiAnswer = (value: string) => {
+    setAiAnswers((prev) =>
+      prev.map((answer, idx) => (idx === aiQuestionIndex ? value : answer))
+    );
+    setAiBuilderError(null);
+  };
+
+  const createAiPlanPayload = () => ({
+    purpose: aiAnswers[0]?.trim() || "",
+    core_values: aiAnswers[1]?.trim() || "",
+    brand_promises: aiAnswers[2]?.trim() || "",
+    target_segments: aiAnswers[3]?.trim() || "",
+    bhag: aiAnswers[4]?.trim() || "",
+    three_year_goals: aiAnswers[5]?.trim() || "",
+    one_year_goals: aiAnswers[6]?.trim() || "",
+    quarterly_plan: aiAnswers[7]?.trim() || "",
+    critical_numbers: aiAnswers[8]?.trim() || "",
+    people_process_swot: aiAnswers[9]?.trim() || "",
+  });
+
+  const createAiPlanPreview = () => {
+    const answer = (idx: number) => aiAnswers[idx]?.trim() || "Not specified";
+    return [
+      "AI BUSINESS PLAN",
+      "=".repeat(60),
+      "",
+      `Purpose: ${answer(0)}`,
+      `Core Values: ${answer(1)}`,
+      `Target Segments: ${answer(3)}`,
+      "",
+      "EXECUTIVE SUMMARY",
+      "-".repeat(60),
+      `${answer(0)} The plan is guided by ${answer(1)} and supported by ${answer(2)}.`,
+      "",
+      "STRATEGIC DIRECTION",
+      "-".repeat(60),
+      `BHAG / 10-Year Goal: ${answer(4)}`,
+      `3-Year Goals: ${answer(5)}`,
+      `1-Year Goals: ${answer(6)}`,
+      "",
+      "QUARTERLY PLAN",
+      "-".repeat(60),
+      answer(7),
+      "",
+      "CRITICAL NUMBERS",
+      "-".repeat(60),
+      answer(8),
+      "",
+      "DRIVERS AND SWOT",
+      "-".repeat(60),
+      answer(9),
+      "",
+      "90 DAY EXECUTION PLAN",
+      "-".repeat(60),
+      "1. Align leadership around the 12 month goal.",
+      "2. Turn customer focus into weekly sales and marketing actions.",
+      "3. Assign owners to the biggest risks and review progress weekly.",
+      "4. Review scorecard numbers monthly and correct misses quickly.",
+    ].join("\n");
+  };
+
+  const extractAiPlanText = (response: any): string => {
+    const planObject =
+      response?.plan ||
+      response?.data?.plan ||
+      response?.result?.plan ||
+      null;
+    if (planObject && typeof planObject === "object") {
+      return JSON.stringify(planObject, null, 2);
+    }
+
+    const candidates = [
+      response?.plan,
+      response?.ai_plan,
+      response?.business_plan,
+      response?.summary,
+      response?.data?.plan,
+      response?.data?.ai_plan,
+      response?.data?.business_plan,
+      response?.data?.summary,
+      response?.result?.plan,
+      response?.result?.ai_plan,
+      response?.result?.business_plan,
+      response?.result?.summary,
+    ];
+    const text = candidates.find(
+      (candidate) => typeof candidate === "string" && candidate.trim()
+    );
+    return text || createAiPlanPreview();
+  };
+
+  const isAiPlanCompleted = (response: any): boolean => {
+    const status = String(response?.status || response?.data?.status || "")
+      .trim()
+      .toLowerCase();
+    return (
+      status === "completed" ||
+      status === "success" ||
+      (response?.success === true && !!(response?.plan || response?.data?.plan))
+    );
+  };
+
+  const getCompletedAiPlan = (response: any): Record<string, any> | null => {
+    const plan =
+      response?.plan ||
+      response?.data?.plan ||
+      response?.result?.plan ||
+      null;
+    return plan && typeof plan === "object" && !Array.isArray(plan)
+      ? plan
+      : null;
+  };
+
+  const normalizeAiPlanForSave = (plan: Record<string, any>) => ({
+    purpose: plan.purpose || "",
+    core_values: Array.isArray(plan.core_values) ? plan.core_values : [],
+    core_values_explanation: plan.core_values_explanation || "",
+    brand_promises: Array.isArray(plan.brand_promises)
+      ? plan.brand_promises
+      : [],
+    brand_promise_kpis:
+      plan.brand_promise_kpis ||
+      plan["brand Promise KPIs"] ||
+      plan.brand_promise_KPIs ||
+      [],
+    target_segments: plan.target_segments || "",
+    bhag_selected: plan.bhag_selected || "",
+    bhag_initiatives: Array.isArray(plan.bhag_initiatives)
+      ? plan.bhag_initiatives
+      : [],
+    three_year_goals: plan.three_year_goals || "",
+    three_year_initiatives: Array.isArray(plan.three_year_initiatives)
+      ? plan.three_year_initiatives
+      : [],
+    one_year_goals: plan.one_year_goals || "",
+    one_year_initiatives: Array.isArray(plan.one_year_initiatives)
+      ? plan.one_year_initiatives
+      : [],
+    quarterly_goals: plan.quarterly_goals || "",
+    quarterly_theme: plan.quarterly_theme || "",
+    quarterly_initiatives: Array.isArray(plan.quarterly_initiatives)
+      ? plan.quarterly_initiatives
+      : [],
+    quarterly_rewards: Array.isArray(plan.quarterly_rewards)
+      ? plan.quarterly_rewards
+      : [],
+    critical_numbers: Array.isArray(plan.critical_numbers)
+      ? plan.critical_numbers
+      : [],
+    people_drivers:
+      plan.people_drivers &&
+      typeof plan.people_drivers === "object" &&
+      !Array.isArray(plan.people_drivers)
+        ? plan.people_drivers
+        : {},
+    process_drivers: Array.isArray(plan.process_drivers)
+      ? plan.process_drivers
+      : [],
+    strengths: Array.isArray(plan.strengths) ? plan.strengths : [],
+    weaknesses: Array.isArray(plan.weaknesses) ? plan.weaknesses : [],
+    opportunities: Array.isArray(plan.opportunities) ? plan.opportunities : [],
+    threats: Array.isArray(plan.threats) ? plan.threats : [],
+  });
+
+  const saveAiPlanToApi = async (
+    plan: Record<string, any>,
+    signal?: AbortSignal
+  ) => {
+    const res = await fetch(`${BASE_URL}/extra_fields/save_ai_plan`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(normalizeAiPlanForSave(plan)),
+      signal,
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok || json?.success === false) {
+      throw new Error(json?.message || json?.error || "Failed to save AI plan.");
+    }
+    return json;
+  };
+
+  const waitForAiPlan = (ms: number, signal: AbortSignal) =>
+    new Promise<void>((resolve, reject) => {
+      if (signal.aborted) {
+        reject(new DOMException("AI plan generation cancelled.", "AbortError"));
+        return;
+      }
+
+      const timeoutId = window.setTimeout(resolve, ms);
+      signal.addEventListener(
+        "abort",
+        () => {
+          window.clearTimeout(timeoutId);
+          reject(new DOMException("AI plan generation cancelled.", "AbortError"));
+        },
+        { once: true }
+      );
+    });
+
+  const getAiPlanErrorMessage = (response: any) => {
+    if (Array.isArray(response?.errors) && response.errors.length > 0) {
+      return response.errors.join("\n");
+    }
+    return response?.message || response?.error || "AI plan generation failed.";
+  };
+
+  const pollAiPlan = async (jobId: string, signal: AbortSignal) => {
+    while (true) {
+      if (signal.aborted || aiPlanCancelledRef.current) {
+        throw new DOMException("AI plan generation cancelled.", "AbortError");
+      }
+
+      const res = await fetch(
+        `${BASE_URL}/extra_fields/poll_ai_plan?job_id=${encodeURIComponent(jobId)}`,
+        {
+          method: "GET",
+          headers: getAuthHeaders(),
+          signal,
+        }
+      );
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(json?.message || json?.error || `HTTP ${res.status}`);
+      }
+
+      const status = String(json?.status || "").toLowerCase();
+      if (isAiPlanCompleted(json)) {
+        return json;
+      }
+
+      if (status === "processing" || status === "pending") {
+        await waitForAiPlan(10000, signal);
+        continue;
+      }
+
+      if (status === "error" || status === "failed" || json?.success === false) {
+        const error = new Error(getAiPlanErrorMessage(json));
+        (error as any).shouldRestartAiPlan = true;
+        throw error;
+      }
+
+      return json;
+    }
+  };
+
+  const generateAiPlan = async (retryAttempt = 0) => {
+    stopAiPlanGeneration();
+    const controller = new AbortController();
+    aiPlanAbortRef.current = controller;
+    aiPlanCancelledRef.current = false;
+
+    setAiBuilderStage("building");
+    setAiBuilderError(null);
+    setAiPlanJobId("");
+
+    try {
+      const res = await fetch(`${BASE_URL}/extra_fields/generate_ai_plan`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(createAiPlanPayload()),
+        signal: controller.signal,
+      });
+      const json = await res.json().catch(() => ({}));
+
+      if (!res.ok || !json?.success || !json?.job_id) {
+        throw new Error(json?.message || json?.error || "Failed to start AI plan generation.");
+      }
+
+      setAiPlanJobId(json.job_id);
+      const pollResponse = await pollAiPlan(json.job_id, controller.signal);
+      if (controller.signal.aborted || aiPlanCancelledRef.current) return;
+      const completedPlan = getCompletedAiPlan(pollResponse);
+      setGeneratedAiPlanPayload(completedPlan);
+      setGeneratedAiPlan(extractAiPlanText(pollResponse));
+      setAiBuilderStage("plan");
+    } catch (err: any) {
+      if (err?.name === "AbortError" || aiPlanCancelledRef.current) {
+        return;
+      }
+
+      if (err?.shouldRestartAiPlan && retryAttempt < 1) {
+        toast.error(err.message || "AI response failed. Restarting process.");
+        await generateAiPlan(retryAttempt + 1);
+        return;
+      }
+
+      setAiBuilderError(err.message || "Failed to generate AI plan.");
+      setAiBuilderStage("questions");
+    } finally {
+      if (aiPlanAbortRef.current === controller) {
+        aiPlanAbortRef.current = null;
+      }
+    }
+  };
+
+  const goToNextAiQuestion = () => {
+    if (!aiAnswers[aiQuestionIndex]?.trim()) {
+      setAiBuilderError("Please answer this question before continuing.");
+      return;
+    }
+
+    if (aiQuestionIndex < AI_PLAN_FIELDS.length - 1) {
+      setAiQuestionIndex((idx) => idx + 1);
+      setAiBuilderError(null);
+      return;
+    }
+
+    generateAiPlan();
+  };
+
+  const downloadAiPlan = () => {
+    const plan = generatedAiPlanPayload || safeParseJSON(generatedAiPlan);
+    const hasPlanPayload = plan && Object.keys(plan).length > 0;
+    if (!generatedAiPlan && !hasPlanPayload) return;
+
+    const escapeCsv = (value: any) => {
+      const text =
+        value === null || value === undefined
+          ? ""
+          : typeof value === "object"
+            ? JSON.stringify(value)
+            : String(value);
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+
+    const rows: string[][] = hasPlanPayload
+      ? Object.entries(normalizeAiPlanForSave(plan)).map(([key, value]) => [
+          key,
+          typeof value === "object" ? JSON.stringify(value) : String(value ?? ""),
+        ])
+      : [["plan", generatedAiPlan]];
+    const csv = [["Field", "Value"], ...rows]
+      .map((row) => row.map(escapeCsv).join(","))
+      .join("\n");
+    const blob = new Blob([csv], {
+      type: "text/csv;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ai-business-plan.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const saveAiPlan = async () => {
+    const parsedPlan = generatedAiPlanPayload || safeParseJSON(generatedAiPlan);
+    if (!parsedPlan || Object.keys(parsedPlan).length === 0) {
+      toast.error("No AI plan payload found to save.");
+      return;
+    }
+
+    try {
+      setIsSavingAiPlan(true);
+      await saveAiPlanToApi(parsedPlan);
+      toast.success("AI plan saved.");
+      window.location.reload();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save AI plan.");
+    } finally {
+      setIsSavingAiPlan(false);
+    }
+  };
+
+  const aiPlanDisplay = generatedAiPlanPayload || safeParseJSON(generatedAiPlan);
+  const hasStructuredAiPlan = Object.keys(aiPlanDisplay).length > 0;
+
+  const renderAiPlanStringList = (items: any[] = []) => (
+    <div className="flex flex-wrap gap-2">
+      {items.map((item, idx) => (
+        <span
+          key={`${String(item)}-${idx}`}
+          className="rounded-full px-3 py-1 text-[12px] font-black"
+          style={{ background: C.primaryBg, color: C.primary }}
+        >
+          {String(item)}
+        </span>
+      ))}
+    </div>
+  );
+
+  const renderAiPlanObjectList = (items: any[] = []) => (
+    <div className="space-y-2">
+      {items.map((item, idx) => {
+        if (!item || typeof item !== "object") {
+          return (
+            <div
+              key={idx}
+              className="rounded-xl border bg-white p-3 text-[13px] font-bold"
+              style={{ borderColor: C.primaryBord, color: C.textMain }}
+            >
+              {String(item)}
+            </div>
+          );
+        }
+
+        const title =
+          item.initiative ||
+          item.goal ||
+          item.name ||
+          item.title ||
+          item.department_name ||
+          "Item";
+        const detail =
+          item.owner ||
+          item.rationale ||
+          item.observation ||
+          item.detail ||
+          item.target ||
+          "";
+
+        return (
+          <div
+            key={`${title}-${idx}`}
+            className="rounded-xl border bg-white p-3"
+            style={{ borderColor: C.primaryBord }}
+          >
+            <div className="text-[13px] font-black" style={{ color: C.textMain }}>
+              {title}
+            </div>
+            {detail && (
+              <div className="mt-1 text-[12px] font-semibold" style={{ color: C.textMuted }}>
+                {typeof detail === "number" ? String(detail) : detail}
+              </div>
+            )}
+            {item.current !== undefined && (
+              <div className="mt-1 text-[12px] font-semibold" style={{ color: C.textMuted }}>
+                Current: {item.current}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const renderAiPlanScalar = (value: any) => {
+    if (Array.isArray(value)) return renderAiPlanObjectList(value);
+    if (value && typeof value === "object") {
+      return renderAiPlanObjectList(
+        Object.entries(value).map(([name, target]) => ({ name, target }))
+      );
+    }
+
+    return (
+      <p className="text-[13px] font-semibold" style={{ color: C.textMain }}>
+        {String(value ?? "")}
+      </p>
+    );
+  };
+
+  const renderAiPlanSection = (title: string, children: React.ReactNode) => (
+    <div
+      className="rounded-2xl border bg-white p-4 shadow-sm"
+      style={{ borderColor: C.primaryBord }}
+    >
+      <h4
+        className="mb-2 text-[12px] font-black uppercase tracking-[0.12em]"
+        style={{ color: C.primary }}
+      >
+        {title}
+      </h4>
+      {children}
+    </div>
+  );
+
+  const handleCopyAiPrompt = async (
+    type: "overview" | "detailed" | "script"
+  ) => {
+    setIsCopyingAiPrompt(type);
+    try {
+      const plan = await buildFullPlanText();
+      let prompt = "";
+      if (type === "overview") {
+        prompt = `Create an interesting and impactful infographic using less text for the business plan of my company in landscape mode (red, black & white colors) from the plan given below:\n\n${plan}`;
+      } else if (type === "detailed") {
+        prompt = `Create an interesting and impactful DETAILED infographic with all key metrics, goals, SWOT and KPIs for the business plan of my company in landscape mode (red, black & white colors) from the plan given below:\n\n${plan}`;
+      } else if (type === "script") {
+        prompt = `Create an engaging video script for explaining my business plan to my team in an impactful way\n\n${plan}`;
+      }
+      await navigator.clipboard.writeText(prompt);
+      toast.success(
+        type === "script"
+          ? "Video script prompt copied! Paste in Gemini or ChatGPT."
+          : "Infographic prompt copied! Paste in Gemini or ChatGPT."
+      );
+    } catch (err) {
+      console.error("AI prompt copy failed", err);
+      toast.error("Failed to copy prompt.");
+    } finally {
+      setIsCopyingAiPrompt(null);
+    }
+  };
+
   // ── Overview Media Handlers ──
   const handleAddImage = async () => {
-    const trimmed = newImageUrl.trim();
+    const trimmed = normalizeImageUrl(newImageUrl.trim());
     if (!trimmed) return;
     setIsSavingImages(true);
     setMediaSaveError(null);
     try {
-      const updated = [...(overviewImages || []), trimmed];
+      const updated = [
+        ...(overviewImages || []).map((item) => item.url),
+        trimmed,
+      ];
       await saveOverviewImagesApi(updated);
-      setOverviewImages(updated);
       setNewImageUrl("");
+      await loadOverviewMedia();
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to save image.");
     } finally {
@@ -1917,12 +2430,19 @@ const BusinessPlanAndGoles = () => {
   };
 
   const handleDeleteImage = async (index: number) => {
-    const updated = (overviewImages || []).filter((_, i) => i !== index);
+    const media = (overviewImages || [])[index];
     setIsSavingImages(true);
     setMediaSaveError(null);
     try {
-      await saveOverviewImagesApi(updated);
-      setOverviewImages(updated);
+      if (media?.id) {
+        await deleteExtraFieldFromApi(media.id);
+      } else {
+        const updated = (overviewImages || [])
+          .filter((_, i) => i !== index)
+          .map((item) => item.url);
+        await saveOverviewImagesApi(updated);
+      }
+      setOverviewImages((prev) => prev.filter((_, i) => i !== index));
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to delete image.");
     } finally {
@@ -1936,10 +2456,13 @@ const BusinessPlanAndGoles = () => {
     setIsSavingVideos(true);
     setMediaSaveError(null);
     try {
-      const updated = [...(overviewVideos || []), trimmed];
+      const updated = [
+        ...(overviewVideos || []).map((item) => item.url),
+        trimmed,
+      ];
       await saveOverviewVideosApi(updated);
-      setOverviewVideos(updated);
       setNewVideoUrl("");
+      await loadOverviewMedia();
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to save video.");
     } finally {
@@ -1948,12 +2471,19 @@ const BusinessPlanAndGoles = () => {
   };
 
   const handleDeleteVideo = async (index: number) => {
-    const updated = (overviewVideos || []).filter((_, i) => i !== index);
+    const media = (overviewVideos || [])[index];
     setIsSavingVideos(true);
     setMediaSaveError(null);
     try {
-      await saveOverviewVideosApi(updated);
-      setOverviewVideos(updated);
+      if (media?.id) {
+        await deleteExtraFieldFromApi(media.id);
+      } else {
+        const updated = (overviewVideos || [])
+          .filter((_, i) => i !== index)
+          .map((item) => item.url);
+        await saveOverviewVideosApi(updated);
+      }
+      setOverviewVideos((prev) => prev.filter((_, i) => i !== index));
     } catch (err: any) {
       setMediaSaveError(err.message || "Failed to delete video.");
     } finally {
@@ -2002,9 +2532,9 @@ const BusinessPlanAndGoles = () => {
           trimmedVideo,
           purposeRecordId
         );
-        setPurposeText(resObj.purposeText);
-        setPurposeVideoUrl(resObj.videoUrl);
-        setPurposeRecordId(resObj.recordId);
+        setPurposeText(trimmedText);
+        setPurposeVideoUrl(trimmedVideo);
+        setPurposeRecordId(resObj.recordId || purposeRecordId);
         setActiveTopModal(null);
       }
     } catch (err: any) {
@@ -2034,11 +2564,9 @@ const BusinessPlanAndGoles = () => {
           filtered.map((v) => v.value),
           tempCoreVideoUrl
         );
-        const merged = filtered.map((v, i) => ({
-          ...v,
-          id: resObj.values[i]?.id ?? v.id,
-        }));
-        setCoreValues(merged);
+        setCoreValues(
+          filtered.map((v, i) => ({ ...v, id: resObj.values[i]?.id ?? v.id }))
+        );
         setCoreVideoUrl(tempCoreVideoUrl);
       } else {
         setCoreValues([]);
@@ -2067,7 +2595,6 @@ const BusinessPlanAndGoles = () => {
         }
       }
       setPendingDeleteIds([]);
-
       if (filtered.length > 0 || tempBrandVideoUrl.trim() !== "") {
         await saveBrandPromisesToApi(filtered, tempBrandVideoUrl);
         setBrandPromises(
@@ -2079,7 +2606,6 @@ const BusinessPlanAndGoles = () => {
         setBrandPromises([]);
         setBrandVideoUrl(tempBrandVideoUrl);
       }
-
       setActiveTopModal(null);
     } catch (err: any) {
       setBrandSaveError(err.message || "Failed to save. Please try again.");
@@ -2251,17 +2777,14 @@ const BusinessPlanAndGoles = () => {
   return (
     <div
       className="bp-wrap min-h-screen px-4 md:px-8 w-full mx-auto space-y-6"
-      style={{ background:"white", color: C.textMain, fontFamily: C.font }}
+      style={{ background: "white", color: C.textMain, fontFamily: C.font }}
     >
       <ThemeStyle />
 
       {/* ── Page Header ── */}
       <div
         className="overflow-hidden rounded-2xl border shadow-sm p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
-        style={{
-          background: C.primaryBord,
-          borderColor: C.primaryBord,
-        }}
+        style={{ background: C.primaryBord, borderColor: C.primaryBord }}
       >
         <div>
           <p
@@ -2271,8 +2794,8 @@ const BusinessPlanAndGoles = () => {
             Strategic overview and goals alignment
           </p>
           <h1
-            className="text-2xl font-black tracking-tight"
-            style={{ color : "DA7756" }}
+            className="text-2xl font-black tracking-tight bp-heading-coral"
+            style={{ color: "#DA7756" }}
           >
             Business Plan
           </h1>
@@ -2285,9 +2808,15 @@ const BusinessPlanAndGoles = () => {
         </div>
         <div className="flex gap-3 shrink-0">
           <BtnOutline onClick={handleCopyPlan} disabled={isCopyingPlan}>
-            {isCopyingPlan ? <LoaderIcon /> : "Copy Plan"}
+            {isCopyingPlan ? (
+              <>
+                <LoaderIcon /> Copying...
+              </>
+            ) : (
+              "Copy Plan"
+            )}
           </BtnOutline>
-          <BtnPrimary>✨ Create with AI</BtnPrimary>
+          <BtnPrimary onClick={openAiBuilder}>Create with A.I</BtnPrimary>
         </div>
       </div>
 
@@ -2312,17 +2841,19 @@ const BusinessPlanAndGoles = () => {
 
       {/* ══ STRATEGIC PLAN ══ */}
       {activeMainTab === "strategic" && (
-        <div className="space-y-6 "         
->
+        <div className="space-y-6">
           {/* Our Business Plan header */}
           <div
             className="rounded-[8px] p-5 flex items-center justify-between relative"
             style={{ background: C.primaryBord }}
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full" style={{ background: C.primary }}>
-  <EyeIcon color="white" />
-</div>
+              <div
+                className="p-2 rounded-full"
+                style={{ background: C.primary }}
+              >
+                <EyeIcon color="white" />
+              </div>
               <span className="text-[12px] font-black tracking-[0.15em] text-[#070707] uppercase">
                 Our Business Plan
               </span>
@@ -2368,7 +2899,7 @@ const BusinessPlanAndGoles = () => {
                         top: infoPos.top,
                         right: infoPos.right,
                         zIndex: 99999,
-                        background: "#16102b", // Dark purple/blue tint like in image
+                        background: "#16102b",
                         color: "#fff",
                         borderRadius: 16,
                         boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
@@ -2518,15 +3049,7 @@ const BusinessPlanAndGoles = () => {
                       className="text-[11px] mb-4 font-semibold"
                       style={{ color: C.textMuted }}
                     >
-                      {(overviewImages || []).length}/12 images • Max 1 MB per
-                      image.{" "}
-                      <a
-                        href="#"
-                        style={{ color: C.primary }}
-                        className="hover:underline"
-                      >
-                        Compress images here
-                      </a>
+                      {(overviewImages || []).length}/12 images
                     </p>
                     {isFetchingMedia ? (
                       <div
@@ -2548,7 +3071,7 @@ const BusinessPlanAndGoles = () => {
                       </div>
                     ) : (
                       <InlineImageSlider
-                        images={overviewImages}
+                        images={(overviewImages || []).map((item) => item.url)}
                         onDelete={handleDeleteImage}
                         isSaving={isSavingImages}
                       />
@@ -2560,17 +3083,35 @@ const BusinessPlanAndGoles = () => {
                       Generate with AI:
                     </p>
                     <div className="flex gap-3">
+                      {/* ── Create Image (overview) ── */}
                       <button
-                        className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm"
+                        onClick={() => handleCopyAiPrompt("overview")}
+                        disabled={isCopyingAiPrompt === "overview"}
+                        className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60 flex items-center justify-center gap-1.5"
                         style={{ borderColor: C.borderLgt }}
                       >
-                        ✨ Create Image (overview)
+                        {isCopyingAiPrompt === "overview" ? (
+                          <>
+                            <LoaderIcon /> Copying...
+                          </>
+                        ) : (
+                          "✨ Create Image (overview)"
+                        )}
                       </button>
+                      {/* ── Create Image (detailed) ── */}
                       <button
-                        className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm"
+                        onClick={() => handleCopyAiPrompt("detailed")}
+                        disabled={isCopyingAiPrompt === "detailed"}
+                        className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60 flex items-center justify-center gap-1.5"
                         style={{ borderColor: C.borderLgt }}
                       >
-                        ✨ Create Image (detailed)
+                        {isCopyingAiPrompt === "detailed" ? (
+                          <>
+                            <LoaderIcon /> Copying...
+                          </>
+                        ) : (
+                          "✨ Create Image (detailed)"
+                        )}
                       </button>
                     </div>
                   </div>
@@ -2578,13 +3119,13 @@ const BusinessPlanAndGoles = () => {
 
                 {addContentTab === "video" && (
                   <div>
-                    <div className="flex gap-2 mb-3">
+                    <div className="flex gap-2 mb-1.5">
                       <input
                         type="text"
                         value={newVideoUrl}
                         onChange={(e) => setNewVideoUrl(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleAddVideo()}
-                        placeholder="Paste YouTube, Vimeo, or direct video URL..."
+                        placeholder="Paste YouTube Video URL..."
                         className="bp-input flex-1"
                         disabled={isSavingVideos}
                       />
@@ -2601,6 +3142,7 @@ const BusinessPlanAndGoles = () => {
                         {isSavingVideos ? <LoaderIcon /> : "+ Add"}
                       </button>
                     </div>
+
                     <p
                       className="text-[11px] font-black mb-4"
                       style={{ color: C.textMuted }}
@@ -2627,7 +3169,7 @@ const BusinessPlanAndGoles = () => {
                       </div>
                     ) : (
                       <InlineVideoPlayer
-                        videos={overviewVideos}
+                        videos={(overviewVideos || []).map((item) => item.url)}
                         onDelete={handleDeleteVideo}
                         isSaving={isSavingVideos}
                       />
@@ -2638,11 +3180,20 @@ const BusinessPlanAndGoles = () => {
                     >
                       Generate with AI:
                     </p>
+                    {/* ── Create Video Script ── */}
                     <button
-                      className="w-full py-2.5 bg-white border rounded-xl flex items-center justify-center text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm"
+                      onClick={() => handleCopyAiPrompt("script")}
+                      disabled={isCopyingAiPrompt === "script"}
+                      className="w-full py-2.5 bg-white border rounded-xl flex items-center justify-center text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60 gap-1.5"
                       style={{ borderColor: C.borderLgt }}
                     >
-                      📄 Create Video Script
+                      {isCopyingAiPrompt === "script" ? (
+                        <>
+                          <LoaderIcon /> Copying...
+                        </>
+                      ) : (
+                        "📄 Create Video Script"
+                      )}
                     </button>
                   </div>
                 )}
@@ -2651,8 +3202,11 @@ const BusinessPlanAndGoles = () => {
           )}
 
           {/* ── 3 Cards ── */}
-{/* ── 3 Cards ── */}
-<div className="rounded-[8px] p-6" style={{ background: C.primaryBord }}>            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-black mb-5">
+          <div
+            className="rounded-[8px] p-6"
+            style={{ background: C.primaryBord }}
+          >
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-black mb-5">
               Strategic Essentials
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -2969,9 +3523,7 @@ const BusinessPlanAndGoles = () => {
 
           {/* Sub-sections */}
           <BhagSection />
-          <MediumTermSection />
-          <ShortTermSection />
-          <QuarterlySection />
+          <GoalsPage />
           <CriticalNumbers />
           <KeyProcessesSection />
           <SWOTAnalysis />
@@ -2979,6 +3531,405 @@ const BusinessPlanAndGoles = () => {
       )}
 
       {activeMainTab === "goals" && <GoalsView />}
+
+      {isAiBuilderOpen && (
+        <Modal onClose={closeAiBuilder}>
+          <div className="bp-modal-box" style={{ maxWidth: 760 }}>
+            <div
+              className="flex items-center justify-between gap-4 px-6 py-5 border-b"
+              style={{ background: C.cardBg, borderColor: C.primaryBord }}
+            >
+              <div>
+                <div
+                  className="text-[10px] font-black uppercase tracking-[0.18em]"
+                  style={{ color: C.primary }}
+                >
+                  AI Plan Builder
+                </div>
+                <h2
+                  className="mt-1 text-[20px] font-black"
+                  style={{ color: C.textMain }}
+                >
+                  Create Business Plan with A.I
+                </h2>
+              </div>
+              <BtnIcon onClick={closeAiBuilder} title="Close">
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </BtnIcon>
+            </div>
+
+            <div className="p-6 flex-1 overflow-y-auto bp-scroll">
+              {aiBuilderStage === "questions" && (
+                <div className="space-y-5">
+                  <div>
+                    <div className="mb-2 flex items-center justify-between text-xs font-black">
+                      <span style={{ color: C.textMuted }}>
+                        Question {aiQuestionIndex + 1} of {AI_PLAN_FIELDS.length}
+                      </span>
+                      <span style={{ color: C.primary }}>
+                        {Math.round(
+                          ((aiQuestionIndex + 1) / AI_PLAN_FIELDS.length) * 100
+                        )}
+                        %
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-white">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${((aiQuestionIndex + 1) / AI_PLAN_FIELDS.length) * 100}%`,
+                          background: C.primary,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    className="rounded-2xl border bg-white p-5 shadow-sm"
+                    style={{ borderColor: C.primaryBord }}
+                  >
+                    <label
+                      className="mb-3 block text-[15px] font-black leading-snug"
+                      style={{ color: C.textMain }}
+                    >
+                      {AI_PLAN_FIELDS[aiQuestionIndex].label}
+                    </label>
+                    <textarea
+                      value={aiAnswers[aiQuestionIndex]}
+                      onChange={(e) => updateAiAnswer(e.target.value)}
+                      className="bp-input resize-y"
+                      style={{ minHeight: 150 }}
+                      placeholder="Type your answer here..."
+                      autoFocus
+                    />
+                  </div>
+
+                  {aiBuilderError && (
+                    <div className="bp-error-banner">{aiBuilderError}</div>
+                  )}
+                </div>
+              )}
+
+              {aiBuilderStage === "building" && (
+                <div className="flex min-h-[360px] flex-col items-center justify-center text-center">
+                  <div
+                    className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
+                    style={{ background: C.primaryBg, color: C.primary }}
+                  >
+                    <LoaderIcon className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-xl font-black" style={{ color: C.textMain }}>
+                    Building your AI plan
+                  </h3>
+                  <p
+                    className="mt-2 max-w-md text-sm font-semibold"
+                    style={{ color: C.textMuted }}
+                  >
+                    Creating a polished business plan from your answers.
+                  </p>
+                </div>
+              )}
+
+              {aiBuilderStage === "plan" && (
+                <div
+                  className="rounded-2xl border bg-white p-4"
+                  style={{ borderColor: C.primaryBord }}
+                >
+                  <h3
+                    className="text-base font-black"
+                    style={{ color: C.textMain }}
+                  >
+                    Generated Business Plan
+                  </h3>
+                  <p
+                    className="mb-3 text-xs font-semibold"
+                    style={{ color: C.textMuted }}
+                  >
+                    Review the plan before saving or downloading.
+                  </p>
+                  {hasStructuredAiPlan ? (
+                    <div className="bp-scroll max-h-[430px] space-y-4 overflow-y-auto pr-1">
+                      {aiPlanDisplay.purpose &&
+                        renderAiPlanSection(
+                          "Purpose",
+                          <p className="text-[13px] font-semibold leading-relaxed" style={{ color: C.textMain }}>
+                            {aiPlanDisplay.purpose}
+                          </p>
+                        )}
+
+                      {(Array.isArray(aiPlanDisplay.core_values) ||
+                        aiPlanDisplay.core_values_explanation) &&
+                        renderAiPlanSection(
+                          "Core Values",
+                          <div className="space-y-3">
+                            {Array.isArray(aiPlanDisplay.core_values) &&
+                              renderAiPlanStringList(aiPlanDisplay.core_values)}
+                            {aiPlanDisplay.core_values_explanation && (
+                              <p className="text-[13px] font-semibold leading-relaxed" style={{ color: C.textMain }}>
+                                {aiPlanDisplay.core_values_explanation}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                      {(Array.isArray(aiPlanDisplay.brand_promises) ||
+                        Array.isArray(
+                          aiPlanDisplay.brand_promise_kpis ||
+                            aiPlanDisplay["brand Promise KPIs"]
+                        )) &&
+                        renderAiPlanSection(
+                          "Brand Promises",
+                          <div className="space-y-3">
+                            {Array.isArray(aiPlanDisplay.brand_promises) &&
+                              renderAiPlanStringList(aiPlanDisplay.brand_promises)}
+                            {Array.isArray(
+                              aiPlanDisplay.brand_promise_kpis ||
+                                aiPlanDisplay["brand Promise KPIs"]
+                            ) && (
+                              <div>
+                                <p className="mb-2 text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                  KPIs
+                                </p>
+                                {renderAiPlanStringList(
+                                  aiPlanDisplay.brand_promise_kpis ||
+                                    aiPlanDisplay["brand Promise KPIs"]
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                      {(aiPlanDisplay.target_segments ||
+                        aiPlanDisplay.bhag_selected) &&
+                        renderAiPlanSection(
+                          "Strategic Direction",
+                          <div className="space-y-3">
+                            {aiPlanDisplay.target_segments && (
+                              <div>
+                                <p className="text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                  Target Segments
+                                </p>
+                                <p className="mt-1 text-[13px] font-semibold" style={{ color: C.textMain }}>
+                                  {aiPlanDisplay.target_segments}
+                                </p>
+                              </div>
+                            )}
+                            {aiPlanDisplay.bhag_selected && (
+                              <div>
+                                <p className="text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                  BHAG
+                                </p>
+                                <p className="mt-1 text-[13px] font-semibold" style={{ color: C.textMain }}>
+                                  {aiPlanDisplay.bhag_selected}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                      {Array.isArray(aiPlanDisplay.bhag_initiatives) &&
+                        aiPlanDisplay.bhag_initiatives.length > 0 &&
+                        renderAiPlanSection(
+                          "BHAG Initiatives",
+                          renderAiPlanObjectList(aiPlanDisplay.bhag_initiatives)
+                        )}
+
+                      {(aiPlanDisplay.three_year_goals ||
+                        Array.isArray(aiPlanDisplay.three_year_initiatives)) &&
+                        renderAiPlanSection(
+                          "Three Year Plan",
+                          <div className="space-y-3">
+                            {aiPlanDisplay.three_year_goals && (
+                              <p className="text-[13px] font-semibold" style={{ color: C.textMain }}>
+                                {aiPlanDisplay.three_year_goals}
+                              </p>
+                            )}
+                            {Array.isArray(aiPlanDisplay.three_year_initiatives) &&
+                              renderAiPlanObjectList(aiPlanDisplay.three_year_initiatives)}
+                          </div>
+                        )}
+
+                      {(aiPlanDisplay.one_year_goals ||
+                        Array.isArray(aiPlanDisplay.one_year_initiatives)) &&
+                        renderAiPlanSection(
+                          "One Year Plan",
+                          <div className="space-y-3">
+                            {aiPlanDisplay.one_year_goals && (
+                              <p className="text-[13px] font-semibold" style={{ color: C.textMain }}>
+                                {aiPlanDisplay.one_year_goals}
+                              </p>
+                            )}
+                            {Array.isArray(aiPlanDisplay.one_year_initiatives) &&
+                              renderAiPlanObjectList(aiPlanDisplay.one_year_initiatives)}
+                          </div>
+                        )}
+
+                      {(aiPlanDisplay.quarterly_goals ||
+                        aiPlanDisplay.quarterly_theme ||
+                        Array.isArray(aiPlanDisplay.quarterly_initiatives) ||
+                        Array.isArray(aiPlanDisplay.quarterly_rewards)) &&
+                        renderAiPlanSection(
+                          "Quarterly Plan",
+                          <div className="space-y-3">
+                            {aiPlanDisplay.quarterly_goals && (
+                              <div>
+                                <p className="mb-2 text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                  Goals
+                                </p>
+                                {renderAiPlanScalar(aiPlanDisplay.quarterly_goals)}
+                              </div>
+                            )}
+                            {aiPlanDisplay.quarterly_theme && (
+                              <p className="text-[13px] font-semibold" style={{ color: C.textMain }}>
+                                Theme: {aiPlanDisplay.quarterly_theme}
+                              </p>
+                            )}
+                            {Array.isArray(aiPlanDisplay.quarterly_initiatives) &&
+                              renderAiPlanObjectList(aiPlanDisplay.quarterly_initiatives)}
+                            {Array.isArray(aiPlanDisplay.quarterly_rewards) && (
+                              <div>
+                                <p className="mb-2 text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                  Rewards
+                                </p>
+                                {aiPlanDisplay.quarterly_rewards.some(
+                                  (item: any) => item && typeof item === "object"
+                                )
+                                  ? renderAiPlanObjectList(aiPlanDisplay.quarterly_rewards)
+                                  : renderAiPlanStringList(aiPlanDisplay.quarterly_rewards)}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                      {Array.isArray(aiPlanDisplay.critical_numbers) &&
+                        aiPlanDisplay.critical_numbers.length > 0 &&
+                        renderAiPlanSection(
+                          "Critical Numbers",
+                          renderAiPlanObjectList(aiPlanDisplay.critical_numbers)
+                        )}
+
+                      {(aiPlanDisplay.people_drivers ||
+                        Array.isArray(aiPlanDisplay.process_drivers)) &&
+                        renderAiPlanSection(
+                          "Drivers",
+                          <div className="space-y-3">
+                            {aiPlanDisplay.people_drivers &&
+                              typeof aiPlanDisplay.people_drivers === "object" &&
+                              !Array.isArray(aiPlanDisplay.people_drivers) &&
+                              renderAiPlanObjectList(
+                                Object.entries(aiPlanDisplay.people_drivers).map(
+                                  ([name, target]) => ({ name, target })
+                                )
+                              )}
+                            {Array.isArray(aiPlanDisplay.process_drivers) &&
+                              renderAiPlanStringList(aiPlanDisplay.process_drivers)}
+                          </div>
+                        )}
+
+                      {(["strengths", "weaknesses", "opportunities", "threats"] as const).some(
+                        (key) => Array.isArray(aiPlanDisplay[key]) && aiPlanDisplay[key].length > 0
+                      ) &&
+                        renderAiPlanSection(
+                          "SWOT",
+                          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                            {(["strengths", "weaknesses", "opportunities", "threats"] as const).map(
+                              (key) =>
+                                Array.isArray(aiPlanDisplay[key]) &&
+                                aiPlanDisplay[key].length > 0 && (
+                                  <div key={key}>
+                                    <p className="mb-2 text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                      {key}
+                                    </p>
+                                    {renderAiPlanStringList(aiPlanDisplay[key])}
+                                  </div>
+                                )
+                            )}
+                          </div>
+                        )}
+                    </div>
+                  ) : (
+                    <pre
+                      className="bp-scroll max-h-[430px] whitespace-pre-wrap rounded-xl p-4 text-[12px] font-semibold leading-relaxed"
+                      style={{
+                        background: C.primaryBg,
+                        color: C.textMain,
+                        border: `1px solid ${C.primaryBord}`,
+                      }}
+                    >
+                      {generatedAiPlan}
+                    </pre>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div
+              className="flex flex-wrap items-center justify-between gap-3 border-t p-5"
+              style={{ background: C.cardBg, borderColor: C.primaryBord }}
+            >
+              {aiBuilderStage === "questions" ? (
+                <>
+                  <BtnOutline
+                    onClick={() =>
+                      aiQuestionIndex === 0
+                        ? closeAiBuilder()
+                        : setAiQuestionIndex((idx) => idx - 1)
+                    }
+                  >
+                    {aiQuestionIndex === 0 ? "Cancel" : "Back"}
+                  </BtnOutline>
+                  <button
+                    onClick={goToNextAiQuestion}
+                    className="px-6 py-2 text-[13px] font-black text-white rounded-xl transition-colors shadow-sm active:scale-[0.97]"
+                    style={{ background: "#1a1a1a", fontFamily: C.font }}
+                  >
+                    {aiQuestionIndex === AI_PLAN_FIELDS.length - 1
+                      ? "Build AI Plan"
+                      : "Next"}
+                  </button>
+                </>
+              ) : aiBuilderStage === "building" ? (
+                <>
+                  <BtnOutline onClick={closeAiBuilder}>Cancel</BtnOutline>
+                  <div
+                    className="flex items-center justify-center gap-2 text-sm font-black"
+                    style={{ color: C.primary }}
+                  >
+                    <LoaderIcon /> Generating plan...
+                  </div>
+                </>
+              ) : (
+                <>
+                  <BtnOutline onClick={downloadAiPlan}>Download</BtnOutline>
+                  <div className="flex gap-3">
+                    <BtnOutline onClick={closeAiBuilder}>Close</BtnOutline>
+                    <button
+                      onClick={saveAiPlan}
+                      disabled={isSavingAiPlan}
+                      className="px-6 py-2 text-[13px] font-black text-white rounded-xl transition-colors shadow-sm active:scale-[0.97]"
+                      style={{ background: "#1a1a1a", fontFamily: C.font }}
+                    >
+                      {isSavingAiPlan ? "Saving..." : "Save"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* ══ MODALS ══ */}
       {activeTopModal && (
@@ -3064,16 +4015,9 @@ const BusinessPlanAndGoles = () => {
                       type="text"
                       value={tempPurposeVideoUrl}
                       onChange={(e) => setTempPurposeVideoUrl(e.target.value)}
-                      placeholder="Paste YouTube, Vimeo, or Direct Video URL..."
+                      placeholder="Paste YouTube Video URL..."
                       className="bp-input"
                     />
-                    <p
-                      className="text-[11px] mt-1.5 font-semibold"
-                      style={{ color: C.textMuted }}
-                    >
-                      Supports YouTube, Vimeo, and direct video files (.mp4,
-                      etc.)
-                    </p>
                   </div>
                 </div>
               )}
@@ -3154,7 +4098,7 @@ const BusinessPlanAndGoles = () => {
                       type="text"
                       value={tempCoreVideoUrl}
                       onChange={(e) => setTempCoreVideoUrl(e.target.value)}
-                      placeholder="Paste YouTube, Vimeo, or Direct Video URL..."
+                      placeholder="Paste YouTube Video URL..."
                       className="bp-input"
                     />
                   </div>
@@ -3178,7 +4122,7 @@ const BusinessPlanAndGoles = () => {
                       type="text"
                       value={tempBrandVideoUrl}
                       onChange={(e) => setTempBrandVideoUrl(e.target.value)}
-                      placeholder="Paste YouTube, Vimeo, or Direct Video URL..."
+                      placeholder="Paste YouTube Video URL..."
                       className="bp-input"
                     />
                   </div>
@@ -3328,10 +4272,10 @@ const BusinessPlanAndGoles = () => {
                       {(tempBrandPromises || []).filter(
                         (p) => p.text.trim() !== ""
                       ).length === 0 && (
-                        <p className="text-[13px] text-gray-400 italic">
-                          Add promises above to link KPIs.
-                        </p>
-                      )}
+                          <p className="text-[13px] text-gray-400 italic">
+                            Add promises above to link KPIs.
+                          </p>
+                        )}
                     </div>
                   </div>
                 </div>

@@ -167,6 +167,8 @@ export const ExpenseDetailPage = () => {
     fetchVendors();
   }, []);
 
+
+
   // Fetch expense details
   useEffect(() => {
     const fetchExpense = async () => {
@@ -313,7 +315,12 @@ export const ExpenseDetailPage = () => {
             >
               {expense.transaction.transaction_type.toUpperCase()}
             </Badge>
+            <button onClick={handleEdit}>
+              <Edit className="h-4 w-4" />
+              <span className="sr-only">Edit Expense</span>
+            </button>
           </div>
+
         </div>
 
         {/* Action Buttons
@@ -435,7 +442,7 @@ export const ExpenseDetailPage = () => {
                         {new Date(expense.date).toLocaleDateString("en-GB")}
                       </p>
                     </div>
-                   
+
                     <div>
                       <span className="text-sm text-gray-600">
                         Reference Number

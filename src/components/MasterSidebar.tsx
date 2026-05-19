@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  MapPin, 
-  Users, 
-  CheckSquare, 
-  MapPinHouse, 
-  Package, 
+import {
+  ChevronDown,
+  ChevronRight,
+  MapPin,
+  Users,
+  CheckSquare,
+  MapPinHouse,
+  Package,
   FileText,
   DoorOpen,
   PackagePlus,
   Ticket,
-  Wallet
+  Wallet,
+  Settings2
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -56,6 +57,14 @@ const masterItems = [
     href: '/master/unit-default'
   },
   {
+    name: 'Ticket Master',
+    icon: Ticket,
+    hasChildren: true,
+    children: [
+      { name: 'Complaint QR Setup', href: '/master/ticket/golden-qr' },
+    ]
+  },
+  {
     name: 'Material Master -> EBom',
     icon: FileText,
     href: '/master/material-ebom'
@@ -69,6 +78,11 @@ const masterItems = [
     name: 'Plant Detail Setup',
     icon: DoorOpen,
     href: '/master/plant-detail'
+  },
+  {
+    name: 'Fields Setup',
+    icon: Settings2,
+    href: '/master/fields-setup'
   },
 ];
 

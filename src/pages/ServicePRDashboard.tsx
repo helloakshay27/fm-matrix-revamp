@@ -46,6 +46,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "po_number",
+    label: "Wo Number",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "reference_number",
     label: "Reference No.",
     sortable: true,
@@ -60,20 +67,6 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "created_by",
-    label: "Created By",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "created_on",
-    label: "Created On",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
     key: "last_approved_by",
     label: "Last Approved By",
     sortable: true,
@@ -83,6 +76,20 @@ const columns: ColumnConfig[] = [
   {
     key: "approved_status",
     label: "Approved Status",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_by",
+    label: "Created By",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_on",
+    label: "Created On",
     sortable: true,
     draggable: true,
     defaultVisible: true,
@@ -473,7 +480,7 @@ export const ServicePRDashboard = () => {
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
-        storageKey="service-pr-dashboard-columns"
+        storageKey="service-pr-dashboard-columns-v2"
         className="min-w-[1000px]"
         emptyMessage="No service PR data available"
         searchTerm={searchQuery}

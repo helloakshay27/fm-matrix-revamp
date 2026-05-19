@@ -260,12 +260,13 @@ export const SalesOrderListPage: React.FC = () => {
             shipped: 'bg-purple-100 text-purple-800',
             delivered: 'bg-green-100 text-green-800',
             cancelled: 'bg-red-100 text-red-800',
-            closed: 'bg-gray-100 text-gray-800'
+            closed: 'bg-gray-100 text-gray-800',
+            pending_approval: 'bg-orange-100 text-orange-800',
         };
 
         return (
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || 'bg-gray-100 text-gray-800'}`}>
-                {status.toUpperCase()}
+                {status.replace(/_/g, " ").toUpperCase()}
             </span>
         );
     };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Download, User, BadgeCheck, CalendarCheck2, Loader2, CheckCircle2, XCircle, Maximize2, X, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, FileText, Download, User, BadgeCheck, CalendarCheck2, Loader2, CheckCircle2, XCircle, Maximize2, X, ChevronLeft, ChevronRight, Image as ImageIcon, ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -483,6 +483,7 @@ export const KRCCFormDetail: React.FC = () => {
   const [previewItems, setPreviewItems] = useState<IAttachmentItem[]>([]);
   const [previewIndex, setPreviewIndex] = useState(0);
   const [previewTitle, setPreviewTitle] = useState('');
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   const openPreview = useCallback((items: IAttachmentItem[], index: number, title: string) => {
     setPreviewItems(items);
@@ -490,9 +491,21 @@ export const KRCCFormDetail: React.FC = () => {
     setPreviewTitle(title);
     setPreviewOpen(true);
   }, []);
-  const closePreview = useCallback(() => setPreviewOpen(false), []);
-  const gotoPrev = useCallback(() => setPreviewIndex(i => (i - 1 + previewItems.length) % previewItems.length), [previewItems.length]);
-  const gotoNext = useCallback(() => setPreviewIndex(i => (i + 1) % previewItems.length), [previewItems.length]);
+  const closePreview = useCallback(() => {
+    setPreviewOpen(false);
+    setZoomLevel(1);
+  }, []);
+  const gotoPrev = useCallback(() => {
+    setPreviewIndex(i => (i - 1 + previewItems.length) % previewItems.length);
+    setZoomLevel(1);
+  }, [previewItems.length]);
+  const gotoNext = useCallback(() => {
+    setPreviewIndex(i => (i + 1) % previewItems.length);
+    setZoomLevel(1);
+  }, [previewItems.length]);
+
+  const zoomIn = useCallback(() => setZoomLevel(z => Math.min(z + 0.25, 3)), []);
+  const zoomOut = useCallback(() => setZoomLevel(z => Math.max(z - 0.25, 0.5)), []);
 
   useEffect(() => {
     if (!previewOpen) return;
@@ -865,6 +878,9 @@ export const KRCCFormDetail: React.FC = () => {
                 <span className="text-xs px-2 py-0.5 rounded bg-white/10 border border-white/20">{previewIndex + 1}/{previewItems.length}</span>
               </div>
               <div className="flex items-center gap-2">
+                <button onClick={zoomOut} className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"><ZoomOut className="h-4 w-4" /></button>
+                <span className="text-xs px-2 py-1 bg-white/10 rounded">{zoomLevel}x</span>
+                <button onClick={zoomIn} className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"><ZoomIn className="h-4 w-4" /></button>
                 <button onClick={gotoPrev} className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"><ChevronLeft className="h-4 w-4" /></button>
                 <button onClick={gotoNext} className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"><ChevronRight className="h-4 w-4" /></button>
                 <button onClick={closePreview} className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"><X className="h-4 w-4" /></button>
@@ -875,6 +891,7 @@ export const KRCCFormDetail: React.FC = () => {
                 src={previewItems[previewIndex].url}
                 alt={(previewItems[previewIndex].document_file_name || '') + ''}
                 className="mx-auto max-h-[70vh] object-contain w-full select-none"
+                style={{ transform: `scale(${zoomLevel})` }}
                 draggable={false}
               />
             </div>

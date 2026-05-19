@@ -6,6 +6,7 @@ const ptwData: ProductData = {
   name: 'Permit to Work (PTW)',
   description: 'A digital permit system for approvals, field execution, compliance, and closure. Controls high-risk work through structured permits, approvals, and compliance tracking.',
   brief: 'Eliminate paper permit workflows. PTW ensures every high-risk work order is approved, tracked, and closed with a full digital audit trail — reducing safety incidents and regulatory risk.',
+  tabOrder: ['summary', 'features', 'market', 'pricing', 'usecases', 'roadmap', 'business', 'gtm', 'metrics', 'swot', 'enhancements', 'assets'],
   excelLikeSummary: true, excelLikeFeatures: true, excelLikeMarket: true, excelLikePricing: false,
   excelLikeSwot: true, excelLikeRoadmap: true, excelLikeBusinessPlan: true, excelLikeGtm: true,
   excelLikeMetrics: true, excelLikePostPossession: true,
@@ -28,12 +29,12 @@ const ptwData: ProductData = {
   owner: 'Abdul / Vinayak', ownerImage: '',
   extendedContent: {
     featureSummary: (
-      <div className="-m-4 overflow-x-auto"><table className="w-full border-collapse text-xs bg-white"><tbody>
-        <tr className="border-b border-gray-200"><td className="w-1/4 p-3 border-r border-[#D3D1C7]"><div className="flex items-center gap-2 font-bold text-gray-800"><FileText className="w-4 h-4 text-blue-500" /> Permit Creation</div></td><td className="p-3 text-gray-700 font-medium">Digital permit forms · Risk assessment attachment · Permit type classification · Time-bound validity</td></tr>
-        <tr className="border-b border-gray-200"><td className="w-1/4 p-3 border-r border-[#D3D1C7]"><div className="flex items-center gap-2 font-bold text-gray-800"><ShieldCheck className="w-4 h-4 text-green-500" /> Multi-level Approval</div></td><td className="p-3 text-gray-700 font-medium">Configurable approval hierarchy · Sequential and parallel approval flows · Mobile approvals · Rejection with reason</td></tr>
-        <tr className="border-b border-gray-200"><td className="w-1/4 p-3 border-r border-[#D3D1C7]"><div className="flex items-center gap-2 font-bold text-gray-800"><BarChart2 className="w-4 h-4 text-purple-500" /> Field Execution</div></td><td className="p-3 text-gray-700 font-medium">QR scan at worksite · Field sign-off · Real-time status · Incident linkage</td></tr>
-        <tr className="border-b border-gray-200"><td className="w-1/4 p-3 border-r border-[#D3D1C7]"><div className="flex items-center gap-2 font-bold text-gray-800"><Bell className="w-4 h-4 text-orange-400" /> Notifications</div></td><td className="p-3 text-gray-700 font-medium">Approval pending alerts · Expiry warnings · Completion confirmations · Escalations</td></tr>
-        <tr><td className="w-1/4 p-3 border-r border-[#D3D1C7]"><div className="flex items-center gap-2 font-bold text-blue-700"><ShieldCheck className="w-4 h-4 text-orange-400" /> Audit Trail (USP)</div></td><td className="p-3 text-blue-700 font-bold">Complete digital record of every permit — creation, approval, execution, and closure — exportable for regulatory audits.</td></tr>
+      <div className="-m-4 overflow-x-auto"><table className="w-full border-collapse text-xs bg-white font-poppins"><tbody>
+        <tr className="border-b border-[#C4B89D]/50"><td className="w-1/4 p-3 border-r border-[#C4B89D]/50 bg-[#F6F4EE]"><div className="flex items-center gap-2 font-semibold text-[#2C2C2C]"><FileText className="w-4 h-4 text-[#2C2C2C]" /> Permit Creation</div></td><td className="p-3 text-[#2C2C2C]/80 font-medium">Digital permit forms · Risk assessment attachment · Permit type classification · Time-bound validity</td></tr>
+        <tr className="border-b border-[#C4B89D]/50"><td className="w-1/4 p-3 border-r border-[#C4B89D]/50 bg-[#F6F4EE]"><div className="flex items-center gap-2 font-semibold text-[#2C2C2C]"><ShieldCheck className="w-4 h-4 text-[#2C2C2C]" /> Multi-level Approval</div></td><td className="p-3 text-[#2C2C2C]/80 font-medium">Configurable approval hierarchy · Sequential and parallel approval flows · Mobile approvals · Rejection with reason</td></tr>
+        <tr className="border-b border-[#C4B89D]/50"><td className="w-1/4 p-3 border-r border-[#C4B89D]/50 bg-[#F6F4EE]"><div className="flex items-center gap-2 font-semibold text-[#2C2C2C]"><BarChart2 className="w-4 h-4 text-[#2C2C2C]" /> Field Execution</div></td><td className="p-3 text-[#2C2C2C]/80 font-medium">QR scan at worksite · Field sign-off · Real-time status · Incident linkage</td></tr>
+        <tr className="border-b border-[#C4B89D]/50"><td className="w-1/4 p-3 border-r border-[#C4B89D]/50 bg-[#F6F4EE]"><div className="flex items-center gap-2 font-semibold text-[#2C2C2C]"><Bell className="w-4 h-4 text-[#2C2C2C]" /> Notifications</div></td><td className="p-3 text-[#2C2C2C]/80 font-medium">Approval pending alerts · Expiry warnings · Completion confirmations · Escalations</td></tr>
+        <tr><td className="w-1/4 p-3 border-r border-[#C4B89D]/50 bg-[#F6F4EE]"><div className="flex items-center gap-2 font-semibold text-[#2C2C2C]"><ShieldCheck className="w-4 h-4 text-[#2C2C2C]" /> Audit Trail (USP)</div></td><td className="p-3 text-[#2C2C2C] font-semibold">Complete digital record of every permit — creation, approval, execution, and closure — exportable for regulatory audits.</td></tr>
       </tbody></table></div>
     ),
     productSummaryNew: {
@@ -88,5 +89,5 @@ const ptwData: ProductData = {
   },
 };
 
-const PTWPage: React.FC = () => <BaseProductPage productData={ptwData} />;
+const PTWPage: React.FC = () => <BaseProductPage productData={ptwData} tabsVariant="snag360" />;
 export default PTWPage;

@@ -77,10 +77,10 @@ const MarketPlaceAllPage = () => {
           </div>
         </div>
         <div className="flex gap-3 mt-6">
-          <Button onClick={() => setIsFilterOpen(false)} className="flex-1 bg-[#C72030] hover:bg-[#C72030]/90 text-white">
+          <Button onClick={() => setIsFilterOpen(false)} className="fm-button-fix fm-button-brand px-8 py-2">
             Apply Filters
           </Button>
-          <Button variant="outline" onClick={() => setIsFilterOpen(false)} className="flex-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white">
+          <Button variant="outline" onClick={() => setIsFilterOpen(false)} className="fm-button-fix fm-button-outline px-8 py-2">
             Reset
           </Button>
         </div>
@@ -138,7 +138,7 @@ const MarketPlaceAllPage = () => {
           <div className="text-sm text-gray-500">
             {featuredApps.length} apps found
           </div>
-          <Button onClick={() => setIsFilterOpen(true)} variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white">
+          <Button onClick={() => setIsFilterOpen(true)} variant="outline" className="fm-button-fix fm-button-outline px-8 py-2">
             <Filter className="w-4 h-4 mr-2" />
             Filters
           </Button>

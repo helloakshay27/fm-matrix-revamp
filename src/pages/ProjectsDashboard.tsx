@@ -505,7 +505,7 @@ export const ProjectsDashboard = () => {
 
   const getTags = useCallback(async () => {
     try {
-      await dispatch(fetchProjectsTags()).unwrap();
+      await dispatch(fetchProjectsTags({ active: true })).unwrap();
     } catch (error) {
       console.log(error);
       toast.error(error);
@@ -1283,14 +1283,14 @@ export const ProjectsDashboard = () => {
         storageKey="projects-table"
         onSort={handleColumnSort}
         onFilterClick={() => setIsFilterModalOpen(true)}
-        canAddRow={true}
+        canAddRow={false}
         readonlyColumns={["id", "milestones", "tasks", "subtasks", "issues"]}
         onAddRow={(newRowData) => {
           handleSubmit(newRowData);
         }}
         renderEditableCell={renderEditableCell}
         newRowPlaceholder="Click to add new project"
-        loading={isLoading}
+        loading={paginationData?.current_page === 1 && isLoading}
         enableGlobalSearch={true}
         onSearchChange={(searchQuery) => {
           setSearchTerm(searchQuery);

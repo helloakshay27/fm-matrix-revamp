@@ -186,7 +186,7 @@ const UtilityConsumptionDashboard = () => {
         </Button>
         <Button
           onClick={() => setIsFilterModalOpen(true)}
-          className="bg-white text-[#C72030] border border-[#C72030] hover:bg-[#C72030] hover:text-white transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2"
+          className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
         >
           <Filter className="w-4 h-4" />
           Filters

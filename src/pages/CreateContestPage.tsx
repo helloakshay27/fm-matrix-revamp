@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Quill from "quill";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -246,10 +247,10 @@ export const CreateContestPage: React.FC = () => {
       prev.map((offer) =>
         offer.id === id
           ? {
-              ...offer,
-              bannerImage: file,
-              bannerImageName: file ? file.name : "",
-            }
+            ...offer,
+            bannerImage: file,
+            bannerImageName: file ? file.name : "",
+          }
           : offer
       )
     );
@@ -298,8 +299,6 @@ export const CreateContestPage: React.FC = () => {
 
     const baseUrl = localStorage.getItem("baseUrl") || "";
     const token = localStorage.getItem("token") || "";
-    //     const baseUrl =  "https://uat-hi-society.lockated.com";
-    // const token = "O08MAh4ADTSweyKwK8zwR5CDVlzKYKLcu825jhnvEjI"
     const formData = new FormData();
 
     // Basic contest fields
@@ -390,25 +389,20 @@ export const CreateContestPage: React.FC = () => {
 
     try {
       // Ensure protocol is present
-      const url = /^https?:\/\//i.test(baseUrl)
-        ? baseUrl
-        : `https://${baseUrl}`;
+      const url = `https://${baseUrl}`;
 
-      const res = await fetch(`${url}/contests.json`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          // Don't set Content-Type - browser will set it with boundary for multipart/form-data
-        },
-        body: formData,
-      });
+      const response = await axios.post(
+        `${url}/contests.json`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            // axios will automatically set Content-Type with multipart/form-data boundary
+          },
+        }
+      );
 
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`API error: ${res.status} - ${errText}`);
-      }
-
-      const data = await res.json();
+      const data = response.data;
       sonnerToast.success("Contest created successfully!");
 
       // Store the created contest ID for navigation
@@ -419,7 +413,8 @@ export const CreateContestPage: React.FC = () => {
       setShowSuccessModal(true);
     } catch (err: any) {
       console.error(err);
-      sonnerToast.error(err.message || "Failed to create contest");
+      const errorMessage = err.response?.data?.message || err.message || "Failed to create contest";
+      sonnerToast.error(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -508,15 +503,15 @@ export const CreateContestPage: React.FC = () => {
 
   const handleSuccessClose = () => {
     setShowSuccessModal(false);
-    navigate("/contests");
+    navigate("/pulse/contests");
   };
 
   const handleViewDetails = () => {
     setShowSuccessModal(false);
     if (createdContestId) {
-      navigate(`/contests/${createdContestId}`);
+      navigate(`/pulse/contests/${createdContestId}`);
     } else {
-      navigate("/contests");
+      navigate("/pulse/contests");
     }
   };
 
@@ -840,9 +835,9 @@ export const CreateContestPage: React.FC = () => {
                         color: "#22c55e",
                       },
                       "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                        {
-                          backgroundColor: "#22c55e",
-                        },
+                      {
+                        backgroundColor: "#22c55e",
+                      },
                     }}
                   />
                   <span
@@ -1010,7 +1005,7 @@ export const CreateContestPage: React.FC = () => {
       {/* Header */}
       <div className="mb-4">
         <button
-          onClick={() => navigate("/contests")}
+          onClick={() => navigate("/pulse/contests")}
           className="flex items-center gap-1 hover:text-gray-800 mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -1034,11 +1029,10 @@ export const CreateContestPage: React.FC = () => {
             {steps.map((step) => (
               <div
                 key={step.id}
-                className={`flex flex-col items-center ${
-                  step.id <= Math.max(...completedSteps, currentStep)
-                    ? "cursor-pointer"
-                    : "cursor-not-allowed opacity-100"
-                }`}
+                className={`flex flex-col items-center ${step.id <= Math.max(...completedSteps, currentStep)
+                  ? "cursor-pointer"
+                  : "cursor-not-allowed opacity-100"
+                  }`}
                 onClick={() => handleStepClick(step.id)}
               >
                 <div className="py-2 px-3 rounded text-white font-semibold bg-white">

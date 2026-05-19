@@ -64,14 +64,14 @@ const CustomStepIconRoot = styled('div')<{
   fontFamily: 'Work Sans, sans-serif',
   fontSize: '14px',
   ...(ownerState.active && {
-    backgroundColor: '#C72030',
+    backgroundColor: '#da7756',
     color: 'white',
-    border: '1px solid #C72030',
+    border: '1px solid #da7756',
   }),
   ...(ownerState.completed && {
-    backgroundColor: '#C72030',
+    backgroundColor: '#da7756',
     color: 'white',
-    border: '1px solid #C72030',
+    border: '1px solid #da7756',
   }),
 }));
 
@@ -92,23 +92,24 @@ function CustomStepIcon(props: {
 }
 
 const RedButton = styled(MuiButton)(({ theme }) => ({
-  backgroundColor: '#C72030',
-  color: 'white',
+  backgroundColor: '#da7756',
+  color: 'white !important',
   borderRadius: 0,
   textTransform: 'none',
   padding: '8px 16px',
   fontFamily: 'Work Sans, sans-serif',
   fontWeight: 500,
-  boxShadow: '0 2px 4px rgba(199, 32, 48, 0.2)',
+  boxShadow: '0 2px 4px rgba(218, 119, 86, 0.2)',
   '&:hover': {
-    backgroundColor: '#B8252F',
-    boxShadow: '0 4px 8px rgba(199, 32, 48, 0.3)',
+    backgroundColor: '#C4623C',
+    boxShadow: '0 4px 8px rgba(218, 119, 86, 0.3)',
   },
 }));
+RedButton.defaultProps = { color: 'inherit' };
 
 const DraftButton = styled(MuiButton)(({ theme }) => ({
   backgroundColor: '#f6f4ee',
-  color: '#C72030',
+  color: '#da7756',
   borderRadius: 0,
   textTransform: 'none',
   padding: '8px 16px',
@@ -162,28 +163,18 @@ const fieldStyles = {
       borderColor: '#ddd',
     },
     '&:hover fieldset': {
-      borderColor: '#C72030',
+      borderColor: '#da7756',
     },
     '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+      borderColor: '#da7756',
     },
   },
   '& .MuiInputLabel-root': {
     fontSize: '14px',
     '&.Mui-focused': {
-      color: '#C72030',
+      color: '#da7756',
     },
   },
-};
-
-const initialAddress = {
-  addressType: 'billing',
-  country: '',
-  state: '',
-  city: '',
-  pincode: '',
-  addressLine1: '',
-  addressLine2: '',
 };
 
 const initialFormData = {
@@ -196,9 +187,8 @@ const initialFormData = {
   supplierType: '',
   websiteUrl: '',
   serviceDescription: '',
-  date: null as Date | null,
+  date: '' as string,
   services: '',
-  addresses: [initialAddress],
   gstTreatment: '',
   gstin: '',
   businessLegalName: '',
@@ -230,7 +220,22 @@ export const AddVendorPage = () => {
   const [errors, setErrors] = useState<any>({});
   const [contactPersons, setContactPersons] = useState([initialContactPerson]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentAddressIndex, setCurrentAddressIndex] = useState(0);
+  const [billingAddress, setBillingAddress] = useState({
+    country: '',
+    state: '',
+    city: '',
+    pincode: '',
+    addressLine1: '',
+    addressLine2: '',
+  });
+  const [shippingAddress, setShippingAddress] = useState({
+    country: '',
+    state: '',
+    city: '',
+    pincode: '',
+    addressLine1: '',
+    addressLine2: '',
+  });
 
   const [panAttachments, setPanAttachments] = useState<File[]>([]);
   const [tanAttachments, setTanAttachments] = useState<File[]>([]);
@@ -238,6 +243,9 @@ export const AddVendorPage = () => {
   const [kycAttachments, setKycAttachments] = useState<File[]>([]);
   const [complianceAttachments, setComplianceAttachments] = useState<File[]>([]);
   const [otherAttachments, setOtherAttachments] = useState<File[]>([]);
+  const [openingBalances, setOpeningBalances] = useState([
+    { billNo: '', date: '', dueDate: '', amount: '' }
+  ]);
 
   const validateStep = () => {
     const newErrors: any = {};
@@ -330,62 +338,47 @@ export const AddVendorPage = () => {
 
     // Address validation for step 1
     if (activeStep === 1) {
-      // Validate at least one address exists
-      if (!formData.addresses || formData.addresses.length === 0) {
-        newErrors.addresses = 'At least one address is required';
-        isValid = false;
-      } else {
-        // Validate each address
-        formData.addresses.forEach((address: any, index: number) => {
-          // Country validation (REQUIRED)
-          if (!address.country.trim()) {
-            newErrors[`address_${index}_country`] = 'Country is required';
-            isValid = false;
-          } else {
-            if (address.country.trim() && !alphabeticRegex.test(address.country.trim())) {
-              newErrors[`address_${index}_country`] = 'Country should only contain alphabets and spaces';
-              isValid = false;
-            }
-          }
+      const alphabeticRegex = /^[a-zA-Z\s]+$/;
+      const addresses = [
+        { address: billingAddress, type: 'billing', label: 'Billing Address' },
+        { address: shippingAddress, type: 'shipping', label: 'Shipping Address' },
+      ];
 
-          // State validation (REQUIRED)
-          if (!address.state.trim()) {
-            newErrors[`address_${index}_state`] = 'State is required';
-            isValid = false;
-          } else {
-            if (address.state.trim() && !alphabeticRegex.test(address.state.trim())) {
-              newErrors[`address_${index}_state`] = 'State should only contain alphabets and spaces';
-              isValid = false;
-            }
-          }
+      addresses.forEach(({ address, type, label }) => {
+        if (!address.country.trim()) {
+          newErrors[`address_${type}_country`] = `${label} - Country is required`;
+          isValid = false;
+        } else if (!alphabeticRegex.test(address.country.trim())) {
+          newErrors[`address_${type}_country`] = `${label} - Country should only contain alphabets`;
+          isValid = false;
+        }
 
-          // City validation (REQUIRED)
-          if (!address.city.trim()) {
-            newErrors[`address_${index}_city`] = 'City is required';
-            isValid = false;
-          } else {
-            if (address.city.trim() && !alphabeticRegex.test(address.city.trim())) {
-              newErrors[`address_${index}_city`] = 'City should only contain alphabets and spaces';
-              isValid = false;
-            }
-          }
+        if (!address.state.trim()) {
+          newErrors[`address_${type}_state`] = `${label} - State is required`;
+          isValid = false;
+        } else if (!alphabeticRegex.test(address.state.trim())) {
+          newErrors[`address_${type}_state`] = `${label} - State should only contain alphabets`;
+          isValid = false;
+        }
 
-          // Address Line1 validation (REQUIRED)
-          if (!address.addressLine1.trim()) {
-            newErrors[`address_${index}_addressLine1`] = 'Address Line 1 is required';
-            isValid = false;
-          }
+        if (!address.city.trim()) {
+          newErrors[`address_${type}_city`] = `${label} - City is required`;
+          isValid = false;
+        } else if (!alphabeticRegex.test(address.city.trim())) {
+          newErrors[`address_${type}_city`] = `${label} - City should only contain alphabets`;
+          isValid = false;
+        }
 
-          // Pincode validation (optional - only validate format if provided)
-          if (address.pincode.trim()) {
-            const pincodeRegex = /^[0-9]{6}$/;
-            if (!pincodeRegex.test(address.pincode.trim())) {
-              newErrors[`address_${index}_pincode`] = 'Please enter a valid 6-digit pincode';
-              isValid = false;
-            }
-          }
-        });
-      }
+        if (!address.addressLine1.trim()) {
+          newErrors[`address_${type}_addressLine1`] = `${label} - Address Line 1 is required`;
+          isValid = false;
+        }
+
+        if (address.pincode.trim() && !/^[0-9]{6}$/.test(address.pincode.trim())) {
+          newErrors[`address_${type}_pincode`] = `${label} - Enter valid 6-digit pincode`;
+          isValid = false;
+        }
+      });
     }
 
     // Bank Details validation for step 2 (all optional - no red asterisks)
@@ -512,16 +505,27 @@ export const AddVendorPage = () => {
     // PAN - Send as separate field
     apiFormData.append('pms_supplier[pan_number]', formData.pan || '');
 
-    formData.addresses.forEach((address: any, index: number) => {
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][address]`, address.addressLine1 || '');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][address_type]`, address.addressType || 'billing');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][country]`, address.country || '');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][state]`, address.state || '');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][city]`, address.city || '');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][pin_code]`, address.pincode || '');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][address_line_two]`, address.addressLine2 || '');
-      apiFormData.append(`pms_supplier[addresses_attributes][${index}][default_address]`, 'true');
-    });
+    // Billing Address - index 0
+    apiFormData.append('pms_supplier[addresses_attributes][0][address]', billingAddress.addressLine1 || '');
+    apiFormData.append('pms_supplier[addresses_attributes][0][address_type]', 'billing');
+    apiFormData.append('pms_supplier[addresses_attributes][0][country]', billingAddress.country || '');
+    apiFormData.append('pms_supplier[addresses_attributes][0][state]', billingAddress.state || '');
+    apiFormData.append('pms_supplier[addresses_attributes][0][city]', billingAddress.city || '');
+    apiFormData.append('pms_supplier[addresses_attributes][0][pin_code]', billingAddress.pincode || '');
+    apiFormData.append('pms_supplier[addresses_attributes][0][address_line_two]', billingAddress.addressLine2 || '');
+    apiFormData.append('pms_supplier[addresses_attributes][0][default_address]', 'true');
+    apiFormData.append('pms_supplier[addresses_attributes][0][default_shipping_address]', 'false');
+
+    // Shipping Address - index 1
+    apiFormData.append('pms_supplier[addresses_attributes][1][address]', shippingAddress.addressLine1 || '');
+    apiFormData.append('pms_supplier[addresses_attributes][1][address_type]', 'shipping');
+    apiFormData.append('pms_supplier[addresses_attributes][1][country]', shippingAddress.country || '');
+    apiFormData.append('pms_supplier[addresses_attributes][1][state]', shippingAddress.state || '');
+    apiFormData.append('pms_supplier[addresses_attributes][1][city]', shippingAddress.city || '');
+    apiFormData.append('pms_supplier[addresses_attributes][1][pin_code]', shippingAddress.pincode || '');
+    apiFormData.append('pms_supplier[addresses_attributes][1][address_line_two]', shippingAddress.addressLine2 || '');
+    apiFormData.append('pms_supplier[addresses_attributes][1][default_address]', 'true');
+    apiFormData.append('pms_supplier[addresses_attributes][1][default_shipping_address]', 'true');
 
     // Step 2: Bank Details - Send all fields
     apiFormData.append('pms_supplier[account_name]', formData.accountName || '');
@@ -561,6 +565,16 @@ export const AddVendorPage = () => {
     kycAttachments.forEach(file => apiFormData.append('kyc_attachments[]', file));
     complianceAttachments.forEach(file => apiFormData.append('compliance_attachments[]', file));
     otherAttachments.forEach(file => apiFormData.append('cancle_checque[]', file));
+
+    // Step 0 (cont): Opening Balance Details - optional, only append if data exists
+    openingBalances.forEach((row, index) => {
+      if (row.billNo || row.date || row.dueDate || row.amount) {
+        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][bill_no]`, row.billNo || '');
+        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][date]`, row.date || '');
+        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][due_date]`, row.dueDate || '');
+        apiFormData.append(`pms_supplier[opening_balance_details_attributes][${index}][amount]`, row.amount || '');
+      }
+    });
 
     // Hardcoded values from API spec
     apiFormData.append('pms_supplier[active]', 'true');
@@ -709,18 +723,18 @@ export const AddVendorPage = () => {
     const fileNames = currentFiles.map(f => f.name);
 
     return (
-      <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#C72030] bg-red-50' : 'border-gray-300'}`}>
+      <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#da7756] bg-red-50' : 'border-gray-300'}`}>
         <p className="text-gray-600 font-medium mb-2">{title}</p>
         <label className="cursor-pointer">
           <div className="flex flex-col items-center">
             <Upload className="w-8 h-8 text-gray-400 mb-2" />
-            <p className="text-sm text-gray-500">Drag & Drop or <span className="text-[#C72030] font-semibold">Choose Files</span></p>
+            <p className="text-sm text-gray-500">Drag & Drop or <span className="text-[#da7756] font-semibold">Choose Files</span></p>
           </div>
           <input type="file" multiple className="hidden" onChange={handleFileChange} />
         </label>
         {fileNames.length > 0 ? (
           <div className="mt-3 p-2 bg-white rounded border">
-            <p className="text-xs text-[#C72030] font-semibold mb-1">{fileNames.length} file(s) selected:</p>
+            <p className="text-xs text-[#da7756] font-semibold mb-1">{fileNames.length} file(s) selected:</p>
             <div className="max-h-20 overflow-y-auto">
               {fileNames.map((fileName, index) => (
                 <p key={index} className="text-xs text-gray-700 truncate" title={fileName}>
@@ -743,7 +757,7 @@ export const AddVendorPage = () => {
           <>
             <SectionCard>
               <SectionHeader>
-                <Building className="text-[#C72030]" />
+                <Building className="text-[#da7756]" />
                 <SectionTitle>COMPANY INFORMATION</SectionTitle>
               </SectionHeader>
               <Box p={3}>
@@ -841,7 +855,7 @@ export const AddVendorPage = () => {
                     fullWidth
                     variant="outlined"
                     value={formData.date}
-                    onChange={(date) => setFormData({ ...formData, date })}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
                     placeholder="Select Date"
@@ -903,7 +917,7 @@ export const AddVendorPage = () => {
             </SectionCard>
             <SectionCard>
               <SectionHeader>
-                <Landmark className="text-[#C72030]" />
+                <Landmark className="text-[#da7756]" />
                 <SectionTitle>OTHER DETAILS</SectionTitle>
               </SectionHeader>
               <Box p={3}>
@@ -1007,162 +1021,268 @@ export const AddVendorPage = () => {
                 </div>
               </Box>
             </SectionCard>
+            <SectionCard>
+              <SectionHeader>
+                <Landmark className="text-[#da7756]" />
+                <SectionTitle>OPENING BALANCE</SectionTitle>
+              </SectionHeader>
+              <Box p={3}>
+                <div className="space-y-3">
+                  {openingBalances.map((row, index) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <TextField
+                        label="Bill No"
+                        placeholder="Enter bill number"
+                        size="small"
+                        value={row.billNo}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].billNo = e.target.value;
+                          setOpeningBalances(updated);
+                        }}
+                        sx={{ flex: 1 }}
+                      />
+                      {/* <TextField
+                        label="Bill Date"
+                        type="date"
+                        size="small"
+                        value={row.date}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].date = e.target.value;
+                          setOpeningBalances(updated);
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ flex: 1 }}
+                      /> */}
+                      <TextField
+                        label="Bill Date"
+                        type="date"
+                        size="small"
+                        value={row.date}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].date = e.target.value;
+                          if (updated[index].dueDate && updated[index].dueDate <= e.target.value) {
+                            updated[index].dueDate = '';
+                          }
+                          setOpeningBalances(updated);
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{
+                          min: new Date().toISOString().split('T')[0],
+                        }}
+                        sx={{ flex: 1 }}
+                      />
+                      {/* <TextField
+                        label="Due Date"
+                        type="date"
+                        size="small"
+                        value={row.dueDate}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].dueDate = e.target.value;
+                          setOpeningBalances(updated);
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ flex: 1 }}
+                      /> */}
+                      <TextField
+                        label="Due Date"
+                        type="date"
+                        size="small"
+                        value={row.dueDate}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].dueDate = e.target.value;
+                          setOpeningBalances(updated);
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{
+                          min: row.date
+                            ? row.date
+                            : new Date().toISOString().split('T')[0],
+                        }}
+                        sx={{ flex: 1 }}
+                      />
+                      <TextField
+                        label="Amount"
+                        placeholder="Enter amount"
+                        type="number"
+                        size="small"
+                        value={row.amount}
+                        onChange={(e) => {
+                          const updated = [...openingBalances];
+                          updated[index].amount = e.target.value;
+                          setOpeningBalances(updated);
+                        }}
+                        sx={{ flex: 1 }}
+                      />
+                      <IconButton
+                        onClick={() => {
+                          if (index === openingBalances.length - 1) {
+                            setOpeningBalances([...openingBalances, { billNo: '', date: '', dueDate: '', amount: '' }]);
+                          } else {
+                            setOpeningBalances(openingBalances.filter((_, i) => i !== index));
+                          }
+                        }}
+                        sx={{
+                          border: '1px solid #da7756',
+                          borderRadius: '4px',
+                          color: '#da7756',
+                          width: 36,
+                          height: 36,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {index === openingBalances.length - 1 ? <Plus size={16} /> : <Trash2 size={16} />}
+                      </IconButton>
+                    </div>
+                  ))}
+                </div>
+              </Box>
+            </SectionCard>
           </>
         );
       case 1:
         return (
           <SectionCard>
             <SectionHeader>
-              <MapPin className="text-[#C72030]" />
+              <MapPin className="text-[#da7756]" />
               <SectionTitle>ADDRESS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
               <div className="space-y-6">
-                {formData.addresses.map((address: any, index: number) => (
-                  <div key={index} className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-sm font-semibold text-gray-700">Address {index + 1}</span>
-                      {formData.addresses.length > 1 && (
-                        <button
-                          onClick={() => {
-                            const newAddresses = formData.addresses.filter((_: any, i: number) => i !== index);
-                            setFormData({ ...formData, addresses: newAddresses });
-                          }}
-                          className="text-red-600 hover:text-red-800 flex items-center gap-1"
-                        >
-                          <Trash2 size={16} /> Remove
-                        </button>
-                      )}
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                      <TextField
-                        select
-                        label={<span>Address Type <span style={{ color: 'red' }}>*</span></span>}
-                        fullWidth
-                        value={address.addressType}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].addressType = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                      >
-                        <MenuItem value="billing">Billing Address</MenuItem>
-                        <MenuItem value="shipping">Shipping Address</MenuItem>
-                      </TextField>
-
-                      <TextField
-                        label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
-                        fullWidth
-                        value={address.country}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].country = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                        onKeyDown={(e) => {
-                          const char = e.key;
-                          if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        error={!!errors[`address_${index}_country`]}
-                        helperText={errors[`address_${index}_country`]}
-                        placeholder="e.g., India"
-                      />
-
-                      <TextField
-                        label={<span>State <span style={{ color: 'red' }}>*</span></span>}
-                        fullWidth
-                        value={address.state}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].state = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                        onKeyDown={(e) => {
-                          const char = e.key;
-                          if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        error={!!errors[`address_${index}_state`]}
-                        helperText={errors[`address_${index}_state`]}
-                        placeholder="e.g., Maharashtra"
-                      />
-
-                      <TextField
-                        label={<span>City <span style={{ color: 'red' }}>*</span></span>}
-                        fullWidth
-                        value={address.city}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].city = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                        onKeyDown={(e) => {
-                          const char = e.key;
-                          if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) {
-                            e.preventDefault();
-                          }
-                        }}
-                        error={!!errors[`address_${index}_city`]}
-                        helperText={errors[`address_${index}_city`]}
-                        placeholder="e.g., Mumbai"
-                      />
-
-                      <TextField
-                        label="Pincode"
-                        fullWidth
-                        value={address.pincode}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].pincode = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                        error={!!errors[`address_${index}_pincode`]}
-                        helperText={errors[`address_${index}_pincode`]}
-                        placeholder="123456"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4">
-                      <TextField
-                        label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
-                        fullWidth
-                        value={address.addressLine1}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].addressLine1 = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                        error={!!errors[`address_${index}_addressLine1`]}
-                        helperText={errors[`address_${index}_addressLine1`]}
-                      />
-                      <TextField
-                        label="Address Line 2"
-                        fullWidth
-                        value={address.addressLine2}
-                        onChange={(e) => {
-                          const newAddresses = [...formData.addresses];
-                          newAddresses[index].addressLine2 = e.target.value;
-                          setFormData({ ...formData, addresses: newAddresses });
-                        }}
-                      />
-                    </div>
+                {/* Billing Address Block */}
+                <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="mb-4">
+                    <span className="text-sm font-semibold text-gray-700">Billing Address</span>
                   </div>
-                ))}
-              </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <TextField
+                      label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={billingAddress.country}
+                      onChange={(e) => setBillingAddress({ ...billingAddress, country: e.target.value })}
+                      onKeyDown={(e) => { const char = e.key; if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) e.preventDefault(); }}
+                      error={!!errors['address_billing_country']}
+                      helperText={errors['address_billing_country']}
+                      placeholder="e.g., India"
+                    />
+                    <TextField
+                      label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={billingAddress.state}
+                      onChange={(e) => setBillingAddress({ ...billingAddress, state: e.target.value })}
+                      onKeyDown={(e) => { const char = e.key; if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) e.preventDefault(); }}
+                      error={!!errors['address_billing_state']}
+                      helperText={errors['address_billing_state']}
+                      placeholder="e.g., Maharashtra"
+                    />
+                    <TextField
+                      label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={billingAddress.city}
+                      onChange={(e) => setBillingAddress({ ...billingAddress, city: e.target.value })}
+                      onKeyDown={(e) => { const char = e.key; if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) e.preventDefault(); }}
+                      error={!!errors['address_billing_city']}
+                      helperText={errors['address_billing_city']}
+                      placeholder="e.g., Mumbai"
+                    />
+                    <TextField
+                      label="Pincode"
+                      fullWidth
+                      value={billingAddress.pincode}
+                      onChange={(e) => setBillingAddress({ ...billingAddress, pincode: e.target.value })}
+                      error={!!errors['address_billing_pincode']}
+                      helperText={errors['address_billing_pincode']}
+                      placeholder="123456"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    <TextField
+                      label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={billingAddress.addressLine1}
+                      onChange={(e) => setBillingAddress({ ...billingAddress, addressLine1: e.target.value })}
+                      error={!!errors['address_billing_addressLine1']}
+                      helperText={errors['address_billing_addressLine1']}
+                    />
+                    <TextField
+                      label="Address Line 2"
+                      fullWidth
+                      value={billingAddress.addressLine2}
+                      onChange={(e) => setBillingAddress({ ...billingAddress, addressLine2: e.target.value })}
+                    />
+                  </div>
+                </div>
 
-              <button
-                onClick={() => {
-                  const newAddresses = [...formData.addresses, { ...initialAddress }];
-                  setFormData({ ...formData, addresses: newAddresses });
-                }}
-                className="mt-6 flex items-center gap-2 px-4 py-2 rounded bg-[#C72030] text-white hover:bg-[#B8252F] transition-colors"
-              >
-                <Plus size={18} /> Add Another Address
-              </button>
+                {/* Shipping Address Block */}
+                <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="mb-4">
+                    <span className="text-sm font-semibold text-gray-700">Shipping Address</span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    <TextField
+                      label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={shippingAddress.country}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, country: e.target.value })}
+                      onKeyDown={(e) => { const char = e.key; if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) e.preventDefault(); }}
+                      error={!!errors['address_shipping_country']}
+                      helperText={errors['address_shipping_country']}
+                      placeholder="e.g., India"
+                    />
+                    <TextField
+                      label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={shippingAddress.state}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
+                      onKeyDown={(e) => { const char = e.key; if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) e.preventDefault(); }}
+                      error={!!errors['address_shipping_state']}
+                      helperText={errors['address_shipping_state']}
+                      placeholder="e.g., Maharashtra"
+                    />
+                    <TextField
+                      label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={shippingAddress.city}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
+                      onKeyDown={(e) => { const char = e.key; if (!/[a-zA-Z\s]/.test(char) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(char)) e.preventDefault(); }}
+                      error={!!errors['address_shipping_city']}
+                      helperText={errors['address_shipping_city']}
+                      placeholder="e.g., Mumbai"
+                    />
+                    <TextField
+                      label="Pincode"
+                      fullWidth
+                      value={shippingAddress.pincode}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, pincode: e.target.value })}
+                      error={!!errors['address_shipping_pincode']}
+                      helperText={errors['address_shipping_pincode']}
+                      placeholder="123456"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    <TextField
+                      label={<span>Address Line 1 <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
+                      value={shippingAddress.addressLine1}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine1: e.target.value })}
+                      error={!!errors['address_shipping_addressLine1']}
+                      helperText={errors['address_shipping_addressLine1']}
+                    />
+                    <TextField
+                      label="Address Line 2"
+                      fullWidth
+                      value={shippingAddress.addressLine2}
+                      onChange={(e) => setShippingAddress({ ...shippingAddress, addressLine2: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+              </div>
             </Box>
           </SectionCard>
         );
@@ -1170,7 +1290,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <Landmark className="text-[#C72030]" />
+              <Landmark className="text-[#da7756]" />
               <SectionTitle>BANK DETAILS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -1213,7 +1333,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <User className="text-[#C72030]" />
+              <User className="text-[#da7756]" />
               <SectionTitle>CONTACT PERSON</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -1307,7 +1427,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <FileText className="text-[#C72030]" />
+              <FileText className="text-[#da7756]" />
               <SectionTitle>KYC DETAILS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -1359,7 +1479,7 @@ export const AddVendorPage = () => {
         return (
           <SectionCard>
             <SectionHeader>
-              <Upload className="text-[#C72030]" />
+              <Upload className="text-[#da7756]" />
               <SectionTitle>ATTACHMENTS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
@@ -1413,9 +1533,10 @@ export const AddVendorPage = () => {
                 onClick={() => handleStepClick(index)}
                 sx={{
                   cursor: 'pointer',
-                  backgroundColor: (index === activeStep || completedSteps.includes(index)) ? '#C72030' : 'white',
-                  color: (index === activeStep || completedSteps.includes(index)) ? 'white' : '#C4B89D',
-                  border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'}`,
+                  backgroundColor: 'white',
+                  color: (index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D',
+                  border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'}`,
+                  fontWeight: (index === activeStep) ? 600 : 500,
                   padding: '8px 12px',
                   fontSize: '11px',
                   fontWeight: 500,
@@ -1426,7 +1547,7 @@ export const AddVendorPage = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: index === activeStep ? '0 2px 4px rgba(199, 32, 48, 0.3)' : 'none',
+                  boxShadow: index === activeStep ? '0 2px 4px rgba(218, 119, 86, 0.3)' : 'none',
                   transition: 'all 0.2s ease',
                   fontFamily: 'Work Sans, sans-serif',
                   position: 'relative',
@@ -1445,7 +1566,7 @@ export const AddVendorPage = () => {
                   sx={{
                     width: '30px',
                     height: '2px',
-                    backgroundImage: `repeating-linear-gradient(to right, ${(index < activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'} 0px, ${(index < activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'} 6px, transparent 6px, transparent 12px)`,
+                    backgroundImage: `repeating-linear-gradient(to right, ${(index < activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'} 0px, ${(index < activeStep || completedSteps.includes(index)) ? '#da7756' : '#C4B89D'} 6px, transparent 6px, transparent 12px)`,
                     margin: '0 0px',
                     flexShrink: 0
                   }}

@@ -15,6 +15,8 @@ import {
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 import axios from "axios";
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 import { ClubGalleryImageUpload } from "@/components/ClubGalleryImageUpload";
 
 // Custom theme for MUI components
@@ -86,6 +88,12 @@ export const EditBookingSetupClubPage = () => {
 
     const coverImageRef = useRef(null);
     const bookingImageRef = useRef(null);
+    const descriptionQuillRef = useRef<HTMLDivElement>(null);
+    const descriptionEditorRef = useRef<Quill | null>(null);
+    const termsQuillRef = useRef<HTMLDivElement>(null);
+    const termsEditorRef = useRef<Quill | null>(null);
+    const cancellationQuillRef = useRef<HTMLDivElement>(null);
+    const cancellationEditorRef = useRef<Quill | null>(null);
     const [selectedFile, setSelectedFile] = useState(null);
     const [selectedBookingFiles, setSelectedBookingFiles] = useState([]);
     const [imageIdsToRemove, setImageIdsToRemove] = useState([]);
@@ -128,6 +136,7 @@ export const EditBookingSetupClubPage = () => {
         seaterInfo: "Select a seater",
         floorInfo: "Select a floor",
         sharedContentInfo: "",
+        bookableSlotsPerDay: "",
         slots: [
             {
                 startTime: { hour: "", minute: "" },
@@ -153,6 +162,7 @@ export const EditBookingSetupClubPage = () => {
                 dayType: "entireDay",
                 blockReason: "",
                 selectedSlots: [],
+                _destroy: false,
             },
         ],
     });
@@ -276,6 +286,7 @@ export const EditBookingSetupClubPage = () => {
                 seaterInfo: responseData.seater_info,
                 floorInfo: responseData.location_info,
                 sharedContentInfo: responseData.shared_content,
+                bookableSlotsPerDay: responseData.bookable_slot_count || "",
                 slots: responseData.facility_slots?.map((slot) => ({
                     id: slot.facility_slot.id,
                     startTime: {
@@ -323,6 +334,7 @@ export const EditBookingSetupClubPage = () => {
                     dayType: blocking.facility_blocking?.block_slot && blocking.facility_blocking?.block_slot.length > 0 ? "selectedSlots" : "entireDay",
                     blockReason: blocking.facility_blocking?.reason || "",
                     selectedSlots: blocking.facility_blocking?.block_slot?.map((slotId: string) => parseInt(slotId)) || [],
+                    _destroy: false,
                 })) || [
                         {
                             id: undefined,
@@ -331,6 +343,7 @@ export const EditBookingSetupClubPage = () => {
                             dayType: "entireDay",
                             blockReason: "",
                             selectedSlots: [],
+                            _destroy: false,
                         },
                     ],
             }));
@@ -473,6 +486,7 @@ export const EditBookingSetupClubPage = () => {
             dayType: "entireDay",
             blockReason: "",
             selectedSlots: [],
+            _destroy: false,
         };
         setFormData({
             ...formData,
@@ -487,6 +501,116 @@ export const EditBookingSetupClubPage = () => {
         fetchInventories();
         fetchFacilityBookingDetails();
     }, [id]);
+
+    // Initialize Quill editors for Description, Terms & Conditions, and Cancellation Policy
+    useEffect(() => {
+        // Description editor
+        if (descriptionQuillRef.current && !descriptionEditorRef.current) {
+            descriptionEditorRef.current = new Quill(descriptionQuillRef.current, {
+                theme: "snow",
+                placeholder: "Enter description...",
+                modules: {
+                    toolbar: [
+                        [{ header: [1, 2, 3, false] }],
+                        ["bold", "italic", "underline", "strike"],
+                        ["blockquote", "code-block"],
+                        [{ list: "ordered" }, { list: "bullet" }],
+                        ["link", "image"],
+                        ["clean"],
+                    ],
+                },
+            });
+
+            if (formData.description) {
+                descriptionEditorRef.current.root.innerHTML = formData.description;
+            }
+
+            descriptionEditorRef.current.on("text-change", () => {
+                const html = descriptionEditorRef.current?.root.innerHTML;
+                const sanitized = html && html !== '<p><br></p>' ? html : "";
+                setFormData((prev) => ({ ...prev, description: sanitized }));
+            });
+        }
+
+        // Terms & Conditions editor
+        if (termsQuillRef.current && !termsEditorRef.current) {
+            termsEditorRef.current = new Quill(termsQuillRef.current, {
+                theme: "snow",
+                placeholder: "Enter terms and conditions...",
+                modules: {
+                    toolbar: [
+                        [{ header: [1, 2, 3, false] }],
+                        ["bold", "italic", "underline", "strike"],
+                        ["blockquote", "code-block"],
+                        [{ list: "ordered" }, { list: "bullet" }],
+                        ["link", "image"],
+                        ["clean"],
+                    ],
+                },
+            });
+
+            if (formData.termsConditions) {
+                termsEditorRef.current.root.innerHTML = formData.termsConditions;
+            }
+
+            termsEditorRef.current.on("text-change", () => {
+                const html = termsEditorRef.current?.root.innerHTML;
+                const sanitized = html && html !== '<p><br></p>' ? html : "";
+                setFormData((prev) => ({ ...prev, termsConditions: sanitized }));
+            });
+        }
+
+        // Cancellation Policy editor
+        if (cancellationQuillRef.current && !cancellationEditorRef.current) {
+            cancellationEditorRef.current = new Quill(cancellationQuillRef.current, {
+                theme: "snow",
+                placeholder: "Enter cancellation policy...",
+                modules: {
+                    toolbar: [
+                        [{ header: [1, 2, 3, false] }],
+                        ["bold", "italic", "underline", "strike"],
+                        ["blockquote", "code-block"],
+                        [{ list: "ordered" }, { list: "bullet" }],
+                        ["link"],
+                        ["clean"],
+                    ],
+                },
+            });
+
+            if (formData.cancellationText) {
+                cancellationEditorRef.current.root.innerHTML = formData.cancellationText;
+            }
+
+            cancellationEditorRef.current.on("text-change", () => {
+                const html = cancellationEditorRef.current?.root.innerHTML;
+                const sanitized = html && html !== '<p><br></p>' ? html : "";
+                setFormData((prev) => ({ ...prev, cancellationText: sanitized }));
+            });
+        }
+
+        return () => {
+            // Cleanup not strictly necessary for Quill; if required, set refs to null here
+        };
+    }, []);
+
+    // Sync updates from formData to editors (useful if formData is pre-filled)
+    useEffect(() => {
+        if (descriptionEditorRef.current && formData.description !== (descriptionEditorRef.current.root.innerHTML || "")) {
+            descriptionEditorRef.current.root.innerHTML = formData.description || "";
+        }
+    }, [formData.description]);
+
+    useEffect(() => {
+        if (termsEditorRef.current && formData.termsConditions !== (termsEditorRef.current.root.innerHTML || "")) {
+            termsEditorRef.current.root.innerHTML = formData.termsConditions || "";
+        }
+    }, [formData.termsConditions]);
+
+    useEffect(() => {
+        if (cancellationEditorRef.current && formData.cancellationText !== (cancellationEditorRef.current.root.innerHTML || "")) {
+            cancellationEditorRef.current.root.innerHTML = formData.cancellationText || "";
+        }
+    }, [formData.cancellationText]);
 
     const handleCoverImageChange = (e) => {
         const file = e.target.files?.[0] || null;
@@ -655,23 +779,23 @@ export const EditBookingSetupClubPage = () => {
             // Block Days - Handle multiple block day records
             console.log('=== Preparing Block Days Payload ===');
             formData.blockDays.forEach((blockDay, index) => {
-                console.log(`Block day ${index}:`, {
-                    id: blockDay.id,
-                    startDate: blockDay.startDate,
-                    dayType: blockDay.dayType,
-                    selectedSlots: blockDay.selectedSlots,
-                    selectedSlotsCount: blockDay.selectedSlots?.length || 0
-                });
 
                 // Include ID only if it exists (existing block day from API)
                 if (blockDay.id) {
-                    console.log(`Block day ${index} has ID: ${blockDay.id} - will update existing record`);
                     formDataToSend.append(
                         `facility_setup[facility_blockings_attributes][${index}][id]`,
                         blockDay.id.toString()
                     );
                 } else {
                     console.log(`Block day ${index} has no ID - will create new record`);
+                }
+
+                // Add _destroy flag if marked for deletion
+                if (blockDay._destroy) {
+                    formDataToSend.append(
+                        `facility_setup[facility_blockings_attributes][${index}][_destroy]`,
+                        "true"
+                    );
                 }
 
                 if (blockDay.startDate) {
@@ -715,6 +839,11 @@ export const EditBookingSetupClubPage = () => {
                     "false"
                 );
             });
+
+            formDataToSend.append(
+                "facility_setup[bookable_slot_count]",
+                formData.bookableSlotsPerDay
+            )
 
             formDataToSend.append(
                 "facility_setup[multi_slot]",
@@ -1343,7 +1472,7 @@ export const EditBookingSetupClubPage = () => {
                             <div className="w-12  h-12  rounded-full flex items-center justify-center bg-[#E5E0D3] text-[#C72030]">
                                 <CalendarDays className="w-4 h-4" />
                             </div>
-                            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">CONFIGURE SLOT</h3>
+                            <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">Facility Operational Timings & Booking</h3>
                         </div>
                         <div>
                             <Button
@@ -1546,6 +1675,28 @@ export const EditBookingSetupClubPage = () => {
                                     /> */}
                                 </div>
                             ))}
+
+                            <div className="flex items-center gap-3 mt-4">
+                                <label className="text-sm font-medium text-gray-700">
+                                    Bookable Slots Per Day
+                                </label>
+                                <TextField
+                                    size="small"
+                                    value={formData.bookableSlotsPerDay}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        // Allow only positive integers (no decimals, no negatives)
+                                        if (value === '' || /^[1-9]\d*$/.test(value)) {
+                                            setFormData({
+                                                ...formData,
+                                                bookableSlotsPerDay: value,
+                                            });
+                                        }
+                                    }}
+                                    variant="outlined"
+                                />
+                            </div>
+
                             <div className="space-y-4 mt-4">
                                 <div>
                                     <label className="text-sm font-medium text-gray-700">
@@ -1801,18 +1952,34 @@ export const EditBookingSetupClubPage = () => {
                         </div>
 
                         <div className="space-y-6">
-                            {[...formData.blockDays].reverse().map((blockDay, reverseIndex) => {
-                                const blockIndex = formData.blockDays.length - 1 - reverseIndex;
-                                return (
-                                    <div key={blockIndex} className="space-y-4 p-4 border rounded-lg">
-                                        {formData.blockDays.length > 1 && (
+                            {formData.blockDays
+                                .map((blockDay, index) => ({ blockDay, index }))
+                                .filter(({ blockDay }) => !blockDay._destroy)
+                                .reverse()
+                                .map(({ blockDay, index: blockIndex }, reverseIndex) => {
+                                    return (
+                                        <div key={blockIndex} className="space-y-4 p-4 border rounded-lg">
+                                            {/* {formData.blockDays.filter((bd) => !bd._destroy).length > 1 && ( */}
                                             <div className="flex justify-between items-center mb-2">
                                                 <span className="text-sm font-semibold">Block Day {blockIndex + 1}</span>
                                                 <button
                                                     onClick={() => {
+                                                        const newBlockDays = [...formData.blockDays];
+                                                        // If it's an existing block day with an ID, mark it for deletion with _destroy
+                                                        if (newBlockDays[blockIndex].id) {
+                                                            console.log(`Marking block day ${blockIndex} (ID: ${newBlockDays[blockIndex].id}) for deletion`);
+                                                            newBlockDays[blockIndex] = {
+                                                                ...newBlockDays[blockIndex],
+                                                                _destroy: true,
+                                                            };
+                                                        } else {
+                                                            // If it's a new block day without an ID, remove it from the array
+                                                            console.log(`Removing new block day ${blockIndex} (no ID)`);
+                                                            newBlockDays.splice(blockIndex, 1);
+                                                        }
                                                         setFormData({
                                                             ...formData,
-                                                            blockDays: formData.blockDays.filter((_, idx) => idx !== blockIndex),
+                                                            blockDays: newBlockDays,
                                                         });
                                                     }}
                                                     className="text-red-500 hover:text-red-700"
@@ -1820,140 +1987,140 @@ export const EditBookingSetupClubPage = () => {
                                                     <X className="w-4 h-4" />
                                                 </button>
                                             </div>
-                                        )}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <TextField
-                                                label="Date"
-                                                type="date"
-                                                value={blockDay.startDate}
-                                                onChange={(e) => {
-                                                    const newBlockDays = [...formData.blockDays];
-                                                    newBlockDays[blockIndex].startDate = e.target.value;
-                                                    setFormData({
-                                                        ...formData,
-                                                        blockDays: newBlockDays,
-                                                    });
-                                                    // Fetch slots automatically if selectedSlots is active
-                                                    if (blockDay.dayType === "selectedSlots" && e.target.value) {
-                                                        fetchBlockDaySlots(id!, e.target.value, blockIndex);
-                                                    }
-                                                }}
-                                                variant="outlined"
-                                                InputLabelProps={{
-                                                    shrink: true,
-                                                }}
-                                            />
-                                        </div>
-
-                                        <div className="flex gap-6 px-1">
-                                            <div className="flex items-center space-x-2">
-                                                <input
-                                                    type="radio"
-                                                    id={`entireDay-${blockIndex}`}
-                                                    name={`dayType-${blockIndex}`}
-                                                    checked={blockDay.dayType === "entireDay"}
-                                                    onChange={() => {
+                                            {/* )} */}
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <TextField
+                                                    label="Date"
+                                                    type="date"
+                                                    value={blockDay.startDate}
+                                                    onChange={(e) => {
                                                         const newBlockDays = [...formData.blockDays];
-                                                        newBlockDays[blockIndex].dayType = "entireDay";
+                                                        newBlockDays[blockIndex].startDate = e.target.value;
                                                         setFormData({
                                                             ...formData,
                                                             blockDays: newBlockDays,
                                                         });
+                                                        // Fetch slots automatically if selectedSlots is active
+                                                        if (blockDay.dayType === "selectedSlots" && e.target.value) {
+                                                            fetchBlockDaySlots(id!, e.target.value, blockIndex);
+                                                        }
                                                     }}
-                                                    className="text-blue-600"
-                                                />
-                                                <label htmlFor={`entireDay-${blockIndex}`}>Entire Day</label>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <input
-                                                    type="radio"
-                                                    id={`selectedSlots-${blockIndex}`}
-                                                    name={`dayType-${blockIndex}`}
-                                                    checked={blockDay.dayType === "selectedSlots"}
-                                                    onChange={() => {
-                                                        const newBlockDays = [...formData.blockDays];
-                                                        newBlockDays[blockIndex].dayType = "selectedSlots";
-                                                        setFormData({
-                                                            ...formData,
-                                                            blockDays: newBlockDays,
-                                                        });
+                                                    variant="outlined"
+                                                    InputLabelProps={{
+                                                        shrink: true,
                                                     }}
-                                                    className="text-blue-600"
                                                 />
-                                                <label htmlFor={`selectedSlots-${blockIndex}`}>Selected Slots</label>
                                             </div>
-                                        </div>
 
-                                        {blockDay.dayType === "selectedSlots" && (
-                                            <div>
-                                                <h4 className="text-sm font-medium text-gray-700 mb-3">Select Slots</h4>
-                                                {blockDaySlots[blockIndex]?.length > 0 ? (
-                                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                                        {blockDaySlots[blockIndex].map((slot) => {
-                                                            const isChecked = blockDay.selectedSlots?.includes(slot.id) || false;
-                                                            console.log(`Block ${blockIndex} - Slot ${slot.id} (${slot.ampm}):`, {
-                                                                slotId: slot.id,
-                                                                slotIdType: typeof slot.id,
-                                                                selectedSlots: blockDay.selectedSlots,
-                                                                isChecked: isChecked
+                                            <div className="flex gap-6 px-1">
+                                                <div className="flex items-center space-x-2">
+                                                    <input
+                                                        type="radio"
+                                                        id={`entireDay-${blockIndex}`}
+                                                        name={`dayType-${blockIndex}`}
+                                                        checked={blockDay.dayType === "entireDay"}
+                                                        onChange={() => {
+                                                            const newBlockDays = [...formData.blockDays];
+                                                            newBlockDays[blockIndex].dayType = "entireDay";
+                                                            setFormData({
+                                                                ...formData,
+                                                                blockDays: newBlockDays,
                                                             });
-                                                            return (
-                                                                <div key={slot.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        id={`slot-${blockIndex}-${slot.id}`}
-                                                                        checked={isChecked}
-                                                                        onChange={(e) => {
-                                                                            const newBlockDays = [...formData.blockDays];
-                                                                            if ((e.target as HTMLInputElement).checked) {
-                                                                                newBlockDays[blockIndex].selectedSlots = [...(blockDay.selectedSlots || []), slot.id];
-                                                                            } else {
-                                                                                newBlockDays[blockIndex].selectedSlots = (blockDay.selectedSlots || []).filter((id: number) => id !== slot.id);
-                                                                            }
-                                                                            setFormData({
-                                                                                ...formData,
-                                                                                blockDays: newBlockDays,
-                                                                            });
-                                                                        }}
-                                                                        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                                                                    />
-                                                                    <label
-                                                                        htmlFor={`slot-${blockIndex}-${slot.id}`}
-                                                                        className="cursor-pointer text-sm font-medium"
-                                                                    >
-                                                                        {slot.ampm}
-                                                                    </label>
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                ) : blockDay.startDate ? (
-                                                    <p className="text-sm text-gray-500">No slots available for the selected date</p>
-                                                ) : (
-                                                    <p className="text-sm text-gray-500">Please select a date to fetch available slots</p>
-                                                )}
+                                                        }}
+                                                        className="text-blue-600"
+                                                    />
+                                                    <label htmlFor={`entireDay-${blockIndex}`}>Entire Day</label>
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <input
+                                                        type="radio"
+                                                        id={`selectedSlots-${blockIndex}`}
+                                                        name={`dayType-${blockIndex}`}
+                                                        checked={blockDay.dayType === "selectedSlots"}
+                                                        onChange={() => {
+                                                            const newBlockDays = [...formData.blockDays];
+                                                            newBlockDays[blockIndex].dayType = "selectedSlots";
+                                                            setFormData({
+                                                                ...formData,
+                                                                blockDays: newBlockDays,
+                                                            });
+                                                        }}
+                                                        className="text-blue-600"
+                                                    />
+                                                    <label htmlFor={`selectedSlots-${blockIndex}`}>Selected Slots</label>
+                                                </div>
                                             </div>
-                                        )}
 
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
-                                            <Textarea
-                                                placeholder="Please mention block reason"
-                                                value={blockDay.blockReason}
-                                                onChange={(e) => {
-                                                    const newBlockDays = [...formData.blockDays];
-                                                    newBlockDays[blockIndex].blockReason = e.target.value;
-                                                    setFormData({
-                                                        ...formData,
-                                                        blockDays: newBlockDays,
-                                                    });
-                                                }}
-                                                className="min-h-[100px]"
-                                            />
+                                            {blockDay.dayType === "selectedSlots" && (
+                                                <div>
+                                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Select Slots</h4>
+                                                    {blockDaySlots[blockIndex]?.length > 0 ? (
+                                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                                            {blockDaySlots[blockIndex].map((slot) => {
+                                                                const isChecked = blockDay.selectedSlots?.includes(slot.id) || false;
+                                                                console.log(`Block ${blockIndex} - Slot ${slot.id} (${slot.ampm}):`, {
+                                                                    slotId: slot.id,
+                                                                    slotIdType: typeof slot.id,
+                                                                    selectedSlots: blockDay.selectedSlots,
+                                                                    isChecked: isChecked
+                                                                });
+                                                                return (
+                                                                    <div key={slot.id} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            id={`slot-${blockIndex}-${slot.id}`}
+                                                                            checked={isChecked}
+                                                                            onChange={(e) => {
+                                                                                const newBlockDays = [...formData.blockDays];
+                                                                                if ((e.target as HTMLInputElement).checked) {
+                                                                                    newBlockDays[blockIndex].selectedSlots = [...(blockDay.selectedSlots || []), slot.id];
+                                                                                } else {
+                                                                                    newBlockDays[blockIndex].selectedSlots = (blockDay.selectedSlots || []).filter((id: number) => id !== slot.id);
+                                                                                }
+                                                                                setFormData({
+                                                                                    ...formData,
+                                                                                    blockDays: newBlockDays,
+                                                                                });
+                                                                            }}
+                                                                            className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                                                                        />
+                                                                        <label
+                                                                            htmlFor={`slot-${blockIndex}-${slot.id}`}
+                                                                            className="cursor-pointer text-sm font-medium"
+                                                                        >
+                                                                            {slot.ampm}
+                                                                        </label>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    ) : blockDay.startDate ? (
+                                                        <p className="text-sm text-gray-500">No slots available for the selected date</p>
+                                                    ) : (
+                                                        <p className="text-sm text-gray-500">Please select a date to fetch available slots</p>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-700 mb-2 block">Block Reason</label>
+                                                <Textarea
+                                                    placeholder="Please mention block reason"
+                                                    value={blockDay.blockReason}
+                                                    onChange={(e) => {
+                                                        const newBlockDays = [...formData.blockDays];
+                                                        newBlockDays[blockIndex].blockReason = e.target.value;
+                                                        setFormData({
+                                                            ...formData,
+                                                            blockDays: newBlockDays,
+                                                        });
+                                                    }}
+                                                    className="min-h-[100px]"
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
                         </div>
                     </div>
 
@@ -2272,13 +2439,14 @@ export const EditBookingSetupClubPage = () => {
                         </div>
 
                         <div>
-                            <Textarea
-                                placeholder="Enter description"
-                                value={formData.description}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, description: e.target.value })
-                                }
-                                className="min-h-[100px]"
+                            <div
+                                ref={descriptionQuillRef}
+                                style={{
+                                    backgroundColor: "#fff",
+                                    borderRadius: "6px",
+                                    border: "1px solid #ccc",
+                                    minHeight: "200px",
+                                }}
                             />
                         </div>
                     </div>
@@ -2292,16 +2460,14 @@ export const EditBookingSetupClubPage = () => {
                             </div>
 
                             <div>
-                                <Textarea
-                                    placeholder="Enter terms and conditions"
-                                    value={formData.termsConditions}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            termsConditions: e.target.value,
-                                        })
-                                    }
-                                    className="min-h-[100px]"
+                                <div
+                                    ref={termsQuillRef}
+                                    style={{
+                                        backgroundColor: "#fff",
+                                        borderRadius: "6px",
+                                        border: "1px solid #ccc",
+                                        minHeight: "200px",
+                                    }}
                                 />
                             </div>
                         </div>
@@ -2434,16 +2600,14 @@ export const EditBookingSetupClubPage = () => {
                             <div className="font-medium text-gray-700">
                                 Cancellation Policy <span>*</span>
                             </div>
-                            <Textarea
-                                placeholder="Enter cancellation text"
-                                value={formData.cancellationText}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        cancellationText: e.target.value,
-                                    })
-                                }
-                                className="min-h-[100px]"
+                            <div
+                                ref={cancellationQuillRef}
+                                style={{
+                                    backgroundColor: "#fff",
+                                    borderRadius: "6px",
+                                    border: "1px solid #ccc",
+                                    minHeight: "200px",
+                                }}
                             />
                         </div>
                     </div>

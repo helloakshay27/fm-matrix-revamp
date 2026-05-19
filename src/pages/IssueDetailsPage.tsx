@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { ArrowLeft, ChevronDown, ChevronDownCircle, PencilIcon, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronDownCircle, Eye, PencilIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import axios from "axios";
 import { useSpeechToText } from "@/hooks/useSpeechToText";
@@ -141,7 +141,7 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
 
     const handleRemoveFile = async (fileId: string) => {
         try {
-            await axios.delete(`https://${baseUrl}/issues/${id}/attachments/${fileId}.json`, {
+            await axios.delete(`https://${baseUrl}/issues/${id}/remove_attachemnts/${fileId}.json`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -172,41 +172,56 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
                             return (
                                 <div
                                     key={index}
-                                    className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white relative"
+                                    className="border rounded overflow-hidden flex flex-col items-center justify-center text-center shadow-sm bg-white hover:shadow-md transition-shadow group"
                                 >
-                                    <Trash2
-                                        size={20}
-                                        color="#C72030"
-                                        className="absolute top-2 right-2 cursor-pointer hover:opacity-75"
-                                        onClick={() => handleRemoveFile(file.id)}
-                                    />
-                                    <div className="w-[100px] h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
+                                    <div className="w-full h-[120px] flex items-center justify-center bg-gray-100 rounded-t overflow-hidden relative group">
                                         {isImage ? (
                                             <img
                                                 src={fileUrl}
                                                 alt={fileName}
-                                                className="object-contain h-full"
+                                                className="object-contain h-full w-full"
                                             />
                                         ) : isPdf ? (
-                                            <span className="text-red-600 font-bold">PDF</span>
+                                            <span className="text-red-600 font-bold text-2xl">PDF</span>
                                         ) : isWord ? (
-                                            <span className="text-blue-600 font-bold">DOC</span>
+                                            <span className="text-blue-600 font-bold text-2xl">DOC</span>
                                         ) : isExcel ? (
-                                            <span className="text-green-600 font-bold">XLS</span>
+                                            <span className="text-green-600 font-bold text-2xl">XLS</span>
                                         ) : (
-                                            <span className="text-gray-500 font-bold">FILE</span>
+                                            <span className="text-gray-500 font-bold text-2xl">FILE</span>
                                         )}
+                                        
+                                        {/* Button Overlay */}
+                                        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                                            <button
+                                                onClick={() => window.open(fileUrl, "_blank")}
+                                                className="bg-white text-gray-800 p-2 rounded hover:bg-blue-500 hover:text-white transition-all transform hover:scale-110"
+                                                title="View file"
+                                            >
+                                                <Eye size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleRemoveFile(file.id)}
+                                                className="bg-white text-gray-800 p-2 rounded hover:bg-red-500 hover:text-white transition-all transform hover:scale-110"
+                                                title="Delete file"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <a
-                                        href={fileUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        download={fileName}
-                                        className="text-xs text-blue-700 hover:underline truncate w-full"
-                                        title={fileName}
-                                    >
-                                        {fileName}
-                                    </a>
+                                    
+                                    <div className="w-full p-2 flex-1 flex flex-col justify-center">
+                                        <a
+                                            href={fileUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            download={fileName}
+                                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline truncate"
+                                            title={fileName}
+                                        >
+                                            {fileName}
+                                        </a>
+                                    </div>
                                 </div>
                             );
                         })}
@@ -253,7 +268,8 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
                         )}
                     </button>
                 </div>
-            )}
+            )
+            }
             <input
                 type="file"
                 multiple
@@ -262,7 +278,7 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
                 onChange={handleFileChange}
                 disabled={uploading}
             />
-        </div>
+        </div >
     );
 };
 
@@ -937,7 +953,7 @@ const IssueDetailsPage = () => {
                 milestone_id: issueDetail.milestone_id || "",
                 task_management_name: issueDetail.task_management_name || "",
                 task_management_id: issueDetail.task_management_id || "",
-                tags: issueDetail.tags || [],
+                tags: issueDetail.task_tags || [],
                 attachments: issueDetail.attachments || [],
                 comments: sortCommentsDesc(issueDetail.comments || []),
             };

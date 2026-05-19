@@ -47,7 +47,9 @@ export const AddServicePRDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+  const orgId = localStorage.getItem("org_id");
   const navigate = useNavigate();
+  const isPanchshilOrg = orgId === "63";
 
   const { data = [] } = useAppSelector((state) => state.changePlantDetails) as { data: any[] };
 
@@ -238,6 +240,39 @@ export const AddServicePRDashboard = () => {
     }
   };
 
+  // Fetch Service Details (UOM) by Service ID
+  const fetchServiceUOM = async (detailId, serviceId) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/services/${serviceId}.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log("Service Details Response:", response.data);
+
+      // Update the detail with the UOM from API
+      if (response.data && response.data.base_uom) {
+        const uom = response.data.base_uom || response.data || "";
+        setDetailsForms((prevForms) =>
+          prevForms.map((form) =>
+            form.id === detailId
+              ? { ...form, uom: uom }
+              : form
+          )
+        );
+        if (uom) {
+          toast.success(`UOM ${uom} loaded successfully`);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching Service UOM:", error);
+      toast.error("Failed to fetch Service UOM");
+    }
+  };
+
   // Fetch saved PR details if saved_pr_id is present or create system log
   useEffect(() => {
     if (savedPrId) {
@@ -282,6 +317,8 @@ export const AddServicePRDashboard = () => {
                 id: index + 1,
                 service: item.pms_service_id || "",
                 productDescription: item.prod_desc || "",
+                glCode: item.gl_account || "",
+                taxCode: item.tax_code || "",
                 quantityArea: item.quantity || "",
                 uom: item.unit || "",
                 expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
@@ -297,6 +334,7 @@ export const AddServicePRDashboard = () => {
                 taxAmount: item.taxable_value || "",
                 amount: item.total_value || "",
                 totalAmount: item.total_amount || "",
+                storageLocation: item.general_storage || "",
                 wbsCode: item.wbs_code || "",
               }))
             );
@@ -395,6 +433,31 @@ export const AddServicePRDashboard = () => {
           }
         );
         toast.success("Auto saved successfully");
+
+        // Refetch details API immediately after successful auto-save
+        // try {
+        //   const servicesResponse = await dispatch(
+        //     getServices({ baseUrl, token })
+        //   ).unwrap();
+        //   setServices(servicesResponse.services || []);
+
+        //   const suppliersResponse = await dispatch(
+        //     getSuppliers({ baseUrl, token })
+        //   ).unwrap();
+        //   setSuppliers(suppliersResponse.suppliers || []);
+
+        //   const plantDetailsResponse = await dispatch(
+        //     getPlantDetails({ baseUrl, token })
+        //   ).unwrap();
+        //   setPlantDetails(plantDetailsResponse.plant_details || []);
+
+        //   const addressesResponse = await dispatch(
+        //     getAddresses({ baseUrl, token })
+        //   ).unwrap();
+        //   setAddresses(addressesResponse.addresses || []);
+        // } catch (error) {
+        //   console.error("Error refetching details API:", error);
+        // }
       } catch (error) {
         console.error("Error updating system log:", error);
       }
@@ -495,6 +558,8 @@ export const AddServicePRDashboard = () => {
             id: index + 1,
             service: item.pms_service_id,
             productDescription: item.product_description,
+            glCode: item.gl_account || "",
+            taxCode: item.tax_code || "",
             quantityArea: item.quantity,
             uom: item.unit,
             expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
@@ -510,6 +575,7 @@ export const AddServicePRDashboard = () => {
             taxAmount: item.tax_amount,
             amount: item.total_value,
             totalAmount: Number(item.tax_amount) + Number(item.total_value),
+            storageLocation: item.general_storage || "",
             wbsCode: item.wbs_code,
           })));
         } catch (error) {
@@ -595,14 +661,14 @@ export const AddServicePRDashboard = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []) as File[];
-    const validFileTypes = ['image/jpeg', 'image/png', 'application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const validFileTypes = ['application/pdf'];
     const maxFileSizeBytes = 12 * 1024 * 1024; // 12 MB
     const validFiles: File[] = [];
 
     selectedFiles.forEach((file) => {
       // Validate file type
       if (!validFileTypes.includes(file.type)) {
-        toast.error(`Invalid file type: ${file.name}. Accepted formats: JPG, PNG, PDF, XLS, XLSX, DOC, DOCX`);
+        toast.error(`Invalid file type: ${file.name}. Only PDF files are accepted.`);
         return;
       }
 
@@ -641,6 +707,10 @@ export const AddServicePRDashboard = () => {
           // When WBS code changes, fetch GL code
           if (field === "wbsCode" && value) {
             fetchGlCodeForWbs(id, value);
+          }
+          // When service changes, fetch UOM
+          if (field === "service" && value) {
+            fetchServiceUOM(id, value);
           }
           return updatedForm;
         }
@@ -1217,12 +1287,12 @@ export const AddServicePRDashboard = () => {
                       </MenuItem>
                       {wbsCodes.map((wbs) => (
                         <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                          {wbs.wbs_code}
+                          {`${wbs.wbs_code} - ${wbs.wbs_name}`}
                         </MenuItem>
                       ))}
                     </MuiSelect>
                   </FormControl>
-                  {overallWbs && (
+                  {/* {overallWbs && (
                     <Button
                       variant="ghost"
                       type="button"
@@ -1235,7 +1305,7 @@ export const AddServicePRDashboard = () => {
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                  )}
+                  )} */}
                 </div>
               )}
 
@@ -1343,7 +1413,7 @@ export const AddServicePRDashboard = () => {
                           </MenuItem>
                           {wbsCodes.map((wbs) => (
                             <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                              {wbs.wbs_code}
+                              {`${wbs.wbs_code} - ${wbs.wbs_name}`}
                             </MenuItem>
                           ))}
                         </MuiSelect>
@@ -1475,13 +1545,12 @@ export const AddServicePRDashboard = () => {
                   <TextField
                     label="UOM"
                     value={detailsData.uom}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "uom", e.target.value)
-                    }
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
+                    InputProps={{ readOnly: true }}
                     sx={fieldStyles}
+                    disabled
                   />
 
                   <TextField
@@ -1517,149 +1586,163 @@ export const AddServicePRDashboard = () => {
                     sx={fieldStyles}
                   />
 
-                  <TextField
-                    label="CGST Rate"
-                    value={detailsData.cgstRate}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                        handleDetailsChange(detailsData.id, "cgstRate", value);
-                      }
-                    }}
-                    fullWidth
-                    variant="outlined"
-                    type="text"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="CGST Rate"
+                      value={detailsData.cgstRate}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                          handleDetailsChange(detailsData.id, "cgstRate", value);
+                        }
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      type="text"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  )}
 
-                  <TextField
-                    label="CGST Amt"
-                    value={detailsData.cgstAmt}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="CGST Amt"
+                      value={detailsData.cgstAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+                  )}
 
-                  <TextField
-                    label="SGST Rate"
-                    value={detailsData.sgstRate}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                        handleDetailsChange(detailsData.id, "sgstRate", value);
-                      }
-                    }}
-                    fullWidth
-                    variant="outlined"
-                    type="text"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="SGST Rate"
+                      value={detailsData.sgstRate}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                          handleDetailsChange(detailsData.id, "sgstRate", value);
+                        }
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      type="text"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  )}
 
-                  <TextField
-                    label="SGST Amt"
-                    value={detailsData.sgstAmt}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="SGST Amt"
+                      value={detailsData.sgstAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+                  )}
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="IGST Rate"
+                      value={detailsData.igstRate}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                          handleDetailsChange(detailsData.id, "igstRate", value);
+                        }
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      type="text"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  )}
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="IGST Amt"
+                      value={detailsData.igstAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+                  )}
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="TCS Rate"
+                      value={detailsData.tcsRate}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                          handleDetailsChange(detailsData.id, "tcsRate", value);
+                        }
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      type="text"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+                  )}
+                  {!isPanchshilOrg && (
+                    <TextField
+                      label="TCS Amt"
+                      value={detailsData.tcsAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+                  )}
+                  {!isPanchshilOrg && (
 
-                  <TextField
-                    label="IGST Rate"
-                    value={detailsData.igstRate}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                        handleDetailsChange(detailsData.id, "igstRate", value);
-                      }
-                    }}
-                    fullWidth
-                    variant="outlined"
-                    type="text"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="IGST Amt"
-                    value={detailsData.igstAmt}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
-
-                  <TextField
-                    label="TCS Rate"
-                    value={detailsData.tcsRate}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                        handleDetailsChange(detailsData.id, "tcsRate", value);
-                      }
-                    }}
-                    fullWidth
-                    variant="outlined"
-                    type="text"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="TCS Amt"
-                    value={detailsData.tcsAmt}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
-
-                  <TextField
-                    label="Tax Amount"
-                    value={detailsData.taxAmount}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
+                    <TextField
+                      label="Tax Amount"
+                      value={detailsData.taxAmount}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+                  )}
 
                   <TextField
                     label="Amount"
@@ -1851,7 +1934,7 @@ export const AddServicePRDashboard = () => {
               </div>
               <div className="text-xs text-gray-500 mt-3 space-y-1">
                 <p>Accepts up to 12 MB files</p>
-                <p>Supported formats: JPG, PNG, PDF, XLS, XLSX, DOC, DOCX</p>
+                <p>Supported formats: PDF</p>
               </div>
             </div>
 
@@ -1940,7 +2023,7 @@ export const AddServicePRDashboard = () => {
         <div className="flex items-center justify-center gap-4 mt-8">
           <Button
             onClick={handleSubmit}
-            className="bg-red-600 hover:bg-red-700 text-white px-8"
+            className="bg-[#C72030] hover:bg-[#C72030] text-white"
             disabled={submitting}
           >
             Save Service PR

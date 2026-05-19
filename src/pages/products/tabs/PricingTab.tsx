@@ -29,6 +29,69 @@ const StatusBadge: React.FC<{ status: string }> = ({ status }) => {
 };
 
 const PricingTab: React.FC<PricingTabProps> = ({ productData }) => {
+  if (productData.extendedContent?.rawPricingTable) {
+    return <div className="w-full mt-4">{productData.extendedContent.rawPricingTable}</div>;
+  }
+
+  const rawPricingSections = productData.extendedContent?.rawPricingSections;
+  if (rawPricingSections) {
+    return (
+      <div className="space-y-6 mt-4">
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+          <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
+            {rawPricingSections.title}
+          </h2>
+          {rawPricingSections.subtitle && (
+            <p className="mt-2 text-[12px] text-[#2C2C2C]/60 font-medium italic">
+              {rawPricingSections.subtitle}
+            </p>
+          )}
+        </div>
+
+        {rawPricingSections.sections.map((section, sectionIndex) => (
+          <div key={sectionIndex} className="border border-[#D3D1C7] bg-white">
+            <div className="bg-[#DA7756] text-white px-4 py-3 text-[13px] font-semibold uppercase tracking-wide">
+              {section.title}
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1100px] table-fixed border-collapse text-[13px] leading-relaxed">
+                <thead>
+                  <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold uppercase">
+                    {section.columns.map((header) => (
+                      <th
+                        key={header}
+                        className="border border-[#D3D1C7] p-3 text-left"
+                      >
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {section.rows.map((row, rowIndex) => (
+                    <tr
+                      key={rowIndex}
+                      className={rowIndex % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}
+                    >
+                      {row.map((cell, cellIndex) => (
+                        <td
+                          key={cellIndex}
+                          className="border border-[#D3D1C7] p-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words align-top"
+                        >
+                          {cell}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   const dp = productData.extendedContent?.detailedPricing as
     | PricingDetails
     | undefined;

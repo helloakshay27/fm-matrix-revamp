@@ -8,6 +8,7 @@ interface EnhancementsTabProps {
 const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
   const isClubEnhancement = !!productData.extendedContent?.detailedEnhancementRoadmap?.isClubEnhancement;
   const clubEnhancements = productData.extendedContent?.detailedEnhancementRoadmap;
+  const isProcurement = productData.name.toLowerCase().includes("procurement");
 
   if (isClubEnhancement && clubEnhancements) {
     return (
@@ -197,15 +198,21 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                         <th className="border border-[#E5E7EB] bg-white px-3 py-3 w-[40%]">
                           Description
                         </th>
-                        <th className="border border-[#E5E7EB] bg-white px-3 py-3 w-[22%]">
-                          {hasInnovationShape ? "Business Value" : "Target User"}
-                        </th>
+                        {!isProcurement && (
+                          <th className="border border-[#E5E7EB] bg-white px-3 py-3 w-[22%]">
+                            {hasInnovationShape ? "Business Value" : "Target User"}
+                          </th>
+                        )}
                         <th className="border border-[#E5E7EB] bg-white px-3 py-3 w-[20%]">
-                          Competitor Leapfrogged
+                          {isProcurement ? "Competitive Leapfrog" : "Competitor Leapfrogged"}
                         </th>
                         {hasImpact && (
                           <th className="border border-[#E5E7EB] bg-white px-3 py-3 text-center w-[8%]">
-                            {hasInnovationShape ? "Priority" : "Impact"}
+                            {isProcurement
+                              ? "Impact Level"
+                              : hasInnovationShape
+                                ? "Priority"
+                                : "Impact"}
                           </th>
                         )}
                       </tr>
@@ -230,11 +237,13 @@ const EnhancementsTab: React.FC<EnhancementsTabProps> = ({ productData }) => {
                           <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {item.description}
                           </td>
-                          <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
-                            {hasInnovationShape
-                              ? innovationLayer[idx]?.value
-                              : item.targetUser}
-                          </td>
+                          {!isProcurement && (
+                            <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
+                              {hasInnovationShape
+                                ? innovationLayer[idx]?.value
+                                : item.targetUser}
+                            </td>
+                          )}
                           <td className="border border-[#E5E7EB] px-3 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">
                             {item.competitorLeapfrogged}
                           </td>

@@ -290,6 +290,10 @@ const EditOpportunityModal: React.FC<EditOpportunityModalProps> = ({
         formData.append("opportunity[tag_ids][]", tag.value || tag.id);
       });
 
+      observers.forEach((observer: any) => {
+        formData.append("opportunity[observer_ids][]", observer.value || observer.id);
+      });
+
       // Append new attachments
       attachments.forEach((file) => {
         formData.append("attachments[]", file);

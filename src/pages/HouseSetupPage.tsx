@@ -124,7 +124,7 @@ const HouseSetupPage = () => {
     const columns = useMemo(() => [
         { key: 'id', label: 'ID', sortable: true },
         { key: 'name', label: 'Name', sortable: true },
-        { key: 'floor_count', label: 'Floor Count', sortable: true },
+        { key: 'floor_count', label: 'Member Count', sortable: true },
         { key: 'actions', label: 'Actions', sortable: false },
     ], []);
 
@@ -169,7 +169,7 @@ const HouseSetupPage = () => {
             </div>
 
             <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleCloseModal()}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px] bg-white">
                     <DialogHeader>
                         <DialogTitle>{editingHouse ? 'Edit House' : 'Add House'}</DialogTitle>
                     </DialogHeader>
@@ -184,7 +184,7 @@ const HouseSetupPage = () => {
                                 required
                             />
                         </div>
-                        <div className="space-y-2">
+                        {/* <div className="space-y-2">
                             <Label htmlFor="floor_count">Floor Count</Label>
                             <Input
                                 id="floor_count"
@@ -194,7 +194,7 @@ const HouseSetupPage = () => {
                                 placeholder="Enter floor count"
                                 required
                             />
-                        </div>
+                        </div> */}
                         <DialogFooter className="gap-2 sm:gap-0">
                             <Button type="button" variant="outline" onClick={handleCloseModal}>Cancel</Button>
                             <Button type="submit" className="bg-red-600 hover:bg-red-700 text-white">

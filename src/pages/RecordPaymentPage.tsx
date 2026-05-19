@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
+import BookingInvoice from "@/components/BookingInvoice";
 
 // Section component - matching InvoiceAdd design
 const Section: React.FC<{
@@ -205,6 +206,7 @@ export const RecordPaymentPage: React.FC = () => {
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [sendThankYou, setSendThankYou] = useState(true);
+  const [pdfInvoices, setPdfInvoices] = useState<any[]>([]);
 
   // Customer Detail Drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -648,6 +650,38 @@ export const RecordPaymentPage: React.FC = () => {
       toast.success(
         `Payment ${status === "draft" ? "saved as draft" : "recorded"} successfully!`
       );
+
+      // After saving the payment, fetch unpaid invoices for this customer
+      try {
+        const invoicesRes = await axios.get(
+          `https://${baseUrl}/lock_account_invoices.json`,
+          {
+            params: {
+              lock_account_id: lock_account_id,
+              "q[lock_account_customer_id_eq]": selectedCustomerId,
+              "q[status_not_eq]": "paid",
+            },
+            headers: authHeaders,
+          }
+        );
+
+        const invoicesList: any[] = invoicesRes.data?.data || invoicesRes.data || [];
+        if (invoicesList.length > 0) {
+          // Fetch detailed invoice objects for PDF generation
+          const detailPromises = invoicesList.map((inv) =>
+            axios.get(
+              `https://${baseUrl}/lock_account_invoices/${inv.id}.json`,
+              { params: { lock_account_id: lock_account_id }, headers: authHeaders }
+            )
+          );
+          const detailResponses = await Promise.all(detailPromises);
+          const details = detailResponses.map((r) => r.data || r.data?.data || r);
+          setPdfInvoices(details);
+        }
+      } catch (e) {
+        console.error("Failed to fetch invoices after payment:", e);
+      }
+
       navigate(-1);
     } catch (err) {
       console.error("Failed to save payment:", err);
@@ -1962,6 +1996,19 @@ export const RecordPaymentPage: React.FC = () => {
           {submitting ? "Saving…" : "Save as Paid"}
         </MuiButton>
       </div>
+      {/* Hidden off-screen invoice PDF generator (auto-downloads then removed) */}
+      {pdfInvoices.length > 0 && (
+        <div style={{ position: "absolute", left: -9999, top: 0, width: "210mm" }}>
+          {pdfInvoices.map((inv, idx) => (
+            <BookingInvoice
+              key={inv?.id ?? idx}
+              data={inv?.data ?? inv}
+              autoDownload={true}
+              onDownloadComplete={() => setPdfInvoices((prev) => prev.filter((_, i) => i !== idx))}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 };

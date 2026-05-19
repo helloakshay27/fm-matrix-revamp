@@ -564,7 +564,7 @@ export const ManualJournalDashboard = () => {
             title="Edit"
             className="p-0"
           >
-            {/* <Edit className="w-4 h-4" /> */}
+             <Edit className="w-4 h-4" /> 
           </Button>
         </div>
       );

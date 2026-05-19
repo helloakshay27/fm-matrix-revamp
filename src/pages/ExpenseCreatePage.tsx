@@ -19,8 +19,9 @@ import {
   FormControlLabel,
   Radio,
   Checkbox,
+  CircularProgress,
 } from '@mui/material';
-import { Close, CloudUpload, Search } from '@mui/icons-material';
+import { Close, CloudUpload, Search, EditOutlined } from '@mui/icons-material';
 import { Receipt, FileText } from 'lucide-react';
 import { toast as sonnerToast } from 'sonner';
 
@@ -84,6 +85,14 @@ const EMPTY_LINE = (): ExpenseLine => ({
   taxExemptionId: null,
 });
 
+const GST_TREATMENT_MAP: Record<string, string> = {
+  'registered_regular': 'registered_business_regular',
+  'registered_composition': 'registered_business_composition',
+};
+
+const normalizeGstTreatment = (val: string): string => {
+  return GST_TREATMENT_MAP[val] || val;
+};
 // ── Indian states list ───────────────────────────────────────────────────────
 const INDIAN_STATES = [
   'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa',
@@ -188,6 +197,31 @@ export const ExpenseCreatePage: React.FC = () => {
 
   const [showTagModal, setShowTagModal] = useState(false);
   const [reportingTagAccount, setReportingTagAccount] = useState('');
+
+  // Vendor detail state
+  const [vendorDetail, setVendorDetail] = useState<any>(null);
+  const [vendorDetailLoading, setVendorDetailLoading] = useState(false);
+  const [gstDetails, setGstDetails] = useState<any[]>([]);
+  const [selectedGstDetailId, setSelectedGstDetailId] = useState<any>(null);
+
+  // Edit modals
+  const [gstPickerModalOpen, setGstPickerModalOpen] = useState(false);
+  const [gstModalOpen, setGstModalOpen] = useState(false);
+  const [gstTreatmentDraft, setGstTreatmentDraft] = useState('');
+  const [gstManageModalOpen, setGstManageModalOpen] = useState(false);
+  const [showNewGstForm, setShowNewGstForm] = useState(false);
+  const [editingGstDetailId, setEditingGstDetailId] = useState<any>(null);
+  const [newGstForm, setNewGstForm] = useState({
+    gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: ''
+  });
+  const [sourceModalOpen, setSourceModalOpen] = useState(false);
+  const [sourceDraft, setSourceDraft] = useState('');
+  const [destinationModalOpen, setDestinationModalOpen] = useState(false);
+  const [destinationDraft, setDestinationDraft] = useState('');
+
+  const selectedGstDetail = gstDetails.find(
+    g => String(g.id) === String(selectedGstDetailId)
+  ) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
 
   // ── Fetch account ledgers ─────────────────────────────────────────────────
   useEffect(() => {
@@ -427,6 +461,134 @@ export const ExpenseCreatePage: React.FC = () => {
     return errorMessages.length === 0;
   };
 
+  const fetchVendorDetail = async (vendorId: string) => {
+    if (!vendorId) {
+      setVendorDetail(null);
+      setGstDetails([]);
+      setSelectedGstDetailId(null);
+      setGstTreatment('');
+      setSourceOfSupply('');
+      return;
+    }
+    const apiUrl = getApiUrl();
+    const token = localStorage.getItem('token');
+    setVendorDetailLoading(true);
+    try {
+      const res = await axios.get(
+        `${apiUrl}/pms/suppliers/${vendorId}.json?access_token=${token}`
+      );
+      const data = res.data?.supplier || res.data;
+      setVendorDetail(data);
+      if (data.gst_preference) setGstTreatment(normalizeGstTreatment(data.gst_preference));
+      const nextGst: any[] = Array.isArray(data.gst_details) ? data.gst_details : [];
+      setGstDetails(nextGst);
+      const primaryGst = nextGst.find(g => g.primary) || nextGst[0] || data.primary_gst_detail || null;
+      if (primaryGst) {
+        setSelectedGstDetailId(primaryGst.id ?? null);
+        if (primaryGst.place_of_supply) setSourceOfSupply(primaryGst.place_of_supply);
+      }
+    } catch (err) {
+      sonnerToast.error('Failed to load vendor details');
+    } finally {
+      setVendorDetailLoading(false);
+    }
+  };
+
+
+  // const fetchVendorDetail = async (vendorId: string) => {
+  //   if (!vendorId) {
+  //     setVendorDetail(null);
+  //     setGstDetails([]);
+  //     setSelectedGstDetailId(null);
+  //     setGstTreatment('');
+  //     setSourceOfSupply('');
+  //     return;
+  //   }
+  //   const apiUrl = getApiUrl();
+  //   const token = localStorage.getItem('token');
+  //   setVendorDetailLoading(true);
+  //   try {
+  //     const res = await axios.get(
+  //       `${apiUrl}/pms/suppliers/${vendorId}.json?access_token=${token}`
+  //     );
+
+  //     // ✅ ADD THESE LOGS:
+  //     console.log('🔍 Full API response:', res.data);
+  //     console.log('🔍 supplier object:', res.data?.supplier);
+  //     console.log('🔍 gst_preference raw:', res.data?.supplier?.gst_preference || res.data?.gst_preference);
+  //     console.log('🔍 gst_details:', res.data?.supplier?.gst_details || res.data?.gst_details);
+
+  //     const data = res.data?.supplier || res.data;
+
+  //     console.log('🔍 data after parse:', data);
+  //     console.log('🔍 data.gst_preference:', data.gst_preference);
+
+  //     setVendorDetail(data);
+  //     if (data.gst_preference) setGstTreatment(normalizeGstTreatment(data.gst_preference));
+
+  //     console.log('🔍 setGstTreatment called with:', data.gst_preference);
+
+  //     const nextGst: any[] = Array.isArray(data.gst_details) ? data.gst_details : [];
+  //     setGstDetails(nextGst);
+  //     const primaryGst = nextGst.find(g => g.primary) || nextGst[0] || data.primary_gst_detail || null;
+  //     if (primaryGst) {
+  //       setSelectedGstDetailId(primaryGst.id ?? null);
+  //       if (primaryGst.place_of_supply) setSourceOfSupply(primaryGst.place_of_supply);
+  //     }
+  //   } catch (err) {
+  //     console.error('❌ fetchVendorDetail error:', err);
+  //     sonnerToast.error('Failed to load vendor details');
+  //   } finally {
+  //     setVendorDetailLoading(false);
+  //   }
+  // };
+  const handleVendorChange = (vendorId: string) => {
+    setVendor(vendorId);
+    fetchVendorDetail(vendorId);
+  };
+
+  const handleGstinDropdownChange = (value: any) => {
+    setSelectedGstDetailId(value);
+    const selected = gstDetails.find(g => String(g.id) === String(value));
+    if (selected?.place_of_supply) setSourceOfSupply(selected.place_of_supply);
+    setGstPickerModalOpen(false);
+  };
+
+  const handleSaveAndSelectGst = async () => {
+    if (!vendor || !newGstForm.gstin || !newGstForm.place_of_supply) {
+      sonnerToast.error('GSTIN and Place of Supply are required');
+      return;
+    }
+    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
+    const normalized = newGstForm.gstin.toUpperCase().trim();
+    if (!gstinRegex.test(normalized)) {
+      sonnerToast.error('Invalid GSTIN format. e.g. 27AAAAA1234A1Z5');
+      return;
+    }
+    const apiUrl = getApiUrl();
+    const token = localStorage.getItem('token');
+    const gstAttr: any = {
+      ...(editingGstDetailId ? { id: Number(editingGstDetailId) || editingGstDetailId } : {}),
+      gstin: normalized,
+      place_of_supply: newGstForm.place_of_supply,
+      business_legal_name: newGstForm.business_legal_name || '',
+      business_trade_name: newGstForm.business_trade_name || '',
+    };
+    try {
+      await axios.put(
+        `${apiUrl}/pms/suppliers/${vendor}.json?access_token=${token}`,
+        { pms_supplier: { gst_details_attributes: [gstAttr] } }
+      );
+      setShowNewGstForm(false);
+      setEditingGstDetailId(null);
+      setGstManageModalOpen(false);
+      sonnerToast.success('Tax information saved');
+      await fetchVendorDetail(vendor);
+    } catch (err) {
+      sonnerToast.error('Failed to save tax information');
+    }
+  };
+
   // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!validate()) return;
@@ -529,20 +691,23 @@ export const ExpenseCreatePage: React.FC = () => {
     <>
       <div>
         <label className="block text-sm font-medium mb-2">Vendor</label>
-        <FormControl fullWidth>
-          <Select
-            value={vendor}
-            onChange={e => setVendor(e.target.value)}
-            displayEmpty
-            sx={fieldStyles}
-            disabled={loadingVendors}
-          >
-            <MenuItem value="">{loadingVendors ? 'Loading...' : 'Select a vendor'}</MenuItem>
-            {vendors.map(v => (
-              <MenuItem key={v.id} value={v.id.toString()}>{v.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <div className="flex items-center gap-3">
+          <FormControl sx={{ flex: 1 }}>
+            <Select
+              value={vendor}
+              onChange={e => handleVendorChange(e.target.value)}
+              displayEmpty
+              sx={fieldStyles}
+              disabled={loadingVendors}
+            >
+              <MenuItem value="">{loadingVendors ? 'Loading...' : 'Select a vendor'}</MenuItem>
+              {vendors.map(v => (
+                <MenuItem key={v.id} value={v.id.toString()}>{v.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {vendorDetailLoading && <CircularProgress size={20} />}
+        </div>
       </div>
 
       <div>
@@ -779,8 +944,32 @@ export const ExpenseCreatePage: React.FC = () => {
                 </div>
               )}
 
-              {/* GST fields */}
+              {/* GST fields - always show vendor dropdown */}
               <GstFields />
+
+              {/* Vendor GST Details Card - show when vendor is selected */}
+              {vendorDetail && (
+                <div className="md:col-span-2">
+                  <div className="border border-gray-200 rounded-lg bg-gray-50 px-4 py-4 space-y-3">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Vendor GST Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 min-w-[120px]">GSTIN:</span>
+                        <span className="text-gray-800 font-medium">
+                          {selectedGstDetail?.gstin || vendorDetail?.primary_gst_detail?.gstin || '—'}
+                        </span>
+                        <IconButton size="small" onClick={() => setGstPickerModalOpen(true)}>
+                          <EditOutlined fontSize="small" className="text-blue-500" />
+                        </IconButton>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              )}
 
               {/* Tax */}
               <div>
@@ -983,10 +1172,53 @@ export const ExpenseCreatePage: React.FC = () => {
                 </div>
               </div>
 
-              {/* GST block */}
+              {/* GST block - always show vendor dropdown */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <GstFields />
               </div>
+
+              {/* Vendor GST Details Card - show when vendor is selected */}
+              {vendorDetail && (
+                <div className="md:col-span-2">
+                  <div className="border border-gray-200 rounded-lg bg-gray-50 px-4 py-4 space-y-3">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                      Vendor GST Details
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 min-w-[120px]">GST Treatment:</span>
+                        <span className="text-gray-800 font-medium">
+                          {GST_TREATMENTS.find(t => t.value === vendorDetail?.gst_preference)?.label || vendorDetail?.gst_preference || '—'}
+                        </span>
+                        <IconButton size="small" onClick={() => { setGstTreatmentDraft(vendorDetail?.gst_preference || ''); setGstModalOpen(true); }}>
+                          <EditOutlined fontSize="small" className="text-blue-500" />
+                        </IconButton>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-gray-500 min-w-[120px]">GSTIN:</span>
+                        <span className="text-gray-800 font-medium">
+                          {selectedGstDetail?.gstin || vendorDetail?.primary_gst_detail?.gstin || '—'}
+                        </span>
+                        <IconButton size="small" onClick={() => setGstPickerModalOpen(true)}>
+                          <EditOutlined fontSize="small" className="text-blue-500" />
+                        </IconButton>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-1">
+                      <input type="checkbox" id="reverseCharge" checked={reverseCharge}
+                        onChange={e => { const checked = e.target.checked; setReverseCharge(checked); if (checked) { setAmountIs('exclusive'); setAmountsAre('exclusive'); } }} />
+                      <label htmlFor="reverseCharge" className="text-sm text-gray-700">
+                        This transaction is applicable for reverse charge
+                      </label>
+                    </div>
+                    {reverseCharge && (
+                      <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 flex items-center gap-2">
+                        <span>ℹ️</span> Reverse Charge is applicable — tax overridden to zero.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Amounts are + Tax Override */}
               <div className="space-y-3">
@@ -1449,6 +1681,166 @@ export const ExpenseCreatePage: React.FC = () => {
           Save
         </Button>
       </div>
+
+      {/* GST Treatment Edit Modal */}
+      <Dialog open={gstModalOpen} onClose={() => setGstModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Configure Tax Preferences</DialogTitle>
+        <DialogContent>
+          <TextField label="GST Treatment" select fullWidth value={gstTreatmentDraft}
+            onChange={e => setGstTreatmentDraft(e.target.value)} size="small" sx={{ mt: 1 }}>
+            {GST_TREATMENTS.map(opt => (
+              <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+            ))}
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained"
+            onClick={() => { setGstTreatment(gstTreatmentDraft); setVendorDetail((prev: any) => prev ? { ...prev, gst_preference: gstTreatmentDraft } : prev); setGstModalOpen(false); }}
+            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+            Update
+          </Button>
+          <Button variant="outlined" onClick={() => setGstModalOpen(false)}
+            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* GSTIN Picker Modal */}
+      <Dialog open={gstPickerModalOpen} onClose={() => setGstPickerModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogContent className="!p-0">
+          <div className="max-h-[240px] overflow-y-auto">
+            {gstDetails.length === 0 && (
+              <div className="px-4 py-6 text-center text-sm text-gray-400">No GST details found</div>
+            )}
+            {gstDetails.map(gst => (
+              <button key={gst.id} type="button"
+                className={`w-full text-left px-4 py-3 border-b border-gray-100 hover:bg-gray-50 text-sm ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''}`}
+                onClick={() => handleGstinDropdownChange(gst.id)}>
+                {gst.gstin} — {gst.place_of_supply}
+                {gst.primary && <span className="ml-2 text-xs text-green-600 italic">(Primary)</span>}
+              </button>
+            ))}
+          </div>
+          <div className="px-4 py-2 border-t border-gray-200 bg-gray-50">
+            <button type="button" className="text-blue-600 text-sm"
+              onClick={() => { setGstPickerModalOpen(false); setShowNewGstForm(false); setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setGstManageModalOpen(true); }}>
+              ⚙ Manage Tax Informations
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* GST Manage Modal */}
+      <Dialog open={gstManageModalOpen} onClose={() => setGstManageModalOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Manage Tax Informations
+          <IconButton size="small" onClick={() => setGstManageModalOpen(false)}><Close fontSize="small" /></IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <div className="space-y-4">
+            <Button variant="contained" size="small"
+              onClick={() => { setEditingGstDetailId(null); setNewGstForm({ gstin: '', place_of_supply: '', business_legal_name: '', business_trade_name: '' }); setShowNewGstForm(true); }}
+              sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+              Add New Tax Information
+            </Button>
+            {showNewGstForm && (
+              <div className="border border-gray-200 bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <TextField label="GSTIN*" fullWidth value={newGstForm.gstin} size="small"
+                  onChange={e => setNewGstForm(p => ({ ...p, gstin: e.target.value.toUpperCase() }))}
+                  error={!!newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)}
+                  helperText={newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin) ? 'Invalid GSTIN. e.g. 27AAAAA1234A1Z5' : ''}
+                  inputProps={{ maxLength: 15 }} />
+                <TextField label="Place of Supply*" select fullWidth value={newGstForm.place_of_supply} size="small"
+                  onChange={e => setNewGstForm(p => ({ ...p, place_of_supply: e.target.value }))}>
+                  <MenuItem value="">Select</MenuItem>
+                  {INDIAN_STATES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                </TextField>
+                <TextField label="Business Legal Name" fullWidth value={newGstForm.business_legal_name} size="small"
+                  onChange={e => setNewGstForm(p => ({ ...p, business_legal_name: e.target.value }))} />
+                <TextField label="Business Trade Name" fullWidth value={newGstForm.business_trade_name} size="small"
+                  onChange={e => setNewGstForm(p => ({ ...p, business_trade_name: e.target.value }))} />
+                <div className="md:col-span-2 flex gap-2">
+                  <Button variant="contained" size="small" onClick={handleSaveAndSelectGst}
+                    sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>
+                    {editingGstDetailId ? 'Save' : 'Save and Select'}
+                  </Button>
+                  <Button variant="outlined" size="small"
+                    onClick={() => { setShowNewGstForm(false); setEditingGstDetailId(null); }}
+                    sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+            <div className="border border-gray-200 rounded-md overflow-hidden">
+              <div className="grid grid-cols-4 bg-gray-50 text-xs font-semibold text-gray-500 px-4 py-2">
+                <div>GSTIN</div><div>PLACE OF SUPPLY</div><div>LEGAL NAME</div><div></div>
+              </div>
+              <div className="max-h-[280px] overflow-y-auto">
+                {gstDetails.map(gst => (
+                  <div key={gst.id}
+                    className={`grid grid-cols-4 px-4 py-2 text-sm border-t border-gray-100 cursor-pointer hover:bg-gray-50 ${String(selectedGstDetailId) === String(gst.id) ? 'bg-gray-100' : ''}`}
+                    onClick={() => handleGstinDropdownChange(gst.id)}>
+                    <div>{gst.gstin}{gst.primary && <div className="text-green-600 text-xs italic">(Primary)</div>}</div>
+                    <div>{gst.place_of_supply || '—'}</div>
+                    <div>{gst.business_legal_name || '—'}</div>
+                    <div className="flex justify-end gap-1">
+                      {!gst.primary && (
+                        <IconButton size="small" onClick={e => { e.stopPropagation(); setEditingGstDetailId(gst.id); setNewGstForm({ gstin: gst.gstin, place_of_supply: gst.place_of_supply, business_legal_name: gst.business_legal_name || '', business_trade_name: gst.business_trade_name || '' }); setShowNewGstForm(true); }}>
+                          <EditOutlined fontSize="small" />
+                        </IconButton>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button variant="outlined" size="small" onClick={() => setGstManageModalOpen(false)}
+            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Source of Supply Edit Modal */}
+      <Dialog open={sourceModalOpen} onClose={() => setSourceModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Edit Source of Supply</DialogTitle>
+        <DialogContent>
+          <TextField label="Source of Supply" select fullWidth value={sourceDraft}
+            onChange={e => setSourceDraft(e.target.value)} size="small" sx={{ mt: 1 }}>
+            <MenuItem value="">Select state</MenuItem>
+            {INDIAN_STATES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained"
+            onClick={() => { setSourceOfSupply(sourceDraft); setSourceModalOpen(false); }}
+            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>Update</Button>
+          <Button variant="outlined" onClick={() => setSourceModalOpen(false)}
+            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Destination of Supply Edit Modal */}
+      <Dialog open={destinationModalOpen} onClose={() => setDestinationModalOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>Edit Destination of Supply</DialogTitle>
+        <DialogContent>
+          <TextField label="Destination of Supply" select fullWidth value={destinationDraft}
+            onChange={e => setDestinationDraft(e.target.value)} size="small" sx={{ mt: 1 }}>
+            <MenuItem value="">Select state</MenuItem>
+            {INDIAN_STATES.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+          </TextField>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="contained"
+            onClick={() => { setDestinationOfSupply(destinationDraft); setDestinationModalOpen(false); }}
+            sx={{ textTransform: 'none', bgcolor: '#C72030', '&:hover': { bgcolor: '#A01020' } }}>Update</Button>
+          <Button variant="outlined" onClick={() => setDestinationModalOpen(false)}
+            sx={{ textTransform: 'none', borderColor: '#C72030', color: '#C72030' }}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Reporting Tags Modal */}
       {/* <Dialog open={showTagModal} onClose={() => setShowTagModal(false)} maxWidth="xs" fullWidth>

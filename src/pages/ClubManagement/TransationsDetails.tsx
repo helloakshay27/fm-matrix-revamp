@@ -174,7 +174,7 @@ export const TransactionsDetails = () => {
                 journalNo: data.voucher_number || "",
                 referenceNo: data.reference || "",
                 notes: data.description || "",
-                reportingMethod: "", // Not present in API
+                reportingMethod: data.reporting_method || "", // Not present in API
                 currency: "", // Not present in API
                 journalRows: Array.isArray(data.records) ? data.records.map((rec: any) => ({
                     accountName: rec.ledger_name || "",
@@ -201,7 +201,7 @@ export const TransactionsDetails = () => {
     };
 
     const handleClose = () => {
-        navigate("/accounting/manual-journal");
+        navigate("/accounting/transactions");
     };
 
     if (loading) {
@@ -225,7 +225,7 @@ export const TransactionsDetails = () => {
                             className="p-0"
                         >
                             <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back to Manual Journal List
+                            Back to Transactions List
                         </Button>
                         {/* <div className="flex items-center gap-2">
                             <Button
@@ -246,7 +246,7 @@ export const TransactionsDetails = () => {
                                 <NotepadText className="w-4 h-4" />
                             </div>
                             <h3 className="text-lg font-semibold uppercase text-[#1A1A1A]">
-                                Manual Journal Details
+                                Transaction Details
                             </h3>
                         </div>
 

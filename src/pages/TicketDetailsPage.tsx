@@ -5196,6 +5196,38 @@ export const TicketDetailsPage = () => {
                   )}
                 </div>
 
+                {/* Basic Fields Card - Only show if data exists */}
+                {ticketData?.basic_fields && Array.isArray(ticketData.basic_fields) && ticketData.basic_fields.length > 0 && (
+                  <div className="w-full bg-white rounded-lg shadow-sm border">
+                    <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                          <FileText className="w-6 h-6 text-[#C72030]" />
+                        </div>
+                        <h3 className="text-lg font-semibold uppercase text-black">
+                          Additional Details
+                        </h3>
+                      </div>
+                    </div>
+
+                    {/* Body */}
+                    <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-5 py-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8">
+                        {ticketData.basic_fields.map((field: any, index: number) => (
+                          <div key={`${field.question_id}-${index}`} className="flex items-start">
+                            <div className="w-[140px] text-[14px] leading-tight text-gray-500 tracking-wide flex-shrink-0">
+                              {field.question}
+                            </div>
+                            <div className="text-[14px] font-semibold text-gray-900 flex-1">
+                              {field.value || '-'}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="w-full bg-white rounded-lg shadow-sm border">
                   <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
                     <div className="flex items-center gap-3">
@@ -8513,6 +8545,38 @@ export const TicketDetailsPage = () => {
                 </div>
               )}
             </div>
+
+            {/* Basic Fields Card - Only show if data exists */}
+            {ticketData?.basic_fields && Array.isArray(ticketData.basic_fields) && ticketData.basic_fields.length > 0 && (
+              <div className="w-full bg-white rounded-lg shadow-sm border">
+                <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <FileText className="w-6 h-6 text-[#C72030]" />
+                    </div>
+                    <h3 className="text-lg font-semibold uppercase text-black">
+                      Requester Details
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Body */}
+                <div className="bg-[#FBFBFA] border border-t-0 border-[#D9D9D9] px-5 py-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-8">
+                    {ticketData.basic_fields.map((field: any, index: number) => (
+                      <div key={`${field.question_id}-${index}`} className="flex items-start">
+                        <div className="w-[140px] text-[14px] leading-tight text-gray-500 tracking-wide flex-shrink-0">
+                          {field.question}
+                        </div>
+                        <div className="text-[14px] font-semibold text-gray-900 flex-1">
+                          {field.value || '-'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="w-full bg-white rounded-lg shadow-sm border">
               <div className="flex items-center justify-between gap-3 bg-[#F6F4EE] py-3 px-4 border border-[#D9D9D9]">

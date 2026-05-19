@@ -7,7 +7,7 @@ import { FileText, Settings, ExternalLink, Lock, User } from "lucide-react";
  * ID: 13
  */
 const loyaltyEngineData: ProductData = {
-  name: "Loyalty Engine",
+  name: "Loyalty Management & Cold Wallet",
   description:
     "A configurable system designed to automatically apply loyalty rewards, points, or benefits based on predefined business rules, without requiring code changes.",
   brief:
@@ -910,7 +910,7 @@ const loyaltyEngineData: ProductData = {
       industryUseCases: [
         {
           rank: "1",
-          industry: "Real Estate & Property Development",
+          industry: "Real Estate Development",
           features:
             "AI modules fully applicable.\nTeams: Sales, CRM, Collections, Marketing, Finance.\nFeatures: Transaction Events (demand note/payment triggers), Milestones, Tier Management, Encashment, Escrow Wallet, CRM Integration, Referral rules, Time-Based Events.",
           useCase:
@@ -5013,7 +5013,9 @@ const LEUseCasesTab: React.FC = () => {
                   {u.urgency}
                 </td>
                 <td className="border border-[#C4B89D]/50 p-2 text-[#2C2C2C]/80 break-words">
-                  <div className="font-semibold text-[#DA7756] mb-1">{u.primaryBuyer}</div>
+                  <div className="font-semibold text-[#DA7756] mb-1">
+                    {u.primaryBuyer}
+                  </div>
                   <div className="text-[#2C2C2C]/70">{u.primaryUser}</div>
                 </td>
               </tr>

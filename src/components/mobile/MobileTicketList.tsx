@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Star, Clock, Filter, History, Plus, Flag, Timer } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Star, Filter, History, Plus, Flag, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ticketManagementAPI, TicketResponse } from '@/services/ticketManagementAPI';
 import { useToast } from '@/hooks/use-toast';
-import { MobileDynamicCreateTicketModal } from './MobileDynamicCreateTicketModal';
 
 interface MobileTicketListProps {
   onTicketSelect: (ticket: TicketResponse) => void;
+  onCreateTicket: () => void;
 }
 
-export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSelect }) => {
+export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSelect, onCreateTicket }) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<'my' | 'golden' | 'flagged' | 'all'>('all');
   const [activeFilter, setActiveFilter] = useState<'all' | 'approaching' | 'within' | 'breach'>('all');
   const [tickets, setTickets] = useState<TicketResponse[]>([]);
   const [loading, setLoading] = useState(false);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -360,22 +362,13 @@ export const MobileTicketList: React.FC<MobileTicketListProps> = ({ onTicketSele
       {/* Floating Action Button (FAB) */}
       <div className="fixed bottom-6 right-6 z-50">
         <Button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+          onClick={onCreateTicket}
+          className="w-14 h-14 rounded-full text-white shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center"
+          style={{ backgroundColor: '#da7756' }}
         >
           <Plus className="h-6 w-6" />
         </Button>
       </div>
-
-      {/* Create Ticket Modal */}
-      <MobileDynamicCreateTicketModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSuccess={() => {
-          setIsCreateModalOpen(false);
-          fetchTickets();
-        }}
-      />
     </div>
   );
 };

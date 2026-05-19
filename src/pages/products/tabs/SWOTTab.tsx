@@ -7,9 +7,22 @@ interface SWOTTabProps {
 
 const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
   const isCpManagement = productData.name === "CP Management";
+  const isProcurement = productData.name.toLowerCase().includes("procurement");
 
   const swotData = productData.extendedContent?.detailedSWOT;
   const isClubSWOT = !!swotData?.isClubSWOT;
+  const procurementSections = swotData
+    ? [
+        { title: "STRENGTHS", label: "Strength", rows: swotData.strengths },
+        { title: "WEAKNESSES", label: "Weakness", rows: swotData.weaknesses },
+        {
+          title: "OPPORTUNITIES",
+          label: "Opportunity",
+          rows: swotData.opportunities,
+        },
+        { title: "THREATS", label: "Threat", rows: swotData.threats },
+      ]
+    : [];
 
   if (isClubSWOT) {
     return (
@@ -99,7 +112,62 @@ const SWOTTab: React.FC<SWOTTabProps> = ({ productData }) => {
               </div>
 
               {productData.extendedContent?.detailedSWOT ? (
-                isCpManagement ? (
+                isProcurement ? (
+                  <div className="mt-4 space-y-5">
+                    {procurementSections.map((section) => (
+                      <div
+                        key={section.title}
+                        className="border border-[#D3D1C7] bg-white"
+                      >
+                        <div className="bg-[#DA7756] text-white px-4 py-3 text-[13px] font-semibold uppercase tracking-wide">
+                          {section.title}
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-[1120px] border-collapse font-poppins text-[12px] leading-relaxed">
+                            <colgroup>
+                              <col className="w-[64px]" />
+                              <col className="w-[280px]" />
+                              <col />
+                            </colgroup>
+                            <thead>
+                              <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold uppercase">
+                                <th className="border border-[#D3D1C7] px-3 py-2 text-center">
+                                  #
+                                </th>
+                                <th className="border border-[#D3D1C7] px-3 py-2 text-left">
+                                  {section.label}
+                                </th>
+                                <th className="border border-[#D3D1C7] px-3 py-2 text-left">
+                                  Explanation
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {section.rows.map((item, i) => (
+                                <tr
+                                  key={`${section.title}-${i}`}
+                                  className={`align-top ${
+                                    i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"
+                                  }`}
+                                >
+                                  <td className="border border-[#E5E7EB] px-3 py-2 text-center font-semibold text-[#DA7756]">
+                                    {i + 1}
+                                  </td>
+                                  <td className="border border-[#E5E7EB] px-3 py-2 font-semibold text-[#2C2C2C]">
+                                    {item.headline}
+                                  </td>
+                                  <td className="border border-[#E5E7EB] px-3 py-2 text-[#2C2C2C] font-medium">
+                                    {item.explanation}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : isCpManagement ? (
                   <div className="mt-3 space-y-0">
                     <div className="bg-white text-center text-[11px] px-4 py-2 border border-[#E5E7EB] text-[#2C2C2C]/60 font-medium font-poppins italic">
                       Grounded in product features, market context, and competitor landscape. Not generic.

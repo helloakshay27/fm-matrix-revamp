@@ -114,6 +114,8 @@ interface ServiceItem {
   product_description: string;
   rate: number;
   wbs_code: string;
+  tax_code: string;
+  gl_account: string;
   cgst_rate: number;
   cgst_amount: number;
   sgst_rate: number;
@@ -230,12 +232,23 @@ export const ServicePRDetailsPage = () => {
   const [openDeletionModal, setOpenDeletionModal] = useState(false)
   const [printing, setPrinting] = useState(false)
   const [testRunLoading, setTestRunLoading] = useState(false)
+  const [sapPushDisabled, setSapPushDisabled] = useState(false)
   const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
     [key: string]: string;
-  }>({});
+  }>({})
+  const [updatedGlAccounts, setUpdatedGlAccounts] = useState<{
+    [key: string]: string;
+  }>({})
+  const [updatedTaxCodes, setUpdatedTaxCodes] = useState<{
+    [key: string]: string;
+  }>({})
+  const [updatedHsnCodes, setUpdatedHsnCodes] = useState<{
+    [key: string]: string;
+  }>({})
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
     editWbsCode: false,
+    canEditAll: false,
   });
   const [externalApiCalls, setExternalApiCalls] = useState<any[]>([]);
 
@@ -268,12 +281,14 @@ export const ServicePRDetailsPage = () => {
         setButtonCondition({
           showSap: response.show_send_sap_yes,
           editWbsCode: response.can_edit_wbs_codes,
+          canEditAll: response.can_edit,
         });
-        // Set external API calls if available
+        // Set external API calls if avai
+        // lable
         console.log("response.page", response.page.api_responses);
-        if (response.api_calls && Array.isArray(response.api_calls)) {
-          setExternalApiCalls(response.api_calls);
-          console.log("API Calls set in state:", response.api_calls);
+        if (response.page?.api_responses && Array.isArray(response.page.api_responses)) {
+          setExternalApiCalls(response.page.api_responses);
+          console.log("API Calls set in state:", response.page.api_responses);
         }
         // Initialize updatedWbsCodes with current WBS codes
         const initialWbsCodes = response.page?.inventories?.reduce(
@@ -285,6 +300,25 @@ export const ServicePRDetailsPage = () => {
           {}
         );
         setUpdatedWbsCodes(initialWbsCodes || {});
+        const initialGlAccounts = response.page?.inventories?.reduce(
+          (acc: { [key: string]: string }, item: ServiceItem) => {
+            const key = item.id || item.sno.toString();
+            acc[key] = item.gl_account || "";
+            return acc;
+          },
+          {}
+        );
+
+        const initialTaxCodes = response.page?.inventories?.reduce(
+          (acc: { [key: string]: string }, item: ServiceItem) => {
+            const key = item.id || item.sno.toString();
+            acc[key] = item.tax_code || "";
+            return acc;
+          },
+          {}
+        );
+        setUpdatedGlAccounts(initialGlAccounts || {});
+        setUpdatedTaxCodes(initialTaxCodes || {});
       } catch (error: any) {
         toast.error(error.message || "Failed to fetch service PR");
       } finally {
@@ -308,6 +342,45 @@ export const ServicePRDetailsPage = () => {
   }, []);
 
   // Handle WBS code change
+  // Handle Tax Code change
+  const handleTaxCodeChange = useCallback((event, item: ServiceItem) => {
+    const newTaxCode = event.target.value as string;
+    const itemKey = (item.id || item.sno).toString();
+    setUpdatedTaxCodes((prev) => ({
+      ...prev,
+      [itemKey]: newTaxCode,
+    }));
+  }, []);
+
+  // Handle WBS code change with GL fetch
+  const handleWbsCodeChangeWithGlFetch = useCallback(async (event, item: ServiceItem) => {
+    const newWbsCode = event.target.value as string;
+    const itemKey = (item.id || item.sno).toString();
+
+    setUpdatedWbsCodes((prev) => ({
+      ...prev,
+      [itemKey]: newWbsCode,
+    }));
+
+    if (newWbsCode) {
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/wbs_costs/get_gl_code.json?wbs_code=${newWbsCode}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (response.data?.gl_code) {
+          setUpdatedGlAccounts((prev) => ({
+            ...prev,
+            [itemKey]: response.data.gl_code,
+          }));
+          toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
+        }
+      } catch (error) {
+        console.error("Error fetching GL code for WBS:", error);
+        toast.error("Failed to fetch GL code");
+      }
+    }
+  }, [baseUrl, token]);
   const handleWbsCodeChange = useCallback(
     (event, item: ServiceItem) => {
       const newWbsCode = event.target.value as string;
@@ -332,9 +405,11 @@ export const ServicePRDetailsPage = () => {
 
     try {
       const updates = {
-        pms_po_inventory_updates: Object.entries(updatedWbsCodes).map(([itemKey, wbsCode]) => ({
+        pms_po_inventory_updates: Object.entries(updatedWbsCodes).map(([itemKey]) => ({
           id: itemKey,
-          wbs_code: wbsCode
+          wbs_code: updatedWbsCodes[itemKey],
+          gl_account: updatedGlAccounts[itemKey],  // ← add this
+          tax_code: updatedTaxCodes[itemKey],       // ← add this
         }))
       }
 
@@ -348,10 +423,33 @@ export const ServicePRDetailsPage = () => {
 
       toast.success("WBS Codes updated successfully");
       setShowEditWbsModal(false);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const detailsResponse = await axios.get(
+        `https://${baseUrl}/pms/work_orders/${id}.json`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (detailsResponse.data?.page) {
+        setServicePR(detailsResponse.data.page);
+
+        if (
+          detailsResponse.data.page?.api_responses &&
+          Array.isArray(detailsResponse.data.page.api_responses)
+        ) {
+          setExternalApiCalls(detailsResponse.data.page.api_responses);
+        }
+
+        toast.success("Data refreshed after test run");
+      }
+
+
     } catch (error: any) {
       toast.error(error.message || "Failed to update WBS Codes");
     }
-  }, [id, updatedWbsCodes]);
+  }, [id, updatedWbsCodes, updatedGlAccounts, updatedTaxCodes]); // ← add missing deps
 
   // Handle print
   const handlePrint = useCallback(async () => {
@@ -391,11 +489,13 @@ export const ServicePRDetailsPage = () => {
   const handleSendToSap = useCallback(async () => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
+
+
     if (!baseUrl || !token || !id) {
       toast.error("Missing required configuration");
       return;
     }
-
+    setSapPushDisabled(true);
     try {
       const response = await axios.get<{ message: string }>(
         `https://${baseUrl}/pms/work_orders/${id}.json?send_sap=yes`,
@@ -403,9 +503,46 @@ export const ServicePRDetailsPage = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      toast.success(response.data.message);
+
+      toast.success(response.data.message || "Sent to SAP successfully");
+
+      // wait for server-side processing
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const detailsResponse = await axios.get(
+        `https://${baseUrl}/pms/work_orders/${id}.json`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (detailsResponse.data?.page) {
+        setServicePR(detailsResponse.data.page);
+
+        if (
+          detailsResponse.data.page?.api_responses &&
+          Array.isArray(detailsResponse.data.page.api_responses)
+        ) {
+          setExternalApiCalls(detailsResponse.data.page.api_responses);
+          console.log(
+            "API Calls updated after send to SAP:",
+            detailsResponse.data.page.api_responses
+          );
+        }
+
+        toast.success("Data refreshed after send to SAP");
+      }
+
+      // Disable the button after successful push
+
     } catch (error: any) {
-      toast.error(error.message || "Failed to send to SAP");
+      console.error("Send to SAP error:", error);
+
+      toast.error(
+        error?.response?.data?.message ||
+        error.message ||
+        "Failed to send to SAP"
+      );
     }
   }, [id]);
 
@@ -413,6 +550,7 @@ export const ServicePRDetailsPage = () => {
   const handleTestRun = useCallback(async () => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
+
     if (!baseUrl || !token || !id) {
       toast.error("Missing required configuration");
       return;
@@ -420,15 +558,48 @@ export const ServicePRDetailsPage = () => {
 
     try {
       setTestRunLoading(true);
+
       const response = await axios.get<{ message: string }>(
         `https://${baseUrl}/pms/work_orders/test_run?id=${id}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      toast.success(response.data.message || "Test run completed successfully");
+
+      toast.success(
+        response.data.message || "Test run completed successfully"
+      );
+
+      // wait for server-side processing
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const detailsResponse = await axios.get(
+        `https://${baseUrl}/pms/work_orders/${id}.json`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (detailsResponse.data?.page) {
+        setServicePR(detailsResponse.data.page);
+
+        if (
+          detailsResponse.data.page?.api_responses &&
+          Array.isArray(detailsResponse.data.page.api_responses)
+        ) {
+          setExternalApiCalls(detailsResponse.data.page.api_responses);
+        }
+
+        toast.success("Data refreshed after test run");
+      }
     } catch (error: any) {
-      toast.error(error.message || "Failed to run test run");
+      console.error("Test run error:", error);
+
+      toast.error(
+        error?.response?.data?.message ||
+        error.message ||
+        "Failed to run test run"
+      );
     } finally {
       setTestRunLoading(false);
     }
@@ -485,13 +656,15 @@ export const ServicePRDetailsPage = () => {
       };
 
       try {
-        await dispatch(
+        const response = await dispatch(
           approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
         ).unwrap();
-        toast.success("Work Order approved successfully");
+
+        toast.success(response?.message || "Service PR approved successfully");
+        
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
-        toast.error(error.message || "Failed to approve Work Order");
+        toast.error(error.message || "Failed to approve Service PR");
       }
     }
   };
@@ -519,13 +692,14 @@ export const ServicePRDetailsPage = () => {
       };
 
       try {
-        await dispatch(
-          approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
-        ).unwrap();
-        toast.success("Work Order rejected successfully");
+       const response = await dispatch(
+  approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+).unwrap();
+        // toast.success("Service PR rejected successfully");
+        toast.success(response?.message || "Service PR rejected successfully");
         navigate(`/finance/pending-approvals`);
       } catch (error: any) {
-        toast.error(error.message || "Failed to reject Work Order");
+        toast.error(error.message || "Failed to reject Service PR");
       } finally {
         setOpenRejectDialog(false);
         setRejectComment("");
@@ -656,34 +830,37 @@ export const ServicePRDetailsPage = () => {
             </>
           ) : (
             <>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-gray-300 bg-blue-600 text-white"
-                onClick={handleTestRun}
-                disabled={testRunLoading}
-              >
-                {testRunLoading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Running...
-                  </>
-                ) : (
-                  "Test Run"
-                )}
-              </Button>
+              {(buttonCondition.canEditAll) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-blue-600 text-white"
+                  onClick={handleTestRun}
+                  disabled={testRunLoading}
+                >
+                  {testRunLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Running...
+                    </>
+                  ) : (
+                    "Test Run"
+                  )}
+                </Button>
+              )}
               {buttonCondition.showSap && (
                 <Button
                   size="sm"
                   variant="outline"
                   className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                   onClick={handleSendToSap}
+                  disabled={sapPushDisabled}
                 >
-                  Push To SAP 
+                  Push To SAP
                 </Button>
               )}
 
-              {servicePR?.all_level_approved === null && !shouldShowButtons && (
+              { buttonCondition.canEditAll && (
                 <Button
                   size="sm"
                   variant="outline"
@@ -735,7 +912,7 @@ export const ServicePRDetailsPage = () => {
                 Feeds
               </Button>
 
-              {servicePR?.all_level_approved && !shouldShowButtons && (
+              {(buttonCondition.canEditAll) && (
                 <>
                   <Button
                     size="sm"
@@ -745,14 +922,14 @@ export const ServicePRDetailsPage = () => {
                   >
                     Edit WBS Codes
                   </Button>
-                  <Button
+                  {/* <Button
                     size="sm"
                     variant="outline"
                     className="border-gray-300 btn-primary"
                     onClick={() => setOpenDeletionModal(true)}
                   >
                     Raise Deletion Request
-                  </Button>
+                  </Button> */}
                 </>
               )}
             </>
@@ -1330,27 +1507,82 @@ export const ServicePRDetailsPage = () => {
         >
           <DialogTitle>Edit WBS Codes</DialogTitle>
           <DialogContent>
-            <div className="space-y-4 mt-4">
+            <div className="space-y-6 mt-4">
+
               {servicePR.inventories?.map((item) => (
-                <FormControl fullWidth key={item.id || item.sno}>
-                  <InputLabel>
-                    WBS Code for {item.boq_details || `Item ${item.sno}`}
-                  </InputLabel>
-                  <Select
-                    value={updatedWbsCodes[(item.id || item.sno).toString()] || item.wbs_code}
-                    onChange={(e) => handleWbsCodeChange(e, item)}
-                    label={`WBS Code for ${item.boq_details || `Item ${item.sno}`}`}
-                  >
-                    <MenuItem value="">
-                      <em>Select WBS Code</em>
-                    </MenuItem>
-                    {wbsCodes.map((wbs: { wbs_code: string }) => (
-                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                        {wbs.wbs_code}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <div key={item.id || item.toString()} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                  <div className="font-semibold text-gray-900 text-sm mb-4">
+                    {item.boq_details || `Item ${item.id}`}
+                  </div>
+
+                  {/* Grid for fields in rows */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormControl fullWidth key={item.id || item.sno}>
+                      <InputLabel>
+                        WBS Code for {item.boq_details || `Item ${item.sno}`}
+                      </InputLabel>
+                      <Select
+                        value={updatedWbsCodes[(item.id || item.sno).toString()] || item.wbs_code}
+                        onChange={(e) => handleWbsCodeChangeWithGlFetch(e, item)}   // ← changed
+                        label={`WBS Code for ${item.boq_details || `Item ${item.sno}`}`}
+                      >
+                        <MenuItem value="">
+                          <em>Select WBS Code</em>
+                        </MenuItem>
+                        {wbsCodes.map((wbs: { wbs_code: string }) => (
+                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                            {wbs.wbs_code}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+
+
+                    <TextField
+                      fullWidth
+                      label="GL Account"
+                      value={
+                        updatedGlAccounts[(item.id || item.sno).toString()] ||
+                        item.gl_account ||
+                        ""
+                      }
+                      disabled
+                      variant="outlined"
+                      size="small"
+                    />
+
+                    {/* Tax Code Dropdown */}
+                    <FormControl fullWidth>
+                      <InputLabel>Tax Code</InputLabel>
+                      <Select
+                        value={
+                          updatedTaxCodes[(item.id || item.sno).toString()] ||
+                          item.tax_code ||
+                          ""
+                        }
+                        onChange={(e) => handleTaxCodeChange(e, item)}
+
+                        label="Tax Code"
+                        size="small"
+                      >
+                        <MenuItem value="">
+                          <em>Select Tax Code</em>
+                        </MenuItem>
+                        <MenuItem value="V0">V0</MenuItem>
+                        <MenuItem value="V1">V1</MenuItem>
+                        <MenuItem value="V2">V2</MenuItem>
+                        <MenuItem value="V3">V3</MenuItem>
+                        <MenuItem value="V4">V4</MenuItem>
+                        <MenuItem value="V5">V5</MenuItem>
+                      </Select>
+                    </FormControl>
+
+
+
+                  </div>
+                </div>
+
               ))}
               {(!servicePR.inventories || servicePR.inventories.length === 0) && (
                 <p className="text-muted-foreground">No inventory items available</p>
@@ -1412,9 +1644,10 @@ export const ServicePRDetailsPage = () => {
               <Rss className="w-5 h-5" />
               External API Calls
             </h3>
-            <div className="space-y-4">
-              {externalApiCalls.map((apiCall, index) => (
-                <div key={apiCall.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+            {(() => {
+              const apiCall = externalApiCalls[externalApiCalls.length - 1];
+              return (
+                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600 font-semibold">Provider</p>
@@ -1422,8 +1655,7 @@ export const ServicePRDetailsPage = () => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600 font-semibold">Response Status Code</p>
-                      <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'
-                        }`}>
+                      <p className={`text-sm font-medium ${apiCall.response_status === 200 ? 'text-green-600' : 'text-red-600'}`}>
                         {apiCall.response_status || '-'}
                       </p>
                     </div>
@@ -1442,8 +1674,8 @@ export const ServicePRDetailsPage = () => {
                     )}
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })()}
           </div>
         )}
       </div>

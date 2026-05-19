@@ -1,291 +1,332 @@
 import React from "react";
 
-const postPossessionRoadmap = {
-  sections: [
-    {
-      timeframe: "IMMEDIATE (0–3 MONTHS)",
-      headline: "Stop Losing Deals We Should Be Winning",
-      colorContext: "red",
-      items: [
-        {
-          whatItIs: "UI/UX Overhaul — Resident App & Admin Console",
-          whyItMatters: "Current UI is functional but below consumer-grade standards expected in GCC luxury, UK BTR, and premium Indian developers. Every UK/GCC demo loss is partly a design loss. This is the single highest-leverage action to stop deal leakage in international markets.",
-          unlockedSegment: "GCC (Dubai luxury), UK BTR, Indian premium developers (₹3Cr+ properties)",
-          effort: "High (8–12 weeks design + dev)",
-          impact: "Very High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "Publish ROI Calculator & Case Study (Godrej / Piramal)",
-          whyItMatters: "Sales team loses deals at CFO/CRM Head stage because there is no quantified proof. A single published case study with specific numbers (CP cost reduction %, referral conversions, ticket SLA improvement) is worth more than 20 feature demos. Without this, every deal requires a leap of faith.",
-          unlockedSegment: "All enterprise segments; immediately relevant for every active deal in pipeline",
-          effort: "Low (2–4 weeks)",
-          impact: "Very High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "Multi-Language Support — Arabic (GCC) and Bahasa (SE Asia)",
-          whyItMatters: "Every GCC developer prospect requires Arabic UI. Every SE Asia prospect requires Bahasa Melayu/Indonesia. Without this, GCC and SE Asia deals cannot close regardless of feature depth. This is a structural blocker for international expansion.",
-          unlockedSegment: "GCC (UAE, Saudi, Qatar), SE Asia (Malaysia, Indonesia, Singapore)",
-          effort: "Medium (6–10 weeks)",
-          impact: "Very High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "Public API Documentation + Integration Catalogue",
-          whyItMatters: "Enterprise CIOs and IT heads ask 'what can this integrate with?' before signing. Without published API docs and a connector list, deals stall at technical evaluation. Yardi, Fixflo, and AppFolio all have public integration catalogues. This is table stakes for enterprise credibility.",
-          unlockedSegment: "Enterprise developers with existing ERP/BMS/CRM systems; all international segments",
-          effort: "Medium (4–6 weeks)",
-          impact: "High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "Onboarding Playbook + Customer Success Framework",
-          whyItMatters: "130+ features with no structured onboarding creates post-signature churn risk. A formal customer success process (90-day activation playbook, health score, QBR template) protects existing revenue and generates referenceability for new deals.",
-          unlockedSegment: "All segments — existing and new customers",
-          effort: "Low-Medium (3–5 weeks)",
-          impact: "High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "Referral Payout Automation (Resident-to-Developer)",
-          whyItMatters: "Referral module exists but if payout to resident is manual or opaque, residents stop referring. An automated payout workflow (UPI direct credit, wallet credit, voucher) closes the referral loop and drives word-of-mouth adoption of the feature itself.",
-          unlockedSegment: "Indian developers with active referral programs; GCC developers targeting NRI buyer segment",
-          effort: "Medium (6–8 weeks)",
-          impact: "Very High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "Pricing Page + Self-Serve Demo Request on Website",
-          whyItMatters: "Without a public pricing page or an easy demo request flow, mid-market leads that find the product through content/word-of-mouth drop off. Even a 'Start from ₹X/unit/month — get a demo' page converts passive interest into pipeline.",
-          unlockedSegment: "Mid-market Indian developers (500–2,000 units), GCC developers exploring options",
-          effort: "Low (1–2 weeks)",
-          impact: "Medium",
-          priority: "P1",
-        },
-      ],
-    },
-    {
-      timeframe: "SHORT-TERM (3–6 MONTHS)",
-      headline: "Expand Addressable Market & Move Up-Market",
-      colorContext: "orange",
-      items: [
-        {
-          whatItIs: "AI-Powered Ticket Classification & Routing",
-          whyItMatters: "Today, ticket categorisation and routing relies on admin configuration. AI-based NLP classification of complaint text (e.g., 'water leaking from ceiling' → auto-categorised as plumbing, auto-routed to plumbing vendor) eliminates configuration overhead and reduces wrong-routing by 60–70%. This is a meaningful operational upgrade that existing FM tools cannot easily replicate.",
-          unlockedSegment: "All developer segments with high complaint volumes; enterprise FM operators",
-          effort: "Medium-High (10–14 weeks)",
-          impact: "Very High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "Predictive Asset Maintenance (ML-based)",
-          whyItMatters: "Using meter readings, asset age, maintenance history, and usage patterns to predict failure before it happens. Transforms the FM module from reactive to proactive. This is a board-level conversation for developers managing large asset portfolios (lifts, DG sets, STP/ETP plants). No community app competitor offers this.",
-          unlockedSegment: "Large township developers, senior living operators, GCC institutional property managers",
-          effort: "High (12–18 weeks)",
-          impact: "Very High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "GDPR / DPDP Compliance Dashboard",
-          whyItMatters: "As India's DPDP Act 2023 enforcement ramps up and UK/EU GDPR audits intensify, developer IT and legal teams need a compliance dashboard showing data residency, consent management, and audit logs. Building this as a visible feature (not just architecture) turns data sovereignty from a sales claim into a demonstrable compliance tool.",
-          unlockedSegment: "UK BTR operators, European developers, large Indian developers with listed entity status",
-          effort: "Medium (8–12 weeks)",
-          impact: "High",
-          priority: "P1",
-        },
-        {
-          whatItIs: "Resident Engagement Score & Loyalty Analytics Dashboard",
-          whyItMatters: "Developer CRM teams need to see which residents are most engaged, most likely to refer, and most at risk of disengagement. A resident-level engagement score (based on app activity, events attended, service usage, referrals made) gives CRM teams an actionable churn-prevention and referral-activation tool.",
-          unlockedSegment: "Developer CRM/Loyalty teams; large Indian and GCC developers with formal loyalty programs",
-          effort: "Medium (8–10 weeks)",
-          impact: "High",
-          priority: "P1",
-        },
-        {
-          whatItIs: "UK / GCC Localisation Package (Legal, Banking, Tax)",
-          whyItMatters: "UK: Bank account integration (Faster Payments, CHAPS), UK lease templates, service charge (Section 20) compliance. GCC: VAT configuration for UAE/Saudi, Arabic RTL UI, Emirates ID integration for visitor management. This package makes the product legally and operationally usable in these markets.",
-          unlockedSegment: "UK BTR operators and developers; GCC developers and property managers",
-          effort: "High (14–20 weeks)",
-          impact: "Very High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "Marketplace Commission Engine",
-          whyItMatters: "As on-premise services marketplace grows, the platform needs a configurable commission engine (% take-rate per service category, vendor settlement, tax on commission). This creates a second revenue stream for Lockated and a monetisation tool for developer clients who run curated vendor ecosystems.",
-          unlockedSegment: "Large Indian developers and township operators with active on-premise services; GCC operators",
-          effort: "Medium (8–12 weeks)",
-          impact: "High",
-          priority: "P1",
-        },
-        {
-          whatItIs: "EV Charging Management Integration",
-          whyItMatters: "Electric vehicle adoption in India and GCC is accelerating. Integrating EV charging slot booking, billing (per kWh), and reporting into the platform adds a high-visibility, future-facing feature that developer sales teams can showcase. Directly tied to parking and billing modules.",
-          unlockedSegment: "Premium Indian developers, GCC luxury developers, UK BTR with sustainability commitments",
-          effort: "Medium (8–10 weeks)",
-          impact: "High",
-          priority: "P1",
-        },
-        {
-          whatItIs: "Self-Serve Mid-Market Onboarding (Community < 500 Units)",
-          whyItMatters: "A simplified, guided self-serve setup flow for smaller communities (RWA, small developers) reduces sales and onboarding cost for mid-market. Capture this segment via inbound rather than enterprise sales — significantly expanding TAM without proportional headcount growth.",
-          unlockedSegment: "Mid-market RWAs and small developers; India Tier-2/Tier-3 cities; SE Asia",
-          effort: "High (12–16 weeks)",
-          impact: "Medium",
-          priority: "P1",
-        },
-      ],
-    },
-    {
-      timeframe: "MEDIUM-TERM (6–18 MONTHS)",
-      headline: "Build Long-Term Competitive Moat",
-      colorContext: "orange",
-      items: [
-        {
-          whatItIs: "AI FM Copilot — Conversational FM Assistant",
-          whyItMatters: "A natural language AI assistant embedded in the Admin Console that lets FM managers ask questions ('Show me all overdue PPM tasks in Tower B', 'Which vendors have the lowest resolution scores this quarter?') and receive instant answers without navigating dashboards. This reduces FM cognitive load and creates a moat that is extremely hard for competitors to replicate quickly.",
-          unlockedSegment: "All developer and FM segments; particularly high value for multi-site FM operators managing 5+ communities",
-          effort: "Very High (20–30 weeks)",
-          impact: "Very High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "Open Integration Marketplace (100+ Connectors)",
-          whyItMatters: "Build and publish a formal integration marketplace (Zapier-style or MCP-based) connecting Post Possession to ERP (SAP, Tally, Oracle), CRM (Salesforce, HubSpot), HR (Darwinbox, SAP SuccessFactors), smart building (Siemens, Honeywell BMS), and Indian payment rails. Makes the platform an open hub rather than a closed system — a critical enterprise procurement requirement.",
-          unlockedSegment: "Enterprise developers with complex IT stacks; all international segments",
-          effort: "Very High (24–36 weeks)",
-          impact: "Very High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "Developer Revenue Intelligence Platform",
-          whyItMatters: "Aggregate anonymised data across all deployed communities to give developer CRM teams benchmarked intelligence: 'Your referral conversion rate is 4.2% vs industry average of 6.1%'. 'Communities with weekly wellness events have 22% higher app engagement.' This turns Post Possession from an operational tool into a strategic intelligence platform — impossible to replicate without scale.",
-          unlockedSegment: "Large enterprise developers with 5+ projects on the platform; developer CEOs and CRMs",
-          effort: "Very High (20–28 weeks)",
-          impact: "Very High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "Computer Vision — Full Suite Expansion",
-          whyItMatters: "Expand current CV capabilities to include: (1) Automated lift/escalator malfunction detection via CCTV feed analysis, (2) Parking spot occupancy AI (real-time availability without sensors), (3) Perimeter breach detection. These add-ons create a premium security and smart building tier that commands 2–3x higher pricing.",
-          unlockedSegment: "Premium/luxury developers, GCC smart city developments, large township operators",
-          effort: "Very High (24–32 weeks)",
-          impact: "High",
-          priority: "P1",
-        },
-        {
-          whatItIs: "Resident Lifetime Value (LTV) Model for Developer CRM",
-          whyItMatters: "A proprietary LTV model per resident that combines engagement data, referral history, payment behaviour, and community tenure to predict: (1) likelihood of referral in next 6 months, (2) likelihood of buying developer's next project, (3) churn risk. This gives developer CRM teams AI-driven prioritisation of who to activate with offers/outreach.",
-          unlockedSegment: "Developer CRM/Loyalty/Sales teams; large developers with 10,000+ residents on platform",
-          effort: "Very High (20–26 weeks)",
-          impact: "Very High",
-          priority: "P0",
-        },
-        {
-          whatItIs: "US Market Entry — HOA & Multifamily Module",
-          whyItMatters: "US-specific module: HOA violation management, ACH payment integration (US bank rails), ADA accessibility compliance tracker, state-specific lease management (CA, TX, NY). This unlocks the $4B US HOA/multifamily software market where no white-label + data-sovereign solution currently exists.",
-          unlockedSegment: "US gated community developers, HOA management companies, Class A multifamily operators",
-          effort: "Very High (30–40 weeks)",
-          impact: "Very High",
-          priority: "P1",
-        },
-        {
-          whatItIs: "Carbon & Sustainability Dashboard",
-          whyItMatters: "Track and report community-level carbon footprint: energy consumption (DG, grid), water usage, waste generation, EV charging vs petrol vehicles. Configurable ESG reporting for developer annual reports. As ESG compliance becomes mandatory for listed developers and institutional property funds, this becomes a board-level requirement.",
-          unlockedSegment: "Listed developers (Godrej, Lodha, Prestige), UK/European BTR funds, GCC sovereign wealth-backed developers",
-          effort: "Medium-High (14–20 weeks)",
-          impact: "High",
-          priority: "P1",
-        },
-        {
-          whatItIs: "Hyperlocal Commerce Ecosystem (Resident Marketplace App-in-App)",
-          whyItMatters: "Build a fully native hyperlocal commerce layer within the resident app: grocery (Blinkit/Zepto integration API), pharmacy, doctor consultation, home services (Urban Company integration). Revenue share with platform partners. Turns the app into a daily-use lifestyle platform rather than a maintenance-utility — dramatically improving resident DAU and making uninstall effectively impossible.",
-          unlockedSegment: "Large Indian developers and townships with captive resident base of 2,000+ units; GCC luxury communities",
-          effort: "Very High (24–32 weeks)",
-          impact: "High",
-          priority: "P1",
-        },
-      ],
-    },
-  ],
+type RoadmapItem = {
+  initiative: string;
+  whatItIs: string;
+  whyItMatters: string;
+  segment: string;
+  dealRisk: string;
+  priority: string;
+  marketSignal: string;
 };
 
+type RoadmapPhase = {
+  title: string;
+  note: string;
+  summary: string;
+  items: RoadmapItem[];
+};
+
+const roadmapPhases: RoadmapPhase[] = [
+  {
+    "title": "PHASE 1 - IMMEDIATE (0-3 MONTHS) - Stop losing deals we should be winning",
+    "note": "These features and fixes are needed right now. Each one is actively costing us deals in current pipeline.",
+    "summary": "PHASE 1 SUMMARY - 5 items | Segments unlocked: Enterprise developers, premium gated communities, IFM portfolio accounts, REIT-grade residential | Estimated revenue impact: INR 2-4 crore in pipeline unblocked per quarter after delivery",
+    "items": [
+      {
+        "initiative": "Native Developer Leadership Dashboard with Community Health Score",
+        "whatItIs": "A real-time dashboard accessible to developer leadership showing one community health score per property, ticket SLA compliance %, billing collection rate, resident app adoption %, and gate activity volumes. No operational drilldown required.",
+        "whyItMatters": "Cited in 40-60% of enterprise developer RFPs as a deal-blocking requirement. Developer CEOs and CXOs want a single-number health score per property, not raw operational reports.",
+        "segment": "Enterprise real estate developers (500+ unit projects)",
+        "dealRisk": "2-5 enterprise deals lost per quarter until delivered",
+        "priority": "P1",
+        "marketSignal": "MyGate Enterprise launched similar feature in 2024. Tata Crest includes it. Absence makes us look operational-only, not executive-ready."
+      },
+      {
+        "initiative": "ANPR Camera Integration at Standard Tier",
+        "whatItIs": "Out-of-the-box ANPR camera integration that enables automatic vehicle recognition at gate without custom implementation work. Should support top 3 ANPR hardware brands deployed in India residential.",
+        "whyItMatters": "Required for premium gated communities and township projects as a gate management standard. NoBrokerHood bundles hardware. MyGate offers it on request. We have no standard offering.",
+        "segment": "Premium gated communities, township developers, REIT-grade residential assets",
+        "dealRisk": "Premium community deals lost to NoBrokerHood hardware bundle. Estimated 3-8 deals per quarter.",
+        "priority": "P1",
+        "marketSignal": "NoBrokerHood Shield (2024) bundles ANPR + camera. This is becoming a standard expectation in deals above INR 2,000/unit/year."
+      },
+      {
+        "initiative": "AI Predictive Maintenance Alerting - Phase 1",
+        "whatItIs": "ML model that analyses meter consumption patterns, checklist completion history, and asset maintenance records to predict equipment failure risk and generate proactive maintenance alerts for FM teams.",
+        "whyItMatters": "First mover in India community management category. No competitor has deployed predictive maintenance. Strong ROI story: 20-30% reduction in emergency repair costs. IFM clients and REIT asset managers need this for contract renewal differentiation.",
+        "segment": "IFM companies, REIT-grade residential, premium communities with high MEP complexity",
+        "dealRisk": "Not a deal-blocker today but will become one in 12-18 months as awareness grows. Risk of ApnaComplex or NoBrokerHood announcing AI features first.",
+        "priority": "P1",
+        "marketSignal": "Smartly.io (Singapore) has launched AI community insights. Global PropTech trend toward predictive operations is 18 months ahead of India market."
+      },
+      {
+        "initiative": "Biometric Attendance Integration for Staff",
+        "whatItIs": "Integration with fingerprint and face recognition biometric devices for household staff and facility staff attendance tracking, replacing selfie-based attendance with tamper-proof biometric records.",
+        "whyItMatters": "IFM contract renewals increasingly require biometric proof of service hours. Current selfie-based attendance is disputed by some clients. Biometric integration removes dispute risk and qualifies us for government-housing and REIT contracts requiring biometric compliance.",
+        "segment": "IFM companies with government housing contracts, REIT-grade residential, premium communities with 24-hour security requirements",
+        "dealRisk": "Government housing and REIT contracts require biometric attendance. Estimated 2-4 deals blocked per quarter without this.",
+        "priority": "P2",
+        "marketSignal": "Government housing projects (PMAY, CIDCO, MHADA) increasingly mandate biometric FM staff attendance in contract SLAs."
+      },
+      {
+        "initiative": "Vendor and Service Provider Marketplace",
+        "whatItIs": "Curated in-app marketplace within the resident-facing app where pre-vetted service providers can list services for resident booking. Includes home repairs, home maintenance, professional cleaning, and local food delivery.",
+        "whyItMatters": "Creates a revenue-sharing stream from service provider commissions on top of the base SaaS license fee. Resident stickiness driver - frequent marketplace users are 3x less likely to request app change to a competing platform.",
+        "segment": "All segments - resident experience enhancement applicable to all community types",
+        "dealRisk": "Not a near-term deal-blocker but reduces long-term NPS and creates a platform for developer loyalty programs if delivered.",
+        "priority": "P2",
+        "marketSignal": "MyGate vendor marketplace is the most frequently praised resident-facing feature in community App Store reviews. Absence noted in resident feedback at deployed clients."
+      }
+    ]
+  },
+  {
+    "title": "PHASE 2 - SHORT-TERM (3-6 MONTHS) - Expand addressable market and move up-market",
+    "note": "These features open new segments, increase ACV, and move from mid-market to enterprise positioning.",
+    "summary": "PHASE 2 SUMMARY - 5 items | Segments unlocked: Tier 2 / Tier 3 residential, REITs, institutional investors, enterprise developers with CRM-led sales, premium communities requiring integrated security | Estimated revenue impact: INR 4-8 crore incremental ARR",
+    "items": [
+      {
+        "initiative": "Multi-Language Support (Hindi, Tamil, Telugu, Kannada, Marathi)",
+        "whatItIs": "Resident app and admin console support for India's top 5 residential languages in addition to English. Language preference saved per user, not per project.",
+        "whyItMatters": "Opens Tier 2 and Tier 3 city markets where English-only apps have low adoption. Bharat residential development is growing faster than Tier 1 cities. Government housing and affordable housing projects require Hindi support.",
+        "segment": "Tier 2 and Tier 3 city developers, affordable housing projects, government housing (PMAY, CIDCO)",
+        "dealRisk": "Tier 2 market locked until delivered. Estimated 30-40% of India residential market inaccessible without regional language support.",
+        "priority": "P1",
+        "marketSignal": "NoBrokerHood supports Hindi and Kannada. ApnaComplex supports Tamil. Language gap is noted in South India and Tier 2 market feedback."
+      },
+      {
+        "initiative": "CCTV and Surveillance Dashboard Integration",
+        "whatItIs": "Web console dashboard showing live and recorded CCTV feeds from community cameras alongside gate management and security incident reports. Integration with top 3 CCTV brands deployed in India residential.",
+        "whyItMatters": "Security monitoring in one interface alongside operations increases platform stickiness for security administrators. Premium communities and township developers require integrated security monitoring.",
+        "segment": "Premium gated communities, township developers, commercial office parks requiring physical security management",
+        "dealRisk": "Security-focused deals deferred until CCTV integration available. NoBrokerHood Shield direct competitor feature.",
+        "priority": "P1",
+        "marketSignal": "NoBrokerHood Shield CCTV integration (2024) and Envision IoT security integration signal that security technology integration is becoming a baseline expectation in premium segments."
+      },
+      {
+        "initiative": "CRM Integration - Salesforce and HubSpot MCP",
+        "whatItIs": "Bi-directional integration between the Post Possession referral and lead module and developer sales team CRM. Referral leads from resident app flow directly into developer CRM with source attribution, resident contact, and unit details.",
+        "whyItMatters": "Converts Post Possession from an operations platform into a revenue-generating tool for developer sales teams. Referral lead integration creates measurable ROI for the developer marketing and sales budget, not just the FM or CX budget.",
+        "segment": "Enterprise real estate developers with CRM-led sales processes (Salesforce, HubSpot, Zoho CRM)",
+        "dealRisk": "Marketing-led procurement at enterprise developers blocked until CRM integration proven. Estimated 2-4 enterprise deals require this as a pre-condition.",
+        "priority": "P2",
+        "marketSignal": "Yardi and Buildium have Salesforce integrations as standard. India platforms have none. First to deliver wins enterprise developer sales team as champion."
+      },
+      {
+        "initiative": "ESG Reporting Module",
+        "whatItIs": "Pre-built ESG reporting module aggregating waste generation data, meter consumption trends, water usage, energy consumption, and compliance records into ESG-formatted reports aligned to GRESB and GRI standards.",
+        "whyItMatters": "REIT listing requirements under SEBI now include ESG disclosures. PE funds with green-linked financing need ESG data from their residential assets. No India community platform provides this.",
+        "segment": "REITs, institutional investors, PE funds with ESG-linked debt covenants, premium developers seeking green building certifications",
+        "dealRisk": "REIT and institutional investor segment entirely inaccessible without ESG reporting capability.",
+        "priority": "P1",
+        "marketSignal": "SEBI BRSR requirements for listed entities (including listed REITs and developer companies) now mandate ESG disclosures. Regulatory tailwind is clear."
+      },
+      {
+        "initiative": "Loyalty Engine and Resident Rewards Program",
+        "whatItIs": "Configurable resident loyalty module enabling developers to award points for app engagement, on-time bill payments, event participation, and referral submissions. Points redeemable for facility credits, service vouchers, or partner offers.",
+        "whyItMatters": "Developer's single best tool for reducing resident churn to competing platforms and increasing referral conversion. Loyalty-engaged residents generate 3-5x more referral leads and have higher NPS scores.",
+        "segment": "All segments - applicable to all community types as a resident experience enhancement",
+        "dealRisk": "Resident retention and referral revenue opportunity delayed. Not a deal-blocker but creates measurable LTV increase when deployed.",
+        "priority": "P2",
+        "marketSignal": "MyGate does not have a loyalty program. First mover in India community management loyalty programs creates a resident-facing competitive advantage."
+      }
+    ]
+  },
+  {
+    "title": "PHASE 3 - MEDIUM-TERM (6-18 MONTHS) - Build the long-term moat",
+    "note": "These capabilities become structural advantages that are difficult to copy and expand the total addressable market.",
+    "summary": "PHASE 3 SUMMARY - 4 items | Segments unlocked: UAE / UK / Southeast Asia, AI-native enterprise deals, vendor marketplace network, financial services cross-sell | Estimated revenue impact: INR 10-20 crore ARR at full deployment",
+    "items": [
+      {
+        "initiative": "Global Edition - GDPR and PDPL Compliance Architecture",
+        "whatItIs": "Platform variant configured for GDPR (UK/EU) and PDPL (UAE) compliance with data residency controls, consent management, and localised billing currency support in GBP and AED.",
+        "whyItMatters": "Unlocks UAE, UK, and Southeast Asia markets for Indian developers with cross-border portfolios. PDPL (UAE Personal Data Protection Law effective 2024) creates the same urgency in UAE that DPDP Act creates in India.",
+        "segment": "UAE-based developer clients, UK property managers, Indian developer groups with international portfolios",
+        "dealRisk": "International expansion blocked until global compliance architecture delivered. Secondary market potential represents 20-30% of total TAM.",
+        "priority": "P1",
+        "marketSignal": "UAE PDPL enforcement began in 2024. UK GDPR enforcement has been active since 2018. Both markets have Indian developer presence looking for compliant platforms."
+      },
+      {
+        "initiative": "AI Community Assistant - Resident-Facing Chatbot",
+        "whatItIs": "LLM-powered in-app assistant that answers resident queries about billing, maintenance status, facility availability, community rules, and complaint status without human intervention. Trained on property-specific data stored on client servers.",
+        "whyItMatters": "Reduces resident support tickets by 30-40% by resolving common queries instantly. Differentiates Post Possession from all India competitors as the first AI-native community platform. Data privacy is maintained because the LLM operates on-premise on client servers.",
+        "segment": "All segments - highest value in large communities (1,000+ units) where FM team handles high query volumes",
+        "dealRisk": "First mover advantage. No India community platform has deployed a resident-facing AI assistant.",
+        "priority": "P2",
+        "marketSignal": "Smartly.io (2024) and global PropTech players are investing in AI assistants. India market is 18-24 months behind but developer awareness is growing rapidly."
+      },
+      {
+        "initiative": "Property Management Marketplace - Third-Party Vendors",
+        "whatItIs": "Marketplace within the admin console where certified IFM vendors, AMC service providers, and specialist facility contractors list their services. Developers and RWAs can discover, compare, and onboard vendors directly from the platform.",
+        "whyItMatters": "Revenue stream from vendor marketplace commissions. Platform stickiness for admin users increases when vendor discovery and procurement happens within the platform. Reduces developer time spent sourcing and onboarding FM vendors.",
+        "segment": "Enterprise developers, IFM companies managing large portfolios, REIT asset managers requiring standardised vendor management",
+        "dealRisk": "Vendor marketplace creates a defensible revenue stream that pure SaaS pricing cannot replicate. Competitive moat deepens as vendor network grows.",
+        "priority": "P2",
+        "marketSignal": "MyGate vendor marketplace is its highest-rated feature. Becoming a vendor distribution network creates a platform business model on top of SaaS."
+      },
+      {
+        "initiative": "Financial Services Integration - Insurance and Loans for Residents",
+        "whatItIs": "Partnered financial services layer enabling residents to access home insurance, appliance insurance, personal loans, and moving services directly through the resident app with the developer brand as the trust anchor.",
+        "whyItMatters": "Non-SaaS revenue stream sharing with financial services partners. Developer brand association with premium financial services increases resident loyalty. NoBrokerHood already monetises this - we need a developer-branded equivalent.",
+        "segment": "All residential segments - highest value in premium and luxury communities where financial services cross-sell is relevant",
+        "dealRisk": "NoBrokerHood's financial services integration is their primary revenue diversification play. Not responding cedes this revenue stream entirely.",
+        "priority": "P3",
+        "marketSignal": "NoBrokerHood and ApnaComplex post-NoBroker acquisition are building financial services into community apps. This is an inevitable platform evolution in this category."
+      }
+    ]
+  }
+];
+
 const PostPossessionRoadmapTab: React.FC = () => {
+  const styles: Record<string, React.CSSProperties> = {
+    section: {
+      backgroundColor: "#DA7756",
+      color: "#ffffff",
+      fontFamily: "inherit",
+      fontSize: "11pt",
+      fontWeight: "bold",
+      letterSpacing: "0.05em",
+      padding: "12px 12px",
+      textAlign: "left",
+      textTransform: "uppercase",
+      verticalAlign: "middle",
+      whiteSpace: "normal",
+    },
+    note: {
+      backgroundColor: "#F6F4EE",
+      borderBottom: "2px solid #DA7756",
+      color: "#DA7756",
+      fontFamily: "inherit",
+      fontSize: "11pt",
+      fontWeight: "bold",
+      padding: "14px 12px",
+      textAlign: "left",
+      verticalAlign: "middle",
+      whiteSpace: "normal",
+    },
+    headerCell: {
+      backgroundColor: "#F6F4EE",
+      borderBottom: "2px solid #C4B89D",
+      borderRight: "1px solid rgba(196,184,157,0.5)",
+      color: "#1f1f1f",
+      fontFamily: "inherit",
+      fontSize: "10pt",
+      fontWeight: "bold",
+      letterSpacing: "0.05em",
+      padding: "12px 8px",
+      textAlign: "left",
+      textTransform: "uppercase",
+      verticalAlign: "middle",
+      whiteSpace: "normal",
+    },
+    cell: {
+      backgroundColor: "#ffffff",
+      borderBottom: "1px solid rgba(196,184,157,0.35)",
+      borderRight: "1px solid rgba(196,184,157,0.35)",
+      color: "#1f1f1f",
+      fontFamily: "inherit",
+      fontSize: "10pt",
+      lineHeight: 1.55,
+      padding: "12px 8px",
+      textAlign: "left",
+      verticalAlign: "top",
+      whiteSpace: "normal",
+      wordWrap: "break-word",
+    },
+    altCell: {
+      backgroundColor: "#F6F4EE",
+      borderBottom: "1px solid rgba(196,184,157,0.35)",
+      borderRight: "1px solid rgba(196,184,157,0.35)",
+      color: "#1f1f1f",
+      fontFamily: "inherit",
+      fontSize: "10pt",
+      lineHeight: 1.55,
+      padding: "12px 8px",
+      textAlign: "left",
+      verticalAlign: "top",
+      whiteSpace: "normal",
+      wordWrap: "break-word",
+    },
+    summary: {
+      backgroundColor: "#DA7756",
+      border: "1px solid #C4B89D",
+      color: "#ffffff",
+      fontFamily: "inherit",
+      fontSize: "10pt",
+      fontWeight: "bold",
+      lineHeight: 1.6,
+      padding: "14px 12px",
+      textAlign: "left",
+      verticalAlign: "top",
+      whiteSpace: "normal",
+    },
+  };
+
+  const getCellStyle = (index: number) => (index % 2 === 0 ? styles.altCell : styles.cell);
+  const priorityStyle = (priority: string, index: number) => ({
+    ...getCellStyle(index),
+    color: priority === "P1" ? "#9b1c1c" : priority === "P2" ? "#DA7756" : "#1f1f1f",
+    fontWeight: "bold",
+    textAlign: "center" as const,
+  });
+
   return (
-    <div className="space-y-12 animate-fade-in font-poppins">
-      {/* Strategic Header */}
-      <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
-        <h2 className="text-xl font-bold uppercase tracking-wider">
-          Post Possession — Strategic Product Roadmap
-        </h2>
+    <div className="w-full font-sans">
+      <div className="mb-6">
+        <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] p-6 rounded-t-xl border-l-4 border-l-[#DA7756]">
+          <h2 className="text-xl font-bold uppercase tracking-wider">
+            POST POSSESSION - PRODUCT ROADMAP
+          </h2>
+          <p className="text-xs opacity-70 italic mt-2 font-medium">
+            Purpose: Prioritised feature roadmap grounded in market gaps, competitive weaknesses, and deal-loss analysis.
+          </p>
+        </div>
       </div>
 
-      <div className="space-y-16 mt-8">
-        {postPossessionRoadmap.sections.map((section, idx) => {
-          return (
-            <div key={idx} className="space-y-4">
-              <div className="bg-[#DA7756] text-white px-4 py-2 font-bold text-sm uppercase tracking-wide">
-                {section.timeframe} — {section.headline}
-              </div>
+      <div className="space-y-8">
+        {roadmapPhases.map((phase) => (
+          <section key={phase.title} className="overflow-x-auto">
+            <table
+              style={{ borderCollapse: "collapse", tableLayout: "fixed", width: "100%", minWidth: "1650px", backgroundColor: "white" }}
+              cellSpacing={0}
+              cellPadding={0}
+            >
+              <colgroup>
+                <col style={{ width: "240px" }} />
+                <col style={{ width: "330px" }} />
+                <col style={{ width: "330px" }} />
+                <col style={{ width: "260px" }} />
+                <col style={{ width: "230px" }} />
+                <col style={{ width: "90px" }} />
+                <col style={{ width: "320px" }} />
+              </colgroup>
+              <tbody>
+                <tr>
+                  <td style={styles.section} colSpan={7}>{phase.title}</td>
+                </tr>
+                <tr>
+                  <td style={styles.note} colSpan={7}>{phase.note}</td>
+                </tr>
+                <tr>
+                  {["Feature / Initiative", "What it is", "Why it matters", "Customer segment it unlocks", "Deal risk if delayed", "Priority", "Market Signal"].map((header) => (
+                    <td key={header} style={styles.headerCell}>{header}</td>
+                  ))}
+                </tr>
+                {phase.items.map((item, index) => {
+                  const cellStyle = getCellStyle(index);
 
-              <div className="overflow-hidden border border-[#D3D1C7] rounded-xl shadow-sm">
-                <table className="w-full border-collapse table-fixed text-[12px] leading-relaxed">
-                  <thead>
-                    <tr className="bg-[#F6F4EE] text-[#2C2C2C] font-bold uppercase text-[10px] tracking-wider">
-                      <th className="border-r border-[#D3D1C7] px-4 py-3 text-left w-[22%]">Feature / Initiative</th>
-                      <th className="border-r border-[#D3D1C7] px-4 py-3 text-left w-[33%]">Strategic Rationale (The 'Why')</th>
-                      <th className="border-r border-[#D3D1C7] px-4 py-3 text-left w-[20%]">Unlocked Segment</th>
-                      <th className="border-r border-[#D3D1C7] px-4 py-3 text-center w-[10%]">Effort</th>
-                      <th className="border border-white/20 px-4 py-3 text-center w-[8%]">Impact</th>
-                      <th className="border border-white/20 px-4 py-3 text-center w-[7%]">Prior.</th>
+                  return (
+                    <tr key={item.initiative} className="align-top">
+                      <td style={{ ...cellStyle, fontWeight: "bold", color: "#DA7756" }}>{item.initiative}</td>
+                      <td style={cellStyle}>{item.whatItIs}</td>
+                      <td style={cellStyle}>{item.whyItMatters}</td>
+                      <td style={cellStyle}>{item.segment}</td>
+                      <td style={cellStyle}>{item.dealRisk}</td>
+                      <td style={priorityStyle(item.priority, index)}>{item.priority}</td>
+                      <td style={cellStyle}>{item.marketSignal}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {section.items.map((item, i) => (
-                      <tr key={i} className="align-top bg-white hover:bg-gray-50/50 transition-colors border-b border-gray-100 last:border-0">
-                        <td className="border border-gray-100 px-4 py-4 font-bold text-[#DA7756]">
-                          {item.whatItIs}
-                        </td>
-                        <td className="border border-gray-100 px-4 py-4 text-gray-600 italic">
-                          {item.whyItMatters}
-                        </td>
-                        <td className="border border-gray-100 px-4 py-4 font-medium text-gray-700">
-                          {item.unlockedSegment}
-                        </td>
-                        <td className="border border-gray-100 px-4 py-4 text-center font-medium text-gray-500 text-[11px]">
-                          {item.effort}
-                        </td>
-                        <td className="border border-gray-100 px-4 py-4 text-center">
-                          <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase ${item.impact === "Very High" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"
-                            }`}>
-                            {item.impact}
-                          </span>
-                        </td>
-                        <td className="border border-gray-100 px-4 py-4 text-center font-black text-[#A52A1A]">
-                          {item.priority}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Strategic Footer */}
-      <div className="bg-white border border-[#D3D1C7] rounded-xl p-4 shadow-sm border-l-4 border-l-[#DA7756]">
-        <h4 className="text-xs font-bold uppercase tracking-widest text-[#DA7756] mb-2">Roadmap Philosophy</h4>
-        <p className="text-[11px] text-[#666] leading-relaxed italic">
-          This roadmap focuses on removing technical blockers for high-margin international markets while building a deep
-          AI-driven operational moat that point-solutions cannot replicate. Every initiative is tied to a specific
-          commercial outcome: expansion, retention, or monetisation.
-        </p>
+                  );
+                })}
+                <tr>
+                  <td style={styles.summary} colSpan={7}>{phase.summary}</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        ))}
       </div>
     </div>
   );
 };
 
 export default PostPossessionRoadmapTab;
-

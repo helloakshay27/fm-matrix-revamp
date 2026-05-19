@@ -906,14 +906,21 @@ export const AMCDashboard = () => {
           return '-';
         }
       case 'associated_asset_service': {
-        // Map from associated_assets key and combine with service names from amc_services
-        const rawAssocAssets = Array.isArray(item.associated_assets) ? item.associated_assets
+        const rawAssocAssets = Array.isArray(item.associated_assets)
+          ? item.associated_assets
           : Array.isArray(item.amc_assets) ? item.amc_assets : [];
         const rawAssocServices = Array.isArray(item.amc_services) ? item.amc_services : [];
-        const assetAssocNames = rawAssocAssets.map((a: any) => a.asset_name).filter(Boolean);
-        const serviceAssocNames = rawAssocServices.map((s: any) => s.service_name).filter(Boolean);
-        const allAssocNames = [...assetAssocNames, ...serviceAssocNames];
-        return allAssocNames.length > 0 ? formatNamesWithEllipsis(allAssocNames) : '-';
+        const count = item.amc_type === 'Service'
+          ? rawAssocServices.length
+          : item.amc_type === 'Asset'
+            ? rawAssocAssets.length
+            : rawAssocAssets.length + rawAssocServices.length;
+        const label = item.amc_type === 'Service' ? 'Service' : 'Asset';
+        return count > 0 ? (
+          <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#EDEAE3] text-[#1a1a1a]">
+            {count} {label}{count !== 1 ? 's' : ''}
+          </span>
+        ) : '-';
       }
       case 'amc_type':
         return item.amc_type || '-';

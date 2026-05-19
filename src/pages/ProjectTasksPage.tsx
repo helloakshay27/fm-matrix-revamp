@@ -561,14 +561,17 @@ const ProjectTasksPage = () => {
     const [selectedCreators, setSelectedCreators] = useState<number[]>([]);
     const [selectedProjects, setSelectedProjects] = useState<number[]>([]);
     const [selectedWorkflowStatus, setSelectedWorkflowStatus] = useState<string[]>([]);
+    const [selectedTags, setSelectedTags] = useState<any[]>([]);
     const [dates, setDates] = useState({ startDate: '', endDate: '', completedAt: '' });
     const [projectOptions, setProjectOptions] = useState<any[]>([]);
+    const [tags, setTags] = useState<any[]>([]);
     const [dropdowns, setDropdowns] = useState({
         status: false,
         workflowStatus: false,
         responsiblePerson: false,
         createdBy: false,
         project: false,
+        tags: false,
         startDate: false,
         endDate: false,
         completedAt: false,
@@ -579,6 +582,7 @@ const ProjectTasksPage = () => {
         responsiblePerson: '',
         createdBy: '',
         project: '',
+        tags: '',
     });
 
     // Pause Modal State
@@ -596,6 +600,93 @@ const ProjectTasksPage = () => {
     const viewDropdownRef = useRef<HTMLDivElement>(null);
     const statusDropdownRef = useRef<HTMLDivElement>(null);
     const filterModalRef = useRef<HTMLDivElement>(null);
+
+    /**
+     * Helper function to update URL query parameters
+     * Deletes params if value is null/undefined/empty array
+     */
+    const updateQueryParams = useCallback(
+        (updates: Record<string, any>, replace = false) => {
+            const params = new URLSearchParams(searchParams);
+
+            Object.entries(updates).forEach(([key, value]) => {
+                if (
+                    value === undefined ||
+                    value === null ||
+                    value === "" ||
+                    (Array.isArray(value) && value.length === 0)
+                ) {
+                    params.delete(key);
+                } else if (Array.isArray(value)) {
+                    // Remove old array params
+                    for (const [paramKey] of params) {
+                        if (paramKey.startsWith(key)) {
+                            params.delete(paramKey);
+                        }
+                    }
+                    // Add new array values
+                    value.forEach((val) => {
+                        params.append(key, String(val));
+                    });
+                } else {
+                    params.set(key, String(value));
+                }
+            });
+
+            setSearchParams(params, { replace });
+        },
+        [searchParams, setSearchParams]
+    );
+
+    // Initialize filter states from URL on mount
+    useEffect(() => {
+        const urlStatuses = searchParams.getAll("status");
+        const urlResponsible = searchParams.getAll("responsible");
+        const urlCreators = searchParams.getAll("created_by");
+        const urlProjects = searchParams.getAll("project");
+        const urlWorkflowStatus = searchParams.getAll("workflow_status");
+        const urlTags = searchParams.getAll("tags");
+        const urlStartDate = searchParams.get("start_date") || "";
+        const urlEndDate = searchParams.get("end_date") || "";
+        const urlCompletedAt = searchParams.get("completed_at") || "";
+
+        if (urlStatuses.length > 0) {
+            setSelectedStatuses(urlStatuses);
+        }
+        if (urlResponsible.length > 0) {
+            setSelectedResponsible(urlResponsible.map(Number));
+        }
+        if (urlCreators.length > 0) {
+            setSelectedCreators(urlCreators.map(Number));
+        }
+        if (urlProjects.length > 0) {
+            setSelectedProjects(urlProjects.map(Number));
+        }
+        if (urlWorkflowStatus.length > 0) {
+            setSelectedWorkflowStatus(urlWorkflowStatus);
+        }
+        if (urlTags.length > 0) {
+            setSelectedTags(urlTags.map(Number));
+        }
+        if (urlStartDate || urlEndDate || urlCompletedAt) {
+            setDates({
+                startDate: urlStartDate,
+                endDate: urlEndDate,
+                completedAt: urlCompletedAt,
+            });
+        }
+
+        const urlView = (searchParams.get("view") || "List") as "Kanban" | "List";
+        if (urlView !== selectedView) {
+            setSelectedView(urlView);
+        }
+    }, []);
+
+    // Sync view preference to URL and localStorage
+    useEffect(() => {
+        localStorage.setItem("taskPageViewPreference", selectedView);
+        updateQueryParams({ view: selectedView }, true);
+    }, [selectedView, updateQueryParams]);
 
     // Handle click outside for view dropdown
     useEffect(() => {
@@ -726,6 +817,34 @@ const ProjectTasksPage = () => {
         localStorage.setItem("taskPageViewPreference", selectedView);
     }, [selectedView]);
 
+    // Fetch tags from API
+    useEffect(() => {
+        const fetchTags = async () => {
+            try {
+                const response = baseUrl
+                    ? await axios.get(`https://${baseUrl}/company_tags.json`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    })
+                    : await baseClient.get(`/company_tags.json`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+                const tagsList = response.data || [];
+                setTags(tagsList);
+            } catch (error) {
+                console.log('Error fetching tags:', error);
+                setTags([]);
+            }
+        };
+
+        if (token && baseUrl) {
+            fetchTags();
+        }
+    }, [baseUrl, token]);
+
     // Save filter state to localStorage whenever it changes
     useEffect(() => {
         const filters = {
@@ -734,12 +853,14 @@ const ProjectTasksPage = () => {
             selectedCreators,
             selectedProjects,
             selectedWorkflowStatus,
+            selectedTags,
             dates,
             statusSearch: searchTerms.status,
             workflowStatusSearch: searchTerms.workflowStatus,
             ResponsiblePersonSearch: searchTerms.responsiblePerson,
             creatorSearch: searchTerms.createdBy,
             projectSearch: searchTerms.project,
+            tagsSearch: searchTerms.tags,
         };
         if (
             selectedStatuses?.length > 0 ||
@@ -747,6 +868,7 @@ const ProjectTasksPage = () => {
             selectedCreators?.length > 0 ||
             selectedProjects?.length > 0 ||
             selectedWorkflowStatus?.length > 0 ||
+            selectedTags?.length > 0 ||
             dates.startDate ||
             dates.endDate ||
             dates.completedAt
@@ -759,6 +881,7 @@ const ProjectTasksPage = () => {
         selectedCreators,
         selectedProjects,
         selectedWorkflowStatus,
+        selectedTags,
         dates,
         searchTerms,
     ]);
@@ -778,6 +901,7 @@ const ProjectTasksPage = () => {
                 startDate: false,
                 endDate: false,
                 completedAt: false,
+                tags: false,
                 [key]: true,
             };
         });
@@ -860,6 +984,19 @@ const ProjectTasksPage = () => {
                 params['q[milestone_id_eq]'] = mid;
             }
 
+            // Update URL with current filter state
+            updateQueryParams({
+                status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
+                workflow_status: selectedWorkflowStatus.length > 0 ? selectedWorkflowStatus : undefined,
+                responsible: selectedResponsible.length > 0 ? selectedResponsible : undefined,
+                created_by: selectedCreators.length > 0 ? selectedCreators : undefined,
+                project: selectedProjects.length > 0 ? selectedProjects : undefined,
+                tags: selectedTags.length > 0 ? selectedTags : undefined,
+                start_date: dates.startDate || undefined,
+                end_date: dates.endDate || undefined,
+                completed_at: dates.completedAt || undefined,
+            }, true);
+
             setIsFilterModalOpen(false);
             setCurrentPage(1);
             // Filters automatically applied through useTasks hook
@@ -901,6 +1038,9 @@ const ProjectTasksPage = () => {
         }
         if (selectedProjects.length > 0) {
             filters['q[project_management_id_in][]'] = selectedProjects;
+        }
+        if (selectedTags.length > 0) {
+            filters['q[task_tags_company_tag_id_in][]'] = selectedTags;
         }
         if (dates.startDate) {
             filters['q[start_date_eq]'] = dates.startDate;
@@ -953,9 +1093,24 @@ const ProjectTasksPage = () => {
         setSelectedCreators([]);
         setSelectedProjects([]);
         setSelectedWorkflowStatus([]);
+        setSelectedTags([]);
         setDates({ startDate: '', endDate: '', completedAt: '' });
-        setSearchTerms({ status: '', workflowStatus: '', responsiblePerson: '', createdBy: '', project: '' });
+        setSearchTerms({ status: '', workflowStatus: '', responsiblePerson: '', createdBy: '', project: '', tags: '' });
         localStorage.removeItem('taskFilters');
+        
+        // Clear URL params for all filters
+        updateQueryParams({
+            status: undefined,
+            workflow_status: undefined,
+            responsible: undefined,
+            created_by: undefined,
+            project: undefined,
+            tags: undefined,
+            start_date: undefined,
+            end_date: undefined,
+            completed_at: undefined,
+        }, true);
+        
         setCurrentPage(1);
         // Filters automatically cleared and refetched through useTasks hook
     };
@@ -2597,6 +2752,44 @@ const ProjectTasksPage = () => {
                                         selectedCreators,
                                         setSelectedCreators,
                                         searchTerms.createdBy
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Tags */}
+                        <div className="p-6 py-3">
+                            <div
+                                className="flex items-center justify-between cursor-pointer"
+                                onClick={() => toggleDropdown('tags')}
+                            >
+                                <span className="font-medium text-sm select-none">Tags</span>
+                                {dropdowns.tags ? (
+                                    <ChevronDown className="text-gray-400" />
+                                ) : (
+                                    <ChevronRight className="text-gray-400" />
+                                )}
+                            </div>
+                            {dropdowns.tags && (
+                                <div className="mt-4 border">
+                                    <div className="relative border-b">
+                                        <Search className="absolute left-3 top-2.5 text-red-400" size={16} />
+                                        <input
+                                            type="text"
+                                            placeholder="Filter tags..."
+                                            className="w-full pl-8 pr-4 py-2 text-sm border focus:outline-none"
+                                            value={searchTerms.tags}
+                                            onChange={(e) => setSearchTerms({ ...searchTerms, tags: e.target.value })}
+                                        />
+                                    </div>
+                                    {renderCheckboxList(
+                                        tags.map((tag: any) => ({
+                                            label: tag.name || tag.label,
+                                            value: tag.id,
+                                        })),
+                                        selectedTags,
+                                        setSelectedTags,
+                                        searchTerms.tags
                                     )}
                                 </div>
                             )}

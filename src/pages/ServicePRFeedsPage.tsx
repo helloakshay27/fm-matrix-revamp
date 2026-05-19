@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Activity } from 'lucide-react';
+import { ArrowLeft, Activity, Rss } from 'lucide-react';
 import { FeedItem } from '../components/FeedItem';
 import { Heading } from '../components/ui/heading';
 import { useEffect, useState } from 'react';
@@ -106,12 +106,18 @@ export const ServicePRFeedsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [feeds, setFeeds] = useState([]);
+  const [apiCalls, setApiCalls] = useState([]);
+  const [activeTab, setActiveTab] = useState<'feeds' | 'sap'>('feeds');
 
   useEffect(() => {
     const fetchFeeds = async () => {
       try {
         const response = await dispatch(getServiceFeeds({ baseUrl, token, id })).unwrap();
-        setFeeds(response.feeds.map(formatedFeed));
+        setFeeds(response.feeds.map(formatedFeed).filter(Boolean));
+        // note: service PR uses "external_api_calls" key, not "api_calls"
+        if (response.external_api_calls && Array.isArray(response.external_api_calls)) {
+          setApiCalls(response.external_api_calls);
+        }
       } catch (error) {
         console.error('Error fetching feeds:', error);
       }
@@ -126,10 +132,11 @@ export const ServicePRFeedsPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="mx-auto">
+        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
             <button
-              onClick={handleBack}
+              onClick={() => navigate(-1)}
               className="flex items-center space-x-1 hover:text-[#C72030] transition-colors duration-200"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -150,26 +157,116 @@ export const ServicePRFeedsPage = () => {
                 Activity Feeds
               </Heading>
               <p className="text-gray-600 text-sm">
-                Track all changes and approvals for this Material PR
+                Track all changes and approvals for this Service PR
               </p>
             </div>
           </div>
         </div>
 
-        <div className="space-y-4">
-          {feeds.map((feed, index) => (
-            <FeedItem key={index} feed={feed} index={index} />
-          ))}
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 mb-6">
+          <button
+            onClick={() => setActiveTab('feeds')}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${
+              activeTab === 'feeds'
+                ? 'border-[#C72030] text-[#C72030]'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Activity className="w-4 h-4" />
+            Activity Feeds
+            {feeds.length > 0 && (
+              <span className="ml-1 bg-gray-100 text-gray-600 text-xs rounded-full px-2 py-0.5">
+                {feeds.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('sap')}
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors duration-200 ${
+              activeTab === 'sap'
+                ? 'border-[#C72030] text-[#C72030]'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Rss className="w-4 h-4" />
+            SAP API Logs
+            {apiCalls.length > 0 && (
+              <span className="ml-1 bg-gray-100 text-gray-600 text-xs rounded-full px-2 py-0.5">
+                {apiCalls.length}
+              </span>
+            )}
+          </button>
         </div>
 
-        {feeds.length === 0 && (
-          <div className="text-center py-12">
-            <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
-            <p className="text-gray-600">
-              Activity feeds will appear here as actions are taken on this Material PR.
-            </p>
-          </div>
+        {/* Activity Feeds Tab */}
+        {activeTab === 'feeds' && (
+          <>
+            <div className="space-y-4">
+              {feeds.map((feed, index) => (
+                <FeedItem key={index} feed={feed} index={index} />
+              ))}
+            </div>
+            {feeds.length === 0 && (
+              <div className="text-center py-12">
+                <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
+                <p className="text-gray-600">
+                  Activity feeds will appear here as actions are taken on this Service PR.
+                </p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* SAP API Logs Tab */}
+        {activeTab === 'sap' && (
+          <>
+            <div className="space-y-4">
+              {apiCalls.map((apiCall, index) => (
+                <div key={apiCall.id || index} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500 font-semibold">Provider</p>
+                      <p className="text-sm font-medium">{apiCall.api_provider || '-'}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500 font-semibold">Response Status</p>
+                      <span className={`inline-block text-xs font-semibold px-2 py-1 rounded-full ${
+                        apiCall.response_status === 200
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {apiCall.response_status || '-'}
+                      </span>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-sm text-gray-500 font-semibold">Message</p>
+                      <p className="text-sm bg-gray-50 p-2 rounded border border-gray-200 mt-1 font-mono whitespace-pre-wrap break-words">
+                        {apiCall.eval_status || apiCall.message || '-'}
+                      </p>
+                    </div>
+                    {apiCall.created_at && (
+                      <div className="md:col-span-2">
+                        <p className="text-xs text-gray-400">
+                          Created: {new Date(apiCall.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {apiCalls.length === 0 && (
+              <div className="text-center py-12">
+                <Rss className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No SAP API logs yet</h3>
+                <p className="text-gray-600">
+                  SAP API call logs will appear here after pushing to SAP.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

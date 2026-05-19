@@ -42,6 +42,14 @@ interface Attachment {
     category: string;
 }
 
+interface OpeningBalance {
+    id: number;
+    bill_no: string;
+    date: string;
+    due_date: string;
+    amount: number;
+}
+
 interface Address {
     id: number;
     attention: string | null;
@@ -110,6 +118,7 @@ interface Vendor {
     other_attachments: Attachment[];
     compliance_attachments: Attachment[];
     cancle_checque: Attachment[];
+    opening_balances?: OpeningBalance[];
     financial_summary: {
         po_total_amount: number;
         po_paid_amount: number;
@@ -328,6 +337,13 @@ const DetailsVendorPage = () => {
                             className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
                         >
                             Attachments
+                        </TabsTrigger>
+
+                        <TabsTrigger
+                            value="openingBalance"
+                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                        >
+                            Opening Balance
                         </TabsTrigger>
 
                         <TabsTrigger
@@ -760,6 +776,58 @@ const DetailsVendorPage = () => {
                                         </Table>
                                     </div>
                                 </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="openingBalance" className="p-4 sm:p-6">
+                        {/* Opening Balance */}
+                        <Card className="w-full">
+                            <CardHeader className="pb-4 lg:pb-6">
+                                <CardTitle className="flex items-center gap-3 text-lg font-semibold text-[#1A1A1A]">
+                                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                                        <FileSpreadsheet className="w-6 h-6" style={{ color: '#C72030' }} />
+                                    </div>
+                                    <span className="uppercase tracking-wide">Opening Balance</span>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                                {vendor?.opening_balances && vendor.opening_balances.length > 0 ? (
+                                    <div className="overflow-x-auto">
+                                        <div className="rounded-lg border border-gray-200 overflow-hidden">
+                                            <Table className="border-separate">
+                                                <TableHeader>
+                                                    <TableRow className="hover:bg-gray-50" style={{ backgroundColor: '#e6e2d8' }}>
+                                                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Bill No</TableHead>
+                                                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Bill Date</TableHead>
+                                                        <TableHead className="font-semibold text-gray-900 py-3 px-4 border-r" style={{ borderColor: '#fff' }}>Due Date</TableHead>
+                                                        <TableHead className="font-semibold text-gray-900 py-3 px-4 text-right" style={{ borderColor: '#fff' }}>Amount</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {vendor.opening_balances.map((balance, index) => (
+                                                        <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                                                            <TableCell className="py-3 px-4 font-medium">{balance.bill_no || '-'}</TableCell>
+                                                            <TableCell className="py-3 px-4">
+                                                                {balance.date ? new Date(balance.date).toLocaleDateString() : '-'}
+                                                            </TableCell>
+                                                            <TableCell className="py-3 px-4">
+                                                                {balance.due_date ? new Date(balance.due_date).toLocaleDateString() : '-'}
+                                                            </TableCell>
+                                                            <TableCell className="py-3 px-4 text-right font-medium">
+                                                                ₹ {balance.amount?.toLocaleString('en-IN') || '-'}
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8">
+                                        <div className="text-gray-500 text-sm">No opening balance records found</div>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>

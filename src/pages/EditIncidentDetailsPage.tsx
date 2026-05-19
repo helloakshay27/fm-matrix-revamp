@@ -2950,8 +2950,8 @@ export const EditIncidentDetailsPage = () => {
       // Show success message
       toast.success('Incident updated successfully!');
 
-      // Navigate back to the details page
-      navigate(`${basePath}/incident/${id}`);
+      // Navigate to the new details page
+      navigate(`${basePath}/incident/new-details/${id}`);
     } catch (err) {
       setError('Failed to update incident details');
       console.error('Error updating incident:', err);
@@ -2969,7 +2969,7 @@ export const EditIncidentDetailsPage = () => {
   return (
     <div className="p-6 bg-white min-h-screen">
       {/* Header */}
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <nav className="flex items-center text-sm text-gray-600 mb-4">
           <span>{isSafetyContext ? 'Safety' : 'Maintenance'}</span>
           <span className="mx-2">{'>'}</span>
@@ -2983,6 +2983,28 @@ export const EditIncidentDetailsPage = () => {
             <p className="text-gray-600">Incident #{id}</p>
           </div>
         </div>
+      </div> */}
+      <div className="mb-6">
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          <span>{'>'}</span>
+          <button onClick={() => navigate(`${basePath}/incident/new-details/${id}`)} className="hover:text-[#C72030] hover:underline transition-colors">
+            Incident
+          </button>
+          <span>{'>'}</span>
+          <span className="text-[#1a1a1a] font-medium">Edit Incident</span>
+        </div>
+
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT INCIDENT DETAILS</h1>
+        <p className="text-gray-600">Incident #{id}</p>
       </div>
 
       <div className="space-y-6" key={formKey}>

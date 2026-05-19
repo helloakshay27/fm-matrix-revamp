@@ -297,7 +297,7 @@ export const RecurringBillsDashboard: React.FC = () => {
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[status] || "bg-gray-100 text-gray-800"}`}
       >
-        {status.toUpperCase()}
+        {status.replace(/_/g, " ").toUpperCase()}
       </span>
     );
   };
@@ -325,14 +325,14 @@ export const RecurringBillsDashboard: React.FC = () => {
         >
           <Eye className="w-4 h-4" />
         </button>
-        {/* <button
+        <button
           onClick={() => handleEdit(bill.id)}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="Edit"
         >
           <Edit className="w-4 h-4" />
         </button>
-        <button
+        {/* <button
           onClick={() => handleDelete(bill.id)}
           className="p-1 text-black hover:bg-gray-100 rounded"
           title="Delete"
@@ -408,7 +408,7 @@ export const RecurringBillsDashboard: React.FC = () => {
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/accounting/bills/edit/${id}`);
+    navigate(`/accounting/recurring-bills/edit/${id}`);
   };
 
   const handleDelete = (id: number) => {

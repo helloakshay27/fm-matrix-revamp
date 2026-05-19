@@ -496,7 +496,7 @@ export const ClubMembershipDetailPage = () => {
               <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
                 {membershipData.user_name}
               </h1>
-              {renderStatusBadge()}
+              {/* {renderStatusBadge()} */}
             </div>
             <div className="text-sm text-gray-600">
               Membership #{membershipData.membership_number} • Created on {formatDateTime(membershipData.created_at)}
@@ -515,7 +515,7 @@ export const ClubMembershipDetailPage = () => {
                 ) : null}
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className='bg-white'>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
                 <SelectItem value="inactive">Inactive</SelectItem>

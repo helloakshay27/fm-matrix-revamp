@@ -8,6 +8,8 @@ interface RoadmapTabProps {
 const RoadmapTab = ({ productData }: RoadmapTabProps) => {
   const structuredRoadmap =
     productData.extendedContent?.detailedRoadmap?.structuredRoadmap;
+  const roadmapTableVariant =
+    productData.extendedContent?.detailedRoadmap?.roadmapTableVariant;
   const hasVendorRoadmapGrid =
     structuredRoadmap?.some((section) =>
       section.items.some(
@@ -24,7 +26,70 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
 
   return (
     <div className="space-y-12 animate-fade-in">
-      {isClubRoadmap ? (
+      {roadmapTableVariant === "html" && structuredRoadmap?.length ? (
+        <div className="bg-transparent p-3">
+          <div className="w-full rounded-md border border-[#C4B89D] bg-white">
+            <div className="px-4 pt-4 pb-6">
+              <div className="bg-white text-[#2C2C2C] border border-[#C4B89D] border-l-4 border-l-[#DA7756] p-4 rounded-t-xl mb-0 flex justify-between items-center">
+                <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
+                  {productData.name} — Product Roadmap
+                </h2>
+              </div>
+
+              <div className="mt-6 space-y-6">
+                {structuredRoadmap.map((section, sIdx) => {
+                  const showRevenueImpact = section.items.some((it) => (it.revenueImpact ?? "").trim());
+
+                  return (
+                    <div key={sIdx} className="space-y-0">
+                      <div className="bg-[#DA7756] text-white border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
+                        {section.timeframe}
+                      </div>
+                      <div className="border border-[#D3D1C7] border-t-0 bg-white">
+                        <table className="w-full border-collapse table-fixed text-[13px] leading-relaxed font-poppins">
+                          <thead>
+                            <tr className="bg-[#F6F4EE] text-[#DA7756] font-semibold uppercase text-[12px]">
+                              <th className="border border-[#E5E7EB] px-4 py-3 text-left w-[17%]">Feature</th>
+                              <th className="border border-[#E5E7EB] px-4 py-3 text-left w-[14%]">Module</th>
+                              <th className="border border-[#E5E7EB] px-4 py-3 text-left w-[33%]">Description</th>
+                              <th className="border border-[#E5E7EB] px-4 py-3 text-left w-[9%]">Priority</th>
+                              <th className="border border-[#E5E7EB] px-4 py-3 text-left w-[17%]">Target Segment</th>
+                              {showRevenueImpact && (
+                                <th className="border border-[#E5E7EB] px-4 py-3 text-left w-[12%]">Revenue Impact</th>
+                              )}
+                              <th className="border border-[#E5E7EB] px-4 py-3 text-left w-[10%]">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {section.items.map((item, i) => (
+                              <tr key={i} className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
+                                <td className="border border-[#E5E7EB] px-4 py-3 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">{item.featureName}</td>
+                                <td className="border border-[#E5E7EB] px-4 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{item.theme}</td>
+                                <td className="border border-[#E5E7EB] px-4 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{item.whatItIs}</td>
+                                <td className="border border-[#E5E7EB] px-4 py-3 font-semibold whitespace-pre-line break-words">{item.priority}</td>
+                                <td className="border border-[#E5E7EB] px-4 py-3 text-[#2C2C2C]/85 font-medium whitespace-pre-line break-words">{item.unlockedSegment}</td>
+                                {showRevenueImpact && (
+                                  <td className="border border-[#E5E7EB] px-4 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{item.revenueImpact}</td>
+                                )}
+                                <td className="border border-[#E5E7EB] px-4 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{item.estTimeline}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {section.summary && (
+                        <div className="bg-[#DA7756] text-white border border-[#D3D1C7] border-t-0 px-4 py-3 text-[12px] font-semibold leading-relaxed font-poppins">
+                          {section.summary}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : isClubRoadmap ? (
         <div className="bg-transparent p-3">
           <div className="w-full rounded-md border border-[#C4B89D] bg-white">
             <div className="px-4 pt-4 pb-6">
@@ -35,10 +100,10 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                 3 Phases | Phase 1: Foundation Launch | Phase 2: Growth Features | Phase 3: AI and Enterprise Moat
               </div>
               <div className="mt-6 space-y-6">
-                {detailedRoadmap.phases?.map((section: any, sIdx: number) => (
+                {detailedRoadmap.phases?.map((section, sIdx) => (
                   <div key={sIdx} className="space-y-0">
                     <div className="bg-[#DA7756] text-white border border-[#D3D1C7] px-4 py-3 text-[13px] font-semibold uppercase tracking-wide font-poppins">
-                      {section.phaseTitle}
+                      {(section as unknown as { phaseTitle?: string }).phaseTitle}
                     </div>
                     <div className="border border-[#D3D1C7] border-t-0 bg-white">
                       <table className="w-full border-collapse table-fixed text-[13px] leading-relaxed font-poppins">
@@ -52,7 +117,7 @@ const RoadmapTab = ({ productData }: RoadmapTabProps) => {
                           </tr>
                         </thead>
                         <tbody>
-                          {section.items.map((item: any, i: number) => (
+                          {(section as unknown as { items: Array<{ feature: string; description: string; segment: string; priority?: string; timeline: string }> }).items.map((item, i) => (
                             <tr key={i} className={`align-top ${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]"}`}>
                               <td className="border border-[#E5E7EB] px-4 py-3 font-semibold text-[#2C2C2C] whitespace-pre-line break-words">{item.feature}</td>
                               <td className="border border-[#E5E7EB] px-4 py-3 text-[#2C2C2C] font-medium whitespace-pre-line break-words">{item.description}</td>

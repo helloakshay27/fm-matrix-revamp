@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
-import { toast } from "sonner";
 
 // ── Design Tokens ──
 const C = {
@@ -42,6 +41,7 @@ const formatDateForApi = (s: string): string => {
   if (p.length === 3 && p[2].length === 4) return `${p[2]}-${p[1]}-${p[0]}`;
   return s;
 };
+
 const apiDateToDisplay = (s: string): string => {
   if (!s) return "";
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
@@ -50,10 +50,12 @@ const apiDateToDisplay = (s: string): string => {
   }
   return s;
 };
+
 const clampProgress = (val: any): number => {
   const n = Math.round(Number(val));
   return isNaN(n) ? 0 : Math.min(100, Math.max(0, n));
 };
+
 const MEDIUM_TERM_PERIOD = "three_to_five_years";
 
 const sliderBg = (pct: number) =>
@@ -163,13 +165,10 @@ const ThemeStyle = () => (
     .st-modal-slider::-webkit-slider-thumb:hover { transform:scale(1.2); }
     .st-modal-portal { position:fixed; inset:0; z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; background:rgba(0,0,0,0.42); backdrop-filter:blur(4px); }
     .st-modal-box { background:${C.primaryBg}; border-radius:20px; border:1px solid ${C.primaryBord}; box-shadow:0 30px 80px rgba(0,0,0,0.20); width:100%; display:flex; flex-direction:column; max-height:90vh; overflow:hidden; }
-    
-    /* MODIFIED: .st-input updated for native date picker consistency */
     .st-input { width:100%; border:1px solid ${C.borderLgt}; border-radius:12px; padding:10px 12px; font-size:13px; color:${C.textMain}; background:#fff; transition:border-color .15s,box-shadow .15s; outline:none; box-sizing:border-box; font-family:'Poppins',sans-serif; }
     .st-input[type="date"] { padding: 9px 12px; cursor: pointer; }
     .st-input:focus { border-color:${C.primary}; box-shadow:0 0 0 3px rgba(218,119,86,0.15); }
     .st-input::placeholder { color:#a3a3a3; }
-    
     .st-textarea { width:100%; border:1px solid ${C.borderLgt}; border-radius:12px; padding:10px 12px; font-size:13px; color:${C.textMain}; background:#fff; transition:border-color .15s,box-shadow .15s; outline:none; box-sizing:border-box; min-height:72px; resize:vertical; font-family:'Poppins',sans-serif; }
     .st-textarea:focus { border-color:${C.primary}; box-shadow:0 0 0 3px rgba(218,119,86,0.15); }
     .st-textarea::placeholder { color:#a3a3a3; }
@@ -195,9 +194,8 @@ const UserSelect = ({
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (ref.current && !ref.current.contains(e.target as Node))
         setOpen(false);
-      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -206,7 +204,7 @@ const UserSelect = ({
   const selectedUser = users.find((u: any) => u.id === value);
   const displayValue = selectedUser
     ? selectedUser.full_name ||
-      `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
+    `${selectedUser.firstname || ""} ${selectedUser.lastname || ""}`.trim()
     : "";
 
   const filteredUsers = users.filter((u: any) => {
@@ -231,7 +229,6 @@ const UserSelect = ({
           setOpen(true);
         }}
       />
-      {/* Dropdown Chevron */}
       <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -316,11 +313,13 @@ interface Goal {
 }
 
 interface StrategicGoalData {
+  id?: number;
   title: string;
-  goalType: string;
+  period: string;
   targetDate: string;
   revenueTarget: string;
   profitTarget: string;
+  linkedInitiatives?: number[];
 }
 
 const Modal = ({
@@ -371,34 +370,28 @@ const getPeriodBadgeLabel = (period: string): string => {
     this_quarter: "This Quarter",
     quarterly: "Quarterly",
     long_term: "Long Term",
-    BHAG: "BHAG",
   };
   return map[period] || period || "";
 };
 
 // ══════════════════════════════════════════════════════════
 export const MediumTermSection = () => {
+  // ── State ──
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [editingGoalId, setEditingGoalId] = useState<number | null>(null);
 
-  // Info Tooltip State
   const [isInfoHovered, setIsInfoHovered] = useState(false);
-  const [infoPos, setInfoPos] = useState({ top: 0, left: 0, transform: "translateX(-50%)" });
+  const [infoPos, setInfoPos] = useState({
+    top: 0,
+    left: 0,
+    transform: "translateX(-50%)",
+  });
 
   const [goals, setGoals] = useState<Goal[]>([]);
   const [allGoals, setAllGoals] = useState<Goal[]>([]);
-
-  // Users list state for dropdown
   const [usersList, setUsersList] = useState<any[]>([]);
 
-  const [strategicGoal, setStrategicGoal] = useState<StrategicGoalData>({
-    title: "",
-    goalType: "Medium-term (3-5 years)",
-    targetDate: "",
-    revenueTarget: "",
-    profitTarget: "",
-  });
-
+  const [strategicGoals, setStrategicGoals] = useState<StrategicGoalData[]>([]);
   const [strategicGoalId, setStrategicGoalId] = useState<number | null>(null);
 
   const [tempStrategic, setTempStrategic] = useState<StrategicGoalData | null>(
@@ -410,9 +403,8 @@ export const MediumTermSection = () => {
 
   const [isFetching, setIsFetching] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
-  const [tempGoal, setTempGoal] = useState<Goal | null>(null);
 
-  // Date states now natively hold "YYYY-MM-DD"
+  const [tempGoal, setTempGoal] = useState<Goal | null>(null);
   const [tempGoalDate, setTempGoalDate] = useState("");
 
   const [isSaving, setIsSaving] = useState(false);
@@ -420,23 +412,18 @@ export const MediumTermSection = () => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   // ─────────────────────────────────────────────
-  // ✅ API Calls
+  // 1. Fetch functions (defined FIRST)
   // ─────────────────────────────────────────────
-
   const fetchUsers = useCallback(async () => {
     const orgId =
       localStorage.getItem("org_id") ||
       localStorage.getItem("organization_id") ||
       "";
     if (!orgId) return;
-
     try {
       const res = await fetch(
         `${BASE_URL}/api/users?organization_id=${orgId}`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(),
-        }
+        { method: "GET", headers: getAuthHeaders() }
       );
       if (!res.ok) return;
       const data = await res.json();
@@ -449,11 +436,8 @@ export const MediumTermSection = () => {
   const fetchStrategicGoal = useCallback(async () => {
     try {
       const res = await fetch(
-        `${BASE_URL}/goals?period=${MEDIUM_TERM_PERIOD}`,
-        {
-          method: "GET",
-          headers: getAuthHeaders(),
-        }
+        `${BASE_URL}/goals?q[goal_category_eq]=strategic`,
+        { method: "GET", headers: getAuthHeaders() }
       );
       if (!res.ok) return;
       const json = await res.json();
@@ -461,40 +445,23 @@ export const MediumTermSection = () => {
         ? json
         : json.goals || json.data || [];
 
-      const strategic =
-        records.find(
-          (g: any) =>
-            g.period === MEDIUM_TERM_PERIOD &&
-            (g.revenue_target != null || g.profit_target != null)
-        ) || records.find((g: any) => g.period === MEDIUM_TERM_PERIOD);
+      const mappedStrategic = records.map((sg: any) => ({
+        id: sg.id,
+        title: sg.title || "",
+        period: sg.period || "",
+        targetDate: sg.target_date || "",
+        revenueTarget: String(sg.revenue_target ?? ""),
+        profitTarget: String(sg.profit_target ?? ""),
+        linkedInitiatives: Array.isArray(sg.key_initiative_goals)
+          ? sg.key_initiative_goals.map((ki: any) => ki.id).filter(Boolean)
+          : [],
+      }));
 
-      if (strategic) {
-        setStrategicGoalId(strategic.id ?? null);
-        setStrategicGoal({
-          title: strategic.title || "",
-          goalType: "Medium-term (3-5 years)",
-          targetDate: strategic.target_date || "", // Keeps native YYYY-MM-DD
-          revenueTarget: String(strategic.revenue_target ?? ""),
-          profitTarget: String(strategic.profit_target ?? ""),
-        });
-
-        const linked = Array.isArray(strategic.key_initiative_goals)
-          ? strategic.key_initiative_goals
-              .map((ki: any) => ki.id)
-              .filter(Boolean)
-          : [];
-        setLinkedStrategicInitiatives(linked);
-      } else {
-        setStrategicGoalId(null);
-        setStrategicGoal({
-          title: "",
-          goalType: "Medium-term (3-5 years)",
-          targetDate: "",
-          revenueTarget: "",
-          profitTarget: "",
-        });
-        setLinkedStrategicInitiatives([]);
-      }
+      // Only show 3-5 years strategic goals in the UI
+      const mediumTermStrategic = mappedStrategic.filter(
+        (sg) => sg.period === MEDIUM_TERM_PERIOD
+      );
+      setStrategicGoals(mediumTermStrategic);
     } catch (err) {
       console.error("[MediumTermSection] fetchStrategicGoal:", err);
     }
@@ -504,10 +471,10 @@ export const MediumTermSection = () => {
     setIsFetching(true);
     setFetchError(null);
     try {
-      const res = await fetch(`${BASE_URL}/goals`, {
-        method: "GET",
-        headers: getAuthHeaders(),
-      });
+      const res = await fetch(
+        `${BASE_URL}/goals?q[goal_category_eq]=operational`,
+        { method: "GET", headers: getAuthHeaders() }
+      );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
       const records: any[] = Array.isArray(json)
@@ -531,12 +498,14 @@ export const MediumTermSection = () => {
         updateRemarks: g.update_remarks || "",
       });
 
-      setAllGoals(records.map(mapRecord));
+      const mappedRecords = records.map(mapRecord);
+      setAllGoals(mappedRecords);
 
-      const mediumGoals = records.filter(
-        (g: any) => g.period === MEDIUM_TERM_PERIOD
+      // Only show 3-5 years operational goals in the UI
+      const mediumTermGoals = mappedRecords.filter(
+        (g) => g.period === MEDIUM_TERM_PERIOD
       );
-      setGoals(mediumGoals.map(mapRecord));
+      setGoals(mediumTermGoals);
     } catch (err: any) {
       setFetchError(err.message || "Failed to load goals");
     } finally {
@@ -544,12 +513,34 @@ export const MediumTermSection = () => {
     }
   }, []);
 
+  // ─────────────────────────────────────────────
+  // 2. Global event dispatcher
+  // ─────────────────────────────────────────────
+  const dispatchGoalsUpdated = () =>
+    window.dispatchEvent(new Event("goals_updated"));
+
+  // ─────────────────────────────────────────────
+  // 3. Effects (after fetch functions are defined)
+  // ─────────────────────────────────────────────
+  useEffect(() => {
+    const handleGoalsUpdated = () => {
+      fetchStrategicGoal();
+      fetchGoals();
+    };
+    window.addEventListener("goals_updated", handleGoalsUpdated);
+    return () =>
+      window.removeEventListener("goals_updated", handleGoalsUpdated);
+  }, [fetchStrategicGoal, fetchGoals]);
+
   useEffect(() => {
     fetchStrategicGoal();
     fetchGoals();
     fetchUsers();
   }, [fetchStrategicGoal, fetchGoals, fetchUsers]);
 
+  // ─────────────────────────────────────────────
+  // 4. Handlers (with dispatchGoalsUpdated)
+  // ─────────────────────────────────────────────
   const handleCardSlider = async (id: number, val: string) => {
     const clamped = clampProgress(val);
     setGoals((prev) =>
@@ -563,7 +554,11 @@ export const MediumTermSection = () => {
           goal: { progress_percentage: clamped, current_value: clamped },
         }),
       });
-      if (!res.ok) fetchGoals();
+      if (!res.ok) {
+        fetchGoals(); // revert optimistic update on error
+      } else {
+        dispatchGoalsUpdated(); // notify all sections
+      }
     } catch {
       fetchGoals();
     }
@@ -576,22 +571,33 @@ export const MediumTermSection = () => {
     setTempGoalDate("");
     setEditingGoalId(null);
     setTempStrategic(null);
+    setStrategicGoalId(null);
   };
 
-  const openStrategicModal = () => {
+  const openStrategicModal = (sg?: StrategicGoalData) => {
     setSaveError(null);
-    setTempStrategic({
-      title: strategicGoal.title,
-      goalType: strategicGoal.goalType || "Medium-term (3-5 years)",
-      targetDate: strategicGoal.targetDate, // Native YYYY-MM-DD
-      revenueTarget: strategicGoal.revenueTarget,
-      profitTarget: strategicGoal.profitTarget,
-    });
+    if (sg) {
+      setStrategicGoalId(sg.id || null);
+      setTempStrategic({ ...sg });
+      setLinkedStrategicInitiatives(sg.linkedInitiatives || []);
+    } else {
+      setStrategicGoalId(null);
+      setTempStrategic({
+        title: "",
+        period: MEDIUM_TERM_PERIOD,
+        targetDate: "",
+        revenueTarget: "",
+        profitTarget: "",
+      });
+      setLinkedStrategicInitiatives([]);
+    }
     setActiveModal("edit_strategic");
   };
 
-  const confirmDeleteStrategic = () =>
+  const confirmDeleteStrategic = (id: number) => {
+    setStrategicGoalId(id);
     setActiveModal("confirm_delete_strategic");
+  };
 
   const executeDeleteStrategic = async () => {
     if (!strategicGoalId) {
@@ -605,16 +611,9 @@ export const MediumTermSection = () => {
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error(`API error ${res.status}`);
-      setStrategicGoal({
-        title: "",
-        goalType: "Medium-term (3-5 years)",
-        targetDate: "",
-        revenueTarget: "",
-        profitTarget: "",
-      });
       setStrategicGoalId(null);
       setLinkedStrategicInitiatives([]);
-      fetchGoals();
+      dispatchGoalsUpdated(); // ✅ notify all sections
     } catch (err: any) {
       alert("Failed to delete: " + (err.message || "Unknown error"));
     } finally {
@@ -625,7 +624,7 @@ export const MediumTermSection = () => {
 
   const openGoalModal = (goal: Goal) => {
     setTempGoal({ ...goal });
-    setTempGoalDate(goal.targetDate || ""); // Native YYYY-MM-DD
+    setTempGoalDate(goal.targetDate || "");
     setEditingGoalId(goal.id ?? null);
     setSaveError(null);
     setActiveModal("goal_details");
@@ -670,15 +669,16 @@ export const MediumTermSection = () => {
 
       const payload = {
         goal: {
+          goal_category: "strategic",
           title: tempStrategic.title.trim(),
-          description: "Strategic objective for medium term",
+          description: "Strategic objective",
           target_date: apiTargetDate,
           revenue_target: Number(tempStrategic.revenueTarget) || 0,
           profit_target: Number(tempStrategic.profitTarget) || 0,
           target_value: 100,
           current_value: 0,
           unit: "percent",
-          period: MEDIUM_TERM_PERIOD,
+          period: tempStrategic.period,
           status: "on_track",
           owner_id: null,
           update_remarks: "",
@@ -687,7 +687,6 @@ export const MediumTermSection = () => {
       };
 
       let res: Response;
-
       if (strategicGoalId) {
         res = await fetch(`${BASE_URL}/goals/${strategicGoalId}`, {
           method: "PUT",
@@ -703,10 +702,8 @@ export const MediumTermSection = () => {
       }
 
       if (!res.ok) throw new Error(`API error ${res.status}`);
-
-      await fetchStrategicGoal();
-      await fetchGoals();
       closeModal();
+      dispatchGoalsUpdated(); // ✅ notify all sections
     } catch (err: any) {
       setSaveError(err.message || "Failed to save. Please try again.");
     } finally {
@@ -725,6 +722,7 @@ export const MediumTermSection = () => {
 
     const payload = {
       goal: {
+        goal_category: "operational",
         title: tempGoal.title.trim(),
         description: tempGoal.description || "",
         target_value: Number(tempGoal.targetValue) || 100,
@@ -742,18 +740,18 @@ export const MediumTermSection = () => {
     try {
       const res = editingGoalId
         ? await fetch(`${BASE_URL}/goals/${editingGoalId}`, {
-            method: "PUT",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(payload),
-          })
+          method: "PUT",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        })
         : await fetch(`${BASE_URL}/goals`, {
-            method: "POST",
-            headers: getAuthHeaders(),
-            body: JSON.stringify(payload),
-          });
+          method: "POST",
+          headers: getAuthHeaders(),
+          body: JSON.stringify(payload),
+        });
       if (!res.ok) throw new Error(`API error ${res.status}`);
       closeModal();
-      fetchGoals();
+      dispatchGoalsUpdated(); // ✅ notify all sections
     } catch (err: any) {
       setSaveError(err.message || "Error saving goal. Please try again.");
     } finally {
@@ -769,7 +767,7 @@ export const MediumTermSection = () => {
         headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      fetchGoals();
+      dispatchGoalsUpdated(); // ✅ notify all sections
     } catch (err: any) {
       alert("Failed to delete: " + err.message);
     }
@@ -790,7 +788,7 @@ export const MediumTermSection = () => {
     );
   };
 
-  const isEditingStrategic = !!strategicGoal.title;
+  const isEditingStrategic = !!strategicGoalId;
 
   const modalBtnBase: React.CSSProperties = {
     border: "none",
@@ -802,6 +800,9 @@ export const MediumTermSection = () => {
     fontFamily: C.font,
   };
 
+  // ─────────────────────────────────────────────
+  // 5. JSX (unchanged from original)
+  // ─────────────────────────────────────────────
   return (
     <div
       className="medium-wrap"
@@ -832,7 +833,7 @@ export const MediumTermSection = () => {
                 setInfoPos({
                   top: rect.bottom + window.scrollY + 10,
                   left: rect.left + window.scrollX + rect.width / 2,
-                  transform: "translateX(-50%)"
+                  transform: "translateX(-50%)",
                 });
                 setIsInfoHovered(true);
               }}
@@ -843,111 +844,169 @@ export const MediumTermSection = () => {
             </span>
           </div>
 
-          {isInfoHovered && ReactDOM.createPortal(
-            <div 
-              style={{
-                position: "absolute",
-                top: infoPos.top,
-                left: infoPos.left,
-                transform: infoPos.transform,
-                zIndex: 99999,
-                background: "#16102b",
-                color: "#fff",
-                borderRadius: 12,
-                boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-                padding: "16px",
-                width: 320,
-                textAlign: "center",
-                fontFamily: "'Poppins', sans-serif",
-                pointerEvents: "none",
-                border: "1px solid rgba(218,119,86,0.2)"
-              }}
-            >
-              <h4 style={{ margin: "0 0 10px 0", fontSize: 13, fontWeight: 800, color: "#fff" }}>
-                Medium-term goals (3-5 Years)
-              </h4>
-              <p style={{ margin: "0 0 10px 0", fontSize: 12, lineHeight: 1.5, color: "#d1d5db" }}>
-                Your medium-term direction that bridges your long-term BHAG and annual goals. Focus on 1-3 major strategic themes or market positions.
-              </p>
-              <p style={{ margin: "0 0 10px 0", fontSize: 11, fontStyle: "italic", color: "#9ca3af" }}>
-                From Scaling Up: "The strategic thrust defines which customers you'll serve and how you'll dominate your space."
-              </p>
-              <div style={{ fontSize: 11, color: "#9ca3af" }}>
-                <div style={{ fontStyle: "italic" }}>
-                  Example for a logistics company:
+          {isInfoHovered &&
+            ReactDOM.createPortal(
+              <div
+                style={{
+                  position: "absolute",
+                  top: infoPos.top,
+                  left: infoPos.left,
+                  transform: infoPos.transform,
+                  zIndex: 99999,
+                  background: "#16102b",
+                  color: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+                  padding: "16px",
+                  width: 320,
+                  textAlign: "center",
+                  fontFamily: "'Poppins', sans-serif",
+                  pointerEvents: "none",
+                  border: "1px solid rgba(218,119,86,0.2)",
+                }}
+              >
+                <h4
+                  style={{
+                    margin: "0 0 10px 0",
+                    fontSize: 13,
+                    fontWeight: 800,
+                    color: "#fff",
+                  }}
+                >
+                  Medium-term Goals (3-5 Years)
+                </h4>
+                <p
+                  style={{
+                    margin: "0 0 10px 0",
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                    color: "#d1d5db",
+                  }}
+                >
+                  Your medium-term direction that bridges your long-term BHAG
+                  and annual goals. Focus on 1-3 major strategic themes or
+                  market positions.
+                </p>
+                <p
+                  style={{
+                    margin: "0 0 10px 0",
+                    fontSize: 11,
+                    fontStyle: "italic",
+                    color: "#9ca3af",
+                  }}
+                >
+                  From Scaling Up: "The strategic thrust defines which customers
+                  you'll serve and how you'll dominate your space."
+                </p>
+                <div style={{ fontSize: 11, color: "#9ca3af" }}>
+                  <div style={{ fontStyle: "italic" }}>
+                    Example for a logistics company:
+                  </div>
+                  <div style={{ fontStyle: "italic" }}>
+                    "Expand cold-chain logistics to cover all Tier-2 cities in
+                    South India by 2028, becoming the #1 choice for perishable
+                    goods"
+                  </div>
                 </div>
-                <div style={{ fontStyle: "italic" }}>
-                  "Expand cold-chain logistics to cover all Tier-2 cities in South India by 2028, becoming the #1 choice for perishable goods"
-                </div>
-              </div>
-            </div>,
-            document.body
-          )}
+              </div>,
+              document.body
+            )}
 
           {isFetching && <LoaderIcon className="w-4 h-4" />}
         </div>
 
         <div className="p-6">
-          {/* ── Strategic Goal block ── */}
+          {/* Strategic Goals Block */}
           <div className="mb-8">
             {isFetching ? (
               <div className="st-skeleton h-24 w-full rounded-xl" />
-            ) : strategicGoal.title ? (
-              <div
-                className="bg-white rounded-xl p-5 flex justify-between items-center group transition-all"
-                style={{
-                  border: `1px solid ${C.borderLgt}`,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
-                }}
-              >
-                <div>
-                  <h3
-                    className="font-bold text-[16px] m-0"
-                    style={{ color: C.textMain }}
+            ) : strategicGoals.length > 0 ? (
+              <div className="space-y-4">
+                {strategicGoals.map((sg) => (
+                  <div
+                    key={sg.id}
+                    className="bg-white rounded-xl p-5 flex justify-between items-center group transition-all"
+                    style={{
+                      border: `1px solid ${C.borderLgt}`,
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+                    }}
                   >
-                    {strategicGoal.title}
-                  </h3>
-                  {(strategicGoal.revenueTarget ||
-                    strategicGoal.profitTarget) && (
-                    <div
-                      className="text-[12px] mt-1.5 flex gap-3"
-                      style={{ color: C.textMuted }}
-                    >
-                      {strategicGoal.revenueTarget &&
-                        strategicGoal.revenueTarget !== "0" && (
-                          <span>Revenue: ₹{strategicGoal.revenueTarget}Cr</span>
+                    <div>
+                      <h3
+                        className="font-bold text-[16px] m-0"
+                        style={{ color: C.textMain }}
+                      >
+                        {sg.title}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-2">
+                        {sg.period && (
+                          <span
+                            className="inline-block px-2 py-0.5 text-[10px] font-black rounded-full uppercase tracking-wider"
+                            style={{
+                              background: C.primaryTint,
+                              color: C.primary,
+                            }}
+                          >
+                            {getPeriodBadgeLabel(sg.period)}
+                          </span>
                         )}
-                      {strategicGoal.profitTarget &&
-                        strategicGoal.profitTarget !== "0" && (
-                          <span>Profit: ₹{strategicGoal.profitTarget}Cr</span>
+                        {(sg.revenueTarget || sg.profitTarget) && (
+                          <div
+                            className="text-[12px] flex gap-3 font-medium"
+                            style={{ color: C.textMuted }}
+                          >
+                            {sg.revenueTarget && sg.revenueTarget !== "0" && (
+                              <span>Revenue: ₹{sg.revenueTarget}Cr</span>
+                            )}
+                            {sg.profitTarget && sg.profitTarget !== "0" && (
+                              <span>Profit: ₹{sg.profitTarget}Cr</span>
+                            )}
+                          </div>
                         )}
+                      </div>
+                      {sg.targetDate && (
+                        <div
+                          className="text-[11px] mt-1.5"
+                          style={{ color: C.textMuted }}
+                        >
+                          📅 Target: {apiDateToDisplay(sg.targetDate)}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {strategicGoal.targetDate && (
-                    <div
-                      className="text-[11px] mt-1"
-                      style={{ color: C.textMuted }}
-                    >
-                      📅 Target: {apiDateToDisplay(strategicGoal.targetDate)}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => openStrategicModal(sg)}
+                        className="p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors text-gray-500 border"
+                        style={{ borderColor: C.borderLgt }}
+                        title="Edit Goal"
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        onClick={() => confirmDeleteStrategic(sg.id as number)}
+                        className="p-2 bg-gray-50 hover:bg-red-50 rounded-lg cursor-pointer transition-colors text-gray-500 hover:text-red-500 border"
+                        style={{ borderColor: C.borderLgt }}
+                        title="Delete Goal"
+                      >
+                        <TrashIcon />
+                      </button>
                     </div>
-                  )}
-                </div>
-                <div className="flex gap-2">
+                  </div>
+                ))}
+
+                <div className="flex justify-end mt-4">
                   <button
-                    onClick={openStrategicModal}
-                    className="p-2 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors text-gray-500 border"
-                    style={{ borderColor: C.borderLgt }}
-                    title="Edit Goal"
+                    onClick={() => openStrategicModal()}
+                    className="text-sm font-black px-4 py-2 rounded-xl transition-colors"
+                    style={{ color: C.primary, background: "transparent" }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.background = C.primaryTint)
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.background = "transparent")
+                    }
                   >
-                    <EditIcon />
-                  </button>
-                  <button
-                    onClick={confirmDeleteStrategic}
-                    className="p-2 bg-gray-50 hover:bg-red-50 rounded-lg cursor-pointer transition-colors text-gray-500 hover:text-red-500 border"
-                    style={{ borderColor: C.borderLgt }}
-                    title="Delete Goal"
-                  >
-                    <TrashIcon />
+                    + Add Strategic Priority
                   </button>
                 </div>
               </div>
@@ -964,13 +1023,13 @@ export const MediumTermSection = () => {
                   className="text-[16px] font-bold mb-1"
                   style={{ color: C.textMain }}
                 >
-                  Set Your Medium-Term Priorities
+                  Set Your Strategic Priorities
                 </h3>
                 <p className="text-[13px] mb-5" style={{ color: C.textMuted }}>
-                  What are your core objectives for the next 3-5 years?
+                  What are your core objectives for the future?
                 </p>
                 <button
-                  onClick={openStrategicModal}
+                  onClick={() => openStrategicModal()}
                   className="px-5 py-2.5 rounded-lg font-bold text-[13px] transition-colors shadow-sm flex items-center justify-center mx-auto gap-2 text-white"
                   style={{ background: C.primary }}
                   onMouseEnter={(e) =>
@@ -980,7 +1039,7 @@ export const MediumTermSection = () => {
                     (e.currentTarget.style.background = C.primary)
                   }
                 >
-                  + Add Medium-Term Priority
+                  + Add Strategic Priority
                 </button>
               </div>
             )}
@@ -1000,7 +1059,7 @@ export const MediumTermSection = () => {
               className="text-[10px] font-black uppercase tracking-[0.15em]"
               style={{ color: "#070707" }}
             >
-              Medium-term Initiatives
+              Operational Initiatives (3-5 Years)
             </span>
             {isFetching && <LoaderIcon className="w-3.5 h-3.5" />}
           </div>
@@ -1014,7 +1073,7 @@ export const MediumTermSection = () => {
                   className="col-span-2 text-sm italic py-2"
                   style={{ color: C.textMuted }}
                 >
-                  No medium-term goals found. Add one below.
+                  No operational goals found for 3-5 years. Add one below.
                 </p>
               )}
               {goals.map((goal) => (
@@ -1139,12 +1198,12 @@ export const MediumTermSection = () => {
                 (e.currentTarget.style.background = "transparent")
               }
             >
-              + Add New Goal
+              + Add New Operational Goal
             </button>
           </div>
         </div>
 
-        {/* ══ MODAL 0: Confirm Delete ══ */}
+        {/* Confirm Delete Strategic Modal */}
         {activeModal === "confirm_delete_strategic" && (
           <Modal onClose={closeModal}>
             <div
@@ -1227,7 +1286,7 @@ export const MediumTermSection = () => {
           </Modal>
         )}
 
-        {/* ══ MODAL 1: Add / Edit Strategic Goal ══ */}
+        {/* Add / Edit Strategic Goal Modal */}
         {activeModal === "edit_strategic" && tempStrategic && (
           <Modal onClose={closeModal}>
             <div className="st-modal-box" style={{ maxWidth: 600 }}>
@@ -1241,8 +1300,8 @@ export const MediumTermSection = () => {
                     style={{ color: C.textMain }}
                   >
                     {isEditingStrategic
-                      ? "Edit Medium-term Strategic Goal"
-                      : "Add Medium-term Strategic Goal"}
+                      ? "Edit Strategic Goal"
+                      : "Add Strategic Goal"}
                   </h2>
                   <p
                     style={{
@@ -1252,8 +1311,8 @@ export const MediumTermSection = () => {
                     }}
                   >
                     {isEditingStrategic
-                      ? "Update your 3-5 year strategic direction"
-                      : "Define your core objective for the next 3-5 years"}
+                      ? "Update your strategic direction"
+                      : "Define your core objective and period"}
                   </p>
                 </div>
                 <button
@@ -1306,26 +1365,20 @@ export const MediumTermSection = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="st-label">Goal Type</label>
+                    <label className="st-label">Period</label>
                     <select
-                      value={tempStrategic.goalType}
+                      value={tempStrategic.period}
                       onChange={(e) =>
                         setTempStrategic({
                           ...tempStrategic,
-                          goalType: e.target.value,
+                          period: e.target.value,
                         })
                       }
                       className="st-select"
                     >
-                      <option value="Medium-term (3-5 years)">
-                        Medium-term (3-5 years)
-                      </option>
-                      <option value="Long-term (5+ years)">
-                        Long-term (5+ years)
-                      </option>
-                      <option value="Short-term (1-2 years)">
-                        Short-term (1-2 years)
-                      </option>
+                      <option value="this_quarter">This Quarter</option>
+                      <option value="this_year">This Year</option>
+                      <option value="three_to_five_years">3-5 Years</option>
                     </select>
                   </div>
                   <div>
@@ -1492,7 +1545,7 @@ export const MediumTermSection = () => {
           </Modal>
         )}
 
-        {/* ══ MODAL 2: Create/Edit Medium-term Goal ══ */}
+        {/* Create/Edit Operational Goal Modal */}
         {activeModal === "goal_details" && tempGoal && (
           <Modal onClose={closeModal}>
             <div
@@ -1548,8 +1601,8 @@ export const MediumTermSection = () => {
                   }}
                 >
                   {editingGoalId
-                    ? "Edit Medium-term Goal"
-                    : "Create New Medium-term Goal"}
+                    ? "Edit Operational Goal"
+                    : "Create New Operational Goal"}
                 </h2>
                 <p
                   style={{
@@ -1558,7 +1611,7 @@ export const MediumTermSection = () => {
                     color: C.textMuted,
                   }}
                 >
-                  Set a measurable target for the next 3-5 years
+                  Set a measurable target
                 </p>
               </div>
 
@@ -1628,7 +1681,6 @@ export const MediumTermSection = () => {
                   </div>
                   <div>
                     <label className="st-label">Target Date</label>
-                    {/* MODIFIED: Using native input type="date" */}
                     <input
                       type="date"
                       value={tempGoalDate}
@@ -1822,7 +1874,7 @@ export const MediumTermSection = () => {
                     if (!isSaving) e.currentTarget.style.background = C.primary;
                   }}
                 >
-                  {isSaving && <LoaderIcon />}
+                  {isSaving && <LoaderIcon className="w-4 h-4" />}
                   {isSaving
                     ? "Saving..."
                     : editingGoalId

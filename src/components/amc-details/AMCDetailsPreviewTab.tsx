@@ -238,11 +238,24 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
   const [previewDoc, setPreviewDoc] = useState<{ url: string; name: string } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const normalizedAmcType = (amc?.amc_type || "").toString().toLowerCase();
+  const normalizedChecklistType = (amc?.checklist_type || "").toString().toLowerCase();
+  const normalizedResourceType = (amc?.resource_type || "").toString().toLowerCase();
+  const normalizedCoverageType = normalizedAmcType === "non-comprehensive"
+    ? "Non-Comprehensive"
+    : normalizedAmcType === "comprehensive"
+      ? "Comprehensive"
+      : (amc?.coverage_type || amc?.amc_coverage_type || "").toString();
   const isAssetType =
     normalizedAmcType === "asset" ||
+    normalizedChecklistType === "asset" ||
+    normalizedResourceType.includes("asset") ||
+    ((amc?.amc_assets?.length || 0) > 0 && !(amc?.amc_services?.length || 0)) ||
     (!normalizedAmcType && !!amc?.asset_id && !amc?.service_id);
   const isServiceType =
     normalizedAmcType === "service" ||
+    normalizedChecklistType === "service" ||
+    normalizedResourceType.includes("service") ||
+    ((amc?.amc_services?.length || 0) > 0 && !(amc?.amc_assets?.length || 0)) ||
     (!normalizedAmcType && !!amc?.service_id && !amc?.asset_id);
   const normalizedDetailsType = (amc?.amc_details_type || "").toString().toLowerCase();
   const inferredIndividual = (amc?.amc_assets?.length || 0) <= 1;
@@ -572,6 +585,26 @@ export const AMCDetailsPreviewTab: React.FC<AMCDetailsPreviewTabProps> = ({
                   />
                   <span className="text-[#1a1a1a] font-medium">Service</span>
                 </label>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">AMC Type</label>
+              <div className="flex gap-6">
+                {["Comprehensive", "Non-Comprehensive"].map((option) => (
+                  <label key={option} className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name={`amc-type-${option}`}
+                      value={option}
+                      checked={(normalizedCoverageType || "Comprehensive") === option}
+                      readOnly
+                      className="mr-2 w-4 h-4"
+                      style={{ accentColor: '#C72030' }}
+                    />
+                    <span className="text-[#1a1a1a] font-medium">{option}</span>
+                  </label>
+                ))}
               </div>
             </div>
 

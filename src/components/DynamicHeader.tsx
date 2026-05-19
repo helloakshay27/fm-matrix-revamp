@@ -131,7 +131,7 @@ export const DynamicHeader = () => {
 
   return (
     <div
-      className={`h-12 border-b border-[#D5DbDB] fixed top-16 right-0 ${isSidebarCollapsed ? "left-16" : "left-64"} z-10 transition-all duration-300`}
+      className={`h-12 border-b border-[#D5DbDB] fixed top-16 right-0 ${isSidebarCollapsed ? "left-0 md:left-16" : "left-0 md:left-64"} z-10 transition-all duration-300`}
       style={{ backgroundColor: "#f6f4ee" }}
     >
       <div className="flex items-center h-full px-4 overflow-x-auto">

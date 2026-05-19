@@ -206,7 +206,7 @@ const HSNCodeSetup = () => {
             </div>
 
             <Dialog open={isModalOpen} onOpenChange={(open) => !open && handleCloseModal()}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px] bg-white">
                     <DialogHeader>
                         <DialogTitle>{editingHsn ? 'Edit HSN Code' : 'Add HSN Code'}</DialogTitle>
                     </DialogHeader>
