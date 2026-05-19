@@ -860,7 +860,7 @@ export const ServicePRDetailsPage = () => {
                 </Button>
               )}
 
-              {servicePR?.all_level_approved === null && buttonCondition.canEditAll && (
+              { buttonCondition.canEditAll && (
                 <Button
                   size="sm"
                   variant="outline"

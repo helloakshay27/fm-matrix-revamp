@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import axios from "axios";
 import {
@@ -114,6 +114,26 @@ interface ApiDashboardData {
 interface RatingsFeedbackDashboardResponse {
   success?: boolean;
   data?: ApiDashboardData;
+}
+
+interface AiFeedbackSummary {
+  overall_health?: string;
+  rating_interpretation?: string;
+  engagement_insight?: string;
+  top_performers?: Array<string | { name?: string; reason?: string }>;
+  departments_to_watch?: Array<{
+    department_name?: string;
+    observation?: string;
+  }>;
+  collaboration_patterns?: string;
+  risks?: Array<{
+    risk_description?: string;
+    risk_level?: string;
+  }>;
+  recommendations?: Array<{
+    title?: string;
+    detail?: string;
+  }>;
 }
 
 type ApiRecord = Record<string, unknown>;
@@ -942,6 +962,34 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function isAiSummaryCompleted(payload: unknown): boolean {
+  const record = toApiRecord(payload);
+  const nestedData = toApiRecord(record.data);
+  const status = String(record.status ?? nestedData.status ?? "")
+    .trim()
+    .toLowerCase();
+  const success = record.success === true || nestedData.success === true;
+  const hasSummary =
+    Object.keys(toApiRecord(record.summary)).length > 0 ||
+    Object.keys(toApiRecord(nestedData.summary)).length > 0;
+
+  return (
+    status === "success" ||
+    status === "completed" ||
+    (success && (status === "completed" || hasSummary))
+  );
+}
+
+function getAiSummaryFromPayload(payload: unknown): AiFeedbackSummary | null {
+  const record = toApiRecord(payload);
+  const nestedData = toApiRecord(record.data);
+  const summary = toApiRecord(record.summary);
+  const nestedSummary = toApiRecord(nestedData.summary);
+  const source = Object.keys(summary).length > 0 ? summary : nestedSummary;
+
+  return Object.keys(source).length > 0 ? (source as AiFeedbackSummary) : null;
+}
+
 async function safeApiRequest<T>(endpoint: string): Promise<T> {
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const baseURL = await resolveFeedbackApiBaseUrl();
@@ -994,6 +1042,9 @@ const FeedbackDashboard = () => {
   const [aiSummaryFromDate, setAiSummaryFromDate] = useState("2026-01-01");
   const [aiSummaryToDate, setAiSummaryToDate] = useState("2026-05-18");
   const [aiSummaryError, setAiSummaryError] = useState<string | null>(null);
+  const [aiFeedbackSummary, setAiFeedbackSummary] =
+    useState<AiFeedbackSummary | null>(null);
+  const aiSummaryPollingRef = useRef(false);
 
   const fetchDashboard = async () => {
     try {
@@ -1028,6 +1079,8 @@ const FeedbackDashboard = () => {
   }, []);
 
   const handleGenerateAiSummary = async () => {
+    if (aiSummaryPollingRef.current) return;
+
     if (!aiSummaryFromDate || !aiSummaryToDate) {
       setAiSummaryError("Please select both start date and end date.");
       return;
@@ -1040,8 +1093,10 @@ const FeedbackDashboard = () => {
     }
 
     try {
+      aiSummaryPollingRef.current = true;
       setAiLoading(true);
       setAiSummaryError(null);
+      setAiFeedbackSummary(null);
 
       const baseURL = await resolveFeedbackApiBaseUrl();
       const generateResponse = await axios.post(
@@ -1077,12 +1132,14 @@ const FeedbackDashboard = () => {
           }
         );
 
-        console.log("AI summary poll response:", pollResponse.data);
-
-        const pollStatus = String(pollResponse.data?.status || "").toLowerCase();
-        if (pollStatus === "success") {
+        if (isAiSummaryCompleted(pollResponse.data)) {
+          setAiFeedbackSummary(getAiSummaryFromPayload(pollResponse.data));
           break;
         }
+
+        const pollStatus = String(pollResponse.data?.status || "")
+          .trim()
+          .toLowerCase();
 
         if (pollStatus === "error") {
           const responseData = toApiRecord(pollResponse.data);
@@ -1110,6 +1167,7 @@ const FeedbackDashboard = () => {
         setAiSummaryError("Failed to generate AI summary.");
       }
     } finally {
+      aiSummaryPollingRef.current = false;
       setAiLoading(false);
     }
   };
@@ -1433,6 +1491,145 @@ const FeedbackDashboard = () => {
               {aiLoading ? "Processing..." : "Generate AI Summary"}
             </button>
           </div>
+
+          {aiFeedbackSummary && (
+            <div className="mt-5 space-y-4 border-t pt-5" style={{ borderColor: BP.primaryBord }}>
+              <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-xl border bg-[#fffaf8] p-4" style={{ borderColor: BP.primaryBord }}>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                    Overall Health
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-neutral-900">
+                    {aiFeedbackSummary.overall_health || "N/A"}
+                  </p>
+                </div>
+                <div className="rounded-xl border bg-[#fffaf8] p-4" style={{ borderColor: BP.primaryBord }}>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                    Rating
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-neutral-900">
+                    {aiFeedbackSummary.rating_interpretation || "N/A"}
+                  </p>
+                </div>
+                <div className="rounded-xl border bg-[#fffaf8] p-4" style={{ borderColor: BP.primaryBord }}>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                    Engagement
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-neutral-900">
+                    {aiFeedbackSummary.engagement_insight || "N/A"}
+                  </p>
+                </div>
+              </div>
+
+              {aiFeedbackSummary.collaboration_patterns && (
+                <div className="rounded-xl border bg-white p-4" style={{ borderColor: BP.primaryBord }}>
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                    Collaboration Patterns
+                  </p>
+                  <p className="mt-2 text-sm font-medium text-neutral-800">
+                    {aiFeedbackSummary.collaboration_patterns}
+                  </p>
+                </div>
+              )}
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                {!!aiFeedbackSummary.top_performers?.length && (
+                  <div className="rounded-xl border bg-white p-4" style={{ borderColor: BP.primaryBord }}>
+                    <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                      Top Performers
+                    </p>
+                    <ul className="space-y-2">
+                      {aiFeedbackSummary.top_performers.map((performer, index) => {
+                        const name =
+                          typeof performer === "string" ? performer : performer.name;
+                        const reason =
+                          typeof performer === "string" ? "" : performer.reason;
+
+                        return (
+                          <li key={`${name || "performer"}-${index}`} className="rounded-lg bg-[#fffaf8] px-3 py-2">
+                            <p className="text-sm font-semibold text-neutral-900">
+                              {name || "Unnamed"}
+                            </p>
+                            {reason && (
+                              <p className="mt-1 text-xs font-medium text-neutral-600">
+                                {reason}
+                              </p>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+
+                {!!aiFeedbackSummary.departments_to_watch?.length && (
+                  <div className="rounded-xl border bg-white p-4" style={{ borderColor: BP.primaryBord }}>
+                    <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                      Departments To Watch
+                    </p>
+                    <ul className="space-y-2">
+                      {aiFeedbackSummary.departments_to_watch.map((department, index) => (
+                        <li key={`${department.department_name || "department"}-${index}`} className="rounded-lg bg-[#fffaf8] px-3 py-2">
+                          <p className="text-sm font-semibold text-neutral-900">
+                            {department.department_name || "Unnamed Department"}
+                          </p>
+                          {department.observation && (
+                            <p className="mt-1 text-xs font-medium text-neutral-600">
+                              {department.observation}
+                            </p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {!!aiFeedbackSummary.risks?.length && (
+                  <div className="rounded-xl border bg-white p-4" style={{ borderColor: BP.primaryBord }}>
+                    <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                      Risks
+                    </p>
+                    <ul className="space-y-2">
+                      {aiFeedbackSummary.risks.map((risk, index) => (
+                        <li key={`${risk.risk_description || "risk"}-${index}`} className="rounded-lg bg-red-50 px-3 py-2">
+                          <p className="text-sm font-semibold text-red-800">
+                            {risk.risk_level || "Risk"}
+                          </p>
+                          {risk.risk_description && (
+                            <p className="mt-1 text-xs font-medium text-red-700">
+                              {risk.risk_description}
+                            </p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {!!aiFeedbackSummary.recommendations?.length && (
+                  <div className="rounded-xl border bg-white p-4" style={{ borderColor: BP.primaryBord }}>
+                    <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                      Recommendations
+                    </p>
+                    <ul className="space-y-2">
+                      {aiFeedbackSummary.recommendations.map((recommendation, index) => (
+                        <li key={`${recommendation.title || "recommendation"}-${index}`} className="rounded-lg bg-emerald-50 px-3 py-2">
+                          <p className="text-sm font-semibold text-emerald-900">
+                            {recommendation.title || "Recommendation"}
+                          </p>
+                          {recommendation.detail && (
+                            <p className="mt-1 text-xs font-medium text-emerald-800">
+                              {recommendation.detail}
+                            </p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {isAiSummaryModalOpen &&

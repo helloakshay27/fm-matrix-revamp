@@ -287,6 +287,20 @@ const getItemStatus = (item: any): string => {
   return item.status || "open";
 };
 
+const isCompletedStatus = (status: string) =>
+  ["closed", "completed", "done"].includes(status.toLowerCase());
+
+const getItemType = (item: any): string => {
+  if (!item || typeof item !== "object") return "task";
+  return String(item.type || "task").toLowerCase();
+};
+
+const groupTasksIssuesByType = (items: any[] = []) => ({
+  tasks: items.filter((item) => getItemType(item) === "task"),
+  issues: items.filter((item) => getItemType(item) === "issue"),
+  todos: items.filter((item) => getItemType(item) === "todo"),
+});
+
 const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
   const merged: any[] = [];
   const seen = new Set<string>();
@@ -297,6 +311,36 @@ const mergeUniqueItems = (primary: any[] = [], fallback: any[] = []) => {
     seen.add(key);
     merged.push(item);
   });
+  return merged;
+};
+
+const mergeTasksIssuesPreservingType = (
+  primary: any[] = [],
+  fallback: any[] = []
+) => {
+  const merged: any[] = [];
+  const seen = new Set<string>();
+
+  [...primary, ...fallback].forEach((item) => {
+    const title = getItemTitle(item).trim();
+    if (!title) return;
+
+    const type = getItemType(item);
+    const hasExplicitType = !!item?.type;
+    const typedKey = `${title.toLowerCase()}|${type}`;
+    const titleHasTypedItem = merged.some(
+      (existing) =>
+        getItemTitle(existing).trim().toLowerCase() === title.toLowerCase() &&
+        !!existing?.type
+    );
+
+    if (!hasExplicitType && titleHasTypedItem) return;
+    if (seen.has(typedKey)) return;
+
+    seen.add(typedKey);
+    merged.push(item);
+  });
+
   return merged;
 };
 
@@ -372,7 +416,10 @@ const resolveRawSource = (report: any) => {
       ...normalizedDraft,
       ...rd,
       tasks_issues: Array.isArray(rd.tasks_issues)
-        ? mergeUniqueItems(rd.tasks_issues, normalizedDraft.tasks_issues || [])
+        ? mergeTasksIssuesPreservingType(
+            normalizedDraft.tasks_issues || [],
+            rd.tasks_issues
+          )
         : normalizedDraft.tasks_issues || [],
       tomorrow_plan: Array.isArray(rd.tomorrow_plan)
         ? mergeUniqueItems(rd.tomorrow_plan, normalizedDraft.tomorrow_plan || [])
@@ -765,10 +812,11 @@ const DailyTab = ({
           ])
         );
         source.tasks_issues.forEach((t: any) =>
-          pushUnique(allTasksIssues, { ...t, member: report.name }, [
-            "title",
-            "member",
-          ])
+          pushUnique(
+            allTasksIssues,
+            { ...t, type: getItemType(t), member: report.name },
+            ["type", "title", "member"]
+          )
         );
         source.tomorrow_plan.forEach((p: any) =>
           pushUnique(allTomorrowPlan, { ...p, member: report.name }, [
@@ -919,6 +967,7 @@ const DailyTab = ({
           title: a.title || a.text || "",
         })),
         tasks_issues: allTasksIssues.map((t) => ({
+          type: getItemType(t),
           title: t.title || t.text || "",
           status: t.status || "open",
         })),
@@ -1102,6 +1151,7 @@ const DailyTab = ({
           title: a.title || a.text || "",
         })),
         tasks_issues: allTasksIssues.map((t) => ({
+          type: getItemType(t),
           title: t.title || t.text || "",
           status: t.status || "open",
         })),
@@ -1761,6 +1811,8 @@ const DailyTab = ({
                           String(item.member).trim().toLowerCase() ===
                             normalizedReportName
                       );
+                      const groupedTasksIssues =
+                        groupTasksIssuesByType(userTasksIssues);
 
                       const userTomorrowPlan = displayRd.tomorrow_plan.filter(
                         (item: any) =>
@@ -2097,7 +2149,7 @@ const DailyTab = ({
                                         <AlertTriangle className="w-3.5 h-3.5 text-orange-600" />
                                       </div>
                                       <h4 className="text-xs font-extrabold text-neutral-700 uppercase tracking-wider">
-                                        Tasks & Issues
+                                        Tasks, Issues & Todos
                                       </h4>
                                     </div>
                                     {userTasksIssues.length === 0 ? (
@@ -2105,33 +2157,79 @@ const DailyTab = ({
                                         None recorded.
                                       </p>
                                     ) : (
-                                      <ul className="space-y-2.5">
-                                        {userTasksIssues.map(
-                                          (item: any, i: number) => (
-                                            <li
-                                              key={i}
-                                              className="flex items-start gap-2 text-xs text-neutral-700"
-                                            >
-                                              <span
-                                                className={cn(
-                                                  "shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5",
-                                                  getItemStatus(item) === "open"
-                                                    ? "bg-red-100 text-red-600"
-                                                    : getItemStatus(item) ===
-                                                        "closed"
-                                                      ? "bg-green-100 text-green-600"
-                                                      : "bg-gray-100 text-gray-500"
+                                      <div className="space-y-4">
+                                        {[
+                                          {
+                                            label: "Tasks",
+                                            items: groupedTasksIssues.tasks,
+                                            dotClass: "bg-blue-400",
+                                          },
+                                          {
+                                            label: "Issues",
+                                            items: groupedTasksIssues.issues,
+                                            dotClass: "bg-red-400",
+                                          },
+                                          {
+                                            label: "Todos",
+                                            items: groupedTasksIssues.todos,
+                                            dotClass: "bg-violet-400",
+                                          },
+                                        ].map((section) => (
+                                          <div key={section.label}>
+                                            <div className="flex items-center justify-between gap-2 mb-2">
+                                              <p className="text-[10px] font-extrabold text-neutral-500 uppercase tracking-wider">
+                                                {section.label}
+                                              </p>
+                                              <span className="text-[10px] font-bold text-neutral-400">
+                                                {section.items.length}
+                                              </span>
+                                            </div>
+                                            {section.items.length === 0 ? (
+                                              <p className="text-xs text-neutral-300 italic">
+                                                None recorded.
+                                              </p>
+                                            ) : (
+                                              <ul className="space-y-2.5">
+                                                {section.items.map(
+                                                  (item: any, i: number) => (
+                                                    <li
+                                                      key={`${section.label}-${i}`}
+                                                      className="flex items-start gap-2 text-xs text-neutral-700"
+                                                    >
+                                                      <div
+                                                        className={cn(
+                                                          "w-1.5 h-1.5 rounded-full mt-1.5 shrink-0",
+                                                          section.dotClass
+                                                        )}
+                                                      />
+                                                      <span
+                                                        className={cn(
+                                                          "shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded-full mt-0.5",
+                                                          getItemStatus(item) ===
+                                                            "open"
+                                                            ? "bg-red-100 text-red-600"
+                                                            : isCompletedStatus(
+                                                                  getItemStatus(
+                                                                    item
+                                                                  )
+                                                                )
+                                                              ? "bg-green-100 text-green-600"
+                                                              : "bg-gray-100 text-gray-500"
+                                                        )}
+                                                      >
+                                                        {getItemStatus(item)}
+                                                      </span>
+                                                      <span className="leading-relaxed">
+                                                        {getItemTitle(item)}
+                                                      </span>
+                                                    </li>
+                                                  )
                                                 )}
-                                              >
-                                                {getItemStatus(item)}
-                                              </span>
-                                              <span className="leading-relaxed">
-                                                {getItemTitle(item)}
-                                              </span>
-                                            </li>
-                                          )
-                                        )}
-                                      </ul>
+                                              </ul>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
                                     )}
                                   </div>
 

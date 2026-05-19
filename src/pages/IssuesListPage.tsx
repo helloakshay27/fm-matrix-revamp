@@ -86,40 +86,40 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "project_name",
-    label: "Project Name",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "milestone_name",
-    label: "Milestone Name",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "task_name",
-    label: "Task Name",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "sub_task_name",
-    label: "Subtask Name",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
     key: "title",
     label: "Title",
     sortable: true,
     draggable: true,
     defaultVisible: true,
   },
+  {
+    key: "project_name",
+    label: "Project Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  // {
+  //   key: "milestone_name",
+  //   label: "Milestone Name",
+  //   sortable: true,
+  //   draggable: true,
+  //   defaultVisible: true,
+  // },
+  // {
+  //   key: "task_name",
+  //   label: "Task Name",
+  //   sortable: true,
+  //   draggable: true,
+  //   defaultVisible: true,
+  // },
+  // {
+  //   key: "sub_task_name",
+  //   label: "Subtask Name",
+  //   sortable: true,
+  //   draggable: true,
+  //   defaultVisible: true,
+  // },
   {
     key: "issue_type",
     label: "Type",
@@ -373,9 +373,9 @@ const IssuesListPage = ({
     return {
       id: issue.id?.toString() || "",
       project_name: issue.project_management_name || "Not Selected",
-      milestone_name: issue.milstone_name || "Not Selected",
-      task_name: issue.task_management_name || "Not Selected",
-      sub_task_name: issue.sub_task_management_name || "Not Selected",
+      milestone_name: issue.milstone_name,
+      task_name: issue.task_management_name,
+      sub_task_name: issue.sub_task_management_name,
       title: issue.title || "",
       description: issue.description || "",
       issue_type: issue.issue_type || "",
@@ -674,11 +674,30 @@ const IssuesListPage = ({
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === "title") {
       return (
-        <div
-          className="max-w-[200px] overflow-hidden text-ellipsis whitespace-nowrap"
-          title={item.title}
-        >
-          {item.title}
+        <div className="flex flex-col gap-2">
+          <div
+            className="max-w-[500px] overflow-hidden text-ellipsis whitespace-nowrap font-medium"
+            title={item.title}
+          >
+            {item.title}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {item.milestone_name && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {item.milestone_name}
+              </span>
+            )}
+            {item.task_name && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                {item.task_name}
+              </span>
+            )}
+            {item.sub_task_name && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                {item.sub_task_name}
+              </span>
+            )}
+          </div>
         </div>
       );
     }
