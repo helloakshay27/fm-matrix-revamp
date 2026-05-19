@@ -1721,6 +1721,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                   item.title ||
                   "",
                 status: "completed",
+                type: item.type,
               })),
             tomorrow_plan: tomorrowPlanPayload,
             past_kpis: kpis.map((kpi) => ({
