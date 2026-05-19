@@ -30,6 +30,8 @@ import {
   Trash2,
   Eye,
   Pencil,
+  Play,
+  Pause,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -305,6 +307,9 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [overdueReason, setOverdueReason] = useState("");
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTodo, setSelectedTodo] = useState<any>(null);
+  const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+  const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
+  const [isPauseLoading, setIsPauseLoading] = useState(false);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -504,7 +509,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   ${userId ? `&q[responsible_person_id_eq]=${userId}` : ""}
 `.replace(/\s+/g, "");
 
-  const { data: tasksData, isLoading: tasksLoading } = useTasks({
+  const { data: tasksData, isLoading: tasksLoading, refetch: refetchTasks } = useTasks({
     taskType: "my",
     page: currentTasksPage,
     filters: {
@@ -1080,6 +1085,55 @@ const BusinessCompassDailyReport: React.FC = () => {
       toast.error("Failed to complete item");
     } finally {
       setIsOverdueLoading(false);
+    }
+  };
+
+  const handlePlayTask = async (taskId: number) => {
+    try {
+      await axios.put(
+        `https://${baseUrl}/task_managements/${taskId}/update_status.json`,
+        { status: "started" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Task started successfully");
+      refetchTasks();
+    } catch (error) {
+      console.error("Failed to start task:", error);
+      toast.error("Failed to start task");
+    }
+  };
+
+  const handlePauseTaskSubmit = async (reason: string, taskId: number) => {
+    if (!taskId) return;
+    setIsPauseLoading(true);
+    try {
+      await axios.put(
+        `https://${baseUrl}/task_managements/${taskId}/update_status.json`,
+        { status: "stopped" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      await axios.post(
+        `https://${baseUrl}/comments.json`,
+        {
+          comment: {
+            body: `Paused with reason: ${reason}`,
+            commentable_id: taskId,
+            commentable_type: "TaskManagement",
+            commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
+            active: true,
+          },
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast.success("Task paused successfully");
+      setIsPauseModalOpen(false);
+      setPauseTaskId(null);
+      refetchTasks();
+    } catch (error) {
+      console.error("Failed to pause task:", error);
+      toast.error(`Failed to pause task: ${error?.response?.data?.error || error?.message || "Server error"}`);
+    } finally {
+      setIsPauseLoading(false);
     }
   };
 
@@ -2595,6 +2649,60 @@ const BusinessCompassDailyReport: React.FC = () => {
                             >
                               <Pencil size={14} />
                             </button>
+                            {/* Play/Pause buttons for task-type items */}
+                            {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
+                              item.originalData?.is_started ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPauseTaskId(item.originalData.id);
+                                    setIsPauseModalOpen(true);
+                                  }}
+                                  className="p-1 hover:bg-gray-200 rounded transition"
+                                  title="Pause task"
+                                >
+                                  <Pause size={16} className="text-orange-500" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePlayTask(item.originalData.id);
+                                  }}
+                                  className="p-1 hover:bg-gray-200 rounded transition"
+                                  title="Play task"
+                                >
+                                  <Play size={16} className="text-green-500" />
+                                </button>
+                              )
+                            )}
+                            {/* Play/Pause for todo-type items linked to a task */}
+                            {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
+                              item.originalData?.task_management?.is_started ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPauseTaskId(item.originalData.task_management_id);
+                                    setIsPauseModalOpen(true);
+                                  }}
+                                  className="p-1 hover:bg-gray-200 rounded transition"
+                                  title="Pause task"
+                                >
+                                  <Pause size={16} className="text-orange-500" />
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePlayTask(item.originalData.task_management_id);
+                                  }}
+                                  className="p-1 hover:bg-gray-200 rounded transition"
+                                  title="Play task"
+                                >
+                                  <Play size={16} className="text-green-500" />
+                                </button>
+                              )
+                            )}
                             <div className="flex items-center gap-2">
                               <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[#DA7756] text-[#fff] uppercase">
                                 {item.type}
@@ -4738,6 +4846,77 @@ const BusinessCompassDailyReport: React.FC = () => {
         isEditMode={!!editTodoData}
         prefillData={editTodoData || {}}
       />
+
+      {/* Pause Reason Modal */}
+      <PauseReasonModal
+        isOpen={isPauseModalOpen}
+        onClose={() => {
+          setIsPauseModalOpen(false);
+          setPauseTaskId(null);
+        }}
+        onSubmit={handlePauseTaskSubmit}
+        isLoading={isPauseLoading}
+        taskId={pauseTaskId}
+      />
+    </div>
+  );
+};
+
+const PauseReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
+  const [reason, setReason] = useState("");
+
+  useEffect(() => {
+    if (!isOpen) setReason("");
+  }, [isOpen]);
+
+  const handleSubmit = () => {
+    if (!reason.trim()) {
+      toast.error("Please enter a reason for pausing the task");
+      return;
+    }
+    onSubmit(reason, taskId);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] border border-gray-200">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-1 h-8 bg-[#C72030] rounded-sm"></div>
+          <h2 className="text-lg font-bold text-gray-900">Pause Task</h2>
+        </div>
+        <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+          Please provide a reason for pausing this task. This will help track the pause history.
+        </p>
+        <div className="mb-6">
+          <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Reason</label>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Enter reason for pausing this task..."
+            className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
+            rows={4}
+            disabled={isLoading}
+          />
+        </div>
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
+          >
+            {isLoading ? "Processing..." : "Pause Task"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
