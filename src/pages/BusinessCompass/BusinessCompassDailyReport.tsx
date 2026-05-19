@@ -362,10 +362,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       // Build query parameters for todos - filter by date and include both open and completed
       const queryParams = new URLSearchParams();
       queryParams.append("q[user_id_eq]", userId.toString());
-      queryParams.append("q[target_date_lteq]", startDate);
-      // Include both open and completed statuses
-      queryParams.append("q[status_in][]", "open");
-      queryParams.append("q[status_in][]", "completed");
+      queryParams.append("for_date", startDate);
 
       const url = `https://${baseUrl}/todos.json?${queryParams.toString()}`;
       const response = await axios.get(url, {
@@ -503,10 +500,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   }, [applyStoredDraft, clearStoredDraft, getStoredDraft]);
 
   const myIssuesFilter = `
-  q[status_in][]=open
-  &q[status_in][]=overdued
-  &q[status_in][]=completed
-  &q[start_date_or_target_date_or_completed_at_eq]=${startDate}
+  for_date=${startDate}
   ${userId ? `&q[responsible_person_id_eq]=${userId}` : ""}
 `.replace(/\s+/g, "");
 
@@ -514,7 +508,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     taskType: "my",
     page: currentTasksPage,
     filters: {
-      "q[start_date_or_target_date_or_completed_at_eq]": startDate,
+      "for_date": startDate,
     },
   });
 
