@@ -23,6 +23,9 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
         amcs.map((amc, index) => {
           const amcData = {
             vendor: amc?.supplier_name || amc?.amc_vendor_name || '-',
+            amcType: ['Comprehensive', 'Non-Comprehensive'].includes(amc?.amc_type)
+              ? amc.amc_type
+              : amc?.coverage_type || amc?.amc_coverage_type || '-',
             startDate: amc?.amc_start_date || '-',
             endDate: amc?.amc_end_date || '-',
             firstService: amc?.amc_first_service || '-',
@@ -68,6 +71,11 @@ export const AMCDetailsTab: React.FC<AMCDetailsTabProps> = ({ asset }) => {
                     <span className="text-gray-500 w-24">Vendor</span>
                     <span className="text-gray-500 mx-2">:</span>
                     <span className="text-gray-900 font-medium">{amcData.vendor}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="text-gray-500 w-24">AMC Type</span>
+                    <span className="text-gray-500 mx-2">:</span>
+                    <span className="text-gray-900 font-medium">{amcData.amcType}</span>
                   </div>
                   <div className="flex">
                     <span className="text-gray-500 w-24">First Service</span>

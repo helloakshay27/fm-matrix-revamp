@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X, Plus, FileText, FileSpreadsheet, File, Eye, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, X, Plus, FileText, FileSpreadsheet, File, Eye, Loader2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, FormHelperText, Box, Avatar, Chip } from '@mui/material';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
 import { MaterialDatePicker } from '@/components/ui/material-date-picker';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -36,12 +36,14 @@ export const EditAMCPage = () => {
   const [formData, setFormData] = useState({
     details: '',
     type: 'Individual',
+    amcType: 'Comprehensive',
     assetName: '',
     asset_ids: [] as string[],
     vendor: '',
     group: '',
     subgroup: '',
     service: '',
+    service_ids: [] as string[],
     supplier: '',
     startDate: '',
     endDate: '',
@@ -61,6 +63,7 @@ export const EditAMCPage = () => {
     group: '',
     supplier: '',
     service: '',
+    service_ids: '',
     startDate: '',
     endDate: '',
     cost: '',
@@ -238,12 +241,19 @@ export const EditAMCPage = () => {
   useEffect(() => {
     if (amcData && typeof amcData === 'object') {
       const data = amcData as any;
-      const resourceDetailType = data.resource_type === 'Pms::Service' ? 'Service' : 'Asset';
+      const resourceDetailType =
+        data.checklist_type === 'Service' || data.resource_type === 'Pms::Service'
+          ? 'Service'
+          : 'Asset';
       const amcType = data.amc_type === 'Service'
         ? 'Service'
         : data.amc_type === 'Asset'
           ? 'Asset'
           : resourceDetailType;
+      const coverageType =
+        data.amc_type === 'Non-Comprehensive' || data.amc_type === 'Comprehensive'
+          ? data.amc_type
+          : data.coverage_type || data.amc_coverage_type || 'Comprehensive';
       const isGroupType = data.amc_details_type === 'group';
 
       let assetIds: string[] = [];
@@ -259,14 +269,22 @@ export const EditAMCPage = () => {
       );
 
       // Extract service info from amc_services if available
+      let serviceIdsToUse: string[] = [];
       let serviceIdToUse = data.service_id?.toString();
       let serviceNameFromApi = '';
 
       if (Array.isArray(data.amc_services) && data.amc_services.length > 0) {
-        // For Individual type, use the first service from amc_services
+        serviceIdsToUse = data.amc_services
+          .map((service: any) => service.service_id?.toString())
+          .filter(Boolean);
+        // Keep the first service for legacy single-value fields.
         const firstService = data.amc_services[0];
         serviceIdToUse = firstService.service_id?.toString() || serviceIdToUse;
         serviceNameFromApi = firstService.service_name || '';
+      }
+
+      if (!serviceIdsToUse.length && serviceIdToUse) {
+        serviceIdsToUse = [serviceIdToUse];
       }
 
       const foundService = services.find(
@@ -289,6 +307,7 @@ export const EditAMCPage = () => {
       setFormData({
         details: amcType,
         type: isGroupType ? 'Group' : 'Individual',
+        amcType: coverageType,
         assetName: foundService || serviceIdToUse
           ? serviceIdToUse
           : data.resource_id === 'Pms::Service'
@@ -301,6 +320,7 @@ export const EditAMCPage = () => {
         service: foundService || serviceIdToUse
           ? serviceIdToUse
           : data.service_id?.toString() || formData.service,
+        service_ids: serviceIdsToUse,
         supplier: foundSupplier ? supplierId : '',
         startDate: data.amc_start_date || '',
         endDate: data.amc_end_date || '',
@@ -355,7 +375,8 @@ export const EditAMCPage = () => {
           ...prev,
           [field]: value,
           assetName: '',
-          asset_ids: []
+          asset_ids: [],
+          service_ids: []
         };
       }
       // Do NOT clear group, subgroup, service, or supplier when switching type
@@ -388,6 +409,13 @@ export const EditAMCPage = () => {
     setAttachments(prev => ({
       ...prev,
       [type]: prev[type].filter((_, i) => i !== index)
+    }));
+  };
+
+  const removeExistingFile = (type: 'contracts' | 'invoices', attachmentId: number) => {
+    setExistingFiles(prev => ({
+      ...prev,
+      [type]: prev[type].filter(file => file.attachment_id !== attachmentId)
     }));
   };
 
@@ -565,6 +593,7 @@ export const EditAMCPage = () => {
       group: '',
       supplier: '',
       service: '',
+      service_ids: '',
       startDate: '',
       endDate: '',
       cost: '',
@@ -586,8 +615,8 @@ export const EditAMCPage = () => {
           isValid = false;
         }
       } else if (formData.details === 'Service' && formData.type === 'Individual') {
-        if (!formData.assetName) {
-          newErrors.service = 'Please select a service.';
+        if (!formData.service_ids.length) {
+          newErrors.service_ids = 'Please select a service.';
           isValid = false;
         }
         if (!formData.vendor) {
@@ -652,6 +681,7 @@ export const EditAMCPage = () => {
       group: '',
       supplier: '',
       service: '',
+      service_ids: '',
       startDate: '',
       endDate: '',
       cost: '',
@@ -671,8 +701,8 @@ export const EditAMCPage = () => {
         isValid = false;
       }
     } else if (formData.details === 'Service' && formData.type === 'Individual') {
-      if (!formData.assetName) {
-        newErrors.service = 'Please select a service.';
+      if (!formData.service_ids.length) {
+        newErrors.service_ids = 'Please select a service.';
         isValid = false;
       }
       if (!formData.vendor) {
@@ -767,6 +797,7 @@ export const EditAMCPage = () => {
       sendData.append('pms_asset_amc[remarks]', formData.remarks || '');
       sendData.append('pms_asset_amc[pms_site_id]', (amcData as any)?.pms_site_id || '');
       sendData.append('pms_asset_amc[type]', formData.type);
+      sendData.append('pms_asset_amc[amc_type]', formData.amcType);
       sendData.append('pms_asset_amc[time_expression]', buildCronExpression());
       sendData.append('pms_asset_amc[check_box_time]', 'true');
 
@@ -791,7 +822,10 @@ export const EditAMCPage = () => {
           sendData.append('group_id', formData.group || '');
           sendData.append('sub_group_id', formData.subgroup || '');
         } else if (formData.type === 'Individual') {
-          sendData.append('pms_asset_amc[resource_id]', formData.assetName || formData.service);
+          sendData.append('pms_asset_amc[resource_id]', formData.service_ids.join(','));
+          formData.service_ids.forEach((serviceId) => {
+            sendData.append('service_ids[]', String(serviceId));
+          });
         }
       }
 
@@ -1166,9 +1200,18 @@ export const EditAMCPage = () => {
   };
 
   const getServiceName = () => {
-    if (!formData.assetName) return 'Not selected';
-    const service = services.find(s => s.id?.toString() === formData.assetName?.toString());
-    return service?.service_name || formData.assetName;
+    const serviceIds = formData.service_ids.length
+      ? formData.service_ids
+      : formData.assetName
+        ? [formData.assetName]
+        : [];
+    if (!serviceIds.length) return 'Not selected';
+    return serviceIds
+      .map(serviceId => {
+        const service = services.find(s => s.id?.toString() === serviceId?.toString());
+        return service?.service_name || serviceId;
+      })
+      .join(', ');
   };
 
   /*
@@ -1307,43 +1350,6 @@ export const EditAMCPage = () => {
   };
   */
 
-  const downloadAttachment = async (file) => {
-    try {
-      const token = localStorage.getItem('token');
-      const baseUrl = localStorage.getItem('baseUrl');
-
-      if (!token || !baseUrl) {
-        console.error('Missing token or base URL');
-        return;
-      }
-
-      const apiUrl = `https://${baseUrl}/attachfiles/${file.attachment_id}?show_file=true`;
-
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) throw new Error('Download failed');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = file.document_name || `document_${file.attachment_id}`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error('Error downloading file:', err);
-    }
-  };
-
-
   // Field styles - matching AddAMCPage
   const fieldStylesMUI = {
     height: '40px',
@@ -1444,24 +1450,25 @@ export const EditAMCPage = () => {
     };
 
     const renderServiceValue = (selected: any) => {
+      const values = Array.isArray(selected) ? selected : selected ? [selected] : [];
       // For Group type with amc_services, display service names
       if (formData.type === 'Group' && selectedServiceNames.length > 0) {
         return selectedServiceNames.join(', ');
       }
       // For Individual type, find service by ID
-      if (!selected || selected === '') {
+      if (!values.length) {
         // Check if we have selectedServiceNames as fallback
         if (selectedServiceNames.length > 0) {
           return selectedServiceNames.join(', ');
         }
         return <span style={{ color: '#aaa' }}>Select a Service...</span>;
       }
-      const service = services.find(s => s.id?.toString() === selected.toString());
-      // If service not found in services array, check selectedServiceNames (from amc_services)
-      if (!service && selectedServiceNames.length > 0) {
-        return selectedServiceNames[0]; // For Individual type, show the first service name
-      }
-      return service?.service_name || selected;
+      return values
+        .map((serviceId: string) => {
+          const service = services.find(s => s.id?.toString() === serviceId.toString());
+          return service?.service_name || serviceId;
+        })
+        .join(', ');
     };
 
     const renderGroupValue = (selected: any) => {
@@ -1526,6 +1533,27 @@ export const EditAMCPage = () => {
           </div>
 
           <div>
+            <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">AMC Type</label>
+            <div className="flex gap-6">
+              {['Comprehensive', 'Non-Comprehensive'].map(option => (
+                <label key={option} className="flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`preview-amc-type-${option}`}
+                    value={option}
+                    checked={formData.amcType === option}
+                    readOnly
+                    disabled
+                    className="mr-2 w-4 h-4"
+                    style={{ accentColor: '#C72030' }}
+                  />
+                  <span className="text-[#1a1a1a] font-medium">{option}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div>
             <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">Type</label>
             <div className="flex gap-6">
               {['Individual', 'Group'].map(option => (
@@ -1572,9 +1600,10 @@ export const EditAMCPage = () => {
                 <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Service <span style={{ color: '#C72030' }}>*</span></InputLabel>
                   <MuiSelect
+                    multiple
                     label="Service"
                     displayEmpty
-                    value={formData.assetName || formData.service || ''}
+                    value={formData.service_ids.length ? formData.service_ids : formData.assetName ? [formData.assetName] : []}
                     disabled
                     renderValue={renderServiceValue}
                   >
@@ -1994,9 +2023,10 @@ export const EditAMCPage = () => {
                   variant="ghost"
                   size="sm"
                   className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]"
-                  onClick={() => downloadAttachment(file)}
+                  onClick={() => removeExistingFile(type, file.attachment_id)}
+                  disabled={updateLoading}
                 >
-                  <Download className="w-3 h-3" />
+                  <X className="w-3 h-3" />
                 </Button>
               </div>
             );
@@ -2233,6 +2263,27 @@ export const EditAMCPage = () => {
                     </div>
 
                     <div>
+                      <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">AMC Type</label>
+                      <div className="flex gap-6">
+                        {['Comprehensive', 'Non-Comprehensive'].map(option => (
+                          <label key={option} className="flex items-center cursor-pointer">
+                            <input
+                              type="radio"
+                              name="amcType"
+                              value={option}
+                              checked={formData.amcType === option}
+                              onChange={e => handleInputChange('amcType', e.target.value)}
+                              className="mr-2 w-4 h-4"
+                              style={{ accentColor: '#C72030' }}
+                              disabled={updateLoading}
+                            />
+                            <span className="text-[#1a1a1a] font-medium">{option}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
                       <label className="block text-sm font-semibold mb-3 text-[#1a1a1a]">Type</label>
                       <div className="flex gap-4">
                         <label className="flex items-center">
@@ -2311,34 +2362,94 @@ export const EditAMCPage = () => {
                             {errors.asset_ids && <FormHelperText>{errors.asset_ids}</FormHelperText>}
                           </FormControl>
                         ) : (
-                          <FormControl fullWidth variant="outlined" error={!!errors.service}>
+                          <FormControl fullWidth variant="outlined" error={!!errors.service_ids}>
                             <InputLabel id="service-select-label" shrink>
                               Service <span style={{ color: '#C72030' }}>*</span>
                             </InputLabel>
                             <MuiSelect
                               labelId="service-select-label"
+                              multiple
                               label="Service"
                               displayEmpty
-                              value={formData.assetName}
-                              onChange={e => handleInputChange('assetName', e.target.value)}
-                              sx={fieldStyles}
+                              value={formData.service_ids}
+                              onChange={e => {
+                                const selected = e.target.value;
+                                const serviceIds = typeof selected === 'string'
+                                  ? selected.split(',').filter(Boolean)
+                                  : selected as string[];
+                                setFormData(prev => ({
+                                  ...prev,
+                                  service_ids: serviceIds,
+                                  assetName: serviceIds[0] || '',
+                                  service: serviceIds[0] || ''
+                                }));
+                                setErrors(prev => ({ ...prev, service_ids: '', service: '' }));
+                              }}
+                              sx={{
+                                ...fieldStyles,
+                                height: 'auto',
+                                minHeight: '56px',
+                                '& .MuiSelect-select': {
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  minHeight: '32px',
+                                  padding: '16px 44px 8px 14px',
+                                },
+                                '& .MuiSelect-icon': {
+                                  top: 'calc(50% - 0.5em)',
+                                },
+                              }}
                               disabled={loading || servicesLoading || updateLoading}
                               renderValue={(selected) => {
-                                if (!selected) {
+                                const selectedIds = Array.isArray(selected) ? selected : [];
+                                if (!selectedIds.length) {
                                   return <em>Select a Service...</em>;
                                 }
-                                const service = services.find(s => s.id.toString() === selected);
-                                return service ? service.service_name : selected;
+                                return (
+                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
+                                    {selectedIds.map(serviceId => {
+                                      const service = services.find(s => s.id.toString() === serviceId.toString());
+                                      return (
+                                        <Chip
+                                          key={serviceId}
+                                          label={service ? service.service_name : serviceId}
+                                          size="small"
+                                          onMouseDown={(event) => event.stopPropagation()}
+                                          onDelete={() => {
+                                            const serviceIds = formData.service_ids.filter(id => id !== serviceId);
+                                            setFormData(prev => ({
+                                              ...prev,
+                                              service_ids: serviceIds,
+                                              assetName: serviceIds[0] || '',
+                                              service: serviceIds[0] || ''
+                                            }));
+                                            setErrors(prev => ({ ...prev, service_ids: '', service: '' }));
+                                          }}
+                                          sx={{
+                                            backgroundColor: 'rgba(199,32,48,0.08)',
+                                            color: '#C72030',
+                                            fontWeight: 500,
+                                          }}
+                                        />
+                                      );
+                                    })}
+                                  </Box>
+                                );
                               }}
                             >
-                              <MenuItem value=""><em>Select a Service...</em></MenuItem>
                               {Array.isArray(services) && services.map((service) => (
                                 <MenuItem key={service.id} value={service.id.toString()}>
+                                  <input
+                                    type="checkbox"
+                                    checked={formData.service_ids.includes(service.id.toString())}
+                                    readOnly
+                                    style={{ marginRight: '8px', accentColor: '#C72030' }}
+                                  />
                                   {service.service_name}
                                 </MenuItem>
                               ))}
                             </MuiSelect>
-                            {errors.service && <FormHelperText>{errors.service}</FormHelperText>}
+                            {errors.service_ids && <FormHelperText>{errors.service_ids}</FormHelperText>}
                           </FormControl>
                         )}
 
@@ -2882,8 +2993,8 @@ export const EditAMCPage = () => {
                                     </div>
                                   )}
                                   <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{doc.document_name}</span>
-                                  <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(doc)}>
-                                    <Download className="w-3 h-3" />
+                                  <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => removeExistingFile('contracts', doc.attachment_id)} disabled={updateLoading}>
+                                    <X className="w-3 h-3" />
                                   </Button>
                                 </div>
                               );
@@ -2938,8 +3049,8 @@ export const EditAMCPage = () => {
                                     </div>
                                   )}
                                   <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
-                                  <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(file)}>
-                                    <Download className="w-3 h-3" />
+                                  <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => removeFile('invoices', index)} disabled={updateLoading}>
+                                    <X className="w-3 h-3" />
                                   </Button>
 
                                 </div>
@@ -2974,8 +3085,8 @@ export const EditAMCPage = () => {
                                     </div>
                                   )}
                                   <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.document_name}</span>
-                                  <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => downloadAttachment(file)}>
-                                    <Download className="w-3 h-3" />
+                                  <Button type="button" variant="ghost" size="sm" className="absolute top-1 right-1 h-4 w-4 p-0 text-[#C72030]" onClick={() => removeExistingFile('invoices', file.attachment_id)} disabled={updateLoading}>
+                                    <X className="w-3 h-3" />
                                   </Button>
                                 </div>
                               );
