@@ -226,6 +226,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "1" ||
       org_id === "84" ||
       org_id === "1" ||
+      org_id === "10" ||
+      org_id === "3" ||
+      userEmail === "sumanta.karmakar@ltimindtree.com" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
@@ -327,6 +330,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       org_id === "1" ||
       org_id === "84" ||
       org_id === "1" ||
+      org_id === "10" ||
+      org_id === "3" ||
+      userEmail === "sumanta.karmakar@ltimindtree.com" ||
       userEmail === "ubaid.hashmat@lockated.com" ||
       userEmail === "besis69240@azeriom.com" ||
       userEmail === "megipow156@aixind.com" ||
@@ -465,15 +471,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Conditional Header - Hide in embedded mode, Use EmployeeHeader or EmployeeHeaderStatic for employee users */}
       {isEmbedded ? null : isEmployeeUser && isLocalhost ? (
         selectedCompany?.id === 300 ||
-        selectedCompany?.id === 295 ||
-        selectedCompany?.id === 298 ||
-        selectedCompany?.id === 199 ||
-        org_id === "90" ||
-        org_id === "1" ||
-        userEmail === "ubaid.hashmat@lockated.com" ||
-        userEmail === "besis69240@azeriom.com" ||
-        userEmail === "megipow156@aixind.com" ||
-        userEmail === "jevosak839@cimario.com" ? (
+          selectedCompany?.id === 295 ||
+          selectedCompany?.id === 298 ||
+          selectedCompany?.id === 199 ||
+          org_id === "90" ||
+          org_id === "1" ||
+          userEmail === "ubaid.hashmat@lockated.com" ||
+          userEmail === "besis69240@azeriom.com" ||
+          userEmail === "megipow156@aixind.com" ||
+          userEmail === "jevosak839@cimario.com" ? (
           <EmployeeHeader />
         ) : (
           // isNewEmpHubRoute ? (
@@ -513,7 +519,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           isEmbedded
             ? "ml-0 pt-4"
             : // For employee users, only add left margin if on Project Task module
-              isEmployeeUser && isLocalhost
+            isEmployeeUser && isLocalhost
               ? currentSection === "Project Task" ||
                 currentSection === "Business Compass" ||
                 currentSection === "Admin Compass" ||
@@ -524,12 +530,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   : "ml-0 md:ml-64"
                 : "ml-0" // No margin for other modules
               : // For action sidebar, add extra top padding and adjust left margin
-                isActionSidebarVisible
+              isActionSidebarVisible
                 ? "ml-0 md:ml-64 pt-28"
                 : isSidebarCollapsed
                   ? "ml-0 md:ml-16"
                   : "ml-0 md:ml-64"
-        } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
+          } ${isEmbedded ? "" : isEmployeeUser && isLocalhost ? "pt-16" : isActionSidebarVisible ? "" : "pt-28"} transition-all duration-300`}
       >
         <Outlet />
       </main>
