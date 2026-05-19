@@ -961,7 +961,7 @@ export const EditMaterialPRDashboard = () => {
                     >
                       <MenuItem value=""><em>Select WBS Code</em></MenuItem>
                       {wbsCodes.map((wbs) => (
-                        <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>{wbs.wbs_code}</MenuItem>
+                        <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>{`${wbs.wbs_code} - ${wbs.wbs_name}`}</MenuItem>
                       ))}
                     </MuiSelect>
                   </FormControl>
@@ -1080,7 +1080,7 @@ export const EditMaterialPRDashboard = () => {
                           >
                             <MenuItem value=""><em>Select WBS Code</em></MenuItem>
                             {wbsCodes.map((wbs) => (
-                              <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>{wbs.wbs_code}</MenuItem>
+                              <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>{`${wbs.wbs_code} - ${wbs.wbs_name}`}</MenuItem>
                             ))}
                           </MuiSelect>
                         </FormControl>
