@@ -6,6 +6,33 @@ interface SecurityOverlaysProps {
   security: SecurityState;
 }
 
+const FaceMeasurementOverlay: React.FC<{ compact?: boolean }> = ({
+  compact = false,
+}) => {
+  const cornerSize = compact ? "h-4 w-4" : "h-7 w-7";
+  const cornerClass = `${cornerSize} absolute border-[#DA7756]`;
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute inset-3 border border-white/15" />
+      <div className="absolute left-1/2 top-3 h-[calc(100%-1.5rem)] w-px -translate-x-1/2 bg-white/15" />
+      <div className="absolute left-3 top-1/2 h-px w-[calc(100%-1.5rem)] -translate-y-1/2 bg-white/15" />
+      <div className="absolute left-[22%] top-[24%] h-[18%] w-[56%] rounded-[50%] border border-[#DA7756]/50" />
+      <div className="absolute left-[30%] top-[54%] h-[16%] w-[40%] rounded-[50%] border border-white/20" />
+      <div className="absolute left-[18%] top-[18%] h-[64%] w-[64%] rotate-[-16deg] border-l border-t border-white/20" />
+      <div className="absolute right-[18%] top-[18%] h-[64%] w-[64%] rotate-[16deg] border-r border-t border-white/20" />
+      <div className="absolute inset-x-4 top-1/2 h-px bg-[#DA7756]/80 shadow-[0_0_18px_rgba(218,119,86,0.8)]" />
+      <div className={`${cornerClass} left-2 top-2 border-l-2 border-t-2`} />
+      <div className={`${cornerClass} right-2 top-2 border-r-2 border-t-2`} />
+      <div className={`${cornerClass} bottom-2 left-2 border-b-2 border-l-2`} />
+      <div className={`${cornerClass} bottom-2 right-2 border-b-2 border-r-2`} />
+      <div className="absolute bottom-2 right-3 rounded bg-black/45 px-1.5 py-0.5 font-mono text-[8px] font-semibold tracking-widest text-white/70">
+        SCAN
+      </div>
+    </div>
+  );
+};
+
 // STUB EXPORTS (kept so existing imports don't break)
 // State screens are now overlays inside SecurityOverlays, not early returns.
 // Pages should just render <SecurityOverlays> and their content; no guards needed.
@@ -115,6 +142,7 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
   const canRetryFaceCheck =
     showBadge &&
     (faceAuthStatus === "api_unavailable" || faceAuthStatus === "error");
+  const showLiveBadge = showBadge && !showBlankScreen;
 
   return (
     <>
@@ -201,11 +229,65 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
       {/* NO FACE DETECTED */}
       {showBlankScreen && (
         <div className="fixed inset-0 z-[9998] bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
-          <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-300/30 flex items-center justify-center mb-6">
-            <Camera className="w-10 h-10 text-gray-700" />
+          <div className="relative mb-6">
+            <div
+              className="absolute inset-0 rounded-xl animate-ping"
+              style={{
+                background:
+                  faceAuthStatus === "unconfigured"
+                    ? "rgba(218,119,86,0.28)"
+                    : "rgba(239,68,68,0.25)",
+                animationDuration: "2s",
+              }}
+            />
+            <div className="relative h-40 w-40 overflow-hidden rounded-lg border-2 border-white/15 bg-black shadow-2xl">
+              <video
+                ref={previewVideoRef}
+                autoPlay
+                playsInline
+                muted
+                className="h-full w-full object-cover"
+                style={{
+                  transform: "scaleX(-1)",
+                  display: showBadge ? "block" : "none",
+                }}
+              />
+              {showBadge && <FaceMeasurementOverlay />}
+              {!showBadge && (
+                <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                  <Camera className="w-10 h-10 text-gray-700" />
+                </div>
+              )}
+            </div>
           </div>
           <h1 className="text-2xl font-semibold mb-3">{blankTitle}</h1>
           <p className="text-white/50 text-sm max-w-md">{blankCopy}</p>
+          {canRegisterFace && (
+            <button
+              type="button"
+              disabled={registeringFace}
+              onClick={registerFace}
+              className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#DA7756] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#c66545] disabled:cursor-wait disabled:opacity-60"
+            >
+              {registeringFace ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <UserCheck className="h-4 w-4" />
+              )}
+              {registeringFace ? "Enrolling Face..." : "Enroll Face"}
+            </button>
+          )}
+          {canRetryFaceCheck && (
+            <button
+              type="button"
+              disabled={registeringFace}
+              onClick={refreshFaceProfile}
+              className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20 disabled:cursor-wait disabled:opacity-60"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Retry Face Check
+            </button>
+          )}
         </div>
       )}
 
@@ -291,7 +373,7 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
       </div>
 
       {/* LIVE CAMERA BADGE (draggable) - only shown when fully active */}
-      {showBadge && (
+      {showLiveBadge && (
         <div
           className="fixed z-[9992] flex flex-col items-center gap-1.5 select-none cursor-grab active:cursor-grabbing touch-none"
           style={{
@@ -308,7 +390,7 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
         >
           <div className="relative">
             <div
-              className="absolute inset-0 rounded-full animate-ping"
+              className="absolute inset-0 rounded-xl animate-ping"
               style={{
                 background: isBlurred
                   ? "rgba(239,68,68,0.35)"
@@ -317,30 +399,28 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
               }}
             />
             <div
-              className="relative rounded-full p-[2px]"
+              className="relative rounded-xl p-[2px]"
               style={{
                 background: isBlurred
                   ? "linear-gradient(135deg,#ef4444,#b91c1c)"
                   : "linear-gradient(135deg,#4ade80,#16a34a)",
               }}
             >
-              <div
-                className="rounded-full overflow-hidden bg-black"
-                style={{ width: 56, height: 56 }}
-              >
+              <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-black">
                 <video
                   ref={previewVideoRef}
                   autoPlay
                   playsInline
                   muted
                   style={{
-                    width: 56,
-                    height: 56,
+                    width: 80,
+                    height: 80,
                     objectFit: "cover",
                     transform: "scaleX(-1)",
                     display: "block",
                   }}
                 />
+                <FaceMeasurementOverlay compact />
               </div>
             </div>
             <div

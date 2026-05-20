@@ -1004,6 +1004,29 @@ export function useProductSecurity(): SecurityState {
   const showBlankScreen =
     cameraPermission === "granted" && !faceDetected && !modelLoading;
 
+  useEffect(() => {
+    if (cameraPermission !== "granted" || !mediaStreamRef.current) return;
+
+    const previewVideo = previewVideoRef.current;
+    if (!previewVideo) return;
+
+    if (previewVideo.srcObject !== mediaStreamRef.current) {
+      previewVideo.srcObject = mediaStreamRef.current;
+    }
+
+    const playPreview = () => {
+      previewVideo
+        .play()
+        .catch((e) => console.warn("Preview video play failed:", e));
+    };
+
+    if (previewVideo.readyState >= 1) {
+      playPreview();
+    } else {
+      previewVideo.onloadedmetadata = playPreview;
+    }
+  }, [cameraPermission, model, showBlankScreen]);
+
   return {
     cameraPermission,
     isBlurred,

@@ -688,6 +688,9 @@ const productData: Product[] = [
   },
 ];
 
+const getDisplayProductName = (product: Product) =>
+  product.name.replace(/\s*\*\s*$/, "");
+
 const Products: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -787,6 +790,17 @@ const Products: React.FC = () => {
     },
   ];
 
+  const openProductDetails = (product: Product) => {
+    const targetPath = `/product/${product.slug}`;
+
+    navigate(`${targetPath}/access`, {
+      state: {
+        productName: getDisplayProductName(product),
+        targetPath,
+      },
+    });
+  };
+
   const renderCell = (product: Product, columnKey: string) => {
     switch (columnKey) {
       case "isActive":
@@ -867,10 +881,10 @@ const Products: React.FC = () => {
           <span className="text-xs text-gray-400">-</span>
         );
       case "name": {
-        const displayName = product.name.replace(/\s*\*\s*$/, "");
+        const displayName = getDisplayProductName(product);
         return (
           <button
-            onClick={() => navigate(`/product/${product.slug}`)}
+            onClick={() => openProductDetails(product)}
             className="text-blue-600 font-bold hover:underline text-left text-xs leading-relaxed"
           >
             {displayName}
@@ -892,7 +906,7 @@ const Products: React.FC = () => {
         variant="ghost"
         size="sm"
         className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 transition-all"
-        onClick={() => navigate(`/product/${product.slug}`)}
+        onClick={() => openProductDetails(product)}
       >
         <Eye className="w-4 h-4" />
       </Button>
