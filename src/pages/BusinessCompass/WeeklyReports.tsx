@@ -283,10 +283,7 @@ const WeeklyReports = () => {
         Record<string, boolean>
     >({});
     const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
-    const [pauseItem, setPauseItem] = useState<{
-        id: number;
-        type: "task" | "issue";
-    } | null>(null);
+    const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
     const [isPauseLoading, setIsPauseLoading] = useState(false);
     const [updatingPlayPauseIds, setUpdatingPlayPauseIds] = useState<
         Record<string, boolean>
@@ -1229,23 +1226,18 @@ const WeeklyReports = () => {
         }
     };
 
-    const handlePlayTaskIssue = async (item: any) => {
-        if (!item || !normalizedBaseUrl || !["task", "issue"].includes(item.type)) return;
+    const handlePlayTask = async (item: any) => {
+        if (!item || item.type !== "task" || !normalizedBaseUrl) return;
 
         const realId = Number(
             String(item.id || "").replace("task-", "").replace("issue-", "")
         );
         if (!realId) return;
 
-        const endpoint =
-            item.type === "task"
-                ? `${normalizedBaseUrl}/task_managements/${realId}/update_status.json`
-                : `${normalizedBaseUrl}/issues/${realId}/update_status.json`;
-
         setUpdatingPlayPauseIds((prev) => ({ ...prev, [item.id]: true }));
         try {
             await axios.put(
-                endpoint,
+                `${normalizedBaseUrl}/task_managements/${realId}/update_status.json`,
                 { status: "started" },
                 {
                     headers: {
@@ -1268,12 +1260,12 @@ const WeeklyReports = () => {
                 )
             );
             toast.success(
-                `${item.type === "task" ? "Task" : "Issue"} started successfully`
+                "Task started successfully"
             );
             setTasksIssuesRefreshKey((key) => key + 1);
         } catch (error) {
-            console.error(`Failed to start ${item.type}:`, error);
-            toast.error(`Failed to start ${item.type}`);
+            console.error("Failed to start task:", error);
+            toast.error("Failed to start task");
         } finally {
             setUpdatingPlayPauseIds((prev) => {
                 const next = { ...prev };
@@ -1283,24 +1275,16 @@ const WeeklyReports = () => {
         }
     };
 
-    const handlePauseTaskIssueSubmit = async (
-        reason: string,
-        target: { id: number; type: "task" | "issue" } | null
-    ) => {
-        if (!target || !normalizedBaseUrl) return;
+    const handlePauseTaskSubmit = async (reason: string, taskId: number | null) => {
+        if (!taskId || !normalizedBaseUrl) return;
 
-        const itemKey = `${target.type}-${target.id}`;
-        const endpoint =
-            target.type === "task"
-                ? `${normalizedBaseUrl}/task_managements/${target.id}/update_status.json`
-                : `${normalizedBaseUrl}/issues/${target.id}/update_status.json`;
-        const commentableType = target.type === "task" ? "TaskManagement" : "Issue";
+        const itemKey = `task-${taskId}`;
 
         setIsPauseLoading(true);
         setUpdatingPlayPauseIds((prev) => ({ ...prev, [itemKey]: true }));
         try {
             await axios.put(
-                endpoint,
+                `${normalizedBaseUrl}/task_managements/${taskId}/update_status.json`,
                 { status: "stopped" },
                 {
                     headers: {
@@ -1314,8 +1298,8 @@ const WeeklyReports = () => {
                 {
                     comment: {
                         body: `Paused with reason: ${reason}`,
-                        commentable_id: target.id,
-                        commentable_type: commentableType,
+                        commentable_id: taskId,
+                        commentable_type: "TaskManagement",
                         commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
                         active: true,
                     },
@@ -1341,15 +1325,15 @@ const WeeklyReports = () => {
                 )
             );
             toast.success(
-                `${target.type === "task" ? "Task" : "Issue"} paused successfully`
+                "Task paused successfully"
             );
             setIsPauseModalOpen(false);
-            setPauseItem(null);
+            setPauseTaskId(null);
             setTasksIssuesRefreshKey((key) => key + 1);
         } catch (error: any) {
-            console.error(`Failed to pause ${target.type}:`, error);
+            console.error("Failed to pause task:", error);
             toast.error(
-                `Failed to pause ${target.type}: ${error?.response?.data?.error || error?.message || "Server error"}`
+                `Failed to pause task: ${error?.response?.data?.error || error?.message || "Server error"}`
             );
         } finally {
             setIsPauseLoading(false);
@@ -2919,17 +2903,14 @@ const WeeklyReports = () => {
                                                 >
                                                     <Pencil size={14} />
                                                 </button>
-                                                {(item.type === "task" || item.type === "issue") &&
+                                                {item.type === "task" &&
                                                     item.status !== "completed" &&
                                                     item.status !== "closed" && (
                                                         item.originalData?.is_started ? (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    setPauseItem({
-                                                                        id: item.originalData.id,
-                                                                        type: item.type,
-                                                                    });
+                                                                    setPauseTaskId(item.originalData.id);
                                                                     setIsPauseModalOpen(true);
                                                                 }}
                                                                 disabled={!!updatingPlayPauseIds[item.id]}
@@ -2949,7 +2930,7 @@ const WeeklyReports = () => {
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    handlePlayTaskIssue(item);
+                                                                    handlePlayTask(item);
                                                                 }}
                                                                 disabled={!!updatingPlayPauseIds[item.id]}
                                                                 className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
@@ -4515,11 +4496,11 @@ const WeeklyReports = () => {
                 isOpen={isPauseModalOpen}
                 onClose={() => {
                     setIsPauseModalOpen(false);
-                    setPauseItem(null);
+                    setPauseTaskId(null);
                 }}
-                onSubmit={handlePauseTaskIssueSubmit}
+                onSubmit={handlePauseTaskSubmit}
                 isLoading={isPauseLoading}
-                target={pauseItem}
+                taskId={pauseTaskId}
             />
 
             <Menu
@@ -4875,19 +4856,15 @@ const PauseReasonModal = ({
     onClose,
     onSubmit,
     isLoading,
-    target,
+    taskId,
 }: {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (
-        reason: string,
-        target: { id: number; type: "task" | "issue" } | null
-    ) => void;
+    onSubmit: (reason: string, taskId: number | null) => void;
     isLoading: boolean;
-    target: { id: number; type: "task" | "issue" } | null;
+    taskId: number | null;
 }) => {
     const [reason, setReason] = useState("");
-    const label = target?.type === "issue" ? "Issue" : "Task";
 
     useEffect(() => {
         if (!isOpen) setReason("");
@@ -4895,10 +4872,10 @@ const PauseReasonModal = ({
 
     const handleSubmit = () => {
         if (!reason.trim()) {
-            toast.error(`Please enter a reason for pausing the ${label.toLowerCase()}`);
+            toast.error("Please enter a reason for pausing the task");
             return;
         }
-        onSubmit(reason, target);
+        onSubmit(reason, taskId);
     };
 
     if (!isOpen) return null;
@@ -4908,10 +4885,10 @@ const PauseReasonModal = ({
             <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] max-w-[calc(100vw-2rem)] border border-gray-200">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-1 h-8 bg-[#C72030] rounded-sm" />
-                    <h2 className="text-lg font-bold text-gray-900">Pause {label}</h2>
+                    <h2 className="text-lg font-bold text-gray-900">Pause Task</h2>
                 </div>
                 <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                    Please provide a reason for pausing this {label.toLowerCase()}.
+                    Please provide a reason for pausing this task.
                 </p>
                 <div className="mb-6">
                     <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
@@ -4920,7 +4897,7 @@ const PauseReasonModal = ({
                     <textarea
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
-                        placeholder={`Enter reason for pausing this ${label.toLowerCase()}...`}
+                        placeholder="Enter reason for pausing this task..."
                         className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
                         rows={4}
                         disabled={isLoading}
@@ -4939,7 +4916,7 @@ const PauseReasonModal = ({
                         disabled={isLoading}
                         className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
                     >
-                        {isLoading ? "Processing..." : `Pause ${label}`}
+                        {isLoading ? "Processing..." : "Pause Task"}
                     </button>
                 </div>
             </div>
