@@ -1510,7 +1510,7 @@ export const AMCDetailsPage = () => {
                         <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Asset/service Covered</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
                       </TableRow>
                     </TableHeader>

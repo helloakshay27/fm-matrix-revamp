@@ -415,6 +415,7 @@ import OfficeAlternativePage from "./pages/products/OfficeAlternativePage";
 import BudgetingWBSPage from "./pages/products/BudgetingWBSPage";
 import LiquidtextPage from "./pages/products/LiquidtextPage";
 import ViMilesPage from "./pages/products/ViMilesPage";
+import ProductAccessGate from "./pages/products/ProductAccessGate";
 import ProductLandingPage from "./pages/products/ProductLandingPage";
 import HRPolicies from "./pages/HRPolicies";
 import Directory from "./pages/Directory";
@@ -5662,6 +5663,10 @@ function App() {
                           path="/product-details/:productId"
                           element={<ProductDetails />}
                         />
+                          <Route
+                            path="/product/:productSlug/access"
+                            element={<ProductAccessGate />}
+                          />
                         <Route
                           path="/product/loyalty"
                           element={<CustomerAppPage />}

@@ -27,6 +27,8 @@ interface Filters {
   status?: string;
   entity?: string;
   created_at?: string;
+  created_date_from?: string;
+  created_date_to?: string;
 }
 
 interface FilterDialogProps {
@@ -66,6 +68,8 @@ export const OccupantUsersFilterDialog = ({
       status: "",
       entity: "",
       created_at: "",
+      created_date_from: "",
+      created_date_to: "",
     });
   };
 
@@ -193,11 +197,26 @@ export const OccupantUsersFilterDialog = ({
             <div>
               <TextField
                 fullWidth
-                label="Created Date"
+                label="Created Date From"
                 type="date"
                 variant="outlined"
-                value={filters.created_at}
-                onChange={(e) => handleFilterChange("created_at", e.target.value)}
+                value={filters.created_date_from}
+                onChange={(e) => handleFilterChange("created_date_from", e.target.value)}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={fieldStyles}
+              />
+            </div>
+
+            <div>
+              <TextField
+                fullWidth
+                label="Created Date To"
+                type="date"
+                variant="outlined"
+                value={filters.created_date_to}
+                onChange={(e) => handleFilterChange("created_date_to", e.target.value)}
                 InputLabelProps={{
                   shrink: true,
                 }}

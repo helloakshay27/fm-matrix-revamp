@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +67,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import AccountingDocumentPdf from "@/components/accounting/AccountingDocumentPdf";
 
 export const InvoiceDashboardDetailsPage = () => {
   const { id } = useParams();
@@ -97,6 +100,9 @@ export const InvoiceDashboardDetailsPage = () => {
   const [attachments, setAttachments] = useState([]);
   const [notes, setNotes] = useState("");
   const [sendThankYou, setSendThankYou] = useState(true);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+  const invoicePdfRef = useRef(null);
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
@@ -308,11 +314,55 @@ export const InvoiceDashboardDetailsPage = () => {
   };
 
   const handlePrint = () => {
-    window.print();
+    setActiveTab("pdf");
+    setTimeout(() => window.print(), 0);
   };
 
-  const handleDownload = () => {
-    sonnerToast.success("Downloading invoice PDF...");
+  const handleDownload = async () => {
+    try {
+      setPdfGenerating(true);
+      setRenderDownloadPdf(true);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      if (!invoicePdfRef.current) {
+        throw new Error("PDF preview is not ready yet");
+      }
+
+      const canvas = await html2canvas(invoicePdfRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`Invoice-${invoiceData?.invoice_number || id || "download"}.pdf`);
+      sonnerToast.success("Invoice PDF downloaded successfully");
+    } catch (error) {
+      console.error("Error generating invoice PDF:", error);
+      sonnerToast.error("Failed to download invoice PDF");
+    } finally {
+      setPdfGenerating(false);
+      setRenderDownloadPdf(false);
+    }
   };
 
   const handleSendEmail = () => {
@@ -530,6 +580,9 @@ export const InvoiceDashboardDetailsPage = () => {
     }
   });
   const taxRows = Object.entries(taxBreakdown);
+  const invoiceItems = Array.isArray(invoiceData?.item_details)
+    ? invoiceData.item_details
+    : [];
   const mapTransactionsToJournal = (transactions = []) => {
     return transactions.map((t) => ({
       account: t.ledger_name,
@@ -582,6 +635,27 @@ export const InvoiceDashboardDetailsPage = () => {
                 Approval Log
               </Button>
             )}
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setActiveTab("pdf")}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              PDF
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDownload}
+              disabled={pdfGenerating}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {pdfGenerating ? "Downloading..." : "Download PDF"}
+            </Button>
 
             {/* ── WITHOUT APPROVAL ── */}
             {!hasInvoiceApproval && (
@@ -692,7 +766,7 @@ export const InvoiceDashboardDetailsPage = () => {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-5 w-full max-w-4xl">
+          <TabsList className="flex flex-wrap w-full max-w-5xl">
             <TabsTrigger value="invoice-details">Invoice Details</TabsTrigger>
             {invoiceData.status === "Overdue" && (
               <TabsTrigger value="record-payment">Record Payment</TabsTrigger>
@@ -700,6 +774,7 @@ export const InvoiceDashboardDetailsPage = () => {
             <TabsTrigger value="customer-info">Customer Info</TabsTrigger>
             <TabsTrigger value="attachments">Attachments & Comms</TabsTrigger>
             <TabsTrigger value="activity-logs">Activity Logs</TabsTrigger>
+            <TabsTrigger value="pdf">PDF</TabsTrigger>
           </TabsList>
 
           {/* Invoice Details Tab */}
@@ -1403,6 +1478,50 @@ export const InvoiceDashboardDetailsPage = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="pdf" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    Invoice PDF
+                  </CardTitle>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={handlePrint}>
+                      <Printer className="h-4 w-4 mr-2" />
+                      Print
+                    </Button>
+                    <Button size="sm" onClick={handleDownload} disabled={pdfGenerating}>
+                      <Download className="h-4 w-4 mr-2" />
+                      {pdfGenerating ? "Downloading..." : "Download PDF"}
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-auto rounded-lg border bg-muted/30 p-4">
+                  <div className="mx-auto bg-white" ref={activeTab === "pdf" ? invoicePdfRef : null}>
+                    <AccountingDocumentPdf
+                      documentTitle="INVOICE"
+                      documentNumber={invoiceData.invoice_number}
+                      documentDate={invoiceData.date}
+                      status={invoiceData.status}
+                      customerName={invoiceData.customer_name}
+                      items={invoiceItems}
+                      data={invoiceData}
+                      taxRows={taxRows}
+                      formatDate={formatDate}
+                      formatCurrency={formatCurrency}
+                      secondaryDateLabel="Due Date"
+                      secondaryDate={invoiceData.due_date}
+                      referenceNumber={invoiceData.order_number}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           {/* Customer Info Tab */}
           <TabsContent value="customer-info" className="space-y-6">
             <Card>
@@ -1624,6 +1743,28 @@ export const InvoiceDashboardDetailsPage = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {renderDownloadPdf && activeTab !== "pdf" && (
+        <div className="fixed left-[-10000px] top-0">
+          <div ref={invoicePdfRef}>
+            <AccountingDocumentPdf
+              documentTitle="INVOICE"
+              documentNumber={invoiceData.invoice_number}
+              documentDate={invoiceData.date}
+              status={invoiceData.status}
+              customerName={invoiceData.customer_name}
+              items={invoiceItems}
+              data={invoiceData}
+              taxRows={taxRows}
+              formatDate={formatDate}
+              formatCurrency={formatCurrency}
+              secondaryDateLabel="Due Date"
+              secondaryDate={invoiceData.due_date}
+              referenceNumber={invoiceData.order_number}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

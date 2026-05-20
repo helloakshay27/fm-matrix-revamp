@@ -42,7 +42,7 @@ import {
     startOfWeek,
     subDays,
 } from "date-fns";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -283,10 +283,7 @@ const WeeklyReports = () => {
         Record<string, boolean>
     >({});
     const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
-    const [pauseItem, setPauseItem] = useState<{
-        id: number;
-        type: "task" | "issue";
-    } | null>(null);
+    const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
     const [isPauseLoading, setIsPauseLoading] = useState(false);
     const [updatingPlayPauseIds, setUpdatingPlayPauseIds] = useState<
         Record<string, boolean>
@@ -1229,23 +1226,18 @@ const WeeklyReports = () => {
         }
     };
 
-    const handlePlayTaskIssue = async (item: any) => {
-        if (!item || !normalizedBaseUrl || !["task", "issue"].includes(item.type)) return;
+    const handlePlayTask = async (item: any) => {
+        if (!item || item.type !== "task" || !normalizedBaseUrl) return;
 
         const realId = Number(
             String(item.id || "").replace("task-", "").replace("issue-", "")
         );
         if (!realId) return;
 
-        const endpoint =
-            item.type === "task"
-                ? `${normalizedBaseUrl}/task_managements/${realId}/update_status.json`
-                : `${normalizedBaseUrl}/issues/${realId}/update_status.json`;
-
         setUpdatingPlayPauseIds((prev) => ({ ...prev, [item.id]: true }));
         try {
             await axios.put(
-                endpoint,
+                `${normalizedBaseUrl}/task_managements/${realId}/update_status.json`,
                 { status: "started" },
                 {
                     headers: {
@@ -1268,12 +1260,12 @@ const WeeklyReports = () => {
                 )
             );
             toast.success(
-                `${item.type === "task" ? "Task" : "Issue"} started successfully`
+                "Task started successfully"
             );
             setTasksIssuesRefreshKey((key) => key + 1);
         } catch (error) {
-            console.error(`Failed to start ${item.type}:`, error);
-            toast.error(`Failed to start ${item.type}`);
+            console.error("Failed to start task:", error);
+            toast.error("Failed to start task");
         } finally {
             setUpdatingPlayPauseIds((prev) => {
                 const next = { ...prev };
@@ -1283,24 +1275,16 @@ const WeeklyReports = () => {
         }
     };
 
-    const handlePauseTaskIssueSubmit = async (
-        reason: string,
-        target: { id: number; type: "task" | "issue" } | null
-    ) => {
-        if (!target || !normalizedBaseUrl) return;
+    const handlePauseTaskSubmit = async (reason: string, taskId: number | null) => {
+        if (!taskId || !normalizedBaseUrl) return;
 
-        const itemKey = `${target.type}-${target.id}`;
-        const endpoint =
-            target.type === "task"
-                ? `${normalizedBaseUrl}/task_managements/${target.id}/update_status.json`
-                : `${normalizedBaseUrl}/issues/${target.id}/update_status.json`;
-        const commentableType = target.type === "task" ? "TaskManagement" : "Issue";
+        const itemKey = `task-${taskId}`;
 
         setIsPauseLoading(true);
         setUpdatingPlayPauseIds((prev) => ({ ...prev, [itemKey]: true }));
         try {
             await axios.put(
-                endpoint,
+                `${normalizedBaseUrl}/task_managements/${taskId}/update_status.json`,
                 { status: "stopped" },
                 {
                     headers: {
@@ -1314,8 +1298,8 @@ const WeeklyReports = () => {
                 {
                     comment: {
                         body: `Paused with reason: ${reason}`,
-                        commentable_id: target.id,
-                        commentable_type: commentableType,
+                        commentable_id: taskId,
+                        commentable_type: "TaskManagement",
                         commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
                         active: true,
                     },
@@ -1341,15 +1325,15 @@ const WeeklyReports = () => {
                 )
             );
             toast.success(
-                `${target.type === "task" ? "Task" : "Issue"} paused successfully`
+                "Task paused successfully"
             );
             setIsPauseModalOpen(false);
-            setPauseItem(null);
+            setPauseTaskId(null);
             setTasksIssuesRefreshKey((key) => key + 1);
         } catch (error: any) {
-            console.error(`Failed to pause ${target.type}:`, error);
+            console.error("Failed to pause task:", error);
             toast.error(
-                `Failed to pause ${target.type}: ${error?.response?.data?.error || error?.message || "Server error"}`
+                `Failed to pause task: ${error?.response?.data?.error || error?.message || "Server error"}`
             );
         } finally {
             setIsPauseLoading(false);
@@ -2754,58 +2738,76 @@ const WeeklyReports = () => {
                         </Card>
 
                         {/* Tasks & Issues */}
-                        <Card className={cn("overflow-hidden", cardChrome)}>
-                            <div
-                                className={cn(
-                                    "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between",
-                                    sectionHeader
-                                )}
-                            >
-                                <div className="space-y-2">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <AlertTriangle className="h-5 w-5 shrink-0 text-[#DA7756]" />
-                                        <h3 className="font-bold text-neutral-900">
-                                            Tasks, Issues & Todos
-                                        </h3>
-                                        <Badge className="border-0 bg-neutral-200 px-2 py-0 text-[10px] font-bold uppercase text-neutral-700 hover:bg-neutral-200 hover:text-neutral-700">
-                                            Optional
-                                        </Badge>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        <Badge className="border-0 bg-[#DA7756]/10 px-3 py-1 text-[10px] font-bold text-[#9e4f36] hover:bg-[#DA7756]/10 hover:text-[#9e4f36]">
+                        <Card className="rounded-2xl border border-[#DA7756]/20 overflow-hidden bg-[#fff] shadow-sm mt-6">
+                            <div className="bg-white p-4 border-b border-[#b91c1c]/10">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-3">
+                                            <CheckSquare className="h-6 w-6 text-[#DA7756]" />
+                                            <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                                                Tasks, Issues & Todos
+                                            </h3>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-[#DA7756]/10 px-3 py-1 text-[10px] font-bold text-[#9e4f36]"
+                                            >
                                             Tasks: {taskIssueCounts.tasks}
-                                        </Badge>
-                                        <Badge className="border-0 bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-800 hover:bg-violet-100 hover:text-violet-800">
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-800"
+                                            >
                                             Issues: {taskIssueCounts.issues}
-                                        </Badge>
-                                        <Badge className="border-0 bg-yellow-100 px-3 py-1 text-[10px] font-bold text-yellow-800 hover:bg-yellow-100 hover:text-yellow-800">
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-yellow-100 px-3 py-1 text-[10px] font-bold text-yellow-800"
+                                            >
                                             Todos: {taskIssueCounts.todos}
-                                        </Badge>
-                                        <Badge className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800 hover:bg-emerald-100 hover:text-emerald-800">
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
+                                            >
                                             Closed: {taskIssueCounts.completed}
-                                        </Badge>
-                                        <Badge className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 hover:bg-sky-100 hover:text-sky-800">
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
+                                            >
                                             Open: {taskIssueCounts.open}
-                                        </Badge>
-                                        <Badge className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 hover:bg-red-100 hover:text-red-800">
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800"
+                                            >
                                             Overdue: {taskIssueCounts.overdue}
-                                        </Badge>
-                                        <Badge className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 hover:bg-amber-100 hover:text-amber-800">
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
+                                            >
                                             In Progress: {taskIssueCounts.inProgress}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <Badge className={badgePoints}>
+                                            {taskIssueCounts.completed}/20 PTS
                                         </Badge>
+                                        <Button
+                                            className="rounded-[8px] shadow-lg font-semibold text-sm"
+                                            onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
+                                        >
+                                            <Plus size={14} />
+                                            Add
+                                        </Button>
                                     </div>
                                 </div>
-                                <Button
-                                    type="button"
-                                    className={cn("shrink-0 rounded-xl", btnPrimary)}
-                                    // onClick={() => setAddTaskOpen(true)}
-                                    onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
-                                >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Add
-                                </Button>
                             </div>
-                            <div className="p-6">
+                            <CardContent className="p-6">
                                 {/* <CheckSquare className="h-12 w-12 text-neutral-200" />
                                 <p className="text-lg text-neutral-400">
                                     No open tasks or issues.
@@ -2818,7 +2820,7 @@ const WeeklyReports = () => {
                                             className="text-[#b91c1c]/30 animate-spin mb-3"
                                         />
                                         <p className="text-sm font-bold text-gray-500">
-                                            Loading tasks, issues and todos...
+                                            Loading tasks and issues...
                                         </p>
                                     </div>
                                 ) : mergedTasksIssues.length === 0 ? (
@@ -2826,7 +2828,7 @@ const WeeklyReports = () => {
                                         <div className="flex flex-col items-center gap-3 opacity-30">
                                             <CheckSquare
                                                 size={40}
-                                                className="text-[#b91c1c]/20"
+                                                className="text-[#DA7756]/20"
                                             />
                                             <p className="text-base font-bold text-gray-400 tracking-tight">
                                                 No open tasks or issues
@@ -2835,7 +2837,7 @@ const WeeklyReports = () => {
                                     </div>
                                 ) : (
                                     <div
-                                        className="space-y-2 max-h-[400px] overflow-y-auto w-full"
+                                        className="space-y-2 max-h-[400px] overflow-y-auto"
                                         ref={scrollContainerRef}
                                     >
                                         {mergedTasksIssues.map((item: any) => (
@@ -2845,13 +2847,13 @@ const WeeklyReports = () => {
                                                     "flex items-center gap-3 p-3 rounded-[10px] border transition-all",
                                                     item.status === "completed" ||
                                                         item.status === "closed"
-                                                        ? "bg-green-50/50 border-green-200/50"
+                                                        ? "bg-[#DA7756]/10 border-[#DA7756]/20"
                                                         : item.status === "overdue" ||
                                                             item.status === "overdued" ||
                                                             item.status === "on_hold"
-                                                            ? "bg-red-50/50 border-red-200/50"
+                                                            ? "bg-[#DA7756]/10 border-[#DA7756]/20"
                                                             : item.status === "in_progress"
-                                                                ? "bg-amber-50/50 border-amber-200/50"
+                                                                ? "bg-[#DA7756]/10 border-[#DA7756]/20"
                                                                 : "bg-blue-50/50 border-blue-200/50"
                                                 )}
                                             >
@@ -2897,7 +2899,7 @@ const WeeklyReports = () => {
                                                 >
                                                     <Eye
                                                         size={16}
-                                                        className="text-gray-600 hover:text-gray-800"
+                                                        className="text-[#DA7756] hover:text-[#DA7756]"
                                                     />
                                                 </button>
                                                 <button
@@ -2919,17 +2921,14 @@ const WeeklyReports = () => {
                                                 >
                                                     <Pencil size={14} />
                                                 </button>
-                                                {(item.type === "task" || item.type === "issue") &&
+                                                {item.type === "task" &&
                                                     item.status !== "completed" &&
                                                     item.status !== "closed" && (
                                                         item.originalData?.is_started ? (
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    setPauseItem({
-                                                                        id: item.originalData.id,
-                                                                        type: item.type,
-                                                                    });
+                                                                    setPauseTaskId(item.originalData.id);
                                                                     setIsPauseModalOpen(true);
                                                                 }}
                                                                 disabled={!!updatingPlayPauseIds[item.id]}
@@ -2949,7 +2948,7 @@ const WeeklyReports = () => {
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    handlePlayTaskIssue(item);
+                                                                    handlePlayTask(item);
                                                                 }}
                                                                 disabled={!!updatingPlayPauseIds[item.id]}
                                                                 className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
@@ -2967,7 +2966,7 @@ const WeeklyReports = () => {
                                                         )
                                                     )}
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white text-gray-600 uppercase">
+                                                    <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[#DA7756] text-[#fff] uppercase">
                                                         {item.type}
                                                     </span>
                                                     {item.status === "completed" ||
@@ -2989,18 +2988,18 @@ const WeeklyReports = () => {
                                                         <Info size={16} className="text-blue-600" />
                                                     )}
                                                 </div>
-                                                <div className="flex-1 min-w-0 text-left">
+                                                <div className="flex-1 min-w-0">
                                                     <p
                                                         className={cn(
-                                                            "text-sm font-medium truncate text-left",
+                                                            "text-sm font-medium truncate",
                                                             (item.status === "completed" ||
                                                                 item.status === "closed") &&
-                                                            "line-through text-gray-400"
+                                                            "line-through text-[#DA7756]"
                                                         )}
                                                     >
                                                         {item.title}
                                                     </p>
-                                                    <p className="text-xs text-gray-500 capitalize text-left">
+                                                    <p className="text-xs text-[#DA7756] capitalize">
                                                         {item.status.replace(/_/g, " ")}
                                                     </p>
                                                 </div>
@@ -3038,7 +3037,7 @@ const WeeklyReports = () => {
                                         )}
                                     </div>
                                 )}
-                            </div>
+                            </CardContent>
                         </Card>
 
                         {/* Deep work */}
@@ -4515,11 +4514,11 @@ const WeeklyReports = () => {
                 isOpen={isPauseModalOpen}
                 onClose={() => {
                     setIsPauseModalOpen(false);
-                    setPauseItem(null);
+                    setPauseTaskId(null);
                 }}
-                onSubmit={handlePauseTaskIssueSubmit}
+                onSubmit={handlePauseTaskSubmit}
                 isLoading={isPauseLoading}
-                target={pauseItem}
+                taskId={pauseTaskId}
             />
 
             <Menu
@@ -4875,19 +4874,15 @@ const PauseReasonModal = ({
     onClose,
     onSubmit,
     isLoading,
-    target,
+    taskId,
 }: {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (
-        reason: string,
-        target: { id: number; type: "task" | "issue" } | null
-    ) => void;
+    onSubmit: (reason: string, taskId: number | null) => void;
     isLoading: boolean;
-    target: { id: number; type: "task" | "issue" } | null;
+    taskId: number | null;
 }) => {
     const [reason, setReason] = useState("");
-    const label = target?.type === "issue" ? "Issue" : "Task";
 
     useEffect(() => {
         if (!isOpen) setReason("");
@@ -4895,10 +4890,10 @@ const PauseReasonModal = ({
 
     const handleSubmit = () => {
         if (!reason.trim()) {
-            toast.error(`Please enter a reason for pausing the ${label.toLowerCase()}`);
+            toast.error("Please enter a reason for pausing the task");
             return;
         }
-        onSubmit(reason, target);
+        onSubmit(reason, taskId);
     };
 
     if (!isOpen) return null;
@@ -4908,10 +4903,10 @@ const PauseReasonModal = ({
             <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] max-w-[calc(100vw-2rem)] border border-gray-200">
                 <div className="flex items-center gap-3 mb-4">
                     <div className="w-1 h-8 bg-[#C72030] rounded-sm" />
-                    <h2 className="text-lg font-bold text-gray-900">Pause {label}</h2>
+                    <h2 className="text-lg font-bold text-gray-900">Pause Task</h2>
                 </div>
                 <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                    Please provide a reason for pausing this {label.toLowerCase()}.
+                    Please provide a reason for pausing this task.
                 </p>
                 <div className="mb-6">
                     <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
@@ -4920,7 +4915,7 @@ const PauseReasonModal = ({
                     <textarea
                         value={reason}
                         onChange={(e) => setReason(e.target.value)}
-                        placeholder={`Enter reason for pausing this ${label.toLowerCase()}...`}
+                        placeholder="Enter reason for pausing this task..."
                         className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
                         rows={4}
                         disabled={isLoading}
@@ -4939,7 +4934,7 @@ const PauseReasonModal = ({
                         disabled={isLoading}
                         className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
                     >
-                        {isLoading ? "Processing..." : `Pause ${label}`}
+                        {isLoading ? "Processing..." : "Pause Task"}
                     </button>
                 </div>
             </div>
