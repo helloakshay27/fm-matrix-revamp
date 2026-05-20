@@ -292,6 +292,33 @@ export const AMCDetailsPage = () => {
     }
   };
 
+  const openVisitEditModal = () => {
+    const visit = amcVisitData.find((x) => x.id === selectedVisitId);
+    if (!visit) return;
+
+    const toInputDate = (raw: string | null | undefined): string => {
+      if (!raw) return "";
+      if (raw.includes("/")) {
+        const parts = raw.split("/");
+        if (parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+        return "";
+      }
+      return raw.split("T")[0];
+    };
+
+    setVisitEditVisitNumber(String(visit.visit_number ?? ""));
+    setVisitEditVisitDate(toInputDate(visit.visit_date));
+    setVisitEditActualVisitDate(toInputDate((visit as any).actual_visit_date));
+    setVisitEditTechnicianId(visit.technician ? String(visit.technician.id) : "");
+    setVisitEditRemarks(visit.remarks || "");
+    setVisitEditStatus((visit as any).status || "");
+    setVisitEditDocument(null);
+    const assetIds: number[] = (visit as any).asset_ids || (visit as any).amc_asset_ids || [];
+    setVisitEditSelectedAssetIds(assetIds);
+    fetchVisitTechnicians();
+    setShowVisitEditModal(true);
+  };
+
   const handleVisitUpdate = async () => {
     if (!selectedVisitId) return;
     const baseUrl = localStorage.getItem("baseUrl");
@@ -1602,7 +1629,7 @@ export const AMCDetailsPage = () => {
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader className="border-b border-gray-100 pb-3">
                   <DialogTitle className="text-[#1a1a1a] font-semibold text-base uppercase tracking-wide">
-                    Add Visit
+                    Edit Visit Log
                   </DialogTitle>
                 </DialogHeader>
 
@@ -1723,10 +1750,10 @@ export const AMCDetailsPage = () => {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <label className="text-sm font-medium text-gray-700">
-                          Assets — select completed
+                          Assets — select AMC completed assets
                         </label>
                         <span className="text-sm font-semibold text-[#C72030] bg-[#FFF0F0] px-2.5 py-0.5 rounded-full">
-                          {visitEditSelectedAssetIds.length} / {amcDetails.amc_assets.length}
+                          {visitEditSelectedAssetIds.length} of {amcDetails.amc_assets.length} completed
                         </span>
                       </div>
                       <div className="border border-gray-200 rounded-md overflow-hidden">
@@ -2239,15 +2266,15 @@ export const AMCDetailsPage = () => {
 
             {/* Right: action buttons */}
             <div className="flex items-center ml-6">
-              {/* Add Visit */}
+              {/* Edit Visit Log */}
               <Button
                 variant="ghost"
                 size="sm"
                 className="text-gray-600 hover:bg-gray-100 flex flex-col items-center gap-1 h-auto mr-6"
-                onClick={() => setShowAddVisitModal(true)}
+                onClick={openVisitEditModal}
               >
-                <Plus className="w-5 h-5 mt-3" />
-                <span className="text-xs font-medium">Add Visit</span>
+                <Edit className="w-5 h-5 mt-3" />
+                <span className="text-xs font-medium">Edit Visit Log</span>
               </Button>
 
               <div className="w-px h-8 bg-gray-300 mr-6" />
