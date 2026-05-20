@@ -121,16 +121,16 @@ const PulseContestRewards = () => {
                 {
                     params: {
                         token: token,
-                        reward_type: "merchandise",
+                        // reward_type: "merchandise",
                         access: "admin",
                     },
                 }
             )
 
             // Transform the data to match table structure
-            const transformedData = response.data.map((claim: UserContestReward) => ({
+            const transformedData = response.data?.rewards.map((claim: UserContestReward) => ({
                 id: claim.id,
-                user_name: claim.user.full_name,
+                user_name: claim.user.firstname + " " + claim.user.lastname,
                 user_mobile: claim.user.mobile,
                 user_email: claim.user.email,
                 contest_name: claim.contest.name,
