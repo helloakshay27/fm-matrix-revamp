@@ -406,10 +406,23 @@ export const ActionSidebar = () => {
     setCurrentFunction,
     isActionSidebarVisible,
   } = useActionLayout();
-  const { isSidebarCollapsed, setIsSidebarCollapsed } = useLayout();
+  const {
+    isSidebarCollapsed,
+    setIsSidebarCollapsed,
+    isMobileSidebarOpen,
+    setIsMobileSidebarOpen,
+  } = useLayout();
   const [expandedFunctions, setExpandedFunctions] = useState<Set<string>>(
     new Set()
   );
+
+  // Check if current organization is PANCHSHIL (via hostname or localStorage)
+  const hostname = window.location.hostname;
+  const isPanchshilOrg =
+    hostname.includes("panchshil.com") ||
+    (localStorage.getItem("selectedOrg") || "")
+      .toUpperCase()
+      .includes("PANCHSHIL");
 
   // Get module functions (safe to call even if no module)
   const moduleFunctions = currentModule
@@ -434,10 +447,23 @@ export const ActionSidebar = () => {
       return children.some((child) => hasActiveDescendant(child, allFunctions));
     };
 
+    const filteredModuleFunctions = isPanchshilOrg
+      ? moduleFunctions.filter((func) => {
+          const panchshilHiddenFunctions = [
+            "M-Safe",
+            "M-safe",
+            "Gate Pass",
+            "Visitor",
+            "Staff",
+          ];
+          return !panchshilHiddenFunctions.includes(func.function_name);
+        })
+      : moduleFunctions;
+
     const topLevel: any[] = [];
 
     // First pass: identify top-level functions (no parent)
-    moduleFunctions.forEach((func) => {
+    filteredModuleFunctions.forEach((func) => {
       if (!func.parent_function || func.parent_function === "") {
         topLevel.push({ ...func, children: [] });
       }
@@ -445,7 +471,7 @@ export const ActionSidebar = () => {
 
     // Second pass: recursively build children for each parent
     const buildChildren = (parent: any): void => {
-      const children = moduleFunctions.filter(
+      const children = filteredModuleFunctions.filter(
         (func) => func.parent_function === parent.action_name
       );
 
@@ -460,7 +486,7 @@ export const ActionSidebar = () => {
 
     // Filter: only include functions that are active OR have active descendants
     const filterInactive = (func: any): any | null => {
-      if (!hasActiveDescendant(func, moduleFunctions)) {
+      if (!hasActiveDescendant(func, filteredModuleFunctions)) {
         return null; // Exclude this branch entirely
       }
 
@@ -475,7 +501,7 @@ export const ActionSidebar = () => {
     return topLevel
       .map((func) => filterInactive(func))
       .filter((func) => func !== null);
-  }, [moduleFunctions]);
+  }, [moduleFunctions, isPanchshilOrg]);
 
   // Don't render if not visible or no module selected
   if (!isActionSidebarVisible || !currentModule) {
@@ -591,7 +617,9 @@ export const ActionSidebar = () => {
     <div
       className={`${
         isSidebarCollapsed ? "w-16" : "w-64"
-      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${
+        isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      } md:translate-x-0`}
       style={{ top: "4rem", height: "91vh" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>

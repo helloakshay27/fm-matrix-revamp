@@ -102,6 +102,18 @@ const navigationStructure = {
             href: "/settings/company-hub/announcements",
           },
           {
+            name: "Team Setup",
+            href: "/settings/company-hub/team-setup",
+          },
+          {
+            name: "Face Authentication",
+            href: "/settings/company-hub/face-authentication",
+          },
+          {
+            name: "Jobs",
+            href: "/settings/company-hub/jobs",
+          },
+          {
             name: "Holiday Calendar",
 
             href: "/settings/account/holiday-calendar",
@@ -883,7 +895,11 @@ const modulesByPackage = {
       icon: FileText,
       href: "/utility/utility-request",
     },
-    // { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
+    {
+      name: "Utility Consumption",
+      icon: BarChart3,
+      href: "/utility/utility-consumption",
+    },
     { name: "EV Consumption", icon: Car, href: "/utility/ev-consumption" },
     { name: "Solar Generator", icon: Sun, href: "/utility/solar-generator" },
   ],
@@ -1513,6 +1529,18 @@ const modulesByPackage = {
           name: "Announcements Setup",
           href: "/settings/company-hub/announcements",
         },
+        {
+          name: "Team Setup",
+          href: "/settings/company-hub/team-setup",
+        },
+        {
+          name: "Face Authentication",
+          href: "/settings/company-hub/face-authentication",
+        },
+        {
+          name: "Jobs",
+          href: "/settings/company-hub/jobs",
+        },
       ],
     },
   ],
@@ -1924,12 +1952,21 @@ export const StacticSidebar = () => {
     setCurrentSection,
     isSidebarCollapsed,
     setIsSidebarCollapsed,
+    isMobileSidebarOpen,
   } = useLayout();
   const user = getUser();
   const assetRestricted = isAssetRestrictedUser(user);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [selectedDepartment, setSelectedRole] = useState("");
   const [selectedRole, setSelectedDepartment] = useState("");
+
+  // Check if current organization is PANCHSHIL (via hostname or localStorage)
+  const hostname = window.location.hostname;
+  const isPanchshilOrg =
+    hostname.includes("panchshil.com") ||
+    (localStorage.getItem("selectedOrg") || "")
+      .toUpperCase()
+      .includes("PANCHSHIL");
 
   // Helper function to find the deepest navigable sub-item
   const findDeepestNavigableItem = (item: any): string | null => {
@@ -2051,9 +2088,36 @@ export const StacticSidebar = () => {
       });
   };
 
+  // Helper function to filter out Panchshil-restricted items
+  const filterPanchshilItems = (items: any[]): any[] => {
+    if (!isPanchshilOrg) return items;
+
+    const panchshilHiddenModules = ["M-Safe", "Gate Pass", "Visitor", "Staff"];
+
+    return items
+      .filter((item: any) => {
+        if (panchshilHiddenModules.includes(item.name)) {
+          return false;
+        }
+        return true;
+      })
+      .map((item: any) => {
+        if (item.subItems && Array.isArray(item.subItems)) {
+          return {
+            ...item,
+            subItems: filterPanchshilItems(item.subItems),
+          };
+        }
+        return item;
+      });
+  };
+
   let currentModules = modulesByPackage[currentSection] || [];
   if (assetRestricted) {
     currentModules = filterAssetItems(currentModules);
+  }
+  if (isPanchshilOrg) {
+    currentModules = filterPanchshilItems(currentModules);
   }
 
   const isActiveRoute = (href: string, mode: "exact" | "prefix" = "exact") => {
@@ -2347,7 +2411,7 @@ export const StacticSidebar = () => {
     <div
       className={`${
         isSidebarCollapsed ? "w-16" : "w-64"
-      } bg-[#f6f4ee] border-r border-[#D5DbDB]  fixed left-0 top-0 overflow-y-auto transition-all duration-300`}
+      } bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300 z-40 ${isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       style={{ top: "4rem", height: "calc(100vh - 65px)" }}
     >
       <div className={`${isSidebarCollapsed ? "px-2 py-2" : "p-2"}`}>
