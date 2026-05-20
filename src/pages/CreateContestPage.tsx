@@ -1057,13 +1057,13 @@ export const CreateContestPage: React.FC = () => {
 
         {/* Action Buttons */}
         <div className="flex justify-center gap-4 mt-6">
-          <Button
+          {/* <Button
             onClick={handleSaveDraft}
             variant="outline"
             className="bg-[#F6F4EE] text-[#C72030] border-[#C72030] hover:bg-[#EDEAE3]"
           >
             Save to draft
-          </Button>
+          </Button> */}
           {currentStep < 4 ? (
             <Button
               onClick={handleNext}

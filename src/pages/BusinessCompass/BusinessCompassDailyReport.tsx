@@ -645,6 +645,9 @@ const BusinessCompassDailyReport: React.FC = () => {
     const inProgress = mergedTasksIssues.filter(
       (item) => item.status === "in_progress"
     ).length;
+    const tasks = mergedTasksIssues.filter((item) => item.type === "task").length;
+    const issues = mergedTasksIssues.filter((item) => item.type === "issue").length;
+    const todos = mergedTasksIssues.filter((item) => item.type === "todo").length;
 
     return {
       completed,
@@ -652,6 +655,9 @@ const BusinessCompassDailyReport: React.FC = () => {
       overdue,
       onHold,
       inProgress,
+      tasks,
+      issues,
+      todos,
       total: mergedTasksIssues.length,
     };
   }, [mergedTasksIssues]);
@@ -2500,19 +2506,37 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <div className="flex flex-wrap gap-2 pt-1">
                           <Badge
                             variant="outline"
-                            className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
+                            className="border-0 bg-[#DA7756]/10 px-3 py-1 text-[10px] font-bold text-[#9e4f36]"
                           >
-                            Completed: {taskIssueCounts.completed}
+                            Tasks: {taskIssueCounts.tasks}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className="border-0 bg-blue-100 px-3 py-1 text-[10px] font-bold text-blue-800"
+                            className="border-0 bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-800"
+                          >
+                            Issues: {taskIssueCounts.issues}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-0 bg-yellow-100 px-3 py-1 text-[10px] font-bold text-yellow-800"
+                          >
+                            Todos: {taskIssueCounts.todos}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
+                          >
+                            Closed: {taskIssueCounts.completed}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
                           >
                             Open: {taskIssueCounts.open}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className="border-0 bg-rose-100 px-3 py-1 text-[10px] font-bold text-rose-800"
+                            className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800"
                           >
                             Overdue: {taskIssueCounts.overdue}
                           </Badge>
@@ -2521,12 +2545,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                             className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
                           >
                             In Progress: {taskIssueCounts.inProgress}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-purple-100 px-3 py-1 text-[10px] font-bold text-purple-800"
-                          >
-                            On Hold: {taskIssueCounts.onHold}
                           </Badge>
                         </div>
                       </div>
