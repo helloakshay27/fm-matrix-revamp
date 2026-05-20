@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -46,6 +48,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import axios from "axios";
+import AccountingDocumentPdf from "@/components/accounting/AccountingDocumentPdf";
 // Types
 interface SalesOrderItem {
   id: number;
@@ -117,6 +120,17 @@ interface SalesOrder {
   status: string;
   customer_notes: string;
   terms_and_conditions: string;
+  credit_note_number?: string;
+  credit_note_date?: string;
+  invoice_number?: string;
+  invoice_type?: string;
+  reason?: string;
+  place_of_supply?: string;
+  subject?: string;
+  sub_total_amount?: number;
+  lock_account_tax_amount?: number;
+  charge_name?: string;
+  reference_number?: string;
   created_at: string;
   updated_at: string;
   item_details: {
@@ -127,6 +141,9 @@ interface SalesOrder {
     rate: number;
     total_amount: number;
     item_unit: string;
+    account?: string;
+    tax_type?: string;
+    tax_group?: { name?: string; rate?: number; tax_rates?: { name: string; rate: number }[] };
   }[];
   attachments: any[];
 }
@@ -202,6 +219,9 @@ export const CreditNoteDetails = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+  const creditNotePdfRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const fetchSalesOrder = async () => {
       setLoading(true);
@@ -296,11 +316,55 @@ export const CreditNoteDetails = () => {
   };
 
   const handlePrint = () => {
-    window.print();
+    setActiveTab("pdf");
+    setTimeout(() => window.print(), 0);
   };
 
-  const handleDownload = () => {
-    sonnerToast.success("Downloading credit note PDF...");
+  const handleDownload = async () => {
+    try {
+      setPdfGenerating(true);
+      setRenderDownloadPdf(true);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      if (!creditNotePdfRef.current) {
+        throw new Error("PDF preview is not ready yet");
+      }
+
+      const canvas = await html2canvas(creditNotePdfRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`CreditNote-${salesOrder?.credit_note_number || id || "download"}.pdf`);
+      sonnerToast.success("Credit note PDF downloaded successfully");
+    } catch (error) {
+      console.error("Error generating credit note PDF:", error);
+      sonnerToast.error("Failed to download credit note PDF");
+    } finally {
+      setPdfGenerating(false);
+      setRenderDownloadPdf(false);
+    }
   };
 
   const handleSendEmail = () => {
@@ -345,6 +409,17 @@ export const CreditNoteDetails = () => {
     }
   });
   const taxRows = Object.entries(taxBreakdown);
+  const creditNoteItems = Array.isArray(salesOrder?.item_details)
+    ? salesOrder.item_details
+    : [];
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-IN");
+  };
+  const formatCurrency = (amount: number) => {
+    const currencySymbol = localStorage.getItem("currencySymbol") || "₹";
+    return `${currencySymbol}${Number(amount || 0).toFixed(2)}`;
+  };
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -372,10 +447,31 @@ export const CreditNoteDetails = () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Badge className={`${getStatusColor(salesOrder.status)} border`}>
               {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
             </Badge>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setActiveTab("pdf")}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              PDF
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDownload}
+              disabled={pdfGenerating}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {pdfGenerating ? "Downloading..." : "Download PDF"}
+            </Button>
           </div>
         </div>
 
@@ -450,6 +546,7 @@ export const CreditNoteDetails = () => {
                 { label: "Credit Note Details", value: "order-details" },
                 { label: "Customer Info", value: "customer-info" },
                 { label: "History", value: "history" },
+                { label: "PDF", value: "pdf" },
               ].map((tab) => (
                 <TabsTrigger
                   key={tab.value}
@@ -923,9 +1020,79 @@ export const CreditNoteDetails = () => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent
+              value="pdf"
+              className="p-3 sm:p-6 space-y-6"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      Credit Note PDF
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={handlePrint}>
+                        <Printer className="h-4 w-4 mr-2" />
+                        Print
+                      </Button>
+                      <Button size="sm" onClick={handleDownload} disabled={pdfGenerating}>
+                        <Download className="h-4 w-4 mr-2" />
+                        {pdfGenerating ? "Downloading..." : "Download PDF"}
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-auto rounded-lg border bg-muted/30 p-4">
+                    <div className="mx-auto bg-white" ref={activeTab === "pdf" ? creditNotePdfRef : null}>
+                      <AccountingDocumentPdf
+                        documentTitle="CREDIT NOTE"
+                        documentNumber={salesOrder.credit_note_number}
+                        documentDate={salesOrder.date || salesOrder.credit_note_date}
+                        status={salesOrder.status}
+                        customerName={salesOrder.customer_name}
+                        items={creditNoteItems}
+                        data={salesOrder}
+                        taxRows={taxRows}
+                        formatDate={formatDate}
+                        formatCurrency={formatCurrency}
+                        secondaryDateLabel="Invoice Date"
+                        secondaryDate={(salesOrder as any).invoice_date}
+                        referenceNumber={salesOrder.reference_number || salesOrder.invoice_number}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      {renderDownloadPdf && activeTab !== "pdf" && (
+        <div className="fixed left-[-10000px] top-0">
+          <div ref={creditNotePdfRef}>
+            <AccountingDocumentPdf
+              documentTitle="CREDIT NOTE"
+              documentNumber={salesOrder.credit_note_number}
+              documentDate={salesOrder.date || salesOrder.credit_note_date}
+              status={salesOrder.status}
+              customerName={salesOrder.customer_name}
+              items={creditNoteItems}
+              data={salesOrder}
+              taxRows={taxRows}
+              formatDate={formatDate}
+              formatCurrency={formatCurrency}
+              secondaryDateLabel="Invoice Date"
+              secondaryDate={(salesOrder as any).invoice_date}
+              referenceNumber={salesOrder.reference_number || salesOrder.invoice_number}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

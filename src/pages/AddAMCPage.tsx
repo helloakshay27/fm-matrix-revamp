@@ -23,6 +23,9 @@ interface Service {
   service_name: string;
 }
 
+const MAX_ATTACHMENT_SIZE_MB = 20;
+const MAX_ATTACHMENT_SIZE_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;
+
 export const AddAMCPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -165,13 +168,28 @@ export const AddAMCPage = () => {
   };
 
   const handleFileUpload = (type: 'contracts' | 'invoices', files: FileList | null) => {
-    if (files) {
-      const fileArray = Array.from(files);
-      setAttachments(prev => ({
-        ...prev,
-        [type]: [...prev[type], ...fileArray]
-      }));
+    if (!files) return;
+
+    const fileArray = Array.from(files);
+    const validFiles = fileArray.filter(file => file.size <= MAX_ATTACHMENT_SIZE_BYTES);
+    const oversizedFiles = fileArray.filter(file => file.size > MAX_ATTACHMENT_SIZE_BYTES);
+
+    if (oversizedFiles.length > 0) {
+      const skippedNames = oversizedFiles
+        .slice(0, 3)
+        .map(file => file.name)
+        .join(', ');
+      toast.error(
+        `Each attachment must be ${MAX_ATTACHMENT_SIZE_MB} MB or less. Skipped: ${skippedNames}${oversizedFiles.length > 3 ? '...' : ''}`
+      );
     }
+
+    if (validFiles.length === 0) return;
+
+    setAttachments(prev => ({
+      ...prev,
+      [type]: [...prev[type], ...validFiles]
+    }));
   };
 
   const removeFile = (type: 'contracts' | 'invoices', index: number) => {
@@ -3787,7 +3805,10 @@ export const AddAMCPage = () => {
                         multiple
                         className="hidden"
                         id="contracts-upload"
-                        onChange={e => handleFileUpload('contracts', e.target.files)}
+                        onChange={e => {
+                          handleFileUpload('contracts', e.target.files);
+                          e.currentTarget.value = '';
+                        }}
                         disabled={isSubmitting}
                       />
                       <div className="flex items-center justify-center gap-2 mb-4">
@@ -3807,6 +3828,9 @@ export const AddAMCPage = () => {
                         <Plus className="w-4 h-4 mr-1" />
                         Upload Files
                       </Button>
+                      <p className="mt-3 text-xs text-gray-500">
+                        Max file size: {MAX_ATTACHMENT_SIZE_MB} MB
+                      </p>
                     </div>
 
                     {attachments.contracts.length > 0 && (
@@ -3863,7 +3887,10 @@ export const AddAMCPage = () => {
                         multiple
                         className="hidden"
                         id="invoices-upload"
-                        onChange={e => handleFileUpload('invoices', e.target.files)}
+                        onChange={e => {
+                          handleFileUpload('invoices', e.target.files);
+                          e.currentTarget.value = '';
+                        }}
                         disabled={isSubmitting}
                       />
                       <div className="flex items-center justify-center gap-2 mb-4">
@@ -3883,6 +3910,9 @@ export const AddAMCPage = () => {
                         <Plus className="w-4 h-4 mr-1" />
                         Upload Files
                       </Button>
+                      <p className="mt-3 text-xs text-gray-500">
+                        Max file size: {MAX_ATTACHMENT_SIZE_MB} MB
+                      </p>
                     </div>
                     {attachments.invoices.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-3">
