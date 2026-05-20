@@ -31,8 +31,8 @@ const OpeningBalance = () => {
   const lock_account_id = localStorage.getItem("lock_account_id");
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    const fetchAccounts = async () => {
+
+   const fetchAccounts = async () => {
       setLoadingAccounts(true);
       const baseUrl = API_CONFIG.BASE_URL;
       const token = API_CONFIG.TOKEN;
@@ -89,6 +89,8 @@ const OpeningBalance = () => {
         setLoadingAccounts(false);
       }
     };
+  useEffect(() => {
+   
     fetchAccounts();
   }, []);
 
@@ -214,7 +216,7 @@ const totalCredit = filteredAccounts.reduce((sum, acc) => {
 
     console.log('Submitting payload:', payload);
     try {
-      const url = `${baseUrl}/lock_accounts/2/lock_account_transactions.json`;
+      const url = `${baseUrl}/lock_accounts/${lock_account_id}/lock_account_transactions.json`;
       const response = await axios.post(url, payload, {
         headers: {
           'Content-Type': 'application/json',
@@ -223,6 +225,8 @@ const totalCredit = filteredAccounts.reduce((sum, acc) => {
       });
       // Optionally show success message or redirect
       alert('Opening balance submitted successfully!');
+        // reload latest balances
+  await fetchAccounts();
     } catch (error) {
       console.error('Error submitting opening balance:', error);
       alert('Failed to submit opening balance');
