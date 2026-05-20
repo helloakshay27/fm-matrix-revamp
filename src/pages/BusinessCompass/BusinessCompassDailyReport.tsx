@@ -637,7 +637,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       (item) => item.status === "open" || item.status === "reopen"
     ).length;
     const overdue = mergedTasksIssues.filter(
-      (item) => item.status === "overdue"
+      (item) => item.status === "overdue" || item.status === "overdued"
     ).length;
     const onHold = mergedTasksIssues.filter(
       (item) => item.status === "on_hold"
@@ -2504,7 +2504,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             : `Total: ${taskIssueCounts.total} items`}
                         </p> */}
                         <div className="flex flex-wrap gap-2 pt-1">
-                          {/* <Badge
+                          <Badge
                             variant="outline"
                             className="border-0 bg-[#DA7756]/10 px-3 py-1 text-[10px] font-bold text-[#9e4f36]"
                           >
@@ -2521,12 +2521,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                             className="border-0 bg-yellow-100 px-3 py-1 text-[10px] font-bold text-yellow-800"
                           >
                             Todos: {taskIssueCounts.todos}
-                          </Badge> */}
+                          </Badge>
                           <Badge
                             variant="outline"
                             className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
                           >
-                            Completed: {taskIssueCounts.completed}
+                            Closed: {taskIssueCounts.completed}
                           </Badge>
                           <Badge
                             variant="outline"
@@ -2545,12 +2545,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                             className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
                           >
                             In Progress: {taskIssueCounts.inProgress}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-orange-100 px-3 py-1 text-[10px] font-bold text-orange-800"
-                          >
-                            On Hold: {taskIssueCounts.onHold}
                           </Badge>
                         </div>
                       </div>
