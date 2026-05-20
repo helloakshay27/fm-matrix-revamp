@@ -27,6 +27,20 @@ interface InvoiceData {
     };
     site_name?: string;
     created_at?: string;
+    invoice_data?: {
+        lock_account_bill_id?: number | string;
+        invoice?: any;
+        member?: any;
+        line_items?: any[];
+        totals?: any;
+    };
+    billing?: {
+        raised_bill_to_user?: boolean;
+        bill_to?: string | null;
+        billing_company_name?: string;
+        billing_gstin?: string;
+        billing_address?: string;
+    };
 }
 
 interface InvoiceProps {
@@ -77,9 +91,18 @@ const Invoice = ({
     const invoiceType = isFromDetailsPage ? "RECEIPT" : "TAX INVOICE";
 
     const primaryMember = data?.club_members?.[0];
-    const billToName = primaryMember?.user_name;
-    const billToEmail = primaryMember?.user_email;
-    const billToMobile = primaryMember?.user_mobile;
+    const billing = data?.billing;
+    const isCompanyBilling = billing?.bill_to === 'company';
+
+    const billToName = isCompanyBilling
+        ? (billing?.billing_company_name || '')
+        : (primaryMember?.user_name || '');
+    const billToLine2 = isCompanyBilling
+        ? (billing?.billing_gstin ? `GSTIN: ${billing.billing_gstin}` : '')
+        : (primaryMember?.user_mobile || '');
+    const billToLine3 = isCompanyBilling
+        ? (billing?.billing_address || '')
+        : (primaryMember?.user_email || '');
 
     const planName = data?.membership_plan?.name || "";
     const baseAmount =
@@ -358,8 +381,8 @@ const Invoice = ({
                                     </p>
                                     <p className="text-[#1F5E2E] font-bold">Bill To:</p>
                                     <p className="text-[#1F5E2E]">{billToName}</p>
-                                    <p className="text-[#1F5E2E]">{billToMobile}</p>
-                                    <p className="text-[#1F5E2E]">{billToEmail}</p>
+                                    <p className="text-[#1F5E2E]">{billToLine2}</p>
+                                    <p className="text-[#1F5E2E]">{billToLine3}</p>
                                 </div>
                             </div>
                         </div>
