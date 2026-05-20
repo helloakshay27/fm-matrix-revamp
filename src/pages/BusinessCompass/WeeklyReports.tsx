@@ -42,7 +42,7 @@ import {
     startOfWeek,
     subDays,
 } from "date-fns";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -2738,58 +2738,76 @@ const WeeklyReports = () => {
                         </Card>
 
                         {/* Tasks & Issues */}
-                        <Card className={cn("overflow-hidden", cardChrome)}>
-                            <div
-                                className={cn(
-                                    "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between",
-                                    sectionHeader
-                                )}
-                            >
-                                <div className="space-y-2">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <AlertTriangle className="h-5 w-5 shrink-0 text-[#DA7756]" />
-                                        <h3 className="font-bold text-neutral-900">
-                                            Tasks, Issues & Todos
-                                        </h3>
-                                        <Badge className="border-0 bg-neutral-200 px-2 py-0 text-[10px] font-bold uppercase text-neutral-700 hover:bg-neutral-200 hover:text-neutral-700">
-                                            Optional
-                                        </Badge>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        <Badge className="border-0 bg-[#DA7756]/10 px-3 py-1 text-[10px] font-bold text-[#9e4f36] hover:bg-[#DA7756]/10 hover:text-[#9e4f36]">
+                        <Card className="rounded-2xl border border-[#DA7756]/20 overflow-hidden bg-[#fff] shadow-sm mt-6">
+                            <div className="bg-white p-4 border-b border-[#b91c1c]/10">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-3">
+                                            <CheckSquare className="h-6 w-6 text-[#DA7756]" />
+                                            <h3 className="text-sm font-bold text-[#1a1a1a] tracking-tight">
+                                                Tasks, Issues & Todos
+                                            </h3>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-[#DA7756]/10 px-3 py-1 text-[10px] font-bold text-[#9e4f36]"
+                                            >
                                             Tasks: {taskIssueCounts.tasks}
-                                        </Badge>
-                                        <Badge className="border-0 bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-800 hover:bg-violet-100 hover:text-violet-800">
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-800"
+                                            >
                                             Issues: {taskIssueCounts.issues}
-                                        </Badge>
-                                        <Badge className="border-0 bg-yellow-100 px-3 py-1 text-[10px] font-bold text-yellow-800 hover:bg-yellow-100 hover:text-yellow-800">
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-yellow-100 px-3 py-1 text-[10px] font-bold text-yellow-800"
+                                            >
                                             Todos: {taskIssueCounts.todos}
-                                        </Badge>
-                                        <Badge className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800 hover:bg-emerald-100 hover:text-emerald-800">
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
+                                            >
                                             Closed: {taskIssueCounts.completed}
-                                        </Badge>
-                                        <Badge className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800 hover:bg-sky-100 hover:text-sky-800">
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
+                                            >
                                             Open: {taskIssueCounts.open}
-                                        </Badge>
-                                        <Badge className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800 hover:bg-red-100 hover:text-red-800">
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800"
+                                            >
                                             Overdue: {taskIssueCounts.overdue}
-                                        </Badge>
-                                        <Badge className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800 hover:bg-amber-100 hover:text-amber-800">
+                                            </Badge>
+                                            <Badge
+                                                variant="outline"
+                                                className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
+                                            >
                                             In Progress: {taskIssueCounts.inProgress}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <Badge className={badgePoints}>
+                                            {taskIssueCounts.completed}/20 PTS
                                         </Badge>
+                                        <Button
+                                            className="rounded-[8px] shadow-lg font-semibold text-sm"
+                                            onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
+                                        >
+                                            <Plus size={14} />
+                                            Add
+                                        </Button>
                                     </div>
                                 </div>
-                                <Button
-                                    type="button"
-                                    className={cn("shrink-0 rounded-xl", btnPrimary)}
-                                    // onClick={() => setAddTaskOpen(true)}
-                                    onClick={(e) => setTaskIssueMenuAnchor(e.currentTarget)}
-                                >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Add
-                                </Button>
                             </div>
-                            <div className="p-6">
+                            <CardContent className="p-6">
                                 {/* <CheckSquare className="h-12 w-12 text-neutral-200" />
                                 <p className="text-lg text-neutral-400">
                                     No open tasks or issues.
@@ -2802,7 +2820,7 @@ const WeeklyReports = () => {
                                             className="text-[#b91c1c]/30 animate-spin mb-3"
                                         />
                                         <p className="text-sm font-bold text-gray-500">
-                                            Loading tasks, issues and todos...
+                                            Loading tasks and issues...
                                         </p>
                                     </div>
                                 ) : mergedTasksIssues.length === 0 ? (
@@ -2810,7 +2828,7 @@ const WeeklyReports = () => {
                                         <div className="flex flex-col items-center gap-3 opacity-30">
                                             <CheckSquare
                                                 size={40}
-                                                className="text-[#b91c1c]/20"
+                                                className="text-[#DA7756]/20"
                                             />
                                             <p className="text-base font-bold text-gray-400 tracking-tight">
                                                 No open tasks or issues
@@ -2819,7 +2837,7 @@ const WeeklyReports = () => {
                                     </div>
                                 ) : (
                                     <div
-                                        className="space-y-2 max-h-[400px] overflow-y-auto w-full"
+                                        className="space-y-2 max-h-[400px] overflow-y-auto"
                                         ref={scrollContainerRef}
                                     >
                                         {mergedTasksIssues.map((item: any) => (
@@ -2829,13 +2847,13 @@ const WeeklyReports = () => {
                                                     "flex items-center gap-3 p-3 rounded-[10px] border transition-all",
                                                     item.status === "completed" ||
                                                         item.status === "closed"
-                                                        ? "bg-green-50/50 border-green-200/50"
+                                                        ? "bg-[#DA7756]/10 border-[#DA7756]/20"
                                                         : item.status === "overdue" ||
                                                             item.status === "overdued" ||
                                                             item.status === "on_hold"
-                                                            ? "bg-red-50/50 border-red-200/50"
+                                                            ? "bg-[#DA7756]/10 border-[#DA7756]/20"
                                                             : item.status === "in_progress"
-                                                                ? "bg-amber-50/50 border-amber-200/50"
+                                                                ? "bg-[#DA7756]/10 border-[#DA7756]/20"
                                                                 : "bg-blue-50/50 border-blue-200/50"
                                                 )}
                                             >
@@ -2881,7 +2899,7 @@ const WeeklyReports = () => {
                                                 >
                                                     <Eye
                                                         size={16}
-                                                        className="text-gray-600 hover:text-gray-800"
+                                                        className="text-[#DA7756] hover:text-[#DA7756]"
                                                     />
                                                 </button>
                                                 <button
@@ -2948,7 +2966,7 @@ const WeeklyReports = () => {
                                                         )
                                                     )}
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white text-gray-600 uppercase">
+                                                    <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[#DA7756] text-[#fff] uppercase">
                                                         {item.type}
                                                     </span>
                                                     {item.status === "completed" ||
@@ -2970,18 +2988,18 @@ const WeeklyReports = () => {
                                                         <Info size={16} className="text-blue-600" />
                                                     )}
                                                 </div>
-                                                <div className="flex-1 min-w-0 text-left">
+                                                <div className="flex-1 min-w-0">
                                                     <p
                                                         className={cn(
-                                                            "text-sm font-medium truncate text-left",
+                                                            "text-sm font-medium truncate",
                                                             (item.status === "completed" ||
                                                                 item.status === "closed") &&
-                                                            "line-through text-gray-400"
+                                                            "line-through text-[#DA7756]"
                                                         )}
                                                     >
                                                         {item.title}
                                                     </p>
-                                                    <p className="text-xs text-gray-500 capitalize text-left">
+                                                    <p className="text-xs text-[#DA7756] capitalize">
                                                         {item.status.replace(/_/g, " ")}
                                                     </p>
                                                 </div>
@@ -3019,7 +3037,7 @@ const WeeklyReports = () => {
                                         )}
                                     </div>
                                 )}
-                            </div>
+                            </CardContent>
                         </Card>
 
                         {/* Deep work */}
