@@ -44,7 +44,7 @@ const columns: ColumnConfig[] = [
     label: "Supplier Name",
     sortable: true,
     draggable: true,
-    defaultVisible: false,
+    defaultVisible: true
   },
   {
     key: "siteName",
