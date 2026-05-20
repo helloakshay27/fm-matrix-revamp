@@ -580,6 +580,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
       String(item.member).trim().toLowerCase() === cleanName.toLowerCase()
   );
   const groupedTasksIssues = groupTasksIssuesByType(filteredTasksIssues);
+  const groupedTasksAndIssues = [
+    ...groupedTasksIssues.tasks,
+    ...groupedTasksIssues.issues,
+  ];
 
   const filteredTomorrowPlan = displayRd.tomorrow_plan.filter(
     (item) =>
@@ -587,22 +591,27 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
       String(item.member).trim().toLowerCase() === cleanName.toLowerCase()
   );
 
-  const sd = draftRaw?.score_details || rd?.score_details || {};
+  const sections =
+    draftRaw?.sections || rawDisplayRd?.sections || rd?.sections || {};
+  const kpisFallback = details?.kpis || rawDisplayRd?.kpis || {};
 
-  const kpiAchieved =
-    sd.kpi?.points ?? details?.kpis?.score ?? details?.score ?? 0;
-  const kpiMax = sd.kpi?.maxPoints ?? 20;
+  const getScore = (val1, val2) => {
+    if (val1 !== undefined && val1 !== null && val1 !== "") return Number(val1);
+    if (val2 !== undefined && val2 !== null && val2 !== "") return Number(val2);
+    return 0;
+  };
 
-  const tasksAchieved = sd.tasksIssues?.points ?? details?.kpis?.tasks ?? 0;
-  const tasksMax = sd.tasksIssues?.maxPoints ?? 25;
+  const kpiAchieved = getScore(sections.kpi_achievement, kpisFallback.score);
+  const kpiMax = 20;
 
-  const issuesAchieved = details?.kpis?.issues ?? 0;
+  const tasksAchieved = getScore(sections.tasks_issues, kpisFallback.tasks);
+  const tasksMax = 20;
 
-  const planAchieved = sd.planning?.points ?? details?.kpis?.planning ?? 0;
-  const planMax = sd.planning?.maxPoints ?? 25;
+  const planAchieved = getScore(sections.planning, kpisFallback.planning);
+  const planMax = 20;
 
-  const timeAchieved = sd.timing?.points ?? details?.kpis?.timing ?? 0;
-  const timeMax = sd.timing?.maxPoints ?? 25;
+  const timeAchieved = getScore(sections.timing, kpisFallback.timing);
+  const timeMax = 20;
 
   const totalScoreStr = Math.round(
     details?.score ?? rawDisplayRd?.total_score ?? log.score ?? 0
@@ -856,10 +865,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             KPI: {kpiAchieved}/{kpiMax}
                           </span>
                           <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                            Tasks: {tasksAchieved}/{tasksMax}
-                          </span>
-                          <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                            Issues: {issuesAchieved}
+                            Tasks & Issues: {tasksAchieved}/{tasksMax}
                           </span>
                           <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
                             Planning: {planAchieved}/{planMax}
@@ -969,7 +975,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             <AlertTriangle className="w-4 h-4 text-orange-600" />
                           </div>
                           <h4 className="text-sm font-extrabold text-neutral-800 uppercase tracking-wider">
-                            Tasks, Issues & Todos
+                            Tasks & Issues / Todos
                           </h4>
                         </div>
                         {filteredTasksIssues.length === 0 ? (
@@ -980,14 +986,9 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                           <div className="space-y-4">
                             {[
                               {
-                                label: "Tasks",
-                                items: groupedTasksIssues.tasks,
-                                dotClass: "bg-blue-400",
-                              },
-                              {
-                                label: "Issues",
-                                items: groupedTasksIssues.issues,
-                                dotClass: "bg-red-400",
+                                label: "Tasks & Issues",
+                                items: groupedTasksAndIssues,
+                                dotClass: "bg-orange-400",
                               },
                               {
                                 label: "Todos",
