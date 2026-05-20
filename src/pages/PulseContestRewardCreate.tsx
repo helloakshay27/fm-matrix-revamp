@@ -22,6 +22,12 @@ interface Prize {
     id: number
     title: string
     reward_type: string
+    coupon_code?: string
+}
+
+interface User {
+    id: number
+    full_name: string
 }
 
 const REWARD_TYPES = ["coupon", "points", "none"]
@@ -52,6 +58,8 @@ const PulseContestRewardCreate = () => {
     const [contests, setContests] = useState<Contest[]>([])
     const [contestsLoading, setContestsLoading] = useState(false)
     const [prizes, setPrizes] = useState<Prize[]>([])
+    const [users, setUsers] = useState<User[]>([])
+    const [usersLoading, setUsersLoading] = useState(false)
 
     const [form, setForm] = useState({
         contest_id: "",
@@ -59,6 +67,7 @@ const PulseContestRewardCreate = () => {
         reward_type: "coupon",
         points_value: "",
         coupon_code: "",
+        user_id: "",
     })
 
     const [errors, setErrors] = useState<Record<string, string>>({})
@@ -68,7 +77,22 @@ const PulseContestRewardCreate = () => {
 
     useEffect(() => {
         fetchContests()
+        fetchUsers()
     }, [])
+
+    const fetchUsers = async () => {
+        setUsersLoading(true)
+        try {
+            const response = await axios.get(`https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`, {
+                headers: { Authorization: `Bearer ${token}` },
+            })
+            setUsers(response.data.users || [])
+        } catch {
+            toast.error("Failed to load users")
+        } finally {
+            setUsersLoading(false)
+        }
+    }
 
     const fetchContests = async () => {
         setContestsLoading(true)
@@ -78,7 +102,16 @@ const PulseContestRewardCreate = () => {
             })
             const data = response.data
             const arr = Array.isArray(data) ? data : Array.isArray(data.contests) ? data.contests : []
-            setContests(arr.map((c: any) => ({ id: c.id, name: c.name, prizes: c.prizes || [] })))
+            setContests(arr.map((c: any) => ({
+                id: c.id,
+                name: c.name,
+                prizes: (c.prizes || []).map((p: any) => ({
+                    id: p.id,
+                    title: p.title,
+                    reward_type: p.reward_type,
+                    coupon_code: p.coupon_code || "",
+                })),
+            })))
         } catch {
             toast.error("Failed to load contests")
         } finally {
@@ -87,10 +120,20 @@ const PulseContestRewardCreate = () => {
     }
 
     const handleContestChange = (contestId: string) => {
-        setForm(prev => ({ ...prev, contest_id: contestId, prize_id: "" }))
+        setForm(prev => ({ ...prev, contest_id: contestId, prize_id: "", coupon_code: "" }))
         setErrors(prev => ({ ...prev, contest_id: "", prize_id: "" }))
         const selected = contests.find(c => String(c.id) === contestId)
         setPrizes(selected?.prizes || [])
+    }
+
+    const handlePrizeChange = (prizeId: string) => {
+        const selectedPrize = prizes.find(p => String(p.id) === prizeId)
+        setForm(prev => ({
+            ...prev,
+            prize_id: prizeId,
+            coupon_code: selectedPrize?.coupon_code || prev.coupon_code,
+        }))
+        setErrors(prev => ({ ...prev, prize_id: "" }))
     }
 
     const handleChange = (field: string, value: string) => {
@@ -105,6 +148,7 @@ const PulseContestRewardCreate = () => {
 
     const validate = () => {
         const newErrors: Record<string, string> = {}
+        if (!form.user_id) newErrors.user_id = "User is required"
         if (!form.contest_id) newErrors.contest_id = "Contest is required"
         if (!form.prize_id) newErrors.prize_id = "Prize is required"
         if (!form.reward_type) newErrors.reward_type = "Reward type is required"
@@ -122,10 +166,11 @@ const PulseContestRewardCreate = () => {
                 `https://${baseUrl}/user_contest_rewards.json`,
                 {
                     user_contest_reward: {
+                        user_id: Number(form.user_id),
                         contest_id: Number(form.contest_id),
                         prize_id: Number(form.prize_id),
                         reward_type: form.reward_type,
-                        status: "pending",
+                        status: "granted",
                         points_value: form.points_value ? Number(form.points_value) : null,
                         coupon_code: form.coupon_code || null,
                     },
@@ -181,6 +226,44 @@ const PulseContestRewardCreate = () => {
                 {/* Left column — main form (2/3 width) */}
                 <div className="xl:col-span-2 space-y-6">
 
+                    {/* User Section */}
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                        <SectionHeader icon={Trophy} title="User" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <FormControl fullWidth size="small" error={!!errors.user_id} sx={fieldSx}>
+                                    <InputLabel>User *</InputLabel>
+                                    <MuiSelect
+                                        value={form.user_id}
+                                        label="User *"
+                                        onChange={(e) => handleChange("user_id", e.target.value as string)}
+                                        disabled={usersLoading}
+                                        endAdornment={
+                                            usersLoading ? (
+                                                <Loader2 className="w-4 h-4 animate-spin mr-3 text-gray-400" />
+                                            ) : undefined
+                                        }
+                                    >
+                                        {usersLoading ? (
+                                            <MenuItem disabled>Loading users...</MenuItem>
+                                        ) : users.length === 0 ? (
+                                            <MenuItem disabled>No users available</MenuItem>
+                                        ) : (
+                                            users.map((u) => (
+                                                <MenuItem key={u.id} value={String(u.id)}>
+                                                    {u.full_name}
+                                                </MenuItem>
+                                            ))
+                                        )}
+                                    </MuiSelect>
+                                </FormControl>
+                                {errors.user_id && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.user_id}</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Contest & Prize Section */}
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                         <SectionHeader icon={Trophy} title="Contest & Prize" />
@@ -225,7 +308,7 @@ const PulseContestRewardCreate = () => {
                                     <MuiSelect
                                         value={form.prize_id}
                                         label="Prize *"
-                                        onChange={(e) => handleChange("prize_id", e.target.value as string)}
+                                        onChange={(e) => handlePrizeChange(e.target.value as string)}
                                         disabled={!form.contest_id}
                                     >
                                         {!form.contest_id ? (
@@ -317,6 +400,10 @@ const PulseContestRewardCreate = () => {
 
                         <div className="space-y-3 text-sm">
                             <SummaryRow
+                                label="User"
+                                value={users.find(u => String(u.id) === form.user_id)?.full_name || "—"}
+                            />
+                            <SummaryRow
                                 label="Contest"
                                 value={
                                     contests.find(c => String(c.id) === form.contest_id)?.name || "—"
@@ -337,8 +424,8 @@ const PulseContestRewardCreate = () => {
                             <SummaryRow
                                 label="Status"
                                 value={
-                                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-                                        Pending
+                                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                        Granted
                                     </span>
                                 }
                             />

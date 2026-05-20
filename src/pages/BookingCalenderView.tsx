@@ -262,6 +262,7 @@ const BookingCalenderView = () => {
         const currentPath = window.location.pathname;
         if (currentPath.includes("bookings")) navigate("/bookings/add");
         else if (currentPath.includes("club-management")) navigate("/club-management/amenities-booking/add");
+        else if (currentPath.includes("pulse")) navigate("/pulse/amenity/add");
         else navigate("/vas/booking/add");
     };
 

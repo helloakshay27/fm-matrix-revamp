@@ -25,7 +25,6 @@ export interface OccupantUserApiResponse {
   access_level?: string;
   face_added: boolean;
   app_downloaded: string;
-  profile_icon_url?: string;
   lock_user_permission: {
     id: string;
     status: string;
@@ -106,7 +105,9 @@ export const fetchOccupantUsers = createAsyncThunk(
     app_downloaded_eq,
     search_all_fields_cont = "",
     lock_user_permissions_user_type_eq = "",
-    created_on_eq = "",
+    created_at_eq = "",
+    created_at_gteq = "",
+    created_at_lteq = "",
   }: {
     page: number;
     perPage: number;
@@ -119,7 +120,9 @@ export const fetchOccupantUsers = createAsyncThunk(
     app_downloaded_eq?: boolean;
     search_all_fields_cont?: string;
     lock_user_permissions_user_type_eq?: string;
-    created_on_eq?: string;
+    created_at_eq?: string;
+    created_at_gteq?: string;
+    created_at_lteq?: string;
   }) => {
     const params = new URLSearchParams({
       "q[lock_user_permission_status_eq]": lock_user_permission_status_eq,
@@ -131,7 +134,9 @@ export const fetchOccupantUsers = createAsyncThunk(
       "q[search_all_fields_cont]": search_all_fields_cont,
       "q[lock_user_permissions_user_type_eq]":
         lock_user_permissions_user_type_eq,
-      "q[created_on_eq]": created_on_eq,
+      "q[created_at_eq]": created_at_eq,
+      "q[created_at_gteq]": created_at_gteq,
+      "q[created_at_lteq]": created_at_lteq,
     });
     if (app_downloaded_eq !== undefined) {
       params.append("q[app_downloaded_eq]", String(app_downloaded_eq));
