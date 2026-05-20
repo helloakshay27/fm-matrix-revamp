@@ -52,7 +52,7 @@ const getBaseApiDomain = (): string => {
   const hostname = window.location.hostname;
 
   if (hostname === 'localhost' || hostname.includes('127.0.0.1')) {
-    return 'https://fm-uat-api.lockated.com';
+    return 'https://oig-api.gophygital.work';
   }
 
   if (hostname === 'oig.gophygital.work' || hostname.includes('oig.gophygital.work')) {
@@ -720,6 +720,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
       return !value || !String(value).trim();
     });
 
+    if (showRequesterDetails) {
     if (missingRequiredFields.length > 0) {
       const missingField = missingRequiredFields[0];
 
@@ -748,6 +749,7 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
 
       return;
     }
+  }
 
     setLoading(true);
     try {
@@ -1234,6 +1236,9 @@ export const MobileNewTicketPage: React.FC<MobileNewTicketPageProps> = ({ onBack
                       style={{ color: '#2c2c2c' }}
                     >
                       {question.descr}
+                      {question.quest_mandatory && (
+                        <span style={{ color: '#da7756' }}> *</span>
+                      )}
                     </label>
 
                     {/* {renderDynamicField(question)} */}
