@@ -54,6 +54,11 @@ const getItemTitle = (item: any): string => {
   return String(item);
 };
 
+const getItemType = (item: any): string => {
+  if (!item || typeof item !== "object") return "task";
+  return String(item.type || "task").toLowerCase();
+};
+
 const toItemArray = (value: any): any[] => {
   if (Array.isArray(value)) return value;
   if (Array.isArray(value?.items)) return value.items;
@@ -75,6 +80,42 @@ const mergeUniqueItems = (primary: any = [], fallback: any = []) => {
   return merged;
 };
 
+const mergeTasksIssuesPreservingType = (
+  primary: any = [],
+  fallback: any = []
+) => {
+  const merged: any[] = [];
+  const seen = new Set<string>();
+
+  [...toItemArray(primary), ...toItemArray(fallback)].forEach((item) => {
+    const title = getItemTitle(item).trim();
+    if (!title) return;
+
+    const type = getItemType(item);
+    const hasExplicitType = !!item?.type;
+    const typedKey = `${title.toLowerCase()}|${type}`;
+    const titleHasTypedItem = merged.some(
+      (existing) =>
+        getItemTitle(existing).trim().toLowerCase() === title.toLowerCase() &&
+        !!existing?.type
+    );
+
+    if (!hasExplicitType && titleHasTypedItem) return;
+    if (seen.has(typedKey)) return;
+
+    seen.add(typedKey);
+    merged.push(item);
+  });
+
+  return merged;
+};
+
+const groupTasksIssuesByType = (items: any[] = []) => ({
+  tasks: items.filter((item) => getItemType(item) === "task"),
+  issues: items.filter((item) => getItemType(item) === "issue"),
+  todos: items.filter((item) => getItemType(item) === "todo"),
+});
+
 const getReportDataSource = (report: any) => {
   const reportData = report?.report_data || {};
   const draftData = report?.daily_report?.report_data || {};
@@ -92,7 +133,10 @@ const getReportDataSource = (report: any) => {
       ...draftData,
       ...reportData,
       tasks_issues: Array.isArray(reportData.tasks_issues)
-        ? mergeUniqueItems(reportData.tasks_issues, draftData.tasks_issues || [])
+        ? mergeTasksIssuesPreservingType(
+            draftData.tasks_issues || [],
+            reportData.tasks_issues
+          )
         : draftData.tasks_issues || [],
       tomorrow_plan: Array.isArray(reportData.tomorrow_plan)
         ? mergeUniqueItems(reportData.tomorrow_plan, draftData.tomorrow_plan || [])
@@ -214,7 +258,10 @@ const compileMeetingNotes = (historyData: any): string => {
               ? mergeUniqueItems(report.tomorrow_plan, memberRawSource.tomorrow_plan || [])
               : memberRawSource.tomorrow_plan,
             tasks_issues: Array.isArray(report.tasks_issues)
-              ? mergeUniqueItems(report.tasks_issues, memberRawSource.tasks_issues || [])
+              ? mergeTasksIssuesPreservingType(
+                  memberRawSource.tasks_issues || [],
+                  report.tasks_issues
+                )
               : memberRawSource.tasks_issues,
             kpis:
               Array.isArray(report.kpis) || typeof report.kpis === "object"
@@ -302,16 +349,39 @@ const compileMeetingNotes = (historyData: any): string => {
     }
 
     if (tasksRaw.length > 0) {
-      detailedText += `**Tasks & Issues:**\n`;
-      tasksRaw.forEach((item: any) => {
-        const title =
-          item.name ||
-          item.title ||
-          item.text ||
-          (typeof item === "string" ? item : "");
-        if (title)
-          detailedText += `[${item.status || "open"}] ${title.trim()}\n`;
-      });
+      const groupedTasksIssues = groupTasksIssuesByType(tasksRaw);
+      detailedText += `**Tasks:**\n`;
+      if (groupedTasksIssues.tasks.length === 0) {
+        detailedText += `None recorded.\n`;
+      } else {
+        groupedTasksIssues.tasks.forEach((item: any) => {
+          const title = getItemTitle(item);
+          if (title)
+            detailedText += `[${item.status || "open"}] ${title.trim()}\n`;
+        });
+      }
+
+      detailedText += `**Issues:**\n`;
+      if (groupedTasksIssues.issues.length === 0) {
+        detailedText += `None recorded.\n`;
+      } else {
+        groupedTasksIssues.issues.forEach((item: any) => {
+          const title = getItemTitle(item);
+          if (title)
+            detailedText += `[${item.status || "open"}] ${title.trim()}\n`;
+        });
+      }
+
+      detailedText += `**Todos:**\n`;
+      if (groupedTasksIssues.todos.length === 0) {
+        detailedText += `None recorded.\n`;
+      } else {
+        groupedTasksIssues.todos.forEach((item: any) => {
+          const title = getItemTitle(item);
+          if (title)
+            detailedText += `[${item.status || "open"}] ${title.trim()}\n`;
+        });
+      }
     }
 
     if (rawSource.big_win)

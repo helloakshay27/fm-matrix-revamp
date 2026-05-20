@@ -863,7 +863,7 @@ export const EditServicePRPage = () => {
                     </MenuItem>
                     {wbsCodes.map((wbs) => (
                       <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                        {wbs.wbs_code}
+                        {`${wbs.wbs_code} - ${wbs.wbs_name}`}
                       </MenuItem>
                     ))}
                   </MuiSelect>
@@ -1217,7 +1217,7 @@ export const EditServicePRPage = () => {
                           </MenuItem>
                           {wbsCodes.map((wbs) => (
                             <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                              {wbs.wbs_code}
+                              {`${wbs.wbs_code} - ${wbs.wbs_name}`}
                             </MenuItem>
                           ))}
                         </MuiSelect>

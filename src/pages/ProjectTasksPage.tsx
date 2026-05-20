@@ -19,6 +19,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
 import { createProjectTask, editProjectTask, resetUserAvailability, updateTaskStatus } from "@/store/slices/projectTasksSlice";
 import { useTasks, useChangeTaskStatus, useCreateTask, useUpdateTaskCompletion, useDeleteTask, useImportTasks } from "@/hooks/useTasks";
+import { useDebounce } from "@/hooks/useDebounce";
 import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus, X, Search, ChevronRight, Play, Pause, ArrowLeft } from "lucide-react";
 import { useEffect, useState, useRef, forwardRef, useCallback } from "react";
 import { cache } from "@/utils/cacheUtils";
@@ -538,8 +539,8 @@ const ProjectTasksPage = () => {
         return "all";
     });
     const [currentPage, setCurrentPage] = useState(1);
-
-    // Save taskType to session storage whenever it changes
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const debouncedSearchTerm = useDebounce(searchTerm, 500);
     useEffect(() => {
         sessionStorage.setItem("taskType", taskType);
     }, [taskType]);
@@ -1053,6 +1054,11 @@ const ProjectTasksPage = () => {
             filters['q[completed_at_lteq]'] = `${dates.completedAt}T23:59:59`;
         }
 
+        // Add global search filter (searches in title, task_code, and description)
+        if (debouncedSearchTerm.trim()) {
+            filters['q[title_or_task_code_or_description_cont]'] = debouncedSearchTerm.trim();
+        }
+
         return filters;
     };
 
@@ -1097,7 +1103,7 @@ const ProjectTasksPage = () => {
         setDates({ startDate: '', endDate: '', completedAt: '' });
         setSearchTerms({ status: '', workflowStatus: '', responsiblePerson: '', createdBy: '', project: '', tags: '' });
         localStorage.removeItem('taskFilters');
-        
+
         // Clear URL params for all filters
         updateQueryParams({
             status: undefined,
@@ -1110,10 +1116,16 @@ const ProjectTasksPage = () => {
             end_date: undefined,
             completed_at: undefined,
         }, true);
-        
+
         setCurrentPage(1);
         // Filters automatically cleared and refetched through useTasks hook
     };
+
+    // Handle search input changes
+    const handleSearchChange = useCallback((searchValue: string) => {
+        setSearchTerm(searchValue);
+        setCurrentPage(1); // Reset to first page when searching
+    }, []);
 
     const getUsers = useCallback(async () => {
         try {
@@ -2471,6 +2483,7 @@ const ProjectTasksPage = () => {
                 rightActions={rightActions}
                 storageKey="projects-table"
                 onSort={handleColumnSort}
+                onSearchChange={handleSearchChange}
                 onFilterClick={() => setIsFilterModalOpen(true)}
                 canAddRow={true}
                 loading={isLoading}

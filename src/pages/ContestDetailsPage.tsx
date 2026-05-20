@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import axios from "axios";
 import {
   ArrowLeft,
   Edit,
@@ -63,35 +64,27 @@ export const ContestDetailsPage: React.FC = () => {
       try {
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
-        // const baseUrl =  "https://uat-hi-society.lockated.com";
-        //     const token = "O08MAh4ADTSweyKwK8zwR5CDVlzKYKLcu825jhnvEjI"
 
         if (!baseUrl || !token) {
           throw new Error("Base URL or token not set in localStorage");
         }
 
         // Ensure protocol is present
-        const url = /^https?:\/\//i.test(baseUrl)
-          ? baseUrl
-          : `https://${baseUrl}`;
+        const url = `https://${baseUrl}`;
 
-        const res = await fetch(`${url}/contests/${id}.json`, {
+        const response = await axios.get(`${url}/contests/${id}.json`, {
           headers: {
             Accept: "application/json",
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
         });
 
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status} - ${res.statusText}`);
-        }
-
-        const data: ContestDetails = await res.json();
+        const data: ContestDetails = response.data;
         setContest(data);
       } catch (err: any) {
         console.error(err);
-        setError(err.message || "Failed to load contest details");
+        const errorMessage = err.response?.data?.message || err.message || "Failed to load contest details";
+        setError(errorMessage);
         toast.error("Could not load contest details");
       } finally {
         setLoading(false);
@@ -133,7 +126,7 @@ export const ContestDetailsPage: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigate("/contests");
+    navigate("/pulse/contests");
   };
 
   if (loading) {
@@ -180,11 +173,10 @@ export const ContestDetailsPage: React.FC = () => {
                 {contest.name}
               </h1>
               <span
-                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                  contest.active
-                    ? "bg-green-100 text-green-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${contest.active
+                  ? "bg-green-100 text-green-800"
+                  : "bg-gray-100 text-gray-800"
+                  }`}
               >
                 {contest.active ? "Active" : "Inactive"}
               </span>
@@ -272,11 +264,10 @@ export const ContestDetailsPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-3">
               <span
-                className={`px-3 py-1 rounded-md text-sm font-medium ${
-                  contest.active
-                    ? "bg-green-100 text-green-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
+                className={`px-3 py-1 rounded-md text-sm font-medium ${contest.active
+                  ? "bg-green-100 text-green-800"
+                  : "bg-gray-100 text-gray-800"
+                  }`}
               >
                 {contest.active ? "Active" : "Inactive"}
               </span>

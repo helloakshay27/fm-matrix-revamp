@@ -31,6 +31,8 @@ import {
     FileText,
     Pencil,
     ListTodo,
+    Play,
+    Pause,
 } from "lucide-react";
 import {
     addDays,
@@ -277,6 +279,22 @@ const WeeklyReports = () => {
     const [closureRemarks, setClosureRemarks] = useState("");
     const [closureAttachments, setClosureAttachments] = useState<any[]>([]);
     const [isClosureSubmitting, setIsClosureSubmitting] = useState(false);
+    const [completingTaskIssueIds, setCompletingTaskIssueIds] = useState<
+        Record<string, boolean>
+    >({});
+    const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
+    const [pauseItem, setPauseItem] = useState<{
+        id: number;
+        type: "task" | "issue";
+    } | null>(null);
+    const [isPauseLoading, setIsPauseLoading] = useState(false);
+    const [updatingPlayPauseIds, setUpdatingPlayPauseIds] = useState<
+        Record<string, boolean>
+    >({});
+    const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
+    const [overdueItem, setOverdueItem] = useState<any>(null);
+    const [overdueReason, setOverdueReason] = useState("");
+    const [isOverdueLoading, setIsOverdueLoading] = useState(false);
     const [currentTasksPage, setCurrentTasksPage] = useState(1);
     const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
     const [hasMoreTasks, setHasMoreTasks] = useState(true);
@@ -492,16 +510,7 @@ const WeeklyReports = () => {
             try {
                 const params = new URLSearchParams();
                 params.append("page", String(currentTasksPage));
-                params.append("q[status_in][]", "open");
-                params.append("q[status_in][]", "overdue");
-                params.append("q[status_in][]", "overdued");
-                params.append("q[status_in][]", "in_progress");
-                params.append("q[status_in][]", "completed");
-                params.append(
-                    "q[start_date_or_target_date_or_completed_at_lteq]",
-                    format(weekEnd, "yyyy-MM-dd")
-                );
-                params.append("q[completed_at_gteq]", format(weekStart, "yyyy-MM-dd"));
+                params.append("for_date", format(weekEnd, "yyyy-MM-dd"));
 
                 const response = await fetch(
                     `${normalizedBaseUrl}/task_managements/my_tasks.json?${params.toString()}`,
@@ -540,16 +549,7 @@ const WeeklyReports = () => {
             try {
                 const params = new URLSearchParams();
                 params.append("page", String(currentIssuesPage));
-                params.append("q[status_in][]", "open");
-                params.append("q[status_in][]", "overdue");
-                params.append("q[status_in][]", "overdued");
-                params.append("q[status_in][]", "in_progress");
-                params.append("q[status_in][]", "completed");
-                params.append(
-                    "q[start_date_or_target_date_or_completed_at_lteq]",
-                    format(weekEnd, "yyyy-MM-dd")
-                );
-                params.append("q[completed_at_gteq]", format(weekStart, "yyyy-MM-dd"));
+                params.append("for_date", format(weekEnd, "yyyy-MM-dd"));
                 params.append("q[responsible_person_id_eq]", String(userId));
 
                 const response = await fetch(
@@ -1086,6 +1086,278 @@ const WeeklyReports = () => {
             );
         } finally {
             setIsClosureSubmitting(false);
+        }
+    };
+
+    const isDateOverdue = (dateStr: string | undefined) => {
+        if (!dateStr) return false;
+        const itemDate = new Date(dateStr);
+        const today = new Date();
+        if (Number.isNaN(itemDate.getTime())) return false;
+        itemDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        return itemDate < today;
+    };
+
+    const completeTaskIssueTodo = async (item: any, reason?: string) => {
+        if (!item || !normalizedBaseUrl) return false;
+
+        const realId = String(item.id || "")
+            .replace("task-", "")
+            .replace("issue-", "")
+            .replace("todo-", "");
+        const previousStatus = item.status;
+
+        setCompletingTaskIssueIds((prev) => ({ ...prev, [item.id]: true }));
+        setMergedTasksIssues((prev) =>
+            prev.map((existing) =>
+                existing.id === item.id ? { ...existing, status: "completed" } : existing
+            )
+        );
+        setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
+
+        try {
+            const headers = {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            };
+
+            if (item.type === "task") {
+                await axios.put(
+                    `${normalizedBaseUrl}/task_managements/${realId}.json`,
+                    { task_management: { status: "completed" } },
+                    { headers }
+                );
+            } else if (item.type === "issue") {
+                await axios.put(
+                    `${normalizedBaseUrl}/issues/${realId}.json`,
+                    { issue: { status: "completed" } },
+                    { headers }
+                );
+            } else {
+                await axios.put(
+                    `${normalizedBaseUrl}/todos/${realId}.json`,
+                    { todo: { status: "completed" } },
+                    { headers }
+                );
+            }
+
+            if (reason?.trim()) {
+                await axios.post(
+                    `${normalizedBaseUrl}/comments.json`,
+                    {
+                        comment: {
+                            body: `Overdue reason: ${reason}`,
+                            commentable_id: realId,
+                            commentable_type:
+                                item.type === "task"
+                                    ? "TaskManagement"
+                                    : item.type === "todo"
+                                        ? "Todo"
+                                        : "Issue",
+                            commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
+                            active: true,
+                        },
+                    },
+                    { headers }
+                );
+            }
+
+            toast.success(
+                `${String(item.type).charAt(0).toUpperCase() + String(item.type).slice(1)} ${reason?.trim() ? "completed with overdue reason" : "completed successfully"}`
+            );
+            setTasksIssuesRefreshKey((key) => key + 1);
+            return true;
+        } catch (error) {
+            console.error("Error completing weekly task/issue/todo:", error);
+            toast.error(`Failed to complete ${item.type}`);
+            setMergedTasksIssues((prev) =>
+                prev.map((existing) =>
+                    existing.id === item.id
+                        ? { ...existing, status: previousStatus }
+                        : existing
+                )
+            );
+            setSelectedTasksIssues((prev) => ({
+                ...prev,
+                [item.id]: previousStatus === "completed" || previousStatus === "closed",
+            }));
+        } finally {
+            setCompletingTaskIssueIds((prev) => {
+                const next = { ...prev };
+                delete next[item.id];
+                return next;
+            });
+        }
+        return false;
+    };
+
+    const handleCompleteTaskIssueTodo = async (item: any) => {
+        const targetDate =
+            item?.originalData?.target_date ||
+            item?.originalData?.due_date ||
+            item?.originalData?.end_date;
+        const isOverdueItem =
+            item?.status === "overdue" ||
+            item?.status === "overdued" ||
+            isDateOverdue(targetDate);
+
+        if (isOverdueItem) {
+            setOverdueItem(item);
+            setOverdueReason("");
+            setIsOverdueModalOpen(true);
+            return;
+        }
+
+        await completeTaskIssueTodo(item);
+    };
+
+    const handleOverdueReasonSubmit = async () => {
+        if (!overdueItem || !overdueReason.trim()) return;
+
+        setIsOverdueLoading(true);
+        try {
+            const completed = await completeTaskIssueTodo(overdueItem, overdueReason.trim());
+            if (completed) {
+                setIsOverdueModalOpen(false);
+                setOverdueItem(null);
+                setOverdueReason("");
+            }
+        } finally {
+            setIsOverdueLoading(false);
+        }
+    };
+
+    const handlePlayTaskIssue = async (item: any) => {
+        if (!item || !normalizedBaseUrl || !["task", "issue"].includes(item.type)) return;
+
+        const realId = Number(
+            String(item.id || "").replace("task-", "").replace("issue-", "")
+        );
+        if (!realId) return;
+
+        const endpoint =
+            item.type === "task"
+                ? `${normalizedBaseUrl}/task_managements/${realId}/update_status.json`
+                : `${normalizedBaseUrl}/issues/${realId}/update_status.json`;
+
+        setUpdatingPlayPauseIds((prev) => ({ ...prev, [item.id]: true }));
+        try {
+            await axios.put(
+                endpoint,
+                { status: "started" },
+                {
+                    headers: {
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                }
+            );
+
+            setMergedTasksIssues((prev) =>
+                prev.map((existing) =>
+                    existing.id === item.id
+                        ? {
+                            ...existing,
+                            originalData: {
+                                ...existing.originalData,
+                                is_started: true,
+                            },
+                        }
+                        : existing
+                )
+            );
+            toast.success(
+                `${item.type === "task" ? "Task" : "Issue"} started successfully`
+            );
+            setTasksIssuesRefreshKey((key) => key + 1);
+        } catch (error) {
+            console.error(`Failed to start ${item.type}:`, error);
+            toast.error(`Failed to start ${item.type}`);
+        } finally {
+            setUpdatingPlayPauseIds((prev) => {
+                const next = { ...prev };
+                delete next[item.id];
+                return next;
+            });
+        }
+    };
+
+    const handlePauseTaskIssueSubmit = async (
+        reason: string,
+        target: { id: number; type: "task" | "issue" } | null
+    ) => {
+        if (!target || !normalizedBaseUrl) return;
+
+        const itemKey = `${target.type}-${target.id}`;
+        const endpoint =
+            target.type === "task"
+                ? `${normalizedBaseUrl}/task_managements/${target.id}/update_status.json`
+                : `${normalizedBaseUrl}/issues/${target.id}/update_status.json`;
+        const commentableType = target.type === "task" ? "TaskManagement" : "Issue";
+
+        setIsPauseLoading(true);
+        setUpdatingPlayPauseIds((prev) => ({ ...prev, [itemKey]: true }));
+        try {
+            await axios.put(
+                endpoint,
+                { status: "stopped" },
+                {
+                    headers: {
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                }
+            );
+
+            await axios.post(
+                `${normalizedBaseUrl}/comments.json`,
+                {
+                    comment: {
+                        body: `Paused with reason: ${reason}`,
+                        commentable_id: target.id,
+                        commentable_type: commentableType,
+                        commentor_id: JSON.parse(localStorage.getItem("user") || "{}")?.id,
+                        active: true,
+                    },
+                },
+                {
+                    headers: {
+                        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                    },
+                }
+            );
+
+            setMergedTasksIssues((prev) =>
+                prev.map((existing) =>
+                    existing.id === itemKey
+                        ? {
+                            ...existing,
+                            originalData: {
+                                ...existing.originalData,
+                                is_started: false,
+                            },
+                        }
+                        : existing
+                )
+            );
+            toast.success(
+                `${target.type === "task" ? "Task" : "Issue"} paused successfully`
+            );
+            setIsPauseModalOpen(false);
+            setPauseItem(null);
+            setTasksIssuesRefreshKey((key) => key + 1);
+        } catch (error: any) {
+            console.error(`Failed to pause ${target.type}:`, error);
+            toast.error(
+                `Failed to pause ${target.type}: ${error?.response?.data?.error || error?.message || "Server error"}`
+            );
+        } finally {
+            setIsPauseLoading(false);
+            setUpdatingPlayPauseIds((prev) => {
+                const next = { ...prev };
+                delete next[itemKey];
+                return next;
+            });
         }
     };
 
@@ -2589,28 +2861,14 @@ const WeeklyReports = () => {
                                                         item.status === "completed" ||
                                                         item.status === "closed"
                                                     }
+                                                    disabled={!!completingTaskIssueIds[item.id]}
                                                     onCheckedChange={(checked) => {
                                                         if (
                                                             checked &&
                                                             item.status !== "completed" &&
                                                             item.status !== "closed"
                                                         ) {
-                                                            if (item.type === "todo") {
-                                                                setMergedTasksIssues((prev) =>
-                                                                    prev.map((existing) =>
-                                                                        existing.id === item.id
-                                                                            ? { ...existing, status: "completed" }
-                                                                            : existing
-                                                                    )
-                                                                );
-                                                                setSelectedTasksIssues((prev) => ({
-                                                                    ...prev,
-                                                                    [item.id]: true,
-                                                                }));
-                                                                return;
-                                                            }
-                                                            setClosureItem(item);
-                                                            setShowClosureModal(true);
+                                                            handleCompleteTaskIssueTodo(item);
                                                         } else {
                                                             setSelectedTasksIssues((prev) => ({
                                                                 ...prev,
@@ -2661,6 +2919,53 @@ const WeeklyReports = () => {
                                                 >
                                                     <Pencil size={14} />
                                                 </button>
+                                                {(item.type === "task" || item.type === "issue") &&
+                                                    item.status !== "completed" &&
+                                                    item.status !== "closed" && (
+                                                        item.originalData?.is_started ? (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setPauseItem({
+                                                                        id: item.originalData.id,
+                                                                        type: item.type,
+                                                                    });
+                                                                    setIsPauseModalOpen(true);
+                                                                }}
+                                                                disabled={!!updatingPlayPauseIds[item.id]}
+                                                                className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                                                title={`Pause ${item.type}`}
+                                                            >
+                                                                {updatingPlayPauseIds[item.id] ? (
+                                                                    <Loader2
+                                                                        size={16}
+                                                                        className="text-orange-500 animate-spin"
+                                                                    />
+                                                                ) : (
+                                                                    <Pause size={16} className="text-orange-500" />
+                                                                )}
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handlePlayTaskIssue(item);
+                                                                }}
+                                                                disabled={!!updatingPlayPauseIds[item.id]}
+                                                                className="p-1 hover:bg-gray-200 rounded transition disabled:opacity-50"
+                                                                title={`Play ${item.type}`}
+                                                            >
+                                                                {updatingPlayPauseIds[item.id] ? (
+                                                                    <Loader2
+                                                                        size={16}
+                                                                        className="text-green-500 animate-spin"
+                                                                    />
+                                                                ) : (
+                                                                    <Play size={16} className="text-green-500" />
+                                                                )}
+                                                            </button>
+                                                        )
+                                                    )}
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-white text-gray-600 uppercase">
                                                         {item.type}
@@ -4104,7 +4409,7 @@ const WeeklyReports = () => {
                 handleCloseDialog={() => setOpenIssueModal(false)}
                 prefillData={{
                     start_date: currentDateValue,
-                    target_date: weekEndDateValue,
+                    target_date: currentDateValue,
                 }}
             />
 
@@ -4116,7 +4421,7 @@ const WeeklyReports = () => {
                 }}
                 getTodos={() => setTasksIssuesRefreshKey((key) => key + 1)}
                 prefillData={{
-                    start_date: weekEndDateValue,
+                    start_date: currentDateValue,
                     target_date: weekEndDateValue,
                 }}
             />
@@ -4191,6 +4496,30 @@ const WeeklyReports = () => {
                 editingTodo={editTodoData}
                 isEditMode={!!editTodoData}
                 prefillData={editTodoData || {}}
+            />
+
+            <OverdueReasonModal
+                isOpen={isOverdueModalOpen}
+                onClose={() => {
+                    setIsOverdueModalOpen(false);
+                    setOverdueItem(null);
+                    setOverdueReason("");
+                }}
+                reason={overdueReason}
+                setReason={setOverdueReason}
+                onSubmit={handleOverdueReasonSubmit}
+                isLoading={isOverdueLoading}
+            />
+
+            <PauseReasonModal
+                isOpen={isPauseModalOpen}
+                onClose={() => {
+                    setIsPauseModalOpen(false);
+                    setPauseItem(null);
+                }}
+                onSubmit={handlePauseTaskIssueSubmit}
+                isLoading={isPauseLoading}
+                target={pauseItem}
             />
 
             <Menu
@@ -4480,6 +4809,140 @@ const WeeklyReports = () => {
                     </div>
                 </div>
             </MuiDialog>
+        </div>
+    );
+};
+
+const OverdueReasonModal = ({
+    isOpen,
+    onClose,
+    reason,
+    setReason,
+    onSubmit,
+    isLoading,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    reason: string;
+    setReason: (reason: string) => void;
+    onSubmit: () => void;
+    isLoading: boolean;
+}) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] max-w-[calc(100vw-2rem)] border border-gray-200">
+                <div className="mb-4">
+                    <h2 className="text-lg font-bold text-gray-900">Item is Overdue</h2>
+                    <p className="text-sm text-gray-600 mt-1">
+                        This item is past its target date. Please provide a reason for the delay.
+                    </p>
+                </div>
+
+                <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="Enter reason for overdue..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#DA7756]/50 resize-none"
+                    rows={4}
+                    disabled={isLoading}
+                />
+
+                <div className="flex gap-2 justify-end pt-4">
+                    <Button
+                        variant="outline"
+                        onClick={onClose}
+                        disabled={isLoading}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        className="bg-[#DA7756] hover:bg-[#c45f3a] text-white"
+                        onClick={onSubmit}
+                        disabled={!reason.trim() || isLoading}
+                    >
+                        {isLoading ? "Submitting..." : "Complete & Submit"}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const PauseReasonModal = ({
+    isOpen,
+    onClose,
+    onSubmit,
+    isLoading,
+    target,
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (
+        reason: string,
+        target: { id: number; type: "task" | "issue" } | null
+    ) => void;
+    isLoading: boolean;
+    target: { id: number; type: "task" | "issue" } | null;
+}) => {
+    const [reason, setReason] = useState("");
+    const label = target?.type === "issue" ? "Issue" : "Task";
+
+    useEffect(() => {
+        if (!isOpen) setReason("");
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error(`Please enter a reason for pausing the ${label.toLowerCase()}`);
+            return;
+        }
+        onSubmit(reason, target);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] max-w-[calc(100vw-2rem)] border border-gray-200">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="w-1 h-8 bg-[#C72030] rounded-sm" />
+                    <h2 className="text-lg font-bold text-gray-900">Pause {label}</h2>
+                </div>
+                <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                    Please provide a reason for pausing this {label.toLowerCase()}.
+                </p>
+                <div className="mb-6">
+                    <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">
+                        Reason
+                    </label>
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder={`Enter reason for pausing this ${label.toLowerCase()}...`}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+                <div className="flex gap-3 justify-end">
+                    <button
+                        onClick={onClose}
+                        disabled={isLoading}
+                        className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
+                    >
+                        {isLoading ? "Processing..." : `Pause ${label}`}
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
