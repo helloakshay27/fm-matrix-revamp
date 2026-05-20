@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { format } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +53,7 @@ import {
     AccordionTrigger,
     AccordionContent,
 } from "@/components/ui/accordion";
+import AccountingDocumentPdf from "@/components/accounting/AccountingDocumentPdf";
 // Types
 interface SalesOrderItem {
     id: number;
@@ -218,6 +221,9 @@ export const SalesOrderDetailPage = () => {
     const [hasSaleOrderApproval, setHasSaleOrderApproval] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
     const [showConvertMenu, setShowConvertMenu] = useState(false);
+    const [pdfGenerating, setPdfGenerating] = useState(false);
+    const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+    const salesOrderPdfRef = useRef<HTMLDivElement | null>(null);
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -381,11 +387,55 @@ export const SalesOrderDetailPage = () => {
     };
 
     const handlePrint = () => {
-        window.print();
+        setActiveTab("pdf");
+        setTimeout(() => window.print(), 0);
     };
 
-    const handleDownload = () => {
-        sonnerToast.success("Downloading sales order PDF...");
+    const handleDownload = async () => {
+        try {
+            setPdfGenerating(true);
+            setRenderDownloadPdf(true);
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+
+            if (!salesOrderPdfRef.current) {
+                throw new Error("PDF preview is not ready yet");
+            }
+
+            const canvas = await html2canvas(salesOrderPdfRef.current, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: "#ffffff",
+                logging: false,
+            });
+
+            const imgData = canvas.toDataURL("image/png");
+            const pdf = new jsPDF("p", "mm", "a4");
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            pdf.save(`SalesOrder-${salesOrder?.sale_order_number || id || "download"}.pdf`);
+            sonnerToast.success("Sales order PDF downloaded successfully");
+        } catch (error) {
+            console.error("Error generating sales order PDF:", error);
+            sonnerToast.error("Failed to download sales order PDF");
+        } finally {
+            setPdfGenerating(false);
+            setRenderDownloadPdf(false);
+        }
     };
 
     const handleSendEmail = () => {
@@ -421,9 +471,14 @@ export const SalesOrderDetailPage = () => {
         }
     });
     const taxRows = Object.entries(taxBreakdown);
+    const salesOrderItems = Array.isArray(salesOrder?.item_details) ? salesOrder.item_details : [];
     const formatDate = (dateString) => {
         if (!dateString) return "N/A";
         return format(new Date(dateString), "dd/MM/yyyy");
+    };
+    const formatCurrency = (amount) => {
+        const currencySymbol = localStorage.getItem("currencySymbol") || "₹";
+        return `${currencySymbol}${Number(amount || 0).toFixed(2)}`;
     };
 
     return (
@@ -463,6 +518,27 @@ export const SalesOrderDetailPage = () => {
                                 Approval Log
                             </Button>
                         )}
+
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setActiveTab("pdf")}
+                            className="gap-2"
+                        >
+                            <FileText className="h-4 w-4" />
+                            PDF
+                        </Button>
+
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleDownload}
+                            disabled={pdfGenerating}
+                            className="gap-2"
+                        >
+                            <Download className="h-4 w-4" />
+                            {pdfGenerating ? "Downloading..." : "Download PDF"}
+                        </Button>
 
                         {/* ── WITHOUT APPROVAL ── */}
                         {!hasSaleOrderApproval && (
@@ -596,10 +672,11 @@ export const SalesOrderDetailPage = () => {
 
                 {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid grid-cols-3 w-full max-w-md">
+                    <TabsList className="grid grid-cols-4 w-full max-w-2xl">
                         <TabsTrigger value="order-details">Order Details</TabsTrigger>
                         <TabsTrigger value="customer-info">Customer Info</TabsTrigger>
                         <TabsTrigger value="history">History</TabsTrigger>
+                        <TabsTrigger value="pdf">PDF</TabsTrigger>
                     </TabsList>
 
                     {/* Order Details Tab */}
@@ -1045,8 +1122,74 @@ export const SalesOrderDetailPage = () => {
                             </CardContent>
                         </Card>
                     </TabsContent>
+
+                    <TabsContent value="pdf" className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between gap-3 flex-wrap">
+                                    <CardTitle className="flex items-center gap-2">
+                                        <FileText className="h-5 w-5 text-primary" />
+                                        Sales Order PDF
+                                    </CardTitle>
+                                    <div className="flex items-center gap-2">
+                                        <Button variant="outline" size="sm" onClick={handlePrint}>
+                                            <Printer className="h-4 w-4 mr-2" />
+                                            Print
+                                        </Button>
+                                        <Button size="sm" onClick={handleDownload} disabled={pdfGenerating}>
+                                            <Download className="h-4 w-4 mr-2" />
+                                            {pdfGenerating ? "Downloading..." : "Download PDF"}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="overflow-auto rounded-lg border bg-muted/30 p-4">
+                                    <div className="mx-auto bg-white" ref={activeTab === "pdf" ? salesOrderPdfRef : null}>
+                                        <AccountingDocumentPdf
+                                            documentTitle="SALES ORDER"
+                                            documentNumber={salesOrder.sale_order_number}
+                                            documentDate={salesOrder.date}
+                                            status={salesOrder.status}
+                                            customerName={salesOrder.customer_name}
+                                            items={salesOrderItems}
+                                            data={salesOrder}
+                                            taxRows={taxRows}
+                                            formatDate={formatDate}
+                                            formatCurrency={formatCurrency}
+                                            secondaryDateLabel="Shipment Date"
+                                            secondaryDate={salesOrder.shipment_date}
+                                            referenceNumber={salesOrder.reference_number}
+                                        />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
                 </Tabs>
             </div>
+
+            {renderDownloadPdf && activeTab !== "pdf" && (
+                <div className="fixed left-[-10000px] top-0">
+                    <div ref={salesOrderPdfRef}>
+                        <AccountingDocumentPdf
+                            documentTitle="SALES ORDER"
+                            documentNumber={salesOrder.sale_order_number}
+                            documentDate={salesOrder.date}
+                            status={salesOrder.status}
+                            customerName={salesOrder.customer_name}
+                            items={salesOrderItems}
+                            data={salesOrder}
+                            taxRows={taxRows}
+                            formatDate={formatDate}
+                            formatCurrency={formatCurrency}
+                            secondaryDateLabel="Shipment Date"
+                            secondaryDate={salesOrder.shipment_date}
+                            referenceNumber={salesOrder.reference_number}
+                        />
+                    </div>
+                </div>
+            )}
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
