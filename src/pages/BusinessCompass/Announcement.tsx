@@ -37,7 +37,7 @@ function AnnouncementCard({ item }: { item: AnnouncementItem }) {
     >
       {/* Left Accent Border */}
       <div className="absolute left-0 top-0 h-full w-1.5 bg-[#DA7756]" aria-hidden />
-      
+
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 px-5 py-5 pl-5 sm:px-6 sm:py-6">
         {/* Icon */}
         <div
@@ -118,18 +118,18 @@ const Announcement = () => {
       const baseUrl = localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
       const protocol = baseUrl.startsWith("http") ? "" : "https://";
 
-      const annEndpoint = `${protocol}${baseUrl}/extra_fields?resource_id=${companyId}&resource_type=CompanySetup&group_name=announcement`;
-      const response = await axios.get(annEndpoint, { 
-        headers: { Authorization: `Bearer ${token}` } 
+      const annEndpoint = `${protocol}${baseUrl}/extra_fields.json?resource_id=${companyId}&resource_type=CompanySetup&group_name=announcement`;
+      const response = await axios.get(annEndpoint, {
+        headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       let fetchedAnns = [];
       if (Array.isArray(response.data)) {
-         fetchedAnns = response.data;
+        fetchedAnns = response.data;
       } else if (Array.isArray(response.data?.data)) {
-         fetchedAnns = response.data.data;
+        fetchedAnns = response.data.data;
       } else if (Array.isArray(response.data?.announcement)) {
-         fetchedAnns = response.data.announcement;
+        fetchedAnns = response.data.announcement;
       }
 
       if (fetchedAnns.length > 0) {
@@ -139,7 +139,7 @@ const Announcement = () => {
             if (!a.field_value || !a.field_value.trim().startsWith("{")) {
               return true;
             }
-            
+
             try {
               const parsed = JSON.parse(a.field_value);
               // Only show announcements explicitly marked as active (isActive: true)
@@ -162,7 +162,7 @@ const Announcement = () => {
                 console.error("Failed to parse announcement data", e);
               }
             }
-            
+
             return {
               id: String(a.id || a.extra_field_id),
               title: a.field_name || "Announcement",
@@ -179,7 +179,7 @@ const Announcement = () => {
               dbId: a.id || a.extra_field_id
             };
           });
-        
+
         setAnnouncements(mappedAnns);
       } else {
         setAnnouncements([]);
@@ -197,7 +197,7 @@ const Announcement = () => {
   }, [companyId]);
 
   return (
-    <div 
+    <div
       className="min-h-[calc(100vh-4rem)] w-full bg-[#f6f4ee] px-4 py-6 sm:px-6"
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
@@ -220,7 +220,7 @@ const Announcement = () => {
           <h2 className="text-sm font-bold uppercase tracking-wider text-neutral-500 mb-4">
             Current
           </h2>
-          
+
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <Loader2 className="h-8 w-8 animate-spin text-[#DA7756]" />
