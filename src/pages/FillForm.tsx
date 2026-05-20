@@ -876,9 +876,9 @@ export const FillForm = () => {
                             {id && <span className="text-sm text-gray-600 ml-2">(Permit ID: {id})</span>}
                         </h1>
                     </div>
-                    <Badge className="bg-blue-100 text-blue-800 px-3 py-1">
+                    {/* <Badge className="bg-blue-100 text-blue-800 px-3 py-1">
                         FILL FORM
-                    </Badge>
+                    </Badge> */}
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">

@@ -645,6 +645,9 @@ const BusinessCompassDailyReport: React.FC = () => {
     const inProgress = mergedTasksIssues.filter(
       (item) => item.status === "in_progress"
     ).length;
+    const tasks = mergedTasksIssues.filter((item) => item.type === "task").length;
+    const issues = mergedTasksIssues.filter((item) => item.type === "issue").length;
+    const todos = mergedTasksIssues.filter((item) => item.type === "todo").length;
 
     return {
       completed,
@@ -652,6 +655,9 @@ const BusinessCompassDailyReport: React.FC = () => {
       overdue,
       onHold,
       inProgress,
+      tasks,
+      issues,
+      todos,
       total: mergedTasksIssues.length,
     };
   }, [mergedTasksIssues]);
@@ -1763,14 +1769,14 @@ const BusinessCompassDailyReport: React.FC = () => {
               })),
             },
             tasks_issues: mergedTasksIssues
-              .filter((item) => selectedTasksIssues[item.id] === true)
+              .filter((item) => selectedTasksIssues[item.id] === true || item.status === 'overdue' || item.status === 'in_progress')
               .map((item) => ({
                 title:
                   item.originalData?.title ||
                   item.originalData?.name ||
                   item.title ||
                   "",
-                status: "completed",
+                status: selectedTasksIssues[item.id] === true ? "completed" : item.status,
                 type: item.type,
               })),
             tomorrow_plan: tomorrowPlanPayload,
@@ -1788,7 +1794,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             sections: {
               kpi_achievement: finalDailyScore.kpiScore,
               accomplishments: finalDailyScore.accomplishmentsScore,
-              tasks_issues: finalDailyScore.tasksIssuesScore,
+              tasks_issues_todos: finalDailyScore.tasksIssuesScore,
               planning: finalDailyScore.planningScore,
               timing: finalDailyScore.timingScore,
             },
@@ -2500,19 +2506,37 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <div className="flex flex-wrap gap-2 pt-1">
                           <Badge
                             variant="outline"
-                            className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
+                            className="border-0 bg-[#DA7756]/10 px-3 py-1 text-[10px] font-bold text-[#9e4f36]"
                           >
-                            Completed: {taskIssueCounts.completed}
+                            Tasks: {taskIssueCounts.tasks}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className="border-0 bg-blue-100 px-3 py-1 text-[10px] font-bold text-blue-800"
+                            className="border-0 bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-800"
+                          >
+                            Issues: {taskIssueCounts.issues}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-0 bg-yellow-100 px-3 py-1 text-[10px] font-bold text-yellow-800"
+                          >
+                            Todos: {taskIssueCounts.todos}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
+                          >
+                            Closed: {taskIssueCounts.completed}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
                           >
                             Open: {taskIssueCounts.open}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className="border-0 bg-rose-100 px-3 py-1 text-[10px] font-bold text-rose-800"
+                            className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800"
                           >
                             Overdue: {taskIssueCounts.overdue}
                           </Badge>
@@ -2521,12 +2545,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                             className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
                           >
                             In Progress: {taskIssueCounts.inProgress}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-purple-100 px-3 py-1 text-[10px] font-bold text-purple-800"
-                          >
-                            On Hold: {taskIssueCounts.onHold}
                           </Badge>
                         </div>
                       </div>
@@ -4024,7 +4042,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           )}
 
                         {report.report_data?.tasks_issues &&
-                          report.report_data.tasks_issues.length > 0 && (
+                          report.report_data.tasks_issues.filter((item: any) => item.status === "completed").length > 0 && (
                             <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
                               <div className="flex items-center gap-2 mb-3">
                                 <CheckSquare
@@ -4036,26 +4054,28 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 </span>
                               </div>
                               <div className="space-y-2">
-                                {report.report_data.tasks_issues.map(
-                                  (item: any, idx: number) => (
-                                    <div
-                                      key={idx}
-                                      className="bg-white border border-red-100 rounded-[6px] p-3 shadow-sm flex items-start gap-2"
-                                    >
-                                      <span className="text-red-600 font-bold mt-0.5">
-                                        ✓
-                                      </span>
-                                      {/* UPDATED: Fallback to item.title if item.name is missing */}
-                                      <span className="text-sm text-gray-700">
-                                        {item.name ||
-                                          item.title ||
-                                          item.originalData?.title ||
-                                          item.originalData?.name ||
-                                          "Unnamed Item"}
-                                      </span>
-                                    </div>
-                                  )
-                                )}
+                                {report.report_data.tasks_issues
+                                  .filter((item: any) => item.status === "completed")
+                                  .map(
+                                    (item: any, idx: number) => (
+                                      <div
+                                        key={idx}
+                                        className="bg-white border border-red-100 rounded-[6px] p-3 shadow-sm flex items-start gap-2"
+                                      >
+                                        <span className="text-red-600 font-bold mt-0.5">
+                                          ✓
+                                        </span>
+                                        {/* UPDATED: Fallback to item.title if item.name is missing */}
+                                        <span className="text-sm text-gray-700">
+                                          {item.name ||
+                                            item.title ||
+                                            item.originalData?.title ||
+                                            item.originalData?.name ||
+                                            "Unnamed Item"}
+                                        </span>
+                                      </div>
+                                    )
+                                  )}
                               </div>
                             </div>
                           )}
