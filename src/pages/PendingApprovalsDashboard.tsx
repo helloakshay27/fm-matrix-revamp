@@ -40,10 +40,17 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "supplierName",
+    label: "Supplier Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: false,
+  },
+  {
     key: "siteName",
     label: "Site Name",
     sortable: true,
-    draggable: true,
+    draggable: true,  
     defaultVisible: true,
   },
   {
@@ -112,6 +119,7 @@ export const PendingApprovalsDashboard = () => {
                     : "Invoice",
         prNo: item.reference_number,
         siteName: item.site_name,
+        supplierName: item.supplier_name,
         level: item.approval_level_name,
         level_id: item.level_id,
         user_id: item.user_id,
