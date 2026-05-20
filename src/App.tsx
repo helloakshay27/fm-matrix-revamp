@@ -640,6 +640,7 @@ import { ViewChecklistMasterPage } from "./pages/ViewChecklistMasterPage";
 import { UnitMasterPage } from "./pages/UnitMasterPage";
 
 // Import Location Master pages
+import { GoldenQrSetupPage } from "./pages/master/GoldenQrSetupPage";
 import { BuildingPage } from "./pages/master/BuildingPage";
 import { WingPage } from "./pages/master/WingPage";
 import { AreaPage } from "./pages/master/AreaPage";
@@ -5331,6 +5332,11 @@ function App() {
                             element={<PaymentRedirectPage />}
                           />
                           {/* Payments Made Routes */}
+                          {/* Master Ticket Routes */}
+                          <Route
+                            path="/master/ticket/golden-qr"
+                            element={<GoldenQrSetupPage />}
+                          />
                           {/* Master Location Routes */}
                           <Route
                             path="/master/location/building"

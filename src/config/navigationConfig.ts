@@ -108,6 +108,18 @@ export const modulesByPackage = {
       ],
     },
     {
+      name: "Ticket Master",
+      icon: Ticket,
+      href: "/master/ticket/golden-qr",
+      subItems: [
+        {
+          name: "Complaint QR Setup",
+          href: "/master/ticket/golden-qr",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
       name: "Checklist Master",
       icon: CheckSquare,
       href: "/master/checklist",
@@ -142,6 +154,7 @@ export const modulesByPackage = {
       icon: DoorOpen,
       href: "/master/gate-number",
     },
+    
     {
       name: "Gate Pass Type",
       icon: Ticket,
@@ -861,6 +874,18 @@ export const modulesByPackage = {
       ],
     },
     {
+      name: "Ticket Setup",
+      icon: Ticket,
+      href: "/master/ticket/golden-qr",
+      subItems: [
+        {
+          name: "Complaint QR Setup",
+          href: "/master/ticket/golden-qr",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
+    {
       name: "Maintenance",
       icon: Wrench,
       href: "/settings/maintenance",
@@ -1142,6 +1167,9 @@ export const sidebarToApiFunctionMapping = {
   "unit master (by default)": ["pms_setup"],
   "material master -> ebom": ["materials", "pms_materials"],
   "gate number": ["gate", "gate_number"],
+  "ticket master": ["Ticket Master", "ticket_master"],
+  "complaint qr setup": ["ticket/golden-qr", "ticket_master"],
+  "ticket setup": ["Ticket Master", "ticket_master"],
 
   // Building/Location Elements
   account: ["account", "accounts", "pms_accounts", "pms_setup"],

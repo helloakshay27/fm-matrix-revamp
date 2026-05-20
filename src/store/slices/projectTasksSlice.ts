@@ -40,12 +40,14 @@ export const fetchKanbanTasksOfProject = createAsyncThunk(
             selectedResponsible,
             selectedCreators,
             selectedProjects,
+            created_by_id,
             dates
         }: {
             baseUrl: string;
             token: string;
             id?: string;
             responsible_person_id?: string;
+            created_by_id?: string;
             selectedFilterOption?: string;
             selectedStatuses?: string[];
             selectedWorkflowStatus?: string[];
@@ -65,6 +67,9 @@ export const fetchKanbanTasksOfProject = createAsyncThunk(
             }
             if (responsible_person_id) {
                 params.append('q[responsible_person_id_eq]', responsible_person_id);
+            }
+            if (created_by_id) {
+                params.append('q[created_by_id_eq]', created_by_id);
             }
 
             // Apply filters
