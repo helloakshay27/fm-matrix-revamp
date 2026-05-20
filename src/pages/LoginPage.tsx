@@ -316,6 +316,19 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
     //   return;
     // }
 
+    if (selectedOrganization?.name === "Vodafone Idea") {
+      if (!captchaInput) {
+        toast.error("Please enter the CAPTCHA.");
+        return;
+      }
+      if (captchaInput !== captchaText) {
+        toast.error("Invalid CAPTCHA. Please try again.");
+        generateCaptcha();
+        setCaptchaInput("");
+        return;
+      }
+    }
+
     setLoginLoading(true);
     try {
       const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
@@ -904,11 +917,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
               outline: "none",
             }}
           />
-          {captchaInput.length > 0 && captchaInput !== captchaText && (
-            <p style={{ color: "#C72030", fontSize: "12px", marginTop: "4px" }}>
-              CAPTCHA does not match. Please try again.
-            </p>
-          )}
         </div>
       )}
 
@@ -929,12 +937,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       {/* Login Button */}
       <Button
         onClick={handleLogin}
-        disabled={
-          !password ||
-          loginLoading ||
-          (selectedOrganization?.name === "Vodafone Idea" &&
-            captchaInput !== captchaText)
-        }
+        disabled={!password || loginLoading}
         className="w-full h-12 bg-[#C72030] hover:bg-[#a81c29] text-white font-semibold rounded-lg text-base transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loginLoading ? (
