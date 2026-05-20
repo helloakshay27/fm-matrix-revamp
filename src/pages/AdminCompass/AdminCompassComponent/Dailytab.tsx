@@ -1850,7 +1850,7 @@ const DailyTab = ({
                       const kpiStr = `${kpiAchieved}/20`;
 
                       const tasksIssuesAchieved = getScore(
-                        sections.tasks_issues,
+                        sections.tasks_issues_todos ?? sections.tasks_issues,
                         kpisFallback.tasks
                       );
                       const tasksIssuesStr = `${tasksIssuesAchieved}/20`;
@@ -1991,7 +1991,7 @@ const DailyTab = ({
                                     KPI: {kpiStr}
                                   </span>
                                   <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
-                                    Tasks & Issues: {tasksIssuesStr}
+                                    Tasks, Issues & Todos: {tasksIssuesStr}
                                   </span>
                                   <span className="px-2.5 py-0.5 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-[10px] font-bold">
                                     Planning: {planStr}

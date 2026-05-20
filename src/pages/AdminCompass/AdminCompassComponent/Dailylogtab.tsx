@@ -307,7 +307,8 @@ const normalizeReportData = (rd) => {
 // Resolve the "true" raw source for a report (same as DailyTab)
 const resolveRawSource = (report) => {
   const rd = report.report_data || {};
-  const draftRaw = report.daily_report?.report_data || {};
+  const draftReport = report.daily_report || {};
+  const draftRaw = draftReport.report_data || {};
   const hasDraft = !!report.daily_report;
   const hasReportData = rd && Object.keys(rd).length > 0;
 
@@ -317,9 +318,37 @@ const resolveRawSource = (report) => {
       raw.accomplishments?.items ||
       (Array.isArray(raw.accomplishments) ? raw.accomplishments : []),
     self_rating:
-      raw.details?.self_rating ?? raw.sections?.self_rating ?? null,
-    total_score: raw.total_score ?? null,
-    is_absent: raw.details?.is_absent ?? raw.sections?.is_absent ?? null,
+      raw.self_rating ??
+      draftReport.self_rating ??
+      report.self_rating ??
+      raw.details?.self_rating ??
+      raw.sections?.self_rating ??
+      null,
+    total_score: raw.total_score ?? report.score ?? null,
+    is_absent:
+      raw.is_absent ??
+      draftReport.is_absent ??
+      raw.details?.is_absent ??
+      raw.sections?.is_absent ??
+      false,
+  });
+
+  const normalizeRootRaw = (raw) => ({
+    ...raw,
+    self_rating:
+      raw.self_rating ??
+      report.self_rating ??
+      draftReport.self_rating ??
+      raw.details?.self_rating ??
+      raw.sections?.self_rating ??
+      null,
+    total_score: raw.total_score ?? report.score ?? draftRaw.total_score ?? null,
+    is_absent:
+      raw.is_absent ??
+      draftReport.is_absent ??
+      raw.details?.is_absent ??
+      raw.sections?.is_absent ??
+      false,
   });
 
   if (!hasReportData && hasDraft) {
@@ -328,6 +357,10 @@ const resolveRawSource = (report) => {
 
   if (report.status === "pending" && hasDraft) {
     return normalizeDraftRaw(draftRaw);
+  }
+
+  if (hasReportData && report.journal_type === "daily") {
+    return normalizeRootRaw(rd);
   }
 
   if (hasReportData && hasDraft) {
@@ -350,13 +383,17 @@ const resolveRawSource = (report) => {
         (Array.isArray(rd.accomplishments)
           ? rd.accomplishments
           : normalizedDraft.accomplishments || []),
-      self_rating: rd.self_rating ?? normalizedDraft.self_rating,
-      total_score: rd.total_score ?? normalizedDraft.total_score,
+      self_rating:
+        rd.self_rating ??
+        report.self_rating ??
+        draftReport.self_rating ??
+        normalizedDraft.self_rating,
+      total_score: rd.total_score ?? report.score ?? normalizedDraft.total_score,
       is_absent: rd.is_absent ?? normalizedDraft.is_absent,
     };
   }
 
-  return rd;
+  return normalizeRootRaw(rd);
 };
 
 const getMeetingNotesData = (data) => {
@@ -580,11 +617,6 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
       String(item.member).trim().toLowerCase() === cleanName.toLowerCase()
   );
   const groupedTasksIssues = groupTasksIssuesByType(filteredTasksIssues);
-  const groupedTasksAndIssues = [
-    ...groupedTasksIssues.tasks,
-    ...groupedTasksIssues.issues,
-  ];
-
   const filteredTomorrowPlan = displayRd.tomorrow_plan.filter(
     (item) =>
       !item.member ||
@@ -604,7 +636,10 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
   const kpiAchieved = getScore(sections.kpi_achievement, kpisFallback.score);
   const kpiMax = 20;
 
-  const tasksAchieved = getScore(sections.tasks_issues, kpisFallback.tasks);
+  const tasksAchieved = getScore(
+    sections.tasks_issues_todos ?? sections.tasks_issues,
+    kpisFallback.tasks
+  );
   const tasksMax = 20;
 
   const planAchieved = getScore(sections.planning, kpisFallback.planning);
@@ -865,7 +900,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                             KPI: {kpiAchieved}/{kpiMax}
                           </span>
                           <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
-                            Tasks & Issues: {tasksAchieved}/{tasksMax}
+                            Tasks, Issues & Todos: {tasksAchieved}/{tasksMax}
                           </span>
                           <span className="px-3 py-1 rounded-full border border-[rgba(206,122,90,0.3)] bg-[#FFF3EE] text-[#CE7A5A] text-xs font-bold shadow-sm">
                             Planning: {planAchieved}/{planMax}
@@ -935,7 +970,7 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                       </div>
                     )}
 
-                    {/* 3-Column: Accomplishments | Tasks & Issues | Tomorrow's Plan */}
+                    {/* 3-Column: Accomplishments | Tasks, Issues & Todos | Tomorrow's Plan */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                       {/* Accomplishments */}
                       <div className="bg-white border border-[#F0E8E3] rounded-xl p-5 shadow-sm">
@@ -968,14 +1003,14 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                         )}
                       </div>
 
-                      {/* Tasks & Issues */}
+                      {/* Tasks, Issues & Todos */}
                       <div className="bg-white border border-[#F0E8E3] rounded-xl p-5 shadow-sm">
                         <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
                           <div className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center shrink-0">
                             <AlertTriangle className="w-4 h-4 text-orange-600" />
                           </div>
                           <h4 className="text-sm font-extrabold text-neutral-800 uppercase tracking-wider">
-                            Tasks & Issues / Todos
+                            Tasks, Issues & Todos
                           </h4>
                         </div>
                         {filteredTasksIssues.length === 0 ? (
@@ -986,9 +1021,14 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
                           <div className="space-y-4">
                             {[
                               {
-                                label: "Tasks & Issues",
-                                items: groupedTasksAndIssues,
-                                dotClass: "bg-orange-400",
+                                label: "Tasks",
+                                items: groupedTasksIssues.tasks,
+                                dotClass: "bg-blue-400",
+                              },
+                              {
+                                label: "Issues",
+                                items: groupedTasksIssues.issues,
+                                dotClass: "bg-red-400",
                               },
                               {
                                 label: "Todos",

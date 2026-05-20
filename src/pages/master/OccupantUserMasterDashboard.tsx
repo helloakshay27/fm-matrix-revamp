@@ -95,6 +95,8 @@ export const OccupantUserMasterDashboard = () => {
     entity?: string;
     downloaded?: undefined | boolean;
     created_at?: string;
+    created_date_from?: string;
+    created_date_to?: string;
   }>({
     name: "",
     email: "",
@@ -103,6 +105,8 @@ export const OccupantUserMasterDashboard = () => {
     entity: "",
     downloaded: undefined,
     created_at: "",
+    created_date_from: "",
+    created_date_to: "",
   });
 
   const {
@@ -158,6 +162,8 @@ export const OccupantUserMasterDashboard = () => {
     downloaded?: undefined | boolean;
     search?: string;
     created_at?: string;
+    created_date_from?: string;
+    created_date_to?: string;
   }) => {
     setFilters(newFilters);
     // const [firstName = "", lastName = ""] =
@@ -179,7 +185,9 @@ export const OccupantUserMasterDashboard = () => {
         entity_id_eq: newFilters.entity,
         app_downloaded_eq: newFilters.downloaded,
         search_all_fields_cont: newFilters.search,
-        created_on_eq: newFilters.created_at,
+        created_at_eq: newFilters.created_at,
+        created_at_gteq: newFilters.created_date_from,
+        created_at_lteq: newFilters.created_date_to,
         // lock_user_permissions_user_type_eq: 'pms_occupant',
       })
     );
@@ -272,7 +280,9 @@ export const OccupantUserMasterDashboard = () => {
           entity_id_eq: filters.entity,
           app_downloaded_eq: filters.downloaded,
           search_all_fields_cont: searchTerm,
-          created_on_eq: filters.created_at,
+          created_at_eq: filters.created_at,
+          created_at_gteq: filters.created_date_from,
+          created_at_lteq: filters.created_date_to,
           // lock_user_permissions_user_type_eq: 'pms_occupant',
         })
       );

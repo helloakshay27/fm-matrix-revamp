@@ -171,6 +171,11 @@ export const IncidentSetupDashboard = () => {
   const [correctiveActions, setCorrectiveActions] = useState([]);
   const [escalateToUsersList, setEscalateToUsersList] = useState([]);
   const [colorCode, setColorCode] = useState('#000000');
+  const [categoryAttachment, setCategoryAttachment] = useState(null);
+  const [categoryAttachmentPreview, setCategoryAttachmentPreview] = useState('');
+  const [editCategoryAttachment, setEditCategoryAttachment] = useState(null);
+  const [editCategoryAttachmentPreview, setEditCategoryAttachmentPreview] = useState('');
+  const [originalCategoryIconUrl, setOriginalCategoryIconUrl] = useState('');
   const menuItems = ['Category', 'Sub Category', 'Sub Sub Category', 'Sub Sub Sub Category', 'Incidence status', 'Incidence level', 'Escalations', 'Approval Setup', 'Secondary Category', 'Secondary Sub Category', 'Secondary Sub Sub Category', 'Secondary Sub Sub Sub Category', 'Who got injured', 'Property Damage Category', 'RCA Category', 'Substandard Act', 'Substandard Condition', 'Preventive Action', 'Corrective Action'];
 
 
@@ -300,7 +305,7 @@ export const IncidentSetupDashboard = () => {
       const data = await fetchByTagType('IncidenceCategory');
       const filteredCategories = data
         .filter(item => item.parent_id === null)
-        .map(({ id, name }) => ({ id, name }));
+        .map(({ id, name, icon_url }) => ({ id, name, icon_url }));
       setCategories(filteredCategories);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -484,24 +489,27 @@ export const IncidentSetupDashboard = () => {
 
     if (selectedCategory === 'Category') {
       try {
+        const formData = new FormData();
+        formData.append('incidence_tag[tag_type]', 'IncidenceCategory');
+        formData.append('incidence_tag[active]', 'true');
+        formData.append('incidence_tag[name]', categoryName);
+        if (categoryAttachment) {
+          formData.append('attachment', categoryAttachment);
+        }
+
         const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({
-            incidence_tag: {
-              tag_type: 'IncidenceCategory',
-              active: true,
-              name: categoryName
-            }
-          })
+          body: formData
         });
 
         if (response.ok) {
           await fetchCategories();
           setCategoryName('');
+          setCategoryAttachment(null);
+          setCategoryAttachmentPreview('');
           toast.success('Category added successfully!');
         } else {
           console.error('Failed to add category:', response.statusText);
@@ -1234,6 +1242,11 @@ export const IncidentSetupDashboard = () => {
         users: '',
         id: ""
       });
+      if (type === 'Category') {
+        setEditCategoryAttachment(null);
+        setEditCategoryAttachmentPreview('');
+        setOriginalCategoryIconUrl(item.icon_url || '');
+      }
     } else if (type === 'Sub Sub Category') {
       setEditFormData({
         category: item.category || '',
@@ -1432,21 +1445,23 @@ export const IncidentSetupDashboard = () => {
       }
     } else if (editingItem?.type === 'Category') {
       try {
+        const formData = new FormData();
+        formData.append('incidence_tag[name]', editFormData.name);
+        if (editCategoryAttachment) {
+          formData.append('attachment', editCategoryAttachment);
+        }
         const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
           method: 'PUT',
           headers: {
-            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({
-            incidence_tag: {
-              name: editFormData.name
-            }
-          })
+          body: formData
         });
 
         if (response.ok) {
           await fetchCategories();
+          setEditCategoryAttachment(null);
+          setEditCategoryAttachmentPreview('');
           toast.success('Category updated successfully!');
         } else {
           console.error('Failed to update category:', response.statusText);
@@ -1917,6 +1932,9 @@ export const IncidentSetupDashboard = () => {
       id: ""
     });
     setColorCode('#000000');
+    setEditCategoryAttachment(null);
+    setEditCategoryAttachmentPreview('');
+    setOriginalCategoryIconUrl('');
   };
 
   // Special function for escalation deletion using GET method
@@ -2187,6 +2205,48 @@ export const IncidentSetupDashboard = () => {
                       InputLabelProps={{ shrink: true }}
                     />
                   </div>
+
+                  {editingItem?.type === 'Category' && (
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">Icon</label>
+                      {originalCategoryIconUrl && (
+                        <div className="mb-2">
+                          <p className="text-xs text-gray-500 mb-1">Current Icon:</p>
+                          <img
+                            src={originalCategoryIconUrl}
+                            alt="current icon"
+                            className="h-16 w-16 object-cover rounded border border-gray-300 shadow-sm"
+                          />
+                        </div>
+                      )}
+                      {editCategoryAttachment && editCategoryAttachmentPreview && (
+                        <div className="mb-2">
+                          <p className="text-xs text-gray-500 mb-1">New Icon Preview:</p>
+                          <img
+                            src={editCategoryAttachmentPreview}
+                            alt="new icon preview"
+                            className="h-16 w-16 object-cover rounded border border-gray-300 shadow-sm"
+                          />
+                        </div>
+                      )}
+                      <TextField
+                        label="Upload New Icon"
+                        type="file"
+                        inputProps={{ accept: 'image/*' }}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const file = e.target.files?.[0];
+                          setEditCategoryAttachment(file || null);
+                          setEditCategoryAttachmentPreview(
+                            file ? URL.createObjectURL(file) : ''
+                          );
+                        }}
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                      />
+                    </div>
+                  )}
 
                   <div className="flex gap-3">
                     <Button
@@ -2882,6 +2942,27 @@ export const IncidentSetupDashboard = () => {
                       />
                     </div>
                   )}
+                  {selectedCategory === 'Category' && (
+                    <div className="flex-1">
+                      <TextField
+                        label={<>Icon <span style={{ color: '#C72030' }}>*</span></>}
+                        type="file"
+                        inputProps={{ accept: 'image/*' }}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const file = e.target.files?.[0];
+                          setCategoryAttachment(file || null);
+                          setCategoryAttachmentPreview(file ? URL.createObjectURL(file) : '');
+                        }}
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                      />
+                      {categoryAttachmentPreview && (
+                        <img src={categoryAttachmentPreview} alt="preview" className="mt-1 h-8 w-8 object-cover rounded border" />
+                      )}
+                    </div>
+                  )}
                   {selectedCategory === 'Incidence level' && (
                     <div className="flex-1">
                       <TextField
@@ -2996,6 +3077,7 @@ export const IncidentSetupDashboard = () => {
                           ) : (
                             <>
                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Name</TableHead>
+                              <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Icon</TableHead>
                               <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                             </>
                           )}
@@ -3294,6 +3376,12 @@ export const IncidentSetupDashboard = () => {
                         )) : categories.map(category => (
                           <TableRow key={category.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
                             <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{category.name}</TableCell>
+                            <TableCell className="px-4 py-3">
+                              {category.icon_url
+                                ? <img src={category.icon_url} alt="icon" className="h-8 w-8 object-cover rounded border" />
+                                : <span className="text-gray-400 text-xs">No icon</span>
+                              }
+                            </TableCell>
                             <TableCell className="px-4 py-3">
                               <div className="flex gap-2">
                                 <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(category, 'Category')}>

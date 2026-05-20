@@ -1769,14 +1769,14 @@ const BusinessCompassDailyReport: React.FC = () => {
               })),
             },
             tasks_issues: mergedTasksIssues
-              .filter((item) => selectedTasksIssues[item.id] === true)
+              .filter((item) => selectedTasksIssues[item.id] === true || item.status === 'overdue' || item.status === 'in_progress')
               .map((item) => ({
                 title:
                   item.originalData?.title ||
                   item.originalData?.name ||
                   item.title ||
                   "",
-                status: "completed",
+                status: selectedTasksIssues[item.id] === true ? "completed" : item.status,
                 type: item.type,
               })),
             tomorrow_plan: tomorrowPlanPayload,
@@ -1794,7 +1794,7 @@ const BusinessCompassDailyReport: React.FC = () => {
             sections: {
               kpi_achievement: finalDailyScore.kpiScore,
               accomplishments: finalDailyScore.accomplishmentsScore,
-              tasks_issues: finalDailyScore.tasksIssuesScore,
+              tasks_issues_todos: finalDailyScore.tasksIssuesScore,
               planning: finalDailyScore.planningScore,
               timing: finalDailyScore.timingScore,
             },
@@ -4042,7 +4042,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           )}
 
                         {report.report_data?.tasks_issues &&
-                          report.report_data.tasks_issues.length > 0 && (
+                          report.report_data.tasks_issues.filter((item: any) => item.status === "completed").length > 0 && (
                             <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
                               <div className="flex items-center gap-2 mb-3">
                                 <CheckSquare
@@ -4054,26 +4054,28 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 </span>
                               </div>
                               <div className="space-y-2">
-                                {report.report_data.tasks_issues.map(
-                                  (item: any, idx: number) => (
-                                    <div
-                                      key={idx}
-                                      className="bg-white border border-red-100 rounded-[6px] p-3 shadow-sm flex items-start gap-2"
-                                    >
-                                      <span className="text-red-600 font-bold mt-0.5">
-                                        ✓
-                                      </span>
-                                      {/* UPDATED: Fallback to item.title if item.name is missing */}
-                                      <span className="text-sm text-gray-700">
-                                        {item.name ||
-                                          item.title ||
-                                          item.originalData?.title ||
-                                          item.originalData?.name ||
-                                          "Unnamed Item"}
-                                      </span>
-                                    </div>
-                                  )
-                                )}
+                                {report.report_data.tasks_issues
+                                  .filter((item: any) => item.status === "completed")
+                                  .map(
+                                    (item: any, idx: number) => (
+                                      <div
+                                        key={idx}
+                                        className="bg-white border border-red-100 rounded-[6px] p-3 shadow-sm flex items-start gap-2"
+                                      >
+                                        <span className="text-red-600 font-bold mt-0.5">
+                                          ✓
+                                        </span>
+                                        {/* UPDATED: Fallback to item.title if item.name is missing */}
+                                        <span className="text-sm text-gray-700">
+                                          {item.name ||
+                                            item.title ||
+                                            item.originalData?.title ||
+                                            item.originalData?.name ||
+                                            "Unnamed Item"}
+                                        </span>
+                                      </div>
+                                    )
+                                  )}
                               </div>
                             </div>
                           )}
