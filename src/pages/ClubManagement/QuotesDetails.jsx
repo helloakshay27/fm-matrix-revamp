@@ -430,26 +430,54 @@ export const QuotesDetails = () => {
                             <p className="font-bold">: {formatDate(quoteData.date)}</p>
                         </div>
                         <div className="p-2">
-                            <p>
-                                Status:{" "}
+                            {quoteData.place_of_supply && (
+                                <div className="flex mb-1">
+                                    <span className="w-24">Place Of Supply</span>
+                                    <span className="font-bold">: {quoteData.place_of_supply}</span>
+                                </div>
+                            )}
+                            {quoteData.reference_number && (
+                                <div className="flex mb-1">
+                                    <span className="w-24">Reference</span>
+                                    <span>: {quoteData.reference_number}</span>
+                                </div>
+                            )}
+                            {quoteData.expiry_date && (
+                                <div className="flex mb-1">
+                                    <span className="w-24">Expiry Date</span>
+                                    <span>: {formatDate(quoteData.expiry_date)}</span>
+                                </div>
+                            )}
+                            <div className="flex items-center">
+                                <span className="w-24">Status</span>
+                                <span>: </span>
                                 <span
-                                    className="inline-flex items-center border px-2 py-0.5 text-[10px] font-bold"
+                                    className="inline-flex items-center border px-2 py-0.5 text-[10px] font-bold ml-1"
                                     style={getPdfStatusStyle(quoteData.status)}
                                 >
                                     {statusDisplay}
                                 </span>
-                            </p>
-                            {quoteData.reference_number && <p>Reference: {quoteData.reference_number}</p>}
-                            {quoteData.expiry_date && <p>Expiry Date: {formatDate(quoteData.expiry_date)}</p>}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="border-b border-gray-500 bg-gray-100 px-2 py-1 font-bold">Bill To</div>
-                    <div className="border-b border-gray-500 px-2 py-2 min-h-[30px]">
-                        <p className="font-bold text-blue-700">{quoteData.customer_name || "N/A"}</p>
-                        {formatAddressBlock(billingAddress).map((line, index) => (
-                            <p key={index}>{line}</p>
-                        ))}
+                    <div className="grid grid-cols-2 border-b border-gray-500 bg-gray-100 font-bold">
+                        <div className="px-2 py-1 border-r border-gray-500">Bill To</div>
+                        <div className="px-2 py-1">Ship To</div>
+                    </div>
+                    <div className="grid grid-cols-2 border-b border-gray-500 min-h-[30px]">
+                        <div className="px-2 py-2 border-r border-gray-500">
+                            <p className="font-bold text-blue-700">{quoteData.customer_name || "N/A"}</p>
+                            {formatAddressBlock(billingAddress).map((line, index) => (
+                                <p key={index}>{line}</p>
+                            ))}
+                        </div>
+                        <div className="px-2 py-2">
+                            <p className="font-bold text-blue-700">{quoteData.customer_name || "N/A"}</p>
+                            {formatAddressBlock(shippingAddress || billingAddress).map((line, index) => (
+                                <p key={index}>{line}</p>
+                            ))}
+                        </div>
                     </div>
 
                     <table className="w-full border-collapse">

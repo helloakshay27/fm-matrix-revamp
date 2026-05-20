@@ -58,7 +58,8 @@ export const AccountingDocumentPdf = ({
   referenceNumber,
 }) => {
   const statusDisplay = formatStatus(status);
-  const billingAddress = data?.address_detail?.billing_address;
+  const billingAddress = data?.address_detail?.billing_address || data?.billing_address;
+  const shippingAddress = data?.address_detail?.shipping_address || data?.shipping_address;
   const notes = data?.customer_notes ?? data?.notes ?? data?.note ?? "";
   const terms = data?.terms_and_conditions ?? data?.terms ?? data?.terms_condition ?? "";
   const totalInWords =
@@ -95,23 +96,51 @@ export const AccountingDocumentPdf = ({
               <p className="font-bold">: {formatDate(documentDate)}</p>
             </div>
             <div className="p-2">
-              <p>
-                Status:{" "}
-                <span className="inline-flex items-center border px-2 py-0.5 text-[10px] font-bold" style={getAccountingPdfStatusStyle(status)}>
+              {data?.place_of_supply && (
+                <div className="flex mb-1">
+                  <span className="w-24">Place Of Supply</span>
+                  <span className="font-bold">: {data.place_of_supply}</span>
+                </div>
+              )}
+              {referenceNumber && (
+                <div className="flex mb-1">
+                  <span className="w-24">Reference</span>
+                  <span>: {referenceNumber}</span>
+                </div>
+              )}
+              {secondaryDate && (
+                <div className="flex mb-1">
+                  <span className="w-24">{secondaryDateLabel}</span>
+                  <span>: {formatDate(secondaryDate)}</span>
+                </div>
+              )}
+              <div className="flex items-center">
+                <span className="w-24">Status</span>
+                <span>: </span>
+                <span className="inline-flex items-center border px-2 py-0.5 text-[10px] font-bold ml-1" style={getAccountingPdfStatusStyle(status)}>
                   {statusDisplay}
                 </span>
-              </p>
-              {referenceNumber && <p>Reference: {referenceNumber}</p>}
-              {secondaryDate && <p>{secondaryDateLabel}: {formatDate(secondaryDate)}</p>}
+              </div>
             </div>
           </div>
           
-          <div className="border-b border-gray-500 bg-gray-100 px-2 py-1 font-bold">Bill To</div>
-          <div className="border-b border-gray-500 px-2 py-2 min-h-[30px]">
-            <p className="font-bold text-blue-700">{customerName || "N/A"}</p>
-            {formatAddressBlock(billingAddress).map((line, index) => (
-              <p key={index}>{line}</p>
-            ))}
+          <div className="grid grid-cols-2 border-b border-gray-500 bg-gray-100 font-bold">
+            <div className="px-2 py-1 border-r border-gray-500">Bill To</div>
+            <div className="px-2 py-1">Ship To</div>
+          </div>
+          <div className="grid grid-cols-2 border-b border-gray-500 min-h-[30px]">
+            <div className="px-2 py-2 border-r border-gray-500">
+              <p className="font-bold text-blue-700">{customerName || "N/A"}</p>
+              {formatAddressBlock(billingAddress).map((line, index) => (
+                <p key={index}>{line}</p>
+              ))}
+            </div>
+            <div className="px-2 py-2">
+              <p className="font-bold text-blue-700">{customerName || "N/A"}</p>
+              {formatAddressBlock(shippingAddress || billingAddress).map((line, index) => (
+                <p key={index}>{line}</p>
+              ))}
+            </div>
           </div>
 
           <table className="w-full border-collapse">
