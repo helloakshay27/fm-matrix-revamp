@@ -444,8 +444,14 @@ const DailyTab = ({
 }: {
   onMeetingSaved?: (date: string) => void;
 }) => {
+  const getLocalDateKey = (date = new Date()) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
   const [activeDate, setActiveDate] = useState(
-    () => new Date().toISOString().split("T")[0]
+    () => getLocalDateKey()
   );
   const [meetingsList, setMeetingsList] = useState<any[]>([]);
   const [meetingsLoaded, setMeetingsLoaded] = useState(false);
@@ -756,6 +762,9 @@ const DailyTab = ({
   };
 
   const changeDate = (days: number) => {
+    const todayKey = getLocalDateKey();
+    if (days > 0 && activeDate >= todayKey) return;
+
     isArrowNav.current = true;
     const currentIndex = calendarRow.findIndex(
       (d: any) => d.full_date === activeDate
@@ -765,7 +774,13 @@ const DailyTab = ({
       let nextIndex = currentIndex + days;
       while (nextIndex >= 0 && nextIndex < calendarRow.length) {
         const s = calendarRow[nextIndex].status;
-        if (s !== "holiday" && s !== "non_meeting" && s !== "upcoming") {
+        const nextDate = calendarRow[nextIndex].full_date;
+        if (
+          s !== "holiday" &&
+          s !== "non_meeting" &&
+          s !== "upcoming" &&
+          (days < 0 || nextDate <= todayKey)
+        ) {
           setActiveDate(calendarRow[nextIndex].full_date);
           return;
         }
@@ -775,7 +790,10 @@ const DailyTab = ({
 
     const d = new Date(activeDate);
     d.setDate(d.getDate() + days);
-    setActiveDate(d.toISOString().split("T")[0]);
+    const nextDateKey = getLocalDateKey(d);
+    if (days < 0 || nextDateKey <= todayKey) {
+      setActiveDate(nextDateKey);
+    }
   };
 
   const toggleExpand = (id: any) =>
@@ -1207,6 +1225,7 @@ const DailyTab = ({
   const calendarRow = calendarDateRow.length > 0 ? calendarDateRow : dateRow;
   const config = dailyData?.config;
   const topDateStr = dailyData?.date || activeDate;
+  const isNextDateDisabled = activeDate >= getLocalDateKey();
   const configName =
     config?.name || (selectedMeetingId === "all" ? "All Meetings" : "Meeting");
 
@@ -1304,20 +1323,16 @@ const DailyTab = ({
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       {/* ══ CALENDAR CARD ══ */}
-      <div className="bg-[#FFF9F6] border border-[#F1E8E3] rounded-[32px] p-6 sm:p-8 shadow-sm overflow-visible">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#FFF0E8] border border-[#F6E1D7]">
-              <Calendar className="w-5 h-5 text-[#CE8261]" />
+      <div className="rounded-[16px] border border-[#DA7756]/20 bg-[#DA7756]/10 shadow-sm overflow-hidden">
+        <div className="p-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-50 p-2 rounded-lg">
+              <Calendar size={20} className="text-blue-600" />
             </div>
-            <div>
-              <h2 className="text-[18px] font-extrabold text-[#1a1a1a]">
-                Daily Meeting
-              </h2>
-              <p className="text-xs font-bold text-[#CE8261] mt-0.5">
-                {topDateStr}
-              </p>
-            </div>
+            <span className="text-lg font-bold text-[#1a1a1a] tracking-tight">
+              Daily Meeting for {topDateStr}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -1328,7 +1343,13 @@ const DailyTab = ({
             </button>
             <button
               onClick={() => changeDate(1)}
-              className="flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm hover:bg-gray-50 transition-colors"
+              disabled={isNextDateDisabled}
+              className={cn(
+                "flex items-center justify-center w-9 h-9 rounded-full bg-white border border-[#EAE3DF] shadow-sm transition-colors",
+                isNextDateDisabled
+                  ? "opacity-40 cursor-not-allowed"
+                  : "hover:bg-gray-50"
+              )}
             >
               <ChevronRight className="w-5 h-5 text-neutral-600" />
             </button>
@@ -1337,22 +1358,18 @@ const DailyTab = ({
 
         {/* ── Calendar Body ── */}
         {isLoading && !dailyData ? (
-          <div
-            className="flex gap-3 flex-wrap py-4 px-3"
-            style={{ overflow: "visible" }}
-          >
+          <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <div
                 key={i}
-                className="rounded-[18px] skeleton"
-                style={{ width: 100, height: 120 }}
+                className="min-w-[96px] h-[110px] rounded-[16px] skeleton shrink-0"
               />
             ))}
           </div>
         ) : noMeetings ? (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F5EFEB] border border-[#EAE3DF]">
-              <Calendar className="w-7 h-7 text-[#CE8261] opacity-40" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/70 border border-[#DA7756]/20">
+              <Calendar className="w-7 h-7 text-[#DA7756] opacity-40" />
             </div>
             <div className="text-center">
               <p className="text-sm font-bold text-neutral-500">
@@ -1364,10 +1381,7 @@ const DailyTab = ({
             </div>
           </div>
         ) : (
-          <div
-            className="flex gap-3 flex-wrap py-4 px-3"
-            style={{ overflow: "visible" }}
-          >
+          <div className="flex gap-4 overflow-x-auto pb-8 pt-2 scrollbar-none snap-x">
             {calendarRow.map((dateItem: any) => {
               const isSelected = dateItem.full_date === activeDate;
               let rawStatus = dateItem.status;
@@ -1382,27 +1396,17 @@ const DailyTab = ({
                 return (
                   <div
                     key={dateItem.full_date}
-                    className="relative select-none cursor-not-allowed"
+                    className="min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 cursor-not-allowed border-2 transition-all shrink-0 snap-center shadow-sm relative group bg-[#f8fafc] text-[#94a3b8] border-gray-100"
                     title="Upcoming – not selectable"
-                    style={{ width: 100, height: 120 }}
                   >
-                    <div className="flex flex-col items-center justify-center w-full h-full border-[3px] border-[#C5BFBB] rounded-[18px] bg-transparent transition-all duration-200">
-                      <span
-                        className="text-[11px] font-extrabold uppercase tracking-widest mb-1 opacity-90"
-                        style={{ color: "#C5BFBB" }}
-                      >
+                    <div className="contents">
+                      <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
                         {dateItem.day}
                       </span>
-                      <span
-                        className="text-[34px] font-bold leading-none"
-                        style={{ color: "#C5BFBB" }}
-                      >
+                      <span className="text-3xl font-black tracking-tighter">
                         {dateItem.date}
                       </span>
-                      <div
-                        className="mt-2.5 h-[20px] px-3 rounded-full flex items-center justify-center text-[9px] font-extrabold uppercase tracking-widest"
-                        style={{ color: "#C5BFBB" }}
-                      >
+                      <div className="text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter inline-flex items-center bg-black/10 text-[#854d0e]">
                         Upcoming
                       </div>
                     </div>
@@ -1417,22 +1421,22 @@ const DailyTab = ({
                 displayLabel = "Holiday";
 
               if (rawStatus === "missed") {
-                bg = "#F34A4A";
+                bg = "#ef4444";
                 textColor = "#FFFFFF";
                 labelBg = "rgba(255,255,255,0.22)";
                 labelColor = "#FFFFFF";
                 displayLabel = "Miss";
               } else if (rawStatus === "done" || rawStatus === "submitted") {
-                bg = "#2ECC71";
+                bg = "#22c55e";
                 textColor = "#FFFFFF";
                 labelBg = "rgba(255,255,255,0.22)";
                 labelColor = "#FFFFFF";
-                displayLabel = "Done";
+                displayLabel = "Filled";
               } else if (
                 rawStatus === "holiday" ||
                 rawStatus === "non_meeting"
               ) {
-                bg = "#F5D142";
+                bg = "#facd55";
                 textColor = "#8A6D3B";
                 labelBg = "rgba(0,0,0,0.09)";
                 labelColor = "#8A6D3B";
@@ -1451,16 +1455,14 @@ const DailyTab = ({
                       : () => setActiveDate(dateItem.full_date)
                   }
                   className={cn(
-                    "relative select-none",
+                    "min-w-[96px] h-[110px] rounded-[16px] flex flex-col items-center justify-center gap-1.5 border-2 transition-all shrink-0 snap-center shadow-sm relative group",
                     isHoliday ? "cursor-not-allowed" : "cursor-pointer"
                   )}
                   title={isHoliday ? "Holiday – not selectable" : undefined}
                 >
                   <div
-                    className="flex flex-col items-center justify-center rounded-[18px] transition-all duration-200"
+                    className="flex flex-col items-center justify-center gap-1.5 w-full h-full rounded-[16px] transition-all duration-200"
                     style={{
-                      width: 100,
-                      height: 120,
                       background: bg,
                       color: textColor,
                       boxShadow: isSelected
@@ -1468,14 +1470,14 @@ const DailyTab = ({
                         : "0 3px 10px rgba(0,0,0,0.09)",
                     }}
                   >
-                    <span className="text-[11px] font-extrabold uppercase tracking-widest mb-1 opacity-90">
+                    <span className="text-[10px] font-black uppercase tracking-widest opacity-80">
                       {dateItem.day}
                     </span>
-                    <span className="text-[34px] font-bold leading-none">
+                    <span className="text-3xl font-black tracking-tighter">
                       {dateItem.date}
                     </span>
                     <div
-                      className="mt-2.5 h-[20px] px-3 rounded-full flex items-center justify-center text-[9px] font-extrabold uppercase tracking-widest"
+                      className="text-[9px] font-black px-2 py-0 h-5 rounded-[6px] border-none shadow-none uppercase tracking-tighter inline-flex items-center"
                       style={{ background: labelBg, color: labelColor }}
                     >
                       {displayLabel}
@@ -1497,28 +1499,28 @@ const DailyTab = ({
         )}
 
         {!noMeetings && (
-          <div className="flex gap-x-8 gap-y-3 text-[11px] font-extrabold flex-wrap justify-center text-[#9A938E] tracking-[0.1em] uppercase mt-2">
-            <div className="flex items-center gap-2.5">
-              <span className="w-[15px] h-[15px] rounded-full bg-[#2ECC71]" />{" "}
+          <div className="flex flex-wrap justify-center gap-x-10 gap-y-4 pt-4 border-t border-gray-50 mt-2">
+            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
+              <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#22c55e]" />{" "}
               Filled
             </div>
-            <div className="flex items-center gap-2.5">
-              <span className="w-[15px] h-[15px] rounded-full bg-[#F34A4A]" />{" "}
-              Missed
+            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
+              <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#ef4444]" />{" "}
+              Missed (click to fill)
             </div>
-            <div className="flex items-center gap-2.5">
-              <span className="w-[15px] h-[15px] rounded-full bg-[#F5D142]" />{" "}
+            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
+              <span className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#facd55]" />{" "}
               Holiday
             </div>
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2 text-xs text-gray-600 font-bold uppercase tracking-wider">
               <span
-                className="w-[15px] h-[15px] rounded-full border-[3px]"
-                style={{ borderColor: "#C5BFBB", background: "transparent" }}
+                className="w-3.5 h-3.5 rounded-[5px] shadow-sm bg-[#f1f5f9] border border-gray-100"
               />{" "}
               Upcoming
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* ══ FILTERS ══ */}

@@ -67,13 +67,12 @@ const DailyMeeting = () => {
         {/* ── Tab bar ── */}
         <div className="mt-5">
           <div
-            className="flex w-full rounded-2xl p-1 gap-1 overflow-x-auto"
+            className="bg-[#DA7756] p-1.5 rounded-[12px] h-auto flex w-full shadow-inner mb-6 gap-1 overflow-x-auto"
             style={{
-              background: "#DA7756",
               fontFamily: "'Poppins', sans-serif",
             }}
           >
-            {tabs.map(({ name, icon: Icon }) => {
+            {tabs.map(({ name }) => {
               const isActive = activeTab === name;
               return (
                 <button
@@ -81,13 +80,12 @@ const DailyMeeting = () => {
                   onClick={() => setActiveTab(name)}
                   style={{ fontFamily: "'Poppins', sans-serif" }}
                   className={cn(
-                    "flex items-center w-full justify-center gap-2 px-5 py-2 rounded-xl text-sm font-bold transition-all duration-150 whitespace-nowrap",
+                    "flex-1 rounded-[10px] px-8 py-2 bg-transparent text-white transition-all font-bold text-sm whitespace-nowrap text-center",
                     isActive
-                      ? "bg-white text-[#DA7756] shadow-sm"
-                      : "bg-transparent text-white hover:bg-white/20"
+                      ? "bg-white text-[#DA7756] shadow-md"
+                      : "hover:bg-white/20"
                   )}
                 >
-                  <Icon className="w-4 h-4 flex-shrink-0" />
                   {name}
                 </button>
               );
