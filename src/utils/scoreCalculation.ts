@@ -42,6 +42,14 @@ export interface AccomplishmentsDetails {
     points: number;
     maxPoints: number;
     bonus: number;
+    itemBreakdown?: Array<{
+        id: string;
+        text: string;
+        completed: boolean;
+        starred: boolean;
+        points: number;
+        cumulativePoints: number;
+    }>;
 }
 
 export interface TasksIssuesDetails {
@@ -134,11 +142,14 @@ function calculateKPIScore(kpis: any[]): { score: number; details: KPIDetails } 
  * Calculate Accomplishments Score (Max 20 points)
  * Combines Daily Checklist (max 10) + Accomplishments (max 10)
  * Points awarded proportionally based on completion percentage
+ * Scoring: 3 points per completed item + 2 bonus points per starred item
  */
 function calculateAccomplishmentsScore(
     accomplishments: any[]
 ): { score: number; details: AccomplishmentsDetails } {
-    const maxPoints = 20; // 10 checklist + 10 accomplishments
+    const maxPoints = 20;
+    const pointsPerCompletedItem = 3;
+    const bonusPointsPerStar = 2;
 
     if (!accomplishments || accomplishments.length === 0) {
         return {
@@ -150,14 +161,53 @@ function calculateAccomplishmentsScore(
                 points: 0,
                 maxPoints,
                 bonus: 0,
+                itemBreakdown: [],
             },
         };
     }
 
+    let totalPoints = 0;
+    let cumulativePoints = 0;
+    const itemBreakdown: Array<{
+        id: string;
+        text: string;
+        completed: boolean;
+        starred: boolean;
+        points: number;
+        cumulativePoints: number;
+    }> = [];
+
     const completedItems = accomplishments.filter((a) => a.completed).length;
     const totalItems = accomplishments.length;
+
+    // Calculate points for each item
+    accomplishments.forEach((item: any) => {
+        let itemPoints = 0;
+
+        if (item.completed) {
+            itemPoints += pointsPerCompletedItem;
+        }
+
+        if (item.starred) {
+            itemPoints += bonusPointsPerStar;
+        }
+
+        totalPoints += itemPoints;
+        cumulativePoints += itemPoints;
+
+        itemBreakdown.push({
+            id: item.id,
+            text: item.text || "",
+            completed: item.completed || false,
+            starred: item.starred || false,
+            points: itemPoints,
+            cumulativePoints: cumulativePoints,
+        });
+    });
+
+    // Cap the total points at maxPoints
+    const score = Math.min(totalPoints, maxPoints);
     const completionPercentage = (completedItems / totalItems) * 100;
-    const score = (maxPoints * completionPercentage) / 100;
 
     return {
         score,
@@ -167,7 +217,8 @@ function calculateAccomplishmentsScore(
             completionPercentage,
             points: score,
             maxPoints,
-            bonus: 0,
+            bonus: score - completedItems * pointsPerCompletedItem,
+            itemBreakdown,
         },
     };
 }
