@@ -625,6 +625,8 @@ export const AddServicePRDashboard = () => {
   };
 
   const calculateItem = (item) => {
+    const r2 = (n: number) => Math.round(n * 100) / 100;
+
     const quantity = parseFloat(item.quantityArea) || 0;
     const rate = parseFloat(item.rate) || 0;
     const cgstRate = parseFloat(item.cgstRate) || 0;
@@ -633,19 +635,19 @@ export const AddServicePRDashboard = () => {
     const tcsRate = parseFloat(item.tcsRate) || 0;
 
     // Calculate base amount
-    const amount = quantity * rate;
+    const amount = r2(quantity * rate);
 
     // Calculate tax amounts
-    const cgstAmt = (amount * cgstRate) / 100;
-    const sgstAmt = (amount * sgstRate) / 100;
-    const igstAmt = (amount * igstRate) / 100;
-    const tcsAmt = (amount * tcsRate) / 100;
+    const cgstAmt = r2((amount * cgstRate) / 100);
+    const sgstAmt = r2((amount * sgstRate) / 100);
+    const igstAmt = r2((amount * igstRate) / 100);
+    const tcsAmt = r2((amount * tcsRate) / 100);
 
     // Calculate total tax amount
-    const taxAmount = cgstAmt + sgstAmt + igstAmt + tcsAmt;
+    const taxAmount = r2(cgstAmt + sgstAmt + igstAmt + tcsAmt);
 
     // Calculate total amount including taxes
-    const totalAmount = amount + taxAmount;
+    const totalAmount = r2(amount + taxAmount);
 
     return {
       ...item,
