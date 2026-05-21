@@ -24,6 +24,7 @@ export interface UserCalendarItem {
   calendarable_id: number;
   created_at: string;
   updated_at: string;
+  duration_minutes?: number;
   url: string;
   redirect_url: string;
   user: {
@@ -32,6 +33,9 @@ export interface UserCalendarItem {
     email: string;
     mobile: string;
   };
+  // Computed sequential slot (set by assignSequentialSlots)
+  _assigned_start?: string;
+  _assigned_end?: string;
 }
 
 interface UseUserCalendarsOptions {
@@ -139,13 +143,26 @@ export const useUserCalendars = ({
     fetchCalendars();
   }, [fetchCalendars]);
 
-  // Filter calendars by type
+  // Exclude completed/closed/done — keep null and all active statuses
+  const DONE_STATUSES = new Set([
+    "completed",
+    "closed",
+    "cancelled",
+    "done",
+    "resolved",
+    "rejected",
+  ]);
+  const isActive = (c: UserCalendarItem) =>
+    !DONE_STATUSES.has((c.status ?? "").toLowerCase());
+
   const tasks = calendars.filter(
-    (c) => c.calendarable_type === "TaskAllocationTime"
+    (c) => c.calendarable_type === "TaskAllocationTime" && isActive(c)
   );
-  const todos = calendars.filter((c) => c.calendarable_type === "Todo");
+  const todos = calendars.filter(
+    (c) => c.calendarable_type === "Todo" && isActive(c)
+  );
   const issues = calendars.filter(
-    (c) => c.calendarable_type === "IssueAllocationTime"
+    (c) => c.calendarable_type === "IssueAllocationTime" && isActive(c)
   );
 
   return {
@@ -157,6 +174,59 @@ export const useUserCalendars = ({
     todos,
     issues,
   };
+};
+
+/**
+ * Groups items by created_at date, sorts within each day by created_at time,
+ * then assigns sequential 30-min slots starting at 09:00 AM.
+ * duration_minutes=0 → 30 min minimum; otherwise uses actual value.
+ * Returns a NEW array — originals are not mutated.
+ */
+export const assignSequentialSlots = (
+  calendars: UserCalendarItem[]
+): UserCalendarItem[] => {
+  // Group by start_at DATE (the actual calendar day the event belongs to)
+  const byDate: Record<string, UserCalendarItem[]> = {};
+  calendars.forEach((item) => {
+    const dateKey = format(new Date(item.start_at), "yyyy-MM-dd");
+    if (!byDate[dateKey]) byDate[dateKey] = [];
+    byDate[dateKey].push(item);
+  });
+
+  const result: UserCalendarItem[] = [];
+
+  Object.entries(byDate).forEach(([dateKey, items]) => {
+    // Sort within each day by created_at ascending (oldest first)
+    const sorted = [...items].sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    // Rolling cursor starting at 09:00 for this date
+    let cursorMs = new Date(`${dateKey}T09:00:00`).getTime();
+
+    sorted.forEach((item) => {
+      const durationMin =
+        typeof item.duration_minutes === "number" && item.duration_minutes > 0
+          ? item.duration_minutes
+          : 30;
+
+      const assignedStart = new Date(cursorMs).toISOString();
+      const assignedEnd = new Date(
+        cursorMs + durationMin * 60_000
+      ).toISOString();
+
+      result.push({
+        ...item,
+        _assigned_start: assignedStart,
+        _assigned_end: assignedEnd,
+      });
+
+      cursorMs += durationMin * 60_000;
+    });
+  });
+
+  return result;
 };
 
 // Helper function to group calendars by date
@@ -189,20 +259,32 @@ export const groupCalendarsByHour = (calendars: UserCalendarItem[]) => {
   return grouped;
 };
 
-// Helper to get task count per hour for today
+// Helper to get task count per hour — uses sequential slot assignment
 export const getHourlyTaskCounts = (
   calendars: UserCalendarItem[],
   date: Date
 ) => {
   const todayStr = format(date, "yyyy-MM-dd");
+  // Filter to today only, then assign sequential slots
+  const DONE = new Set([
+    "completed",
+    "closed",
+    "cancelled",
+    "done",
+    "resolved",
+    "rejected",
+  ]);
   const todayItems = calendars.filter(
-    (c) => format(new Date(c.start_at), "yyyy-MM-dd") === todayStr
+    (c) =>
+      format(new Date(c.created_at), "yyyy-MM-dd") === todayStr &&
+      !DONE.has((c.status ?? "").toLowerCase())
   );
+  const slotted = assignSequentialSlots(todayItems);
 
   const hourCounts: Record<number, number> = {};
-
-  todayItems.forEach((item) => {
-    const hour = new Date(item.start_at).getHours();
+  slotted.forEach((item) => {
+    // Use the assigned start slot hour
+    const hour = new Date(item._assigned_start!).getHours();
     hourCounts[hour] = (hourCounts[hour] || 0) + 1;
   });
 
