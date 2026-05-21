@@ -1,10 +1,38 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Camera, ShieldAlert, Lock, RefreshCw, UserCheck } from "lucide-react";
+import { Camera, ShieldAlert, Lock, RefreshCw } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { SecurityState } from "./useProductSecurity";
 
 interface SecurityOverlaysProps {
   security: SecurityState;
 }
+
+const FaceMeasurementOverlay: React.FC<{ compact?: boolean }> = ({
+  compact = false,
+}) => {
+  const cornerSize = compact ? "h-4 w-4" : "h-7 w-7";
+  const cornerClass = `${cornerSize} absolute border-[#DA7756]`;
+
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div className="absolute inset-3 border border-white/15" />
+      <div className="absolute left-1/2 top-3 h-[calc(100%-1.5rem)] w-px -translate-x-1/2 bg-white/15" />
+      <div className="absolute left-3 top-1/2 h-px w-[calc(100%-1.5rem)] -translate-y-1/2 bg-white/15" />
+      <div className="absolute left-[22%] top-[24%] h-[18%] w-[56%] rounded-[50%] border border-[#DA7756]/50" />
+      <div className="absolute left-[30%] top-[54%] h-[16%] w-[40%] rounded-[50%] border border-white/20" />
+      <div className="absolute left-[18%] top-[18%] h-[64%] w-[64%] rotate-[-16deg] border-l border-t border-white/20" />
+      <div className="absolute right-[18%] top-[18%] h-[64%] w-[64%] rotate-[16deg] border-r border-t border-white/20" />
+      <div className="absolute inset-x-4 top-1/2 h-px bg-[#DA7756]/80 shadow-[0_0_18px_rgba(218,119,86,0.8)]" />
+      <div className={`${cornerClass} left-2 top-2 border-l-2 border-t-2`} />
+      <div className={`${cornerClass} right-2 top-2 border-r-2 border-t-2`} />
+      <div className={`${cornerClass} bottom-2 left-2 border-b-2 border-l-2`} />
+      <div className={`${cornerClass} bottom-2 right-2 border-b-2 border-r-2`} />
+      <div className="absolute bottom-2 right-3 rounded bg-black/45 px-1.5 py-0.5 font-mono text-[8px] font-semibold tracking-widest text-white/70">
+        SCAN
+      </div>
+    </div>
+  );
+};
 
 // STUB EXPORTS (kept so existing imports don't break)
 // State screens are now overlays inside SecurityOverlays, not early returns.
@@ -18,6 +46,8 @@ export const AlwaysMountedVideos: React.FC<{ security: SecurityState }> = () =>
 export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
   security,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const {
     cameraPermission,
     modelLoading,
@@ -35,8 +65,6 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
     previewVideoRef,
     faceAuthStatus,
     faceAuthMessage,
-    registeringFace,
-    registerFace,
     refreshFaceProfile,
   } = security;
 
@@ -96,8 +124,11 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
             ? "Face Service Unavailable"
             : "User Not Detected";
   const blankCopy =
-    faceAuthMessage ||
-    "Please position yourself in front of the camera to view this content.";
+    faceAuthStatus === "unconfigured"
+      ? faceAuthMessage ||
+        "Enroll your face from your profile to continue to product details."
+      : faceAuthMessage ||
+        "Please position yourself in front of the camera to view this content.";
   const badgeLabel = isBlurred
     ? faceAuthStatus === "rejected"
       ? "UNKNOWN"
@@ -111,10 +142,22 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
         : faceAuthStatus === "api_unavailable"
           ? "FACE ONLY"
           : "SECURE";
-  const canRegisterFace = showBadge && faceAuthStatus === "unconfigured";
+  const canOpenFaceEnrollment = showBadge && faceAuthStatus === "unconfigured";
   const canRetryFaceCheck =
     showBadge &&
     (faceAuthStatus === "api_unavailable" || faceAuthStatus === "error");
+  const showLiveBadge = showBadge && !showBlankScreen;
+
+  const goToFaceEnrollment = () => {
+    const params = new URLSearchParams({ tab: "face_enroll" });
+    const returnTo = `${location.pathname}${location.search}${location.hash}`;
+
+    if (returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+      params.set("returnTo", returnTo);
+    }
+
+    navigate(`/profile?${params.toString()}`);
+  };
 
   return (
     <>
@@ -201,11 +244,59 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
       {/* NO FACE DETECTED */}
       {showBlankScreen && (
         <div className="fixed inset-0 z-[9998] bg-[#1a1a1a] flex flex-col items-center justify-center text-white text-center px-8">
-          <div className="w-20 h-20 rounded-full bg-gray-100 border border-gray-300/30 flex items-center justify-center mb-6">
-            <Camera className="w-10 h-10 text-gray-700" />
+          <div className="relative mb-6">
+            <div
+              className="absolute inset-0 rounded-xl animate-ping"
+              style={{
+                background:
+                  faceAuthStatus === "unconfigured"
+                    ? "rgba(218,119,86,0.28)"
+                    : "rgba(239,68,68,0.25)",
+                animationDuration: "2s",
+              }}
+            />
+            <div className="relative h-40 w-40 overflow-hidden rounded-lg border-2 border-white/15 bg-black shadow-2xl">
+              <video
+                ref={previewVideoRef}
+                autoPlay
+                playsInline
+                muted
+                className="h-full w-full object-cover"
+                style={{
+                  transform: "scaleX(-1)",
+                  display: showBadge ? "block" : "none",
+                }}
+              />
+              {showBadge && <FaceMeasurementOverlay />}
+              {!showBadge && (
+                <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                  <Camera className="w-10 h-10 text-gray-700" />
+                </div>
+              )}
+            </div>
           </div>
           <h1 className="text-2xl font-semibold mb-3">{blankTitle}</h1>
           <p className="text-white/50 text-sm max-w-md">{blankCopy}</p>
+          {canOpenFaceEnrollment && (
+            <button
+              type="button"
+              onClick={goToFaceEnrollment}
+              className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#DA7756] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#c66545]"
+            >
+              <Camera className="h-4 w-4" />
+              Enroll Your Face
+            </button>
+          )}
+          {canRetryFaceCheck && (
+            <button
+              type="button"
+              onClick={refreshFaceProfile}
+              className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Retry Face Check
+            </button>
+          )}
         </div>
       )}
 
@@ -291,7 +382,7 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
       </div>
 
       {/* LIVE CAMERA BADGE (draggable) - only shown when fully active */}
-      {showBadge && (
+      {showLiveBadge && (
         <div
           className="fixed z-[9992] flex flex-col items-center gap-1.5 select-none cursor-grab active:cursor-grabbing touch-none"
           style={{
@@ -308,7 +399,7 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
         >
           <div className="relative">
             <div
-              className="absolute inset-0 rounded-full animate-ping"
+              className="absolute inset-0 rounded-xl animate-ping"
               style={{
                 background: isBlurred
                   ? "rgba(239,68,68,0.35)"
@@ -317,30 +408,28 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
               }}
             />
             <div
-              className="relative rounded-full p-[2px]"
+              className="relative rounded-xl p-[2px]"
               style={{
                 background: isBlurred
                   ? "linear-gradient(135deg,#ef4444,#b91c1c)"
                   : "linear-gradient(135deg,#4ade80,#16a34a)",
               }}
             >
-              <div
-                className="rounded-full overflow-hidden bg-black"
-                style={{ width: 56, height: 56 }}
-              >
+              <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-black">
                 <video
                   ref={previewVideoRef}
                   autoPlay
                   playsInline
                   muted
                   style={{
-                    width: 56,
-                    height: 56,
+                    width: 80,
+                    height: 80,
                     objectFit: "cover",
                     transform: "scaleX(-1)",
                     display: "block",
                   }}
                 />
+                <FaceMeasurementOverlay compact />
               </div>
             </div>
             <div
@@ -356,45 +445,22 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
               {sessionId}
             </span>
           </div>
-          {(canRegisterFace || canRetryFaceCheck) && (
+          {canRetryFaceCheck && (
             <div className="flex items-center gap-1 rounded-full bg-black/90 border border-white/10 px-1.5 py-1">
-              {canRetryFaceCheck && (
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    refreshFaceProfile();
-                  }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
-                  aria-label="Retry face profile service"
-                  title="Retry face profile service"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                </button>
-              )}
-              {canRegisterFace && (
-                <button
-                  type="button"
-                  disabled={registeringFace}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    registerFace();
-                  }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:cursor-wait disabled:opacity-50"
-                  aria-label="Add face profile"
-                  title="Add face profile"
-                >
-                  {registeringFace ? (
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <UserCheck className="h-3.5 w-3.5" />
-                  )}
-                </button>
-              )}
+              <button
+                type="button"
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  refreshFaceProfile();
+                }}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                aria-label="Retry face profile service"
+                title="Retry face profile service"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
         </div>

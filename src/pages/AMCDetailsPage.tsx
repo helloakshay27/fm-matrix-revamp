@@ -1510,7 +1510,7 @@ export const AMCDetailsPage = () => {
                         <TableHead className="font-semibold text-[#1a1a1a]">Technician</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Remarks</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Status</TableHead>
-                        <TableHead className="font-semibold text-[#1a1a1a]">Assets Covered</TableHead>
+                        <TableHead className="font-semibold text-[#1a1a1a]">Asset/service Covered</TableHead>
                         <TableHead className="font-semibold text-[#1a1a1a]">Attachment</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1745,96 +1745,161 @@ export const AMCDetailsPage = () => {
                     </div>
                   </div>
 
-                  {/* Assets Table */}
-                  {amcDetails?.amc_assets && amcDetails.amc_assets.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-gray-700">
-                          Assets — select AMC completed assets
-                        </label>
-                        <span className="text-sm font-semibold text-[#C72030] bg-[#FFF0F0] px-2.5 py-0.5 rounded-full">
-                          {visitEditSelectedAssetIds.length} of {amcDetails.amc_assets.length} completed
-                        </span>
-                      </div>
-                      <div className="border border-gray-200 rounded-md overflow-hidden">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-[#EDEAE3]">
-                              <TableHead className="w-10">
-                                <input
-                                  type="checkbox"
-                                  className="w-4 h-4 accent-[#C72030] cursor-pointer"
-                                  checked={
-                                    visitEditSelectedAssetIds.length === amcDetails.amc_assets.length
-                                  }
-                                  onChange={(e) =>
-                                    setVisitEditSelectedAssetIds(
-                                      e.target.checked
-                                        ? amcDetails.amc_assets.map((a: any) => a.asset_id)
-                                        : []
-                                    )
-                                  }
-                                />
-                              </TableHead>
-                              <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Name</TableHead>
-                              <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Code</TableHead>
-                              <TableHead className="font-semibold text-[#1a1a1a] text-xs">Status</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody className="bg-white">
-                            {amcDetails.amc_assets.map((asset: any) => {
-                              const checked = visitEditSelectedAssetIds.includes(asset.asset_id);
-                              return (
-                                <TableRow
-                                  key={asset.id}
-                                  className={`border-b border-gray-100 cursor-pointer transition-colors ${checked ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
-                                  onClick={() =>
-                                    setVisitEditSelectedAssetIds((prev) =>
-                                      checked
-                                        ? prev.filter((x) => x !== asset.asset_id)
-                                        : [...prev, asset.asset_id]
-                                    )
-                                  }
-                                >
-                                  <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                  {/* Assets / Services Table */}
+                  {(() => {
+                    const hasAssets = (amcDetails?.amc_assets?.length ?? 0) > 0;
+                    const hasServices = (amcDetails?.amc_services?.length ?? 0) > 0;
+                    if (!hasAssets && !hasServices) return null;
+
+                    if (hasAssets) {
+                      const items = amcDetails.amc_assets!;
+                      return (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-700">
+                              Assets — select AMC completed assets
+                            </label>
+                            <span className="text-sm font-semibold text-[#C72030] bg-[#FFF0F0] px-2.5 py-0.5 rounded-full">
+                              {visitEditSelectedAssetIds.length} of {items.length} completed
+                            </span>
+                          </div>
+                          <div className="border border-gray-200 rounded-md overflow-hidden">
+                            <Table>
+                              <TableHeader>
+                                <TableRow className="bg-[#EDEAE3]">
+                                  <TableHead className="w-10">
                                     <input
                                       type="checkbox"
                                       className="w-4 h-4 accent-[#C72030] cursor-pointer"
-                                      checked={checked}
-                                      onChange={() =>
-                                        setVisitEditSelectedAssetIds((prev) =>
-                                          checked
-                                            ? prev.filter((x) => x !== asset.asset_id)
-                                            : [...prev, asset.asset_id]
+                                      checked={visitEditSelectedAssetIds.length === items.length}
+                                      onChange={(e) =>
+                                        setVisitEditSelectedAssetIds(
+                                          e.target.checked ? items.map((a: any) => a.asset_id) : []
                                         )
                                       }
                                     />
-                                  </TableCell>
-                                  <TableCell className="text-sm text-gray-900 py-2">
-                                    {asset.asset_name || "—"}
-                                  </TableCell>
-                                  <TableCell className="text-sm text-gray-600 py-2">
-                                    {asset.asset_code || "—"}
-                                  </TableCell>
-                                  <TableCell className="py-2">
-                                    <span
-                                      className={`px-2 py-0.5 text-xs rounded uppercase font-medium ${
-                                        asset.asset_status === "active"
-                                          ? "bg-green-100 text-green-700"
-                                          : "bg-gray-100 text-gray-600"
-                                      }`}
-                                    >
-                                      {asset.asset_status || "—"}
-                                    </span>
-                                  </TableCell>
+                                  </TableHead>
+                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Name</TableHead>
+                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Asset Code</TableHead>
+                                  <TableHead className="font-semibold text-[#1a1a1a] text-xs">Status</TableHead>
                                 </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
+                              </TableHeader>
+                              <TableBody className="bg-white">
+                                {items.map((asset: any) => {
+                                  const checked = visitEditSelectedAssetIds.includes(asset.asset_id);
+                                  return (
+                                    <TableRow
+                                      key={asset.id}
+                                      className={`border-b border-gray-100 cursor-pointer transition-colors ${checked ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
+                                      onClick={() =>
+                                        setVisitEditSelectedAssetIds((prev) =>
+                                          checked ? prev.filter((x) => x !== asset.asset_id) : [...prev, asset.asset_id]
+                                        )
+                                      }
+                                    >
+                                      <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                                        <input
+                                          type="checkbox"
+                                          className="w-4 h-4 accent-[#C72030] cursor-pointer"
+                                          checked={checked}
+                                          onChange={() =>
+                                            setVisitEditSelectedAssetIds((prev) =>
+                                              checked ? prev.filter((x) => x !== asset.asset_id) : [...prev, asset.asset_id]
+                                            )
+                                          }
+                                        />
+                                      </TableCell>
+                                      <TableCell className="text-sm text-gray-900 py-2">{asset.asset_name || "—"}</TableCell>
+                                      <TableCell className="text-sm text-gray-600 py-2">{asset.asset_code || "—"}</TableCell>
+                                      <TableCell className="py-2">
+                                        <span className={`px-2 py-0.5 text-xs rounded uppercase font-medium ${asset.asset_status === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                                          {asset.asset_status || "—"}
+                                        </span>
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // No assets — show services instead
+                    const services = amcDetails.amc_services!;
+                    return (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium text-gray-700">
+                            Services — select AMC completed services
+                          </label>
+                          <span className="text-sm font-semibold text-[#C72030] bg-[#FFF0F0] px-2.5 py-0.5 rounded-full">
+                            {visitEditSelectedAssetIds.length} of {services.length} completed
+                          </span>
+                        </div>
+                        <div className="border border-gray-200 rounded-md overflow-hidden">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-[#EDEAE3]">
+                                <TableHead className="w-10">
+                                  <input
+                                    type="checkbox"
+                                    className="w-4 h-4 accent-[#C72030] cursor-pointer"
+                                    checked={visitEditSelectedAssetIds.length === services.length}
+                                    onChange={(e) =>
+                                      setVisitEditSelectedAssetIds(
+                                        e.target.checked ? services.map((s: any) => s.service_id) : []
+                                      )
+                                    }
+                                  />
+                                </TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a] text-xs">Service Name</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a] text-xs">Service Code</TableHead>
+                                <TableHead className="font-semibold text-[#1a1a1a] text-xs">Status</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody className="bg-white">
+                              {services.map((svc: any) => {
+                                const checked = visitEditSelectedAssetIds.includes(svc.service_id);
+                                return (
+                                  <TableRow
+                                    key={svc.id}
+                                    className={`border-b border-gray-100 cursor-pointer transition-colors ${checked ? "bg-[#FFF8F8]" : "hover:bg-gray-50"}`}
+                                    onClick={() =>
+                                      setVisitEditSelectedAssetIds((prev) =>
+                                        checked ? prev.filter((x) => x !== svc.service_id) : [...prev, svc.service_id]
+                                      )
+                                    }
+                                  >
+                                    <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
+                                      <input
+                                        type="checkbox"
+                                        className="w-4 h-4 accent-[#C72030] cursor-pointer"
+                                        checked={checked}
+                                        onChange={() =>
+                                          setVisitEditSelectedAssetIds((prev) =>
+                                            checked ? prev.filter((x) => x !== svc.service_id) : [...prev, svc.service_id]
+                                          )
+                                        }
+                                      />
+                                    </TableCell>
+                                    <TableCell className="text-sm text-gray-900 py-2">{svc.service_name || "—"}</TableCell>
+                                    <TableCell className="text-sm text-gray-600 py-2">{svc.service_code || "—"}</TableCell>
+                                    <TableCell className="py-2">
+                                      <span className={`px-2 py-0.5 text-xs rounded uppercase font-medium ${(svc.status || "").toLowerCase() === "active" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}>
+                                        {svc.status || "—"}
+                                      </span>
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   <div className="flex justify-center gap-3 pt-3 border-t border-gray-100">
                     <Button

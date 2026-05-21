@@ -637,7 +637,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       (item) => item.status === "open" || item.status === "reopen"
     ).length;
     const overdue = mergedTasksIssues.filter(
-      (item) => item.status === "overdue"
+      (item) => item.status === "overdue" || item.status === "overdued"
     ).length;
     const onHold = mergedTasksIssues.filter(
       (item) => item.status === "on_hold"
@@ -3186,26 +3186,58 @@ const BusinessCompassDailyReport: React.FC = () => {
                             </span>
                           </div>
                           <div className="space-y-2.5 pl-6 border-l-2 border-[#DA7756]/10">
-                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span>• Completed items:</span>
-                              <span className="text-gray-900">
-                                {
-                                  dailyScore.details.accomplishments
-                                    .completedItems
-                                }
-                                /{dailyScore.details.accomplishments.totalItems}{" "}
-                                items
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
-                              <span>• Completion rate:</span>
-                              <span className="text-gray-900">
-                                {dailyScore.details.accomplishments.completionPercentage.toFixed(
-                                  0
+                            {dailyScore.details.accomplishments.itemBreakdown &&
+                              dailyScore.details.accomplishments.itemBreakdown.length >
+                              0 ? (
+                              <div className="space-y-1.5">
+                                {dailyScore.details.accomplishments.itemBreakdown.map(
+                                  (item, idx) => (
+                                    <div
+                                      key={item.id}
+                                      className="text-[10px] font-bold text-gray-600"
+                                    >
+                                      {idx > 0 && (
+                                        <span className="text-gray-400">+</span>
+                                      )}
+                                      <span className="text-gray-700 ml-1">
+                                        {item.text.substring(0, 35)}
+                                        {item.text.length > 35 ? "..." : ""}
+                                      </span>
+                                      <span className="text-purple-600 font-black ml-2">
+                                        {item.points}
+                                      </span>
+                                      <span className="text-gray-400 ml-1">=</span>
+                                      <span className="text-purple-700 font-black ml-1">
+                                        {item.cumulativePoints}
+                                      </span>
+                                    </div>
+                                  )
                                 )}
-                                %
-                              </span>
-                            </div>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                                  <span>• Completed items:</span>
+                                  <span className="text-gray-900">
+                                    {
+                                      dailyScore.details.accomplishments
+                                        .completedItems
+                                    }
+                                    /{dailyScore.details.accomplishments.totalItems}{" "}
+                                    items
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between text-[11px] font-bold text-gray-500">
+                                  <span>• Completion rate:</span>
+                                  <span className="text-gray-900">
+                                    {dailyScore.details.accomplishments.completionPercentage.toFixed(
+                                      0
+                                    )}
+                                    %
+                                  </span>
+                                </div>
+                              </>
+                            )}
                             <div className="flex items-center justify-between text-[11px] font-black text-purple-900 pt-1 border-t border-gray-50">
                               <span>Total earned:</span>
                               <span>
@@ -3948,7 +3980,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                               },
                               {
                                 label: "Tasks & Issues",
-                                value: report.report_data?.sections?.tasks_issues ?? 0,
+                                value: report.report_data?.sections?.tasks_issues_todos ?? 0,
                                 color: "text-[#DA7756]",
                                 bg: "bg-[#DA7756]/5 border-[#DA7756]/20",
                               },

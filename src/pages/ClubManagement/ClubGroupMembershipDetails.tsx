@@ -72,6 +72,11 @@ interface ClubMember {
   current_age?: number | null;
   gender?: string | null;
   snag_answers?: any[];
+  raised_bill_to_user?: boolean;
+  bill_to?: string | null;
+  billing_company_name?: string;
+  billing_gstin?: string;
+  billing_address?: string;
   user: {
     id: number;
     email: string;
@@ -1230,6 +1235,58 @@ export const ClubGroupMembershipDetails = () => {
                   <span className="text-gray-900 font-medium">{membershipData.allocation_payment_detail?.payment_plan?.duration_in_months}</span>
                 </div> */}
                   </div>
+
+                  {/* Billing Info */}
+                  {(() => {
+                    const billing = membershipData.club_members?.[0];
+                    if (!billing) return null;
+                    const isCompany = billing.bill_to === 'company';
+                    return (
+                      <div className="mt-6 pt-6 border-t border-gray-200">
+                        <h3 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                          <Building2 className="w-4 h-4 text-[#C72030]" />
+                          Billing Info
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                          <div className="flex items-start">
+                            <span className="text-gray-500 min-w-[140px]">Bill Raised To User</span>
+                            <span className="text-gray-500 mx-2">:</span>
+                            <Badge className={billing.raised_bill_to_user ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-600'}>
+                              {billing.raised_bill_to_user ? 'Yes' : 'No'}
+                            </Badge>
+                          </div>
+                          {billing.bill_to && (
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Bill To</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium capitalize">{billing.bill_to}</span>
+                            </div>
+                          )}
+                          {isCompany && billing.billing_company_name && (
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">Company Name</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{billing.billing_company_name}</span>
+                            </div>
+                          )}
+                          {isCompany && billing.billing_gstin && (
+                            <div className="flex items-start">
+                              <span className="text-gray-500 min-w-[140px]">GSTIN No.</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{billing.billing_gstin}</span>
+                            </div>
+                          )}
+                          {isCompany && billing.billing_address && (
+                            <div className="flex items-start md:col-span-2">
+                              <span className="text-gray-500 min-w-[140px]">Billing Address</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-medium">{billing.billing_address}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </TabsContent>
               )}
 

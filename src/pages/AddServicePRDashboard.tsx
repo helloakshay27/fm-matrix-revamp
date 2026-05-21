@@ -797,9 +797,9 @@ export const AddServicePRDashboard = () => {
     if (formData.woDate) {
       const woDate = new Date(formData.woDate);
       const today = new Date();
-      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(today.getTime() - 75 * 24 * 60 * 60 * 1000);
       if (woDate > today || woDate < thirtyDaysAgo) {
-        toast.error("WO Date must be current date or within past 30 days");
+        toast.error("WO Date must be current date or within past 75 days");
         return false;
       }
     }
@@ -1048,7 +1048,7 @@ export const AddServicePRDashboard = () => {
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
                 inputProps={{
-                  min: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+                  min: new Date(new Date().getTime() - 75 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
                   max: new Date().toISOString().split("T")[0],
                 }}
               />

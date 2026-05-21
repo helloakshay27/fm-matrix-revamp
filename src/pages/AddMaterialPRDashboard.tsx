@@ -646,9 +646,9 @@ export const AddMaterialPRDashboard = () => {
     if (supplierDetails.prDate) {
       const prDate = new Date(supplierDetails.prDate);
       const today = new Date();
-      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(today.getTime() - 75 * 24 * 60 * 60 * 1000);
       if (prDate > today || prDate < thirtyDaysAgo) {
-        toast.error("PR Date must be current date or within past 30 days");
+        toast.error("PR Date must be current date or within past 75 days");
         return false;
       }
     }
@@ -884,7 +884,7 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
                 inputProps={{
-                  min: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+                  min: new Date(new Date().getTime() - 75 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
                   max: new Date().toISOString().split("T")[0],
                 }}
               />
