@@ -507,7 +507,9 @@ const WeeklyReports = () => {
             try {
                 const params = new URLSearchParams();
                 params.append("page", String(currentTasksPage));
-                params.append("for_date", format(weekEnd, "yyyy-MM-dd"));
+                const year = new Date(weekStart).getFullYear();
+                const weekNum = String(getISOWeek(weekStart)).padStart(2, "0");
+                params.append("for_week", `${year}-W${weekNum}`);
 
                 const response = await fetch(
                     `${normalizedBaseUrl}/task_managements/my_tasks.json?${params.toString()}`,
@@ -546,7 +548,9 @@ const WeeklyReports = () => {
             try {
                 const params = new URLSearchParams();
                 params.append("page", String(currentIssuesPage));
-                params.append("for_date", format(weekEnd, "yyyy-MM-dd"));
+                const year = new Date(weekStart).getFullYear();
+                const weekNum = String(getISOWeek(weekStart)).padStart(2, "0");
+                params.append("for_week", `${year}-W${weekNum}`);
                 params.append("q[responsible_person_id_eq]", String(userId));
 
                 const response = await fetch(
@@ -586,12 +590,9 @@ const WeeklyReports = () => {
             try {
                 const params = new URLSearchParams();
                 params.append("q[user_id_eq]", String(userId));
-                params.append("q[target_date_lteq]", format(weekEnd, "yyyy-MM-dd"));
-                params.append("q[status_in][]", "open");
-                params.append("q[status_in][]", "overdue");
-                params.append("q[status_in][]", "overdued");
-                params.append("q[status_in][]", "in_progress");
-                params.append("q[status_in][]", "completed");
+                const year = new Date(weekStart).getFullYear();
+                const weekNum = String(getISOWeek(weekStart)).padStart(2, "0");
+                params.append("for_week", `${year}-W${weekNum}`);
 
                 const response = await fetch(
                     `${normalizedBaseUrl}/todos.json?${params.toString()}`,
@@ -2753,43 +2754,43 @@ const WeeklyReports = () => {
                                                 variant="outline"
                                                 className="border-0 bg-[#DA7756]/10 px-3 py-1 text-[10px] font-bold text-[#9e4f36]"
                                             >
-                                            Tasks: {taskIssueCounts.tasks}
+                                                Tasks: {taskIssueCounts.tasks}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
                                                 className="border-0 bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-800"
                                             >
-                                            Issues: {taskIssueCounts.issues}
+                                                Issues: {taskIssueCounts.issues}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
                                                 className="border-0 bg-yellow-100 px-3 py-1 text-[10px] font-bold text-yellow-800"
                                             >
-                                            Todos: {taskIssueCounts.todos}
+                                                Todos: {taskIssueCounts.todos}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
                                                 className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
                                             >
-                                            Closed: {taskIssueCounts.completed}
+                                                Closed: {taskIssueCounts.completed}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
                                                 className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
                                             >
-                                            Open: {taskIssueCounts.open}
+                                                Open: {taskIssueCounts.open}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
                                                 className="border-0 bg-red-100 px-3 py-1 text-[10px] font-bold text-red-800"
                                             >
-                                            Overdue: {taskIssueCounts.overdue}
+                                                Overdue: {taskIssueCounts.overdue}
                                             </Badge>
                                             <Badge
                                                 variant="outline"
                                                 className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
                                             >
-                                            In Progress: {taskIssueCounts.inProgress}
+                                                In Progress: {taskIssueCounts.inProgress}
                                             </Badge>
                                         </div>
                                     </div>

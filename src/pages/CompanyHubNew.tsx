@@ -137,6 +137,29 @@ const hasEmployeeOfMonthContent = (employee?: EmployeeOfMonthDisplay | null) =>
       (employee?.points && employee.points.length > 0)
   );
 
+const getCommunityLikeStorageKey = (userId?: number | string) =>
+  `company_hub_local_likes_${userId || "guest"}`;
+
+const readLocalLikedPostIds = (userId?: number | string) => {
+  try {
+    const raw = localStorage.getItem(getCommunityLikeStorageKey(userId));
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeLocalLikedPostIds = (
+  userId: number | string | undefined,
+  likedPostIds: string[]
+) => {
+  localStorage.setItem(
+    getCommunityLikeStorageKey(userId),
+    JSON.stringify(Array.from(new Set(likedPostIds)))
+  );
+};
+
 const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const navigate = useNavigate();
   const { setCurrentSection } = useLayout();
@@ -244,9 +267,12 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
         response.data.posts ||
         response.data.data ||
         (Array.isArray(response.data) ? response.data : []);
+      const localLikedPostIds = readLocalLikedPostIds(userId);
       const postsData = rawPosts.map((post: any) => {
+        const isLocallyLiked = localLikedPostIds.includes(String(post.id));
+        const isApiLiked = post.isliked === true || post.isliked === "true";
         // Calculate total likes if not provided by backend
-        const totalLikes =
+        const apiTotalLikes =
           post.total_likes ??
           (post.likes_with_emoji
             ? Object.values(post.likes_with_emoji).reduce(
@@ -254,6 +280,10 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                 0
               )
             : 0);
+        const totalLikes =
+          isLocallyLiked && !isApiLiked
+            ? Number(apiTotalLikes || 0) + 1
+            : Number(apiTotalLikes || 0);
 
         // Identify post type
         let type: "post" | "event" | "notice" | "document" = "post";
@@ -265,6 +295,15 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
           ...post,
           type,
           total_likes: totalLikes,
+          isliked: isApiLiked || isLocallyLiked,
+          likes_with_emoji: {
+            ...(post.likes_with_emoji || {}),
+            ...(isLocallyLiked && !isApiLiked
+              ? {
+                  heart: Number(post.likes_with_emoji?.heart || 0) + 1,
+                }
+              : {}),
+          },
           total_comments:
             post.total_comments ??
             (Array.isArray(post.comments) ? post.comments.length : 0),
@@ -544,32 +583,113 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
     }
   };
 
-  const handleLikePost = async (postId: number) => {
+  const handleLikePost = async (postId: number, postData?: Post) => {
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        toast.error("Please log in again to like posts");
+        return;
+      }
+
       const baseUrl =
         localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
       const cleanBaseUrl = baseUrl
         .replace(/^https?:\/\//, "")
         .replace(/\/+$/, "");
-      const fullUrl = `https://${cleanBaseUrl}/likes.json`;
+      const post = postData || posts.find((item) => item.id === postId);
+      if (!post) {
+        toast.error("Unable to find post details. Refreshing feed...");
+        fetchPosts();
+        return;
+      }
 
-      await axios.post(
-        fullUrl,
-        {
-          like: {
-            thing_id: postId,
-            thing_type: "Post",
-          },
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      const applyLocalLikeToggle = () => {
+        const postIdKey = String(postId);
+        const likedPostIds = readLocalLikedPostIds(userId);
+        const shouldLike = !post.isliked;
+        const nextLikedPostIds = shouldLike
+          ? [...likedPostIds, postIdKey]
+          : likedPostIds.filter((id) => id !== postIdKey);
+        writeLocalLikedPostIds(userId, nextLikedPostIds);
+
+        setPosts((prevPosts) =>
+          prevPosts.map((item) => {
+            if (item.id !== postId) return item;
+            const currentTotalLikes = Number(item.total_likes || 0);
+            const nextTotalLikes = shouldLike
+              ? currentTotalLikes + 1
+              : Math.max(currentTotalLikes - 1, 0);
+            const currentHeartCount = Number(
+              item.likes_with_emoji?.heart || 0
+            );
+
+            return {
+              ...item,
+              isliked: shouldLike,
+              total_likes: nextTotalLikes,
+              likes_with_emoji: {
+                ...(item.likes_with_emoji || {}),
+                heart: shouldLike
+                  ? currentHeartCount + 1
+                  : Math.max(currentHeartCount - 1, 0),
+              },
+            };
+          })
+        );
+      };
+
+      if (cleanBaseUrl === "fm-uat-api.lockated.com") {
+        applyLocalLikeToggle();
+        return;
+      }
+
+      const likesUrl = `https://${cleanBaseUrl}/likes.json`;
+      const currentUserLike = post.likes_with_user_names?.find(
+        (like: any) => String(like.user_id) === String(userId)
       );
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      };
+
+      if (post.isliked) {
+        if (!currentUserLike?.id) {
+          toast.error("Unable to find your existing like. Refreshing feed...");
+          fetchPosts();
+          return;
+        }
+
+        await axios.delete(
+          `https://${cleanBaseUrl}/likes/${currentUserLike.id}.json`,
+          { headers }
+        );
+      } else {
+        await axios.post(
+          likesUrl,
+          {
+            like: {
+              thing_id: postId,
+              thing_type: "Post",
+              emoji_name: "heart",
+            },
+          },
+          { headers }
+        );
+      }
       fetchPosts();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Like failed:", error);
-      toast.error("Failed to update like");
+      if (error.response?.status === 404) {
+        toast.error("Likes API is not available for this backend");
+        return;
+      }
+
+      toast.error(
+        error.response?.data?.error ||
+          error.response?.data?.message ||
+          "Failed to update like"
+      );
     }
   };
 
