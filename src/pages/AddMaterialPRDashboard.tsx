@@ -1171,14 +1171,7 @@ export const AddMaterialPRDashboard = () => {
                   <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
                   ITEM DETAILS
                 </div>
-                <Button
-                  onClick={addItem}
-                  size="sm"
-                  className="bg-[#C72030] hover:bg-[#C72030]/90"
-                  type="button"
-                >
-                  Add Item
-                </Button>
+                
               </CardTitle>
             </CardHeader>
 
@@ -1435,6 +1428,16 @@ export const AddMaterialPRDashboard = () => {
                 </div>
               ))}
             </CardContent>
+            <div className="flex justify-end p-4">
+                <Button
+                  onClick={addItem}
+                  size="sm"
+                  className="bg-[#C72030] hover:bg-[#C72030]/90"
+                  type="button"
+                >
+                  Add Item
+                </Button>
+              </div>
           </Card>
 
           <div className="flex items-center justify-end">
