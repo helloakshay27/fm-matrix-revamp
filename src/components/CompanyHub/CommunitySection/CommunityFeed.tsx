@@ -11,7 +11,7 @@ interface CommunityFeedProps {
   isLoadingPosts: boolean;
   posts: Post[];
   setDeleteConfirmation: (conf: any) => void;
-  handleLikePost: (postId: number) => void;
+  handleLikePost: (postId: number, post?: Post) => void;
   handleAddComment: (postId: number, commentBody: string) => void;
 }
 

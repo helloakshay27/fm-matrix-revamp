@@ -8,6 +8,7 @@ import {
   Gift,
   FileText,
   Calendar,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +32,12 @@ interface Prize {
   // other fields omitted if not used in UI
 }
 
+interface ContestSite {
+  id: number;
+  site_id: number;
+  site_name: string;
+}
+
 interface ContestDetails {
   id: number;
   name: string;
@@ -38,11 +45,13 @@ interface ContestDetails {
   terms_and_conditions: string | null;
   content_type: string;
   active: boolean;
-  start_at: string; // ISO string
-  end_at: string; // ISO string
+  start_at: string;
+  end_at: string;
   user_caps: number | null;
   user_attemp_remaining: number | null;
+  access_type: string | null;
   prizes: Prize[];
+  contest_sites: ContestSite[];
 }
 
 // Removed hardcoded constants - will use localStorage instead
@@ -117,7 +126,7 @@ export const ContestDetailsPage: React.FC = () => {
   };
 
   const getProbability = (prize: Prize) => {
-    return `${prize.probability_value}/${prize.probability_out_of}`;
+    return `${prize.probability_value}/100`;
   };
 
   const handleEdit = (section: string) => {
@@ -214,7 +223,7 @@ export const ContestDetailsPage: React.FC = () => {
                 Basic Contest Info
               </h3>
             </div>
-            <Button
+            {/* <Button
               onClick={() => handleEdit("basic")}
               variant="outline"
               size="sm"
@@ -222,7 +231,7 @@ export const ContestDetailsPage: React.FC = () => {
             >
               <Edit className="w-4 h-4 mr-1" />
               Edit
-            </Button>
+            </Button> */}
           </div>
           <CardContent className="bg-white p-6 rounded-b-lg">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -271,7 +280,7 @@ export const ContestDetailsPage: React.FC = () => {
               >
                 {contest.active ? "Active" : "Inactive"}
               </span>
-              <Button
+              {/* <Button
                 onClick={() => handleEdit("validity")}
                 variant="outline"
                 size="sm"
@@ -279,7 +288,7 @@ export const ContestDetailsPage: React.FC = () => {
               >
                 <Edit className="w-4 h-4 mr-1" />
                 Edit
-              </Button>
+              </Button> */}
             </div>
           </div>
           <CardContent className="bg-white p-6 rounded-b-lg">
@@ -326,6 +335,40 @@ export const ContestDetailsPage: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Contest Sites */}
+        {contest.contest_sites && contest.contest_sites.length > 0 && (
+          <Card className="w-full bg-transparent shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border-none">
+            <div className="bg-[#F6F4EE] px-6 py-4 rounded-t-lg flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-[#C4B89D54] p-2 rounded-lg">
+                  <MapPin className="w-5 h-5 text-[#C72030]" />
+                </div>
+                <h3 className="text-lg font-semibold text-[#1A1A1A]">
+                  Contest Sites
+                </h3>
+              </div>
+              {/* {contest.access_type && (
+                <span className="px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-800 capitalize">
+                  {contest.access_type.replace(/_/g, " ")}
+                </span>
+              )} */}
+            </div>
+            <CardContent className="bg-white p-6 rounded-b-lg">
+              <div className="flex flex-wrap gap-2">
+                {contest.contest_sites.map((site) => (
+                  <span
+                    key={site.id}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium bg-[#F6F4EE] text-[#1A1A1A] border border-[#E5E0D3]"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-[#C72030]" />
+                    {site.site_name}
+                  </span>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Offers & Media (Prizes) */}
         <Card className="w-full bg-transparent shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border-none">
           <div className="bg-[#F6F4EE] px-6 py-4 rounded-t-lg flex items-center justify-between">
@@ -337,7 +380,7 @@ export const ContestDetailsPage: React.FC = () => {
                 Prizes / Offers
               </h3>
             </div>
-            <Button
+            {/* <Button
               onClick={() => handleEdit("prizes")}
               variant="outline"
               size="sm"
@@ -345,7 +388,7 @@ export const ContestDetailsPage: React.FC = () => {
             >
               <Edit className="w-4 h-4 mr-1" />
               Edit
-            </Button>
+            </Button> */}
           </div>
           <CardContent className="bg-white p-6 rounded-b-lg">
             {contest.prizes.length === 0 ? (
@@ -466,7 +509,7 @@ export const ContestDetailsPage: React.FC = () => {
                 Terms & Conditions
               </h3>
             </div>
-            <Button
+            {/* <Button
               onClick={() => handleEdit("terms")}
               variant="outline"
               size="sm"
@@ -474,7 +517,7 @@ export const ContestDetailsPage: React.FC = () => {
             >
               <Edit className="w-4 h-4 mr-1" />
               Edit
-            </Button>
+            </Button> */}
           </div>
           <CardContent className="bg-white p-6 rounded-b-lg">
             <div className="prose max-w-none text-sm quill-content">
