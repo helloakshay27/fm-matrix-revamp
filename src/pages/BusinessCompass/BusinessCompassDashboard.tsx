@@ -278,10 +278,10 @@ const BusinessCompassDashboard: React.FC = () => {
                 </div>
               </Card>
             )) || (
-              <div className="col-span-full text-center py-8 text-gray-500">
-                No KPI data available
-              </div>
-            )}
+                <div className="col-span-full text-center py-8 text-gray-500">
+                  No KPI data available
+                </div>
+              )}
           </div>
         </CardContent>
       </Card>
@@ -347,7 +347,7 @@ const BusinessCompassDashboard: React.FC = () => {
               <span className="text-[28px] font-black text-[#1a1a1a]">{dashboardData?.data?.business_health_score?.components?.kpi?.percentage || 0}%</span>
               <div className="absolute bottom-3 left-0 right-0 px-6">
                 <div className="h-1.5 bg-white/70 rounded-full overflow-hidden w-full">
-                  <div className="h-full rounded-full bg-[#DA7756]" style={{width: `${dashboardData?.data?.business_health_score?.components?.kpi?.percentage || 0}%`}} />
+                  <div className="h-full rounded-full bg-[#DA7756]" style={{ width: `${dashboardData?.data?.business_health_score?.components?.kpi?.percentage || 0}%` }} />
                 </div>
               </div>
             </div>
@@ -394,7 +394,7 @@ const BusinessCompassDashboard: React.FC = () => {
                 Top Stuck Issues
               </div>
               <button
-                onClick={() => navigate("/business-compass/tasks-and-issues")}
+                onClick={() => navigate("/vas/issues")}
                 className="flex items-center gap-1 text-[13px] font-bold text-[#DA7756] hover:underline"
               >
                 View All →
@@ -411,11 +411,10 @@ const BusinessCompassDashboard: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <h4 className="text-sm font-semibold text-gray-900 truncate">{issue.title}</h4>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge className={`text-xs px-2 py-0.5 rounded-full ${
-                        issue.priority === 'High' ? 'bg-red-100 text-red-700' : 
-                        issue.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 
-                        'bg-green-100 text-green-700'
-                      }`}>
+                      <Badge className={`text-xs px-2 py-0.5 rounded-full ${issue.priority === 'High' ? 'bg-red-100 text-red-700' :
+                          issue.priority === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-green-100 text-green-700'
+                        }`}>
                         {issue.priority}
                       </Badge>
                       <span className="text-xs text-gray-500">{issue.responsible_person}</span>
