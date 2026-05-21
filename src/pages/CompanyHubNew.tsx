@@ -43,6 +43,100 @@ interface CompanyHubNewProps {
   userName?: string;
 }
 
+type EmployeeOfMonthDisplay = {
+  id?: number | string | null;
+  extra_field_id?: number | string | null;
+  full_name?: string | null;
+  name?: string | null;
+  userName?: string | null;
+  role?: string | null;
+  month?: string | null;
+  points?: string[];
+  profile_image?: string | null;
+  profileImage?: string | null;
+  field_description?: string | null;
+};
+
+const readJsonObject = (value: unknown) => {
+  if (!value || typeof value !== "string" || !value.trim().startsWith("{")) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return {};
+  }
+};
+
+const readCachedEmployeeOfMonth = (): EmployeeOfMonthDisplay | null => {
+  try {
+    const cached = localStorage.getItem("company_hub_eom");
+    return cached
+      ? normalizeEmployeeOfMonth(JSON.parse(cached) as EmployeeOfMonthDisplay)
+      : null;
+  } catch {
+    return null;
+  }
+};
+
+const isCompanyHubCacheFresh = () =>
+  Date.now() - Number(localStorage.getItem("company_hub_update_time") || 0) <
+  3600000;
+
+const normalizeEmployeeOfMonth = (
+  employee: any
+): EmployeeOfMonthDisplay | null => {
+  if (!employee) return null;
+
+  const parsedFieldValue = readJsonObject(employee.field_value);
+  const merged = { ...employee, ...parsedFieldValue };
+  const fieldDescription =
+    merged.field_description || employee.field_description || null;
+  const fieldDescriptionLooksLikeImage =
+    typeof fieldDescription === "string" &&
+    /^(https?:\/\/|\/|data:image\/)/.test(fieldDescription);
+
+  const fullName =
+    merged.full_name ||
+    merged.userName ||
+    merged.name ||
+    (!fieldDescriptionLooksLikeImage ? fieldDescription : null);
+  const profileImage =
+    merged.profile_image ||
+    merged.profileImage ||
+    (fieldDescriptionLooksLikeImage ? fieldDescription : null);
+
+  return {
+    ...employee,
+    ...parsedFieldValue,
+    id: employee.id || employee.extra_field_id || null,
+    extra_field_id: employee.extra_field_id || employee.id || null,
+    full_name: fullName || null,
+    name: merged.name || fullName || null,
+    userName: merged.userName || fullName || null,
+    role: merged.role || "Employee",
+    month: merged.month || employee.month || employee.field_name || null,
+    points: Array.isArray(merged.points)
+      ? merged.points.filter(Boolean)
+      : [],
+    profile_image: profileImage || null,
+    profileImage: profileImage || null,
+    field_description: fieldDescription,
+  };
+};
+
+const hasEmployeeOfMonthContent = (employee?: EmployeeOfMonthDisplay | null) =>
+  Boolean(
+    employee?.full_name ||
+      employee?.name ||
+      employee?.userName ||
+      employee?.month ||
+      employee?.profile_image ||
+      employee?.profileImage ||
+      (employee?.points && employee.points.length > 0)
+  );
+
 const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const navigate = useNavigate();
   const { setCurrentSection } = useLayout();
@@ -76,7 +170,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
     },
   ];
 
-  const dispa  = useDispatch();
+  const dispatch = useDispatch();
   const [openTaskModal, setOpenTaskModal] = useState(false);
   const [openTodoModal, setOpenTodoModal] = useState(false);
   const [openTicketModal, setOpenTicketModal] = useState(false);
@@ -101,7 +195,8 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [currentEmployee, setCurrentEmployee] = useState<any>(null);
+  const [currentEmployee, setCurrentEmployee] =
+    useState<EmployeeOfMonthDisplay | null>(null);
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     open: boolean;
@@ -207,6 +302,22 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
         }
         setCompanyData(data);
 
+        const cachedEom = readCachedEmployeeOfMonth();
+        const shouldPreferCachedEom =
+          isCompanyHubCacheFresh() && hasEmployeeOfMonthContent(cachedEom);
+        if (shouldPreferCachedEom) {
+          setCurrentEmployee(cachedEom);
+        } else {
+          const configEom = normalizeEmployeeOfMonth(
+            data?.other_config?.employee_of_the_month
+          );
+          if (hasEmployeeOfMonthContent(configEom)) {
+            setCurrentEmployee(configEom);
+          } else if (hasEmployeeOfMonthContent(cachedEom)) {
+            setCurrentEmployee(cachedEom);
+          }
+        }
+
         // 2. Announcements & Fallback
         try {
           const annEndpoint = `${protocol}${baseUrl}/extra_fields/announcements?resource_id=${effectiveCompanyId}&resource_type=CompanySetup`;
@@ -253,34 +364,70 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
         // 3. Employee of Month
         try {
-          const eomRes = await axios.get(
-            `${protocol}${baseUrl}/extra_fields/employee_of_the_month`,
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
-          const rawEom = eomRes.data?.employee_of_the_month;
-          if (rawEom) {
-            const newest = Array.isArray(rawEom)
-              ? [...rawEom].sort(
-                  (a, b) => (b.extra_field_id || 0) - (a.extra_field_id || 0)
-                )[0]
-              : rawEom;
-            if (newest?.extra_field_id) {
-              const detailRes = await axios.get(
-                `${protocol}${baseUrl}/extra_fields/employee_of_the_month?id=${newest.extra_field_id}`,
+          if (!shouldPreferCachedEom) {
+            const eomRes = await axios.get(
+              `${protocol}${baseUrl}/extra_fields/employee_of_the_month?resource_id=${effectiveCompanyId}&resource_type=CompanySetup`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            let rawEom =
+              eomRes.data?.employee_of_the_month ||
+              eomRes.data?.data ||
+              (Array.isArray(eomRes.data) ? eomRes.data : null);
+
+            if (!rawEom || (Array.isArray(rawEom) && rawEom.length === 0)) {
+              const fallbackRes = await axios.get(
+                `${protocol}${baseUrl}/extra_fields?resource_id=${effectiveCompanyId}&resource_type=CompanySetup&group_name=employee_of_the_month`,
                 { headers: { Authorization: `Bearer ${token}` } }
               );
-              const detail = detailRes.data?.employee_of_the_month;
-              const rawRecRes = await axios.get(
-                `${protocol}${baseUrl}/extra_fields/${newest.extra_field_id}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
-              let parsedRec = {};
-              try {
-                parsedRec = JSON.parse(
-                  rawRecRes.data?.data?.field_value || "{}"
-                );
-              } catch (e) {}
-              setCurrentEmployee({ ...newest, ...detail, ...parsedRec });
+              rawEom = Array.isArray(fallbackRes.data)
+                ? fallbackRes.data
+                : Array.isArray(fallbackRes.data?.data)
+                  ? fallbackRes.data.data
+                  : fallbackRes.data?.employee_of_the_month;
+            }
+
+            if (rawEom) {
+              const newest = Array.isArray(rawEom)
+                ? [...rawEom].sort(
+                    (a, b) =>
+                      Number(b.extra_field_id || b.id || 0) -
+                      Number(a.extra_field_id || a.id || 0)
+                  )[0]
+                : rawEom;
+              const newestId = newest?.extra_field_id || newest?.id;
+              let detail = {};
+              let rawRecord = {};
+
+              if (newestId) {
+                try {
+                  const detailRes = await axios.get(
+                    `${protocol}${baseUrl}/extra_fields/employee_of_the_month?id=${newestId}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                  );
+                  detail = detailRes.data?.employee_of_the_month || {};
+                } catch (e) {
+                  console.error("EOM detail error", e);
+                }
+
+                try {
+                  const rawRecRes = await axios.get(
+                    `${protocol}${baseUrl}/extra_fields/${newestId}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                  );
+                  rawRecord = rawRecRes.data?.data || {};
+                } catch (e) {
+                  console.error("EOM raw record error", e);
+                }
+              }
+
+              const normalizedEom = normalizeEmployeeOfMonth({
+                ...newest,
+                ...detail,
+                ...rawRecord,
+              });
+              if (hasEmployeeOfMonthContent(normalizedEom)) {
+                setCurrentEmployee(normalizedEom);
+              }
             }
           }
         } catch (e) {
