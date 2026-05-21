@@ -19,6 +19,7 @@ import {
   Users,
   Upload,
   FileText,
+  ArrowLeft,
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -906,7 +907,15 @@ export const VisitorFormPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">NEW VISITOR</h1>
+      <div className="flex items-center gap-4 mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-700" />
+        </button>
+        <h1 className="text-2xl font-bold text-gray-900">NEW VISITOR</h1>
+      </div>
 
       {showCameraModal && (
         <div className="fixed top-20 left-8 z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 p-4">
@@ -1488,7 +1497,9 @@ export const VisitorFormPage = () => {
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   sx={fieldStyles}
-                // helperText="Expected arrival date and time"
+                  inputProps={{
+                    min: new Date().toISOString().slice(0, 16),
+                  }}
                 />
               )}
 
