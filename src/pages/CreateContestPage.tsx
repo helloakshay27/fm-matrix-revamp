@@ -12,6 +12,7 @@ import {
   Trophy,
   Calendar,
   Clock,
+  Edit,
 } from "lucide-react";
 import { toast as sonnerToast } from "sonner";
 import {
@@ -131,6 +132,35 @@ export const CreateContestPage: React.FC = () => {
   const [termsText, setTermsText] = useState("");
   const [redemptionText, setRedemptionText] = useState("");
 
+  // Tech Park Modal State
+  const [isTechParkModalOpen, setIsTechParkModalOpen] = useState(false);
+  const [techParks, setTechParks] = useState<any[]>([]);
+  const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
+  const [isLoadingTechParks, setIsLoadingTechParks] = useState(false);
+  const [shareWith, setShareWith] = useState("all");
+
+  const baseUrl = localStorage.getItem("baseUrl");
+  const token = localStorage.getItem("token");
+
+  const fetchTechParks = async () => {
+    if (techParks.length > 0) return;
+
+    setIsLoadingTechParks(true);
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/sites/allowed_sites.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      setTechParks(response.data.sites || []);
+    } catch (error) {
+      console.error("Failed to fetch tech parks", error);
+      sonnerToast.error("Failed to load tech parks");
+    } finally {
+      setIsLoadingTechParks(false);
+    }
+  };
+
   // Initialize Quill editors
   useEffect(() => {
     // Initialize Terms & Conditions editor
@@ -190,6 +220,12 @@ export const CreateContestPage: React.FC = () => {
     };
   }, [currentStep]); // Re-initialize when step changes to ensure editors are visible
 
+  useEffect(() => {
+    if (isTechParkModalOpen) {
+      fetchTechParks();
+    }
+  }, [isTechParkModalOpen]);
+
   const steps: ContestStep[] = [
     {
       id: 1,
@@ -217,7 +253,41 @@ export const CreateContestPage: React.FC = () => {
     },
   ];
 
-  const contestTypes = ["Spin", "Scratch", "Flip"];
+  const contestTypes = ["Spin", "Random", "Special Offer"];
+
+  // Helper function to calculate base probability for each offer
+  const calculateBaseProbability = (): number => {
+    if (offers.length === 0) return 0;
+    return 100 / offers.length;
+  };
+
+  // Helper function to count coupons in an offer
+  const countCoupons = (couponCode: string): number => {
+    if (!couponCode.trim()) return 1;
+    return couponCode
+      .split(",")
+      .map((code) => code.trim())
+      .filter((code) => code.length > 0).length;
+  };
+
+  // Helper function to calculate probability for a specific coupon/offer
+  const calculateCouponProbability = (offer: OfferData): number => {
+    if (offer.rewardType === "Points") {
+      return calculateBaseProbability();
+    }
+
+    const baseProbability = calculateBaseProbability();
+    const couponCount = countCoupons(offer.couponCode);
+    return baseProbability / couponCount;
+  };
+
+  // Helper function to calculate max available probability for an offer
+  const getMaxAvailableProbability = (offerId: string): number => {
+    const otherOffersTotal = offers
+      .filter((o) => o.id !== offerId)
+      .reduce((sum, o) => sum + (Number(o.winningProbability) || 0), 0);
+    return Math.max(0, 100 - otherOffersTotal);
+  };
 
   const addOffer = () => {
     setOffers([...offers, createDefaultOffer()]);
@@ -316,8 +386,48 @@ export const CreateContestPage: React.FC = () => {
       formData.append("contest[user_attemp_remaining]", attemptsRequired);
     }
 
+    // Add tech parks if sharing with individual
+    if (shareWith === "individual") {
+      formData.append("contest[access_type]", "single_site");
+      selectedTechParks.forEach(id => {
+        formData.append("contest[site_ids][]", id.toString());
+      });
+    }
+
     // Add prizes_attributes
-    offers.forEach((offer, index) => {
+    // First, expand offers with comma-separated coupons
+    const expandedOffers: any[] = [];
+    offers.forEach((offer) => {
+      // Use offer-level probability (what user entered or suggested)
+      const userProbability = Number(offer.winningProbability) || calculateBaseProbability();
+
+      if (offer.rewardType === "Coupon Code") {
+        // Split comma-separated coupon codes
+        const coupons = offer.couponCode
+          .split(",")
+          .map((code) => code.trim())
+          .filter((code) => code.length > 0);
+
+        // Create a separate offer for each coupon with distributed probability
+        const probabilityPerCoupon = userProbability / coupons.length;
+        coupons.forEach((coupon) => {
+          expandedOffers.push({
+            ...offer,
+            couponCode: coupon,
+            calculatedProbability: probabilityPerCoupon,
+          });
+        });
+      } else {
+        // For non-coupon offers, add as-is
+        expandedOffers.push({
+          ...offer,
+          calculatedProbability: userProbability,
+        });
+      }
+    });
+
+    // Now add all expanded offers to formData
+    expandedOffers.forEach((offer, index) => {
       formData.append(
         `contest[prizes_attributes][${index}][title]`,
         offer.offerTitle.trim()
@@ -354,13 +464,14 @@ export const CreateContestPage: React.FC = () => {
         );
       }
 
+      // Use calculated probability instead of manual input
       formData.append(
         `contest[prizes_attributes][${index}][probability_value]`,
-        offer.winningProbability || "0"
+        String(offer.calculatedProbability)
       );
       formData.append(
         `contest[prizes_attributes][${index}][probability_out_of]`,
-        offer.probabilityOutOf || "100"
+        "100"
       );
       formData.append(
         `contest[prizes_attributes][${index}][position]`,
@@ -443,6 +554,13 @@ export const CreateContestPage: React.FC = () => {
     }
   };
 
+  const handleShareWithChange = (value: string) => {
+    setShareWith(value);
+    if (value === "individual") {
+      setIsTechParkModalOpen(true);
+    }
+  };
+
   const validateCurrentStep = (): boolean => {
     switch (currentStep) {
       case 1:
@@ -461,19 +579,41 @@ export const CreateContestPage: React.FC = () => {
         return true;
 
       case 2:
+        let totalProbability = 0;
         for (const offer of offers) {
           if (!offer.offerTitle.trim()) {
             alert("Please fill all offer titles");
             return false;
           }
-          if (offer.rewardType === "Coupon Code" && !offer.couponCode.trim()) {
-            alert("Please enter coupon code for all offers");
-            return false;
+          if (offer.rewardType === "Coupon Code") {
+            const coupons = offer.couponCode
+              .split(",")
+              .map((code) => code.trim())
+              .filter((code) => code.length > 0);
+            if (coupons.length === 0) {
+              alert("Please enter at least one coupon code (comma-separated) for all offers");
+              return false;
+            }
           }
           if (offer.rewardType === "Points" && !offer.pointsValue.trim()) {
             alert("Please enter points value for all offers");
             return false;
           }
+
+          const offerProb = Number(offer.winningProbability) || calculateBaseProbability();
+          const maxAvailable = getMaxAvailableProbability(offer.id);
+
+          if (offerProb > maxAvailable) {
+            alert(`Offer "${offer.offerTitle}" has probability ${offerProb.toFixed(2)}% but max available is ${maxAvailable.toFixed(2)}%. Please adjust the probabilities so total equals 100%.`);
+            return false;
+          }
+
+          totalProbability += offerProb;
+        }
+
+        if (Math.abs(totalProbability - 100) > 0.01) {
+          alert(`Total winning probability must equal 100%. Current total: ${totalProbability.toFixed(2)}%`);
+          return false;
         }
         return true;
 
@@ -530,78 +670,159 @@ export const CreateContestPage: React.FC = () => {
     switch (currentStep) {
       case 1:
         return (
-          <Card className="shadow-sm w-full">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
-                <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
-                  <Trophy className="w-5 h-5 text-[#C72030]" />
+          <>
+            <Card className="shadow-sm w-full">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
+                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
+                    <Trophy className="w-5 h-5 text-[#C72030]" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-[#1A1A1A]">
+                    Basic Contest Info
+                  </h2>
                 </div>
-                <h2 className="text-lg font-semibold text-[#1A1A1A]">
-                  Basic Contest Info
-                </h2>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <TextField
-                  fullWidth
-                  label="Contest Name"
-                  placeholder="Enter Title"
-                  value={contestName}
-                  onChange={(e) => setContestName(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  sx={textFieldSx}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <TextField
+                    fullWidth
+                    label="Contest Name"
+                    placeholder="Enter Title"
+                    value={contestName}
+                    onChange={(e) => setContestName(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    sx={textFieldSx}
+                  />
 
-                <FormControl fullWidth size="small" sx={textFieldSx}>
-                  <InputLabel>Contest Type</InputLabel>
-                  <MuiSelect
-                    value={contestType}
-                    label="Contest Type"
-                    onChange={(e) => handleContestTypeChange(e.target.value)}
-                  >
-                    {contestTypes.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
-              </div>
+                  <FormControl fullWidth size="small" sx={textFieldSx}>
+                    <InputLabel>Contest Type</InputLabel>
+                    <MuiSelect
+                      value={contestType}
+                      label="Contest Type"
+                      onChange={(e) => handleContestTypeChange(e.target.value)}
+                    >
+                      {contestTypes.map((type) => (
+                        <MenuItem key={type} value={type}>
+                          {type}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
 
-              <div className="mt-6">
-                <TextField
-                  fullWidth
-                  label="Contest Description"
-                  placeholder="Enter Description"
-                  value={contestDescription}
-                  onChange={(e) => setContestDescription(e.target.value)}
-                  variant="outlined"
-                  multiline
-                  rows={4}
-                  // sx={textFieldSx}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      height: "auto !important",
-                      padding: "2px !important",
-                      display: "flex",
-                    },
-                    "& .MuiInputBase-input[aria-hidden='true']": {
-                      flex: 0,
-                      width: 0,
-                      height: 0,
-                      padding: "0 !important",
-                      margin: 0,
-                      display: "none",
-                    },
-                    "& .MuiInputBase-input": {
-                      resize: "none !important",
-                    },
-                  }}
-                />
-              </div>
-            </CardContent>
-          </Card>
+                <div className="mt-6">
+                  <TextField
+                    fullWidth
+                    label="Contest Description"
+                    placeholder="Enter Description"
+                    value={contestDescription}
+                    onChange={(e) => setContestDescription(e.target.value)}
+                    variant="outlined"
+                    multiline
+                    rows={4}
+                    // sx={textFieldSx}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        height: "auto !important",
+                        padding: "2px !important",
+                        display: "flex",
+                      },
+                      "& .MuiInputBase-input[aria-hidden='true']": {
+                        flex: 0,
+                        width: 0,
+                        height: 0,
+                        padding: "0 !important",
+                        margin: 0,
+                        display: "none",
+                      },
+                      "& .MuiInputBase-input": {
+                        resize: "none !important",
+                      },
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-sm w-full mt-6">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-6 bg-[#F6F4EE] p-4 rounded-lg">
+                  <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
+                    <Trophy className="w-5 h-5 text-[#C72030]" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-[#1A1A1A]">
+                    Share with Tech Parks
+                  </h2>
+                </div>
+
+                <div className="flex flex-col md:flex-row md:items-center gap-6">
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="shareWith"
+                        value="all"
+                        checked={shareWith === "all"}
+                        onChange={() => handleShareWithChange("all")}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Share with all</span>
+                    </label>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="shareWith"
+                        value="individual"
+                        checked={shareWith === "individual"}
+                        onChange={() => handleShareWithChange("individual")}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Share with individual</span>
+                    </label>
+                  </div>
+                </div>
+
+                {shareWith === "individual" && selectedTechParks.length > 0 && (
+                  <div className="mt-4 p-4 bg-[#FFF5F5] rounded-lg border border-[#C72030]">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-gray-900">
+                          Selected Tech Parks ({selectedTechParks.length})
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setIsTechParkModalOpen(true)}
+                        className="text-[#C72030] hover:text-[#B71C1C] transition-colors"
+                        title="Edit tech parks selection"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {selectedTechParks.map((parkId) => {
+                        const park = techParks.find((p) => p.id === parkId);
+                        const parkName = park?.site_name || park?.name || park?.title || `Park ${parkId}`;
+                        return (
+                          <div
+                            key={parkId}
+                            className="flex items-center gap-2 px-3 py-2 bg-white rounded-md border-l-4 border-[#C72030]"
+                          >
+                            <span className="w-2 h-2 bg-[#C72030] rounded-full"></span>
+                            <span className="text-sm font-medium text-gray-800">
+                              {parkName}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
         );
 
       case 2:
@@ -662,17 +883,23 @@ export const CreateContestPage: React.FC = () => {
                     </FormControl>
 
                     {offer.rewardType === "Coupon Code" && (
-                      <TextField
-                        fullWidth
-                        label="Coupon Code"
-                        value={offer.couponCode}
-                        onChange={(e) =>
-                          updateOffer(offer.id, "couponCode", e.target.value)
-                        }
-                        sx={textFieldSx}
-                        size="small"
-                        required
-                      />
+                      <div>
+                        <TextField
+                          fullWidth
+                          label="Coupon Code(s)"
+                          placeholder="e.g., CODE1, CODE2, CODE3"
+                          value={offer.couponCode}
+                          onChange={(e) =>
+                            updateOffer(offer.id, "couponCode", e.target.value)
+                          }
+                          sx={textFieldSx}
+                          size="small"
+                          required
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Enter multiple codes separated by commas. Each code will be a separate offer.
+                        </p>
+                      </div>
                     )}
 
                     {offer.rewardType === "Points" && (
@@ -713,24 +940,50 @@ export const CreateContestPage: React.FC = () => {
                       size="small"
                     />
 
-                    <TextField
-                      fullWidth
-                      label="Winning Probability"
-                      value={offer.winningProbability}
-                      onChange={(e) =>
-                        updateOffer(
-                          offer.id,
-                          "winningProbability",
-                          e.target.value
-                        )
-                      }
-                      sx={textFieldSx}
-                      size="small"
-                      type="number"
-                      inputProps={{ min: 0 }}
-                    />
+                    {(() => {
+                      const maxAvailable = getMaxAvailableProbability(offer.id);
+                      const currentValue = Number(offer.winningProbability) || 0;
+                      const isExceeded = currentValue > maxAvailable;
+                      const suggestedValue = calculateBaseProbability().toFixed(2);
 
-                    <TextField
+                      // Calculate total at offer level (not per coupon)
+                      const totalOfferLevel = offers.reduce((sum, o) => sum + (Number(o.winningProbability) || calculateBaseProbability()), 0);
+
+                      return (
+                        <TextField
+                          fullWidth
+                          label="Winning Probability (%)"
+                          value={offer.winningProbability || suggestedValue}
+                          onChange={(e) =>
+                            updateOffer(offer.id, "winningProbability", e.target.value)
+                          }
+                          variant="outlined"
+                          size="small"
+                          type="number"
+                          inputProps={{ min: 0, max: maxAvailable, step: 0.01 }}
+                          error={isExceeded}
+                          sx={{
+                            ...textFieldSx,
+                            ...(isExceeded && {
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": { borderColor: "#ef4444" },
+                                "&:hover fieldset": { borderColor: "#ef4444" },
+                                "&.Mui-focused fieldset": { borderColor: "#ef4444" },
+                              },
+                              "& .MuiInputLabel-root": { color: "#ef4444" },
+                              "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
+                            }),
+                          }}
+                          helperText={
+                            isExceeded
+                              ? `❌ Exceeded! Max available: ${maxAvailable.toFixed(2)}%`
+                              : `Suggested: ${suggestedValue}% | Max: ${maxAvailable.toFixed(2)}% | Total: ${totalOfferLevel.toFixed(2)}%${Number(offer.winningProbability) ? ` | Each coupon: ${(Number(offer.winningProbability) / countCoupons(offer.couponCode)).toFixed(2)}%` : ""}`
+                          }
+                        />
+                      );
+                    })()}
+
+                    {/* <TextField
                       fullWidth
                       label="Probability (Out of)"
                       value={offer.probabilityOutOf}
@@ -745,7 +998,7 @@ export const CreateContestPage: React.FC = () => {
                       size="small"
                       type="number"
                       inputProps={{ min: 0 }}
-                    />
+                    /> */}
                   </div>
 
                   <div className="mt-4">
@@ -1123,6 +1376,94 @@ export const CreateContestPage: React.FC = () => {
               >
                 View details
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tech Park Selection Modal */}
+      {isTechParkModalOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => {
+            setIsTechParkModalOpen(false);
+            if (selectedTechParks.length === 0) {
+              setShareWith("all");
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded-lg p-6 max-w-md w-full max-h-[70vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Select Tech Park</h2>
+              <button
+                onClick={() => {
+                  setIsTechParkModalOpen(false);
+                  if (selectedTechParks.length === 0) {
+                    setShareWith("all");
+                  }
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {isLoadingTechParks ? (
+                <div className="text-center py-4 text-gray-500">Loading tech parks...</div>
+              ) : techParks.length > 0 ? (
+                techParks.map((park) => (
+                  <label
+                    key={park.id}
+                    className="flex items-center gap-3 p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedTechParks.includes(park.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedTechParks([...selectedTechParks, park.id]);
+                        } else {
+                          setSelectedTechParks(
+                            selectedTechParks.filter((id) => id !== park.id)
+                          );
+                        }
+                      }}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      {park.site_name || park.name}
+                    </span>
+                  </label>
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-500">No tech parks available</div>
+              )}
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <Button
+                onClick={() => {
+                  setIsTechParkModalOpen(false);
+                }}
+                className="flex-1 bg-[#C72030] text-white hover:bg-[#B71C1C]"
+              >
+                Done
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsTechParkModalOpen(false);
+                  setSelectedTechParks([]);
+                  setShareWith("all");
+                }}
+                variant="outline"
+                className="flex-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+              >
+                Cancel
+              </Button>
             </div>
           </div>
         </div>
