@@ -106,7 +106,7 @@ export const Header = () => {
   // Treat vi-web prod and localhost as VI for dev account fetch
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
-  const isWebSite = hostname.includes("web.gophygital.work");
+  const isWebSite = hostname.includes("web.gophygital.work") && !isViSite;
 
   const isClubSite =
     hostname === "club.lockated.com" || hostname.includes("localhost");
@@ -559,7 +559,7 @@ export const Header = () => {
                 </button>
               )}
             </div>
-          )}
+          )} 
 
           {/* Project Dropdown */}
         </div>

@@ -415,6 +415,7 @@ import OfficeAlternativePage from "./pages/products/OfficeAlternativePage";
 import BudgetingWBSPage from "./pages/products/BudgetingWBSPage";
 import LiquidtextPage from "./pages/products/LiquidtextPage";
 import ViMilesPage from "./pages/products/ViMilesPage";
+import ProductAccessGate from "./pages/products/ProductAccessGate";
 import ProductLandingPage from "./pages/products/ProductLandingPage";
 import HRPolicies from "./pages/HRPolicies";
 import Directory from "./pages/Directory";
@@ -1310,6 +1311,10 @@ import { ExpenseEditPage } from "./pages/ExpenseEditPage.tsx";
 import TaxSetupTabView from "./pages/ClubManagement/TaxSetupTabView.tsx";
 import { BillEdit } from "./pages/ClubManagement/BillEdit.tsx";
 import { RecurringBillEdit } from "./pages/ClubManagement/RecurringBillEdit.tsx";
+import PulseContests from "./pages/PulseContests.tsx";
+import PulseContestRewards from "./pages/PulseContestRewards.tsx";
+import PulseContestRewardsDetails from "./pages/PulseContestRewardsDetails.tsx";
+import PulseContestRewardCreate from "./pages/PulseContestRewardCreate.tsx";
 
 const queryClient = new QueryClient();
 
@@ -2845,7 +2850,7 @@ function App() {
                             path="/accounting/tax-setup"
                             element={<TaxSetup />}
                           />
-                           <Route
+                          <Route
                             path="/accounting/tax-setup-tab"
                             element={<TaxSetupTabView />}
                           />
@@ -5724,6 +5729,10 @@ function App() {
                             element={<ProductDetails />}
                           />
                           <Route
+                            path="/product/:productSlug/access"
+                            element={<ProductAccessGate />}
+                          />
+                          <Route
                             path="/product/loyalty"
                             element={<CustomerAppPage />}
                           />
@@ -5958,6 +5967,31 @@ function App() {
                           <Route
                             path="/pulse/events/details/:id/users/:userid"
                             element={<EventUserDetailsPage />}
+                          />
+
+                          <Route
+                            path="/pulse/contests"
+                            element={<PulseContests />}
+                          />
+                          <Route
+                            path="/pulse/contests/create"
+                            element={<CreateContestPage />}
+                          />
+                          <Route
+                            path="/pulse/contests/:id"
+                            element={<ContestDetailsPage />}
+                          />
+                          <Route
+                            path="/pulse/rewards"
+                            element={<PulseContestRewards />}
+                          />
+                          <Route
+                            path="/pulse/rewards/create"
+                            element={<PulseContestRewardCreate />}
+                          />
+                          <Route
+                            path="/pulse/rewards/:id"
+                            element={<PulseContestRewardsDetails />}
                           />
 
                           <Route

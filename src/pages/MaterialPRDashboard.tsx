@@ -56,6 +56,20 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
+   {
+    key: "lastApprovedBy",
+    label: "Last Approved By",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "approvedStatus",
+    label: "Approved Status",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
   {
     key: "createdBy",
     label: "Created By",
@@ -70,20 +84,7 @@ const columns: ColumnConfig[] = [
     draggable: true,
     defaultVisible: true,
   },
-  {
-    key: "lastApprovedBy",
-    label: "Last Approved By",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
-    key: "approvedStatus",
-    label: "Approved Status",
-    sortable: true,
-    draggable: true,
-    defaultVisible: true,
-  },
+ 
   {
     key: "prAmount",
     label: "PR Amount",
@@ -479,7 +480,7 @@ export const MaterialPRDashboard = () => {
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
-        storageKey="material-pr-dashboard-columns"
+        storageKey="material-pr-dashboard-columns-v2"
         className="min-w-[1000px]"
         emptyMessage="No material PR data available"
         selectAllLabel="Select all Material PRs"

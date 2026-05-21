@@ -273,6 +273,11 @@ interface MemberData {
     companyName: string;
     companyAddress: string;
     corporateInterest: 'yes' | 'no' | '';
+    raisedBillToThisUser: boolean;
+    billTo: 'user' | 'company' | '';
+    billingCompanyName: string;
+    billingGstinNo: string;
+    billingCompanyAddress: string;
 }
 
 // Formatter helper: Converts API response with bills_invoice_data into Invoice-compatible format
@@ -471,6 +476,11 @@ export const AddGroupMembershipPage = () => {
             companyName: '',
             companyAddress: '',
             corporateInterest: '',
+            raisedBillToThisUser: false,
+            billTo: '',
+            billingCompanyName: '',
+            billingGstinNo: '',
+            billingCompanyAddress: '',
         };
         return [initialMember];
     });
@@ -757,7 +767,7 @@ export const AddGroupMembershipPage = () => {
                     const mobile = userData.mobile || memberData.user_mobile || '';
                     const birthDate = userData.birth_date || '';
                     const gender = userData.gender || '';
-
+                    console.log(memberData)
                     // Build member object
                     const newMember: MemberData = {
                         id: memberId,
@@ -812,6 +822,11 @@ export const AddGroupMembershipPage = () => {
                         companyName: '',
                         companyAddress: '',
                         corporateInterest: '',
+                        raisedBillToThisUser: memberData?.raised_bill_to_user ?? false,
+                        billTo: memberData?.bill_to || '',
+                        billingCompanyName: memberData?.billing_company_name || '',
+                        billingGstinNo: memberData?.billing_gstin || '',
+                        billingCompanyAddress: memberData?.billing_address || '',
                     };
 
                     console.log(newMember)
@@ -1437,7 +1452,16 @@ export const AddGroupMembershipPage = () => {
                     custom_amenities: selectedAddOns.map(addOnId => ({
                         facility_setup_id: addOnId,
                         access: true
-                    }))
+                    })),
+                    billing: {
+                        raised_bill_to_user: member.raisedBillToThisUser,
+                        bill_to: member.billTo || null,
+                        ...(member.billTo === 'company' && {
+                            billing_company_name: member.billingCompanyName,
+                            billing_gstin: member.billingGstinNo,
+                            billing_address: member.billingCompanyAddress,
+                        }),
+                    },
                 };
 
                 // Add files if present
@@ -1550,10 +1574,23 @@ export const AddGroupMembershipPage = () => {
             const allBills = extractBillsFromResponse(data);
             console.log(`Extracted ${allBills.length} bills from response`, allBills);
 
+            // Attach billing info from first member to every bill for invoice rendering
+            const firstMember = members[0];
+            const billingInfo = {
+                raised_bill_to_user: firstMember.raisedBillToThisUser,
+                bill_to: firstMember.billTo || null,
+                ...(firstMember.billTo === 'company' && {
+                    billing_company_name: firstMember.billingCompanyName,
+                    billing_gstin: firstMember.billingGstinNo,
+                    billing_address: firstMember.billingCompanyAddress,
+                }),
+            };
+            const allBillsWithBilling = allBills.map((bill: any) => ({ ...bill, billing: billingInfo }));
+
             // Store all bills and set first bill as current
-            setBillsInvoiceDataArray(allBills);
+            setBillsInvoiceDataArray(allBillsWithBilling);
             setCurrentBillIndex(0);
-            setInvoiceData(allBills[0]);
+            setInvoiceData(allBillsWithBilling[0]);
             setShowInvoice(true);
             setIsGeneratingInvoice(true);
             setAutoDownloadInvoice(true);
@@ -1727,6 +1764,11 @@ export const AddGroupMembershipPage = () => {
         companyName: '',
         companyAddress: '',
         corporateInterest: '',
+        raisedBillToThisUser: false,
+        billTo: '',
+        billingCompanyName: '',
+        billingGstinNo: '',
+        billingCompanyAddress: '',
     });
 
     // Replace the card-specific add/remove functions with a single unified approach
@@ -2707,10 +2749,106 @@ export const AddGroupMembershipPage = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Section 3: Upload Documents */}
+                                            {/* Section 3: Billing Info */}
                                             <div className="mb-8 pt-8 border-t border-gray-200">
                                                 <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
                                                     <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">3</div>
+                                                    Billing Info
+                                                </h4>
+
+                                                <div className="space-y-4">
+                                                    <FormControlLabel
+                                                        control={
+                                                            <Checkbox
+                                                                checked={member.raisedBillToThisUser}
+                                                                onChange={(e) => updateMember(member.id, {
+                                                                    raisedBillToThisUser: e.target.checked,
+                                                                    billTo: e.target.checked ? member.billTo : '',
+                                                                })}
+                                                                disabled={memberIndex !== 0}
+                                                                sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                                                            />
+                                                        }
+                                                        label="Raised bill to this user"
+                                                    />
+
+                                                    {memberIndex === 0 && member.raisedBillToThisUser && (
+                                                        <div className="space-y-4">
+                                                            <RadioGroup
+                                                                row
+                                                                value={member.billTo}
+                                                                onChange={(e) => updateMember(member.id, { billTo: e.target.value as 'user' | 'company' })}
+                                                            >
+                                                                <FormControlLabel
+                                                                    value="user"
+                                                                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                                                                    label="Bill to User"
+                                                                />
+                                                                <FormControlLabel
+                                                                    value="company"
+                                                                    control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
+                                                                    label="Bill to Company"
+                                                                />
+                                                            </RadioGroup>
+
+                                                            {member.billTo === 'user' && (
+                                                                <div className="bg-gray-50 rounded-lg p-4 space-y-3 border border-gray-200">
+                                                                    <p className="text-sm font-medium text-gray-700">User Information</p>
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                        <div>
+                                                                            <p className="text-xs text-gray-500 mb-1">Name</p>
+                                                                            <p className="text-sm font-medium text-gray-800">
+                                                                                {[member.formData.firstName, member.formData.lastName].filter(Boolean).join(' ') || '—'}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div>
+                                                                            <p className="text-xs text-gray-500 mb-1">Email</p>
+                                                                            <p className="text-sm font-medium text-gray-800">{member.formData.email || '—'}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="text-xs text-gray-500 mb-1">Address</p>
+                                                                        <p className="text-sm font-medium text-gray-800">
+                                                                            {[member.formData.address, member.formData.address_line_two, member.formData.city, member.formData.state, member.formData.country, member.formData.pin_code].filter(Boolean).join(', ') || '—'}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+
+                                                            {member.billTo === 'company' && (
+                                                                <div className="space-y-4">
+                                                                    <TextField
+                                                                        label="Company Name"
+                                                                        value={member.billingCompanyName}
+                                                                        onChange={(e) => updateMember(member.id, { billingCompanyName: e.target.value })}
+                                                                        sx={fieldStyles}
+                                                                        fullWidth
+                                                                    />
+                                                                    <TextField
+                                                                        label="GSTIN No."
+                                                                        value={member.billingGstinNo}
+                                                                        onChange={(e) => updateMember(member.id, { billingGstinNo: e.target.value })}
+                                                                        sx={fieldStyles}
+                                                                        fullWidth
+                                                                    />
+                                                                    <TextField
+                                                                        label="Address"
+                                                                        value={member.billingCompanyAddress}
+                                                                        onChange={(e) => updateMember(member.id, { billingCompanyAddress: e.target.value })}
+                                                                        sx={fieldStyles}
+                                                                        fullWidth
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Section 4: Upload Documents */}
+                                            <div className="mb-8 pt-8 border-t border-gray-200">
+                                                <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
+                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">4</div>
                                                     Upload Documents
                                                 </h4>
 
@@ -2866,10 +3004,10 @@ export const AddGroupMembershipPage = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Section 4: Health & Wellness */}
+                                            {/* Section 5: Health & Wellness */}
                                             <div className="mb-8 pt-8 border-t border-gray-200">
                                                 <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">4</div>
+                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">5</div>
                                                     Health & Wellness Information
                                                 </h4>
 
@@ -2990,10 +3128,10 @@ export const AddGroupMembershipPage = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Section 5: Activity Interests */}
+                                            {/* Section 6: Activity Interests */}
                                             <div className="mb-8 pt-8 border-t border-gray-200">
                                                 <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">5</div>
+                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">6</div>
                                                     Activity Interests
                                                 </h4>
 
@@ -3047,10 +3185,10 @@ export const AddGroupMembershipPage = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Section 6: Lifestyle & Communication */}
+                                            {/* Section 7: Lifestyle & Communication */}
                                             <div className="mb-8 pt-8 border-t border-gray-200">
                                                 <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">6</div>
+                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">7</div>
                                                     Lifestyle & Communication
                                                 </h4>
 
@@ -3108,7 +3246,7 @@ export const AddGroupMembershipPage = () => {
                                             {/* Section 7: Occupation */}
                                             <div className="pt-8 border-t border-gray-200">
                                                 <h4 className="text-md font-semibold text-[#1a1a1a] mb-4 flex items-center gap-2">
-                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">7</div>
+                                                    <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-xs">8</div>
                                                     Occupation & Demographics
                                                 </h4>
 
