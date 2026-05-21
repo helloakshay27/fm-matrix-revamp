@@ -35,11 +35,11 @@ baseClient.interceptors.request.use(
       const isLocalhost = hostname === "localhost" || hostname === "127.0.0.1";
 
       // If running locally, use runwal API directly
-      if (isLocalhost) {
-        config.baseURL = "https://runwal-api.lockated.com";
-        console.log("🏠 Running locally - Base URL set to:", config.baseURL);
-        return config;
-      }
+      // if (isLocalhost) {
+      //   config.baseURL = "https://runwal-api.lockated.com";
+      //   console.log("🏠 Running locally - Base URL set to:", config.baseURL);
+      //   return config;
+      // }
 
       // Extract URL parameters first to check for org_id
       const urlParams = new URLSearchParams(window.location.search);
@@ -95,18 +95,23 @@ baseClient.interceptors.request.use(
       const isFmSite =
         hostname === "fm-uat.gophygital.work" ||
         hostname === "fm.gophygital.work" ||
-        hostname === "fm-matrix.lockated.com" ||
-        hostname === "localhost";
+        hostname === "fm-matrix.lockated.com"
       const isClubSite =
         hostname.includes("club-uat-api.lockated.com") ||
         hostname.includes("club.lockated.com");
+      const isPanchshilPulseProd = hostname === "pulse.panchshil.com" ||
+        hostname === "localhost";
 
       const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
       // Build API URL based on site type and available parameters
       let apiUrl = "";
 
-      if (isClubSite && email && organizationId) {
+      if (isPanchshilPulseProd && (organizationId || orgId)) {
+        // Panchshil Pulse Prod: use organization_id if available
+        apiUrl = `https://pulse-api.panchshil.com/api/users/get_organizations_by_email.json?org_id=${organizationId || orgId}`;
+        console.log("🔍 Using org_id for Panchshil Pulse Prod site:", organizationId || orgId);
+      } else if (isClubSite && email && organizationId) {
         // Club site: use organization_id if available
         apiUrl = `https://club-uat-api.lockated.com/api/users/get_organizations_by_email.json?email=${email}`;
         console.log("🔍 Using email for Club site:", email);
