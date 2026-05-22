@@ -720,13 +720,28 @@ export const VisitorDetailsPage = () => {
 
                     {hasData(visitorData.expected_at) && (
                       <div className="flex items-start">
-                        <span className="text-gray-500 min-w-[140px]">Expected Date & Time</span>
+                        <span className="text-gray-500 min-w-[140px]">Expected Date</span>
                         <span className="text-gray-500 mx-2">:</span>
-                        <span className="text-gray-900 font-medium">{visitorData.expected_at}</span>
+                        <span className="text-gray-900 font-medium">
+                          {visitorData.expected_at?.split(' ')[0] || '-'}
+                        </span>
                       </div>
                     )}
 
                     {hasData(visitorData.expected_at) && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 min-w-[140px]">Expected Time</span>
+                        <span className="text-gray-500 mx-2">:</span>
+                        <span className="text-gray-900 font-medium">
+                          {(() => {
+                            const parts = visitorData.expected_at!.split(' ');
+                            return parts.length >= 3 ? `${parts[1]} ${parts[2]}` : parts[1] || '-';
+                          })()}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* {hasData(visitorData.expected_at) && (
                       <div className="flex items-start">
                         <span className="text-gray-500 min-w-[140px]">Expected Time</span>
                         <span className="text-gray-500 mx-2">:</span>
@@ -739,7 +754,7 @@ export const VisitorDetailsPage = () => {
                             : "-"} 
                         </span>
                       </div>
-                    )}
+                    )} */}
 
                     {hasData(visitorData.guest_from) && (
                       <div className="flex items-start">
