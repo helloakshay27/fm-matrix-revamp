@@ -129,9 +129,8 @@ export const ContestDetailsPage: React.FC = () => {
     return `${prize.probability_value}/100`;
   };
 
-  const handleEdit = (section: string) => {
-    toast.info(`Editing ${section} section (not implemented yet)`);
-    // You can later navigate to /contests/${id}/edit?section=basic etc.
+  const handleEdit = () => {
+    navigate(`/pulse/contests/${id}/edit`);
   };
 
   const handleBack = () => {
@@ -199,7 +198,7 @@ export const ContestDetailsPage: React.FC = () => {
 
           <div className="flex items-center gap-3">
             <Button
-              onClick={() => handleEdit("all")}
+              onClick={() => handleEdit()}
               variant="outline"
               className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 px-4 py-2"
             >

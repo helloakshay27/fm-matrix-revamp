@@ -1038,6 +1038,7 @@ import CommunityDocumentDetails from "./pages/CommunityDocumentDetails";
 import { ContestListPage } from "./pages/ContestListPage";
 import { CreateContestPage } from "./pages/CreateContestPage";
 import { ContestDetailsPage } from "./pages/ContestDetailsPage";
+import { EditContestPage } from "./pages/EditContestPage";
 
 import { SpinnerContest } from "./components/mobile/SpinnerContest";
 import { ScratchCard } from "./components/mobile/ScratchCard";
@@ -5983,6 +5984,10 @@ function App() {
                             element={<ContestDetailsPage />}
                           />
                           <Route
+                            path="/pulse/contests/:id/edit"
+                            element={<EditContestPage />}
+                          />
+                          <Route
                             path="/pulse/rewards"
                             element={<PulseContestRewards />}
                           />
@@ -6718,6 +6723,10 @@ function App() {
                         <Route
                           path="/contests/:id"
                           element={<ContestDetailsPage />}
+                        />
+                        <Route
+                          path="/contests/:id/edit"
+                          element={<EditContestPage />}
                         />
                         {/* Contest & Promotion Routes */}
                         <Route
