@@ -21,6 +21,7 @@ import {
   UserCalendarItem,
   getHourlyTaskCounts,
   getDailyTaskCounts,
+  assignSequentialSlots,
 } from "./hooks/useUserCalendars";
 import TodoConvertModal from "../TodoConvertModal";
 import TodoDetailsModal from "../TodoDetailsModal";
@@ -47,10 +48,8 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
   const [selectedFilterDate, setSelectedFilterDate] = useState<Date>(
     new Date()
   );
-  // Selected hour for hourly view filtering
-  const [selectedHour, setSelectedHour] = useState<number | null>(
-    new Date().getHours()
-  );
+  // Selected hour — default to 9 AM (where sequential slots start)
+  const [selectedHour, setSelectedHour] = useState<number | null>(9);
 
   // Convert Todo Modal State
   const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
@@ -73,8 +72,11 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
       selectedDate,
     });
 
-  // Combine tasks and issues for display
-  const allTasks = useMemo(() => [...tasks, ...issues], [tasks, issues]);
+  // Combine tasks and issues, then assign sequential 9am slots
+  const allTasks = useMemo(
+    () => assignSequentialSlots([...tasks, ...issues]),
+    [tasks, issues]
+  );
 
   // Get current month/year for monthly view
   const currentMonth = format(selectedDate, "MMMM yyyy");
@@ -89,14 +91,14 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
     [calendars]
   );
 
-  // Generate hourly slots
+  // Generate hourly slots — always 9 AM to 6 PM (matches sequential slot window)
   const hourlySlots = useMemo(() => {
     const slots = [];
     const currentHour = new Date().getHours();
-    const startHour = Math.max(0, currentHour - 2);
+    const START_HOUR = 9; // sequential slots begin at 9 AM
 
     for (let i = 0; i < 10; i++) {
-      const hour = (startHour + i) % 24;
+      const hour = START_HOUR + i; // 9, 10, 11 … 18 (6 PM)
       const count = hourlyTaskCounts[hour] || 0;
       slots.push({
         hour,
@@ -179,17 +181,23 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
     return days;
   }, [selectedDate, dailyTaskCounts, selectedFilterDate]);
 
-  // Get events for selected date (for monthly view sidebar)
+  // Get events for selected date with sequential slots applied — exclude completed
+  const DONE_STATUSES = new Set([
+    "completed",
+    "closed",
+    "cancelled",
+    "done",
+    "resolved",
+    "rejected",
+  ]);
   const selectedDateEvents = useMemo(() => {
     const selectedDateStr = format(selectedFilterDate, "yyyy-MM-dd");
-    return calendars
-      .filter(
-        (c) => format(new Date(c.start_at), "yyyy-MM-dd") === selectedDateStr
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.start_at).getTime() - new Date(b.start_at).getTime()
-      );
+    const filtered = calendars.filter(
+      (c) =>
+        format(new Date(c.created_at), "yyyy-MM-dd") === selectedDateStr &&
+        !DONE_STATUSES.has((c.status ?? "").toLowerCase())
+    );
+    return assignSequentialSlots(filtered);
   }, [calendars, selectedFilterDate]);
 
   const handleItemClick = (item: UserCalendarItem) => {
@@ -202,7 +210,9 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
         description: item.description || "",
         status: item.status || "open",
         priority: "P1", // Default priority since not available in UserCalendarItem
-        target_date: item.start_at ? new Date(item.start_at).toLocaleDateString() : "",
+        target_date: item.start_at
+          ? new Date(item.start_at).toLocaleDateString()
+          : "",
         user: item.user?.name || "Unknown",
         user_id: item.user_id,
         created_by: item.user?.name || "Unknown",
@@ -221,8 +231,11 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
     }
   };
 
-  const handleToggleTodo = async (e: React.MouseEvent, todo: UserCalendarItem) => {
-    console.log(todo)
+  const handleToggleTodo = async (
+    e: React.MouseEvent,
+    todo: UserCalendarItem
+  ) => {
+    console.log(todo);
     e.stopPropagation();
     setToggleLoading(true);
     try {
@@ -231,7 +244,11 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
         id: todo.calendarable_id,
         completed: isCompleted,
       });
-      toast.success(isCompleted ? "Task completed successfully" : "Task reopened successfully");
+      toast.success(
+        isCompleted
+          ? "Task completed successfully"
+          : "Task reopened successfully"
+      );
       refetch();
     } catch (error: any) {
       toast.error("Failed to update task status");
@@ -301,14 +318,13 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                     v.toLowerCase() as "hourly" | "weekly" | "monthly"
                   );
                   setSelectedFilterDate(new Date());
-                  setSelectedHour(
-                    v.toLowerCase() === "hourly" ? new Date().getHours() : null
-                  );
+                  setSelectedHour(v.toLowerCase() === "hourly" ? 9 : null);
                 }}
-                className={`px-2.5 h-6 text-[11px] font-semibold rounded-full transition-all ${activeTimeView === v.toLowerCase()
-                  ? "bg-white shadow-sm text-gray-900 border border-[#E5DFD0]"
-                  : "text-gray-500 hover:text-gray-700"
-                  }`}
+                className={`px-2.5 h-6 text-[11px] font-semibold rounded-full transition-all ${
+                  activeTimeView === v.toLowerCase()
+                    ? "bg-white shadow-sm text-gray-900 border border-[#E5DFD0]"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
               >
                 {v} View
               </button>
@@ -407,7 +423,13 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                         </h4>
                       </div>
                       <p className="text-[9px] font-bold text-gray-400 italic pl-3.5 uppercase tracking-tight">
-                        {format(new Date(ev.start_at), "h:mm a")}
+                        {format(
+                          new Date(ev._assigned_start || ev.start_at),
+                          "h:mm a"
+                        )}
+                        {ev._assigned_end
+                          ? ` – ${format(new Date(ev._assigned_end), "h:mm a")}`
+                          : ""}
                       </p>
                     </div>
                   );
@@ -431,12 +453,13 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                   {item.label}
                 </p>
                 <div
-                  className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] font-semibold transition-all p-1 text-center leading-tight overflow-hidden ${item.isSelected || item.isActive
-                    ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#C97B6B] text-gray-800 shadow-sm"
-                    : item.count > 0
-                      ? "bg-[#F0F9FF] border-blue-300 text-blue-500 hover:border-[#C97B6B]"
-                      : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-400 hover:border-[#C97B6B]"
-                    }`}
+                  className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] font-semibold transition-all p-1 text-center leading-tight overflow-hidden ${
+                    item.isSelected || item.isActive
+                      ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#C97B6B] text-gray-800 shadow-sm"
+                      : item.count > 0
+                        ? "bg-[#F0F9FF] border-blue-300 text-blue-500 hover:border-[#C97B6B]"
+                        : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-400 hover:border-[#C97B6B]"
+                  }`}
                 >
                   {item.count > 0
                     ? `${item.count} task${item.count > 1 ? "s" : ""}`
@@ -456,22 +479,24 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 className="flex flex-col items-center gap-1.5 group cursor-pointer min-w-0"
               >
                 <p
-                  className={`text-[10px] font-semibold tracking-tight transition-colors truncate w-full text-center ${item.isSelected || item.isToday
-                    ? "text-[#C97B6B]"
-                    : item.isWeekend
-                      ? "text-gray-600"
-                      : "text-gray-600"
-                    }`}
+                  className={`text-[10px] font-semibold tracking-tight transition-colors truncate w-full text-center ${
+                    item.isSelected || item.isToday
+                      ? "text-[#C97B6B]"
+                      : item.isWeekend
+                        ? "text-gray-600"
+                        : "text-gray-600"
+                  }`}
                 >
                   {item.label}
                 </p>
                 <div
-                  className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] transition-all p-1 text-center leading-tight overflow-hidden ${item.isSelected || item.isToday
-                    ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#C97B6B] text-[#C97B6B] shadow-sm font-bold"
-                    : item.isWeekend
-                      ? "bg-white/50 border-[#E8CC9F] text-[#E8CC9F] font-medium"
-                      : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-500 font-medium hover:border-[#C97B6B]"
-                    }`}
+                  className={`w-[50px] h-[60px] rounded-[10px] border flex items-center justify-center text-[10px] transition-all p-1 text-center leading-tight overflow-hidden ${
+                    item.isSelected || item.isToday
+                      ? "bg-[radial-gradient(circle_at_center,_#ffffff_0%,_#fcedeb_100%)] border-[#C97B6B] text-[#C97B6B] shadow-sm font-bold"
+                      : item.isWeekend
+                        ? "bg-white/50 border-[#E8CC9F] text-[#E8CC9F] font-medium"
+                        : "bg-[#FAF9F6] border-[#E8E4D9] text-gray-500 font-medium hover:border-[#C97B6B]"
+                  }`}
                 >
                   {item.isWeekend
                     ? "Weekly Off"
@@ -513,8 +538,13 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                 </div>
               ) : (
                 allTasks.slice(0, 5).map((task) => {
-                  const taskTime = new Date(task.start_at);
-                  const timeStr = format(taskTime, "h:mm a");
+                  // Use assigned sequential slot time
+                  const startTime = task._assigned_start || task.start_at;
+                  const endTime = task._assigned_end || null;
+                  const timeStr = format(new Date(startTime), "h:mm a");
+                  const endStr = endTime
+                    ? format(new Date(endTime), "h:mm a")
+                    : null;
 
                   return (
                     <div
@@ -526,7 +556,8 @@ const UserCalendarWidget: React.FC<UserCalendarWidgetProps> = ({
                         {getTruncatedTitle(task.title, 45)}
                       </p>
                       <p className="text-[9px] text-gray-400 mt-0.5">
-                        {timeStr} - {task.all_day ? "All day" : "1h"}
+                        {timeStr}
+                        {endStr ? ` – ${endStr}` : ""}
                       </p>
                     </div>
                   );

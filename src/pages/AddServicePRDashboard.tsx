@@ -1785,7 +1785,7 @@ export const AddServicePRDashboard = () => {
               </div>
             ))}
 
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="flex justify-end p-4">
               <Button
                 className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
                 onClick={addNewDetailsForm}
