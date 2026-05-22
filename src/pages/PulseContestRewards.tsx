@@ -127,8 +127,10 @@ const PulseContestRewards = () => {
                 }
             )
 
+            const data = response.data?.rewards || response.data
+
             // Transform the data to match table structure
-            const transformedData = response.data?.map((claim: UserContestReward) => ({
+            const transformedData = data?.map((claim: UserContestReward) => ({
                 id: claim.id,
                 user_name: claim.user.firstname + " " + claim.user.lastname,
                 user_mobile: claim.user.mobile,
