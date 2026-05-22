@@ -36,7 +36,7 @@ interface DashboardTabProps {
   openTodoModal: boolean;
   setOpenTodoModal: (open: boolean) => void;
   handleCloseTodoModal: () => void;
-  handleLikePost: (postId: number) => void;
+  handleLikePost: (postId: number, post?: Post) => void;
   handleAddComment: (postId: number, comment: string) => void;
 }
 

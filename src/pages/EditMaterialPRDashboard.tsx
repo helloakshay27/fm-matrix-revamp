@@ -728,7 +728,7 @@ export const EditMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
                 inputProps={{
-                  min: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+                  min: new Date(new Date().getTime() - 75 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
                   max: new Date().toISOString().split("T")[0],
                 }}
               />

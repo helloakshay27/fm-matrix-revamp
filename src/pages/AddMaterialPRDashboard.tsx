@@ -646,9 +646,9 @@ export const AddMaterialPRDashboard = () => {
     if (supplierDetails.prDate) {
       const prDate = new Date(supplierDetails.prDate);
       const today = new Date();
-      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(today.getTime() - 75 * 24 * 60 * 60 * 1000);
       if (prDate > today || prDate < thirtyDaysAgo) {
-        toast.error("PR Date must be current date or within past 30 days");
+        toast.error("PR Date must be current date or within past 75 days");
         return false;
       }
     }
@@ -884,7 +884,7 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
                 inputProps={{
-                  min: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+                  min: new Date(new Date().getTime() - 75 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
                   max: new Date().toISOString().split("T")[0],
                 }}
               />
@@ -1171,14 +1171,7 @@ export const AddMaterialPRDashboard = () => {
                   <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
                   ITEM DETAILS
                 </div>
-                <Button
-                  onClick={addItem}
-                  size="sm"
-                  className="bg-[#C72030] hover:bg-[#C72030]/90"
-                  type="button"
-                >
-                  Add Item
-                </Button>
+                
               </CardTitle>
             </CardHeader>
 
@@ -1435,6 +1428,16 @@ export const AddMaterialPRDashboard = () => {
                 </div>
               ))}
             </CardContent>
+            <div className="flex justify-end p-4">
+                <Button
+                  onClick={addItem}
+                  size="sm"
+                  className="bg-[#C72030] hover:bg-[#C72030]/90"
+                  type="button"
+                >
+                  Add Item
+                </Button>
+              </div>
           </Card>
 
           <div className="flex items-center justify-end">

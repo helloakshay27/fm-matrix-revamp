@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Camera, ShieldAlert, Lock, RefreshCw, UserCheck } from "lucide-react";
+import { Camera, ShieldAlert, Lock, RefreshCw } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { SecurityState } from "./useProductSecurity";
 
 interface SecurityOverlaysProps {
@@ -45,6 +46,8 @@ export const AlwaysMountedVideos: React.FC<{ security: SecurityState }> = () =>
 export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
   security,
 }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const {
     cameraPermission,
     modelLoading,
@@ -62,8 +65,6 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
     previewVideoRef,
     faceAuthStatus,
     faceAuthMessage,
-    registeringFace,
-    registerFace,
     refreshFaceProfile,
   } = security;
 
@@ -123,8 +124,11 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
             ? "Face Service Unavailable"
             : "User Not Detected";
   const blankCopy =
-    faceAuthMessage ||
-    "Please position yourself in front of the camera to view this content.";
+    faceAuthStatus === "unconfigured"
+      ? faceAuthMessage ||
+        "Enroll your face from your profile to continue to product details."
+      : faceAuthMessage ||
+        "Please position yourself in front of the camera to view this content.";
   const badgeLabel = isBlurred
     ? faceAuthStatus === "rejected"
       ? "UNKNOWN"
@@ -138,11 +142,22 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
         : faceAuthStatus === "api_unavailable"
           ? "FACE ONLY"
           : "SECURE";
-  const canRegisterFace = showBadge && faceAuthStatus === "unconfigured";
+  const canOpenFaceEnrollment = showBadge && faceAuthStatus === "unconfigured";
   const canRetryFaceCheck =
     showBadge &&
     (faceAuthStatus === "api_unavailable" || faceAuthStatus === "error");
   const showLiveBadge = showBadge && !showBlankScreen;
+
+  const goToFaceEnrollment = () => {
+    const params = new URLSearchParams({ tab: "face_enroll" });
+    const returnTo = `${location.pathname}${location.search}${location.hash}`;
+
+    if (returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+      params.set("returnTo", returnTo);
+    }
+
+    navigate(`/profile?${params.toString()}`);
+  };
 
   return (
     <>
@@ -262,27 +277,21 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
           </div>
           <h1 className="text-2xl font-semibold mb-3">{blankTitle}</h1>
           <p className="text-white/50 text-sm max-w-md">{blankCopy}</p>
-          {canRegisterFace && (
+          {canOpenFaceEnrollment && (
             <button
               type="button"
-              disabled={registeringFace}
-              onClick={registerFace}
-              className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#DA7756] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#c66545] disabled:cursor-wait disabled:opacity-60"
+              onClick={goToFaceEnrollment}
+              className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#DA7756] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#c66545]"
             >
-              {registeringFace ? (
-                <RefreshCw className="h-4 w-4 animate-spin" />
-              ) : (
-                <UserCheck className="h-4 w-4" />
-              )}
-              {registeringFace ? "Enrolling Face..." : "Enroll Face"}
+              <Camera className="h-4 w-4" />
+              Enroll Your Face
             </button>
           )}
           {canRetryFaceCheck && (
             <button
               type="button"
-              disabled={registeringFace}
               onClick={refreshFaceProfile}
-              className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20 disabled:cursor-wait disabled:opacity-60"
+              className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
             >
               <RefreshCw className="h-4 w-4" />
               Retry Face Check
@@ -436,45 +445,22 @@ export const SecurityOverlays: React.FC<SecurityOverlaysProps> = ({
               {sessionId}
             </span>
           </div>
-          {(canRegisterFace || canRetryFaceCheck) && (
+          {canRetryFaceCheck && (
             <div className="flex items-center gap-1 rounded-full bg-black/90 border border-white/10 px-1.5 py-1">
-              {canRetryFaceCheck && (
-                <button
-                  type="button"
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    refreshFaceProfile();
-                  }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
-                  aria-label="Retry face profile service"
-                  title="Retry face profile service"
-                >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                </button>
-              )}
-              {canRegisterFace && (
-                <button
-                  type="button"
-                  disabled={registeringFace}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    registerFace();
-                  }}
-                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20 disabled:cursor-wait disabled:opacity-50"
-                  aria-label="Add face profile"
-                  title="Add face profile"
-                >
-                  {registeringFace ? (
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <UserCheck className="h-3.5 w-3.5" />
-                  )}
-                </button>
-              )}
+              <button
+                type="button"
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  refreshFaceProfile();
+                }}
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                aria-label="Retry face profile service"
+                title="Retry face profile service"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
         </div>
