@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, Loader2, Download, ChevronLeft, ChevronRight, Upload, FileSpreadsheet, X } from 'lucide-react';
+import { Plus, Loader2, Download, ChevronLeft, ChevronRight, Upload, FileSpreadsheet, X, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -65,6 +65,10 @@ export function GoldenQrSetupPage() {
   const [isDownloadingSample, setIsDownloadingSample] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<GoldenQrRecord | null>(null);
+  const isEditFilling = useRef(false);
+
   const [selectedBuilding, setSelectedBuilding] = useState<string>('');
   const [selectedWing, setSelectedWing] = useState<string>('');
   const [selectedArea, setSelectedArea] = useState<string>('');
@@ -80,19 +84,23 @@ export function GoldenQrSetupPage() {
 
   useEffect(() => {
     if (selectedBuilding) {
-      setSelectedWing('');
-      setSelectedArea('');
-      setSelectedFloor('');
-      setSelectedRoom('');
+      if (!isEditFilling.current) {
+        setSelectedWing('');
+        setSelectedArea('');
+        setSelectedFloor('');
+        setSelectedRoom('');
+      }
       dispatch(fetchWings(Number(selectedBuilding)));
     }
   }, [dispatch, selectedBuilding]);
 
   useEffect(() => {
     if (selectedBuilding) {
-      setSelectedArea('');
-      setSelectedFloor('');
-      setSelectedRoom('');
+      if (!isEditFilling.current) {
+        setSelectedArea('');
+        setSelectedFloor('');
+        setSelectedRoom('');
+      }
       dispatch(
         fetchAreas({
           buildingId: Number(selectedBuilding),
@@ -104,8 +112,10 @@ export function GoldenQrSetupPage() {
 
   useEffect(() => {
     if (selectedArea) {
-      setSelectedFloor('');
-      setSelectedRoom('');
+      if (!isEditFilling.current) {
+        setSelectedFloor('');
+        setSelectedRoom('');
+      }
       dispatch(
         fetchFloors({
           buildingId: Number(selectedBuilding) || 0,
@@ -118,7 +128,9 @@ export function GoldenQrSetupPage() {
 
   useEffect(() => {
     if (selectedFloor) {
-      setSelectedRoom('');
+      if (!isEditFilling.current) {
+        setSelectedRoom('');
+      }
       dispatch(
         fetchRooms({
           buildingId: Number(selectedBuilding) || 0,
@@ -276,6 +288,28 @@ export function GoldenQrSetupPage() {
     }
   };
 
+  const handleEditClick = (record: GoldenQrRecord) => {
+    const content = record.content || record;
+    const buildingId = String(content.building_id || '');
+    const wingId = String(content.wing_id || '');
+    const areaId = String(content.area_id || '');
+    const floorId = String(content.floor || '');
+    const roomId = String(content.room || '');
+
+    isEditFilling.current = true;
+    setSelectedBuilding(buildingId);
+    setSelectedWing(wingId);
+    setSelectedArea(areaId);
+    setSelectedFloor(floorId);
+    setSelectedRoom(roomId);
+    setMarkGolden(record.mark_golden_ticket === true || String(record.mark_golden_ticket) === 'true');
+    setShowRequester(record.show_requester === true || String(record.show_requester) === 'true');
+    setEditingRecord(record);
+    setIsEditMode(true);
+    setTimeout(() => { isEditFilling.current = false; }, 200);
+    setShowDialog(true);
+  };
+
   const resetForm = () => {
     setSelectedBuilding('');
     setSelectedWing('');
@@ -284,6 +318,8 @@ export function GoldenQrSetupPage() {
     setSelectedRoom('');
     setMarkGolden(false);
     setShowRequester(false);
+    setEditingRecord(null);
+    setIsEditMode(false);
   };
 
   const handleSubmit = async () => {
@@ -296,39 +332,66 @@ export function GoldenQrSetupPage() {
     try {
       const baseUrl = getBaseUrl();
       const token = getToken();
-      const payload = {
-        content: {
-          building_id: selectedBuilding,
-          wing_id: selectedWing,
-          area_id: selectedArea,
-          floor: selectedFloor,
-          room: selectedRoom,
-        },
-        fields_for: 'ComplaintGoldenQr',
-        mark_golden_ticket: markGolden ? 'true' : 'false',
-        show_requester: showRequester ? 'true' : 'false',
-      };
 
-      const response = await fetch(
-        `${baseUrl}/pms/account_setups/create_additional_fields.json`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+      if (isEditMode && editingRecord?.id) {
+        const payload = {
+          id: editingRecord.id,
+          mark_golden_ticket: markGolden,
+          show_requester: showRequester,
+          content: {
+            building_id: selectedBuilding,
+            wing_id: selectedWing,
+            area_id: selectedArea,
+            floor: selectedFloor,
+            room: selectedRoom,
           },
-          body: JSON.stringify(payload),
-        }
-      );
+        };
+        const response = await fetch(
+          `${baseUrl}/pms/account_setups/update_additional_fields`,
+          {
+            method: 'PUT',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+        if (!response.ok) throw new Error('Failed to update');
+        toast.success('Golden QR setup updated successfully');
+      } else {
+        const payload = {
+          content: {
+            building_id: selectedBuilding,
+            wing_id: selectedWing,
+            area_id: selectedArea,
+            floor: selectedFloor,
+            room: selectedRoom,
+          },
+          fields_for: 'ComplaintGoldenQr',
+          mark_golden_ticket: markGolden ? 'true' : 'false',
+          show_requester: showRequester ? 'true' : 'false',
+        };
+        const response = await fetch(
+          `${baseUrl}/pms/account_setups/create_additional_fields.json`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+        if (!response.ok) throw new Error('Failed to save');
+        toast.success('Golden QR setup saved successfully');
+      }
 
-      if (!response.ok) throw new Error('Failed to save');
-
-      toast.success('Golden QR setup saved successfully');
       resetForm();
       setShowDialog(false);
       loadTableData();
     } catch {
-      toast.error('Failed to save Golden QR setup');
+      toast.error(isEditMode ? 'Failed to update Golden QR setup' : 'Failed to save Golden QR setup');
     } finally {
       setIsSubmitting(false);
     }
@@ -393,146 +456,156 @@ export function GoldenQrSetupPage() {
           </div>
         ) : (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-[#F5F5F5]">
-                  <TableHead className="w-10">
-                    <Checkbox
-                      checked={allCurrentSelected}
-                      onCheckedChange={(checked) => toggleSelectAll(Boolean(checked))}
-                      aria-label="Select all"
-                    />
-                  </TableHead>
-                  <TableHead className="font-semibold text-gray-700">Sr. No.</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Building</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Wing</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Area</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Floor</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Room</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Golden Ticket</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Show Requester</TableHead>
-                  <TableHead className="font-semibold text-gray-700">QR Code</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#F5F5F5]">
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allCurrentSelected}
+                    onCheckedChange={(checked) => toggleSelectAll(Boolean(checked))}
+                    aria-label="Select all"
+                  />
+                </TableHead>
+                <TableHead className="font-semibold text-gray-700">Sr. No.</TableHead>
+                <TableHead className="font-semibold text-gray-700">Building</TableHead>
+                <TableHead className="font-semibold text-gray-700">Wing</TableHead>
+                <TableHead className="font-semibold text-gray-700">Area</TableHead>
+                <TableHead className="font-semibold text-gray-700">Floor</TableHead>
+                <TableHead className="font-semibold text-gray-700">Room</TableHead>
+                <TableHead className="font-semibold text-gray-700">Golden Ticket</TableHead>
+                <TableHead className="font-semibold text-gray-700">Show Requester</TableHead>
+                <TableHead className="font-semibold text-gray-700">QR Code</TableHead>
+                <TableHead className="font-semibold text-gray-700">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tableData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-8 text-gray-500">
+                    No records found
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tableData.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={10} className="text-center py-8 text-gray-500">
-                      No records found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  tableData.map((record, index) => {
-                    const content = record.content || record;
-                    const rowChecked = record.id != null && selectedIds.has(record.id);
-                    return (
-                      <TableRow key={record.id ?? index} className="hover:bg-gray-50">
-                        <TableCell>
-                          <Checkbox
-                            checked={rowChecked}
-                            onCheckedChange={(checked) =>
-                              record.id != null && toggleRow(record.id, Boolean(checked))
-                            }
-                            aria-label={`Select row ${record.id}`}
+              ) : (
+                tableData.map((record, index) => {
+                  const content = record.content || record;
+                  const rowChecked = record.id != null && selectedIds.has(record.id);
+                  return (
+                    <TableRow key={record.id ?? index} className="hover:bg-gray-50">
+                      <TableCell>
+                        <Checkbox
+                          checked={rowChecked}
+                          onCheckedChange={(checked) =>
+                            record.id != null && toggleRow(record.id, Boolean(checked))
+                          }
+                          aria-label={`Select row ${record.id}`}
+                        />
+                      </TableCell>
+                      <TableCell>{(currentPage - 1) * perPage + index + 1}</TableCell>
+                      <TableCell>{getBuildingName(content.building_id)}</TableCell>
+                      <TableCell>{getWingName(content.wing_id) || '-'}</TableCell>
+                      <TableCell>{getAreaName(content.area_id) || '-'}</TableCell>
+                      <TableCell>{getFloorName(content.floor) || '-'}</TableCell>
+                      <TableCell>{getRoomName(content.room) || '-'}</TableCell>
+                      <TableCell>
+                        {String(record.mark_golden_ticket) === 'true' ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                            Yes
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            No
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {String(record.show_requester) === 'true' ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                            Yes
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                            No
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {record.qr_code_url ? (
+                          <img
+                            src={record.qr_code_url}
+                            alt="QR Code"
+                            className="w-16 h-16 object-contain cursor-pointer hover:opacity-75 transition-opacity"
+                            onClick={() => setQrModalUrl(record.qr_code_url)}
                           />
-                        </TableCell>
-                        <TableCell>{(currentPage - 1) * perPage + index + 1}</TableCell>
-                        <TableCell>{getBuildingName(content.building_id)}</TableCell>
-                        <TableCell>{getWingName(content.wing_id) || '-'}</TableCell>
-                        <TableCell>{getAreaName(content.area_id) || '-'}</TableCell>
-                        <TableCell>{getFloorName(content.floor) || '-'}</TableCell>
-                        <TableCell>{getRoomName(content.room) || '-'}</TableCell>
-                        <TableCell>
-                          {String(record.mark_golden_ticket) === 'true' ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                              Yes
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                              No
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {String(record.show_requester) === 'true' ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                              Yes
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                              No
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {record.qr_code_url ? (
-                            <img
-                              src={record.qr_code_url}
-                              alt="QR Code"
-                              className="w-16 h-16 object-contain cursor-pointer hover:opacity-75 transition-opacity"
-                              onClick={() => setQrModalUrl(record.qr_code_url)}
-                            />
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-                )}
-              </TableBody>
-            </Table>
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-                <p className="text-sm text-gray-600">
-                  Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, totalCount)} of {totalCount} records
-                </p>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { loadTableData(currentPage - 1); setCurrentPage(currentPage - 1); }}
-                    disabled={currentPage <= 1 || isLoadingTable}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </Button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-                    .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
-                      if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
-                      acc.push(p);
-                      return acc;
-                    }, [])
-                    .map((item, idx) =>
-                      item === 'ellipsis' ? (
-                        <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">…</span>
-                      ) : (
-                        <Button
-                          key={item}
-                          variant={item === currentPage ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => { loadTableData(item as number); setCurrentPage(item as number); }}
-                          disabled={isLoadingTable}
-                          className={`h-8 w-8 p-0 ${item === currentPage ? 'bg-[#C72030] hover:bg-[#a01828] text-white border-[#C72030]' : ''}`}
+                        ) : (
+                          <span className="text-gray-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <button
+                          onClick={() => handleEditClick(record)}
+                          className="p-1.5 rounded hover:bg-gray-100 text-gray-500 hover:text-[#C72030] transition-colors"
+                          title="Edit"
                         >
-                          {item}
-                        </Button>
-                      )
-                    )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => { loadTableData(currentPage + 1); setCurrentPage(currentPage + 1); }}
-                    disabled={currentPage >= totalPages || isLoadingTable}
-                    className="h-8 w-8 p-0"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                Showing {(currentPage - 1) * perPage + 1}–{Math.min(currentPage * perPage, totalCount)} of {totalCount} records
+              </p>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { loadTableData(currentPage - 1); setCurrentPage(currentPage - 1); }}
+                  disabled={currentPage <= 1 || isLoadingTable}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                  .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
+                    acc.push(p);
+                    return acc;
+                  }, [])
+                  .map((item, idx) =>
+                    item === 'ellipsis' ? (
+                      <span key={`ellipsis-${idx}`} className="px-2 text-gray-400">…</span>
+                    ) : (
+                      <Button
+                        key={item}
+                        variant={item === currentPage ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => { loadTableData(item as number); setCurrentPage(item as number); }}
+                        disabled={isLoadingTable}
+                        className={`h-8 w-8 p-0 ${item === currentPage ? 'bg-[#C72030] hover:bg-[#a01828] text-white border-[#C72030]' : ''}`}
+                      >
+                        {item}
+                      </Button>
+                    )
+                  )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { loadTableData(currentPage + 1); setCurrentPage(currentPage + 1); }}
+                  disabled={currentPage >= totalPages || isLoadingTable}
+                  className="h-8 w-8 p-0"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
               </div>
-            )}
+            </div>
+          )}
           </>
         )}
       </div>
@@ -641,12 +714,12 @@ export function GoldenQrSetupPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Add Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+      {/* Add / Edit Dialog */}
+      <Dialog open={showDialog} onOpenChange={(open) => { if (!open) resetForm(); setShowDialog(open); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-gray-900">
-              Add Golden QR Setup
+              {isEditMode ? 'Edit Golden QR Setup' : 'Add Golden QR Setup'}
             </DialogTitle>
           </DialogHeader>
 
