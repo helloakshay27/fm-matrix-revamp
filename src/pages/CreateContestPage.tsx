@@ -253,7 +253,7 @@ export const CreateContestPage: React.FC = () => {
     },
   ];
 
-  const contestTypes = ["Spin", "Random", "Special Offer"];
+  const contestTypes = ["Spin", "Random", "Special Discount"];
 
   // Helper function to calculate base probability for each offer
   const calculateBaseProbability = (): number => {
@@ -374,7 +374,7 @@ export const CreateContestPage: React.FC = () => {
     // Basic contest fields
     formData.append("contest[name]", contestName.trim());
     formData.append("contest[description]", contestDescription.trim());
-    formData.append("contest[content_type]", contestType.toLowerCase());
+    formData.append("contest[content_type]", contestType.toLowerCase().replace(/\s+/g, "_"));
     formData.append("contest[active]", String(isActive));
     formData.append("contest[start_at]", buildISO(startDate, startTime));
     formData.append("contest[end_at]", buildISO(endDate, endTime, true));
@@ -383,7 +383,7 @@ export const CreateContestPage: React.FC = () => {
       formData.append("contest[user_caps]", usersCap);
     }
     if (attemptsRequired) {
-      formData.append("contest[user_attemp_remaining]", attemptsRequired);
+      formData.append("contest[attemp_required]", attemptsRequired);
     }
 
     // Add tech parks if sharing with individual
