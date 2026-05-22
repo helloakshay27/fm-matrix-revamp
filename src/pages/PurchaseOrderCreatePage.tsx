@@ -1026,45 +1026,48 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     const afterDiscount = subTotal - totalDiscount;
 
     // compute tax breakdown for any item-level tax groups (similar to QuotesAdd)
-    const selectedTaxGroups = items
-        .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
-        .map(item => {
-            const group = taxGroups.find(g => g.id === item.tax_group_id);
-            return {
-                itemAmount: item.amount,
-                taxRates: group?.tax_rates || []
-            };
-        });
-    const taxBreakdown: any[] = [];
-    selectedTaxGroups.forEach(group => {
-        group.taxRates.forEach((rate: any) => {
-            const taxAmt = (group.itemAmount * rate.rate) / 100;
-            const existing = taxBreakdown.find(t => t.name === rate.name);
-            if (existing) {
-                existing.amount += taxAmt;
-            } else {
-                taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmt });
-            }
-        });
-    });
-
-    // Tax rate breakdown for inter-state transactions (IGST)
-    items
-        .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
-        .forEach(item => {
-            const rate = taxRates.find(r => r.id === item.tax_group_id);
-            if (!rate) return;
-            const rateValue = rate.rate ?? rate.percentage ?? 0;
-            const taxAmt = (item.amount * rateValue) / 100;
-            const existing = taxBreakdown.find(t => t.name === rate.name);
-            if (existing) {
-                existing.amount += taxAmt;
-            } else {
-                taxBreakdown.push({ name: rate.name, rate: rateValue, amount: taxAmt });
-            }
+    // When reverseCharge is true, skip tax breakdown calculation (matching BillsAdd logic)
+    let taxBreakdown: any[] = [];
+    if (!reverseCharge) {
+        const selectedTaxGroups = items
+            .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
+            .map(item => {
+                const group = taxGroups.find(g => g.id === item.tax_group_id);
+                return {
+                    itemAmount: item.amount,
+                    taxRates: group?.tax_rates || []
+                };
+            });
+        selectedTaxGroups.forEach(group => {
+            group.taxRates.forEach((rate: any) => {
+                const taxAmt = (group.itemAmount * rate.rate) / 100;
+                const existing = taxBreakdown.find(t => t.name === rate.name);
+                if (existing) {
+                    existing.amount += taxAmt;
+                } else {
+                    taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmt });
+                }
+            });
         });
 
-    const totalTaxGroups = taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
+        // Tax rate breakdown for inter-state transactions (IGST)
+        items
+            .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
+            .forEach(item => {
+                const rate = taxRates.find(r => r.id === item.tax_group_id);
+                if (!rate) return;
+                const rateValue = rate.rate ?? rate.percentage ?? 0;
+                const taxAmt = (item.amount * rateValue) / 100;
+                const existing = taxBreakdown.find(t => t.name === rate.name);
+                if (existing) {
+                    existing.amount += taxAmt;
+                } else {
+                    taxBreakdown.push({ name: rate.name, rate: rateValue, amount: taxAmt });
+                }
+            });
+    }
+
+    const totalTaxGroups = reverseCharge ? 0 : taxBreakdown.reduce((sum, t) => sum + t.amount, 0);
 
     // Find selected tax rate
     const selectedTaxObj = taxOptions.find(t => t.id === selectedTax);
@@ -1101,10 +1104,11 @@ export const PurchaseOrderCreatePage: React.FC = () => {
     }, [sourceOfSupply, destinationOfSupply]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Update totalAmount2 to include tax groups and adjustment
+    // When reverseCharge is true, totalTaxGroups is 0, so taxes are not added
     useEffect(() => {
         const total = afterDiscount + totalTaxGroups - taxAmount2 + (Number(adjustment) || 0);
         setTotalAmount2(total);
-    }, [afterDiscount, totalTaxGroups, taxAmount2, adjustment]);
+    }, [afterDiscount, totalTaxGroups, taxAmount2, adjustment, reverseCharge]);
 
     // Handle file upload
     const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -2564,7 +2568,7 @@ export const PurchaseOrderCreatePage: React.FC = () => {
                                 </div>
                             </div>
 
-                            {taxBreakdown.length > 0 && (
+                            {!reverseCharge && taxBreakdown.length > 0 && (
                                 <>
                                     <div className="flex justify-between items-center py-1">
                                         <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
