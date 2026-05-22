@@ -60,6 +60,7 @@ export const EditServicePRPage = () => {
   const [services, setServices] = useState([]);
   const [wbsSelection, setWbsSelection] = useState("");
   const [overallWbs, setOverallWbs] = useState("");
+  const [overallGlCode, setOverallGlCode] = useState("");
   const [wbsCodes, setWbsCodes] = useState([]);
   const [showRadio, setShowRadio] = useState(false);
   const [glAccountOptions, setGlAccountOptions] = useState([]);
@@ -163,6 +164,22 @@ export const EditServicePRPage = () => {
       }
     } catch (error) {
       console.error("Error fetching GL Code for WBS:", error);
+    }
+  };
+
+  const fetchGlCodeForOverallWbs = async (wbsCode) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/wbs_costs/get_gl_code.json?wbs_code=${wbsCode}`,
+        { headers: { Authorization: token } }
+      );
+      if (response.data && response.data.gl_code) {
+        setOverallGlCode(response.data.gl_code);
+        toast.success(`GL Code ${response.data.gl_code} loaded successfully`);
+      }
+    } catch (error) {
+      console.error("Error fetching GL Code for overall WBS:", error);
+      toast.error("Failed to fetch GL Code for WBS");
     }
   };
 
@@ -298,23 +315,13 @@ export const EditServicePRPage = () => {
   useEffect(() => {
     if (data.length > 0) {
       setShowRadio(true);
+      setWbsCodes(data);
+    }
+    if (data.length <= 0) {
+      setShowRadio(false);
+      setWbsCodes([]);
     }
   }, [data]);
-
-  useEffect(() => {
-    if (showRadio) {
-      const fetchData = async () => {
-        try {
-          const response = await dispatch(fetchWBS({ baseUrl, token })).unwrap();
-          setWbsCodes(response.wbs);
-        } catch (error) {
-          console.log(error);
-          toast.error(error);
-        }
-      };
-      fetchData();
-    }
-  }, [showRadio, dispatch, baseUrl, token]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -477,6 +484,13 @@ export const EditServicePRPage = () => {
     .reduce((acc, item) => acc + (parseFloat(item.totalAmount) || 0), 0)
     .toFixed(2);
 
+  const formatIndian = (val: string | number): string => {
+    if (val === "" || val === null || val === undefined) return "";
+    const n = parseFloat(String(val));
+    if (isNaN(n)) return "";
+    return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  };
+
   const validateForm = () => {
     if (!formData.contractor) {
       toast.error("Contractor is required");
@@ -496,13 +510,17 @@ export const EditServicePRPage = () => {
     }
 
     for (const item of detailsForms) {
-      if (item._destroy === 1) continue; // Skip validation for items marked for deletion
+      if (item._destroy === 1) continue;
       if (!item.service) {
         toast.error("Service is required for all items");
         return false;
       }
       if (!item.productDescription) {
         toast.error("Product Additional Text is required for all items");
+        return false;
+      }
+      if (wbsSelection !== "overall" && !item.glCode) {
+        toast.error("GL Code is required for all items");
         return false;
       }
       if (!item.quantityArea || isNaN(parseFloat(item.quantityArea)) || parseFloat(item.quantityArea) <= 0) {
@@ -516,6 +534,26 @@ export const EditServicePRPage = () => {
       if (!item.rate || isNaN(parseFloat(item.rate)) || parseFloat(item.rate) <= 0) {
         toast.error("Rate must be a valid positive number for all items");
         return false;
+      }
+    }
+
+    if (showRadio) {
+      if (wbsSelection === "overall" && !overallWbs) {
+        toast.error("WBS Code is required when 'All Items' is selected");
+        return false;
+      }
+      if (wbsSelection === "overall" && !overallGlCode) {
+        toast.error("GL Code is required. Please select a WBS Code first to auto-populate it");
+        return false;
+      }
+      if (wbsSelection === "individual") {
+        for (const item of detailsForms) {
+          if (item._destroy === 1) continue;
+          if (!item.wbsCode) {
+            toast.error("WBS Code is required for each item when 'Individual' is selected");
+            return false;
+          }
+        }
       }
     }
 
@@ -564,7 +602,7 @@ export const EditServicePRPage = () => {
           taxable_value: item.taxAmount,
           total_value: item.amount,
           total_amount: item.totalAmount,
-          gl_account: item.glCode,
+          gl_account: wbsSelection === "overall" ? overallGlCode : item.glCode,
           tax_code: item.taxCode,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
           _destroy: item._destroy,
@@ -854,7 +892,10 @@ export const EditServicePRPage = () => {
                   <MuiSelect
                     label="WBS Code*"
                     value={overallWbs}
-                    onChange={(e) => setOverallWbs(e.target.value)}
+                    onChange={(e) => {
+                      setOverallWbs(e.target.value);
+                      if (e.target.value) fetchGlCodeForOverallWbs(e.target.value);
+                    }}
                     displayEmpty
                     sx={fieldStyles}
                   >
@@ -994,11 +1035,11 @@ export const EditServicePRPage = () => {
 
                     <TextField
                       label="Rate*"
-                      value={detailsData.rate}
+                      value={formatIndian(detailsData.rate)}
                       onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                          handleDetailsChange(detailsData.id, "rate", value);
+                        const raw = e.target.value.replace(/,/g, "");
+                        if (raw === "" || /^\d*\.?\d{0,2}$/.test(raw)) {
+                          handleDetailsChange(detailsData.id, "rate", raw);
                         }
                       }}
                       fullWidth
@@ -1170,7 +1211,7 @@ export const EditServicePRPage = () => {
 
                     <TextField
                       label="Amount"
-                      value={detailsData.amount}
+                      value={formatIndian(detailsData.amount)}
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
@@ -1186,7 +1227,7 @@ export const EditServicePRPage = () => {
 
                     <TextField
                       label="Total Amount"
-                      value={detailsData.totalAmount}
+                      value={formatIndian(detailsData.totalAmount)}
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
@@ -1300,7 +1341,7 @@ export const EditServicePRPage = () => {
 
         <div className="flex items-center justify-end my-4">
           <Button className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed" type="button">
-            Total Amount: {grandTotal}
+            Total Amount: {formatIndian(grandTotal)}
           </Button>
         </div>
 

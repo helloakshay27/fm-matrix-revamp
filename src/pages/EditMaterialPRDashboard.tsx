@@ -202,27 +202,14 @@ export const EditMaterialPRDashboard = () => {
   useEffect(() => {
     if (Array.isArray(data) && data.length > 0) {
       setShowRadio(true);
+      setWbsCodes(data);
     }
     if (Array.isArray(data) && data.length <= 0) {
       setShowRadio(false);
       setWbsSelection("");
+      setWbsCodes([]);
     }
   }, [data]);
-
-  useEffect(() => {
-    if (showRadio) {
-      const fetchData = async () => {
-        try {
-          const response = await dispatch(fetchWBS({ baseUrl, token })).unwrap();
-          setWbsCodes(response.wbs);
-        } catch (error) {
-          console.log(error);
-          toast.error(error);
-        }
-      };
-      fetchData();
-    }
-  }, [showRadio, dispatch, baseUrl, token]);
 
   // ── Load existing PR data ─────────────────────────────────────────────────
 
@@ -483,6 +470,13 @@ export const EditMaterialPRDashboard = () => {
       .filter((item) => item._destroy !== 1)
       .reduce((total, item) => total + (parseFloat(item.amount) || 0), 0)
       .toFixed(2);
+  };
+
+  const formatIndian = (val: string | number): string => {
+    if (val === "" || val === null || val === undefined) return "";
+    const n = parseFloat(String(val));
+    if (isNaN(n)) return "";
+    return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
   };
 
   // ── Validation ────────────────────────────────────────────────────────────
@@ -1193,11 +1187,11 @@ export const EditMaterialPRDashboard = () => {
                     {/* Rate */}
                     <TextField
                       label="Rate"
-                      value={item.each}
+                      value={formatIndian(item.each)}
                       onChange={(e) => {
-                        const value = e.target.value;
-                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                          handleItemChange(item.id, "each", value);
+                        const raw = e.target.value.replace(/,/g, "");
+                        if (raw === "" || /^\d*\.?\d{0,2}$/.test(raw)) {
+                          handleItemChange(item.id, "each", raw);
                         }
                       }}
                       placeholder="Enter Number"
@@ -1226,7 +1220,7 @@ export const EditMaterialPRDashboard = () => {
                     {/* Amount */}
                     <TextField
                       label="Amount*"
-                      value={item.amount}
+                      value={formatIndian(item.amount)}
                       placeholder="Calculated Amount"
                       fullWidth
                       variant="outlined"
@@ -1242,7 +1236,7 @@ export const EditMaterialPRDashboard = () => {
           {/* Total */}
           <div className="flex items-center justify-end">
             <Button className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed" type="button">
-              Total Amount: {calculateTotalAmount()}
+              Total Amount: {formatIndian(calculateTotalAmount())}
             </Button>
           </div>
 

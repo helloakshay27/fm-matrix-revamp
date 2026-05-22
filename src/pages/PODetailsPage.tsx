@@ -337,6 +337,13 @@ const debitNoteDetailsColumns: ColumnConfig[] = [
   { key: "created_by", label: "Created By", sortable: true, draggable: true },
 ];
 
+const formatIndian = (val: string | number | null | undefined): string => {
+  if (val === "" || val === null || val === undefined) return "-";
+  const n = parseFloat(String(val));
+  if (isNaN(n)) return String(val);
+  return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+};
+
 export const PODetailsPage = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token')
@@ -597,8 +604,8 @@ export const PODetailsPage = () => {
         : "-",
       quantity: item.quantity?.toString() || "-",
       unit: item.unit || "-",
-      rate: item.rate?.toString() || "-",
-      total_value: item.total_value?.toString() || "-",
+      rate: formatIndian(item.rate),
+      total_value: formatIndian(item.total_value),
       approved_qty: item.approved_qty?.toString() || "-",
       transfer_qty: item.transfer_qty?.toString() || "-",
     })) || [];
@@ -614,18 +621,18 @@ export const PODetailsPage = () => {
       inventory: item.inventories_name || "-",
       supplier: item.supplier || "-",
       invoice_number: item.invoice_no || "-",
-      total_grn_amount: item.amount || "-",
-      payable_amount: item.payable_amount || "-",
-      retention_amount: item.retention_amount || "-",
-      tds_amount: item.tds_amount || "-",
-      qc_amount: item.qh_amount || "-",
+      total_grn_amount: formatIndian(item.amount),
+      payable_amount: formatIndian(item.payable_amount),
+      retention_amount: formatIndian(item.retention_amount),
+      tds_amount: formatIndian(item.tds_amount),
+      qc_amount: formatIndian(item.qh_amount),
       invoice_date: item.bill_date
         ? format(new Date(item.bill_date), "dd-MM-yyyy")
         : "-",
       payment_mode: item.payment_mod || "-",
       other_expenses: item.other_expenses || "-",
       loading_expense: item.loading_expense || "-",
-      adjustment_amount: item.adj_amount || "-",
+      adjustment_amount: formatIndian(item.adj_amount),
       qc_approval_status: item.qc_approval_status || "-",
       hse_approval_status: item.hse_approval_status || "-",
       admin_approval_status: item.admin_approval_status || "-",
