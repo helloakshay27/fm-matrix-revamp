@@ -854,7 +854,7 @@ const modulesByPackage = {
         },
       ],
     },
-    { name: "WBS", icon: BarChart3, href: "/finance/wbs" },
+    // { name: "WBS", icon: BarChart3, href: "/finance/wbs" },
   ],
   CRM: [
     { name: "Lead", icon: Target, href: "/crm/lead" },
