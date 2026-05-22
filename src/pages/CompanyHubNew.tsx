@@ -117,9 +117,7 @@ const normalizeEmployeeOfMonth = (
     userName: merged.userName || fullName || null,
     role: merged.role || "Employee",
     month: merged.month || employee.month || employee.field_name || null,
-    points: Array.isArray(merged.points)
-      ? merged.points.filter(Boolean)
-      : [],
+    points: Array.isArray(merged.points) ? merged.points.filter(Boolean) : [],
     profile_image: profileImage || null,
     profileImage: profileImage || null,
     field_description: fieldDescription,
@@ -158,6 +156,131 @@ const writeLocalLikedPostIds = (
     getCommunityLikeStorageKey(userId),
     JSON.stringify(Array.from(new Set(likedPostIds)))
   );
+};
+
+const getApiBaseUrl = (baseUrl: string | null) => {
+  const cleanBaseUrl = (baseUrl || "fm-uat-api.lockated.com")
+    .replace(/^https?:\/\//, "")
+    .replace(/\/+$/, "");
+  return `https://${cleanBaseUrl}`;
+};
+
+const normalizeId = (value: unknown) => {
+  if (value === null || value === undefined || value === "") return null;
+  return String(value);
+};
+
+type UnknownRecord = Record<string, unknown>;
+
+const toRecord = (value: unknown): UnknownRecord =>
+  value && typeof value === "object" ? (value as UnknownRecord) : {};
+
+const getCompanyHubCommunityIdFromConfig = (source: unknown): string | null => {
+  const sourceRecord = toRecord(source);
+  const rawConfig = sourceRecord.other_config;
+  const config = toRecord(
+    rawConfig && typeof rawConfig === "object" ? rawConfig : source
+  );
+  const companyHub = toRecord(config.company_hub);
+  const companyHubCommunity = toRecord(companyHub.community);
+  const companyHubCamel = toRecord(config.companyHub);
+  const companyHubCamelCommunity = toRecord(companyHubCamel.community);
+  const candidates = [
+    config.company_hub_community_id,
+    config.companyHubCommunityId,
+    companyHub.community_id,
+    companyHub.communityId,
+    companyHubCommunity.id,
+    companyHubCamel.community_id,
+    companyHubCamel.communityId,
+    companyHubCamelCommunity.id,
+    toRecord(config.company_hub_community).id,
+    toRecord(config.companyHubCommunity).id,
+    config.community_id,
+    config.communityId,
+    toRecord(config.community).id,
+    toRecord(config.community).community_id,
+    sourceRecord.community_id,
+    sourceRecord.communityId,
+  ];
+
+  return candidates.map(normalizeId).find(Boolean) || null;
+};
+
+const getCommunitiesFromResponse = (data: unknown): UnknownRecord[] => {
+  const response = toRecord(data);
+  if (Array.isArray(response.communities)) {
+    return response.communities.filter(
+      (community): community is UnknownRecord =>
+        Boolean(community) && typeof community === "object"
+    );
+  }
+  if (Array.isArray(response.data)) {
+    return response.data.filter(
+      (community): community is UnknownRecord =>
+        Boolean(community) && typeof community === "object"
+    );
+  }
+  if (Array.isArray(data)) {
+    return data.filter(
+      (community): community is UnknownRecord =>
+        Boolean(community) && typeof community === "object"
+    );
+  }
+  return [];
+};
+
+const chooseCompanyHubCommunity = (
+  communities: UnknownRecord[],
+  companyName?: string | null,
+  companyId?: string | null
+) => {
+  const activeCommunities = communities.filter(
+    (community) =>
+      community?.active !== false &&
+      community?.status !== false &&
+      community?.active !== "false" &&
+      community?.status !== "false"
+  );
+  const candidates =
+    activeCommunities.length > 0 ? activeCommunities : communities;
+  const companyNameLower = companyName?.toLowerCase().trim();
+  const namedMatch = candidates.find((community) => {
+    const name = String(community?.name || "").toLowerCase();
+    return (
+      name.includes("company hub") ||
+      name.includes("companyhub") ||
+      name.includes("employee hub") ||
+      name.includes("community feed")
+    );
+  });
+
+  if (namedMatch) return namedMatch;
+
+  if (companyId) {
+    const companyIdMatch = candidates.find((community) =>
+      [
+        community?.company_id,
+        community?.organization_id,
+        community?.resource_id,
+        community?.company_setup_id,
+      ]
+        .map(normalizeId)
+        .includes(companyId)
+    );
+    if (companyIdMatch) return companyIdMatch;
+  }
+
+  if (companyNameLower) {
+    const companyMatch = candidates.find((community) =>
+      String(community?.name || "")
+        .toLowerCase()
+        .includes(companyNameLower)
+    );
+    if (companyMatch) return companyMatch;
+  }
+
+  return candidates[0] || null;
 };
 
 const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
@@ -217,6 +340,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
   // Community State
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+  const companyHubCommunityIdRef = useRef<string | null>(null);
   const [announcements, setAnnouncements] = useState<any[]>([]);
   const [currentEmployee, setCurrentEmployee] =
     useState<EmployeeOfMonthDisplay | null>(null);
@@ -248,75 +372,153 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
     userName || (user ? `${user.firstname} ${user.lastname}`.trim() : "Guest");
   const companyId = String(user?.lock_role?.company_id || "116");
 
-  // Fetch Logic
-  const fetchPosts = useCallback(async () => {
-    setIsLoadingPosts(true);
-    try {
+  const resolveCompanyHubCommunityId = useCallback(
+    async (sourceCompanyData?: CompanyData | null) => {
+      const effectiveCompanyId = localStorage.getItem("org_id") || companyId;
+      const storageKey = `company_hub_community_id_${effectiveCompanyId}`;
+      const configuredId =
+        getCompanyHubCommunityIdFromConfig(sourceCompanyData);
+
+      if (configuredId) {
+        localStorage.setItem(storageKey, configuredId);
+        companyHubCommunityIdRef.current = configuredId;
+        return configuredId;
+      }
+
+      if (companyHubCommunityIdRef.current) {
+        return companyHubCommunityIdRef.current;
+      }
+
+      const cachedId = localStorage.getItem(storageKey);
+      if (cachedId) {
+        companyHubCommunityIdRef.current = cachedId;
+        return cachedId;
+      }
+
       const token = localStorage.getItem("token");
-      const baseUrl =
-        localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
-      const cleanBaseUrl = baseUrl
-        .replace(/^https?:\/\//, "")
-        .replace(/\/+$/, "");
-      const fullUrl = `https://${cleanBaseUrl}/communities/3/posts.json`;
+      if (!token) return null;
 
-      const response = await axios.get(fullUrl, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const rawPosts =
-        response.data.posts ||
-        response.data.data ||
-        (Array.isArray(response.data) ? response.data : []);
-      const localLikedPostIds = readLocalLikedPostIds(userId);
-      const postsData = rawPosts.map((post: any) => {
-        const isLocallyLiked = localLikedPostIds.includes(String(post.id));
-        const isApiLiked = post.isliked === true || post.isliked === "true";
-        // Calculate total likes if not provided by backend
-        const apiTotalLikes =
-          post.total_likes ??
-          (post.likes_with_emoji
-            ? Object.values(post.likes_with_emoji).reduce(
-                (a: any, b: any) => a + (Number(b) || 0),
-                0
-              )
-            : 0);
-        const totalLikes =
-          isLocallyLiked && !isApiLiked
-            ? Number(apiTotalLikes || 0) + 1
-            : Number(apiTotalLikes || 0);
+      const apiBaseUrl = getApiBaseUrl(localStorage.getItem("baseUrl"));
+      const headers = { Authorization: `Bearer ${token}` };
 
-        // Identify post type
-        let type: "post" | "event" | "notice" | "document" = "post";
-        if (post.event) type = "event";
-        else if (post.notice) type = "notice";
-        else if (post.resource_type === "Document") type = "document";
+      const fetchCommunities = async (search?: string) => {
+        const params = new URLSearchParams({
+          page: "1",
+          per_page: "100",
+        });
+        if (search) {
+          params.append("q[name_cont]", search);
+        }
 
-        return {
-          ...post,
-          type,
-          total_likes: totalLikes,
-          isliked: isApiLiked || isLocallyLiked,
-          likes_with_emoji: {
-            ...(post.likes_with_emoji || {}),
-            ...(isLocallyLiked && !isApiLiked
-              ? {
-                  heart: Number(post.likes_with_emoji?.heart || 0) + 1,
-                }
-              : {}),
-          },
-          total_comments:
-            post.total_comments ??
-            (Array.isArray(post.comments) ? post.comments.length : 0),
-          comments: Array.isArray(post.comments) ? post.comments : [],
-        };
-      });
-      setPosts(postsData);
-    } catch (e) {
-      console.error("❌ Posts fetch failed:", e);
-    } finally {
-      setIsLoadingPosts(false);
-    }
-  }, []);
+        const response = await axios.get(
+          `${apiBaseUrl}/communities.json?${params.toString()}`,
+          { headers }
+        );
+        return getCommunitiesFromResponse(response.data);
+      };
+
+      let communities = await fetchCommunities("Company Hub");
+      if (communities.length === 0) {
+        communities = await fetchCommunities();
+      }
+
+      const selectedCommunity = chooseCompanyHubCommunity(
+        communities,
+        sourceCompanyData?.name,
+        effectiveCompanyId
+      );
+      const selectedId = normalizeId(selectedCommunity?.id);
+
+      if (selectedId) {
+        localStorage.setItem(storageKey, selectedId);
+        companyHubCommunityIdRef.current = selectedId;
+      }
+
+      return selectedId;
+    },
+    [companyId]
+  );
+
+  // Fetch Logic
+  const fetchPosts = useCallback(
+    async (sourceCompanyData?: CompanyData | null) => {
+      setIsLoadingPosts(true);
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setPosts([]);
+          return;
+        }
+
+        const communityId =
+          await resolveCompanyHubCommunityId(sourceCompanyData);
+        if (!communityId) {
+          setPosts([]);
+          return;
+        }
+
+        const apiBaseUrl = getApiBaseUrl(localStorage.getItem("baseUrl"));
+        const fullUrl = `${apiBaseUrl}/communities/${communityId}/posts.json`;
+
+        const response = await axios.get(fullUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const rawPosts =
+          response.data.posts ||
+          response.data.data ||
+          (Array.isArray(response.data) ? response.data : []);
+        const localLikedPostIds = readLocalLikedPostIds(userId);
+        const postsData = rawPosts.map((post: any) => {
+          const isLocallyLiked = localLikedPostIds.includes(String(post.id));
+          const isApiLiked = post.isliked === true || post.isliked === "true";
+          // Calculate total likes if not provided by backend
+          const apiTotalLikes =
+            post.total_likes ??
+            (post.likes_with_emoji
+              ? Object.values(post.likes_with_emoji).reduce(
+                  (a: any, b: any) => a + (Number(b) || 0),
+                  0
+                )
+              : 0);
+          const totalLikes =
+            isLocallyLiked && !isApiLiked
+              ? Number(apiTotalLikes || 0) + 1
+              : Number(apiTotalLikes || 0);
+
+          // Identify post type
+          let type: "post" | "event" | "notice" | "document" = "post";
+          if (post.event) type = "event";
+          else if (post.notice) type = "notice";
+          else if (post.resource_type === "Document") type = "document";
+
+          return {
+            ...post,
+            type,
+            total_likes: totalLikes,
+            isliked: isApiLiked || isLocallyLiked,
+            likes_with_emoji: {
+              ...(post.likes_with_emoji || {}),
+              ...(isLocallyLiked && !isApiLiked
+                ? {
+                    heart: Number(post.likes_with_emoji?.heart || 0) + 1,
+                  }
+                : {}),
+            },
+            total_comments:
+              post.total_comments ??
+              (Array.isArray(post.comments) ? post.comments.length : 0),
+            comments: Array.isArray(post.comments) ? post.comments : [],
+          };
+        });
+        setPosts(postsData);
+      } catch (e) {
+        console.error("❌ Posts fetch failed:", e);
+      } finally {
+        setIsLoadingPosts(false);
+      }
+    },
+    [resolveCompanyHubCommunityId, userId]
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -337,7 +539,9 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
         if (data && typeof data.other_config === "string") {
           try {
             data.other_config = JSON.parse(data.other_config);
-          } catch (e) {}
+          } catch (e) {
+            console.error("Failed to parse company hub config:", e);
+          }
         }
         setCompanyData(data);
 
@@ -391,7 +595,9 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
                   const p = JSON.parse(desc);
                   desc = p.description || p.content || desc;
                   active = p.isActive !== undefined ? p.isActive : true;
-                } catch (e) {}
+                } catch (e) {
+                  console.error("Failed to parse announcement config:", e);
+                }
               }
               return { ...a, displayDescription: desc, isActive: active };
             })
@@ -493,13 +699,13 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
           console.error("Life compass error", e);
         }
 
-        fetchPosts();
+        fetchPosts(data);
       } catch (e) {
         console.error("Global fetch failed", e);
       }
     };
     fetchData();
-  }, [companyId, fetchPosts, user?.email]);
+  }, [companyId, fetchPosts, user?.email, userId]);
 
   const confirmDelete = async () => {
     if (!deleteConfirmation.id || !deleteConfirmation.type) return;
@@ -532,10 +738,16 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
       const baseUrl =
         localStorage.getItem("baseUrl") || "fm-uat-api.lockated.com";
       const protocol = baseUrl.startsWith("https") ? "" : "https://";
+      const communityId = await resolveCompanyHubCommunityId(companyData);
+
+      if (!communityId) {
+        toast.error("Unable to find a community for Company Hub");
+        return;
+      }
 
       const formData = new FormData();
       formData.append("body", postText);
-      formData.append("resource_id", "3");
+      formData.append("resource_id", communityId);
       formData.append("resource_type", "Community");
 
       if (createMode === "poll") {
@@ -619,9 +831,7 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
             const nextTotalLikes = shouldLike
               ? currentTotalLikes + 1
               : Math.max(currentTotalLikes - 1, 0);
-            const currentHeartCount = Number(
-              item.likes_with_emoji?.heart || 0
-            );
+            const currentHeartCount = Number(item.likes_with_emoji?.heart || 0);
 
             return {
               ...item,
@@ -1016,5 +1226,3 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 };
 
 export default CompanyHubNew;
-
-
