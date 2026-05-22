@@ -524,7 +524,9 @@ export const CreateContestPage: React.FC = () => {
       setShowSuccessModal(true);
     } catch (err: any) {
       console.error(err);
-      const errorMessage = err.response?.data?.message || err.message || "Failed to create contest";
+      const errorMessage =
+        err.response?.data?.errors?.join(", ") ||
+        "Something went wrong";
       sonnerToast.error(errorMessage);
     } finally {
       setSubmitting(false);
