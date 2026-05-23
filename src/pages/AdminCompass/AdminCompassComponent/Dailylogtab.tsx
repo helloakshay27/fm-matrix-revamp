@@ -1449,9 +1449,9 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
 // ─────────────────────────────────────────────
 // DailyLogTab — Main Component
 // ─────────────────────────────────────────────
-const DailyLogTab = () => {
+const DailyLogTab = ({ initialDate, onSelectedDateChange } = {}) => {
   const [selectedDate, setSelectedDate] = useState(
-    () => new Date().toISOString().split("T")[0]
+    () => initialDate || new Date().toISOString().split("T")[0]
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -1477,6 +1477,17 @@ const DailyLogTab = () => {
   const [metaExpected, setMetaExpected] = useState(0);
 
   const [selectedReport, setSelectedReport] = useState(null);
+
+  useEffect(() => {
+    if (!initialDate) return;
+    setSelectedDate((currentDate) =>
+      currentDate === initialDate ? currentDate : initialDate
+    );
+  }, [initialDate]);
+
+  useEffect(() => {
+    onSelectedDateChange?.(selectedDate);
+  }, [selectedDate, onSelectedDateChange]);
 
   // ── Debounce search ──
   useEffect(() => {

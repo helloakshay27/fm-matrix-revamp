@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { API_CONFIG } from "@/config/apiConfig";
+import { toast } from "sonner";
 import {
   getEmbeddedOrgId,
   getEmbeddedToken,
@@ -113,6 +114,8 @@ interface ApiDashboardData {
 
 interface RatingsFeedbackDashboardResponse {
   success?: boolean;
+  status?: string;
+  errors?: string[];
   data?: ApiDashboardData;
 }
 
@@ -121,19 +124,26 @@ interface AiFeedbackSummary {
   rating_interpretation?: string;
   engagement_insight?: string;
   top_performers?: Array<string | { name?: string; reason?: string }>;
-  departments_to_watch?: Array<{
-    department_name?: string;
-    observation?: string;
-  }>;
+  departments_to_watch?: Array<
+    | string
+    | {
+        department_name?: string;
+        observation?: string;
+      }
+  >;
   collaboration_patterns?: string;
-  risks?: Array<{
-    risk_description?: string;
-    risk_level?: string;
-  }>;
+  risks?: Array<
+    | string
+    | {
+        risk_description?: string;
+        risk_level?: string;
+      }
+  >;
   recommendations?: Array<{
     title?: string;
     detail?: string;
   }>;
+  manager_talking_points?: string[];
 }
 
 type ApiRecord = Record<string, unknown>;
@@ -990,6 +1000,40 @@ function getAiSummaryFromPayload(payload: unknown): AiFeedbackSummary | null {
   return Object.keys(source).length > 0 ? (source as AiFeedbackSummary) : null;
 }
 
+function getApiErrorMessage(payload: unknown, fallback: string): string {
+  const record = toApiRecord(payload);
+  const nestedData = toApiRecord(record.data);
+  const errors = Array.isArray(record.errors)
+    ? record.errors
+    : Array.isArray(nestedData.errors)
+      ? nestedData.errors
+      : [];
+  const errorsMessage = errors
+    .map((error) => String(error || "").trim())
+    .filter(Boolean)
+    .join(", ");
+
+  return (
+    errorsMessage ||
+    getString(record.message) ||
+    getString(record.error) ||
+    getString(nestedData.message) ||
+    getString(nestedData.error) ||
+    fallback
+  );
+}
+
+function isFailedApiPayload(payload: unknown): boolean {
+  const record = toApiRecord(payload);
+  const nestedData = toApiRecord(record.data);
+  const success = record.success ?? nestedData.success;
+  const status = String(record.status ?? nestedData.status ?? "")
+    .trim()
+    .toLowerCase();
+
+  return success === false || String(success).toLowerCase() === "false" || status === "failed" || status === "error";
+}
+
 async function safeApiRequest<T>(endpoint: string): Promise<T> {
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const baseURL = await resolveFeedbackApiBaseUrl();
@@ -1054,6 +1098,15 @@ const FeedbackDashboard = () => {
         RATINGS_FEEDBACK_DASHBOARD_ENDPOINT
       );
 
+      if (isFailedApiPayload(response)) {
+        const message = getApiErrorMessage(
+          response,
+          "Failed to load feedback dashboard."
+        );
+        toast.error(message);
+        throw new Error(message);
+      }
+
       const payload = normalizeDashboardData(response);
 
       if (!payload) {
@@ -1112,6 +1165,25 @@ const FeedbackDashboard = () => {
         }
       );
 
+      if (isFailedApiPayload(generateResponse.data)) {
+        throw new Error(
+          getApiErrorMessage(
+            generateResponse.data,
+            "AI summary generation failed. Please run it again."
+          )
+        );
+      }
+
+      if (isAiSummaryCompleted(generateResponse.data)) {
+        const summary = getAiSummaryFromPayload(generateResponse.data);
+        if (!summary) {
+          throw new Error("AI summary response is empty.");
+        }
+        setAiFeedbackSummary(summary);
+        setIsAiSummaryModalOpen(false);
+        return;
+      }
+
       const jobId = generateResponse.data?.job_id;
       if (!generateResponse.data?.success || !jobId) {
         throw new Error("AI summary job was not created.");
@@ -1137,35 +1209,29 @@ const FeedbackDashboard = () => {
           break;
         }
 
-        const pollStatus = String(pollResponse.data?.status || "")
-          .trim()
-          .toLowerCase();
-
-        if (pollStatus === "error") {
-          const responseData = toApiRecord(pollResponse.data);
-          throw new Error(
-            getString(responseData.message) ||
-              getString(responseData.error) ||
-              "AI summary generation failed."
+        if (isFailedApiPayload(pollResponse.data)) {
+          const message = getApiErrorMessage(
+            pollResponse.data,
+            "AI summary generation failed. Please run it again."
           );
+          throw new Error(message);
         }
 
         await wait(10000);
       }
     } catch (err: unknown) {
+      let message = "Failed to generate AI summary.";
       if (axios.isAxiosError(err)) {
         const responseData = toApiRecord(err.response?.data);
-        setAiSummaryError(
-          getString(responseData.message) ||
-            getString(responseData.error) ||
+        message =
+          getApiErrorMessage(responseData, "") ||
             err.message ||
-            "Failed to generate AI summary."
-        );
+            "Failed to generate AI summary.";
       } else if (err instanceof Error) {
-        setAiSummaryError(err.message);
-      } else {
-        setAiSummaryError("Failed to generate AI summary.");
+        message = err.message;
       }
+      setAiSummaryError(message);
+      toast.error(message);
     } finally {
       aiSummaryPollingRef.current = false;
       setAiLoading(false);
@@ -1182,7 +1248,6 @@ const FeedbackDashboard = () => {
         <FeedbackThemeStyle />
         <div className="flex flex-col items-center gap-3 text-neutral-500">
           <Loader2 className="h-9 w-9 animate-spin text-[#DA7756]" />
-          <p className="text-sm font-medium">Fetching data from API…</p>
         </div>
       </div>
     );
@@ -1568,18 +1633,29 @@ const FeedbackDashboard = () => {
                       Departments To Watch
                     </p>
                     <ul className="space-y-2">
-                      {aiFeedbackSummary.departments_to_watch.map((department, index) => (
-                        <li key={`${department.department_name || "department"}-${index}`} className="rounded-lg bg-[#fffaf8] px-3 py-2">
-                          <p className="text-sm font-semibold text-neutral-900">
-                            {department.department_name || "Unnamed Department"}
-                          </p>
-                          {department.observation && (
-                            <p className="mt-1 text-xs font-medium text-neutral-600">
-                              {department.observation}
+                      {aiFeedbackSummary.departments_to_watch.map((department, index) => {
+                        const departmentName =
+                          typeof department === "string"
+                            ? department
+                            : department.department_name;
+                        const observation =
+                          typeof department === "string"
+                            ? ""
+                            : department.observation;
+
+                        return (
+                          <li key={`${departmentName || "department"}-${index}`} className="rounded-lg bg-[#fffaf8] px-3 py-2">
+                            <p className="text-sm font-semibold text-neutral-900">
+                              {departmentName || "Unnamed Department"}
                             </p>
-                          )}
-                        </li>
-                      ))}
+                            {observation && (
+                              <p className="mt-1 text-xs font-medium text-neutral-600">
+                                {observation}
+                              </p>
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
@@ -1590,18 +1666,25 @@ const FeedbackDashboard = () => {
                       Risks
                     </p>
                     <ul className="space-y-2">
-                      {aiFeedbackSummary.risks.map((risk, index) => (
-                        <li key={`${risk.risk_description || "risk"}-${index}`} className="rounded-lg bg-red-50 px-3 py-2">
-                          <p className="text-sm font-semibold text-red-800">
-                            {risk.risk_level || "Risk"}
-                          </p>
-                          {risk.risk_description && (
-                            <p className="mt-1 text-xs font-medium text-red-700">
-                              {risk.risk_description}
+                      {aiFeedbackSummary.risks.map((risk, index) => {
+                        const riskDescription =
+                          typeof risk === "string" ? risk : risk.risk_description;
+                        const riskLevel =
+                          typeof risk === "string" ? "Risk" : risk.risk_level;
+
+                        return (
+                          <li key={`${riskDescription || "risk"}-${index}`} className="rounded-lg bg-red-50 px-3 py-2">
+                            <p className="text-sm font-semibold text-red-800">
+                              {riskLevel || "Risk"}
                             </p>
-                          )}
-                        </li>
-                      ))}
+                            {riskDescription && (
+                              <p className="mt-1 text-xs font-medium text-red-700">
+                                {riskDescription}
+                              </p>
+                            )}
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}
@@ -1622,6 +1705,21 @@ const FeedbackDashboard = () => {
                               {recommendation.detail}
                             </p>
                           )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {!!aiFeedbackSummary.manager_talking_points?.length && (
+                  <div className="rounded-xl border bg-white p-4" style={{ borderColor: BP.primaryBord }}>
+                    <p className="mb-3 text-[11px] font-bold uppercase tracking-wide text-neutral-500">
+                      Manager Talking Points
+                    </p>
+                    <ul className="space-y-2">
+                      {aiFeedbackSummary.manager_talking_points.map((point, index) => (
+                        <li key={`${point || "talking-point"}-${index}`} className="rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900">
+                          {point}
                         </li>
                       ))}
                     </ul>

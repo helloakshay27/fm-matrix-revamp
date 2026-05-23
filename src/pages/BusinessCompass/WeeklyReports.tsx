@@ -241,6 +241,21 @@ const normalizeToString = (w: any): string => {
     return String(w ?? "");
 };
 
+const normalizeWinKey = (win: unknown): string =>
+    normalizeToString(win).trim().replace(/\s+/g, " ").toLowerCase();
+
+const getTitleOrValue = (item: unknown) => {
+    if (
+        item &&
+        typeof item === "object" &&
+        "title" in item &&
+        typeof item.title === "string"
+    ) {
+        return item.title;
+    }
+    return item;
+};
+
 const SOP_STATUS_OPTIONS = ["To Start", "Broken", "Running"] as const;
 
 const normalizeSopStatus = (status: any) =>
@@ -1372,6 +1387,49 @@ const WeeklyReports = () => {
         [weekStart]
     );
     const importPrevWeekEnd = React.useMemo(() => subDays(weekEnd, 7), [weekEnd]);
+    const existingWinKeys = React.useMemo(
+        () =>
+            new Set(
+                wins
+                    .map(normalizeWinKey)
+                    .filter(Boolean)
+            ),
+        [wins]
+    );
+    const availableDailyReports = React.useMemo(
+        () =>
+            dailyReports
+                .map((report) => {
+                    const rawDate = report.start_date || report.created_at;
+                    const reportDate = rawDate ? new Date(rawDate) : null;
+                    if (!reportDate || isNaN(reportDate.getTime())) return null;
+
+                    const rawWins =
+                        report.report_data?.achievements ||
+                        report.report_data?.accomplishments?.items?.map(
+                            getTitleOrValue
+                        ) ||
+                        (Array.isArray(report.report_data?.accomplishments)
+                            ? report.report_data.accomplishments.map(
+                                getTitleOrValue
+                            )
+                            : []) ||
+                        [];
+                    const reportWins = rawWins
+                        .map(normalizeToString)
+                        .map((win: string) => win.trim())
+                        .filter(
+                            (win: string) =>
+                                win && !existingWinKeys.has(normalizeWinKey(win))
+                        );
+
+                    return reportWins.length > 0
+                        ? { id: report.id, reportDate, wins: reportWins }
+                        : null;
+                })
+                .filter(Boolean),
+        [dailyReports, existingWinKeys]
+    );
 
     const upcomingDays = React.useMemo(() => {
         const start = new Date(weekEnd);
@@ -1881,6 +1939,7 @@ const WeeklyReports = () => {
 
     const handleImportDailyWins = async () => {
         setIsLoadingDailyReports(true);
+        setSelectedDailyWins([]);
         setShowDailyWinsDialog(true);
         try {
             const response = await apiClient.get(
@@ -3212,14 +3271,6 @@ const WeeklyReports = () => {
                                     <Badge className={badgePoints}>
                                         {weeklyScore.breakdown.planning}/20 pts
                                     </Badge>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        className={cn("rounded-lg text-xs font-bold", btnOutline)}
-                                    >
-                                        Important & Not Urgent
-                                    </Button>
                                 </div>
                             </div>
                             <div className="flex flex-col gap-4 p-4">
@@ -4301,66 +4352,44 @@ const WeeklyReports = () => {
                                 <Skeleton className="h-10 w-full" />
                                 <Skeleton className="h-10 w-full" />
                             </div>
-                        ) : dailyReports.length > 0 ? (
-                            dailyReports.map((report: any) => {
-                                const rawDate = report.start_date || report.created_at;
-                                if (!rawDate) return null;
-                                const reportDate = new Date(rawDate);
-                                if (isNaN(reportDate.getTime())) return null;
-
-                                const rawWins =
-                                    report.report_data?.achievements ||
-                                    report.report_data?.accomplishments?.items?.map(
-                                        (i: any) => i.title || i
-                                    ) ||
-                                    (Array.isArray(report.report_data?.accomplishments)
-                                        ? report.report_data.accomplishments.map(
-                                            (i: any) => i.title || i
-                                        )
-                                        : []) ||
-                                    [];
-                                const reportWins: string[] = rawWins
-                                    .map(normalizeToString)
-                                    .filter(Boolean);
-
-                                return reportWins.length > 0 ? (
-                                    <div key={report.id} className="space-y-3">
-                                        <h4 className="text-sm font-bold text-neutral-700">
-                                            {format(reportDate, "EEE, MMM d")}
-                                        </h4>
-                                        <div className="space-y-2">
-                                            {reportWins.map((win: string, i: number) => (
-                                                <div key={i} className="flex items-center gap-3 p-1">
-                                                    <Checkbox
-                                                        id={`win-${report.id}-${i}`}
-                                                        checked={selectedDailyWins.includes(win)}
-                                                        onCheckedChange={(checked) => {
-                                                            if (checked) {
-                                                                setSelectedDailyWins((prev) => [...prev, win]);
-                                                            } else {
-                                                                setSelectedDailyWins((prev) =>
-                                                                    prev.filter((w) => w !== win)
-                                                                );
-                                                            }
-                                                        }}
-                                                        className="rounded border-neutral-300"
-                                                    />
-                                                    <label
-                                                        htmlFor={`win-${report.id}-${i}`}
-                                                        className="text-sm text-neutral-700 cursor-pointer"
-                                                    >
-                                                        {win}
-                                                    </label>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="h-px bg-neutral-100 mt-4 mx-[-24px]" />
+                        ) : availableDailyReports.length > 0 ? (
+                            availableDailyReports.map((entry) => (
+                                <div key={entry.id} className="space-y-3">
+                                    <h4 className="text-sm font-bold text-neutral-700">
+                                        {format(entry.reportDate, "EEE, MMM d")}
+                                    </h4>
+                                    <div className="space-y-2">
+                                        {entry.wins.map((win: string, i: number) => (
+                                            <div key={i} className="flex items-center gap-3 p-1">
+                                                <Checkbox
+                                                    id={`win-${entry.id}-${i}`}
+                                                    checked={selectedDailyWins.includes(win)}
+                                                    onCheckedChange={(checked) => {
+                                                        if (checked) {
+                                                            setSelectedDailyWins((prev) => [...prev, win]);
+                                                        } else {
+                                                            setSelectedDailyWins((prev) =>
+                                                                prev.filter((w) => w !== win)
+                                                            );
+                                                        }
+                                                    }}
+                                                    className="rounded border-neutral-300"
+                                                />
+                                                <label
+                                                    htmlFor={`win-${entry.id}-${i}`}
+                                                    className="text-sm text-neutral-700 cursor-pointer"
+                                                >
+                                                    {win}
+                                                </label>
+                                            </div>
+                                        ))}
                                     </div>
-                                ) : null;
-                            })
+                                    <div className="h-px bg-neutral-100 mt-4 mx-[-24px]" />
+                                </div>
+                            ))
                         ) : (
                             <div className="py-8 text-center text-neutral-500 text-sm italic">
-                                No daily reports with wins found for the past week.
+                                No daily wins available to import for the past week.
                             </div>
                         )}
                     </div>
