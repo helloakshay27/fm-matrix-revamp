@@ -260,6 +260,12 @@ const IssuesListPage = ({
   >([]);
   const [importResults, setImportResults] = useState({ created: 0, failed: 0 });
 
+  // Responsible Person Change Modal State
+  const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
+  const [responsibleTaskId, setResponsibleTaskId] = useState<string | null>(null);
+  const [pendingResponsiblePersonId, setPendingResponsiblePersonId] = useState<string | null>(null);
+  const [isResponsibleLoading, setIsResponsibleLoading] = useState(false);
+
   // Column display state
   const [columnOrder, setColumnOrder] = useState<string[]>(() => {
     const savedOrder = localStorage.getItem("issuesTableColumnOrder");
@@ -575,17 +581,50 @@ const IssuesListPage = ({
   };
 
   const handleIssueUpdate = async (issueId: string, assignedToId: string) => {
+    // Find the current assigned person for this issue
+    const currentIssue = displayIssues?.find((issue: any) => String(issue.id) === String(issueId));
+    const currentAssignedTo = currentIssue?.responsible_person_id;
+
+    // If changing the responsible person, show modal
+    if (currentAssignedTo && currentAssignedTo !== assignedToId) {
+      setResponsibleTaskId(issueId);
+      setPendingResponsiblePersonId(assignedToId);
+      setIsResponsibleModalOpen(true);
+    } else {
+      // First assignment or same person, just update
+      try {
+        await updateMutation.mutateAsync({
+          id: issueId,
+          data: { responsible_person_id: assignedToId },
+          baseUrl,
+          token,
+        });
+        toast.success("Issue updated successfully");
+      } catch (error) {
+        console.log(error);
+        toast.error("Failed to update issue");
+      }
+    }
+  };
+
+  const handleResponsiblePersonChange = async (reason: string, issueId: string, newPersonId: string) => {
+    setIsResponsibleLoading(true);
     try {
       await updateMutation.mutateAsync({
         id: issueId,
-        data: { responsible_person_id: assignedToId },
+        data: { responsible_person_id: newPersonId },
         baseUrl,
         token,
       });
-      toast.success("Issue updated successfully");
+      toast.success("Issue responsible person updated successfully");
+      setIsResponsibleModalOpen(false);
+      setResponsibleTaskId(null);
+      setPendingResponsiblePersonId(null);
     } catch (error) {
       console.log(error);
       toast.error("Failed to update issue");
+    } finally {
+      setIsResponsibleLoading(false);
     }
   };
 
@@ -1350,8 +1389,86 @@ const IssuesListPage = ({
           </PaginationContent>
         </Pagination>
       </div>
+
+      {/* Responsible Person Change Modal */}
+      <ResponsiblePersonReasonModal
+        isOpen={isResponsibleModalOpen}
+        onClose={() => {
+          setIsResponsibleModalOpen(false);
+          setResponsibleTaskId(null);
+          setPendingResponsiblePersonId(null);
+        }}
+        onSubmit={(reason) => {
+          if (responsibleTaskId && pendingResponsiblePersonId) {
+            handleResponsiblePersonChange(reason, responsibleTaskId, pendingResponsiblePersonId);
+          }
+        }}
+        isLoading={isResponsibleLoading}
+        taskId={responsibleTaskId}
+        pendingResponsiblePersonId={pendingResponsiblePersonId}
+        users={users}
+      />
     </div>
   );
 };
+
+// Responsible Person Change Modal Component
+const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId, pendingResponsiblePersonId = null, users = [] }: any) => {
+  const [reason, setReason] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) {
+      setReason('');
+    }
+  }, [isOpen]);
+
+  const handleSubmit = () => {
+    if (!reason.trim()) {
+      toast.error('Please enter a reason for changing the responsible person');
+      return;
+    }
+    if (taskId && pendingResponsiblePersonId) {
+      onSubmit(reason, taskId, pendingResponsiblePersonId);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Responsible Person Change</h2>
+
+        <div className="mb-6">
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="Enter reason for changing responsible person..."
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            rows={4}
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="flex gap-3 justify-end">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={isLoading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={isLoading}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+          >
+            {isLoading ? 'Submitting...' : 'Change Responsible Person'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default IssuesListPage;
