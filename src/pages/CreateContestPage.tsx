@@ -891,6 +891,7 @@ export const CreateContestPage: React.FC = () => {
                       >
                         <MenuItem value="Coupon Code">Coupon Code</MenuItem>
                         <MenuItem value="Points">Points</MenuItem>
+                        <MenuItem value="None">None</MenuItem>
                       </MuiSelect>
                     </FormControl>
 
