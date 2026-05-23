@@ -820,6 +820,7 @@ const AddSacHsn = lazy(() => import("./pages/AddSacHsn"));
 const WOFeedsPage = lazy(() => import("./pages/WOFeedsPage").then(m => ({ default: m.WOFeedsPage })));
 const VendorPage = lazy(() => import("./pages/VendorPage").then(m => ({ default: m.VendorPage })));
 const AddVendorPage = lazy(() => import("./pages/AddVendorPage").then(m => ({ default: m.AddVendorPage })));
+const EditVendorPage = lazy(() => import("./pages/EditVendorPage").then(m => ({ default: m.EditVendorPage })));
 const FinanceMasterPage = lazy(() => import("./pages/FinanceMasterPage").then(m => ({ default: m.FinanceMasterPage })));
 const MsafeReportDownload = lazy(() => import("./pages/MsafeReportDownload"));
 const MsafeDetailReportDownload = lazy(() => import("./pages/MsafeDetailReportDownload"));
@@ -1097,6 +1098,7 @@ const PaymentPlanSetup = lazy(() => import("./pages/settings/PaymentPlanSetup").
 const PurchaseOrderCreatePage = lazy(() => import("./pages/PurchaseOrderCreatePage").then(m => ({ default: m.PurchaseOrderCreatePage })));
 const PurchaseOrderDetailPage = lazy(() => import("./pages/PurchaseOrderDetailPage").then(m => ({ default: m.PurchaseOrderDetailPage })));
 const PurchaseOrderListPage = lazy(() => import("./pages/PurchaseOrderListPage").then(m => ({ default: m.PurchaseOrderListPage })));
+const PurchaseOrderEditPage = lazy(() => import("./pages/Accounting/PurchaseOrderEdit").then(m => ({ default: m.PurchaseOrderEditPage })));
 const RecurringBillCreatePage = lazy(() => import("./pages/ClubManagement/RecurringBillCreatePage").then(m => ({ default: m.RecurringBillCreatePage })));
 const RecurringBillsDashboard = lazy(() => import("./pages/ClubManagement/RecurringBillsDashboard").then(m => ({ default: m.RecurringBillsDashboard })));
 const NewRecurringExpensePage = lazy(() => import("./pages/New Recurring Expense"));
@@ -3465,7 +3467,7 @@ function App() {
                             />
                             <Route
                               path="/accounting/purchase-order/edit/:id"
-                              element={<PurchaseOrderCreatePage />}
+                              element={<PurchaseOrderEditPage />}
                             />
                             {/* Bills Routes */}
                             <Route

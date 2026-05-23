@@ -274,10 +274,17 @@ const DetailsVendorPage = () => {
 
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="flex flex-col gap-2">
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-4">
                             <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">
                                 {vendor?.company_name}
                             </h1>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => navigate(`/maintenance/vendor/edit/${vendor?.id}`)}
+                            >
+                                Edit Vendor
+                            </Button>
                         </div>
                         <div className="text-sm text-gray-600">
                             Vendor # {vendor?.id} • Created by{" "}

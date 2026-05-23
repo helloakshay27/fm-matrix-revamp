@@ -1359,6 +1359,7 @@ export const EditSurveyPage = () => {
                   >
                     <MenuItem value="survey">Survey</MenuItem>
                     <MenuItem value="patrolling">Patrolling</MenuItem>
+                    <MenuItem value="f_and_b">F&B</MenuItem>
                   </MuiSelect>
                 </FormControl>
               </div>
