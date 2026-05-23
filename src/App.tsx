@@ -1295,7 +1295,6 @@ const Announcement = lazy(() => import("./pages/BusinessCompass/Announcement"));
 const Leaderboard = lazy(() => import("./pages/BusinessCompass/Leaderboard"));
 const DiscPersonalityAssessment = lazy(() => import("./pages/BusinessCompass/DiscPersonalityAssessment"));
 const HelpCenter = lazy(() => import("./pages/BusinessCompass/HelpCenter"));
-const BugReports = lazy(() => import("./pages/BusinessCompass/BugReports"));
 const WeeklyReports = lazy(() => import("./pages/BusinessCompass/WeeklyReports"));
 const BusinessCompassTasksAndIssues = lazy(() => import("./pages/BusinessCompass/BusinessCompassTasksAndIssues"));
 const DirectoryAndChat = lazy(() => import("./pages/BusinessCompass/DirectoryAndChat"));
