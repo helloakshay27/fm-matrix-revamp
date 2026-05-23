@@ -395,6 +395,122 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, onEndTask, isLoading, tas
     );
 };
 
+// Responsible Person Change Modal Component
+const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId, pendingResponsiblePersonId = null, users = [] }: any) => {
+    const [reason, setReason] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason('');
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error('Please enter a reason for changing the responsible person');
+            return;
+        }
+        if (taskId && pendingResponsiblePersonId) {
+            onSubmit(reason, taskId, pendingResponsiblePersonId);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Responsible Person Change</h2>
+
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for changing responsible person..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                    <Button
+                        variant="outline"
+                        onClick={onClose}
+                        disabled={isLoading}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    >
+                        {isLoading ? 'Submitting...' : 'Change Responsible Person'}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Hold Reason Modal Component
+const HoldReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
+    const [reason, setReason] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason('');
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error('Please enter a reason for putting the task on hold');
+            return;
+        }
+        onSubmit(reason, taskId);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Hold</h2>
+
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for putting task on hold..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                    <Button
+                        variant="outline"
+                        onClick={onClose}
+                        disabled={isLoading}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50"
+                    >
+                        {isLoading ? 'Submitting...' : 'Put on Hold'}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // Overdue Reason Modal Component
 const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     const [reason, setReason] = useState('');
@@ -590,6 +706,17 @@ const ProjectTasksPage = () => {
     const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
     const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
     const [isPauseLoading, setIsPauseLoading] = useState(false);
+
+    // Hold Reason Modal State
+    const [isHoldModalOpen, setIsHoldModalOpen] = useState(false);
+    const [holdTaskId, setHoldTaskId] = useState<number | null>(null);
+    const [isHoldLoading, setIsHoldLoading] = useState(false);
+
+    // Responsible Person Change Modal State
+    const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
+    const [responsibleTaskId, setResponsibleTaskId] = useState<number | null>(null);
+    const [pendingResponsiblePersonId, setPendingResponsiblePersonId] = useState<number | null>(null);
+    const [isResponsibleLoading, setIsResponsibleLoading] = useState(false);
 
     // Overdue Reason Modal State
     const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
@@ -1460,6 +1587,13 @@ const ProjectTasksPage = () => {
 
     const handleStatusChange = async (id: number, status: string) => {
         try {
+            // Check if task is being put on hold
+            if (status === 'on_hold') {
+                setHoldTaskId(id);
+                setIsHoldModalOpen(true);
+                return;
+            }
+
             // Check if task is being marked as completed and if it's overdue
             if (status === 'completed') {
                 const task = tasks.find(t => t.id === id);
@@ -1507,12 +1641,60 @@ const ProjectTasksPage = () => {
     }
 
     const handleUpdateTask = async (id: number, responsible_person_id: number) => {
+        // Show modal to ask for reason
+        setResponsibleTaskId(id);
+        setPendingResponsiblePersonId(responsible_person_id);
+        setIsResponsibleModalOpen(true);
+    }
+
+    const handleResponsiblePersonReasonSubmit = async (reason: string, tid: number, newResponsiblePersonId: number) => {
+        if (!tid || !newResponsiblePersonId) return;
+
+        setIsResponsibleLoading(true);
         try {
-            await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { responsible_person_id } })).unwrap();
-            setCurrentPage(1);
-            toast.success("Task updated successfully");
+            // Get the current task to find old responsible person
+            const task = tasks.find(t => t.id === tid);
+            const oldResponsibleUser = users.find(u => u.id === task?.responsible_person_id);
+            const oldResponsibleName = oldResponsibleUser?.full_name || 'Unknown';
+
+            // Find new responsible person name from users list
+            const newResponsibleUser = users.find(u => u.id === newResponsiblePersonId);
+            const newResponsibleName = newResponsibleUser?.full_name || `User ${newResponsiblePersonId}`;
+
+            // Update task with new responsible person
+            await dispatch(editProjectTask({ token, baseUrl, id: String(tid), data: { responsible_person_id: newResponsiblePersonId } })).unwrap();
+
+            // Save the change reason as a comment
+            const commentPayload = {
+                comment: {
+                    body: `Responsible person changed from ${oldResponsibleName} to ${newResponsibleName} with reason: ${reason}`,
+                    commentable_id: tid,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            };
+
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            toast.success('Responsible person changed with reason');
+            setIsResponsibleModalOpen(false);
+            setResponsibleTaskId(null);
+            setPendingResponsiblePersonId(null);
+
+            // Refresh task list in background
+            refetchTasks();
         } catch (error) {
-            console.log(error)
+            console.error('Failed to update responsible person:', error);
+            toast.error(
+                `Failed to update responsible person: ${error?.response?.data?.error || error?.message || 'Server error'}`
+            );
+        } finally {
+            setIsResponsibleLoading(false);
         }
     }
 
@@ -1571,6 +1753,47 @@ const ProjectTasksPage = () => {
             );
         } finally {
             setIsPauseLoading(false);
+        }
+    };
+
+    const handleHoldReasonSubmit = async (reason: string, tid: number) => {
+        if (!tid) return;
+
+        setIsHoldLoading(true);
+        try {
+            // Update task status to "on_hold"
+            await statusMutation.mutateAsync({ id: tid, status: 'on_hold' });
+
+            // Save the hold reason as a comment
+            const commentPayload = {
+                comment: {
+                    body: `On hold with reason: ${reason}`,
+                    commentable_id: tid,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            };
+
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            toast.success('Task put on hold with reason');
+            setIsHoldModalOpen(false);
+            setHoldTaskId(null);
+
+            // Refresh task list in background
+            refetchTasks();
+        } catch (error) {
+            console.error('Failed to put task on hold:', error);
+            toast.error(
+                `Failed to put task on hold: ${error?.response?.data?.error || error?.message || 'Server error'}`
+            );
+        } finally {
+            setIsHoldLoading(false);
         }
     };
 
@@ -1771,7 +1994,7 @@ const ProjectTasksPage = () => {
                             className={`absolute top-0 left-0 h-6 ${color} rounded-full transition-all duration-300`}
                             style={{ width: `${progress}%` }}
                         ></div>
-                        <span className="relative z-10 text-xs font-semibold text-gray-800">
+                        <span className="relative text-xs font-semibold text-gray-800">
                             {Math.round(progress)}%
                         </span>
                     </div>
@@ -2496,6 +2719,8 @@ const ProjectTasksPage = () => {
                 collapsible={true}
                 getChildrenKey={() => "sub_tasks_managements"}
                 renderChildrenRows={renderChildrenRows}
+                enableFreeze={true}
+                freezeColumnsCount={3}
             />
 
             <Dialog
@@ -2913,6 +3138,33 @@ const ProjectTasksPage = () => {
                 onEndTask={handleEndTaskSubmit}
                 isLoading={isPauseLoading}
                 taskId={pauseTaskId}
+            />
+
+            {/* Hold Reason Modal */}
+            <HoldReasonModal
+                isOpen={isHoldModalOpen}
+                onClose={() => {
+                    setIsHoldModalOpen(false);
+                    setHoldTaskId(null);
+                }}
+                onSubmit={handleHoldReasonSubmit}
+                isLoading={isHoldLoading}
+                taskId={holdTaskId}
+            />
+
+            {/* Responsible Person Change Reason Modal */}
+            <ResponsiblePersonReasonModal
+                isOpen={isResponsibleModalOpen}
+                onClose={() => {
+                    setIsResponsibleModalOpen(false);
+                    setResponsibleTaskId(null);
+                    setPendingResponsiblePersonId(null);
+                }}
+                onSubmit={handleResponsiblePersonReasonSubmit}
+                isLoading={isResponsibleLoading}
+                taskId={responsibleTaskId}
+                pendingResponsiblePersonId={pendingResponsiblePersonId}
+                users={users}
             />
 
             {/* Overdue Reason Modal */}
