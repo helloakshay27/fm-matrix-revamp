@@ -101,6 +101,7 @@ const TaskCard = ({ task, selectedDate, isDragging, setDraggedTask }) => {
             task.type === "issue" ? `/vas/issues/${task.id}` : `/vas/tasks/${task.id}`
           }
           target="_blank"
+          title={task.title}
         >
           {task.type === "issue" ? "I" : "T"}
           {task.id} - {task.title} (

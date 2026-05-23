@@ -2931,7 +2931,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       }}
                       max={10}
                       step={1}
-                      className="cursor-pointer [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer [&_[role=slider]]:outline-none [&_[data-orientation=horizontal]]:h-1.5 [&_[data-orientation=horizontal]_span:first-child]:bg-[#DA7756]"
+                      className="cursor-pointer [&>span:first-of-type]:h-1.5 [&>span:first-of-type]:bg-[#e5e7eb] [&>span:first-of-type>span]:bg-[#DA7756] [&_[role=slider]]:bg-[#DA7756] [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:shadow-md [&_[role=slider]]:cursor-pointer [&_[role=slider]]:outline-none"
                     />
                   </div>
                   <div className="flex items-center gap-3 bg-[#DA7756]/5 px-4 py-3 rounded-[10px] border border-[#DA7756]/20 min-w-[150px] justify-center">

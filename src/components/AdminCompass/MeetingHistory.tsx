@@ -72,6 +72,11 @@ const STATUS_BADGE: Record<string, string> = {
     pending:   'bg-yellow-100 text-yellow-700 border-yellow-200',
 };
 
+const getISOWeekKey = (date: Date) => {
+    const { week, year } = getISOWeek(date);
+    return `${year}-W${String(week).padStart(2, '0')}`;
+};
+
 // ── Week accordion card ────────────────────────────────────────────────────────
 const WeekCard = ({ entry }: { entry: WeekHistory }) => {
     const [expanded, setExpanded] = useState(false);
@@ -200,10 +205,28 @@ const WeekCard = ({ entry }: { entry: WeekHistory }) => {
 };
 
 // ── Main component ─────────────────────────────────────────────────────────────
-const MeetingHistory = () => {
-    const [currentWeek, setCurrentWeek] = useState(new Date());
+interface MeetingHistoryProps {
+    initialWeekDate?: Date;
+    onWeekDateChange?: (date: Date) => void;
+}
+
+const MeetingHistory = ({ initialWeekDate, onWeekDateChange }: MeetingHistoryProps = {}) => {
+    const [currentWeek, setCurrentWeek] = useState(() => initialWeekDate || new Date());
     const [historyData, setHistoryData] = useState<HistoryResponse | null>(null);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!initialWeekDate) return;
+        setCurrentWeek((current) =>
+            getISOWeekKey(current) === getISOWeekKey(initialWeekDate)
+                ? current
+                : initialWeekDate
+        );
+    }, [initialWeekDate]);
+
+    useEffect(() => {
+        onWeekDateChange?.(currentWeek);
+    }, [currentWeek, onWeekDateChange]);
 
     const getHeaders = () => ({
         Authorization: `Bearer ${localStorage.getItem('token')}`,

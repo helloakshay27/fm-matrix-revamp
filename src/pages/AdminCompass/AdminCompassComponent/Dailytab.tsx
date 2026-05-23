@@ -441,8 +441,12 @@ const resolveRawSource = (report: any) => {
 // -────────────────────────────────────────────
 const DailyTab = ({
   onMeetingSaved,
+  selectedDate,
+  onSelectedDateChange,
 }: {
   onMeetingSaved?: (date: string) => void;
+  selectedDate?: string;
+  onSelectedDateChange?: (date: string) => void;
 }) => {
   const getLocalDateKey = (date = new Date()) => {
     const year = date.getFullYear();
@@ -451,7 +455,7 @@ const DailyTab = ({
     return `${year}-${month}-${day}`;
   };
   const [activeDate, setActiveDate] = useState(
-    () => getLocalDateKey()
+    () => selectedDate || getLocalDateKey()
   );
   const [meetingsList, setMeetingsList] = useState<any[]>([]);
   const [meetingsLoaded, setMeetingsLoaded] = useState(false);
@@ -482,6 +486,17 @@ const DailyTab = ({
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [fetchedFeedbacks, setFetchedFeedbacks] = useState<any[]>([]);
   const [isFetchingFeedbacks, setIsFetchingFeedbacks] = useState(false);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    setActiveDate((currentDate) =>
+      currentDate === selectedDate ? currentDate : selectedDate
+    );
+  }, [selectedDate]);
+
+  useEffect(() => {
+    onSelectedDateChange?.(activeDate);
+  }, [activeDate, onSelectedDateChange]);
 
   const navigate = useNavigate();
 

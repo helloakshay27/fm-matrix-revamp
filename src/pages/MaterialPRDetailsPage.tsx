@@ -201,6 +201,13 @@ const columns: ColumnConfig[] = [
   { key: "wbs_code", label: "Wbs Code", sortable: true, defaultVisible: true },
 ];
 
+const formatIndian = (val: string | number | null | undefined): string => {
+  if (val === "" || val === null || val === undefined) return "-";
+  const n = parseFloat(String(val));
+  if (isNaN(n)) return String(val);
+  return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+};
+
 export const MaterialPRDetailsPage = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -818,9 +825,9 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
       prod_desc: item.prod_desc ?? "-",
       quantity: item.quantity?.toString() ?? "0",
       unit: item.unit ?? "-",
-      total_value: item.total_value?.toString() ?? "0",
-      rate: item.rate?.toString() ?? "0",
-      amount: item.total_value?.toString() ?? "0",
+      total_value: formatIndian(item.total_value),
+      rate: formatIndian(item.rate),
+      amount: formatIndian(item.total_value),
       approved_qty: item.approved_qty?.toString() ?? "0",
       transfer_qty: item.transfer_qty?.toString() ?? "0",
       wbs_code: item.wbs_code ?? "-",
@@ -1206,7 +1213,7 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
               <div className="flex justify-end">
                 <div className="text-right">
                   <div className="text-lg font-semibold">
-                    Net Amount(INR): ₹{pr.total_amount ?? "0"}
+                    Net Amount(INR): ₹{formatIndian(pr.total_amount ?? 0)}
                   </div>
                   <div className="text-sm text-muted-foreground">
                     Amount In Words:{" "}

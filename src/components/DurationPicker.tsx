@@ -664,17 +664,28 @@ export const DurationPicker = ({
                     <div className="mt-6 flex gap-3">
                         <button
                             onClick={() => {
-                                // Clear only input-related values
-                                setDailyHours([]);
+                                // Reset each day to 30 minutes (0.5 hours)
+                                const thirtyMinutes = "0:30";
+                                const resetHours = daysList.map(d => d.isWorking ? thirtyMinutes : "");
+                                setDailyHours(resetHours);
                                 setManualDuration("");
                                 setTotalHoursInput("");
 
-                                // We keep daysList and totalWorkingHours (if calculated from dates)
-                                // to ensure the structural view remains visible.
-                                if (taskType === "flexible") {
-                                    setTotalWorkingHours(0);
-                                    if (onChange) onChange(0);
-                                    if (onDateWiseHoursChange) onDateWiseHoursChange([]);
+                                // Calculate total working hours: 30 minutes × number of working days
+                                const workingDaysCount = daysList.filter(d => d.isWorking).length;
+                                const totalHours = workingDaysCount * 0.5; // 0.5 hours = 30 minutes
+                                setTotalWorkingHours(totalHours);
+
+                                if (onChange) onChange(totalHours);
+
+                                // Update dateWiseHours callback with 30 minutes for each working day
+                                if (onDateWiseHoursChange && daysList.length > 0) {
+                                    const dateWise = daysList.map((d) => ({
+                                        date: d.date,
+                                        hours: d.isWorking ? 0 : 0,
+                                        minutes: d.isWorking ? 30 : 0,
+                                    }));
+                                    onDateWiseHoursChange(dateWise);
                                 }
                             }}
                             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-gray-700 font-medium"

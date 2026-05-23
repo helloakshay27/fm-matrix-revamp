@@ -2118,150 +2118,168 @@ const DiscPersonalityAssessment = () => {
                   </AccordionItem>
                 </Accordion>
 
-                <button
-                  type="button"
-                  className={cn(
-                    "w-full rounded-2xl bg-[#DA7756] py-4 text-base font-extrabold text-white shadow-sm transition-all hover:bg-[#BC6B4A] hover:scale-[1.01] active:scale-[0.99]",
-                    (loadingQuestions || questions.length === 0) &&
-                      "opacity-60 cursor-not-allowed"
-                  )}
-                  onClick={handleStartAssessment}
-                  disabled={loadingQuestions || questions.length === 0}
-                >
-                  {loadingQuestions ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="h-5 w-5 animate-spin" /> Loading
-                      assessment...
-                    </span>
-                  ) : (
-                    "🚀 Start Assessment"
-                  )}
-                </button>
-
-                {/* ── Watch: What is DISC? Video — warm brand colors ── */}
-                <div
-                  style={{
-                    background: "#FFF9F6",
-                    borderRadius: 16,
-                    overflow: "hidden",
-                    border: "1px solid rgba(218,119,86,0.25)",
-                  }}
-                >
-                  <div style={{ padding: "16px 20px 8px 20px" }}>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 10,
-                        marginBottom: 4,
-                      }}
-                    >
-                      {/* Proper YouTube pill logo */}
-                      <svg
-                        viewBox="0 0 90 20"
-                        width="72"
-                        height="16"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-label="YouTube"
-                      >
-                        <rect width="90" height="20" rx="4" fill="#FF0000" />
-                        <path
-                          d="M12 5.5l-4.5 2.5v5l4.5 2.5V5.5z"
-                          fill="white"
-                        />
-                        <rect
-                          x="7.5"
-                          y="5.5"
-                          width="2"
-                          height="9"
-                          fill="white"
-                        />
-                        <text
-                          x="17"
-                          y="14"
-                          fill="white"
-                          fontSize="9"
-                          fontFamily="Arial,Helvetica,sans-serif"
-                          fontWeight="bold"
-                        >
-                          YouTube
-                        </text>
-                      </svg>
-                      <span
-                        style={{
-                          fontSize: 15,
-                          fontWeight: 700,
-                          color: "#1f2937",
-                        }}
-                      >
-                        Watch: What is DISC?
-                      </span>
+                <div className="grid gap-4 rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] md:items-center">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#CE8261]">
+                        Ready when you are
+                      </p>
+                      <h3 className="mt-1 text-lg font-bold text-neutral-900">
+                        Complete your DISC assessment
+                      </h3>
+                      <p className="mt-1 max-w-xl text-sm leading-relaxed text-neutral-500">
+                        Answer a few quick questions to understand your work
+                        style, communication patterns, and best-fit
+                        collaboration approach.
+                      </p>
                     </div>
-                    <p style={{ fontSize: 13, color: "#6b7280", margin: 0 }}>
-                      A quick overview of the DISC model and how it applies to
-                      you
-                    </p>
-                  </div>
-                  <div style={{ padding: "12px 16px 16px 16px" }}>
-                    <a
-                      href="https://youtu.be/C3T7LNHOaow"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: "block",
-                        position: "relative",
-                        borderRadius: 12,
-                        overflow: "hidden",
-                        cursor: "pointer",
-                      }}
+                    <button
+                      type="button"
+                      className={cn(
+                        "inline-flex w-full items-center justify-center rounded-2xl bg-[#DA7756] px-6 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#BC6B4A] active:scale-[0.99] sm:w-auto",
+                        (loadingQuestions || questions.length === 0) &&
+                          "opacity-60 cursor-not-allowed"
+                      )}
+                      onClick={handleStartAssessment}
+                      disabled={loadingQuestions || questions.length === 0}
                     >
-                      <img
-                        src="https://img.youtube.com/vi/C3T7LNHOaow/maxresdefault.jpg"
-                        alt="What is DISC? — Watch on YouTube"
-                        style={{
-                          width: "100%",
-                          display: "block",
-                          aspectRatio: "16/9",
-                          objectFit: "cover",
-                        }}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            "https://img.youtube.com/vi/C3T7LNHOaow/hqdefault.jpg";
-                        }}
-                      />
-                      {/* Dark overlay + centred play button */}
+                      {loadingQuestions ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" /> Loading
+                          assessment...
+                        </span>
+                      ) : (
+                        "Start Assessment"
+                      )}
+                    </button>
+                  </div>
+
+                  {/* ── Watch: What is DISC? Video — warm brand colors ── */}
+                  <div
+                    style={{
+                      background: "#FFF9F6",
+                      borderRadius: 14,
+                      overflow: "hidden",
+                      border: "1px solid rgba(218,119,86,0.25)",
+                      width: "100%",
+                      boxShadow: "0 8px 18px rgba(26,26,26,0.05)",
+                    }}
+                  >
+                    <div style={{ padding: "8px 12px 5px 12px" }}>
                       <div
                         style={{
-                          position: "absolute",
-                          inset: 0,
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
-                          background: "rgba(0,0,0,0.30)",
-                          transition: "background 0.2s",
+                          gap: 7,
+                          marginBottom: 2,
                         }}
-                        onMouseEnter={(e) =>
-                          (e.currentTarget.style.background =
-                            "rgba(0,0,0,0.45)")
-                        }
-                        onMouseLeave={(e) =>
-                          (e.currentTarget.style.background =
-                            "rgba(0,0,0,0.30)")
-                        }
                       >
-                        {/* Official YouTube pill logo as play button */}
+                        {/* Proper YouTube pill logo */}
+                        <svg
+                          viewBox="0 0 90 20"
+                          width="52"
+                          height="12"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-label="YouTube"
+                        >
+                          <rect width="90" height="20" rx="4" fill="#FF0000" />
+                          <path
+                            d="M12 5.5l-4.5 2.5v5l4.5 2.5V5.5z"
+                            fill="white"
+                          />
+                          <rect
+                            x="7.5"
+                            y="5.5"
+                            width="2"
+                            height="9"
+                            fill="white"
+                          />
+                          <text
+                            x="17"
+                            y="14"
+                            fill="white"
+                            fontSize="9"
+                            fontFamily="Arial,Helvetica,sans-serif"
+                            fontWeight="bold"
+                          >
+                            YouTube
+                          </text>
+                        </svg>
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: "#1f2937",
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          Watch: What is DISC?
+                        </span>
+                      </div>
+                      <p
+                        style={{
+                          fontSize: 11,
+                          color: "#6b7280",
+                          margin: 0,
+                          lineHeight: 1.35,
+                        }}
+                      >
+                        A quick overview of the DISC model and how it applies
+                        to you
+                      </p>
+                    </div>
+                    <div style={{ padding: "7px 10px 10px 10px" }}>
+                      <a
+                        href="https://youtu.be/C3T7LNHOaow"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "block",
+                          position: "relative",
+                          borderRadius: 10,
+                          overflow: "hidden",
+                          cursor: "pointer",
+                          height: 128,
+                        }}
+                      >
+                        <img
+                          src="https://img.youtube.com/vi/C3T7LNHOaow/maxresdefault.jpg"
+                          alt="What is DISC? — Watch on YouTube"
+                          style={{
+                            width: "100%",
+                            height: "100%",
+                            display: "block",
+                            objectFit: "cover",
+                          }}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              "https://img.youtube.com/vi/C3T7LNHOaow/hqdefault.jpg";
+                          }}
+                        />
+                        {/* Dark overlay + centred play button */}
                         <div
                           style={{
+                            position: "absolute",
+                            inset: 0,
                             display: "flex",
-                            flexDirection: "column",
                             alignItems: "center",
-                            gap: 10,
+                            justifyContent: "center",
+                            background: "rgba(0,0,0,0.30)",
+                            transition: "background 0.2s",
                           }}
+                          onMouseEnter={(e) =>
+                            (e.currentTarget.style.background =
+                              "rgba(0,0,0,0.45)")
+                          }
+                          onMouseLeave={(e) =>
+                            (e.currentTarget.style.background =
+                              "rgba(0,0,0,0.30)")
+                          }
                         >
                           <svg
                             viewBox="0 0 68 48"
-                            width="68"
-                            height="48"
+                            width="44"
+                            height="31"
                             xmlns="http://www.w3.org/2000/svg"
                             aria-label="Play on YouTube"
                           >
@@ -2272,44 +2290,44 @@ const DiscPersonalityAssessment = () => {
                             <path d="M45 24L27 14v20" fill="white" />
                           </svg>
                         </div>
-                      </div>
-                      {/* Bottom-right YouTube badge */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: 10,
-                          right: 10,
-                          background: "rgba(0,0,0,0.80)",
-                          borderRadius: 6,
-                          padding: "4px 10px",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                        }}
-                      >
-                        <svg
-                          viewBox="0 0 68 48"
-                          width="14"
-                          height="10"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z"
-                            fill="#FF0000"
-                          />
-                          <path d="M45 24L27 14v20" fill="white" />
-                        </svg>
-                        <span
+                        {/* Bottom-right YouTube badge */}
+                        <div
                           style={{
-                            fontSize: 11,
-                            fontWeight: 700,
-                            color: "#ffffff",
+                            position: "absolute",
+                            bottom: 10,
+                            right: 10,
+                            background: "rgba(0,0,0,0.80)",
+                            borderRadius: 5,
+                            padding: "2px 7px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
                           }}
                         >
-                          Watch on YouTube
-                        </span>
-                      </div>
-                    </a>
+                          <svg
+                            viewBox="0 0 68 48"
+                            width="12"
+                            height="9"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z"
+                              fill="#FF0000"
+                            />
+                            <path d="M45 24L27 14v20" fill="white" />
+                          </svg>
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontWeight: 600,
+                              color: "#ffffff",
+                            }}
+                          >
+                            Watch on YouTube
+                          </span>
+                        </div>
+                      </a>
+                    </div>
                   </div>
                 </div>
               </>

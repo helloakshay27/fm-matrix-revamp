@@ -10,7 +10,6 @@ import {
   RefreshCw,
   Edit,
   Trash,
-  Sparkles,
   X,
   Loader2,
   AlertTriangle,
@@ -861,9 +860,6 @@ const MeetingCard = ({
               )}
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button className="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-bold rounded-[14px] transition-all">
-                <Sparkles className="w-4 h-4" /> Generate AI
-              </button>
               <button
                 onClick={handleOpenEditModal}
                 className="flex items-center gap-2 px-4 py-2 bg-white/15 hover:bg-white/25 border border-white/20 text-white text-sm font-bold rounded-[14px] transition-all"
@@ -1138,7 +1134,13 @@ const AllMeetingsView = ({
 // ─────────────────────────────────────────────
 // HistoryTab
 // ─────────────────────────────────────────────
-const HistoryTab = ({ initialDate }: { initialDate?: string }) => {
+const HistoryTab = ({
+  initialDate,
+  onSelectedDateChange,
+}: {
+  initialDate?: string;
+  onSelectedDateChange?: (date: string) => void;
+}) => {
   const [selectedMeetingId, setSelectedMeetingId] = useState("all");
   const [selectedDate, setSelectedDate] = useState(
     () => initialDate || new Date().toISOString().split("T")[0]
@@ -1155,6 +1157,10 @@ const HistoryTab = ({ initialDate }: { initialDate?: string }) => {
       setRefreshKey((k) => k + 1);
     }
   }, [initialDate]);
+
+  useEffect(() => {
+    onSelectedDateChange?.(selectedDate);
+  }, [selectedDate, onSelectedDateChange]);
 
   useEffect(() => {
     setIsFetchingMeetings(true);

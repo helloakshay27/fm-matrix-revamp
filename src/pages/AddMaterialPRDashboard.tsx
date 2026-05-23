@@ -317,27 +317,14 @@ export const AddMaterialPRDashboard = () => {
   useEffect(() => {
     if (Array.isArray(data) && data.length > 0) {
       setShowRadio(true);
+      setWbsCodes(data);
     }
     if (Array.isArray(data) && data.length <= 0) {
-      setShowRadio(false)
-      setWbsSelection("")
+      setShowRadio(false);
+      setWbsSelection("");
+      setWbsCodes([]);
     }
   }, [data]);
-
-  useEffect(() => {
-    if (showRadio) {
-      const fetchData = async () => {
-        try {
-          const response = await dispatch(fetchWBS({ baseUrl, token })).unwrap();
-          setWbsCodes(response.wbs);
-        } catch (error) {
-          console.log(error);
-          toast.error(error);
-        }
-      };
-      fetchData();
-    }
-  }, [showRadio]);
 
   useEffect(() => {
     if (shouldFetch) {
@@ -626,6 +613,13 @@ export const AddMaterialPRDashboard = () => {
     return items.reduce((total, item) => total + (parseFloat(item.amount) || 0), 0).toFixed(2);
   };
 
+  const formatIndian = (val: string | number): string => {
+    if (val === "" || val === null || val === undefined) return "";
+    const n = parseFloat(String(val));
+    if (isNaN(n)) return "";
+    return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  };
+
   const validateForm = () => {
     if (!supplierDetails.supplier) {
       toast.error("Supplier is required");
@@ -677,8 +671,12 @@ export const AddMaterialPRDashboard = () => {
         toast.error("Product Additional Text is required for all items");
         return false;
       }
-      if (!item.glAccount) {
+      if (wbsSelection !== "overall" && !item.glAccount) {
         toast.error("GL Account is required for all items");
+        return false;
+      }
+      if (wbsSelection === "overall" && !overallGlCode) {
+        toast.error("GL Code is required. Please select a WBS Code first to auto-populate it");
         return false;
       }
       if (!item.taxCode) {
@@ -1264,7 +1262,7 @@ export const AddMaterialPRDashboard = () => {
                           ))}
                         </MuiSelect>
                       </FormControl>
-                      {item.wbsCode && (
+                      {/* {item.wbsCode && (
                         <Button
                           variant="ghost"
                           type="button"
@@ -1277,7 +1275,7 @@ export const AddMaterialPRDashboard = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                      )}
+                      )} */}
                     </div>
                   )}
 
@@ -1384,16 +1382,16 @@ export const AddMaterialPRDashboard = () => {
                   {/* Rate */}
                   <TextField
                     label="Rate"
-                    value={item.each}
+                    value={formatIndian(item.each)}
                     onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                        handleItemChange(item.id, "each", value);
+                      const raw = e.target.value.replace(/,/g, "");
+                      if (raw === "" || /^\d*\.?\d{0,2}$/.test(raw)) {
+                        handleItemChange(item.id, "each", raw);
                       }
                     }}
                     placeholder="Enter Number"
                     fullWidth
-                    type="number"
+                    type="text"
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
@@ -1417,7 +1415,7 @@ export const AddMaterialPRDashboard = () => {
                   {/* Amount */}
                   <TextField
                     label="Amount*"
-                    value={item.amount}
+                    value={formatIndian(item.amount)}
                     placeholder="Calculated Amount"
                     fullWidth
                     variant="outlined"
@@ -1432,7 +1430,7 @@ export const AddMaterialPRDashboard = () => {
                 <Button
                   onClick={addItem}
                   size="sm"
-                  className="bg-[#C72030] hover:bg-[#C72030]/90"
+                  className="bg-[#C72030] hover:bg-[# C72030]/90"
                   type="button"
                 >
                   Add Item
@@ -1442,7 +1440,7 @@ export const AddMaterialPRDashboard = () => {
 
           <div className="flex items-center justify-end">
             <Button className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed" type="button">
-              Total Amount: {calculateTotalAmount()}
+              Total Amount: {formatIndian(calculateTotalAmount())}
             </Button>
           </div>
 
