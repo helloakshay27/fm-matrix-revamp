@@ -99,7 +99,9 @@ export const BookingSetupDashboard = () => {
             createdOn: item.created_at.split(" ")[0],
             createdBy: item.create_by_user || "",
             status: item.active || false,
-            location: item.location || "",
+            location: typeof item.location === 'object' && item.location?.category_name
+              ? item.location.category_name
+              : item.location || "",
           })
         );
         setBookingSetupData(formattedData);

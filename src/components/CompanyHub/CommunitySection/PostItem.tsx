@@ -19,7 +19,7 @@ import { formatTimestamp } from "../utils";
 interface PostItemProps {
   post: Post;
   setDeleteConfirmation: (conf: any) => void;
-  handleLikePost: (postId: number) => void;
+  handleLikePost: (postId: number, post?: Post) => void;
   handleAddComment: (postId: number, commentBody: string) => void;
 }
 
@@ -134,7 +134,7 @@ const PostItem: React.FC<PostItemProps> = ({
       )}
       <div className="flex items-center gap-8 pt-6 border-t border-gray-50 text-[11px] font-black text-gray-400 uppercase tracking-widest">
         <div
-          onClick={() => handleLikePost(post.id)}
+          onClick={() => handleLikePost(post.id, post)}
           className="flex items-center gap-2 text-gray-700 hover:text-red-500 transition-colors cursor-pointer"
         >
           <Heart

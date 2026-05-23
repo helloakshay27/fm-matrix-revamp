@@ -591,27 +591,14 @@ export const AddServicePRDashboard = () => {
   useEffect(() => {
     if (data.length > 0) {
       setShowRadio(true);
+      setWbsCodes(data);
     }
     if (data.length <= 0) {
-      setShowRadio(false)
-      setWbsSelection("")
+      setShowRadio(false);
+      setWbsSelection("");
+      setWbsCodes([]);
     }
   }, [data]);
-
-  useEffect(() => {
-    if (showRadio) {
-      const fetchData = async () => {
-        try {
-          const response = await dispatch(fetchWBS({ baseUrl, token })).unwrap();
-          setWbsCodes(response.wbs);
-        } catch (error) {
-          console.log(error);
-          toast.error(error);
-        }
-      };
-      fetchData();
-    }
-  }, [showRadio, dispatch, baseUrl, token]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -625,6 +612,8 @@ export const AddServicePRDashboard = () => {
   };
 
   const calculateItem = (item) => {
+    const r2 = (n: number) => Math.round(n * 100) / 100;
+
     const quantity = parseFloat(item.quantityArea) || 0;
     const rate = parseFloat(item.rate) || 0;
     const cgstRate = parseFloat(item.cgstRate) || 0;
@@ -633,19 +622,19 @@ export const AddServicePRDashboard = () => {
     const tcsRate = parseFloat(item.tcsRate) || 0;
 
     // Calculate base amount
-    const amount = quantity * rate;
+    const amount = r2(quantity * rate);
 
     // Calculate tax amounts
-    const cgstAmt = (amount * cgstRate) / 100;
-    const sgstAmt = (amount * sgstRate) / 100;
-    const igstAmt = (amount * igstRate) / 100;
-    const tcsAmt = (amount * tcsRate) / 100;
+    const cgstAmt = r2((amount * cgstRate) / 100);
+    const sgstAmt = r2((amount * sgstRate) / 100);
+    const igstAmt = r2((amount * igstRate) / 100);
+    const tcsAmt = r2((amount * tcsRate) / 100);
 
     // Calculate total tax amount
-    const taxAmount = cgstAmt + sgstAmt + igstAmt + tcsAmt;
+    const taxAmount = r2(cgstAmt + sgstAmt + igstAmt + tcsAmt);
 
     // Calculate total amount including taxes
-    const totalAmount = amount + taxAmount;
+    const totalAmount = r2(amount + taxAmount);
 
     return {
       ...item,
@@ -776,6 +765,13 @@ export const AddServicePRDashboard = () => {
     .reduce((acc, item) => acc + (parseFloat(item.totalAmount) || 0), 0)
     .toFixed(2);
 
+  const formatIndian = (val: string | number): string => {
+    if (val === "" || val === null || val === undefined) return "";
+    const n = parseFloat(String(val));
+    if (isNaN(n)) return "";
+    return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  };
+
   const validateForm = () => {
     // Work Order Details Validation
     if (!formData.contractor) {
@@ -797,9 +793,9 @@ export const AddServicePRDashboard = () => {
     if (formData.woDate) {
       const woDate = new Date(formData.woDate);
       const today = new Date();
-      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(today.getTime() - 75 * 24 * 60 * 60 * 1000);
       if (woDate > today || woDate < thirtyDaysAgo) {
-        toast.error("WO Date must be current date or within past 30 days");
+        toast.error("WO Date must be current date or within past 75 days");
         return false;
       }
     }
@@ -825,7 +821,7 @@ export const AddServicePRDashboard = () => {
         toast.error("Product Additional Text is required for all items");
         return false;
       }
-      if (!item.glCode) {
+      if (wbsSelection !== "overall" && !item.glCode) {
         toast.error("GL Code is required for all items");
         return false;
       }
@@ -859,6 +855,10 @@ export const AddServicePRDashboard = () => {
       }
       if (wbsSelection === "overall" && !overallWbs) {
         toast.error("WBS Code is required when 'All Items' is selected");
+        return false;
+      }
+      if (wbsSelection === "overall" && !overallGlCode) {
+        toast.error("GL Code is required. Please select a WBS Code first to auto-populate it");
         return false;
       }
       if (wbsSelection === "individual") {
@@ -1048,7 +1048,7 @@ export const AddServicePRDashboard = () => {
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
                 inputProps={{
-                  min: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+                  min: new Date(new Date().getTime() - 75 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
                   max: new Date().toISOString().split("T")[0],
                 }}
               />
@@ -1418,7 +1418,7 @@ export const AddServicePRDashboard = () => {
                           ))}
                         </MuiSelect>
                       </FormControl>
-                      {detailsData.wbsCode && (
+                      {/* {detailsData.wbsCode && (
                         <Button
                           variant="ghost"
                           type="button"
@@ -1431,7 +1431,7 @@ export const AddServicePRDashboard = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                      )}
+                      )} */}
                     </div>
                   )}
 
@@ -1572,11 +1572,11 @@ export const AddServicePRDashboard = () => {
 
                   <TextField
                     label="Rate*"
-                    value={detailsData.rate}
+                    value={formatIndian(detailsData.rate)}
                     onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                        handleDetailsChange(detailsData.id, "rate", value);
+                      const raw = e.target.value.replace(/,/g, "");
+                      if (raw === "" || /^\d*\.?\d{0,2}$/.test(raw)) {
+                        handleDetailsChange(detailsData.id, "rate", raw);
                       }
                     }}
                     fullWidth
@@ -1746,7 +1746,7 @@ export const AddServicePRDashboard = () => {
 
                   <TextField
                     label="Amount"
-                    value={detailsData.amount}
+                    value={formatIndian(detailsData.amount)}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -1762,7 +1762,7 @@ export const AddServicePRDashboard = () => {
 
                   <TextField
                     label="Total Amount"
-                    value={detailsData.totalAmount}
+                    value={formatIndian(detailsData.totalAmount)}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -1783,7 +1783,7 @@ export const AddServicePRDashboard = () => {
               </div>
             ))}
 
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="flex justify-end p-4">
               <Button
                 className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
                 onClick={addNewDetailsForm}
@@ -1796,7 +1796,7 @@ export const AddServicePRDashboard = () => {
 
         <div className="flex items-center justify-end mt-4">
           <Button className="bg-[#C72030] hover:bg-[#C72030] text-white">
-            Total Amount: {grandTotal}
+            Total Amount: {formatIndian(grandTotal)}
           </Button>
         </div>
 

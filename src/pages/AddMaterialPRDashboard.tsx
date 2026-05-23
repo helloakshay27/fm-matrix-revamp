@@ -317,27 +317,14 @@ export const AddMaterialPRDashboard = () => {
   useEffect(() => {
     if (Array.isArray(data) && data.length > 0) {
       setShowRadio(true);
+      setWbsCodes(data);
     }
     if (Array.isArray(data) && data.length <= 0) {
-      setShowRadio(false)
-      setWbsSelection("")
+      setShowRadio(false);
+      setWbsSelection("");
+      setWbsCodes([]);
     }
   }, [data]);
-
-  useEffect(() => {
-    if (showRadio) {
-      const fetchData = async () => {
-        try {
-          const response = await dispatch(fetchWBS({ baseUrl, token })).unwrap();
-          setWbsCodes(response.wbs);
-        } catch (error) {
-          console.log(error);
-          toast.error(error);
-        }
-      };
-      fetchData();
-    }
-  }, [showRadio]);
 
   useEffect(() => {
     if (shouldFetch) {
@@ -626,6 +613,13 @@ export const AddMaterialPRDashboard = () => {
     return items.reduce((total, item) => total + (parseFloat(item.amount) || 0), 0).toFixed(2);
   };
 
+  const formatIndian = (val: string | number): string => {
+    if (val === "" || val === null || val === undefined) return "";
+    const n = parseFloat(String(val));
+    if (isNaN(n)) return "";
+    return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  };
+
   const validateForm = () => {
     if (!supplierDetails.supplier) {
       toast.error("Supplier is required");
@@ -646,9 +640,9 @@ export const AddMaterialPRDashboard = () => {
     if (supplierDetails.prDate) {
       const prDate = new Date(supplierDetails.prDate);
       const today = new Date();
-      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(today.getTime() - 75 * 24 * 60 * 60 * 1000);
       if (prDate > today || prDate < thirtyDaysAgo) {
-        toast.error("PR Date must be current date or within past 30 days");
+        toast.error("PR Date must be current date or within past 75 days");
         return false;
       }
     }
@@ -677,8 +671,12 @@ export const AddMaterialPRDashboard = () => {
         toast.error("Product Additional Text is required for all items");
         return false;
       }
-      if (!item.glAccount) {
+      if (wbsSelection !== "overall" && !item.glAccount) {
         toast.error("GL Account is required for all items");
+        return false;
+      }
+      if (wbsSelection === "overall" && !overallGlCode) {
+        toast.error("GL Code is required. Please select a WBS Code first to auto-populate it");
         return false;
       }
       if (!item.taxCode) {
@@ -884,7 +882,7 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
                 inputProps={{
-                  min: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+                  min: new Date(new Date().getTime() - 75 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
                   max: new Date().toISOString().split("T")[0],
                 }}
               />
@@ -1171,14 +1169,7 @@ export const AddMaterialPRDashboard = () => {
                   <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
                   ITEM DETAILS
                 </div>
-                <Button
-                  onClick={addItem}
-                  size="sm"
-                  className="bg-[#C72030] hover:bg-[#C72030]/90"
-                  type="button"
-                >
-                  Add Item
-                </Button>
+                
               </CardTitle>
             </CardHeader>
 
@@ -1271,7 +1262,7 @@ export const AddMaterialPRDashboard = () => {
                           ))}
                         </MuiSelect>
                       </FormControl>
-                      {item.wbsCode && (
+                      {/* {item.wbsCode && (
                         <Button
                           variant="ghost"
                           type="button"
@@ -1284,7 +1275,7 @@ export const AddMaterialPRDashboard = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                      )}
+                      )} */}
                     </div>
                   )}
 
@@ -1391,16 +1382,16 @@ export const AddMaterialPRDashboard = () => {
                   {/* Rate */}
                   <TextField
                     label="Rate"
-                    value={item.each}
+                    value={formatIndian(item.each)}
                     onChange={(e) => {
-                      const value = e.target.value;
-                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
-                        handleItemChange(item.id, "each", value);
+                      const raw = e.target.value.replace(/,/g, "");
+                      if (raw === "" || /^\d*\.?\d{0,2}$/.test(raw)) {
+                        handleItemChange(item.id, "each", raw);
                       }
                     }}
                     placeholder="Enter Number"
                     fullWidth
-                    type="number"
+                    type="text"
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
@@ -1424,7 +1415,7 @@ export const AddMaterialPRDashboard = () => {
                   {/* Amount */}
                   <TextField
                     label="Amount*"
-                    value={item.amount}
+                    value={formatIndian(item.amount)}
                     placeholder="Calculated Amount"
                     fullWidth
                     variant="outlined"
@@ -1435,11 +1426,21 @@ export const AddMaterialPRDashboard = () => {
                 </div>
               ))}
             </CardContent>
+            <div className="flex justify-end p-4">
+                <Button
+                  onClick={addItem}
+                  size="sm"
+                  className="bg-[#C72030] hover:bg-[# C72030]/90"
+                  type="button"
+                >
+                  Add Item
+                </Button>
+              </div>
           </Card>
 
           <div className="flex items-center justify-end">
             <Button className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed" type="button">
-              Total Amount: {calculateTotalAmount()}
+              Total Amount: {formatIndian(calculateTotalAmount())}
             </Button>
           </div>
 

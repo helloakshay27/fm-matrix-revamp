@@ -57,8 +57,13 @@ export const EmployeeUnifiedCalendar: React.FC<
   EmployeeUnifiedCalendarProps
 > = ({ onNavigateToDetails }) => {
   const [view, setView] = useState<
-    "dayGridMonth" | "timeGridWeek" | "timeGridDay" | "listWeek" | "year"
-  >("dayGridMonth");
+    | "dayGridMonth"
+    | "timeGridWeek"
+    | "timeGridDay"
+    | "listWeek"
+    | "year"
+    | "schedule"
+  >("schedule");
   const [date, setDate] = useState(new Date());
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isYearLoading, setIsYearLoading] = useState(false);
@@ -67,23 +72,20 @@ export const EmployeeUnifiedCalendar: React.FC<
   const calendarRef = useRef<FullCalendar>(null);
   const navigate = useNavigate();
 
-  // Helper function to get default date range (today to one week ago)
+  // Default date range = current month
   const getDefaultDateRange = () => {
     const today = new Date();
-    const oneWeekAgo = new Date(today);
-    oneWeekAgo.setDate(today.getDate() - 7);
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-    const formatDate = (date: Date) => {
-      const day = date.getDate().toString().padStart(2, "0");
-      const month = (date.getMonth() + 1).toString().padStart(2, "0");
-      const year = date.getFullYear();
+    const fmt = (d: Date) => {
+      const day = d.getDate().toString().padStart(2, "0");
+      const month = (d.getMonth() + 1).toString().padStart(2, "0");
+      const year = d.getFullYear();
       return `${day}/${month}/${year}`;
     };
 
-    return {
-      dateFrom: formatDate(oneWeekAgo),
-      dateTo: formatDate(today),
-    };
+    return { dateFrom: fmt(firstDay), dateTo: fmt(lastDay) };
   };
 
   // Helper function to get full year range based on today's date (for 52 Week view default)
@@ -178,54 +180,113 @@ export const EmployeeUnifiedCalendar: React.FC<
 
       const data = await response.json();
 
-      // Map API data to calendar event format
-      const mappedEvents = (data.user_calendars || []).map((item: any) => {
-        // Map calendarable_type to internal event types
-        let eventType = "Todo"; // Default
+      // ── Step 1: classify each item ──────────────────────────────────────────
+      const rawItems = (data.user_calendars || []) as Array<
+        Record<string, unknown>
+      >;
 
-        switch (item.calendarable_type) {
-          case "Todo":
-            eventType = "Todo";
-            break;
-          case "GoogleCalendarEvent":
-            eventType = "Google Calendar";
-            break;
-          case "Meeting":
-            eventType = "Meeting";
-            break;
-          case "FacilityBooking":
-          case "Facility Booking":
-            eventType = "Facility";
-            break;
-          case "TaskManagement":
-          case "Task Management":
-          case "TaskAllocationTime":
-          case "Task":
-            eventType = "Task";
-            break;
-          case "Ticket":
-            eventType = "Ticket";
-            break;
-          case "IssueAllocationTime":
-          case "Issue":
-            eventType = "Issue";
-            break;
-          default:
-            eventType = "Todo";
+      type RawItem = {
+        id: number | string;
+        title?: string;
+        calendarable_type?: string;
+        created_at?: string;
+        start_at?: string;
+        end_at?: string;
+        duration_minutes?: number;
+        status?: string;
+        description?: string;
+        color?: string;
+        location?: string;
+        redirect_url?: string;
+      };
+
+      const classified = rawItems.map(
+        (item): RawItem & { eventType: string } => {
+          const it = item as RawItem;
+          let eventType = "Todo";
+          switch (it.calendarable_type) {
+            case "Todo":
+              eventType = "Todo";
+              break;
+            case "GoogleCalendarEvent":
+              eventType = "Google Calendar";
+              break;
+            case "Meeting":
+              eventType = "Meeting";
+              break;
+            case "FacilityBooking":
+            case "Facility Booking":
+              eventType = "Facility";
+              break;
+            case "TaskManagement":
+            case "Task Management":
+            case "TaskAllocationTime":
+            case "Task":
+              eventType = "Task";
+              break;
+            case "Ticket":
+              eventType = "Ticket";
+              break;
+            case "IssueAllocationTime":
+            case "Issue":
+              eventType = "Issue";
+              break;
+            default:
+              eventType = "Todo";
+          }
+          return { ...it, eventType };
         }
+      );
 
-        return {
-          id: item.id.toString(),
-          title: item.title || "Untitled Event",
-          start: item.start_at,
-          end: item.end_at,
-          type: eventType,
-          status: item.status,
-          description: item.description,
-          color: item.color || getColorForType(eventType),
-          location: item.location,
-          redirectUrl: item.redirect_url,
-        };
+      // ── Step 2: group by calendar DATE (use start_at — the actual calendar day) ──
+      const byDate: Record<string, typeof classified> = {};
+      classified.forEach((it) => {
+        const dateKey = moment(it.start_at || it.created_at).format(
+          "YYYY-MM-DD"
+        );
+        if (!byDate[dateKey]) byDate[dateKey] = [];
+        byDate[dateKey].push(it);
+      });
+
+      // ── Step 3: sort within each day by created_at, then assign slots ────
+      // Day schedule starts at 09:00. Each task duration = duration_minutes || 30 min.
+      const mappedEvents: UnifiedCalendarEvent[] = [];
+
+      Object.entries(byDate).forEach(([dateKey, items]) => {
+        // Sort by created_at ascending so oldest appears first
+        const sorted = [...items].sort(
+          (a, b) =>
+            moment(a.created_at || a.start_at).valueOf() -
+            moment(b.created_at || b.start_at).valueOf()
+        );
+
+        // Rolling cursor starting at 09:00 for this date
+        const cursor = moment(`${dateKey}T09:00:00`);
+
+        sorted.forEach((it) => {
+          const durationMin =
+            typeof it.duration_minutes === "number" && it.duration_minutes > 0
+              ? it.duration_minutes
+              : 30;
+
+          const start = cursor.clone().toISOString();
+          const end = cursor.clone().add(durationMin, "minutes").toISOString();
+
+          mappedEvents.push({
+            id: String(it.id),
+            title: it.title || "Untitled Event",
+            start,
+            end,
+            type: it.eventType as UnifiedCalendarEvent["type"],
+            status: it.status,
+            description: it.description,
+            color: it.color || getColorForType(it.eventType),
+            location: it.location,
+            redirectUrl: it.redirect_url,
+          });
+
+          cursor.add(durationMin, "minutes");
+        });
       });
 
       setEvents(mappedEvents);
@@ -313,13 +374,14 @@ export const EmployeeUnifiedCalendar: React.FC<
     });
   }, [events, activeFilters]);
 
-  // Transform events for FullCalendar
+  // Transform events for FullCalendar (always timed, never all-day)
   const calendarEvents = useMemo(() => {
     return filteredEvents.map((event) => ({
       id: event.id,
       title: event.title,
       start: event.start,
-      end: event.end || moment(event.start).add(1, "hour").toISOString(),
+      end: event.end || moment(event.start).add(30, "minutes").toISOString(),
+      allDay: false,
       backgroundColor: event.color,
       borderColor: event.color,
       textColor: "#fff",
@@ -384,7 +446,7 @@ export const EmployeeUnifiedCalendar: React.FC<
     setView(newView);
 
     const calendarApi = calendarRef.current?.getApi();
-    if (calendarApi && newView !== "year") {
+    if (calendarApi && newView !== "year" && newView !== "schedule") {
       calendarApi.changeView(newView);
     }
   };
@@ -520,56 +582,75 @@ export const EmployeeUnifiedCalendar: React.FC<
   ).length;
 
   const CustomToolbar = () => {
+    const titleLabel =
+      view === "timeGridDay"
+        ? moment(date).format("dddd, MMMM D, YYYY")
+        : view === "timeGridWeek"
+          ? `${moment(date).startOf("week").format("MMM D")} – ${moment(date).endOf("week").format("MMM D, YYYY")}`
+          : moment(date).format("MMMM YYYY");
+
     return (
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
+        {/* Left: Today + arrows + title */}
         <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
+          <button
+            onClick={() => {
+              setDate(new Date());
+              const api = calendarRef.current?.getApi();
+              if (api) api.today();
+            }}
+            className="px-3 py-1.5 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Today
+          </button>
+          <button
             onClick={() => handleNavigate("prev")}
-            className="h-8 w-8 p-0"
+            className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
           >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
+            <ChevronLeft className="h-4 w-4 text-gray-600" />
+          </button>
+          <button
             onClick={() => handleNavigate("next")}
-            className="h-8 w-8 p-0"
+            className="p-1.5 rounded-full hover:bg-gray-100 transition-colors"
           >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
+            <ChevronRight className="h-4 w-4 text-gray-600" />
+          </button>
+          <span className="text-base font-semibold text-gray-800 ml-1">
+            {titleLabel}
+          </span>
         </div>
 
-        <h2 className="text-xl font-semibold">
-          {moment(date).format("MMMM YYYY")}
-        </h2>
-
-        <div className="flex items-center gap-2">
-          {[
-            { key: "dayGridMonth", label: "month" },
-            { key: "timeGridWeek", label: "week" },
-            { key: "timeGridDay", label: "day" },
-            { key: "listWeek", label: "agenda" },
-            { key: "year", label: "52 Week" },
-          ].map(({ key, label }) => (
-            <Button
+        {/* Right: view switcher */}
+        <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-0.5">
+          {(
+            [
+              { key: "schedule", label: "Schedule" },
+              { key: "timeGridDay", label: "Day" },
+              { key: "timeGridWeek", label: "Week" },
+              { key: "dayGridMonth", label: "Month" },
+              { key: "listWeek", label: "Agenda" },
+              { key: "year", label: "52 Week" },
+            ] as const
+          ).map(({ key, label }) => (
+            <button
               key={key}
-              variant={view === key ? "default" : "outline"}
-              size="sm"
               onClick={() => handleViewChange(key)}
-              className="px-3 py-1 h-8 capitalize"
               disabled={isYearLoading && key === "year"}
+              className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                view === key
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-800"
+              }`}
             >
               {isYearLoading && key === "year" ? (
-                <div className="flex items-center gap-2">
-                  <div className="inline-block animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
-                  <span>{label}</span>
+                <div className="flex items-center gap-1">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current" />
+                  {label}
                 </div>
               ) : (
                 label
               )}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
@@ -828,35 +909,56 @@ export const EmployeeUnifiedCalendar: React.FC<
 
       {/* Calendar View */}
       <div
-        className="bg-white border rounded-lg p-4 relative"
-        style={{ height: "700px", overflowY: "auto" }}
+        className="bg-white border border-gray-200 rounded-xl relative overflow-hidden"
+        style={{ minHeight: "640px" }}
       >
+        <div className="px-4 pt-4">
+          <CustomToolbar />
+        </div>
+
         {view === "year" ? (
-          <>
-            <CustomToolbar />
-            {isYearLoading ? (
-              <div className="h-full flex items-center justify-center">
-                <div className="text-center">
-                  <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
-                  <p className="text-gray-600 font-medium">
-                    Loading 52-week calendar...
-                  </p>
-                </div>
+          isYearLoading ? (
+            <div className="h-96 flex items-center justify-center">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mb-3" />
+                <p className="text-gray-500 text-sm">
+                  Loading 52-week calendar…
+                </p>
               </div>
-            ) : (
-              <div className="h-full overflow-y-auto">
-                <YearlyView
-                  events={calendarEvents.length > 0 ? calendarEvents : []}
-                  onSelectEvent={handleSelectEvent}
-                  startDate={parseFilterDate(activeFilters.dateFrom)}
-                  endDate={parseFilterDate(activeFilters.dateTo)}
-                />
-              </div>
-            )}
-          </>
+            </div>
+          ) : (
+            <div className="p-4 overflow-y-auto" style={{ maxHeight: "600px" }}>
+              <YearlyView
+                events={calendarEvents}
+                onSelectEvent={handleSelectEvent}
+                startDate={parseFilterDate(activeFilters.dateFrom)}
+                endDate={parseFilterDate(activeFilters.dateTo)}
+              />
+            </div>
+          )
+        ) : view === "schedule" ? (
+          <GoogleScheduleView
+            events={filteredEvents}
+            date={date}
+            onEventClick={(ev) =>
+              setSelectedEvent({
+                ...ev,
+                backgroundColor: ev.color,
+                extendedProps: {
+                  type: ev.type,
+                  status: ev.status,
+                  description: ev.description,
+                  location: ev.location,
+                  resource: ev,
+                },
+              })
+            }
+            getColorForType={getColorForType}
+            getEventTypeIcon={getEventTypeIcon}
+            getEventTypeLabel={getEventTypeLabel}
+          />
         ) : (
-          <>
-            <CustomToolbar />
+          <div className="px-2 pb-2" style={{ height: "590px" }}>
             <FullCalendar
               ref={calendarRef}
               plugins={[
@@ -871,49 +973,64 @@ export const EmployeeUnifiedCalendar: React.FC<
               eventMouseEnter={handleEventMouseEnter}
               eventMouseLeave={handleEventMouseLeave}
               headerToolbar={false}
-              height="calc(100% - 60px)"
+              height="100%"
               eventDisplay="block"
               dayMaxEvents={3}
               moreLinkClick="popover"
               eventTimeFormat={{
-                hour: "2-digit",
+                hour: "numeric",
                 minute: "2-digit",
-                hour12: false,
+                hour12: true,
               }}
               slotLabelFormat={{
-                hour: "2-digit",
+                hour: "numeric",
                 minute: "2-digit",
-                hour12: false,
+                hour12: true,
               }}
               allDaySlot={false}
+              slotMinTime="08:00:00"
+              slotMaxTime="22:00:00"
+              slotDuration="00:30:00"
               nowIndicator={true}
               selectable={true}
               selectMirror={true}
               dayHeaderFormat={{ weekday: "short", day: "numeric" }}
-              eventContent={(eventInfo) => (
-                <div className="fc-event-content p-1">
-                  <div className="flex items-center gap-1">
-                    {getEventTypeIcon(eventInfo.event.extendedProps?.type)}
-                    <div className="fc-event-title text-xs font-medium truncate">
-                      {eventInfo.event.title}
+              eventContent={(eventInfo) => {
+                const dur = moment(eventInfo.event.end).diff(
+                  moment(eventInfo.event.start),
+                  "minutes"
+                );
+                const showEnd = dur >= 30;
+                return (
+                  <div className="flex items-start gap-1 px-1.5 py-1 h-full overflow-hidden">
+                    <div
+                      className="w-[3px] rounded-full flex-shrink-0 self-stretch"
+                      style={{ backgroundColor: "rgba(255,255,255,0.8)" }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[11px] font-semibold leading-tight truncate">
+                        {eventInfo.event.title}
+                      </div>
+                      <div className="text-[10px] opacity-80 mt-0.5">
+                        {moment(eventInfo.event.start).format("h:mm a")}
+                        {showEnd &&
+                          ` – ${moment(eventInfo.event.end).format("h:mm a")}`}
+                      </div>
                     </div>
                   </div>
-                  <div className="fc-event-time text-xs opacity-75">
-                    {moment(eventInfo.event.start).format("HH:mm")}
-                  </div>
-                </div>
-              )}
+                );
+              }}
             />
-          </>
+          </div>
         )}
 
         {/* Loading Overlay */}
         {isLoading && (
-          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50 rounded-lg">
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
-              <p className="text-gray-600 font-medium">
-                Loading calendar events...
+              <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mb-3" />
+              <p className="text-gray-500 text-sm font-medium">
+                Loading events…
               </p>
             </div>
           </div>
@@ -1261,6 +1378,171 @@ export const EmployeeUnifiedCalendar: React.FC<
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+};
+
+// ── Google Calendar-style Schedule View ────────────────────────────────────
+interface ScheduleViewProps {
+  events: UnifiedCalendarEvent[];
+  date: Date;
+  onEventClick: (event: UnifiedCalendarEvent) => void;
+  getColorForType: (type: string) => string;
+  getEventTypeIcon: (type: string) => React.ReactNode;
+  getEventTypeLabel: (type: string) => string;
+}
+
+const GoogleScheduleView: React.FC<ScheduleViewProps> = ({
+  events,
+  date,
+  onEventClick,
+  getColorForType,
+  getEventTypeIcon,
+  getEventTypeLabel,
+}) => {
+  // Schedule: today at top, descending into the past (up to 90 days back)
+  const windowStart = moment().subtract(90, "days").startOf("day");
+  const windowEnd = moment().endOf("day");
+
+  // Group events by date key (YYYY-MM-DD from their start time)
+  const byDate = useMemo(() => {
+    const map: Record<string, UnifiedCalendarEvent[]> = {};
+    events.forEach((ev) => {
+      const key = moment(ev.start).format("YYYY-MM-DD");
+      if (!map[key]) map[key] = [];
+      map[key].push(ev);
+    });
+    return map;
+  }, [events]);
+
+  // Build descending list: today first → oldest last; always include today
+  const days = useMemo(() => {
+    const set = new Set<string>(Object.keys(byDate));
+    set.add(moment().format("YYYY-MM-DD")); // always show today
+    return Array.from(set)
+      .filter((k) => {
+        const m = moment(k);
+        return (
+          m.isSameOrAfter(windowStart, "day") &&
+          m.isSameOrBefore(windowEnd, "day")
+        );
+      })
+      .sort((a, b) => (a < b ? 1 : -1)); // descending: today → past
+  }, [byDate, windowStart, windowEnd]);
+
+  const formatTime = (ev: UnifiedCalendarEvent) => {
+    const s = moment(ev.start);
+    const e = ev.end ? moment(ev.end) : null;
+    if (!e) return s.format("h:mm a");
+    return `${s.format("h:mm")} – ${e.format("h:mm a")}`;
+  };
+
+  if (days.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-gray-400">
+        <Calendar className="w-12 h-12 mb-3 opacity-30" />
+        <p className="text-sm font-medium">No events this month</p>
+        <p className="text-xs mt-1">Try adjusting the date range in Filters</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-y-auto" style={{ maxHeight: "570px" }}>
+      {days.map((dateKey) => {
+        const isToday = dateKey === moment().format("YYYY-MM-DD");
+        const dayEvents = (byDate[dateKey] || [])
+          .slice()
+          .sort(
+            (a, b) => moment(a.start).valueOf() - moment(b.start).valueOf()
+          );
+
+        return (
+          <div
+            key={dateKey}
+            className={`flex border-b border-gray-100 last:border-0 ${isToday ? "bg-blue-50/30" : ""}`}
+          >
+            {/* Date column */}
+            <div className="flex-shrink-0 w-24 px-3 py-4 flex flex-col items-center gap-0.5">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                  isToday ? "bg-blue-600 text-white" : "text-gray-700"
+                }`}
+              >
+                {moment(dateKey).format("D")}
+              </div>
+              <div
+                className={`text-[11px] font-semibold uppercase tracking-wide ${isToday ? "text-blue-600" : "text-gray-400"}`}
+              >
+                {moment(dateKey).format("ddd")}
+              </div>
+              <div className="text-[10px] text-gray-400">
+                {moment(dateKey).format("MMM")}
+              </div>
+            </div>
+
+            {/* Events column */}
+            <div className="flex-1 py-2 pr-4 min-w-0 space-y-1.5">
+              {dayEvents.length === 0 ? (
+                <div className="py-3 text-xs text-gray-400 italic">
+                  No events
+                </div>
+              ) : (
+                dayEvents.map((ev) => {
+                  const color = ev.color || getColorForType(ev.type);
+                  const durMin = ev.end
+                    ? moment(ev.end).diff(moment(ev.start), "minutes")
+                    : 30;
+                  return (
+                    <div
+                      key={ev.id}
+                      onClick={() => onEventClick(ev)}
+                      className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer hover:bg-white hover:shadow-sm transition-all group"
+                    >
+                      {/* Color bar */}
+                      <div
+                        className="w-1 rounded-full flex-shrink-0 mt-0.5"
+                        style={{ backgroundColor: color, minHeight: "36px" }}
+                      />
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-700 transition-colors">
+                            {ev.title}
+                          </span>
+                          <span
+                            className="flex-shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full text-white leading-none"
+                            style={{ backgroundColor: color }}
+                          >
+                            {getEventTypeLabel(ev.type)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            {getEventTypeIcon(ev.type)}
+                            {formatTime(ev)}
+                          </span>
+                          <span className="text-gray-300">·</span>
+                          <span>{durMin} min</span>
+                          {ev.status && (
+                            <>
+                              <span className="text-gray-300">·</span>
+                              <span className="capitalize bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">
+                                {ev.status}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };

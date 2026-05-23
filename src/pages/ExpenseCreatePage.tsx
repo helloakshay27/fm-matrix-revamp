@@ -19,6 +19,7 @@ import {
   FormControlLabel,
   Radio,
   Checkbox,
+  Tooltip,
   CircularProgress,
 } from '@mui/material';
 import { Close, CloudUpload, Search, EditOutlined } from '@mui/icons-material';
@@ -151,6 +152,7 @@ export const ExpenseCreatePage: React.FC = () => {
   const [vendor, setVendor] = useState('');
   const [customer, setCustomer] = useState('');
   const [billedOn, setBilledOn] = useState(false);
+  const [markUpPercent, setMarkUpPercent] = useState<number>(1);
   const [gstTreatment, setGstTreatment] = useState('');
   const [sourceOfSupply, setSourceOfSupply] = useState('');
   const [destinationOfSupply, setDestinationOfSupply] = useState('Maharashtra'); // ✅ full name default
@@ -1106,17 +1108,54 @@ export const ExpenseCreatePage: React.FC = () => {
                     </Select>
                   </FormControl>
                   {customer && (
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={billedOn}
-                          onChange={e => setBilledOn(e.target.checked)}
-                          size="small"
-                        />
-                      }
-                      label="billed"
-                      className="mt-2"
-                    />
+                    <div className="mt-2 flex items-center gap-4 flex-wrap">
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={billedOn}
+                            onChange={e => setBilledOn(e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="billed"
+                      />
+                      {billedOn && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-700">Mark up by</span>
+                          <Tooltip
+                            title="Enter the percentage by which you want to mark up this expense amount while invoicing the customer."
+                            arrow
+                          >
+                            <IconButton size="small" sx={{ p: 0 }}>
+                              <span style={{
+                                fontSize: 14,
+                                color: '#888',
+                                border: '1px solid #aaa',
+                                borderRadius: '50%',
+                                width: 16,
+                                height: 16,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 'bold',
+                                cursor: 'default'
+                              }}>i</span>
+                            </IconButton>
+                          </Tooltip>
+                          <TextField
+                            size="small"
+                            type="number"
+                            value={markUpPercent}
+                            onChange={e => setMarkUpPercent(parseFloat(e.target.value) || 0)}
+                            inputProps={{ min: 0, step: 0.1 }}
+                            InputProps={{
+                              endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                            }}
+                            sx={{ width: 200 }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
                 <div className="flex flex-col">
@@ -1557,17 +1596,54 @@ export const ExpenseCreatePage: React.FC = () => {
                     </Select>
                   </FormControl>
                   {customer && (
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={billedOn}
-                          onChange={e => setBilledOn(e.target.checked)}
-                          size="small"
-                        />
-                      }
-                      label="billed"
-                      className="mt-2"
-                    />
+                    <div className="mt-2 flex items-center gap-4 flex-wrap">
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={billedOn}
+                            onChange={e => setBilledOn(e.target.checked)}
+                            size="small"
+                          />
+                        }
+                        label="billed"
+                      />
+                      {billedOn && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-700">Mark up by</span>
+                          <Tooltip
+                            title="Enter the percentage by which you want to mark up this expense amount while invoicing the customer."
+                            arrow
+                          >
+                            <IconButton size="small" sx={{ p: 0 }}>
+                              <span style={{
+                                fontSize: 14,
+                                color: '#888',
+                                border: '1px solid #aaa',
+                                borderRadius: '50%',
+                                width: 16,
+                                height: 16,
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 'bold',
+                                cursor: 'default'
+                              }}>i</span>
+                            </IconButton>
+                          </Tooltip>
+                          <TextField
+                            size="small"
+                            type="number"
+                            value={markUpPercent}
+                            onChange={e => setMarkUpPercent(parseFloat(e.target.value) || 0)}
+                            inputProps={{ min: 0, step: 0.1 }}
+                            InputProps={{
+                              endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                            }}
+                            sx={{ width: 100 }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
 

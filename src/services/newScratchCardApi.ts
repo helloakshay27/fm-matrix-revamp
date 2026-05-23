@@ -225,7 +225,7 @@ class NewScratchCardApi {
       // Use actual API - let baseClient interceptor handle URL
       this.initialize();
 
-      const url = `/contests`;
+      const url = `/contests.json`;
       const params: any = {};
       if (this.token) params.token = this.token;
       //   if (this.orgId) params.org_id = this.orgId;
@@ -278,7 +278,7 @@ class NewScratchCardApi {
       // Use actual API - let baseClient interceptor handle URL
       this.initialize();
 
-      const url = `/contests/${contestId}`;
+      const url = `/contests/${contestId}.json`;
       const params: any = {};
       if (this.token) params.token = this.token;
       //   if (this.orgId) params.org_id = this.orgId;
@@ -361,7 +361,7 @@ class NewScratchCardApi {
       // Use actual API - let baseClient interceptor handle URL
       this.initialize();
 
-      const url = `/contests/${contestId}/play`;
+      const url = `/contests/${contestId}/play.json`;
       const params: any = {};
       if (this.token) params.token = this.token;
       // if (this.orgId) params.org_id = this.orgId;
