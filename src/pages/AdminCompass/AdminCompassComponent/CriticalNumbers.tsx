@@ -152,7 +152,7 @@ const fetchUsersFromApi = async (): Promise<UserOption[]> => {
         u.full_name ||
         u.name ||
         `${u.first_name || ""} ${u.last_name || ""}`.trim();
-      let displayName = fName || `User ${u.id}`;
+      const displayName = fName || `User ${u.id}`;
       return {
         id: u.id,
         name: displayName.trim(),
@@ -786,6 +786,7 @@ export const CriticalNumbers = () => {
   }, [loadKpis, loadUsers, loadDepartments]);
 
   const selectedCount = kpis.filter((k) => k.selected).length;
+  const selectedKpis = kpis.filter((k) => k.selected);
   const toggleKpi = (id: number) =>
     setKpis((prev) =>
       prev.map((k) => (k.id === id ? { ...k, selected: !k.selected } : k))
@@ -1454,7 +1455,7 @@ export const CriticalNumbers = () => {
       {/* ── KPI Cards ── */}
       {!showSelectPanel &&
         !isFetching &&
-        kpis.filter((k) => k.selected).length > 0 && (
+        selectedKpis.length > 0 && (
           <div
             style={{
               display: "grid",
@@ -1462,8 +1463,7 @@ export const CriticalNumbers = () => {
               gap: 14,
             }}
           >
-            {kpis
-              .filter((k) => k.selected)
+            {selectedKpis
               .map((kpi) => (
                 <div
                   key={kpi.id}
@@ -1590,7 +1590,7 @@ export const CriticalNumbers = () => {
       {/* ── Empty state ── */}
       {!showSelectPanel &&
         !isFetching &&
-        kpis.filter((k) => k.selected).length === 0 &&
+        selectedKpis.length === 0 &&
         !fetchError && (
           <button
             onClick={openCreate}

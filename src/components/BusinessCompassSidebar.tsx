@@ -55,6 +55,10 @@ const businessCompassNavigation: Record<string, any> = {
     icon: Bug,
     href: "/business-compass/issues",
   },
+  Todo: {
+    icon: ListCheck,
+    href: "/business-compass/todo",
+  },
   "Directory and Chat": {
     icon: User,
     href: "/business-compass/channels",
@@ -78,10 +82,6 @@ const businessCompassNavigation: Record<string, any> = {
   "Help Center": {
     icon: HelpCircle,
     href: "/business-compass/help-center",
-  },
-  "Bug Reports": {
-    icon: Bug,
-    href: "/business-compass/bug-reports",
   },
 };
 

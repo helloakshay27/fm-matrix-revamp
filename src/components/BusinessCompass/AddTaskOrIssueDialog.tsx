@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 type TaskEntryType = 'task' | 'issue';
 
-/** Matches BugReports / WeeklyReports: warm panel `bg-[#fef6f4]`, `border-[#DA7756]/20`. */
+/** Warm panel styling: `bg-[#fef6f4]`, `border-[#DA7756]/20`. */
 export function AddTaskOrIssueDialog({
     open,
     onOpenChange,

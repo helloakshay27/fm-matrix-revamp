@@ -1292,7 +1292,6 @@ import Announcement from "./pages/BusinessCompass/Announcement";
 import Leaderboard from "./pages/BusinessCompass/Leaderboard";
 import DiscPersonalityAssessment from "./pages/BusinessCompass/DiscPersonalityAssessment";
 import HelpCenter from "./pages/BusinessCompass/HelpCenter";
-import BugReports from "./pages/BusinessCompass/BugReports";
 import WeeklyReports from "./pages/BusinessCompass/WeeklyReports";
 import BusinessCompassTasksAndIssues from "./pages/BusinessCompass/BusinessCompassTasksAndIssues";
 import DirectoryAndChat from "./pages/BusinessCompass/DirectoryAndChat";
@@ -2219,6 +2218,10 @@ function App() {
                             element={<IssueDetailsPage />}
                           />
                           <Route
+                            path="/business-compass/todo"
+                            element={<Todo />}
+                          />
+                          <Route
                             path="/business-compass/channels"
                             element={<ChannelsLayout />}
                           >
@@ -2264,10 +2267,6 @@ function App() {
                           <Route
                             path="/business-compass/help-center"
                             element={<HelpCenter />}
-                          />
-                          <Route
-                            path="/business-compass/bug-reports"
-                            element={<BugReports />}
                           />
                           <Route
                             path="/admin-compass/business-plan-goals"

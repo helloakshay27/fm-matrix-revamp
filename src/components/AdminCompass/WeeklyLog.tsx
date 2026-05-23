@@ -77,6 +77,22 @@ function getISOWeekStr(date: Date): string {
     return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
 }
 
+function getDateFromISOWeekStr(weekStr: string): Date {
+    const [yearPart, weekPart] = weekStr.split('-W');
+    const year = Number(yearPart);
+    const week = Number(weekPart);
+    if (!Number.isFinite(year) || !Number.isFinite(week)) return new Date();
+
+    const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+    const dayOfWeek = simple.getUTCDay() || 7;
+    if (dayOfWeek <= 4) {
+        simple.setUTCDate(simple.getUTCDate() - dayOfWeek + 1);
+    } else {
+        simple.setUTCDate(simple.getUTCDate() + 8 - dayOfWeek);
+    }
+    return new Date(simple.getUTCFullYear(), simple.getUTCMonth(), simple.getUTCDate());
+}
+
 function generateWeekOptions(count = 14): Array<{ value: string; label: string }> {
     const options: Array<{ value: string; label: string }> = [];
     const now = new Date();
@@ -101,9 +117,14 @@ const STATUS_STYLE: Record<string, string> = {
 };
 
 // ── Component ──────────────────────────────────────────────────────────────────
-const WeeklyLog = () => {
+interface WeeklyLogProps {
+    initialWeekDate?: Date;
+    onWeekDateChange?: (date: Date) => void;
+}
+
+const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) => {
     const weekOptions = generateWeekOptions(14);
-    const currentWeek = getISOWeekStr(new Date());
+    const currentWeek = getISOWeekStr(initialWeekDate || new Date());
 
     // Filter state
     const [search, setSearch]             = useState('');
@@ -119,6 +140,18 @@ const WeeklyLog = () => {
     const [departments, setDepartments]   = useState<Department[]>([]);
     const [meetings, setMeetings]         = useState<MeetingConfig[]>([]);
     const [loading, setLoading]           = useState(false);
+
+    useEffect(() => {
+        if (!initialWeekDate) return;
+        const incomingWeek = getISOWeekStr(initialWeekDate);
+        setSelectedWeek((current) =>
+            current === incomingWeek ? current : incomingWeek
+        );
+    }, [initialWeekDate]);
+
+    useEffect(() => {
+        onWeekDateChange?.(getDateFromISOWeekStr(selectedWeek));
+    }, [selectedWeek, onWeekDateChange]);
 
     // ── API helpers ──
     const getHeaders = () => ({

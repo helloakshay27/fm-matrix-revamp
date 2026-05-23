@@ -28,16 +28,21 @@ const tabs = [
   { name: "Settings", icon: Settings },
 ];
 
+const getLocalDateKey = (date = new Date()) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const DailyMeeting = () => {
   const [activeTab, setActiveTab] = useState("Daily");
-  const [selectedDateId, setSelectedDateId] = useState(7);
-
-  const [historyInitialDate, setHistoryInitialDate] = useState<
-    string | undefined
-  >();
+  const [selectedMeetingDate, setSelectedMeetingDate] = useState(
+    () => getLocalDateKey()
+  );
 
   const handleMeetingSaved = (date: string) => {
-    setHistoryInitialDate(date);
+    setSelectedMeetingDate(date);
     setActiveTab("History"); // apna tab key yahan use karo
   };
 
@@ -99,11 +104,23 @@ const DailyMeeting = () => {
           style={{ fontFamily: "'Poppins', sans-serif" }}
         >
           {activeTab === "Daily" && (
-            <DailyTab onMeetingSaved={handleMeetingSaved} />
+            <DailyTab
+              selectedDate={selectedMeetingDate}
+              onSelectedDateChange={setSelectedMeetingDate}
+              onMeetingSaved={handleMeetingSaved}
+            />
           )}
-          {activeTab === "Daily Log" && <DailyLogTab />}
+          {activeTab === "Daily Log" && (
+            <DailyLogTab
+              initialDate={selectedMeetingDate}
+              onSelectedDateChange={setSelectedMeetingDate}
+            />
+          )}
           {activeTab === "History" && (
-            <HistoryTab initialDate={historyInitialDate} />
+            <HistoryTab
+              initialDate={selectedMeetingDate}
+              onSelectedDateChange={setSelectedMeetingDate}
+            />
           )}
           {activeTab === "Reports" && <ReportsTab />}
           {activeTab === "Analytics" && <AnalyticsTab />}
