@@ -396,7 +396,7 @@ const DMConversation = () => {
                     <button
                         type="button"
                         onClick={sendMessages}
-                        disabled={input.trim() === ""}
+                        disabled={input.trim() === "" && attachments.length === 0}
                         className="
     text-xl
     text-[#C72030]
