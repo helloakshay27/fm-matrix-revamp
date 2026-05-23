@@ -19,10 +19,25 @@ const statusOptions = [
   { label: "Overdue", value: "overdue", color: "bg-red-500" },
 ];
 
+interface FilterInitialValues {
+  statuses: string[];
+  types: string[];
+  managers: string[];
+  createdBy: string[];
+  startDate: string;
+  endDate: string;
+}
+
 const ProjectFilterModal = ({
   isModalOpen,
   setIsModalOpen,
   onApplyFilters,
+  initialValues,
+}: {
+  isModalOpen: boolean;
+  setIsModalOpen: (open: boolean) => void;
+  onApplyFilters?: (filterString: string) => void;
+  initialValues?: FilterInitialValues;
 }) => {
   const token = localStorage.getItem("token");
   const dispatch = useDispatch();
@@ -157,6 +172,29 @@ const ProjectFilterModal = ({
     creatorSearch,
   ]);
 
+  // Sync selections from URL-based initialValues whenever modal opens
+  useEffect(() => {
+    if (isModalOpen && initialValues) {
+      const hasAny =
+        initialValues.statuses.length > 0 ||
+        initialValues.types.length > 0 ||
+        initialValues.managers.length > 0 ||
+        initialValues.createdBy.length > 0 ||
+        initialValues.startDate ||
+        initialValues.endDate;
+      if (hasAny) {
+        setSelectedStatuses(initialValues.statuses);
+        setSelectedTypes(initialValues.types.map(String));
+        setSelectedManagers(initialValues.managers.map(String));
+        setSelectedCreators(initialValues.createdBy.map(String));
+        setDates({
+          startDate: initialValues.startDate,
+          endDate: initialValues.endDate,
+        });
+      }
+    }
+  }, [isModalOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Dropdown open/close state
   const [dropdowns, setDropdowns] = useState({
     status: false,
@@ -221,7 +259,7 @@ const ProjectFilterModal = ({
       <div className="max-h-40 overflow-y-auto p-2">
         {filtered.map((option) => {
           const label = typeof option === "string" ? option : option.label;
-          const value = typeof option === "string" ? option : option.value;
+          const value = String(typeof option === "string" ? option : option.value);
           const color = typeof option === "string" ? null : option.color;
           return (
             <label
