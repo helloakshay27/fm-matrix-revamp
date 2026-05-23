@@ -389,6 +389,26 @@ const apiHeaders = () => ({
   Authorization: `Bearer ${getToken()}`,
 });
 
+const normalizeKpiItem = (raw: any, index: number): KpiItem | null => {
+  const kpi = raw?.kpi ?? raw;
+  const id = Number(kpi?.kpi_id ?? kpi?.id ?? raw?.kpi_id ?? raw?.id);
+  if (!Number.isFinite(id)) return null;
+
+  return {
+    kpi_id: id,
+    kpi_name: kpi?.kpi_name ?? kpi?.name ?? raw?.kpi_name ?? `KPI ${id}`,
+    kpi_category:
+      kpi?.kpi_category ??
+      kpi?.category ??
+      raw?.kpi_category ??
+      raw?.department_name ??
+      "",
+    kpi_frequency:
+      kpi?.kpi_frequency ?? kpi?.frequency ?? raw?.kpi_frequency ?? "monthly",
+    position: Number(kpi?.position ?? raw?.position ?? index + 1),
+  };
+};
+
 const normalizeSopFromAPI = (raw: any): SopCardData => ({
   id: String(raw.id ?? Math.random()),
   title: raw.system_name ?? raw.title ?? "Untitled",
@@ -403,7 +423,11 @@ const normalizeSopFromAPI = (raw: any): SopCardData => ({
   assigneeId: raw.assignee_id ?? raw.assigned_to_id ?? null,
   assigneeName: raw.assignee_name ?? raw.assigned_to ?? null,
   status: raw.status ?? "broken",
-  kpis: Array.isArray(raw.kpis) ? raw.kpis : [],
+  kpis: Array.isArray(raw.kpis)
+    ? raw.kpis
+      .map(normalizeKpiItem)
+      .filter((kpi: KpiItem | null): kpi is KpiItem => Boolean(kpi))
+    : [],
   createdById: raw.created_by_id ?? null,
   _raw: raw,
 });
@@ -496,11 +520,24 @@ const fetchDepartmentsData = async (): Promise<
 
 const fetchKpisData = async (): Promise<KpiOption[]> => {
   try {
-    const res = await fetch(`https://${BASE_URL()}/kpis`, {
-      headers: apiHeaders(),
-    });
-    if (!res.ok) throw new Error("Failed to fetch KPIs");
-    const json = await res.json();
+    const baseUrl = BASE_URL();
+    let json: any = null;
+    let lastError: Error | null = null;
+
+    for (const endpoint of ["/kpis.json", "/kpis"]) {
+      try {
+        const res = await fetch(`https://${baseUrl}${endpoint}`, {
+          headers: apiHeaders(),
+        });
+        if (!res.ok) throw new Error("Failed to fetch KPIs");
+        json = await res.json();
+        break;
+      } catch (err: any) {
+        lastError = err;
+      }
+    }
+
+    if (!json) throw lastError ?? new Error("Failed to fetch KPIs");
     const arr = Array.isArray(json)
       ? json
       : Array.isArray(json.data)
@@ -508,48 +545,82 @@ const fetchKpisData = async (): Promise<KpiOption[]> => {
         : Array.isArray(json.data?.kpis)
           ? json.data.kpis
           : (json.kpis ?? []);
-    return arr.map((k: any) => ({
-      id: k.id,
-      name: k.name ?? k.kpi_name ?? `KPI ${k.id}`,
-      category: k.category ?? k.kpi_category ?? "",
-      frequency: k.frequency ?? k.kpi_frequency ?? "monthly",
-    }));
+    return arr
+      .map((k: any) => {
+        const id = Number(k.kpi_id ?? k.id);
+        if (!Number.isFinite(id)) return null;
+        return {
+          id,
+          name: k.name ?? k.kpi_name ?? `KPI ${id}`,
+          category: k.category ?? k.kpi_category ?? k.department_name ?? "",
+          frequency: k.frequency ?? k.kpi_frequency ?? "monthly",
+        };
+      })
+      .filter(Boolean) as KpiOption[];
   } catch (err) {
     console.error("Error fetching KPIs:", err);
     return [];
   }
 };
 
-const createSop = async (payload: any) => {
-  const res = await fetch(`https://${BASE_URL()}/system_sops`, {
-    method: "POST",
-    headers: apiHeaders(),
-    body: JSON.stringify({ system_sop: payload }),
-  });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status}: ${txt}`);
+const buildSopPayloadVariants = (payload: any) => {
+  const kpis = Array.isArray(payload.kpis) ? payload.kpis : [];
+  const { kpis: _kpis, ...payloadWithoutKpis } = payload;
+  const kpiIds = kpis
+    .map((kpi: any) => Number(kpi.kpi_id ?? kpi.id))
+    .filter((id: number) => Number.isFinite(id));
+
+  return [
+    { ...payload, kpis, kpi_ids: kpiIds },
+    {
+      ...payload,
+      kpis: kpiIds.map((kpi_id: number) => ({ kpi_id })),
+      kpi_ids: kpiIds,
+    },
+    { ...payloadWithoutKpis, kpi_ids: kpiIds },
+  ];
+};
+
+const saveSop = async (
+  url: string,
+  method: "POST" | "PUT" | "PATCH",
+  payload: any
+) => {
+  const payloadVariants = buildSopPayloadVariants(payload);
+  let lastError = "";
+
+  for (const payloadVariant of payloadVariants) {
+    const res = await fetch(url, {
+      method,
+      headers: apiHeaders(),
+      body: JSON.stringify({ system_sop: payloadVariant }),
+    });
+    const json = await res.json().catch(() => null);
+    if (res.ok && json?.success !== false) {
+      return normalizeSopFromAPI(json?.data ?? json?.system_sop ?? json);
+    }
+
+    const responseErrors = Array.isArray(json?.errors)
+      ? json.errors.join(", ")
+      : json?.error || json?.message || "";
+    lastError = responseErrors || `HTTP ${res.status}`;
+
+    if (!/kpi/i.test(lastError)) break;
   }
-  const json = await res.json();
-  return normalizeSopFromAPI(json.data ?? json.system_sop ?? json);
+
+  throw new Error(lastError || "Failed to save SOP");
+};
+
+const createSop = async (payload: any) => {
+  return saveSop(`https://${BASE_URL()}/system_sops.json`, "POST", payload);
 };
 
 const updateSop = async (id: string, payload: any) => {
-  const res = await fetch(`https://${BASE_URL()}/system_sops/${id}`, {
-    method: "PUT",
-    headers: apiHeaders(),
-    body: JSON.stringify({ system_sop: payload }),
-  });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status}: ${txt}`);
-  }
-  const json = await res.json();
-  return normalizeSopFromAPI(json.data ?? json.system_sop ?? json);
+  return saveSop(`https://${BASE_URL()}/system_sops/${id}.json`, "PUT", payload);
 };
 
 const patchSopStatus = async (id: string, status: string) => {
-  const res = await fetch(`https://${BASE_URL()}/system_sops/${id}`, {
+  const res = await fetch(`https://${BASE_URL()}/system_sops/${id}.json`, {
     method: "PATCH",
     headers: apiHeaders(),
     body: JSON.stringify({ system_sop: { status } }),
@@ -559,7 +630,7 @@ const patchSopStatus = async (id: string, status: string) => {
 };
 
 const deleteSop = async (id: string) => {
-  const res = await fetch(`https://${BASE_URL()}/system_sops/${id}`, {
+  const res = await fetch(`https://${BASE_URL()}/system_sops/${id}.json`, {
     method: "DELETE",
     headers: apiHeaders(),
   });
@@ -1119,7 +1190,11 @@ function SopFormModal({
         setAssignUser(String(initialData.assigneeId ?? ""));
         setHealthScore(initialData.healthPercent);
         setDocUrl(initialData.docUrl ?? "");
-        setSelectedKpiIds((initialData.kpis ?? []).map((k: any) => k.kpi_id));
+        setSelectedKpiIds(
+          (initialData.kpis ?? [])
+            .map((k: any) => Number(k.kpi_id ?? k.id))
+            .filter((id: number) => Number.isFinite(id))
+        );
       } else {
         setSystemName("");
         setDescription("");
@@ -1155,8 +1230,17 @@ function SopFormModal({
           normalizeDepartmentMatch(department) ||
           normalizeDepartmentMatch(d.label) === normalizeDepartmentMatch(department)
       );
-      const builtKpis = selectedKpiIds.map((id, i) => {
-        const k = kpiOptions.find((x: any) => x.id === id);
+      const kpiOptionsById = new Map(
+        kpiOptions.map((k: any) => [Number(k.id), k])
+      );
+      const validSelectedKpiIds = selectedKpiIds.filter((id) =>
+        kpiOptionsById.has(Number(id))
+      );
+      if (selectedKpiIds.length !== validSelectedKpiIds.length) {
+        toast.warning("Some old KPI links were skipped because they no longer exist");
+      }
+      const builtKpis = validSelectedKpiIds.map((id, i) => {
+        const k: any = kpiOptionsById.get(Number(id));
         return {
           kpi_id: id,
           kpi_name: k?.name ?? `KPI ${id}`,
@@ -1175,7 +1259,7 @@ function SopFormModal({
         assignee_id: parseInt(assignUser, 10),
         health_score: healthScore,
         documentation_url: docUrl.trim() || undefined,
-        kpis: isEdit ? initialData?.kpis : builtKpis,
+        kpis: builtKpis,
       };
 
       await onSave(payload, statusColumn);
@@ -1333,49 +1417,53 @@ function SopFormModal({
             />
           </FieldBox>
 
-          {!isEdit && (
-            <FieldBox label="Link KPIs">
-              {kpiOptions.length === 0 ? (
-                <p
-                  className="text-[12px] font-medium py-2"
-                  style={{ color: C.textMuted }}
-                >
-                  No KPIs available
-                </p>
-              ) : (
-                <div className="kpi-list-scroll flex flex-col gap-2">
-                  {kpiOptions.map((k: any) => {
-                    const checked = selectedKpiIds.includes(k.id);
-                    return (
-                      <div
-                        key={k.id}
-                        onClick={() => toggleKpi(k.id)}
-                        className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
-                        style={{
-                          borderColor: checked ? C.primary : C.borderLgt,
-                          background: checked ? C.primaryTint : "#fff",
-                        }}
+          <FieldBox label="Link KPIs">
+            {kpiOptions.length === 0 ? (
+              <p
+                className="text-[12px] font-medium py-2"
+                style={{ color: C.textMuted }}
+              >
+                No KPIs available
+              </p>
+            ) : (
+              <div className="kpi-list-scroll flex flex-col gap-2">
+                {kpiOptions.map((k: any) => {
+                  const checked = selectedKpiIds.includes(k.id);
+                  return (
+                    <div
+                      key={k.id}
+                      onClick={() => toggleKpi(k.id)}
+                      className="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all"
+                      style={{
+                        borderColor: checked ? C.primary : C.borderLgt,
+                        background: checked ? C.primaryTint : "#fff",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleKpi(k.id)}
+                        className="w-4 h-4 accent-[#DA7756] cursor-pointer shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                      <span
+                        className="text-[13px] font-medium flex-1 min-w-0"
+                        style={{ color: C.textMain }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleKpi(k.id)}
-                          className="w-4 h-4 accent-[#DA7756] cursor-pointer shrink-0"
-                          onClick={(e) => e.stopPropagation()}
-                        />
+                        <span className="block truncate">{k.name}</span>
                         <span
-                          className="text-[13px] font-medium flex-1 min-w-0 truncate"
-                          style={{ color: C.textMain }}
+                          className="block text-[11px] font-medium truncate"
+                          style={{ color: C.textMuted }}
                         >
-                          {k.name}
+                          {[k.category, k.frequency].filter(Boolean).join(" - ")}
                         </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </FieldBox>
-          )}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </FieldBox>
         </div>
 
         <div

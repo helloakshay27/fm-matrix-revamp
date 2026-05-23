@@ -41,16 +41,20 @@ interface WeeklyMeetingData {
     }>;
 }
 
-const WeeklyReviews = () => {
+interface WeeklyReviewsProps {
+    initialWeekDate?: Date;
+    onWeekDateChange?: (date: Date) => void;
+}
+
+const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps = {}) => {
     const [selectedMeeting, setSelectedMeeting] = useState('');
     const [meetingConfigs, setMeetingConfigs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [weeklyDataLoading, setWeeklyDataLoading] = useState(false);
-    const [currentWeek, setCurrentWeek] = useState(new Date());
+    const [currentWeek, setCurrentWeek] = useState(() => initialWeekDate || new Date());
     const [weeklyData, setWeeklyData] = useState<WeeklyMeetingData | null>(null);
     const [meetingNotes, setMeetingNotes] = useState('');
     const [markAllAttended, setMarkAllAttended] = useState(false);
-    const [aiSummary, setAiSummary] = useState(false);
     const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<string>('Daily');
     const [selectedPriorityDay, setSelectedPriorityDay] = useState<string>('Mon');
@@ -78,6 +82,19 @@ const WeeklyReviews = () => {
     const handleNextWeek = () => {
         setCurrentWeek(prev => new Date(prev.getTime() + 7 * 24 * 60 * 60 * 1000));
     };
+
+    useEffect(() => {
+        if (!initialWeekDate) return;
+        setCurrentWeek((current) =>
+            getWeekString(current) === getWeekString(initialWeekDate)
+                ? current
+                : initialWeekDate
+        );
+    }, [initialWeekDate]);
+
+    useEffect(() => {
+        onWeekDateChange?.(currentWeek);
+    }, [currentWeek, onWeekDateChange]);
 
     // Helper function to extract KPI summary from member reports
     const extractKpiSummary = () => {
@@ -693,11 +710,9 @@ const WeeklyReviews = () => {
                 <MeetingNotes
                     meetingNotes={meetingNotes}
                     markAllAttended={markAllAttended}
-                    aiSummary={aiSummary}
                     saveMeetingLoading={saveMeetingLoading}
                     onMeetingNotesChange={setMeetingNotes}
                     onMarkAllAttendedChange={setMarkAllAttended}
-                    onAiSummaryChange={setAiSummary}
                     onSaveMeeting={handleSaveMeeting}
                     onClearNotes={() => setMeetingNotes('')}
                 />

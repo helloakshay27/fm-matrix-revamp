@@ -35,6 +35,12 @@ import { Search, Download, Loader2, Grid3x3, Plus, X, Filter, Check, Trash2, Che
 import { cn } from '@/lib/utils';
 import { getAuthHeader, API_CONFIG } from '@/config/apiConfig';
 import { TextField } from '@mui/material';
+import {
+  calculateColumnLeftOffset,
+  isColumnFrozen,
+  getFrozenColumnConfig,
+} from './stickyColumnUtils';
+import './EnhancedTable.css';
 
 // Excel export utility function
 const exportToExcel = <T extends Record<string, any>>(
@@ -141,6 +147,8 @@ interface EnhancedTableProps<T> {
   collapsible?: boolean;
   getChildrenKey?: (item: T) => string;
   renderChildrenRows?: (children: T[], parentId: string) => React.ReactNode;
+  enableFreeze?: boolean;
+  freezeColumnsCount?: number;
 }
 
 export function EnhancedTable<T extends Record<string, any>>({
@@ -201,12 +209,14 @@ export function EnhancedTable<T extends Record<string, any>>({
   collapsible = false,
   getChildrenKey,
   renderChildrenRows,
+  enableFreeze = false,
+  freezeColumnsCount = 0,
 }: EnhancedTableProps<T>) {
   const [internalSearchTerm, setInternalSearchTerm] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);
   const [apiSearchResults, setApiSearchResults] = useState<T[] | null>(null);
-  
+
   // Use external pagination if provided, otherwise use internal
   const currentPage = externalCurrentPage ?? internalCurrentPage;
   const [isSearching, setIsSearching] = useState(false);
@@ -845,38 +855,63 @@ export function EnhancedTable<T extends Record<string, any>>({
                         </div>
                       </TableHead>
                     )}
-                    {visibleColumns.map((column) => (
-                      <SortableColumnHeader
-                        key={column.key}
-                        id={column.key}
-                        sortable={column.sortable !== false}
-                        draggable={column.draggable}
-                        sortDirection={sortState.column === column.key ? sortState.direction : null}
-                        onSort={() => {
-                          // Use external onSort if provided, otherwise use internal sorting
-                          if (column.sortable !== false) {
-                            if (onSort) {
-                              onSort(column.key);
-                            } else {
-                              handleSort(column.key);
+                    {visibleColumns.map((column, columnIndex) => {
+                      const frozenConfig = enableFreeze
+                        ? getFrozenColumnConfig(
+                          columnIndex,
+                          freezeColumnsCount,
+                          visibleColumns,
+                          columnWidths,
+                          true // isStickyHeader = true
+                        )
+                        : null;
+
+                      console.log(frozenConfig)
+
+                      return (
+                        <SortableColumnHeader
+                          key={column.key}
+                          id={column.key}
+                          sortable={column.sortable !== false}
+                          draggable={column.draggable}
+                          sortDirection={sortState.column === column.key ? sortState.direction : null}
+                          onSort={() => {
+                            // Use external onSort if provided, otherwise use internal sorting
+                            if (column.sortable !== false) {
+                              if (onSort) {
+                                onSort(column.key);
+                              } else {
+                                handleSort(column.key);
+                              }
                             }
-                          }
-                        }}
-                        className="bg-[#f6f4ee] text-left text-black min-w-32 sticky top-0"
-                        style={{
-                          width: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined,
-                          minWidth: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined,
-                          position: 'relative'
-                        }}
-                      >
-                        {column.label}
-                        <div
-                          className="column-resize-handle"
-                          onMouseDown={(e) => handleResizeStart(column.key, e)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </SortableColumnHeader>
-                    ))}
+                          }}
+                          className={cn(
+                            "bg-[#f6f4ee] text-left text-black min-w-32 sticky top-0",
+                            frozenConfig?.isFrozen && "frozen-header-cell",
+                            frozenConfig?.isLastFrozen && "frozen-last-cell"
+                          )}
+                          style={{
+                            width: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined,
+                            minWidth: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined,
+                            position: 'relative',
+                            ...(frozenConfig?.isFrozen && {
+                              position: 'sticky' as const,
+                              // left: `${frozenConfig.leftOffset}px`,
+                              zIndex: frozenConfig.zIndex,
+                            }),
+                          }}
+                          data-frozen={frozenConfig?.isFrozen}
+                          data-frozen-shadow={frozenConfig?.showShadow}
+                        >
+                          {column.label}
+                          <div
+                            className="column-resize-handle"
+                            onMouseDown={(e) => handleResizeStart(column.key, e)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </SortableColumnHeader>
+                      );
+                    })}
                   </SortableContext>
                 </TableRow>
               </TableHeader>
@@ -923,7 +958,7 @@ export function EnhancedTable<T extends Record<string, any>>({
                         </div>
                       </TableCell>
                     )}
-                    {visibleColumns.map((column) => {
+                    {visibleColumns.map((column, columnIndex) => {
                       const isReadonly = readonlyColumns.includes(column.key);
 
                       // For readonly columns, don't call renderEditableCell at all
@@ -935,6 +970,16 @@ export function EnhancedTable<T extends Record<string, any>>({
                         );
                       }
 
+                      const frozenConfig = enableFreeze
+                        ? getFrozenColumnConfig(
+                          columnIndex,
+                          freezeColumnsCount,
+                          visibleColumns,
+                          columnWidths,
+                          false // isStickyHeader = false
+                        )
+                        : null;
+
                       const customCell = renderEditableCell ?
                         renderEditableCell(
                           column.key,
@@ -943,7 +988,23 @@ export function EnhancedTable<T extends Record<string, any>>({
                         ) : null;
 
                       return (
-                        <TableCell key={column.key} className="p-4 text-center min-w-32">
+                        <TableCell
+                          key={column.key}
+                          className={cn(
+                            "p-4 text-center min-w-32",
+                            frozenConfig?.isFrozen && "frozen-body-cell",
+                            frozenConfig?.isLastFrozen && "frozen-last-cell"
+                          )}
+                          style={{
+                            ...(frozenConfig?.isFrozen && {
+                              position: 'sticky' as const,
+                              left: `${frozenConfig.leftOffset}px`,
+                              zIndex: frozenConfig.zIndex,
+                            }),
+                          }}
+                          data-frozen={frozenConfig?.isFrozen}
+                          data-frozen-shadow={frozenConfig?.showShadow}
+                        >
                           {customCell !== null ?
                             customCell :
                             renderDefaultEditableCell(
@@ -1071,18 +1132,40 @@ export function EnhancedTable<T extends Record<string, any>>({
                             </div>
                           </TableCell>
                         )}
-                        {visibleColumns.map((column) => {
+                        {visibleColumns.map((column, columnIndex) => {
                           const renderedRow = renderRow ? renderRow(item) : item;
                           const cellContent = renderRow ? renderedRow[column.key] : renderCell?.(item, column.key);
+
+                          const frozenConfig = enableFreeze
+                            ? getFrozenColumnConfig(
+                              columnIndex,
+                              freezeColumnsCount,
+                              visibleColumns,
+                              columnWidths,
+                              false // isStickyHeader = false
+                            )
+                            : null;
+
                           return (
                             <TableCell
                               key={column.key}
-                              className="p-4 text-left min-w-32"
+                              className={cn(
+                                "p-4 text-left min-w-32",
+                                frozenConfig?.isFrozen && "frozen-body-cell",
+                                frozenConfig?.isLastFrozen && "frozen-last-cell"
+                              )}
                               style={{
                                 width: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined,
                                 minWidth: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined,
-                                maxWidth: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined
+                                maxWidth: columnWidths[column.key] ? `${columnWidths[column.key]}px` : undefined,
+                                ...(frozenConfig?.isFrozen && {
+                                  position: 'sticky' as const,
+                                  left: `${frozenConfig.leftOffset}px`,
+                                  zIndex: frozenConfig.zIndex,
+                                }),
                               }}
+                              data-frozen={frozenConfig?.isFrozen}
+                              data-frozen-shadow={frozenConfig?.showShadow}
                             >
                               {cellContent}
                             </TableCell>

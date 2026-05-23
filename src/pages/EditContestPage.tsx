@@ -46,6 +46,7 @@ interface OfferData {
   bannerImageName: string;
   rewardType: string;
   pointsValue: string;
+  validity?: string;
 }
 
 const isoToDateInput = (iso: string): string => {
@@ -102,6 +103,7 @@ export const EditContestPage: React.FC = () => {
     bannerImageName: "",
     rewardType: "Coupon Code",
     pointsValue: "",
+    validity: "",
   });
 
   const [contestName, setContestName] = useState("");
@@ -193,6 +195,7 @@ export const EditContestPage: React.FC = () => {
               prize.reward_type === "points"
                 ? String(prize.points_value ?? "")
                 : "",
+            validity: prize.validity || "",
           }));
           setOffers(mappedOffers);
         }
@@ -441,6 +444,12 @@ export const EditContestPage: React.FC = () => {
               offer.bannerImage
             );
           }
+          if (offer.validity) {
+            formData.append(
+              `contest[prizes_attributes][${prizeIndex}][validity]`,
+              offer.validity
+            );
+          }
           prizeIndex++;
         });
       } else {
@@ -460,6 +469,12 @@ export const EditContestPage: React.FC = () => {
           formData.append(
             `contest[prizes_attributes][${prizeIndex}][image_attributes][document]`,
             offer.bannerImage
+          );
+        }
+        if (offer.validity) {
+          formData.append(
+            `contest[prizes_attributes][${prizeIndex}][validity]`,
+            offer.validity
           );
         }
         prizeIndex++;
@@ -844,6 +859,18 @@ export const EditContestPage: React.FC = () => {
                         />
                       );
                     })()}
+
+                    <TextField
+                      fullWidth
+                      label="Validity"
+                      value={offer.validity}
+                      onChange={(e) => updateOffer(offer.id, "validity", e.target.value)}
+                      sx={textFieldSx}
+                      size="small"
+                      type="date"
+                      inputProps={{ min: 0 }}
+                      required
+                    />
                   </div>
 
                   <div className="mt-4">

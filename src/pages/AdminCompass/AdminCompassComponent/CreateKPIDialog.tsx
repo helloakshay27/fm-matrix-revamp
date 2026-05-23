@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────
-// CreateKPIDialog.tsx — matches BugReports Dialog shell + KPI form
+// CreateKPIDialog.tsx — KPI form dialog
 // ─────────────────────────────────────────────
 import React, { useEffect, useState } from "react";
 import {

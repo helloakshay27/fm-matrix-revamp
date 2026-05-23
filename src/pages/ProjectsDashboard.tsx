@@ -257,7 +257,7 @@ export const ProjectsDashboard = () => {
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { shouldShow } = useDynamicPermissions();
 
   const view = localStorage.getItem("selectedView");
@@ -329,6 +329,74 @@ export const ProjectsDashboard = () => {
   const [sortDirection, setSortDirection] = useState<"asc" | "desc" | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [appliedFilters, setAppliedFilters] = useState(""); // For ProjectFilterModal
+
+  // Helper: sync any key/value map into URL search params
+  const updateQueryParams = useCallback(
+    (updates: Record<string, any>, replace = false) => {
+      const params = new URLSearchParams(searchParams);
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)) {
+          params.delete(key);
+        } else if (Array.isArray(value)) {
+          params.delete(key);
+          value.forEach((val) => params.append(key, String(val)));
+        } else {
+          params.set(key, String(value));
+        }
+      });
+      setSearchParams(params, { replace });
+    },
+    [searchParams, setSearchParams]
+  );
+
+  // On mount: restore applied filters from URL params
+  useEffect(() => {
+    const urlStatuses = searchParams.getAll("status");
+    const urlTypes = searchParams.getAll("type");
+    const urlManagers = searchParams.getAll("manager");
+    const urlCreatedBy = searchParams.getAll("created_by");
+    const urlStartDate = searchParams.get("start_date") || "";
+    const urlEndDate = searchParams.get("end_date") || "";
+
+    const hasFilters =
+      urlStatuses.length > 0 || urlTypes.length > 0 ||
+      urlManagers.length > 0 || urlCreatedBy.length > 0 ||
+      urlStartDate || urlEndDate;
+
+    if (hasFilters) {
+      const parts: string[] = [];
+      urlStatuses.forEach((s) => parts.push(`q[status_in][]=${encodeURIComponent(s)}`));
+      urlTypes.forEach((t) => parts.push(`q[project_type_id_in][]=${encodeURIComponent(t)}`));
+      urlManagers.forEach((m) => parts.push(`q[owner_id_in][]=${encodeURIComponent(m)}`));
+      urlCreatedBy.forEach((c) => parts.push(`q[created_by_id_in][]=${encodeURIComponent(c)}`));
+      if (urlStartDate) parts.push(`q[start_date_eq]=${encodeURIComponent(urlStartDate)}`);
+      if (urlEndDate) parts.push(`q[end_date_eq]=${encodeURIComponent(urlEndDate)}`);
+      setAppliedFilters(parts.join("&"));
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Shared handler: apply filters → state + URL
+  const handleApplyFilters = useCallback(
+    (filterString: string) => {
+      setAppliedFilters(filterString);
+      setCurrentPage(1);
+
+      // Parse incoming qs string to extract individual values for URL
+      const parsed = new URLSearchParams(filterString);
+      updateQueryParams(
+        {
+          status: parsed.getAll("q[status_in][]"),
+          type: parsed.getAll("q[project_type_id_in][]"),
+          manager: parsed.getAll("q[owner_id_in][]"),
+          created_by: parsed.getAll("q[created_by_id_in][]"),
+          start_date: parsed.get("q[start_date_eq]") || undefined,
+          end_date: parsed.get("q[end_date_eq]") || undefined,
+        },
+        true
+      );
+    },
+    [updateQueryParams]
+  );
 
   // Build filter string for TanStack Query (combines status filter + applied filters)
   let filterString = "";
@@ -698,7 +766,7 @@ export const ProjectsDashboard = () => {
               className={`absolute top-0 left-0 h-6 ${color} rounded-full transition-all duration-300`}
               style={{ width: `${progress}%` }}
             ></div>
-            <span className="relative z-10 text-xs font-semibold text-gray-800">
+            <span className="relative text-xs font-semibold text-gray-800">
               {Math.round(progress)}%
             </span>
           </div>
@@ -847,7 +915,7 @@ export const ProjectsDashboard = () => {
               className={`absolute top-0 left-0 h-6 bg-[#7fffdd] rounded-full transition-all duration-300`}
               style={{ width: `${item.completion_percent}%` }}
             ></div>
-            <span className="relative z-10 text-xs font-semibold text-gray-800">
+            <span className="relative text-xs font-semibold text-gray-800">
               {Math.round(item.completion_percent)}%
             </span>
           </div>
@@ -865,7 +933,7 @@ export const ProjectsDashboard = () => {
               className={`absolute top-0 left-0 h-6 bg-[#84edba] rounded-full transition-all duration-300`}
               style={{ width: `${item.milestoneCompletionPercent}%` }}
             ></div>
-            <span className="relative z-10 text-xs font-semibold text-gray-800">
+            <span className="relative text-xs font-semibold text-gray-800">
               {Math.round(item.milestoneCompletionPercent)}%
             </span>
           </div>
@@ -883,7 +951,7 @@ export const ProjectsDashboard = () => {
               className={`absolute top-0 left-0 h-6 bg-[#e9e575] rounded-full transition-all duration-300`}
               style={{ width: `${item.taskCompletionPercent}%` }}
             ></div>
-            <span className="relative z-10 text-xs font-semibold text-gray-800">
+            <span className="relative text-xs font-semibold text-gray-800">
               {Math.round(item.taskCompletionPercent)}%
             </span>
           </div>
@@ -901,7 +969,7 @@ export const ProjectsDashboard = () => {
               className={`absolute top-0 left-0 h-6 bg-[#b4e7ff] rounded-full transition-all duration-300`}
               style={{ width: `${item.subtaskCompletionPercent}%` }}
             ></div>
-            <span className="relative z-10 text-xs font-semibold text-gray-800">
+            <span className="relative text-xs font-semibold text-gray-800">
               {Math.round(item.subtaskCompletionPercent)}%
             </span>
           </div>
@@ -1258,10 +1326,14 @@ export const ProjectsDashboard = () => {
         <ProjectFilterModal
           isModalOpen={isFilterModalOpen}
           setIsModalOpen={setIsFilterModalOpen}
-          onApplyFilters={(filterString) => {
-            setAppliedFilters(filterString);
-            setCurrentPage(1);
-            // TanStack Query hook will automatically refetch with new filters
+          onApplyFilters={handleApplyFilters}
+          initialValues={{
+            statuses: searchParams.getAll("status"),
+            types: searchParams.getAll("type"),
+            managers: searchParams.getAll("manager"),
+            createdBy: searchParams.getAll("created_by"),
+            startDate: searchParams.get("start_date") || "",
+            endDate: searchParams.get("end_date") || "",
           }}
         />
       </div>
@@ -1301,6 +1373,8 @@ export const ProjectsDashboard = () => {
         enableExport={true}
         exportFileName="projects"
         hideTableExport={true}
+        enableFreeze={true}
+        freezeColumnsCount={3}
       />
 
       {/* Infinite Scroll Loader - Only visible when loading more data */}
@@ -1367,10 +1441,7 @@ export const ProjectsDashboard = () => {
       <ProjectFilterModal
         isModalOpen={isFilterModalOpen}
         setIsModalOpen={setIsFilterModalOpen}
-        onApplyFilters={(filterString) => {
-          setAppliedFilters(filterString);
-          setCurrentPage(1);
-        }}
+        onApplyFilters={handleApplyFilters}
       />
     </div>
   );

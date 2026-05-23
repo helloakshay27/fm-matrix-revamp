@@ -1,0 +1,163 @@
+/**
+ * Styles for frozen/sticky columns and headers in EnhancedTable
+ * 
+ * This stylesheet provides styling for:
+ * - Sticky table headers that remain visible during vertical scrolling
+ * - Frozen columns that remain visible during horizontal scrolling
+ * - Shadow effects to indicate frozen column boundaries
+ * - Proper z-index layering for frozen headers and body cells
+ * - Background color handling for frozen cells
+ */
+
+/* Base sticky header styling */
+.table-container {
+  overflow: auto;
+  position: relative;
+  width: 100%;
+}
+
+/* Sticky table header base */
+.sticky-header {
+  /* Headers remain at top during vertical scroll */
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f6f4ee;
+}
+
+/**
+ * Frozen column cells (both header and body)
+ * position: sticky with left offset enables horizontal freeze
+ */
+.frozen-header-cell,
+.frozen-body-cell {
+  background-color: #f6f4ee; /* Prevent transparency overlap */
+  position: sticky; /* This is also set inline, but CSS provides fallback */
+}
+
+/* Frozen body cells with specific styling */
+.frozen-body-cell {
+  background-color: white;
+  z-index: 9; /* Below frozen headers */
+}
+
+/**
+ * Last frozen column - adds visual separator/shadow
+ * Indicates the boundary between frozen and scrollable content
+ */
+.frozen-last-cell {
+  /* box-shadow: 
+    inset -12px 0 8px -10px rgba(0, 0, 0, 0.15);
+  position: relative; */
+}
+
+/**
+ * Frozen header cells (higher z-index than body frozen cells)
+ * Ensures headers appear above body content when scrolling
+ */
+.sticky-header .frozen-header-cell {
+  background-color: #f6f4ee;
+  z-index: 20; /* Higher than frozen body cells */
+}
+
+/**
+ * Last frozen column in header row
+ */
+.sticky-header .frozen-last-cell {
+  /* box-shadow: 
+    inset -12px 0 8px -10px rgba(0, 0, 0, 0.15); */
+}
+
+/**
+ * Enhanced table wrapper
+ */
+.enhancedTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+/**
+ * Column resize handle styling
+ */
+.column-resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  user-select: none;
+  background-color: transparent;
+  transition: background-color 0.2s;
+}
+
+.column-resize-handle:hover,
+.column-resize-handle:active {
+  background-color: #c72030;
+}
+
+/**
+ * Table cell overflow handling
+ * Prevents content from overlapping frozen columns
+ */
+table td,
+table th {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/**
+ * Horizontal scroll container styling
+ */
+.table-container {
+  /* Smooth scrolling for better UX */
+  scroll-behavior: smooth;
+}
+
+/**
+ * Responsive adjustments
+ */
+@media (max-width: 768px) {
+  .frozen-body-cell,
+  .frozen-header-cell {
+    /* On smaller screens, consider reducing shadow */
+    box-shadow: none;
+  }
+
+  .frozen-last-cell {
+    box-shadow: inset -8px 0 6px -6px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/**
+ * Performance optimization: reduce paint areas
+ * Use will-change judiciously
+ */
+.frozen-header-cell[data-frozen="true"],
+.frozen-body-cell[data-frozen="true"] {
+  /* Hint to browser for optimization (use sparingly) */
+  /* will-change: left; */
+}
+
+/**
+ * Print styles - ensure frozen columns print correctly
+ */
+@media print {
+  .sticky-header {
+    position: static;
+    top: auto;
+  }
+
+  .frozen-header-cell,
+  .frozen-body-cell {
+    position: static;
+    left: auto;
+    box-shadow: none;
+  }
+
+  .frozen-last-cell {
+    box-shadow: none;
+    border-right: 1px solid #ddd;
+  }
+}
