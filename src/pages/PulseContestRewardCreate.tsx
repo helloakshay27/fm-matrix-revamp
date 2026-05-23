@@ -97,7 +97,7 @@ const PulseContestRewardCreate = () => {
     const fetchContests = async () => {
         setContestsLoading(true)
         try {
-            const response = await axios.get(`https://${baseUrl}/contests.json?content_type_eq=Special%20Discount`, {
+            const response = await axios.get(`https://${baseUrl}/contests.json?content_type_eq=special_discount`, {
                 headers: { Authorization: `Bearer ${token}` },
             })
             const data = response.data
