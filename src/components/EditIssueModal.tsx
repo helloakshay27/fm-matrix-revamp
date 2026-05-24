@@ -20,6 +20,7 @@ import {
     DialogContent,
     Slide,
 } from "@mui/material";
+import { Button as SubmitButton } from "@/components/ui/button";
 import { TransitionProps } from "@mui/material/transitions";
 import { TaskDatePicker } from "@/components/TaskDatePicker";
 import TasksOfDate from "@/components/TasksOfDate";
@@ -214,6 +215,11 @@ const EditIssueModal = ({
     const [tags, setTags] = useState([]);
     const [mentionTags, setMentionTags] = useState<any[]>([]);
     const [isTagModalOpen, setIsTagModalOpen] = useState(false);
+
+    // Responsible Person Change Modal State
+    const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
+    const [pendingResponsiblePerson, setPendingResponsiblePerson] = useState<string | null>(null);
+    const [responsiblePersonChangeReason, setResponsiblePersonChangeReason] = useState('');
 
     // Date picker states
     const [showDatePicker, setShowDatePicker] = useState(false);
@@ -1011,16 +1017,22 @@ const EditIssueModal = ({
                                 <Select
                                     value={responsiblePerson}
                                     onChange={(e) => {
-                                        setResponsiblePerson(e.target.value);
-                                        if (e.target.value) {
-                                            dispatch(
-                                                fetchUserAvailability({
-                                                    baseUrl,
-                                                    token,
-                                                    id: e.target.value,
-                                                })
-                                            );
-                                            fetchShifts(e.target.value);
+                                        const newPersonId = e.target.value;
+                                        if (responsiblePerson && newPersonId !== responsiblePerson) {
+                                            setPendingResponsiblePerson(newPersonId);
+                                            setIsResponsibleModalOpen(true);
+                                        } else {
+                                            setResponsiblePerson(newPersonId);
+                                            if (newPersonId) {
+                                                dispatch(
+                                                    fetchUserAvailability({
+                                                        baseUrl,
+                                                        token,
+                                                        id: newPersonId,
+                                                    })
+                                                );
+                                                fetchShifts(newPersonId);
+                                            }
                                         }
                                     }}
                                     label="Responsible Person"
@@ -1329,7 +1341,88 @@ const EditIssueModal = ({
                 onClose={() => setIsTagModalOpen(false)}
                 onTagCreated={() => fetchMentionTags()}
             />
+
+            {/* Responsible Person Change Modal */}
+            <ResponsiblePersonChangeModal
+                isOpen={isResponsibleModalOpen}
+                onClose={() => {
+                    setIsResponsibleModalOpen(false);
+                    setPendingResponsiblePerson(null);
+                    setResponsiblePersonChangeReason('');
+                }}
+                onSubmit={(reason) => {
+                    if (pendingResponsiblePerson) {
+                        setResponsiblePerson(pendingResponsiblePerson);
+                        dispatch(
+                            fetchUserAvailability({
+                                baseUrl,
+                                token,
+                                id: pendingResponsiblePerson,
+                            })
+                        );
+                        fetchShifts(pendingResponsiblePerson);
+                        setIsResponsibleModalOpen(false);
+                        setPendingResponsiblePerson(null);
+                        setResponsiblePersonChangeReason('');
+                    }
+                }}
+            />
         </Dialog>
+    );
+};
+
+// Responsible Person Change Modal Component
+const ResponsiblePersonChangeModal = ({ isOpen, onClose, onSubmit }: any) => {
+    const [reason, setReason] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason('');
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error('Please enter a reason for changing the responsible person');
+            return;
+        }
+        onSubmit(reason);
+        setReason('');
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Responsible Person Change</h2>
+
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for changing responsible person..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        rows={4}
+                    />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                    <SubmitButton
+                        variant="outline"
+                        onClick={onClose}
+                    >
+                        Cancel
+                    </SubmitButton>
+                    <SubmitButton
+                        onClick={handleSubmit}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    >
+                        Change Responsible Person
+                    </SubmitButton>
+                </div>
+            </div>
+        </div>
     );
 };
 

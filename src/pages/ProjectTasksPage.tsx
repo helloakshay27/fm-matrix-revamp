@@ -126,7 +126,7 @@ const columns: ColumnConfig[] = [
     },
     {
         key: "started_time",
-        label: "Started Time",
+        label: "Actual Efforts Taken",
         sortable: false,
         draggable: true,
         defaultVisible: true,

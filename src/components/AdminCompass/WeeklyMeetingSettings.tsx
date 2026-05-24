@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Calendar, Plus, X, Loader2, Clock, MoreVertical, Edit2, Trash2 } from 'lucide-react'
+import { Calendar, Plus, X, Loader2, Clock, MoreVertical, Edit2, Trash2, Search, ChevronDown, Check } from 'lucide-react'
 import axios from 'axios'
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -38,6 +38,7 @@ interface User {
 interface Department {
     id: number
     name: string
+    department_name?: string
     [key: string]: any
 }
 
@@ -49,9 +50,160 @@ interface WeeklyMeeting {
     duration_minutes: number
     meeting_head?: { id: number; name: string; email: string }
     department?: { id: number; name: string }
+    departments?: Array<{ id: number; name?: string; department_name?: string }>
+    department_ids?: number[]
     members?: Array<{ id: number; name: string; email: string }>
     is_default?: boolean
     [key: string]: any
+}
+
+const getDepartmentLabel = (dept: Department | { name?: string; department_name?: string }) =>
+    dept.department_name || dept.name || 'Unnamed department'
+
+const getMeetingDepartmentIds = (meeting: WeeklyMeeting | DailyMeetingConfig): string[] => {
+    const ids =
+        Array.isArray(meeting.department_ids)
+            ? meeting.department_ids
+            : Array.isArray(meeting.departments)
+                ? meeting.departments.map((dept: any) => dept?.id)
+                : meeting.department?.id
+                    ? [meeting.department.id]
+                    : []
+
+    return ids.filter(Boolean).map((id: number | string) => String(id))
+}
+
+const getMeetingDepartmentLabels = (meeting: WeeklyMeeting): string[] => {
+    const departmentList = Array.isArray(meeting.departments)
+        ? meeting.departments
+        : meeting.department
+            ? [meeting.department]
+            : []
+
+    return departmentList.map((dept) => getDepartmentLabel(dept)).filter(Boolean)
+}
+
+const getUserLabel = (user: User) => {
+    const fullName = [user.firstname, user.lastname].filter(Boolean).join(' ').trim()
+    return fullName || user.name || user.email || 'Unnamed user'
+}
+
+const SearchableUserSelect = ({
+    value,
+    onChange,
+    users,
+    loading,
+}: {
+    value: string
+    onChange: (value: string) => void
+    users: User[]
+    loading: boolean
+}) => {
+    const [open, setOpen] = useState(false)
+    const [search, setSearch] = useState('')
+    const ref = React.useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const handleOutsideClick = (event: MouseEvent) => {
+            if (ref.current && !ref.current.contains(event.target as Node)) {
+                setOpen(false)
+                setSearch('')
+            }
+        }
+
+        document.addEventListener('mousedown', handleOutsideClick)
+        return () => document.removeEventListener('mousedown', handleOutsideClick)
+    }, [])
+
+    const selectedUser = users.find((user) => String(user.id) === value)
+    const filteredUsers = users.filter((user) => {
+        const query = search.trim().toLowerCase()
+        if (!query) return true
+
+        return (
+            getUserLabel(user).toLowerCase().includes(query) ||
+            String(user.email || '').toLowerCase().includes(query)
+        )
+    })
+
+    return (
+        <div ref={ref} className="relative">
+            <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Input
+                    value={open ? search : selectedUser ? getUserLabel(selectedUser) : ''}
+                    onClick={() => {
+                        if (loading) return
+                        setOpen(true)
+                        setSearch('')
+                    }}
+                    onChange={(event) => {
+                        setSearch(event.target.value)
+                        setOpen(true)
+                    }}
+                    readOnly={!open}
+                    disabled={loading}
+                    placeholder={loading ? 'Loading users...' : 'Search meeting head...'}
+                    className="w-full cursor-pointer pl-9 pr-9"
+                />
+                <ChevronDown
+                    className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
+                />
+            </div>
+
+            {open && (
+                <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 max-h-64 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl">
+                    {value && (
+                        <button
+                            type="button"
+                            className="w-full border-b border-gray-100 px-4 py-2 text-left text-xs font-semibold text-red-500 hover:bg-red-50"
+                            onClick={() => {
+                                onChange('')
+                                setOpen(false)
+                                setSearch('')
+                            }}
+                        >
+                            Clear selection
+                        </button>
+                    )}
+
+                    {filteredUsers.length > 0 ? (
+                        filteredUsers.map((user) => {
+                            const userValue = String(user.id)
+                            const isSelected = userValue === value
+
+                            return (
+                                <button
+                                    key={user.id}
+                                    type="button"
+                                    className={`flex w-full items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 text-left last:border-b-0 hover:bg-[#fffaf8] ${isSelected ? 'bg-[#fef6f4]' : 'bg-white'}`}
+                                    onClick={() => {
+                                        onChange(userValue)
+                                        setOpen(false)
+                                        setSearch('')
+                                    }}
+                                >
+                                    <span className="min-w-0">
+                                        <span className="block truncate text-sm font-semibold text-gray-900">
+                                            {getUserLabel(user)}
+                                        </span>
+                                        <span className="block truncate text-xs text-gray-500">
+                                            {user.email}
+                                        </span>
+                                    </span>
+                                    {isSelected && <Check className="h-4 w-4 shrink-0 text-[#DA7756]" />}
+                                </button>
+                            )
+                        })
+                    ) : (
+                        <div className="px-4 py-6 text-center text-sm text-gray-500">
+                            No users found
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    )
 }
 
 const SAMPLE_MEMBERS: MeetingMember[] = [
@@ -66,9 +218,9 @@ const WeeklyMeetingSettings = () => {
     const [meetingName, setMeetingName] = useState('')
     const [meetingHead, setMeetingHead] = useState('')
     const [dayOfWeek, setDayOfWeek] = useState('Monday')
-    const [time, setTime] = useState('10:00 AM')
+    const [time, setTime] = useState('00:00')
     const [duration, setDuration] = useState('60')
-    const [department, setDepartment] = useState('')
+    const [selectedDepartmentIds, setSelectedDepartmentIds] = useState<string[]>([])
     const [members, setMembers] = useState<MeetingMember[]>([])
     const [setAsDefault, setSetAsDefault] = useState(false)
     const [dailyMeetings, setDailyMeetings] = useState<DailyMeetingConfig[]>([])
@@ -87,6 +239,7 @@ const WeeklyMeetingSettings = () => {
     const [meetingToDelete, setMeetingToDelete] = useState<WeeklyMeeting | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
     const [memberSearch, setMemberSearch] = useState('')
+    const isMeetingFormLoading = isModalOpen && (loadingUsers || loadingDepartments)
 
     // Fetch daily meeting configs on component mount
     useEffect(() => {
@@ -263,6 +416,34 @@ const WeeklyMeetingSettings = () => {
         ))
     }
 
+    const handleDepartmentToggle = (departmentId: string) => {
+        setSelectedDepartmentIds((prev) =>
+            prev.includes(departmentId)
+                ? prev.filter((id) => id !== departmentId)
+                : [...prev, departmentId]
+        )
+    }
+
+    const resetMeetingForm = () => {
+        setMeetingName('')
+        setMeetingHead('')
+        setDayOfWeek('Monday')
+        setTime('00:00')
+        setDuration('60')
+        setSelectedDepartmentIds([])
+        setMembers((prev) => prev.map(m => ({ ...m, selected: false })))
+        setSetAsDefault(false)
+        setSelectedDailyMeeting('')
+        setEditingMeeting(null)
+        setEditingMeetingId(null)
+        setMemberSearch('')
+    }
+
+    const handleOpenCreateMeeting = () => {
+        resetMeetingForm()
+        setIsModalOpen(true)
+    }
+
     const handleEditMeeting = (meeting: WeeklyMeeting) => {
         setEditingMeeting(meeting)
         setMeetingName(meeting.name)
@@ -274,7 +455,7 @@ const WeeklyMeetingSettings = () => {
 
         setTime(meeting.meeting_time)
         setDuration(String(meeting.duration_minutes))
-        setDepartment(String(meeting.department?.id || ''))
+        setSelectedDepartmentIds(getMeetingDepartmentIds(meeting))
         setSetAsDefault(meeting.is_default || false)
 
         // Don't need to manually set members here - it will be set when users are fetched
@@ -292,7 +473,7 @@ const WeeklyMeetingSettings = () => {
             if (meeting.meeting_head) setMeetingHead(String(meeting.meeting_head?.id || ''))
             if (meeting.time) setTime(meeting.time)
             if (meeting.duration) setDuration(String(meeting.duration))
-            if (meeting.department) setDepartment(String(meeting.department?.id || ''))
+            setSelectedDepartmentIds(getMeetingDepartmentIds(meeting))
 
             // Handle members from daily meeting
             if (meeting.members && Array.isArray(meeting.members)) {
@@ -338,6 +519,7 @@ const WeeklyMeetingSettings = () => {
             const selectedMemberIds = members
                 .filter(m => m.selected)
                 .map(m => parseInt(m.id))
+            const selectedDepartmentIdNumbers = selectedDepartmentIds.map(id => parseInt(id))
 
             // Prepare API payload
             const payload = {
@@ -346,7 +528,8 @@ const WeeklyMeetingSettings = () => {
                 day_of_week: dayMapping[dayOfWeek],
                 meeting_time: time,
                 duration_minutes: parseInt(duration),
-                department_id: department ? parseInt(department) : null,
+                department_id: selectedDepartmentIdNumbers[0] || null,
+                department_ids: selectedDepartmentIdNumbers,
                 is_default: setAsDefault,
                 member_ids: selectedMemberIds
             }
@@ -393,17 +576,7 @@ const WeeklyMeetingSettings = () => {
             setWeeklyMeetings(Array.isArray(listResponse.data) ? listResponse.data : listResponse.data.data || [])
 
             // Reset form
-            setMeetingName('')
-            setMeetingHead('')
-            setDayOfWeek('Monday')
-            setTime('10:00 AM')
-            setDuration('60')
-            setDepartment('')
-            setMembers(members.map(m => ({ ...m, selected: false })))
-            setSetAsDefault(false)
-            setSelectedDailyMeeting('')
-            setEditingMeeting(null)
-            setEditingMeetingId(null)
+            resetMeetingForm()
             setIsModalOpen(false)
         } catch (error) {
             console.error('Error creating meeting:', error)
@@ -467,7 +640,7 @@ const WeeklyMeetingSettings = () => {
                         <p className="text-neutral-500 text-sm mt-1">Configure recurring weekly meetings and their participants</p>
                     </div>
                     <Button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={handleOpenCreateMeeting}
                         className="h-10 gap-2 rounded-xl bg-[#DA7756] px-4 font-bold text-white hover:bg-[#c9673f]"
                     >
                         <Plus className="w-4 h-4" />
@@ -493,6 +666,7 @@ const WeeklyMeetingSettings = () => {
                         {weeklyMeetings.map((meeting) => {
                             const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
                             const dayName = dayNames[meeting.day_of_week] || 'Unknown'
+                            const meetingDepartmentLabels = getMeetingDepartmentLabels(meeting)
 
                             return (
                                 <div key={meeting.id} className="border-l-4 border-l-[#5B7DFF] bg-white rounded-[10px] p-5 shadow-md transition-shadow">
@@ -532,6 +706,24 @@ const WeeklyMeetingSettings = () => {
                                         <Clock className="w-3.5 h-3.5" />
                                         {dayName} · {meeting.meeting_time} ({meeting.duration_minutes}m)
                                     </div>
+
+                                    {meetingDepartmentLabels.length > 0 && (
+                                        <div className="mb-3 flex flex-wrap gap-1.5">
+                                            {meetingDepartmentLabels.slice(0, 3).map((departmentName) => (
+                                                <span
+                                                    key={departmentName}
+                                                    className="rounded-full bg-[#fef6f4] px-2.5 py-1 text-xs font-semibold text-[#DA7756]"
+                                                >
+                                                    {departmentName}
+                                                </span>
+                                            ))}
+                                            {meetingDepartmentLabels.length > 3 && (
+                                                <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-600">
+                                                    +{meetingDepartmentLabels.length - 3}
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
 
                                     {/* Attendance */}
                                     {meeting.members && (
@@ -614,7 +806,7 @@ const WeeklyMeetingSettings = () => {
                             <p className="text-neutral-500 text-sm">Create your first weekly meeting configuration to get started</p>
                         </div>
                         <Button
-                            onClick={() => setIsModalOpen(true)}
+                            onClick={handleOpenCreateMeeting}
                             className="h-11 gap-2 rounded-xl bg-[#DA7756] px-6 font-bold text-white hover:bg-[#c9673f]"
                         >
                             <Plus className="w-5 h-5" />
@@ -629,42 +821,55 @@ const WeeklyMeetingSettings = () => {
                 setIsModalOpen(open)
                 if (!open) {
                     // Reset form when closing
-                    setMeetingName('')
-                    setMeetingHead('')
-                    setDayOfWeek('Monday')
-                    setTime('10:00 AM')
-                    setDuration('60')
-                    setDepartment('')
-                    setMembers(members.map(m => ({ ...m, selected: false })))
-                    setSetAsDefault(false)
-                    setSelectedDailyMeeting('')
-                    setEditingMeeting(null)
-                    setEditingMeetingId(null)
-                    setMemberSearch('')
+                    resetMeetingForm()
                 }
             }}>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white p-0">
+                <DialogContent className="flex h-[88vh] max-h-[88vh] max-w-4xl flex-col gap-0 overflow-hidden rounded-2xl border-gray-200 bg-[#fffaf8] p-0 shadow-2xl">
                     {/* Header with Theme Color */}
-                    <DialogHeader className="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <DialogTitle className="text-xl font-bold" style={{ color: THEME_COLOR }}>
-                                {editingMeeting ? 'Edit Weekly Meeting' : 'Create Weekly Meeting'}
-                            </DialogTitle>
+                    <DialogHeader className="border-b border-[#DA7756]/15 bg-white px-6 py-5">
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="flex min-w-0 items-start gap-3">
+                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#fef6f4] text-[#DA7756]">
+                                    <Calendar className="h-5 w-5" />
+                                </div>
+                                <div className="min-w-0">
+                                    <DialogTitle className="text-xl font-bold leading-6 text-[#1a1a1a]">
+                                        {editingMeeting ? 'Edit Weekly Meeting' : 'Create Weekly Meeting'}
+                                    </DialogTitle>
+                                    <p className="mt-1 text-sm text-neutral-500">
+                                        Configure schedule, departments, meeting head, and participants.
+                                    </p>
+                                </div>
+                            </div>
                             <Button
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setIsModalOpen(false)}
-                                className="h-8 w-8"
+                                className="h-9 w-9 shrink-0 rounded-full text-neutral-500 hover:bg-[#fef6f4] hover:text-[#DA7756]"
                             >
                                 <X className="h-4 w-4" />
                             </Button>
                         </div>
                     </DialogHeader>
 
-                    <div className="space-y-6 px-6 py-6">
-                        {/* Copy Settings Section - Only show in create mode */}
-                        {!editingMeeting && (
-                            <div>
+                    <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-6">
+                        {isMeetingFormLoading ? (
+                            <div className="flex min-h-[420px] flex-col items-center justify-center rounded-2xl border border-[#DA7756]/15 bg-white text-center shadow-sm">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#fef6f4] text-[#DA7756]">
+                                    <Loader2 className="h-7 w-7 animate-spin" />
+                                </div>
+                                <h3 className="mt-4 text-base font-bold text-[#1a1a1a]">
+                                    Loading meeting setup
+                                </h3>
+                                <p className="mt-1 text-sm text-neutral-500">
+                                    Fetching meeting heads, departments, and members...
+                                </p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Copy Settings Section - Only show in create mode */}
+                                {!editingMeeting && (
+                            <div className="rounded-xl border border-[#DA7756]/15 bg-white p-4 shadow-sm">
                                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
                                     Copy settings from daily meeting:
                                 </Label>
@@ -700,42 +905,42 @@ const WeeklyMeetingSettings = () => {
                         )}
 
                         {/* Meeting Name */}
-                        <div>
-                            <Label htmlFor="meetingName" className="text-sm font-medium text-gray-700 mb-2 block">
-                                Meeting Name *
-                            </Label>
-                            <Input
-                                id="meetingName"
-                                placeholder="e.g., Sales Team Weekly Review"
-                                value={meetingName}
-                                onChange={(e) => setMeetingName(e.target.value)}
-                                className="w-full"
-                            />
-                        </div>
+                        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                            <div className="mb-4">
+                                <h3 className="text-sm font-bold text-[#1a1a1a]">Meeting Details</h3>
+                                <p className="mt-0.5 text-xs text-neutral-500">Name the meeting and choose who owns it.</p>
+                            </div>
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                    <Label htmlFor="meetingName" className="text-sm font-medium text-gray-700 mb-2 block">
+                                        Meeting Name *
+                                    </Label>
+                                    <Input
+                                        id="meetingName"
+                                        placeholder="e.g., Sales Team Weekly Review"
+                                        value={meetingName}
+                                        onChange={(e) => setMeetingName(e.target.value)}
+                                        className="w-full rounded-lg"
+                                    />
+                                </div>
 
-                        {/* Meeting Head */}
-                        <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                                Meeting Head *
-                            </Label>
-                            <Select value={meetingHead} onValueChange={setMeetingHead} disabled={loadingUsers}>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select meeting head"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {users.length > 0 ? (
-                                        users.map((user) => (
-                                            <SelectItem key={user.id} value={String(user.id)}>
-                                                {user.firstname + " " + user.lastname || user.email}
-                                            </SelectItem>
-                                        ))
-                                    ) : null}
-                                </SelectContent>
-                            </Select>
+                                {/* Meeting Head */}
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                        Meeting Head *
+                                    </Label>
+                                    <SearchableUserSelect
+                                        value={meetingHead}
+                                        onChange={setMeetingHead}
+                                        users={users}
+                                        loading={loadingUsers}
+                                    />
+                                </div>
+                            </div>
                         </div>
 
                         {/* Day of Week, Time, Duration */}
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:grid-cols-3">
                             <div>
                                 <Label className="text-sm font-medium text-gray-700 mb-2 block">
                                     Day of Week *
@@ -780,38 +985,102 @@ const WeeklyMeetingSettings = () => {
                         </div>
 
                         {/* Department */}
-                        <div>
+                        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                             <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                                Department (Optional)
+                                Departments (Optional)
                             </Label>
-                            <Select value={department} onValueChange={setDepartment} disabled={loadingDepartments}>
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder={loadingDepartments ? "Loading departments..." : "Select department"} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {departments.length > 0 ? (
-                                        departments.map((dept) => (
-                                            <SelectItem key={dept.id} value={String(dept.id)}>
-                                                {dept.department_name}
-                                            </SelectItem>
-                                        ))
-                                    ) : null}
-                                </SelectContent>
-                            </Select>
+                            <p className="mb-3 text-xs text-neutral-500">
+                                Choose one or more departments for this weekly meeting.
+                            </p>
+                            <div className="rounded-lg border border-gray-200 bg-white">
+                                <div className="flex min-h-11 flex-wrap items-center gap-2 border-b border-gray-100 px-3 py-2">
+                                    {selectedDepartmentIds.length > 0 ? (
+                                        selectedDepartmentIds.map((deptId) => {
+                                            const dept = departments.find((item) => String(item.id) === deptId)
+                                            return (
+                                                <span
+                                                    key={deptId}
+                                                    className="inline-flex items-center gap-1 rounded-full bg-[#fef6f4] px-2.5 py-1 text-xs font-semibold text-[#DA7756]"
+                                                >
+                                                    {dept ? getDepartmentLabel(dept) : `Department ${deptId}`}
+                                                    <button
+                                                        type="button"
+                                                        className="rounded-full text-[#DA7756]/70 hover:text-[#c9673f]"
+                                                        onClick={() => handleDepartmentToggle(deptId)}
+                                                        aria-label="Remove department"
+                                                    >
+                                                        <X className="h-3 w-3" />
+                                                    </button>
+                                                </span>
+                                            )
+                                        })
+                                    ) : (
+                                        <span className="text-sm text-gray-400">
+                                            {loadingDepartments ? "Loading departments..." : "Select departments"}
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="max-h-44 overflow-y-auto">
+                                    {loadingDepartments ? (
+                                        <div className="space-y-2 p-3">
+                                            {[1, 2, 3].map((i) => (
+                                                <div key={i} className="flex items-center gap-3">
+                                                    <Skeleton className="h-4 w-4 rounded" />
+                                                    <Skeleton className="h-4 w-36 rounded" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : departments.length > 0 ? (
+                                        departments.map((dept) => {
+                                            const deptId = String(dept.id)
+                                            return (
+                                                <label
+                                                    key={dept.id}
+                                                    className="flex cursor-pointer items-center gap-3 border-b border-gray-100 px-4 py-3 last:border-b-0 hover:bg-gray-50"
+                                                >
+                                                    <Checkbox
+                                                        checked={selectedDepartmentIds.includes(deptId)}
+                                                        onCheckedChange={() => handleDepartmentToggle(deptId)}
+                                                        className="data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
+                                                    />
+                                                    <span className="text-sm font-medium text-gray-800">
+                                                        {getDepartmentLabel(dept)}
+                                                    </span>
+                                                </label>
+                                            )
+                                        })
+                                    ) : (
+                                        <p className="px-4 py-3 text-sm text-gray-500">No departments available</p>
+                                    )}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Meeting Members */}
-                        <div>
-                            <Label className="text-sm font-medium text-gray-700 mb-3 block">
-                                Meeting Members
-                            </Label>
-                            <Input
-                                placeholder="Search members by name or email..."
-                                value={memberSearch}
-                                onChange={(e) => setMemberSearch(e.target.value)}
-                                className="w-full mb-3"
-                            />
-                            <div className="border border-gray-200 rounded-lg bg-white max-h-48 overflow-y-auto">
+                        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                            <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700 block">
+                                        Meeting Members
+                                    </Label>
+                                    <p className="mt-1 text-xs text-neutral-500">
+                                        Select participants for this meeting.
+                                    </p>
+                                </div>
+                                <span className="text-xs font-semibold text-[#DA7756]">
+                                    {members.filter(member => member.selected).length} selected
+                                </span>
+                            </div>
+                            <div className="relative mb-3">
+                                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                <Input
+                                    placeholder="Search members by name or email..."
+                                    value={memberSearch}
+                                    onChange={(e) => setMemberSearch(e.target.value)}
+                                    className="w-full rounded-lg pl-9"
+                                />
+                            </div>
+                            <div className="max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white">
                                 {loadingUsers ? (
                                     // Skeleton Loading State
                                     <div className="space-y-2">
@@ -865,7 +1134,7 @@ const WeeklyMeetingSettings = () => {
                         </div>
 
                         {/* Set as Default */}
-                        <div className="flex items-center gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div className="flex items-center gap-3 rounded-xl border border-yellow-200 bg-yellow-50 p-4 shadow-sm">
                             <Checkbox
                                 checked={setAsDefault}
                                 onCheckedChange={(checked) => setSetAsDefault(checked as boolean)}
@@ -878,35 +1147,37 @@ const WeeklyMeetingSettings = () => {
                                 Set as default meeting
                             </label>
                         </div>
+                            </>
+                        )}
+                    </div>
 
-                        {/* Action Buttons */}
-                        <div className="flex gap-3 justify-end border-t border-gray-200 pt-6">
-                            <Button
-                                variant="outline"
-                                onClick={() => setIsModalOpen(false)}
-                                className="px-6"
-                                disabled={isSubmitting}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                onClick={handleCreateMeeting}
-                                className="px-6 text-white flex items-center gap-2"
-                                style={{ backgroundColor: THEME_COLOR }}
-                                onMouseEnter={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = THEME_COLOR_DARK)}
-                                onMouseLeave={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = THEME_COLOR)}
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        {editingMeeting ? 'Updating...' : 'Creating...'}
-                                    </>
-                                ) : (
-                                    editingMeeting ? 'Update Meeting' : 'Create Meeting'
-                                )}
-                            </Button>
-                        </div>
+                    {/* Action Buttons */}
+                    <div className="shrink-0 flex flex-col-reverse gap-3 border-t border-gray-200 bg-white px-6 py-4 sm:flex-row sm:justify-end">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsModalOpen(false)}
+                            className="h-10 rounded-lg px-6"
+                            disabled={isSubmitting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleCreateMeeting}
+                            className="h-10 px-6 text-white flex items-center gap-2 rounded-lg shadow-sm"
+                            style={{ backgroundColor: THEME_COLOR }}
+                            onMouseEnter={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = THEME_COLOR_DARK)}
+                            onMouseLeave={(e) => !isSubmitting && (e.currentTarget.style.backgroundColor = THEME_COLOR)}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    {editingMeeting ? 'Updating...' : 'Creating...'}
+                                </>
+                            ) : (
+                                editingMeeting ? 'Update Meeting' : 'Create Meeting'
+                            )}
+                        </Button>
                     </div>
                 </DialogContent>
             </Dialog>

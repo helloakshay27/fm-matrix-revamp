@@ -46,6 +46,7 @@ interface OfferData {
   bannerImageName: string;
   rewardType: string;
   pointsValue: string;
+  validity?: string;
 }
 
 export const CreateContestPage: React.FC = () => {
@@ -76,6 +77,7 @@ export const CreateContestPage: React.FC = () => {
     bannerImageName: "",
     rewardType: "Coupon Code",
     pointsValue: "",
+    validity: "",
   });
 
   // Helper function to get initial offers count based on contest type
@@ -486,6 +488,14 @@ export const CreateContestPage: React.FC = () => {
           offer.bannerImage
         );
       }
+
+      // Add validity if present
+      if (offer.validity) {
+        formData.append(
+          `contest[prizes_attributes][${index}][validity]`,
+          offer.validity
+        );
+      }
     });
 
     // Add terms and conditions text if present
@@ -881,6 +891,7 @@ export const CreateContestPage: React.FC = () => {
                       >
                         <MenuItem value="Coupon Code">Coupon Code</MenuItem>
                         <MenuItem value="Points">Points</MenuItem>
+                        <MenuItem value="None">None</MenuItem>
                       </MuiSelect>
                     </FormControl>
 
@@ -985,22 +996,17 @@ export const CreateContestPage: React.FC = () => {
                       );
                     })()}
 
-                    {/* <TextField
+                    <TextField
                       fullWidth
-                      label="Probability (Out of)"
-                      value={offer.probabilityOutOf}
-                      onChange={(e) =>
-                        updateOffer(
-                          offer.id,
-                          "probabilityOutOf",
-                          e.target.value
-                        )
-                      }
+                      label="Validity"
+                      value={offer.validity}
+                      onChange={(e) => updateOffer(offer.id, "validity", e.target.value)}
                       sx={textFieldSx}
                       size="small"
-                      type="number"
+                      type="date"
                       inputProps={{ min: 0 }}
-                    /> */}
+                      required
+                    />
                   </div>
 
                   <div className="mt-4">
