@@ -102,6 +102,7 @@ type ApiQuestion = {
 type DiscProfileResult = {
   counts: Record<DiscLetter, number>;
   scores: Record<DiscLetter, number>;
+  percentages?: Record<DiscLetter, number>;
   totalAnswers: number;
   primary: DiscLetter;
   secondary: DiscLetter;
@@ -109,6 +110,7 @@ type DiscProfileResult = {
   blendLabel: string;
   completedAt: string;
   attemptId?: string | number;
+  encryptedAttemptId?: string;
 };
 
 const PATTERN_BY_BLEND: Record<string, string> = {
@@ -654,6 +656,13 @@ function DiscProfileReport({
     axis: L,
     score: result.scores[L],
   }));
+  const percentFor = (letter: DiscLetter) =>
+    result.percentages?.[letter] ??
+    scoreToPercent(result.scores[letter], result.totalAnswers);
+  const percentLabel = (value: number) =>
+    Number.isInteger(value)
+      ? `${value}%`
+      : `${value.toFixed(2).replace(/\.?0+$/, "")}%`;
   const [expandedAccordion, setExpandedAccordion] = useState<
     string | undefined
   >(undefined);
@@ -806,12 +815,12 @@ function DiscProfileReport({
                         s.fill
                       )}
                       style={{
-                        width: `${scoreToPercent(sc, result.totalAnswers)}%`,
+                        width: `${percentFor(L)}%`,
                       }}
                     />
                   </div>
                   <p className="text-center text-xs font-semibold text-neutral-500">
-                    {scoreToPercent(sc, result.totalAnswers)}%
+                    {percentLabel(percentFor(L))}
                   </p>
                 </div>
               </div>
@@ -1640,6 +1649,12 @@ const DiscPersonalityAssessment = () => {
               S: report.scores?.S || 0,
               C: report.scores?.C || 0,
             };
+            const percentages = {
+              D: report.percentages?.D || 0,
+              I: report.percentages?.I || 0,
+              S: report.percentages?.S || 0,
+              C: report.percentages?.C || 0,
+            };
 
             const apiName =
               report.user_name ||
@@ -1664,6 +1679,7 @@ const DiscPersonalityAssessment = () => {
             setSavedProfile({
               counts: rawCounts,
               scores: rawCounts,
+              percentages,
               totalAnswers: totalAnswers,
               primary: primaryType,
               secondary: secondaryType,
@@ -1677,6 +1693,10 @@ const DiscPersonalityAssessment = () => {
                 report.submitted_at ||
                 new Date().toISOString(),
               attemptId: report.attempt_id || report.id || undefined,
+              encryptedAttemptId:
+                report.encrypted_attempt_id ||
+                rData.data?.encrypted_attempt_id ||
+                undefined,
             });
           }
         }
@@ -1732,12 +1752,19 @@ const DiscPersonalityAssessment = () => {
           S: report.scores?.S || 0,
           C: report.scores?.C || 0,
         };
+        const percentages = {
+          D: report.percentages?.D || 0,
+          I: report.percentages?.I || 0,
+          S: report.percentages?.S || 0,
+          C: report.percentages?.C || 0,
+        };
         const primaryType = report.primary_type as DiscLetter;
         const secondaryType = (report.secondary_type ||
           report.primary_type) as DiscLetter;
         setSelectedMemberReport({
           counts: rawCounts,
           scores: rawCounts,
+          percentages,
           totalAnswers: totalAnswers,
           primary: primaryType,
           secondary: secondaryType,
@@ -1790,24 +1817,25 @@ const DiscPersonalityAssessment = () => {
         getBaseUrl() || "https://fm-uat-api.lockated.com"
       ).replace(/\/$/, "");
 
-      const formattedAnswers = answers.map((answerIndex, qIndex) => ({
-        question_id: questions[qIndex].id,
-        dimension: questions[qIndex].options[answerIndex].dimension,
-      }));
-
-      const existingId = savedProfile?.attemptId;
-      const url = existingId
-        ? `${baseUrl}/disc_assessments/${existingId}`
-        : `${baseUrl}/disc_assessments/submit`;
-      const method = existingId ? "PUT" : "POST";
+      const formattedAnswers = answers.map((answerIndex, qIndex) => {
+        const selectedOption = questions[qIndex].options[answerIndex];
+        return {
+          question_id: questions[qIndex].id,
+          dimension: selectedOption.dimension,
+          answers: selectedOption.label,
+        };
+      });
+      const url = `${baseUrl}/disc_assessments/submit`;
 
       const response = await fetch(url, {
-        method,
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ answers: formattedAnswers }),
+        body: JSON.stringify({
+          answers: formattedAnswers,
+        }),
       });
 
       const data = await response.json();
@@ -1822,12 +1850,19 @@ const DiscPersonalityAssessment = () => {
           S: report.scores?.S || 0,
           C: report.scores?.C || 0,
         };
+        const percentages = {
+          D: report.percentages?.D || 0,
+          I: report.percentages?.I || 0,
+          S: report.percentages?.S || 0,
+          C: report.percentages?.C || 0,
+        };
         const primaryType = report.primary_type as DiscLetter;
         const secondaryType = (report.secondary_type ||
           report.primary_type) as DiscLetter;
         result = {
           counts: rawCounts,
           scores: rawCounts,
+          percentages,
           totalAnswers: totalAnswers,
           primary: primaryType,
           secondary: secondaryType,
@@ -1838,7 +1873,12 @@ const DiscPersonalityAssessment = () => {
             report.generated_at ||
             report.submitted_at ||
             new Date().toISOString(),
-          attemptId: report.attempt_id || report.id || existingId,
+          attemptId:
+            report.attempt_id || data.data?.attempt_id || report.id || undefined,
+          encryptedAttemptId:
+            data.data?.encrypted_attempt_id ||
+            report.encrypted_attempt_id ||
+            undefined,
         };
       } else {
         result = computeDiscResult(answers, questions);

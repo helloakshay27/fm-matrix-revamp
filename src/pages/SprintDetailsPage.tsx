@@ -1,13 +1,24 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import axios from "axios";
+import { useEffect, useState, useRef, useCallback, forwardRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ChevronDown, ChevronDownCircle, Eye, ScrollText, ClipboardList } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronDownCircle, Eye, Loader2, Users, X } from "lucide-react";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogTitle, Slide } from "@mui/material";
+import { TransitionProps } from "@mui/material/transitions";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { fetchSprintById } from "@/store/slices/sprintSlice";
+import SprintTasks from "@/components/SprintTasks";
+
+const SlideTransition = forwardRef(function SlideTransition(
+  props: TransitionProps & { children: React.ReactElement },
+  ref: React.Ref<unknown>
+) {
+  return <Slide direction="left" ref={ref} {...props} />;
+});
 
 interface SprintDetails {
   id?: string | number;
@@ -105,7 +116,30 @@ interface ApiSprintTask {
   sprint_id?: number;
   task_id?: number;
   created_at?: string;
-  task_management?: TaskManagement;
+  title?: string;
+  task_code?: string;
+  responsible_person_name?: string;
+  responsible_person_id?: number;
+  created_by_name?: string;
+  status?: string;
+  priority?: string;
+  target_date?: string;
+  expected_start_date?: string;
+  estimated_hour?: number;
+  active_time_till_now?: string;
+  total_allocated_hours?: string | number;
+  started_at?: string;
+  completed_at?: string;
+  milestone_id?: number;
+  milestone_title?: string;
+  project_management_title?: string;
+  project_status_id?: number;
+  predecessor_task?: string | any[];
+  successor_task?: string | any[];
+  completed_sub_tasks?: number;
+  total_sub_tasks?: number;
+  completed_issues?: number;
+  total_issues?: number;
 }
 
 interface ApiSprint {
@@ -126,7 +160,7 @@ interface ApiSprint {
   created_at?: string;
   updated_at?: string;
   associated_projects_count?: number;
-  sprint_tasks?: ApiSprintTask[];
+  sprint_task_managements?: ApiSprintTask[];
 }
 
 // Normalize raw status to display value
@@ -170,6 +204,65 @@ const dropdownOptions = [
   "Completed",
 ];
 
+interface SprintMember {
+  id: number | string;
+  name: string;
+  role: "owner" | "assignee";
+}
+
+interface MemberSummary {
+  member_id: number;
+  member_name: string;
+  email: string;
+  total_tasks: number;
+  completed_tasks: number;
+  pending_tasks: number;
+  total_issues: number;
+  completed_issues: number;
+  pending_issues: number;
+  task_effective_minutes: number;
+  task_actual_minutes: number;
+  issue_effective_minutes: number;
+  issue_actual_minutes: number;
+  total_effective_minutes: number;
+  total_actual_minutes: number;
+}
+
+const fmtMin = (m: number) => {
+  if (!m) return "—";
+  if (m >= 60) return `${(m / 60).toFixed(1)}h`;
+  return `${m}m`;
+};
+
+const AVATAR_COLORS = ["#E95420", "#08AEEA", "#7BD2B5", "#6366F1", "#F59E0B", "#10B981", "#EC4899"];
+
+const getInitials = (name: string) =>
+  name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+
+const extractMembers = (api: ApiSprint): SprintMember[] => {
+  const members: SprintMember[] = [];
+  const seen = new Set<string>();
+
+  if (api.sprint_owner_name && api.owner_id != null) {
+    const key = `${api.owner_id}`;
+    seen.add(key);
+    members.push({ id: api.owner_id, name: api.sprint_owner_name, role: "owner" });
+  }
+
+  (api.sprint_task_managements ?? []).forEach((t) => {
+    const tm = t;
+    if (tm?.responsible_person_name && tm?.responsible_person_id != null) {
+      const key = `${tm.responsible_person_id}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        members.push({ id: tm.responsible_person_id, name: tm.responsible_person_name, role: "assignee" });
+      }
+    }
+  });
+
+  return members;
+};
+
 // Map API sprint -> local details type
 const mapApiToDetails = (api: ApiSprint): SprintDetails => ({
   id: api.id,
@@ -185,17 +278,30 @@ const mapApiToDetails = (api: ApiSprint): SprintDetails => ({
 
 // Map API sprint_tasks -> table rows
 const mapApiTasks = (api: ApiSprint): Task[] => {
-  const list = api.sprint_tasks ?? [];
+  const list = api.sprint_task_managements ?? [];
   return list.map((t) => {
-    const taskMgmt = t.task_management;
+    const taskMgmt = t;
     return {
       id: t.id,
-      task_title: taskMgmt?.title ?? `Task #${t.task_id ?? t.id}`,
+      task_code: taskMgmt?.task_code ?? "-",
+      title: taskMgmt?.title ?? `Task #${t.task_id ?? t.id}`,
+      project_management_title: taskMgmt?.project_management_title ?? "-",
+      milestone_title: taskMgmt?.milestone_title ?? "-",
       status: mapStatusToDisplay(taskMgmt?.status),
-      responsible_person: taskMgmt?.responsible_person_name ?? "-",
+      project_status_id: taskMgmt?.project_status_id ?? "1",
+      responsible_person_id: taskMgmt?.responsible_person_id ?? "-",
+      created_by_name: taskMgmt?.created_by_name ?? "-",
+      expected_start_date: taskMgmt?.expected_start_date,
       target_date: taskMgmt?.target_date ?? "",
+      active_time_till_now: taskMgmt?.active_time_till_now ?? "",
+      total_allocated_hours: taskMgmt?.total_allocated_hours ?? "",
       priority: taskMgmt?.priority ?? "-",
-      estimated_hour: taskMgmt?.estimated_hour ?? 0,
+      predecessor_task: taskMgmt?.predecessor_task ?? "-",
+      successor_task: taskMgmt?.successor_task ?? "-",
+      completed_sub_tasks: taskMgmt?.completed_sub_tasks ?? 0,
+      total_sub_tasks: taskMgmt?.total_sub_tasks ?? 0,
+      completed_issues: taskMgmt?.completed_issues ?? 0,
+      total_issues: taskMgmt?.total_issues ?? 0,
     };
   });
 };
@@ -214,6 +320,10 @@ export const SprintDetailsPage = () => {
 
   const [sprintDetails, setSprintDetails] = useState<SprintDetails>({});
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [sprintMembers, setSprintMembers] = useState<SprintMember[]>([]);
+  const [isMembersOpen, setIsMembersOpen] = useState(false);
+  const [membersSummary, setMembersSummary] = useState<MemberSummary[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(false);
   const [selectedOption, setSelectedOption] = useState("Open");
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -224,6 +334,7 @@ export const SprintDetailsPage = () => {
       const resp = (await dispatch(fetchSprintById({ token, baseUrl, id })).unwrap()) as ApiSprint;
       setSprintDetails(mapApiToDetails(resp));
       setTasks(mapApiTasks(resp));
+      setSprintMembers(extractMembers(resp));
     } catch (error) {
       toast.error(String(error) || "Failed to fetch sprint details");
     }
@@ -244,6 +355,25 @@ export const SprintDetailsPage = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isMembersOpen || !id) return;
+    const fetchMembersSummary = async () => {
+      setMembersLoading(true);
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/sprints/${id}/sprint_members.json`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setMembersSummary(response.data?.members_summary || []);
+      } catch {
+        toast.error("Failed to fetch members summary");
+      } finally {
+        setMembersLoading(false);
+      }
+    };
+    fetchMembersSummary();
+  }, [isMembersOpen, id, baseUrl, token]);
 
   const handleOptionSelect = async (option) => {
     setSelectedOption(option);
@@ -310,7 +440,7 @@ export const SprintDetailsPage = () => {
         </h2>
         <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
 
-        {/* Header Info & Dropdown (visual only to match image) */}
+        {/* Header Info & Dropdown */}
         <div className="flex items-center justify-between my-3 text-[12px]">
           <div className="flex items-center gap-3 text-[#323232] flex-wrap">
             <span>Created By: {sprintDetails.created_by_name}</span>
@@ -320,7 +450,7 @@ export const SprintDetailsPage = () => {
             </span>
             <span className="h-6 w-[1px] border border-gray-300"></span>
 
-            {/* Dropdown */}
+            {/* Status Dropdown */}
             <span
               className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] || "bg-gray-400 text-white"}`}
             >
@@ -332,35 +462,20 @@ export const SprintDetailsPage = () => {
                   aria-haspopup="true"
                   aria-expanded={openDropdown}
                   tabIndex={0}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && setOpenDropdown(!openDropdown)
-                  }
+                  onKeyDown={(e) => e.key === "Enter" && setOpenDropdown(!openDropdown)}
                 >
                   <span className="text-[13px]">{selectedOption}</span>
-                  <ChevronDown
-                    size={15}
-                    className={`${openDropdown ? "rotate-180" : ""
-                      } transition-transform`}
-                  />
+                  <ChevronDown size={15} className={`${openDropdown ? "rotate-180" : ""} transition-transform`} />
                 </div>
                 <ul
-                  className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"
-                    }`}
+                  className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"}`}
                   role="menu"
-                  style={{
-                    minWidth: "150px",
-                    maxHeight: "400px",
-                    overflowY: "auto",
-                    zIndex: 1000,
-                  }}
+                  style={{ minWidth: "150px", maxHeight: "400px", overflowY: "auto", zIndex: 1000 }}
                 >
                   {dropdownOptions.map((option, idx) => (
                     <li key={idx} role="menuitem">
                       <button
-                        className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option
-                          ? "bg-gray-100 font-semibold"
-                          : ""
-                          }`}
+                        className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? "bg-gray-100 font-semibold" : ""}`}
                         onClick={() => handleOptionSelect(option)}
                       >
                         {option}
@@ -370,6 +485,19 @@ export const SprintDetailsPage = () => {
                 </ul>
               </div>
             </span>
+
+            {/* Members */}
+            {sprintMembers.length > 0 && (
+              <>
+                <span className="h-6 w-[1px] border border-gray-300"></span>
+                <button
+                  onClick={() => setIsMembersOpen(true)}
+                  className="flex items-center gap-2 px-2 py-1 rounded-md transition-colors"
+                >
+                  <Users size={15} /> Sprint Members
+                </button>
+              </>
+            )}
           </div>
         </div>
 
@@ -414,7 +542,7 @@ export const SprintDetailsPage = () => {
           </div>
           <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
           <div className="mt-4 overflow-x-auto">
-            <EnhancedTable
+            {/* <EnhancedTable
               data={tasks}
               columns={taskColumns}
               hideColumnsButton={true}
@@ -433,10 +561,200 @@ export const SprintDetailsPage = () => {
                   </Button>
                 </div>
               )}
-            />
+            /> */}
+            <SprintTasks tasks={tasks} />
           </div>
         </div>
       </div>
+
+      {/* Members Panel */}
+      <Dialog
+        open={isMembersOpen}
+        onClose={() => setIsMembersOpen(false)}
+        maxWidth={false}
+        TransitionComponent={SlideTransition}
+        PaperProps={{
+          sx: {
+            width: "min(95vw, 1080px)",
+            height: "100%",
+            maxHeight: "100%",
+            margin: 0,
+            borderRadius: 0,
+            position: "fixed",
+            right: 0,
+            top: 0,
+            bottom: 0,
+          },
+        }}
+        TransitionProps={{ timeout: { enter: 400, exit: 400 } }}
+      >
+        <DialogTitle className="relative !py-5 !px-0 shrink-0">
+          <div className="flex items-center gap-2 px-6">
+            <Users size={18} className="text-[#E95420]" />
+            <span className="text-base font-semibold text-gray-800">Sprint Members</span>
+            {membersSummary.length > 0 && (
+              <span className="ml-1 text-[10px] font-bold bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full">
+                {membersSummary.length}
+              </span>
+            )}
+          </div>
+          <X
+            size={18}
+            className="absolute top-5 right-5 cursor-pointer text-gray-500 hover:text-gray-800"
+            onClick={() => setIsMembersOpen(false)}
+          />
+          <hr className="border border-[#E95420] mt-4" />
+        </DialogTitle>
+
+        <DialogContent sx={{ padding: 0, overflow: "auto" }}>
+          {membersLoading ? (
+            <div className="flex items-center justify-center h-48 gap-2 text-gray-400">
+              <Loader2 size={20} className="animate-spin" />
+              <span className="text-sm">Loading members…</span>
+            </div>
+          ) : membersSummary.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-3">
+              <Users size={36} className="opacity-30" />
+              <p className="text-sm">No members found</p>
+            </div>
+          ) : (
+            <div className="overflow-auto">
+              <table className="w-full text-sm border-collapse" style={{ minWidth: 920 }}>
+                <thead className="sticky top-0 z-10">
+                  {/* Group header row — single consistent dark tone */}
+                  <tr>
+                    <th
+                      rowSpan={2}
+                      className="bg-[#f5f5dc] text-black text-left px-4 py-3 font-semibold text-xs tracking-wide border-r border-slate-300 align-middle whitespace-nowrap"
+                      style={{ minWidth: 190 }}
+                    >
+                      Member
+                    </th>
+                    <th colSpan={3} className="bg-[#f5f5dc] text-black text-center px-3 py-2 text-xs font-semibold tracking-wide border-r border-slate-300 border-l-2 border-l-slate-500">
+                      Tasks
+                    </th>
+                    <th colSpan={3} className="bg-[#f5f5dc] text-black text-center px-3 py-2 text-xs font-semibold tracking-wide border-r border-slate-300 border-l-2 border-l-slate-500">
+                      Issues
+                    </th>
+                    <th colSpan={2} className="bg-[#f5f5dc] text-black text-center px-3 py-2 text-xs font-semibold tracking-wide border-r border-slate-300 border-l-2 border-l-slate-500">
+                      Task Minutes
+                    </th>
+                    <th colSpan={2} className="bg-[#f5f5dc] text-black text-center px-3 py-2 text-xs font-semibold tracking-wide border-r border-slate-300 border-l-2 border-l-slate-500">
+                      Issue Minutes
+                    </th>
+                    <th colSpan={2} className="text-center px-3 py-2 text-xs font-semibold tracking-wide border-l-2 border-l-[#E95420]" style={{ backgroundColor: "#E95420", color: "#fff" }}>
+                      Total Minutes
+                    </th>
+                  </tr>
+                  {/* Sub-header row */}
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    {/* Tasks */}
+                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-200 border-l-2 border-l-slate-300 text-center whitespace-nowrap uppercase tracking-wider">Total</th>
+                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-200 text-center whitespace-nowrap uppercase tracking-wider">Done</th>
+                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-300 text-center whitespace-nowrap uppercase tracking-wider">Completion</th>
+                    {/* Issues */}
+                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-200 border-l-2 border-l-slate-300 text-center whitespace-nowrap uppercase tracking-wider">Total</th>
+                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-200 text-center whitespace-nowrap uppercase tracking-wider">Done</th>
+                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-300 text-center whitespace-nowrap uppercase tracking-wider">Completion</th>
+                    {/* Task Minutes */}
+                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-200 border-l-2 border-l-slate-300 text-center whitespace-nowrap uppercase tracking-wider">Effective</th>
+                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-300 text-center whitespace-nowrap uppercase tracking-wider">Actual</th>
+                    {/* Issue Minutes */}
+                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-200 border-l-2 border-l-slate-300 text-center whitespace-nowrap uppercase tracking-wider">Effective</th>
+                    <th className="bg-slate-50 text-slate-500 px-3 py-1.5 text-[10px] font-semibold border-r border-slate-300 text-center whitespace-nowrap uppercase tracking-wider">Actual</th>
+                    {/* Total Minutes */}
+                    <th className="px-3 py-1.5 text-[10px] font-semibold border-r border-orange-200 border-l-2 border-l-[#E95420] text-center whitespace-nowrap uppercase tracking-wider" style={{ backgroundColor: "#fff7f5", color: "#E95420" }}>Effective</th>
+                    <th className="px-3 py-1.5 text-[10px] font-semibold text-center whitespace-nowrap uppercase tracking-wider" style={{ backgroundColor: "#fff7f5", color: "#E95420" }}>Actual</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {membersSummary.map((m, i) => (
+                    <tr
+                      key={m.member_id}
+                      className={`border-b border-slate-100 transition-colors hover:bg-slate-50/70 ${i % 2 === 0 ? "bg-white" : "bg-slate-50/40"}`}
+                    >
+                      {/* Member */}
+                      <td className="px-4 py-3 border-r border-slate-100">
+                        <div className="flex items-center gap-2.5">
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center !justify-center text-white text-[11px] font-bold shrink-0 select-none"
+                            style={{ backgroundColor: AVATAR_COLORS[i % AVATAR_COLORS.length] }}
+                          >
+                            {getInitials(m.member_name)}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[13px] font-semibold text-gray-800 truncate">{m.member_name}</p>
+                            <p className="text-[11px] text-gray-400 truncate">{m.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      {/* Tasks */}
+                      {(() => {
+                        const taskPct = m.total_tasks > 0 ? Math.round((m.completed_tasks / m.total_tasks) * 100) : 0;
+                        const taskColor = taskPct === 100 ? "#10B981" : taskPct >= 50 ? "#E95420" : "#ef4444";
+                        return (
+                          <>
+                            <td className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200">
+                              <span className="text-[13px] font-medium text-gray-700">{m.total_tasks}</span>
+                            </td>
+                            <td className="px-3 py-3 text-center border-r border-slate-100">
+                              <span className="text-[13px] font-medium text-gray-700">
+                                {m.completed_tasks}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 text-center border-r border-slate-200">
+                              <div className="flex flex-col items-center gap-1 px-1">
+                                {/* <div className="w-full bg-slate-100 rounded-full h-1.5 min-w-[48px]">
+                                  <div className="h-1.5 rounded-full transition-all" style={{ width: `${taskPct}%`, backgroundColor: taskColor }} />
+                                </div> */}
+                                <span className="text-[11px] font-bold" style={{ color: taskColor }}>{taskPct}%</span>
+                              </div>
+                            </td>
+                          </>
+                        );
+                      })()}
+                      {/* Issues */}
+                      {(() => {
+                        const issuePct = m.total_issues > 0 ? Math.round((m.completed_issues / m.total_issues) * 100) : 0;
+                        const issueColor = issuePct === 100 ? "#10B981" : issuePct >= 50 ? "#E95420" : "#ef4444";
+                        return (
+                          <>
+                            <td className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200">
+                              <span className="text-[13px] font-medium text-gray-700">{m.total_issues}</span>
+                            </td>
+                            <td className="px-3 py-3 text-center border-r border-slate-100">
+                              <span className="text-[13px] font-medium text-gray-700">
+                                {m.completed_issues}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 text-center border-r border-slate-200">
+                              <div className="flex flex-col items-center gap-1 px-1">
+                                {/* <div className="w-full bg-slate-100 rounded-full h-1.5 min-w-[48px]">
+                                  <div className="h-1.5 rounded-full transition-all" style={{ width: `${issuePct}%`, backgroundColor: issueColor }} />
+                                </div> */}
+                                <span className="text-[11px] font-bold" style={{ color: issueColor }}>{issuePct}%</span>
+                              </div>
+                            </td>
+                          </>
+                        );
+                      })()}
+                      {/* Task Minutes */}
+                      <td className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200 text-[12px] text-gray-500">{fmtMin(m.task_effective_minutes)}</td>
+                      <td className="px-3 py-3 text-center border-r border-slate-200 text-[12px] text-gray-500">{fmtMin(m.task_actual_minutes)}</td>
+                      {/* Issue Minutes */}
+                      <td className="px-3 py-3 text-center border-r border-slate-100 border-l-2 border-l-slate-200 text-[12px] text-gray-500">{fmtMin(m.issue_effective_minutes)}</td>
+                      <td className="px-3 py-3 text-center border-r border-slate-200 text-[12px] text-gray-500">{fmtMin(m.issue_actual_minutes)}</td>
+                      {/* Total Minutes */}
+                      <td className="px-3 py-3 text-center border-r border-orange-100 border-l-2 border-l-[#E95420] text-[12px] font-semibold" style={{ color: "#E95420", backgroundColor: "#fff9f7" }}>{fmtMin(m.total_effective_minutes)}</td>
+                      <td className="px-3 py-3 text-center text-[12px] font-semibold" style={{ color: "#E95420", backgroundColor: "#fff9f7" }}>{fmtMin(m.total_actual_minutes)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

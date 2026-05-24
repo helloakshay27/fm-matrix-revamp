@@ -146,6 +146,7 @@ interface DailyReportDraft {
   absenceReason?: string;
   kpiEntries?: { [key: number]: string };
   selectedTasksIssues?: { [key: string]: boolean };
+  hiddenAutoIds?: string[];
 }
 
 interface ApplyDraftOptions {
@@ -319,6 +320,8 @@ const BusinessCompassDailyReport: React.FC = () => {
   }>({});
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hiddenAutoIds, setHiddenAutoIds] = useState<Set<string>>(new Set());
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   const [currentTasksPage, setCurrentTasksPage] = useState(1);
   const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
@@ -326,6 +329,9 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [hasMoreIssues, setHasMoreIssues] = useState(true);
   const [todosData, setTodosData] = useState<any>(null);
   const [todosLoading, setTodosLoading] = useState(false);
+  const [tomorrowScheduledItems, setTomorrowScheduledItems] = useState<any[]>([]);
+  const [tomorrowScheduledLoading, setTomorrowScheduledLoading] = useState(false);
+  const [tomorrowFetchDone, setTomorrowFetchDone] = useState(false);
 
   const user =
     typeof localStorage !== "undefined"
@@ -387,6 +393,90 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   useEffect(() => {
     fetchTodos();
+  }, [startDate, baseUrl, token, userId]);
+
+  const getNextWorkingDay = (dateStr: string): string => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() + 1);
+    while (date.getDay() === 0 || date.getDay() === 6) {
+      date.setDate(date.getDate() + 1);
+    }
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  };
+
+  const fetchTomorrowScheduled = async (forDate: string) => {
+    if (!baseUrl || !token || !userId) return;
+    setTomorrowFetchDone(false);
+    setTomorrowScheduledLoading(true);
+    try {
+      const nextDay = getNextWorkingDay(forDate);
+
+      const tasksParams = new URLSearchParams({
+        "q[target_date_eq]": nextDay,
+        "q[responsible_person_id_eq]": userId.toString(),
+      });
+      const issuesParams = new URLSearchParams({
+        "q[end_date_eq]": nextDay,
+        "q[responsible_person_id_eq]": userId.toString(),
+      });
+      const todosParams = new URLSearchParams({
+        "q[user_id_eq]": userId.toString(),
+        "q[target_date_eq]": nextDay,
+      });
+
+      const headers = { Authorization: `Bearer ${token}` };
+      const [tasksRes, issuesRes, todosRes] = await Promise.allSettled([
+        axios.get(`https://${baseUrl}/task_managements.json?${tasksParams}`, { headers }),
+        axios.get(`https://${baseUrl}/issues.json?${issuesParams}`, { headers }),
+        axios.get(`https://${baseUrl}/todos.json?${todosParams}`, { headers }),
+      ]);
+
+      const tasks =
+        tasksRes.status === "fulfilled"
+          ? (tasksRes.value.data?.task_managements ||
+            tasksRes.value.data?.data?.task_managements ||
+            [])
+          : [];
+      const issues =
+        issuesRes.status === "fulfilled"
+          ? (issuesRes.value.data?.issues || [])
+          : [];
+      const todos =
+        todosRes.status === "fulfilled"
+          ? (todosRes.value.data?.todos || [])
+          : [];
+
+      const combined = [
+        ...tasks.map((t: any) => ({
+          id: `task-${t.id}`,
+          title: t.title || t.name || "",
+          type: "task" as const,
+        })),
+        ...issues.map((i: any) => ({
+          id: `issue-${i.id}`,
+          title: i.title || "",
+          type: "issue" as const,
+        })),
+        ...todos.map((t: any) => ({
+          id: `todo-${t.id}`,
+          title: t.title || "",
+          type: "todo" as const,
+        })),
+      ].filter((item) => item.title.trim() !== "");
+
+      setTomorrowScheduledItems(combined);
+    } catch (err) {
+      console.error("Failed to fetch tomorrow's scheduled items:", err);
+      setTomorrowScheduledItems([]);
+    } finally {
+      setTomorrowScheduledLoading(false);
+      setTomorrowFetchDone(true);
+    }
+  };
+
+  useEffect(() => {
+    fetchTomorrowScheduled(startDate);
   }, [startDate, baseUrl, token, userId]);
 
   const buildDraftStorageKey = React.useCallback(
@@ -491,6 +581,9 @@ const BusinessCompassDailyReport: React.FC = () => {
       typeof draft.selectedTasksIssues === "object"
     ) {
       setSelectedTasksIssues(draft.selectedTasksIssues);
+    }
+    if (Array.isArray(draft.hiddenAutoIds)) {
+      setHiddenAutoIds(new Set(draft.hiddenAutoIds));
     }
   }, []);
 
@@ -609,6 +702,11 @@ const BusinessCompassDailyReport: React.FC = () => {
     setSelectedTasksIssues(completedItems);
   }, [mergedTasksIssues]);
 
+  // Reset auto-add tracking when the selected date changes
+  useEffect(() => {
+    setHiddenAutoIds(new Set());
+  }, [startDate]);
+
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -662,6 +760,44 @@ const BusinessCompassDailyReport: React.FC = () => {
     };
   }, [mergedTasksIssues]);
 
+  // Derive completed-today items that auto-populate Today's Accomplishments
+  const autoAddedAccomplishments = useMemo(() => {
+    const today = new Date().toLocaleDateString("en-CA");
+    if (startDate !== today) return [];
+    return mergedTasksIssues.filter(
+      (item) =>
+        (item.status === "completed" || item.status === "closed" || item.status === "done") &&
+        !hiddenAutoIds.has(item.id) &&
+        !!(item.title || "").trim()
+    );
+  }, [mergedTasksIssues, startDate, hiddenAutoIds]);
+
+  // Filter manual accomplishments to exclude items already shown in the auto-added section.
+  // This prevents duplicates when a saved report's payload (which merged auto+manual) is reloaded.
+  const visibleAccomplishments = useMemo(() => {
+    if (autoAddedAccomplishments.length === 0) return accomplishments;
+    const autoTitles = new Set(
+      autoAddedAccomplishments.map((item) =>
+        cleanReportText(item.title || "").toLowerCase()
+      )
+    );
+    return accomplishments.filter(
+      (a) => !autoTitles.has(cleanReportText(a.text).toLowerCase())
+    );
+  }, [accomplishments, autoAddedAccomplishments]);
+
+  // Derive which task/issue IDs are already in the "Plan for Tomorrow" list
+  const addedToTomorrowIds = useMemo(() => {
+    const ids = new Set<string>();
+    mergedTasksIssues.forEach((item) => {
+      const text = cleanReportText(item.title || "").toLowerCase();
+      if (text && planningItems.some((p) => cleanReportText(p.text).toLowerCase() === text)) {
+        ids.add(item.id);
+      }
+    });
+    return ids;
+  }, [mergedTasksIssues, planningItems]);
+
   const [kpis, setKpis] = useState<any[]>([]);
   const [kpiLoading, setKpiLoading] = useState(false);
   const [kpiEntries, setKpiEntries] = useState<{ [key: number]: string }>({});
@@ -671,9 +807,15 @@ const BusinessCompassDailyReport: React.FC = () => {
       ...kpi,
       actual_value: kpiEntries[kpi.kpi_id] || 0,
     }));
-    const nonEmptyAccomplishments = accomplishments.filter(
-      (a) => cleanReportText(a.text) !== ""
-    );
+    const nonEmptyAccomplishments = [
+      ...visibleAccomplishments.filter((a) => cleanReportText(a.text) !== ""),
+      ...autoAddedAccomplishments.map((item) => ({
+        id: `auto-${item.id}`,
+        text: item.title || "",
+        completed: true,
+        starred: false,
+      })),
+    ];
     const nonEmptyPlanningItems = planningItems.filter(
       (p) => cleanReportText(p.text) !== ""
     );
@@ -683,7 +825,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       mergedTasksIssues,
       nonEmptyPlanningItems
     );
-  }, [kpis, kpiEntries, accomplishments, mergedTasksIssues, planningItems]);
+  }, [kpis, kpiEntries, visibleAccomplishments, autoAddedAccomplishments, mergedTasksIssues, planningItems]);
 
   useEffect(() => {
     const fetchKpis = async () => {
@@ -821,6 +963,40 @@ const BusinessCompassDailyReport: React.FC = () => {
     }));
     setPlanningItems((prev) => [...prev, ...newPlanItems]);
     setAccomplishments((prev) => prev.filter((a) => a.completed));
+  };
+
+  const hideAutoAccomplishment = (sourceId: string) => {
+    markDraftDirty();
+    setHiddenAutoIds((prev) => new Set([...prev, sourceId]));
+  };
+
+  const addItemToTomorrow = (item: any) => {
+    const text = cleanReportText(item.title || item.text || "");
+    if (!text) return;
+    const alreadyInPlan = planningItems.some(
+      (p) => cleanReportText(p.text).toLowerCase() === text.toLowerCase()
+    );
+    if (!alreadyInPlan) {
+      setPlanningItems((prev) => [
+        ...prev,
+        { id: `tomorrow-${item.id}-${Date.now()}`, text, starred: false },
+      ]);
+      markDraftDirty();
+    }
+  };
+
+  const removeItemFromTomorrow = (item: any) => {
+    const text = cleanReportText(item.title || item.text || "").toLowerCase();
+    setPlanningItems((prev) =>
+      prev.filter((p) => cleanReportText(p.text).toLowerCase() !== text)
+    );
+    markDraftDirty();
+  };
+
+  const addAllOverdueToTomorrow = () => {
+    mergedTasksIssues
+      .filter((item) => item.status === "overdue" || item.status === "overdued")
+      .forEach(addItemToTomorrow);
   };
 
   const triggerFileUpload = () => fileInputRef.current?.click();
@@ -1168,6 +1344,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     setSelfRating([2]);
     setSubmitError(null);
     setSubmitSuccess(false);
+    setHiddenAutoIds(new Set());
   }, []);
 
   const [viewStartDate, setViewStartDate] = useState(() => {
@@ -1426,6 +1603,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       absenceReason,
       kpiEntries,
       selectedTasksIssues,
+      hiddenAutoIds: [...hiddenAutoIds],
     };
     localStorage.setItem(draftStorageKey, JSON.stringify(draft));
   }, [
@@ -1436,6 +1614,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     absenceReason,
     kpiEntries,
     selectedTasksIssues,
+    hiddenAutoIds,
     draftStorageKey,
     currentReportId,
   ]);
@@ -1673,21 +1852,28 @@ const BusinessCompassDailyReport: React.FC = () => {
   }, [selectedMonth, selectedYear, isLocallyDeletedReport]);
 
   const handleSubmit = async () => {
-    // Only completed items should count towards submitting successfully
-    const accomplishmentItemsPayload = accomplishments
-      .filter((a) => a.completed)
-      .map((a) => ({
-        title: cleanReportText(a.text),
-        star: a.starred,
-      }))
-      .filter((a) => a.title !== "");
+    // Only completed items should count towards submitting successfully.
+    // Use visibleAccomplishments (which excludes items already in auto-added section)
+    // to prevent duplicates in the saved payload.
+    const accomplishmentItemsPayload = [
+      ...visibleAccomplishments
+        .filter((a) => a.completed)
+        .map((a) => ({
+          title: cleanReportText(a.text),
+          star: a.starred,
+        })),
+      ...autoAddedAccomplishments.map((item) => ({
+        title: cleanReportText(item.title || ""),
+        star: false,
+      })),
+    ].filter((a) => a.title !== "");
     const manualTomorrowPlan = planningItems
       .map((p) => ({
         title: cleanReportText(p.text),
         is_starred: p.starred,
       }))
       .filter((p) => p.title !== "");
-    const uncheckedAccomplishmentPlan = accomplishments
+    const uncheckedAccomplishmentPlan = visibleAccomplishments
       .filter((a) => !a.completed)
       .map((a) => ({
         title: cleanReportText(a.text),
@@ -2212,7 +2398,70 @@ const BusinessCompassDailyReport: React.FC = () => {
 
                   <CardContent className="p-6 space-y-6">
                     <div className="space-y-3">
-                      {accomplishments.map((item) => (
+
+                      {/* ── Auto-added from completed tasks today ── */}
+                      {autoAddedAccomplishments.length > 0 && (
+                        <div className="rounded-[12px] border border-emerald-200 bg-emerald-50/70 p-4 animate-in fade-in duration-300">
+                          <div className="flex items-center gap-2 mb-3">
+                            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
+                            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex-1">
+                              Auto-added from completed work today
+                            </span>
+                            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
+                              {autoAddedAccomplishments.length} item{autoAddedAccomplishments.length !== 1 ? "s" : ""}
+                            </span>
+                          </div>
+                          <div className="space-y-1.5">
+                            {autoAddedAccomplishments.map((item) => (
+                              <div
+                                key={item.id}
+                                className="group flex items-center gap-3 bg-white border border-emerald-100 rounded-[8px] px-3 py-2 animate-in fade-in slide-in-from-left-1 duration-200 hover:border-emerald-300 transition-all"
+                              >
+                                <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+                                <span
+                                  className={cn(
+                                    "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase shrink-0",
+                                    item.type === "task"
+                                      ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                      : item.type === "issue"
+                                        ? "bg-violet-100 text-violet-700"
+                                        : "bg-yellow-100 text-yellow-700"
+                                  )}
+                                >
+                                  {item.type}
+                                </span>
+                                <span className="flex-1 text-sm font-medium text-gray-600 truncate line-through decoration-emerald-300">
+                                  {item.title}
+                                </span>
+                                <Badge className="bg-emerald-100 text-emerald-700 border-none text-[9px] font-black px-2 py-0.5 rounded-full shrink-0">
+                                  Done
+                                </Badge>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Remove from accomplishments"
+                                  className="h-6 w-6 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                  onClick={() => hideAutoAccomplishment(item.id)}
+                                >
+                                  <X size={12} />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Divider when both auto and manual entries exist */}
+                      {autoAddedAccomplishments.length > 0 && visibleAccomplishments.length > 0 && (
+                        <div className="flex items-center gap-3 py-1">
+                          <div className="flex-1 h-px bg-gray-100" />
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Manual Entries</span>
+                          <div className="flex-1 h-px bg-gray-100" />
+                        </div>
+                      )}
+
+                      {/* ── Manual accomplishment items ── */}
+                      {visibleAccomplishments.map((item) => (
                         <div
                           key={item.id}
                           className="relative group animate-in fade-in duration-300"
@@ -2223,7 +2472,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                               item.completed
                                 ? "border-[#DA7756]/10 bg-[#DA7756]/10"
                                 : "border-gray-200",
-                              // Highlight carried-over items with a subtle amber tint
                               item.fromYesterday &&
                               !item.completed &&
                               "border-amber-300 bg-amber-50/30"
@@ -2240,10 +2488,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 onClick={() => toggleAccomplishment(item.id)}
                               >
                                 {item.completed && (
-                                  <CheckCircle2
-                                    size={14}
-                                    className="text-white"
-                                  />
+                                  <CheckCircle2 size={14} className="text-white" />
                                 )}
                               </div>
 
@@ -2262,10 +2507,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 type="text"
                                 value={item.text}
                                 onChange={(e) =>
-                                  updateAccomplishmentText(
-                                    item.id,
-                                    e.target.value
-                                  )
+                                  updateAccomplishmentText(item.id, e.target.value)
                                 }
                                 placeholder="Describe your accomplishment..."
                                 className={cn(
@@ -2286,7 +2528,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                               </Button>
                             </div>
 
-                            {/* ── "From Yesterday" badge ── */}
                             {item.fromYesterday && (
                               <div className="pl-10 pt-0.5">
                                 <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
@@ -2299,21 +2540,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                       ))}
 
-                      {accomplishments.length === 0 && (
+                      {visibleAccomplishments.length === 0 && autoAddedAccomplishments.length === 0 && (
                         <div className="flex flex-col items-center gap-4 text-center py-10 bg-gray-50/50 rounded-[14px] border-2 border-dashed border-gray-100">
                           <div className="h-16 w-16 rounded-full bg-[#ecfdf5] border-2 border-[#10b981]/20 flex items-center justify-center">
-                            <CheckCircle2
-                              size={32}
-                              className="text-[#10b981]/30"
-                            />
+                            <CheckCircle2 size={32} className="text-[#10b981]/30" />
                           </div>
                           <div className="space-y-1">
                             <p className="text-base font-bold text-[#065f46]">
                               What did you get done today?
                             </p>
                             <p className="text-xs text-gray-500 font-medium">
-                              Add your accomplishments to celebrate your
-                              progress!
+                              Complete tasks to auto-populate this section, or add entries manually.
                             </p>
                           </div>
                         </div>
@@ -2328,7 +2565,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           <Plus size={18} />
                           Add Item
                         </Button>
-                        {accomplishments.some((a) => !a.completed) && (
+                        {visibleAccomplishments.some((a) => !a.completed) && (
                           <button
                             type="button"
                             style={{
@@ -2526,7 +2763,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             variant="outline"
                             className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
                           >
-                            Closed: {taskIssueCounts.completed}
+                            Completed: {taskIssueCounts.completed}
                           </Badge>
                           <Badge
                             variant="outline"
@@ -2565,231 +2802,315 @@ const BusinessCompassDailyReport: React.FC = () => {
                     </div>
                   </div>
 
-                  <CardContent className="p-6">
+                  <CardContent className="p-4">
                     {tasksLoading || issuesLoading ? (
                       <div className="flex flex-col items-center justify-center text-center py-10">
-                        <Loader2
-                          size={40}
-                          className="text-[#b91c1c]/30 animate-spin mb-3"
-                        />
-                        <p className="text-sm font-bold text-gray-500">
-                          Loading tasks and issues...
-                        </p>
+                        <Loader2 size={40} className="text-[#b91c1c]/30 animate-spin mb-3" />
+                        <p className="text-sm font-bold text-gray-500">Loading tasks and issues...</p>
                       </div>
                     ) : mergedTasksIssues.length === 0 ? (
                       <div className="flex flex-col items-center justify-center text-center py-10">
                         <div className="flex flex-col items-center gap-3 opacity-30">
-                          <CheckSquare
-                            size={40}
-                            className="text-[#DA7756]/20"
-                          />
-                          <p className="text-base font-bold text-gray-400 tracking-tight">
-                            No open tasks or issues
-                          </p>
+                          <CheckSquare size={40} className="text-[#DA7756]/20" />
+                          <p className="text-base font-bold text-gray-400 tracking-tight">No open tasks or issues</p>
                         </div>
                       </div>
                     ) : (
-                      <div
-                        className="space-y-2 max-h-[400px] overflow-y-auto"
-                        ref={scrollContainerRef}
-                      >
-                        {mergedTasksIssues.map((item: any) => (
-                          <div
-                            key={item.id}
-                            className={cn(
-                              "flex items-center gap-3 p-3 rounded-[10px] border transition-all",
-                              item.status === "completed" ||
-                                item.status === "closed"
-                                ? "bg-[#DA7756]/10 border-[#DA7756]/20"
-                                : item.status === "overdue" ||
-                                  item.status === "on_hold"
-                                  ? "bg-[#DA7756]/10 border-[#DA7756]/20"
-                                  : item.status === "in_progress"
-                                    ? "bg-[#DA7756]/10 border-[#DA7756]/20"
-                                    : "bg-blue-50/50 border-blue-200/50"
-                            )}
-                          >
-                            <Checkbox
-                              checked={
-                                selectedTasksIssues[item.id] ||
-                                item.status === "completed" ||
-                                item.status === "closed"
-                              }
-                              onCheckedChange={(checked) => {
-                                if (checked && item.status !== "completed" && item.status !== "closed") {
-                                  // Call API directly to complete the item
-                                  handleCompleteItem(item);
-                                } else {
-                                  markDraftDirty();
-                                  setSelectedTasksIssues((prev) => ({
-                                    ...prev,
-                                    [item.id]: checked as boolean,
-                                  }));
+                      <div className="max-h-[600px] overflow-y-auto space-y-3 pr-1" ref={scrollContainerRef}>
+                        {(
+                          [
+                            {
+                              key: "completed_today",
+                              label: "Completed Today",
+                              statuses: ["completed", "closed", "done"],
+                              colorClass: "text-emerald-700",
+                              bgItem: "bg-emerald-50/60 border-emerald-200",
+                              headerBg: "bg-emerald-50 hover:bg-emerald-100",
+                              pillBg: "bg-emerald-100 text-emerald-700",
+                              showAddToTomorrow: false,
+                              showBulkAdd: false,
+                            },
+                            {
+                              key: "overdue",
+                              label: "Overdue",
+                              statuses: ["overdue", "overdued"],
+                              colorClass: "text-red-700",
+                              bgItem: "bg-red-50/60 border-red-200",
+                              headerBg: "bg-red-50 hover:bg-red-100",
+                              pillBg: "bg-red-100 text-red-700",
+                              showAddToTomorrow: true,
+                              showBulkAdd: true,
+                            },
+                            {
+                              key: "in_progress",
+                              label: "In Progress",
+                              statuses: ["in_progress", "started"],
+                              colorClass: "text-sky-700",
+                              bgItem: "bg-sky-50/60 border-sky-200",
+                              headerBg: "bg-sky-50 hover:bg-sky-100",
+                              pillBg: "bg-sky-100 text-sky-700",
+                              showAddToTomorrow: true,
+                              showBulkAdd: false,
+                            },
+                            {
+                              key: "pending",
+                              label: "Pending",
+                              statuses: ["open", "pending"],
+                              colorClass: "text-slate-600",
+                              bgItem: "bg-slate-50/60 border-slate-200",
+                              headerBg: "bg-slate-50 hover:bg-slate-100",
+                              pillBg: "bg-slate-100 text-slate-600",
+                              showAddToTomorrow: true,
+                              showBulkAdd: false,
+                            },
+                            {
+                              key: "on_hold",
+                              label: "On Hold",
+                              statuses: ["on_hold"],
+                              colorClass: "text-orange-700",
+                              bgItem: "bg-orange-50/60 border-orange-200",
+                              headerBg: "bg-orange-50 hover:bg-orange-100",
+                              pillBg: "bg-orange-100 text-orange-700",
+                              showAddToTomorrow: true,
+                              showBulkAdd: false,
+                            },
+                            {
+                              key: "reopened",
+                              label: "Reopened",
+                              statuses: ["reopen", "reopened"],
+                              colorClass: "text-purple-700",
+                              bgItem: "bg-purple-50/60 border-purple-200",
+                              headerBg: "bg-purple-50 hover:bg-purple-100",
+                              pillBg: "bg-purple-100 text-purple-700",
+                              showAddToTomorrow: true,
+                              showBulkAdd: false,
+                            },
+                          ] as const
+                        ).map((group) => {
+                          const items = mergedTasksIssues.filter((item: any) =>
+                            (group.statuses as readonly string[]).includes(item.status)
+                          );
+                          if (items.length === 0) return null;
+                          const isCollapsed = collapsedGroups.has(group.key);
+
+                          return (
+                            <div key={group.key}>
+                              {/* Group header */}
+                              <button
+                                className={cn(
+                                  "w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5",
+                                  group.headerBg
+                                )}
+                                onClick={() =>
+                                  setCollapsedGroups((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(group.key)) next.delete(group.key);
+                                    else next.add(group.key);
+                                    return next;
+                                  })
                                 }
-                              }}
-                              className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a]"
-                            />
-                            <button
-                              onClick={() => {
-                                if (item.type === "todo") {
-                                  setSelectedTodo(item.originalData);
-                                  setIsDetailsModalOpen(true);
-                                } else {
-                                  const detailsUrl =
-                                    item.type === "task"
-                                      ? `/vas/tasks/${item.originalData?.id}`
-                                      : `/vas/issues/${item.originalData?.id}`;
-                                  navigate(detailsUrl);
-                                }
-                              }}
-                              className="p-1.5 hover:bg-gray-200 rounded-[6px] transition-colors"
-                              title={`View ${item.type} details`}
-                            >
-                              <Eye
-                                size={16}
-                                className="text-[#DA7756] hover:text-[#DA7756]"
-                              />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (item.type === "task") {
-                                  setEditTaskData(item.originalData);
-                                  setIsEditTaskModalOpen(true);
-                                } else if (item.type === "issue") {
-                                  setEditIssueData(item.originalData);
-                                  setIsEditIssueModalOpen(true);
-                                } else if (item.type === "todo") {
-                                  setEditTodoData(item.originalData);
-                                  setIsEditTodoModalOpen(true);
-                                }
-                              }}
-                              className="flex-shrink-0 p-1 text-gray-600 hover:text-[#DA7756] transition-colors"
-                              title={`Edit ${item.type}`}
-                            >
-                              <Pencil size={14} />
-                            </button>
-                            {/* Play/Pause buttons for task-type items */}
-                            {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
-                              item.originalData?.is_started ? (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPauseTaskId(item.originalData.id);
-                                    setIsPauseModalOpen(true);
-                                  }}
-                                  className="p-1 hover:bg-gray-200 rounded transition"
-                                  title="Pause task"
-                                >
-                                  <Pause size={16} className="text-orange-500" />
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePlayTask(item.originalData.id);
-                                  }}
-                                  className="p-1 hover:bg-gray-200 rounded transition"
-                                  title="Play task"
-                                >
-                                  <Play size={16} className="text-green-500" />
-                                </button>
-                              )
-                            )}
-                            {/* Play/Pause for todo-type items linked to a task */}
-                            {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
-                              item.originalData?.task_management?.is_started ? (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setPauseTaskId(item.originalData.task_management_id);
-                                    setIsPauseModalOpen(true);
-                                  }}
-                                  className="p-1 hover:bg-gray-200 rounded transition"
-                                  title="Pause task"
-                                >
-                                  <Pause size={16} className="text-orange-500" />
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handlePlayTask(item.originalData.task_management_id);
-                                  }}
-                                  className="p-1 hover:bg-gray-200 rounded transition"
-                                  title="Play task"
-                                >
-                                  <Play size={16} className="text-green-500" />
-                                </button>
-                              )
-                            )}
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-[#DA7756] text-[#fff] uppercase">
-                                {item.type}
-                              </span>
-                              {item.status === "completed" ||
-                                item.status === "closed" ? (
-                                <CheckCircle2
-                                  size={16}
-                                  className="text-green-600"
+                              >
+                                <span className={cn("text-xs font-black uppercase tracking-wider flex-1 text-left", group.colorClass)}>
+                                  {group.label}
+                                </span>
+                                <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", group.pillBg)}>
+                                  {items.length}
+                                </span>
+                                {group.showBulkAdd && items.length > 0 && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      addAllOverdueToTomorrow();
+                                    }}
+                                    className="text-[10px] font-bold text-red-700 bg-white hover:bg-red-50 border border-red-200 px-2 py-1 rounded-[6px] transition-all ml-1"
+                                  >
+                                    Add all to tomorrow
+                                  </button>
+                                )}
+                                <ChevronRight
+                                  size={14}
+                                  className={cn(
+                                    "transition-transform duration-200 ml-1",
+                                    group.colorClass,
+                                    !isCollapsed && "rotate-90"
+                                  )}
                                 />
-                              ) : item.status === "overdue" ||
-                                item.status === "on_hold" ? (
-                                <AlertCircle
-                                  size={16}
-                                  className="text-red-600"
-                                />
-                              ) : item.status === "in_progress" ? (
-                                <Clock size={16} className="text-amber-600" />
-                              ) : (
-                                <Info size={16} className="text-blue-600" />
+                              </button>
+
+                              {/* Group items */}
+                              {!isCollapsed && (
+                                <div className="space-y-1.5 pl-1">
+                                  {items.map((item: any) => (
+                                    <div
+                                      key={item.id}
+                                      className={cn(
+                                        "flex items-center gap-2 p-2.5 rounded-[10px] border transition-all group",
+                                        group.bgItem
+                                      )}
+                                    >
+                                      <Checkbox
+                                        checked={
+                                          selectedTasksIssues[item.id] ||
+                                          item.status === "completed" ||
+                                          item.status === "closed"
+                                        }
+                                        onCheckedChange={(checked) => {
+                                          if (checked && item.status !== "completed" && item.status !== "closed") {
+                                            handleCompleteItem(item);
+                                          } else {
+                                            markDraftDirty();
+                                            setSelectedTasksIssues((prev) => ({
+                                              ...prev,
+                                              [item.id]: checked as boolean,
+                                            }));
+                                          }
+                                        }}
+                                        className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                      />
+
+                                      <button
+                                        onClick={() => {
+                                          if (item.type === "todo") {
+                                            setSelectedTodo(item.originalData);
+                                            setIsDetailsModalOpen(true);
+                                          } else {
+                                            navigate(
+                                              item.type === "task"
+                                                ? `/vas/tasks/${item.originalData?.id}`
+                                                : `/vas/issues/${item.originalData?.id}`
+                                            );
+                                          }
+                                        }}
+                                        className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                        title={`View ${item.type} details`}
+                                      >
+                                        <Eye size={14} className="text-[#DA7756]" />
+                                      </button>
+
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (item.type === "task") {
+                                            setEditTaskData(item.originalData);
+                                            setIsEditTaskModalOpen(true);
+                                          } else if (item.type === "issue") {
+                                            setEditIssueData(item.originalData);
+                                            setIsEditIssueModalOpen(true);
+                                          } else if (item.type === "todo") {
+                                            setEditTodoData(item.originalData);
+                                            setIsEditTodoModalOpen(true);
+                                          }
+                                        }}
+                                        className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                        title={`Edit ${item.type}`}
+                                      >
+                                        <Pencil size={13} />
+                                      </button>
+
+                                      {/* Play/Pause for tasks */}
+                                      {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
+                                        item.originalData?.is_started ? (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPauseTaskId(item.originalData.id); setIsPauseModalOpen(true); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Pause task"
+                                          >
+                                            <Pause size={14} className="text-orange-500" />
+                                          </button>
+                                        ) : (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); handlePlayTask(item.originalData.id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Start task"
+                                          >
+                                            <Play size={14} className="text-green-500" />
+                                          </button>
+                                        )
+                                      )}
+
+                                      {/* Play/Pause for todos linked to tasks */}
+                                      {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
+                                        item.originalData?.task_management?.is_started ? (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); setPauseTaskId(item.originalData.task_management_id); setIsPauseModalOpen(true); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Pause task"
+                                          >
+                                            <Pause size={14} className="text-orange-500" />
+                                          </button>
+                                        ) : (
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); handlePlayTask(item.originalData.task_management_id); }}
+                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                            title="Start task"
+                                          >
+                                            <Play size={14} className="text-green-500" />
+                                          </button>
+                                        )
+                                      )}
+
+                                      {/* Type badge */}
+                                      <span className={cn(
+                                        "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                        item.type === "task" ? "bg-[#DA7756] text-white" :
+                                          item.type === "issue" ? "bg-violet-600 text-white" :
+                                            "bg-amber-500 text-white"
+                                      )}>
+                                        {item.type}
+                                      </span>
+
+                                      {/* Title + status */}
+                                      <div className="flex-1 min-w-0">
+                                        <p className={cn(
+                                          "text-sm font-medium truncate",
+                                          (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
+                                        )}>
+                                          {item.title}
+                                        </p>
+                                      </div>
+
+                                      {/* Priority badge */}
+                                      <span
+                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                        style={{
+                                          backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                          color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                        }}
+                                      >
+                                        {item.priority}
+                                      </span>
+
+                                      {/* Add to Tomorrow button */}
+                                      {group.showAddToTomorrow && (
+                                        <button
+                                          onClick={() =>
+                                            addedToTomorrowIds.has(item.id)
+                                              ? removeItemFromTomorrow(item)
+                                              : addItemToTomorrow(item)
+                                          }
+                                          className={cn(
+                                            "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                            addedToTomorrowIds.has(item.id)
+                                              ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                              : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
+                                          )}
+                                          title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
+                                        >
+                                          {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
+                                        </button>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
                               )}
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <p
-                                className={cn(
-                                  "text-sm font-medium truncate",
-                                  (item.status === "completed" ||
-                                    item.status === "closed") &&
-                                  "line-through text-[#DA7756]"
-                                )}
-                              >
-                                {item.title}
-                              </p>
-                              <p className="text-xs text-[#DA7756] capitalize">
-                                {item.status.replace(/_/g, " ")}
-                              </p>
-                            </div>
-                            <span
-                              className="text-[10px] px-2 py-1 rounded-full font-bold shrink-0"
-                              style={{
-                                backgroundColor:
-                                  item.priority === "High"
-                                    ? "#fee2e2"
-                                    : item.priority === "Medium"
-                                      ? "#fef3c7"
-                                      : "#dcfce7",
-                                color:
-                                  item.priority === "High"
-                                    ? "#991b1b"
-                                    : item.priority === "Medium"
-                                      ? "#92400e"
-                                      : "#166534",
-                              }}
-                            >
-                              {item.priority}
-                            </span>
-                          </div>
-                        ))}
+                          );
+                        })}
+
                         {isLoadingMore && (
                           <div className="flex items-center justify-center py-4">
-                            <Loader2
-                              size={20}
-                              className="text-[#b91c1c]/50 animate-spin mr-2"
-                            />
-                            <p className="text-xs text-gray-500 font-medium">
-                              Loading more...
-                            </p>
+                            <Loader2 size={20} className="text-[#b91c1c]/50 animate-spin mr-2" />
+                            <p className="text-xs text-gray-500 font-medium">Loading more...</p>
                           </div>
                         )}
                       </div>
@@ -2905,6 +3226,76 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <Plus size={14} />
                       </Button>
                     </div>
+
+                    {/* ── Scheduled for Tomorrow — read-only reference ── */}
+                    {(tomorrowScheduledLoading || tomorrowFetchDone) && (
+                      <div className="mt-6 pt-5 border-t border-indigo-100">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CalendarIcon size={14} className="text-indigo-400 shrink-0" />
+                          <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider flex-1">
+                            Scheduled for Tomorrow
+                          </span>
+                          {/* <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+                            Auto-fetched · read-only
+                          </span> */}
+                        </div>
+
+                        {tomorrowScheduledLoading ? (
+                          <div className="flex items-center gap-2 py-3 text-indigo-300">
+                            <Loader2 size={13} className="animate-spin shrink-0" />
+                            <span className="text-xs font-medium">Fetching upcoming assignments…</span>
+                          </div>
+                        ) : (() => {
+                          const manualTitles = new Set(
+                            planningItems.map((p) => cleanReportText(p.text).toLowerCase())
+                          );
+                          const dedupedTomorrow = tomorrowScheduledItems.filter(
+                            (item) => !manualTitles.has(cleanReportText(item.title).toLowerCase())
+                          );
+                          if (dedupedTomorrow.length === 0) {
+                            return (
+                              <div className="flex items-center gap-2 py-3 text-indigo-300">
+                                <CalendarIcon size={13} className="shrink-0" />
+                                <span className="text-xs font-medium">No tasks, issues or todos scheduled for tomorrow.</span>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="space-y-1.5">
+                              {dedupedTomorrow.map((item) => (
+                                <div
+                                  key={item.id}
+                                  className="flex items-center gap-2.5 bg-indigo-50/50 border border-indigo-100 rounded-[8px] px-3 py-2 select-none"
+                                >
+                                  <CalendarIcon size={12} className="text-indigo-300 shrink-0" />
+                                  <span
+                                    className={cn(
+                                      "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                      item.type === "task"
+                                        ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                        : item.type === "issue"
+                                          ? "bg-violet-100 text-violet-700"
+                                          : "bg-yellow-100 text-yellow-700"
+                                    )}
+                                  >
+                                    {item.type}
+                                  </span>
+                                  <span className="flex-1 text-sm font-medium text-indigo-800 truncate">
+                                    {item.title}
+                                  </span>
+                                  <span className="text-[9px] font-bold text-indigo-300 bg-indigo-100 px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                                    not submitted
+                                  </span>
+                                </div>
+                              ))}
+                              <p className="text-[10px] text-indigo-300 font-medium pt-1 pl-0.5">
+                                These items are for reference only and will not be included in your report.
+                              </p>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
@@ -3022,7 +3413,8 @@ const BusinessCompassDailyReport: React.FC = () => {
             </Card>
 
             {!isAbsent &&
-              accomplishments.filter((a) => a.completed).length === 0 && (
+              accomplishments.filter((a) => a.completed).length === 0 &&
+              autoAddedAccomplishments.length === 0 && (
                 <p className="mt-4 text-xs text-red-500 text-center font-bold animate-in fade-in duration-500">
                   Please complete at least one accomplishment before submitting
                 </p>
