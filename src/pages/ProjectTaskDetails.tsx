@@ -931,25 +931,47 @@ const Attachments = ({
 const ActivityLog = ({ taskId }: { taskId: string }) => {
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
-
-  const [taskStatusLogs, setTaskStatusLogs] = useState([]);
+  const [taskStatusLogs, setTaskStatusLogs] = useState<any[]>([]);
+  const [userMapping, setUserMapping] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchLogs = async () => {
-      const response = await axios.get(
-        `https://${baseUrl}/task_managements/${taskId}/task_system_logs.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setTaskStatusLogs(response.data || []);
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/task_managements/${taskId}/task_system_logs.json`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        setTaskStatusLogs(response.data || []);
+      } catch (e) {
+        console.error(e);
+      }
     };
-
     fetchLogs();
   }, [taskId]);
+
+  // Fetch users to create ID to name mapping
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get(
+          `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const users = response.data?.users || [];
+        const mapping: Record<string, string> = {};
+        users.forEach((user: any) => {
+          mapping[user.id?.toString() || user.user_id?.toString()] = user.full_name || user.name || "Unknown User";
+        });
+        setUserMapping(mapping);
+      } catch (e) {
+        console.error("Error fetching users:", e);
+      }
+    };
+
+    if (token && baseUrl) {
+      fetchUsers();
+    }
+  }, [baseUrl, token]);
 
   const formatTimestamp = (dateString: string) => {
     const date = new Date(dateString);
@@ -960,135 +982,210 @@ const ActivityLog = ({ taskId }: { taskId: string }) => {
     const minutes = String(date.getMinutes()).padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
     hours = hours % 12 || 12;
-    const hoursStr = String(hours).padStart(2, "0");
-    return `${day} ${month} ${year} ${hoursStr}:${minutes} ${ampm}`;
+    return `${day} ${month} ${year} ${String(hours).padStart(2, "0")}:${minutes} ${ampm}`;
   };
 
-  const getActionFromStatus = (status: string) => {
-    switch (status) {
-      case "open":
-        return "opened";
-      case "on_hold":
-        return "put on hold";
-      case "in_progress":
-        return "started progress on";
-      case "completed":
-        return "completed";
-      default:
-        return "updated to " + status.replace(/_/g, " ");
-    }
+  const calcDuration = (start: string, end: string) => {
+    const diffMs = Math.abs(new Date(end).getTime() - new Date(start).getTime());
+    const h = Math.floor(diffMs / 3600000);
+    const m = Math.floor((diffMs % 3600000) / 60000);
+    const s = Math.floor((diffMs % 60000) / 1000);
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
   };
 
-  const getActionFromLog = (log: any) => {
-    if (!log.changed_attr || Object.keys(log.changed_attr).length === 0) {
-      return (
-        log.log_type?.replace("TaskManagement", "").trim() || "updated task"
-      );
-    }
+  const SKIP_FIELDS = new Set([
+    "id", "created_at", "updated_at", "resource_id", "resource_type",
+    "created_by_id", "task_management_id",
+  ]);
 
-    const changedFields = Object.keys(log.changed_attr);
-    const changes: string[] = [];
+  const FIELD_LABELS: Record<string, string> = {
+    status: "Status",
+    title: "Title",
+    description: "Description",
+    target_date: "End Date",
+    expected_start_date: "Start Date",
+    priority: "Priority",
+    responsible_person_id: "Assigned To",
+    milestone_id: "Milestone",
+    project_management_id: "Project",
+    estimated_hour: "Est. Hours",
+    completed_at: "Completed At",
+    source: "Source",
+  };
 
-    // Check for status change
-    if (log.changed_attr.status) {
-      const [oldStatus, newStatus] = log.changed_attr.status;
-      changes.push(`changed status from ${oldStatus} to ${newStatus}`);
-    }
+  const STATUS_BADGE: Record<string, string> = {
+    open: "bg-blue-100 text-blue-700",
+    in_progress: "bg-yellow-100 text-yellow-700",
+    on_hold: "bg-gray-200 text-gray-700",
+    overdue: "bg-red-100 text-red-700",
+    completed: "bg-green-100 text-green-700",
+    nil: "bg-gray-100 text-gray-400",
+  };
 
-    // Check for description change
-    if (log.changed_attr.description) {
-      changes.push("updated the task description");
-    }
+  const parseChanges = (changed_attr: Record<string, any> | null) => {
+    if (!changed_attr || Object.keys(changed_attr).length === 0) return null;
 
-    // Check for started_at change
-    if (log.changed_attr.started_at) {
-      const [oldStart, newStart] = log.changed_attr.started_at;
-      if (oldStart === "nil" || oldStart === null) {
-        changes.push("started the task");
-      } else {
-        changes.push("changed start time");
-      }
-    }
+    // Creation log always has "id" as a new field
+    if ("id" in changed_attr) return { isCreation: true, fields: [] };
 
-    // Check for other field changes
-    const otherFields = changedFields.filter(
-      (field) =>
-        !["status", "description", "started_at", "updated_at"].includes(field)
-    );
-    if (otherFields.length > 0) {
-      otherFields.forEach((field) => {
-        const label = field
-          .replace(/_/g, " ")
-          .replace(/([A-Z])/g, " $1")
-          .trim();
-        changes.push(`updated ${label}`);
+    const fields = Object.entries(changed_attr)
+      .filter(([key]) => !SKIP_FIELDS.has(key))
+      .map(([key, value]) => {
+        const arr = Array.isArray(value) ? value : [null, value];
+        let oldVal: string;
+        let newVal: string;
+
+        if (arr.length >= 3) {
+          // Date split format: ["nil" | old, "Weekday", "DD Mon YYYY"]
+          oldVal = arr[0] === "nil" || arr[0] === null ? "—" : String(arr[0]);
+          newVal = String(arr[arr.length - 1]);
+        } else {
+          oldVal = arr[0] === "nil" || arr[0] === null ? "—" : String(arr[0]);
+          newVal = arr[1] === "nil" || arr[1] === null ? "—" : String(arr[1]);
+        }
+
+        // Convert user IDs to names for responsible_person_id
+        if (key === "responsible_person_id") {
+          if (oldVal !== "—") {
+            oldVal = userMapping[oldVal] || oldVal;
+          }
+          if (newVal !== "—") {
+            newVal = userMapping[newVal] || newVal;
+          }
+        }
+
+        // Strip HTML from description
+        if (key === "description") {
+          oldVal = oldVal === "—" ? "—" : oldVal.replace(/<[^>]+>/g, "").trim().slice(0, 60) + (oldVal.length > 60 ? "…" : "");
+          newVal = newVal === "—" ? "—" : newVal.replace(/<[^>]+>/g, "").trim().slice(0, 60) + (newVal.length > 60 ? "…" : "");
+        }
+
+        return {
+          key,
+          label: FIELD_LABELS[key] || key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+          old: oldVal,
+          new: newVal,
+          isStatus: key === "status",
+        };
       });
-    }
 
-    return changes.join(" and ");
+    return { isCreation: false, fields };
   };
 
-  const calculateDuration = (start: string, end: string) => {
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const diffMs = Math.abs(endDate.getTime() - startDate.getTime());
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-    return `${hours} hr ${minutes} mins ${seconds} sec`;
-  };
-
-  if (!taskStatusLogs || taskStatusLogs.length === 0) {
+  if (!taskStatusLogs.length) {
     return (
-      <div className="text-center py-8 w-full text-gray-500">
+      <div className="text-center py-8 w-full text-gray-500 text-sm">
         No activity logs available
       </div>
     );
   }
 
-  const activities = taskStatusLogs.map((log: any) => ({
-    id: log.id,
-    person: log.changed_by,
-    action: getActionFromLog(log),
-    item: "task",
-    timestamp: formatTimestamp(log.created_at),
-    rawTimestamp: log.created_at,
-  }));
-
-  const sortedActivities = [...activities].sort(
-    (a, b) =>
-      new Date(a.rawTimestamp).getTime() - new Date(b.rawTimestamp).getTime()
+  const sorted = [...taskStatusLogs].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
   );
 
   return (
-    <div className="overflow-x-auto w-full bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg mt-3 px-4">
-      <div className="flex items-center p-2 gap-5 text-[12px] my-3 overflow-x-auto">
-        {sortedActivities.map((activity: any, index: number) => (
-          <Fragment key={activity.id}>
-            <div className="flex flex-col gap-2 min-w-[150px]">
-              <span>
-                <i>
-                  {activity.person}{" "}
-                  <span className="text-[#C72030]">{activity.action}</span>{" "}
-                </i>
-              </span>
-              <span>
-                <i>{activity.timestamp}</i>
-              </span>
-            </div>
-            {index < sortedActivities.length - 1 && (
-              <div className="flex flex-col items-center min-w-[100px]">
-                <h1 className="text-[12px] text-center">
-                  {calculateDuration(
-                    activity.rawTimestamp,
-                    sortedActivities[index + 1].rawTimestamp
-                  )}
-                </h1>
-                <img src="/arrow.png" alt="arrow" className="mt-1" />
+    <div className="overflow-x-auto w-full bg-gray-50 rounded-xl shadow-inner mt-3 p-6">
+      <div className="flex items-start min-w-max">
+        {sorted.map((log: any, index: number) => {
+          const changes = parseChanges(log.changed_attr);
+          const initials = getInitials(log.changed_by || "");
+          const isLast = index === sorted.length - 1;
+
+          return (
+            <Fragment key={log.id}>
+              {/* Step: circle + dashed line + card */}
+              <div className="flex flex-col items-center">
+                {/* Avatar circle (stepper node) */}
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 shadow-md ring-2 ring-white z-10"
+                  style={{ background: changes?.isCreation ? "#16a34a" : "#C72030" }}
+                  title={log.changed_by || "System"}
+                >
+                  {initials}
+                </div>
+
+                {/* Short vertical dashed connector from circle to card */}
+                <div className="w-px h-4 border-l-2 border-dashed border-gray-300" />
+
+                {/* Card */}
+                <div className="w-[215px] bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  {/* Who & when */}
+                  <div className="px-3 pt-2.5 pb-2 border-b border-gray-100">
+                    <p className="text-[11px] font-semibold text-gray-800 truncate leading-snug">
+                      {log.changed_by || "System"}
+                    </p>
+                    <p className="text-[9px] text-gray-400 mt-0.5">
+                      {formatTimestamp(log.created_at)}
+                    </p>
+                  </div>
+
+                  {/* Changes */}
+                  <div className="px-3 py-2.5 space-y-2.5">
+                    {!changes || (!changes.isCreation && changes.fields.length === 0) ? (
+                      <p className="text-[10px] text-gray-400 italic">
+                        {log.log_type?.replace("TaskManagement", "").trim() || "Updated task"}
+                      </p>
+                    ) : changes.isCreation ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-green-500 text-base leading-none">✦</span>
+                        <span className="text-[11px] font-semibold text-green-700">Task Created</span>
+                      </div>
+                    ) : (
+                      changes.fields.map((field) => (
+                        <div key={field.key}>
+                          <p className="text-[8px] font-semibold text-gray-400 uppercase tracking-widest mb-1">
+                            {field.label}
+                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {field.isStatus ? (
+                              <>
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium capitalize ${STATUS_BADGE[field.old] || "bg-gray-100 text-gray-500"}`}>
+                                  {field.old === "—" ? "—" : field.old.replace(/_/g, " ")}
+                                </span>
+                                <span className="text-gray-400 text-[10px] font-bold">→</span>
+                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium capitalize ${STATUS_BADGE[field.new] || "bg-gray-100 text-gray-500"}`}>
+                                  {field.new === "—" ? "—" : field.new.replace(/_/g, " ")}
+                                </span>
+                              </>
+                            ) : (
+                              <div className="flex items-center gap-1 w-full">
+                                <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded truncate max-w-[70px]" title={field.old}>
+                                  {field.old}
+                                </span>
+                                <span className="text-gray-400 text-[10px] font-bold flex-shrink-0">→</span>
+                                <span className="text-[9px] text-gray-800 font-semibold bg-gray-100 px-1.5 py-0.5 rounded truncate max-w-[70px]" title={field.new}>
+                                  {field.new}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
               </div>
-            )}
-          </Fragment>
-        ))}
+
+              {/* Horizontal connector between steps */}
+              {!isLast && (
+                <div className="flex flex-col items-center flex-shrink-0 min-w-[80px] px-1">
+                  {/* Duration label, aligned to circle center (h-10 = 40px, center = 20px) */}
+                  <span className="text-[9px] text-gray-400 whitespace-nowrap text-center mt-1 mb-1 leading-none">
+                    {calcDuration(log.created_at, sorted[index + 1].created_at)}
+                  </span>
+                  {/* Horizontal line + arrowhead */}
+                  <div className="relative w-full flex items-center">
+                    <div className="flex-1 h-[1.5px] bg-gray-300" />
+                    <div className="w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-gray-400 flex-shrink-0" />
+                  </div>
+                </div>
+              )}
+            </Fragment>
+          );
+        })}
       </div>
     </div>
   );
@@ -1783,15 +1880,6 @@ export const ProjectTaskDetails = () => {
                   </div>
                 </span>
                 <span className="h-6 w-[1px] border border-gray-300"></span>
-                <span className="cursor-pointer flex items-center gap-1">
-                  <ActiveTimer
-                    activeTimeTillNow={
-                      (taskDetails as any)?.active_time_till_now
-                    }
-                    isStarted={(taskDetails as any)?.is_started}
-                  />
-                </span>
-                <span className="h-6 w-[1px] border border-gray-300"></span>
                 {taskDetails.todo_converted ? (
                   <span
                     className="flex items-center gap-1 cursor-pointer"
@@ -2075,18 +2163,15 @@ export const ProjectTaskDetails = () => {
                     <div className="flex items-start">
                       <div className="min-w-[200px]">
                         <p className="text-sm font-medium text-gray-600">
-                          {calculateDuration(
-                            taskDetails.expected_start_date,
-                            taskDetails.target_date
-                          ).isOverdue
-                            ? "Overdued Time:"
-                            : "Time Left:"}
+                          Actual Efforts Taken:
                         </p>
                       </div>
                       <div className="flex-1">
-                        <CountdownTimer
-                          startDate={taskDetails.expected_start_date}
-                          targetDate={taskDetails.target_date}
+                        <ActiveTimer
+                          activeTimeTillNow={
+                            (taskDetails as any)?.active_time_till_now
+                          }
+                          isStarted={(taskDetails as any)?.is_started}
                         />
                       </div>
                     </div>
@@ -2122,6 +2207,27 @@ export const ProjectTaskDetails = () => {
                         </Select>
                       </div>
                     </div>
+
+                    <div className="flex items-start">
+                      <div className="min-w-[200px]">
+                        <p className="text-sm font-medium text-gray-600">
+                          {calculateDuration(
+                            taskDetails.expected_start_date,
+                            taskDetails.target_date
+                          ).isOverdue
+                            ? "Overdue Time:"
+                            : "Time Left:"}
+                        </p>
+                      </div>
+                      <div className="flex-1">
+                        <CountdownTimer
+                          startDate={taskDetails.expected_start_date}
+                          targetDate={taskDetails.target_date}
+                        />
+                      </div>
+                    </div>
+
+
                     <div className="flex items-start">
                       <div className="min-w-[200px]">
                         <p className="text-sm font-medium text-gray-600">
@@ -2209,11 +2315,69 @@ export const ProjectTaskDetails = () => {
           )}
 
           {/* Project Drive Tab */}
-          {activeTab === "project_drive" && (
-            <div className="text-center py-8 text-gray-500">
-              No project drive items available
-            </div>
-          )}
+          {activeTab === "project_drive" && (() => {
+            const projectAttachments: any[] = (taskDetails as any)?.project_attachments || [];
+            if (projectAttachments.length === 0) {
+              return (
+                <div className="text-center py-8 text-gray-500 text-sm">
+                  No project drive files available
+                </div>
+              );
+            }
+            const formatBytes = (bytes: number) => {
+              if (!bytes) return "";
+              if (bytes < 1024) return `${bytes} B`;
+              if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+              return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+            };
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4 mt-4">
+                {projectAttachments.map((file: any) => {
+                  const fileName = file.document_file_name;
+                  const fileUrl = file.document_url;
+                  const fileExt = fileName?.split(".").pop()?.toLowerCase();
+                  const isImage = ["jpg", "jpeg", "png", "gif", "bmp", "webp"].includes(fileExt || "");
+                  const isPdf = fileExt === "pdf";
+                  const isWord = ["doc", "docx"].includes(fileExt || "");
+                  const isExcel = ["xls", "xlsx"].includes(fileExt || "");
+                  return (
+                    <div
+                      key={file.id}
+                      className="border rounded p-2 flex flex-col items-center justify-center text-center shadow-sm bg-white"
+                    >
+                      <div className="w-full h-[100px] flex items-center justify-center bg-gray-100 rounded mb-2 overflow-hidden">
+                        {isImage ? (
+                          <img src={fileUrl} alt={fileName} className="object-contain h-full" />
+                        ) : isPdf ? (
+                          <span className="text-red-600 font-bold">PDF</span>
+                        ) : isWord ? (
+                          <span className="text-blue-600 font-bold">DOC</span>
+                        ) : isExcel ? (
+                          <span className="text-green-600 font-bold">XLS</span>
+                        ) : (
+                          <span className="text-gray-500 font-bold">FILE</span>
+                        )}
+                      </div>
+                      <a
+                        href={fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-700 hover:underline truncate w-full"
+                        title={fileName}
+                      >
+                        {fileName}
+                      </a>
+                      {file.document_file_size && (
+                        <span className="text-[10px] text-gray-400 mt-0.5">
+                          {formatBytes(file.document_file_size)}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {/* Activity Log Tab */}
           {activeTab === "activity_log" && <ActivityLog taskId={taskId} />}
