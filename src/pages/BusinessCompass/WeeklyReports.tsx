@@ -71,7 +71,9 @@ import { getUser } from "@/utils/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
     Dialog,
+    DialogClose,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
     DialogFooter,
@@ -270,6 +272,18 @@ const getSopStatusValue = (status: any) => {
     return "To Start";
 };
 
+const formatSopValue = (value: any) => {
+    if (value === null || value === undefined || value === "") return "Not available";
+    return String(value);
+};
+
+const formatSopDate = (value: any) => {
+    if (!value) return "Not available";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Not available";
+    return format(date, "dd MMM yyyy, hh:mm a");
+};
+
 const roundScore = (score: number) => Number(score.toFixed(2));
 
 const WeeklyReports = () => {
@@ -383,6 +397,7 @@ const WeeklyReports = () => {
     const [updatingSopHealth, setUpdatingSopHealth] = React.useState<
         Record<number, boolean>
     >({});
+    const [selectedSopId, setSelectedSopId] = React.useState<number | null>(null);
     const refDate = React.useMemo(() => new Date(), []);
 
     useEffect(() => {
@@ -425,6 +440,11 @@ const WeeklyReports = () => {
     const weekEnd = React.useMemo(
         () => subDays(currentWeekEnd, -selectedWeekOffset * 7),
         [currentWeekEnd, selectedWeekOffset]
+    );
+
+    const selectedSop = React.useMemo(
+        () => systemSops.find((sop) => sop.id === selectedSopId) || null,
+        [selectedSopId, systemSops]
     );
 
     const user =
@@ -3191,6 +3211,16 @@ const WeeklyReports = () => {
                                                             </p>
                                                         </div>
                                                         <div className="flex items-center gap-2 text-xs font-semibold">
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                className="h-9 gap-1.5 rounded-lg border-[#DA7756]/25 bg-[#fef6f4] px-3 text-xs font-bold text-[#DA7756] shadow-sm hover:border-[#DA7756]/45 hover:bg-white hover:text-[#c9673f]"
+                                                                onClick={() => setSelectedSopId(sop.id)}
+                                                                aria-label={`View details for ${sop.system_name || "SOP"}`}
+                                                            >
+                                                                <Eye className="h-3.5 w-3.5" />
+                                                                View
+                                                            </Button>
                                                             <Select
                                                                 value={getSopStatusValue(sop.status)}
                                                                 disabled={!!updatingSopStatus[sop.id]}
@@ -4550,6 +4580,186 @@ const WeeklyReports = () => {
                 isLoading={isPauseLoading}
                 taskId={pauseTaskId}
             />
+
+            <Dialog
+                open={Boolean(selectedSop)}
+                onOpenChange={(open) => {
+                    if (!open) setSelectedSopId(null);
+                }}
+            >
+                <DialogContent className="max-h-[88vh] max-w-4xl overflow-hidden rounded-2xl border-neutral-200 bg-neutral-50 p-0 shadow-2xl">
+                    {selectedSop && (
+                        <div className="flex max-h-[88vh] flex-col">
+                            <DialogHeader className="relative border-b border-neutral-200 bg-white px-6 py-5 pr-14">
+                                <DialogClose className="absolute right-5 top-5 rounded-full p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700">
+                                    <X className="h-4 w-4" />
+                                    <span className="sr-only">Close</span>
+                                </DialogClose>
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div className="flex min-w-0 gap-3">
+                                        <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#fef6f4] text-[#DA7756]">
+                                            <FileText className="h-5 w-5" />
+                                        </div>
+                                        <div className="min-w-0 space-y-1">
+                                            <DialogTitle className="truncate text-xl font-bold text-neutral-900">
+                                                {selectedSop.system_name || "Untitled SOP"}
+                                            </DialogTitle>
+                                            <DialogDescription className="text-sm text-neutral-500">
+                                                {selectedSop.department_name || "No department"}
+                                            </DialogDescription>
+                                        </div>
+                                    </div>
+                                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                        <Badge className="rounded-full border-0 bg-[#fef6f4] px-3 py-1 text-[#DA7756] hover:bg-[#fef6f4]">
+                                            {getSopStatusValue(selectedSop.status)}
+                                        </Badge>
+                                        <Badge className="rounded-full border-0 bg-neutral-100 px-3 py-1 capitalize text-neutral-700 hover:bg-neutral-100">
+                                            {formatSopValue(selectedSop.priority)} priority
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </DialogHeader>
+
+                            <div className="flex-1 space-y-5 overflow-y-auto px-6 py-5">
+                                <div className="grid gap-3 sm:grid-cols-3">
+                                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                                                <Activity className="h-4 w-4" />
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-semibold uppercase text-neutral-500">Health</p>
+                                                <p className="mt-0.5 text-xl font-bold text-neutral-900">
+                                                    {Number(selectedSop.health_score ?? 0)}%
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                                                <Users className="h-4 w-4" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-semibold uppercase text-neutral-500">Department</p>
+                                                <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
+                                                    {formatSopValue(selectedSop.department_name)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                                                <User className="h-4 w-4" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-semibold uppercase text-neutral-500">Assignee</p>
+                                                <p className="mt-0.5 truncate text-sm font-bold text-neutral-900">
+                                                    {formatSopValue(selectedSop.assignee_name)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                    <p className="text-xs font-semibold uppercase text-neutral-500">Description</p>
+                                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-neutral-800">
+                                        {formatSopValue(selectedSop.description)}
+                                    </p>
+                                </div>
+
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                    {[
+                                        ["Created By", selectedSop.created_by_name],
+                                        ["Updated By", selectedSop.updated_by_name],
+                                        ["Created At", formatSopDate(selectedSop.created_at)],
+                                        ["Updated At", formatSopDate(selectedSop.updated_at)],
+                                    ].map(([label, value]) => (
+                                        <div
+                                            key={label}
+                                            className="rounded-xl border border-neutral-200 bg-white px-4 py-3 shadow-sm"
+                                        >
+                                            <p className="text-xs font-semibold uppercase text-neutral-500">
+                                                {label}
+                                            </p>
+                                            <p className="mt-1 break-words text-sm font-semibold text-neutral-900">
+                                                {formatSopValue(value)}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                    <p className="text-xs font-semibold uppercase text-neutral-500">
+                                        Documentation URL
+                                    </p>
+                                    {selectedSop.documentation_url ? (
+                                        <a
+                                            href={selectedSop.documentation_url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="mt-2 block break-all text-sm font-semibold text-[#DA7756] hover:underline"
+                                        >
+                                            {selectedSop.documentation_url}
+                                        </a>
+                                    ) : (
+                                        <p className="mt-2 text-sm text-neutral-600">Not available</p>
+                                    )}
+                                </div>
+
+                                <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <p className="text-xs font-semibold uppercase text-neutral-500">KPIs</p>
+                                        <Badge className="rounded-full border-0 bg-neutral-100 text-neutral-700 hover:bg-neutral-100">
+                                            {Array.isArray(selectedSop.kpis) ? selectedSop.kpis.length : 0}
+                                        </Badge>
+                                    </div>
+                                    {Array.isArray(selectedSop.kpis) && selectedSop.kpis.length > 0 ? (
+                                        <div className="mt-3 space-y-2">
+                                            {selectedSop.kpis.map((kpi: any) => (
+                                                <div
+                                                    key={kpi.id ?? `${kpi.kpi_id}-${kpi.position}`}
+                                                    className="rounded-lg border border-neutral-100 bg-neutral-50 p-3"
+                                                >
+                                                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                                        <div className="min-w-0">
+                                                            <p className="text-sm font-bold text-neutral-900">
+                                                                {formatSopValue(kpi.kpi_name)}
+                                                            </p>
+                                                            <p className="text-xs text-neutral-500">
+                                                                {formatSopValue(kpi.kpi_category)}
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex flex-wrap gap-2 text-xs font-semibold text-neutral-600">
+                                                            <span className="rounded-full bg-white px-2.5 py-1 capitalize text-neutral-700">
+                                                                {formatSopValue(kpi.kpi_frequency)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="mt-3 text-sm text-neutral-600">No KPIs linked.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <DialogFooter className="border-t border-neutral-200 bg-white px-6 py-4">
+                                <Button
+                                    type="button"
+                                    className={cn("h-10 rounded-lg px-5", btnPrimary)}
+                                    onClick={() => setSelectedSopId(null)}
+                                >
+                                    Close
+                                </Button>
+                            </DialogFooter>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             <Menu
                 anchorEl={taskIssueMenuAnchor}
