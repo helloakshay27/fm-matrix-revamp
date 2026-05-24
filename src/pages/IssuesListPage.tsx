@@ -14,6 +14,7 @@ import {
   ChartNoAxesColumn,
   List,
   ChevronDown,
+  X,
 } from "lucide-react";
 import IssueManagementKanban from "@/components/IssueManagementKanban";
 import { toast } from "sonner";
@@ -32,6 +33,8 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import { fetchFMUsers } from "@/store/slices/fmUserSlice";
+import { useAppDispatch } from "@/store/hooks";
+import { updateSprint, fetchSprints } from "@/store/slices/sprintSlice";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useDynamicPermissions } from "@/hooks/useDynamicPermissions";
 import qs from "qs";
@@ -78,6 +81,13 @@ interface Issue {
 }
 
 const columns: ColumnConfig[] = [
+  {
+    key: "actions",
+    label: "Actions",
+    sortable: false,
+    draggable: false,
+    defaultVisible: true,
+  },
   {
     key: "id",
     label: "ID",
@@ -187,6 +197,47 @@ const ISSUSE_STATUS = [
   { value: "closed", label: "Closed" },
 ];
 
+const AddToSprintModal = ({ isOpen, onClose, sprints, selectedSprintId, setSelectedSprintId, onSubmit, isLoading }: any) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">Add to Sprint</h2>
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Select Sprint</label>
+          <Select
+            value={selectedSprintId}
+            onChange={(e) => setSelectedSprintId(e.target.value as string)}
+            displayEmpty
+            fullWidth
+            size="small"
+            variant="outlined"
+          >
+            <MenuItem value=""><em>Select a sprint</em></MenuItem>
+            {sprints.map((sprint: any) => (
+              <MenuItem key={sprint.id} value={String(sprint.id)}>
+                {sprint.name || sprint.title}
+              </MenuItem>
+            ))}
+          </Select>
+        </div>
+        <div className="flex gap-3 justify-end">
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={onSubmit}
+            disabled={isLoading}
+            className="bg-[#C72030] text-white hover:bg-[#A01020] disabled:opacity-50"
+          >
+            {isLoading ? "Adding..." : "Add to Sprint"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const IssuesListPage = ({
   preSelectedProjectId,
 }: { preSelectedProjectId?: string } = {}) => {
@@ -197,6 +248,7 @@ const IssuesListPage = ({
   const { id: projectId } = useParams<{ id: string }>();
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
+  const dispatch = useAppDispatch();
 
   // Parse URL params with default values
   const initSearch = searchParams.get("search") || "";
@@ -265,6 +317,15 @@ const IssuesListPage = ({
   const [responsibleTaskId, setResponsibleTaskId] = useState<string | null>(null);
   const [pendingResponsiblePersonId, setPendingResponsiblePersonId] = useState<string | null>(null);
   const [isResponsibleLoading, setIsResponsibleLoading] = useState(false);
+
+  // Row selection state
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+  // Add to Sprint state
+  const [isAddToSprintModalOpen, setIsAddToSprintModalOpen] = useState(false);
+  const [sprints, setSprints] = useState<any[]>([]);
+  const [selectedSprintId, setSelectedSprintId] = useState<string>("");
+  const [isAddingToSprint, setIsAddingToSprint] = useState(false);
 
   // Column display state
   const [columnOrder, setColumnOrder] = useState<string[]>(() => {
@@ -543,27 +604,89 @@ const IssuesListPage = ({
 
   const handleOpenDialog = () => setOpenIssueModal(true);
 
-  const renderActions = (item: any) => (
-    <div className="flex items-center justify-center gap-2">
-      {shouldShow("employee_project_issues", "show") && (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="p-1"
-          onClick={() => {
-            if (location.pathname.startsWith("/business-compass/issues")) {
-              navigate(`/business-compass/issues/${item.id}`);
-            } else {
-              navigate(`/vas/issues/${item.id}`);
-            }
-          }}
-          title="View Issue Details"
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
-      )}
-    </div>
-  );
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(issues.map((i: any) => String(i.id)));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems((prev) => [...prev, itemId]);
+    } else {
+      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
+    }
+  };
+
+  const fetchSprintsList = useCallback(async () => {
+    try {
+      const result = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
+      const list = result?.sprints || result?.data?.sprints || (Array.isArray(result) ? result : []);
+      setSprints(list);
+    } catch (error) {
+      console.error("Failed to fetch sprints:", error);
+    }
+  }, [dispatch, token, baseUrl]);
+
+  const handleAddToSprintSubmit = async () => {
+    if (!selectedSprintId) {
+      toast.error("Please select a sprint");
+      return;
+    }
+    setIsAddingToSprint(true);
+    try {
+      const result = await dispatch(updateSprint({
+        token,
+        baseUrl,
+        id: selectedSprintId,
+        data: { sprint: { issue_ids: selectedItems.map(Number) } },
+      })).unwrap();
+
+      const existingTaskIds: number[] = result?.existing_task_ids || [];
+      const existingIssueIds: number[] = result?.existing_issue_ids || [];
+
+      if (existingTaskIds.length > 0) {
+        toast.error(`Tasks with IDs ${existingTaskIds.join(", ")} are already added to this sprint`);
+      }
+      if (existingIssueIds.length > 0) {
+        toast.error(`Issues with IDs ${existingIssueIds.join(", ")} are already added to this sprint`);
+      }
+      if (existingTaskIds.length === 0 && existingIssueIds.length === 0) {
+        toast.success("Issues added to sprint successfully");
+        setIsAddToSprintModalOpen(false);
+        setSelectedSprintId("");
+        setSelectedItems([]);
+      }
+    } catch (error) {
+      toast.error("Failed to add issues to sprint");
+    } finally {
+      setIsAddingToSprint(false);
+    }
+  };
+
+  // const renderActions = (item: any) => (
+  // <div className="flex items-center justify-center gap-2">
+  //   {shouldShow("employee_project_issues", "show") && (
+  //     <Button
+  //       size="sm"
+  //       variant="ghost"
+  //       className="p-1"
+  //       onClick={() => {
+  //         if (location.pathname.startsWith("/business-compass/issues")) {
+  //           navigate(`/business-compass/issues/${item.id}`);
+  //         } else {
+  //           navigate(`/vas/issues/${item.id}`);
+  //         }
+  //       }}
+  //       title="View Issue Details"
+  //     >
+  //       <Eye className="w-4 h-4" />
+  //     </Button>
+  //   )}
+  // </div>
+  // );
 
   const handleIssueTypeChange = async (issueId: string, newType: string) => {
     try {
@@ -711,6 +834,27 @@ const IssuesListPage = ({
   };
 
   const renderCell = (item: any, columnKey: string) => {
+    if (columnKey === "actions") {
+      return <div className="flex items-center justify-center gap-2">
+        {shouldShow("employee_project_issues", "show") && (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={() => {
+              if (location.pathname.startsWith("/business-compass/issues")) {
+                navigate(`/business-compass/issues/${item.id}`);
+              } else {
+                navigate(`/vas/issues/${item.id}`);
+              }
+            }}
+            title="View Issue Details"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+    }
     if (columnKey === "title") {
       return (
         <div className="flex flex-col gap-2">
@@ -1210,7 +1354,7 @@ const IssuesListPage = ({
       <EnhancedTable
         data={issues}
         columns={columns}
-        renderActions={renderActions}
+        // renderActions={renderActions}
         searchValue={tempSearchQuery}
         onSearchChange={(searchTerm) => handleSearchChange(searchTerm)}
         renderCell={renderCell}
@@ -1223,6 +1367,11 @@ const IssuesListPage = ({
             ? "No issues found. Create one to get started."
             : ""
         }
+        selectable={true}
+        selectedItems={selectedItems}
+        onSelectAll={handleSelectAll}
+        onSelectItem={handleSelectItem}
+        getItemId={(item: any) => String(item.id)}
       />
 
       {showActionPanel && (
@@ -1232,6 +1381,48 @@ const IssuesListPage = ({
           onClearSelection={() => setShowActionPanel(false)}
         />
       )}
+
+      {selectedItems.length > 0 && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px] selection-panel">
+          <div className="w-[44px] bg-[#C4B59A] rounded-l-lg flex flex-col items-center justify-center">
+            <div className="text-[#C72030] font-bold text-lg"></div>
+          </div>
+          <div className="flex items-center justify-between gap-4 px-6 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-[#1a1a1a]">Action</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => { fetchSprintsList(); setIsAddToSprintModalOpen(true); }}
+                variant="ghost"
+                size="sm"
+                className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+              >
+                <Plus className="w-6 h-6 text-black" />
+                <span className="text-xs text-gray-600">Add to Sprint</span>
+              </Button>
+            </div>
+          </div>
+          <div className="w-[44px] flex items-center justify-center border-l border-gray-200">
+            <button
+              onClick={() => setSelectedItems([])}
+              className="w-full h-full flex items-center justify-center hover:bg-gray-50 transition-colors duration-200"
+            >
+              <X className="w-4 h-4 text-black" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      <AddToSprintModal
+        isOpen={isAddToSprintModalOpen}
+        onClose={() => { setIsAddToSprintModalOpen(false); setSelectedSprintId(""); }}
+        sprints={sprints}
+        selectedSprintId={selectedSprintId}
+        setSelectedSprintId={setSelectedSprintId}
+        onSubmit={handleAddToSprintSubmit}
+        isLoading={isAddingToSprint}
+      />
 
       {/* Issue Filter Modal */}
       <IssueFilterModal

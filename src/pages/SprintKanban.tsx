@@ -180,7 +180,7 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
     useEffect(() => {
         if (sprint) {
             setSelectedSprint(sprint);
-            setSprintBoardTasks(sprint?.sprint_tasks);
+            setSprintBoardTasks(sprint?.sprint_tasks ?? []);
         }
     }, [sprint]);
 
@@ -772,9 +772,9 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
                             <div className="absolute top-2 right-2 flex gap-2">
                                 {selectedSprint && (
                                     <>
-                                        {selectedSprint.status === 'completed' ? (
+                                        {selectedSprint?.status === 'completed' ? (
                                             <CircleCheck size={15} color="green" />
-                                        ) : selectedSprint.status === 'stopped' ? (
+                                        ) : selectedSprint?.status === 'stopped' ? (
                                             <button onClick={handlePlayClick} title="Start">
                                                 <Play size={15} fill="#000" className="cursor-pointer" />
                                             </button>
@@ -799,13 +799,13 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
                                     <GripHorizontal size={15} fill="#000" className="cursor-pointer" />
                                 </div>
                                 <p>
-                                    <span className="text-[#62bbec] font-medium">S-{selectedSprint.id}</span>{' '}
-                                    {selectedSprint.name}
+                                    <span className="text-[#62bbec] font-medium">S-{selectedSprint?.id}</span>{' '}
+                                    {selectedSprint?.name}
                                 </p>
                                 <div className="flex items-center gap-2 text-[#B00020]">
                                     <CalendarDays size={14} />
                                     <span className="text-black">
-                                        {selectedSprint.start_date} to {selectedSprint.end_date}
+                                        {selectedSprint?.start_date} to {selectedSprint?.end_date}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-[#D32F2F]">
@@ -898,14 +898,14 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
                                 <>
                                     {sprintBoardTasks?.map((task: any) => {
                                         const taskId = `task-${task.id}`;
-                                        const taskData = task.task_management || task;
+                                        const taskData = task?.task_management || task;
                                         const visibleSubtasks = (task.sub_tasks_managements || []).filter(
                                             (subtask: any) => subtask.status === 'sprint'
                                         );
                                         return (
                                             <div key={`task-${task.id}`} id={taskId} className="w-full my-2">
                                                 <TaskCard task={taskData} toggleSubCard={() => toggleSubCard(task.id)} />
-                                                {visibleSubtasks.length > 0 && subCardVisibility[task.id] && (
+                                                {visibleSubtasks.length > 0 && subCardVisibility[task?.id] && (
                                                     <div className="ml-5 mt-1">
                                                         {visibleSubtasks.map((subtask: any) => (
                                                             <div
@@ -960,8 +960,8 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
                         const notInSprint = !sprintTaskIds.includes(task.id);
                         const matchesStatus =
                             cardStatus === 'open'
-                                ? task.status === 'open'
-                                : task.status === cardStatus;
+                                ? task?.status === 'open'
+                                : task?.status === cardStatus;
                         return notInSprint && matchesStatus;
                     });
 
@@ -976,10 +976,10 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
                         .filter(
                             (subtask: any) =>
                                 (cardStatus === 'open'
-                                    ? subtask.status === 'open'
-                                    : subtask.status === cardStatus) &&
-                                subtask.status !== subtask.parentTaskStatus &&
-                                !sprintTaskIds.includes(subtask.id)
+                                    ? subtask?.status === 'open'
+                                    : subtask?.status === cardStatus) &&
+                                subtask?.status !== subtask?.parentTaskStatus &&
+                                !sprintTaskIds.includes(subtask?.id)
                         );
 
                     return (
@@ -1003,7 +1003,7 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
                                             task.sub_tasks_managements || []
                                         ).filter((subtask: any) =>
                                             cardStatus === 'open'
-                                                ? subtask.status === 'open'
+                                                ? subtask?.status === 'open'
                                                 : subtask.status === cardStatus
                                         );
 
@@ -1030,7 +1030,7 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
                                                     toggleSubCard={() => toggleSubCard(task.id)}
                                                 />
                                                 {visibleSubtasks.length > 0 &&
-                                                    subCardVisibility[task.id] && (
+                                                    subCardVisibility[task?.id] && (
                                                         <div className="ml-5 mt-1">
                                                             {visibleSubtasks.map((subtask: any) => (
                                                                 <div

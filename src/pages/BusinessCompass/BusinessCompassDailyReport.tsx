@@ -329,6 +329,9 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [hasMoreIssues, setHasMoreIssues] = useState(true);
   const [todosData, setTodosData] = useState<any>(null);
   const [todosLoading, setTodosLoading] = useState(false);
+  const [tomorrowScheduledItems, setTomorrowScheduledItems] = useState<any[]>([]);
+  const [tomorrowScheduledLoading, setTomorrowScheduledLoading] = useState(false);
+  const [tomorrowFetchDone, setTomorrowFetchDone] = useState(false);
 
   const user =
     typeof localStorage !== "undefined"
@@ -390,6 +393,90 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   useEffect(() => {
     fetchTodos();
+  }, [startDate, baseUrl, token, userId]);
+
+  const getNextWorkingDay = (dateStr: string): string => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    date.setDate(date.getDate() + 1);
+    while (date.getDay() === 0 || date.getDay() === 6) {
+      date.setDate(date.getDate() + 1);
+    }
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  };
+
+  const fetchTomorrowScheduled = async (forDate: string) => {
+    if (!baseUrl || !token || !userId) return;
+    setTomorrowFetchDone(false);
+    setTomorrowScheduledLoading(true);
+    try {
+      const nextDay = getNextWorkingDay(forDate);
+
+      const tasksParams = new URLSearchParams({
+        "q[target_date_eq]": nextDay,
+        "q[responsible_person_id_eq]": userId.toString(),
+      });
+      const issuesParams = new URLSearchParams({
+        "q[end_date_eq]": nextDay,
+        "q[responsible_person_id_eq]": userId.toString(),
+      });
+      const todosParams = new URLSearchParams({
+        "q[user_id_eq]": userId.toString(),
+        "q[target_date_eq]": nextDay,
+      });
+
+      const headers = { Authorization: `Bearer ${token}` };
+      const [tasksRes, issuesRes, todosRes] = await Promise.allSettled([
+        axios.get(`https://${baseUrl}/task_managements.json?${tasksParams}`, { headers }),
+        axios.get(`https://${baseUrl}/issues.json?${issuesParams}`, { headers }),
+        axios.get(`https://${baseUrl}/todos.json?${todosParams}`, { headers }),
+      ]);
+
+      const tasks =
+        tasksRes.status === "fulfilled"
+          ? (tasksRes.value.data?.task_managements ||
+            tasksRes.value.data?.data?.task_managements ||
+            [])
+          : [];
+      const issues =
+        issuesRes.status === "fulfilled"
+          ? (issuesRes.value.data?.issues || [])
+          : [];
+      const todos =
+        todosRes.status === "fulfilled"
+          ? (todosRes.value.data?.todos || [])
+          : [];
+
+      const combined = [
+        ...tasks.map((t: any) => ({
+          id: `task-${t.id}`,
+          title: t.title || t.name || "",
+          type: "task" as const,
+        })),
+        ...issues.map((i: any) => ({
+          id: `issue-${i.id}`,
+          title: i.title || "",
+          type: "issue" as const,
+        })),
+        ...todos.map((t: any) => ({
+          id: `todo-${t.id}`,
+          title: t.title || "",
+          type: "todo" as const,
+        })),
+      ].filter((item) => item.title.trim() !== "");
+
+      setTomorrowScheduledItems(combined);
+    } catch (err) {
+      console.error("Failed to fetch tomorrow's scheduled items:", err);
+      setTomorrowScheduledItems([]);
+    } finally {
+      setTomorrowScheduledLoading(false);
+      setTomorrowFetchDone(true);
+    }
+  };
+
+  useEffect(() => {
+    fetchTomorrowScheduled(startDate);
   }, [startDate, baseUrl, token, userId]);
 
   const buildDraftStorageKey = React.useCallback(
@@ -3139,6 +3226,76 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <Plus size={14} />
                       </Button>
                     </div>
+
+                    {/* ── Scheduled for Tomorrow — read-only reference ── */}
+                    {(tomorrowScheduledLoading || tomorrowFetchDone) && (
+                      <div className="mt-6 pt-5 border-t border-indigo-100">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CalendarIcon size={14} className="text-indigo-400 shrink-0" />
+                          <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider flex-1">
+                            Scheduled for Tomorrow
+                          </span>
+                          {/* <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full whitespace-nowrap">
+                            Auto-fetched · read-only
+                          </span> */}
+                        </div>
+
+                        {tomorrowScheduledLoading ? (
+                          <div className="flex items-center gap-2 py-3 text-indigo-300">
+                            <Loader2 size={13} className="animate-spin shrink-0" />
+                            <span className="text-xs font-medium">Fetching upcoming assignments…</span>
+                          </div>
+                        ) : (() => {
+                          const manualTitles = new Set(
+                            planningItems.map((p) => cleanReportText(p.text).toLowerCase())
+                          );
+                          const dedupedTomorrow = tomorrowScheduledItems.filter(
+                            (item) => !manualTitles.has(cleanReportText(item.title).toLowerCase())
+                          );
+                          if (dedupedTomorrow.length === 0) {
+                            return (
+                              <div className="flex items-center gap-2 py-3 text-indigo-300">
+                                <CalendarIcon size={13} className="shrink-0" />
+                                <span className="text-xs font-medium">No tasks, issues or todos scheduled for tomorrow.</span>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="space-y-1.5">
+                              {dedupedTomorrow.map((item) => (
+                                <div
+                                  key={item.id}
+                                  className="flex items-center gap-2.5 bg-indigo-50/50 border border-indigo-100 rounded-[8px] px-3 py-2 select-none"
+                                >
+                                  <CalendarIcon size={12} className="text-indigo-300 shrink-0" />
+                                  <span
+                                    className={cn(
+                                      "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                      item.type === "task"
+                                        ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                        : item.type === "issue"
+                                          ? "bg-violet-100 text-violet-700"
+                                          : "bg-yellow-100 text-yellow-700"
+                                    )}
+                                  >
+                                    {item.type}
+                                  </span>
+                                  <span className="flex-1 text-sm font-medium text-indigo-800 truncate">
+                                    {item.title}
+                                  </span>
+                                  <span className="text-[9px] font-bold text-indigo-300 bg-indigo-100 px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                                    not submitted
+                                  </span>
+                                </div>
+                              ))}
+                              <p className="text-[10px] text-indigo-300 font-medium pt-1 pl-0.5">
+                                These items are for reference only and will not be included in your report.
+                              </p>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
