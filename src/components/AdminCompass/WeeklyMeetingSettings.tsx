@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Calendar, Plus, X, Loader2, Clock, MoreVertical, Edit2, Trash2, Search, ChevronDown, Check } from 'lucide-react'
+import { Calendar, Plus, X, Loader2, Clock, MoreVertical, Edit2, Trash2, Search } from 'lucide-react'
 import axios from 'axios'
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
@@ -49,6 +49,8 @@ interface WeeklyMeeting {
     meeting_time: string
     duration_minutes: number
     meeting_head?: { id: number; name: string; email: string }
+    meeting_heads?: Array<{ id: number; name: string; email: string }>
+    meeting_head_ids?: number[]
     department?: { id: number; name: string }
     departments?: Array<{ id: number; name?: string; department_name?: string }>
     department_ids?: number[]
@@ -88,122 +90,27 @@ const getUserLabel = (user: User) => {
     return fullName || user.name || user.email || 'Unnamed user'
 }
 
-const SearchableUserSelect = ({
-    value,
-    onChange,
-    users,
-    loading,
-}: {
-    value: string
-    onChange: (value: string) => void
-    users: User[]
-    loading: boolean
-}) => {
-    const [open, setOpen] = useState(false)
-    const [search, setSearch] = useState('')
-    const ref = React.useRef<HTMLDivElement>(null)
+const getMeetingHeadIds = (meeting: WeeklyMeeting | DailyMeetingConfig): string[] => {
+    const ids =
+        Array.isArray(meeting.meeting_head_ids)
+            ? meeting.meeting_head_ids
+            : Array.isArray(meeting.meeting_heads)
+                ? meeting.meeting_heads.map((head: any) => head?.id)
+                : meeting.meeting_head?.id
+                    ? [meeting.meeting_head.id]
+                    : []
 
-    useEffect(() => {
-        const handleOutsideClick = (event: MouseEvent) => {
-            if (ref.current && !ref.current.contains(event.target as Node)) {
-                setOpen(false)
-                setSearch('')
-            }
-        }
+    return ids.filter(Boolean).map((id: number | string) => String(id))
+}
 
-        document.addEventListener('mousedown', handleOutsideClick)
-        return () => document.removeEventListener('mousedown', handleOutsideClick)
-    }, [])
+const getMeetingHeadLabels = (meeting: WeeklyMeeting): string[] => {
+    const heads = Array.isArray(meeting.meeting_heads)
+        ? meeting.meeting_heads
+        : meeting.meeting_head
+            ? [meeting.meeting_head]
+            : []
 
-    const selectedUser = users.find((user) => String(user.id) === value)
-    const filteredUsers = users.filter((user) => {
-        const query = search.trim().toLowerCase()
-        if (!query) return true
-
-        return (
-            getUserLabel(user).toLowerCase().includes(query) ||
-            String(user.email || '').toLowerCase().includes(query)
-        )
-    })
-
-    return (
-        <div ref={ref} className="relative">
-            <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input
-                    value={open ? search : selectedUser ? getUserLabel(selectedUser) : ''}
-                    onClick={() => {
-                        if (loading) return
-                        setOpen(true)
-                        setSearch('')
-                    }}
-                    onChange={(event) => {
-                        setSearch(event.target.value)
-                        setOpen(true)
-                    }}
-                    readOnly={!open}
-                    disabled={loading}
-                    placeholder={loading ? 'Loading users...' : 'Search meeting head...'}
-                    className="w-full cursor-pointer pl-9 pr-9"
-                />
-                <ChevronDown
-                    className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`}
-                />
-            </div>
-
-            {open && (
-                <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-50 max-h-64 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-xl">
-                    {value && (
-                        <button
-                            type="button"
-                            className="w-full border-b border-gray-100 px-4 py-2 text-left text-xs font-semibold text-red-500 hover:bg-red-50"
-                            onClick={() => {
-                                onChange('')
-                                setOpen(false)
-                                setSearch('')
-                            }}
-                        >
-                            Clear selection
-                        </button>
-                    )}
-
-                    {filteredUsers.length > 0 ? (
-                        filteredUsers.map((user) => {
-                            const userValue = String(user.id)
-                            const isSelected = userValue === value
-
-                            return (
-                                <button
-                                    key={user.id}
-                                    type="button"
-                                    className={`flex w-full items-center justify-between gap-3 border-b border-gray-100 px-4 py-3 text-left last:border-b-0 hover:bg-[#fffaf8] ${isSelected ? 'bg-[#fef6f4]' : 'bg-white'}`}
-                                    onClick={() => {
-                                        onChange(userValue)
-                                        setOpen(false)
-                                        setSearch('')
-                                    }}
-                                >
-                                    <span className="min-w-0">
-                                        <span className="block truncate text-sm font-semibold text-gray-900">
-                                            {getUserLabel(user)}
-                                        </span>
-                                        <span className="block truncate text-xs text-gray-500">
-                                            {user.email}
-                                        </span>
-                                    </span>
-                                    {isSelected && <Check className="h-4 w-4 shrink-0 text-[#DA7756]" />}
-                                </button>
-                            )
-                        })
-                    ) : (
-                        <div className="px-4 py-6 text-center text-sm text-gray-500">
-                            No users found
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    )
+    return heads.map((head) => head.name || head.email).filter(Boolean)
 }
 
 const SAMPLE_MEMBERS: MeetingMember[] = [
@@ -216,7 +123,8 @@ const SAMPLE_MEMBERS: MeetingMember[] = [
 const WeeklyMeetingSettings = () => {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [meetingName, setMeetingName] = useState('')
-    const [meetingHead, setMeetingHead] = useState('')
+    const [selectedMeetingHeadIds, setSelectedMeetingHeadIds] = useState<string[]>([])
+    const [meetingHeadSearch, setMeetingHeadSearch] = useState('')
     const [dayOfWeek, setDayOfWeek] = useState('Monday')
     const [time, setTime] = useState('00:00')
     const [duration, setDuration] = useState('60')
@@ -424,9 +332,18 @@ const WeeklyMeetingSettings = () => {
         )
     }
 
+    const handleMeetingHeadToggle = (userId: string) => {
+        setSelectedMeetingHeadIds((prev) =>
+            prev.includes(userId)
+                ? prev.filter((id) => id !== userId)
+                : [...prev, userId]
+        )
+    }
+
     const resetMeetingForm = () => {
         setMeetingName('')
-        setMeetingHead('')
+        setSelectedMeetingHeadIds([])
+        setMeetingHeadSearch('')
         setDayOfWeek('Monday')
         setTime('00:00')
         setDuration('60')
@@ -447,7 +364,7 @@ const WeeklyMeetingSettings = () => {
     const handleEditMeeting = (meeting: WeeklyMeeting) => {
         setEditingMeeting(meeting)
         setMeetingName(meeting.name)
-        setMeetingHead(String(meeting.meeting_head?.id || ''))
+        setSelectedMeetingHeadIds(getMeetingHeadIds(meeting))
 
         // Convert day_of_week number back to string
         const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -470,7 +387,7 @@ const WeeklyMeetingSettings = () => {
         if (meeting) {
             // Map daily meeting data to weekly form
             if (meeting.name) setMeetingName(`${meeting.name}`)
-            if (meeting.meeting_head) setMeetingHead(String(meeting.meeting_head?.id || ''))
+            setSelectedMeetingHeadIds(getMeetingHeadIds(meeting))
             if (meeting.time) setTime(meeting.time)
             if (meeting.duration) setDuration(String(meeting.duration))
             setSelectedDepartmentIds(getMeetingDepartmentIds(meeting))
@@ -489,7 +406,7 @@ const WeeklyMeetingSettings = () => {
     const handleCreateMeeting = async () => {
         try {
             // Validation
-            if (!meetingName || !meetingHead || !dayOfWeek || !time || !duration) {
+            if (!meetingName || selectedMeetingHeadIds.length === 0 || !dayOfWeek || !time || !duration) {
                 toast.error('Please fill in all required fields')
                 return
             }
@@ -519,16 +436,16 @@ const WeeklyMeetingSettings = () => {
             const selectedMemberIds = members
                 .filter(m => m.selected)
                 .map(m => parseInt(m.id))
+            const selectedMeetingHeadIdNumbers = selectedMeetingHeadIds.map(id => parseInt(id))
             const selectedDepartmentIdNumbers = selectedDepartmentIds.map(id => parseInt(id))
 
             // Prepare API payload
             const payload = {
                 name: meetingName,
-                meeting_head_id: parseInt(meetingHead),
+                meeting_head_ids: selectedMeetingHeadIdNumbers,
                 day_of_week: dayMapping[dayOfWeek],
                 meeting_time: time,
                 duration_minutes: parseInt(duration),
-                department_id: selectedDepartmentIdNumbers[0] || null,
                 department_ids: selectedDepartmentIdNumbers,
                 is_default: setAsDefault,
                 member_ids: selectedMemberIds
@@ -667,6 +584,7 @@ const WeeklyMeetingSettings = () => {
                             const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
                             const dayName = dayNames[meeting.day_of_week] || 'Unknown'
                             const meetingDepartmentLabels = getMeetingDepartmentLabels(meeting)
+                            const meetingHeadLabels = getMeetingHeadLabels(meeting)
 
                             return (
                                 <div key={meeting.id} className="border-l-4 border-l-[#5B7DFF] bg-white rounded-[10px] p-5 shadow-md transition-shadow">
@@ -753,17 +671,25 @@ const WeeklyMeetingSettings = () => {
                                     )}
 
                                     {/* Meeting Head */}
-                                    {meeting.meeting_head && (
+                                    {meetingHeadLabels.length > 0 && (
                                         <div className="mb-3 pt-3">
-                                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">MEETING HEAD</p>
+                                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">MEETING HEADS</p>
                                             <div className="flex items-center gap-2">
-                                                <div className="w-9 h-9 rounded-full bg-[#5B7DFF] text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
-                                                    {meeting.meeting_head.name?.charAt(0).toUpperCase()}
+                                                <div className="flex -space-x-2">
+                                                    {meetingHeadLabels.slice(0, 3).map((headName) => (
+                                                        <div
+                                                            key={headName}
+                                                            className="w-9 h-9 rounded-full bg-[#5B7DFF] text-white flex items-center justify-center font-bold text-sm flex-shrink-0 border-2 border-white"
+                                                            title={headName}
+                                                        >
+                                                            {headName?.charAt(0).toUpperCase()}
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-semibold text-gray-900 truncate">{meeting.meeting_head.name}</p>
-                                                    <p className="text-xs text-gray-500 truncate">{meeting.meeting_head.email}</p>
-                                                </div>
+                                                <span className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900">
+                                                    {meetingHeadLabels.slice(0, 2).join(', ')}
+                                                    {meetingHeadLabels.length > 2 ? ` +${meetingHeadLabels.length - 2}` : ''}
+                                                </span>
                                             </div>
                                         </div>
                                     )}
@@ -910,7 +836,7 @@ const WeeklyMeetingSettings = () => {
                                 <h3 className="text-sm font-bold text-[#1a1a1a]">Meeting Details</h3>
                                 <p className="mt-0.5 text-xs text-neutral-500">Name the meeting and choose who owns it.</p>
                             </div>
-                            <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-4">
                                 <div>
                                     <Label htmlFor="meetingName" className="text-sm font-medium text-gray-700 mb-2 block">
                                         Meeting Name *
@@ -927,14 +853,92 @@ const WeeklyMeetingSettings = () => {
                                 {/* Meeting Head */}
                                 <div>
                                     <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                                        Meeting Head *
+                                        Meeting Heads *
                                     </Label>
-                                    <SearchableUserSelect
-                                        value={meetingHead}
-                                        onChange={setMeetingHead}
-                                        users={users}
-                                        loading={loadingUsers}
-                                    />
+                                    <div className="rounded-lg border border-gray-200 bg-white">
+                                        <div className="flex min-h-11 flex-wrap items-center gap-2 border-b border-gray-100 px-3 py-2">
+                                            {selectedMeetingHeadIds.length > 0 ? (
+                                                selectedMeetingHeadIds.map((userId) => {
+                                                    const user = users.find((item) => String(item.id) === userId)
+                                                    return (
+                                                        <span
+                                                            key={userId}
+                                                            className="inline-flex items-center gap-1 rounded-full bg-[#fef6f4] px-2.5 py-1 text-xs font-semibold text-[#DA7756]"
+                                                        >
+                                                            {user ? getUserLabel(user) : `User ${userId}`}
+                                                            <button
+                                                                type="button"
+                                                                className="rounded-full text-[#DA7756]/70 hover:text-[#c9673f]"
+                                                                onClick={() => handleMeetingHeadToggle(userId)}
+                                                                aria-label="Remove meeting head"
+                                                            >
+                                                                <X className="h-3 w-3" />
+                                                            </button>
+                                                        </span>
+                                                    )
+                                                })
+                                            ) : (
+                                                <span className="text-sm text-gray-400">
+                                                    Select meeting heads
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="border-b border-gray-100 p-3">
+                                            <div className="relative">
+                                                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                                                <Input
+                                                    placeholder="Search meeting heads by name or email..."
+                                                    value={meetingHeadSearch}
+                                                    onChange={(e) => setMeetingHeadSearch(e.target.value)}
+                                                    className="w-full rounded-lg pl-9"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="max-h-44 overflow-y-auto">
+                                            {users
+                                                .filter((user) => {
+                                                    const query = meetingHeadSearch.trim().toLowerCase()
+                                                    if (!query) return true
+                                                    return (
+                                                        getUserLabel(user).toLowerCase().includes(query) ||
+                                                        String(user.email || '').toLowerCase().includes(query)
+                                                    )
+                                                })
+                                                .map((user) => {
+                                                    const userId = String(user.id)
+                                                    return (
+                                                        <label
+                                                            key={user.id}
+                                                            className="flex cursor-pointer items-center gap-3 border-b border-gray-100 px-4 py-3 last:border-b-0 hover:bg-gray-50"
+                                                        >
+                                                            <Checkbox
+                                                                checked={selectedMeetingHeadIds.includes(userId)}
+                                                                onCheckedChange={() => handleMeetingHeadToggle(userId)}
+                                                                className="data-[state=checked]:bg-[#DA7756] data-[state=checked]:border-[#DA7756]"
+                                                            />
+                                                            <span className="min-w-0">
+                                                                <span className="block truncate text-sm font-semibold text-gray-900">
+                                                                    {getUserLabel(user)}
+                                                                </span>
+                                                                <span className="block truncate text-xs text-gray-500">
+                                                                    {user.email}
+                                                                </span>
+                                                            </span>
+                                                        </label>
+                                                    )
+                                                })}
+                                            {users.filter((user) => {
+                                                const query = meetingHeadSearch.trim().toLowerCase()
+                                                if (!query) return true
+                                                return (
+                                                    getUserLabel(user).toLowerCase().includes(query) ||
+                                                    String(user.email || '').toLowerCase().includes(query)
+                                                )
+                                            }).length === 0 && (
+                                                    <p className="px-4 py-3 text-sm text-gray-500">No meeting heads found</p>
+                                                )}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
