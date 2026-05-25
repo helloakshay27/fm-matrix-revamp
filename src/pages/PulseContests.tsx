@@ -30,7 +30,7 @@ interface ContestRecord {
     description: string;
     startDate: string;
     endDate: string;
-    contestType: "Spin Wheel" | "Card Flip" | "Scratch Card";
+    contestType: string;
     attempt: number;
     status: "Active" | "Inactive" | "Expired";
     isActive: boolean;
@@ -164,9 +164,9 @@ const PulseContests: React.FC = () => {
                     contestType:
                         item.content_type === "spin"
                             ? "Spin Wheel"
-                            : item.content_type === "scratch"
-                                ? "Scratch Card"
-                                : "Card Flip",
+                            : item.content_type === "random"
+                                ? "Random"
+                                : "Special Discount",
                     attempt: item.attemp_required ?? 1,
                     status: item.status ?? "Inactive",
                     isActive: item.active ?? false,
