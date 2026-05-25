@@ -59,6 +59,7 @@ import AddToDoModal from "@/components/AddToDoModal";
 import TodoDetailsModal from "@/components/TodoDetailsModal";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 
 const Transition = forwardRef(function Transition(
   props: TransitionProps & { children: React.ReactElement },
@@ -104,6 +105,11 @@ interface DailyReport {
       tasks_completed?: number;
       is_absent?: boolean;
       self_rating?: number;
+      kpi_achievement?: number;
+      accomplishments?: number;
+      tasks_issues_todos?: number;
+      planning?: number;
+      timing?: number;
     };
     details?: {
       notes?: string | null;
@@ -140,7 +146,7 @@ interface AccomplishmentItem {
 interface DailyReportDraft {
   reportId?: number | null;
   accomplishments?: AccomplishmentItem[];
-  planningItems?: { id: string; text: string; starred: boolean }[];
+  planningItems?: { id: string; text: string; starred: boolean; source_id?: number | null; source_type?: string | null }[];
   selfRating?: number[];
   isAbsent?: boolean;
   absenceReason?: string;
@@ -265,7 +271,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     []
   );
   const [planningItems, setPlanningItems] = useState<
-    { id: string; text: string; starred: boolean }[]
+    { id: string; text: string; starred: boolean; source_id?: number | null; source_type?: string | null }[]
   >([]);
   const [uploadedFiles, setUploadedFiles] = useState<
     {
@@ -311,6 +317,12 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [isPauseModalOpen, setIsPauseModalOpen] = useState(false);
   const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
   const [isPauseLoading, setIsPauseLoading] = useState(false);
+  const [pendingPlayTaskId, setPendingPlayTaskId] = useState<number | null>(null);
+  const [pendingPauseTaskId, setPendingPauseTaskId] = useState<number | null>(null);
+  const [playingTaskIds, setPlayingTaskIds] = useState<Set<number>>(new Set());
+  const [pendingReopenItem, setPendingReopenItem] = useState<any>(null);
+  const [reopenReason, setReopenReason] = useState("");
+  const [isReopenLoading, setIsReopenLoading] = useState(false);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -321,7 +333,9 @@ const BusinessCompassDailyReport: React.FC = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hiddenAutoIds, setHiddenAutoIds] = useState<Set<string>>(new Set());
+  const [autoStarredIds, setAutoStarredIds] = useState<Set<string>>(new Set());
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [pendingConfirmAction, setPendingConfirmAction] = useState<{ fn: () => void; label: string } | null>(null);
 
   const [currentTasksPage, setCurrentTasksPage] = useState(1);
   const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
@@ -332,6 +346,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   const [tomorrowScheduledItems, setTomorrowScheduledItems] = useState<any[]>([]);
   const [tomorrowScheduledLoading, setTomorrowScheduledLoading] = useState(false);
   const [tomorrowFetchDone, setTomorrowFetchDone] = useState(false);
+  const [yesterdaySourceIds, setYesterdaySourceIds] = useState<Set<string>>(new Set());
 
   const user =
     typeof localStorage !== "undefined"
@@ -705,6 +720,8 @@ const BusinessCompassDailyReport: React.FC = () => {
   // Reset auto-add tracking when the selected date changes
   useEffect(() => {
     setHiddenAutoIds(new Set());
+    setAutoStarredIds(new Set());
+    setYesterdaySourceIds(new Set());
   }, [startDate]);
 
   useEffect(() => {
@@ -797,6 +814,16 @@ const BusinessCompassDailyReport: React.FC = () => {
     });
     return ids;
   }, [mergedTasksIssues, planningItems]);
+
+  // Next-day scheduled items deduped against manual plan entries (never in payload)
+  const dedupedTomorrowItems = useMemo(() => {
+    const manualTitles = new Set(
+      planningItems.map((p) => cleanReportText(p.text).toLowerCase())
+    );
+    return tomorrowScheduledItems.filter(
+      (item) => !manualTitles.has(cleanReportText(item.title).toLowerCase())
+    );
+  }, [planningItems, tomorrowScheduledItems]);
 
   const [kpis, setKpis] = useState<any[]>([]);
   const [kpiLoading, setKpiLoading] = useState(false);
@@ -977,9 +1004,11 @@ const BusinessCompassDailyReport: React.FC = () => {
       (p) => cleanReportText(p.text).toLowerCase() === text.toLowerCase()
     );
     if (!alreadyInPlan) {
+      const sourceId = item.originalData?.id ?? null;
+      const sourceType = item.type ?? null;
       setPlanningItems((prev) => [
         ...prev,
-        { id: `tomorrow-${item.id}-${Date.now()}`, text, starred: false },
+        { id: `tomorrow-${item.id}-${Date.now()}`, text, starred: false, source_id: sourceId, source_type: sourceType },
       ]);
       markDraftDirty();
     }
@@ -1139,6 +1168,29 @@ const BusinessCompassDailyReport: React.FC = () => {
     }
   };
 
+  const fmtDate = (d?: string) => {
+    if (!d) return null;
+    const dt = new Date(d);
+    return `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}/${dt.getFullYear()}`;
+  };
+  const fmtHours = (h?: number) => {
+    if (!h) return null;
+    if (h < 1) return `${Math.round(h * 60)}m`;
+    const wh = Math.floor(h); const m = Math.round((h - wh) * 60);
+    return m > 0 ? `${wh}h ${m}m` : `${wh}h`;
+  };
+  const getOverdueLabel = (targetDate?: string) => {
+    if (!targetDate) return null;
+    const now = new Date(); const end = new Date(targetDate); end.setHours(23, 59, 59, 999);
+    const diff = end.getTime() - now.getTime();
+    if (diff > 0) return null;
+    const abs = Math.abs(diff);
+    const d = Math.floor(abs / 86400000); const h = Math.floor((abs % 86400000) / 3600000); const m = Math.floor((abs % 3600000) / 60000);
+    if (d > 0) return `${d}d ${h}h overdue`;
+    if (h > 0) return `${h}h ${m}m overdue`;
+    return `${m}m overdue`;
+  };
+
   // Check if date is overdue
   const isDateOverdue = (dateStr: string | undefined) => {
     if (!dateStr) return false;
@@ -1200,6 +1252,57 @@ const BusinessCompassDailyReport: React.FC = () => {
         prev.map((i) =>
           i.id === item.id ? { ...i, status: item.status } : i
         )
+      );
+    }
+  };
+
+  const handleRevertToOpen = async (item: any, reason: string) => {
+    const realId = item.id.replace("task-", "").replace("issue-", "").replace("todo-", "");
+    const urlBase = `https://${baseUrl}`;
+    const isTask = item.type === "task";
+    const isTodo = item.type === "todo";
+    const userId = JSON.parse(localStorage.getItem("user") || "{}")?.id;
+
+    setMergedTasksIssues((prev) =>
+      prev.map((i) => i.id === item.id ? { ...i, status: "open" } : i)
+    );
+    setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: false }));
+
+    try {
+      if (isTask) {
+        await axios.put(`${urlBase}/task_managements/${realId}.json`,
+          { task_management: { status: "open" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (reason.trim()) {
+          await axios.post(`${urlBase}/comments.json`,
+            { comment: { body: `Reopened: ${reason}`, commentable_id: Number(realId), commentable_type: "TaskManagement", commentor_id: userId } },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
+      } else if (isTodo) {
+        await axios.put(`${urlBase}/todos/${realId}.json`,
+          { todo: { status: "open" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await axios.put(`${urlBase}/issues/${realId}.json`,
+          { issue: { status: "open" } },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (reason.trim()) {
+          await axios.post(`${urlBase}/comments.json`,
+            { comment: { body: `Reopened: ${reason}`, commentable_id: Number(realId), commentable_type: "Issue", commentor_id: userId } },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+        }
+      }
+      toast.success(`${item.type.charAt(0).toUpperCase() + item.type.slice(1)} marked as open`);
+    } catch (error) {
+      console.error("Error reverting status:", error);
+      toast.error(`Failed to revert ${item.type}`);
+      setMergedTasksIssues((prev) =>
+        prev.map((i) => i.id === item.id ? { ...i, status: item.status } : i)
       );
     }
   };
@@ -1273,6 +1376,7 @@ const BusinessCompassDailyReport: React.FC = () => {
   };
 
   const handlePlayTask = async (taskId: number) => {
+    setPlayingTaskIds((prev) => new Set(prev).add(taskId));
     try {
       await axios.put(
         `https://${baseUrl}/task_managements/${taskId}/update_status.json`,
@@ -1284,6 +1388,8 @@ const BusinessCompassDailyReport: React.FC = () => {
     } catch (error) {
       console.error("Failed to start task:", error);
       toast.error("Failed to start task");
+    } finally {
+      setPlayingTaskIds((prev) => { const next = new Set(prev); next.delete(taskId); return next; });
     }
   };
 
@@ -1512,6 +1618,7 @@ const BusinessCompassDailyReport: React.FC = () => {
               id: `fetched-plan-${idx}`,
               text: getReportItemText(p),
               starred: p.is_starred ?? false,
+              ...(p.source_id != null ? { source_id: p.source_id, source_type: p.source_type } : {}),
             }))
         );
       } else {
@@ -1687,7 +1794,18 @@ const BusinessCompassDailyReport: React.FC = () => {
             prevReport?.report_data?.tomorrow_plan
           );
           if (previousPlanItems.length) {
+            // Build set of yesterday source IDs for the tasks section
+            const srcIds = new Set<string>();
+            previousPlanItems.forEach((p: any) => {
+              if (p.source_id && p.source_type) {
+                srcIds.add(`${p.source_type}-${p.source_id}`);
+              }
+            });
+            if (srcIds.size > 0) setYesterdaySourceIds(srcIds);
+
+            // Only carry items WITHOUT a source_id into accomplishments
             carriedPlanItems = previousPlanItems
+              .filter((p: any) => !p.source_id)
               .map((p: any, idx: number) => ({
                 id: `carried-${idx}-${Date.now()}`,
                 text: getReportItemText(p),
@@ -1754,6 +1872,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       id: `fetched-plan-${idx}`,
                       text: getReportItemText(p),
                       starred: p.is_starred ?? false,
+                      ...(p.source_id != null ? { source_id: p.source_id, source_type: p.source_type } : {}),
                     }))
                 );
               }
@@ -1864,13 +1983,14 @@ const BusinessCompassDailyReport: React.FC = () => {
         })),
       ...autoAddedAccomplishments.map((item) => ({
         title: cleanReportText(item.title || ""),
-        star: false,
+        star: autoStarredIds.has(item.id),
       })),
     ].filter((a) => a.title !== "");
     const manualTomorrowPlan = planningItems
       .map((p) => ({
         title: cleanReportText(p.text),
         is_starred: p.starred,
+        ...(p.source_id != null ? { source_id: p.source_id, source_type: p.source_type } : {}),
       }))
       .filter((p) => p.title !== "");
     const uncheckedAccomplishmentPlan = visibleAccomplishments
@@ -2399,67 +2519,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                   <CardContent className="p-6 space-y-6">
                     <div className="space-y-3">
 
-                      {/* ── Auto-added from completed tasks today ── */}
-                      {autoAddedAccomplishments.length > 0 && (
-                        <div className="rounded-[12px] border border-emerald-200 bg-emerald-50/70 p-4 animate-in fade-in duration-300">
-                          <div className="flex items-center gap-2 mb-3">
-                            <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-                            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex-1">
-                              Auto-added from completed work today
-                            </span>
-                            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
-                              {autoAddedAccomplishments.length} item{autoAddedAccomplishments.length !== 1 ? "s" : ""}
-                            </span>
-                          </div>
-                          <div className="space-y-1.5">
-                            {autoAddedAccomplishments.map((item) => (
-                              <div
-                                key={item.id}
-                                className="group flex items-center gap-3 bg-white border border-emerald-100 rounded-[8px] px-3 py-2 animate-in fade-in slide-in-from-left-1 duration-200 hover:border-emerald-300 transition-all"
-                              >
-                                <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
-                                <span
-                                  className={cn(
-                                    "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase shrink-0",
-                                    item.type === "task"
-                                      ? "bg-[#DA7756]/10 text-[#9e4f36]"
-                                      : item.type === "issue"
-                                        ? "bg-violet-100 text-violet-700"
-                                        : "bg-yellow-100 text-yellow-700"
-                                  )}
-                                >
-                                  {item.type}
-                                </span>
-                                <span className="flex-1 text-sm font-medium text-gray-600 truncate line-through decoration-emerald-300">
-                                  {item.title}
-                                </span>
-                                <Badge className="bg-emerald-100 text-emerald-700 border-none text-[9px] font-black px-2 py-0.5 rounded-full shrink-0">
-                                  Done
-                                </Badge>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  title="Remove from accomplishments"
-                                  className="h-6 w-6 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full border-none opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                                  onClick={() => hideAutoAccomplishment(item.id)}
-                                >
-                                  <X size={12} />
-                                </Button>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Divider when both auto and manual entries exist */}
-                      {autoAddedAccomplishments.length > 0 && visibleAccomplishments.length > 0 && (
-                        <div className="flex items-center gap-3 py-1">
-                          <div className="flex-1 h-px bg-gray-100" />
-                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Manual Entries</span>
-                          <div className="flex-1 h-px bg-gray-100" />
-                        </div>
-                      )}
-
                       {/* ── Manual accomplishment items ── */}
                       {visibleAccomplishments.map((item) => (
                         <div
@@ -2540,6 +2599,90 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                       ))}
 
+                      {/* ── Auto-added (checkbox + star editable, title non-editable) ── */}
+                      {autoAddedAccomplishments.map((item) => (
+                        <div key={item.id} className="relative animate-in fade-in duration-300">
+                          <div className="flex flex-col gap-1 bg-[#DA7756]/10 border border-[#DA7756]/10 rounded-[10px] p-3">
+                            <div className="flex items-center gap-4">
+                              <div
+                                className="h-6 w-6 rounded-[6px] flex items-center justify-center border-2 shrink-0 bg-[#1a1a1a] border-[#1a1a1a] cursor-pointer hover:opacity-70 transition-opacity"
+                                onClick={() => { setPendingReopenItem(item); setReopenReason(""); }}
+                                title="Mark as open"
+                              >
+                                <CheckCircle2 size={14} className="text-white" />
+                              </div>
+                              <Star
+                                size={18}
+                                className={cn(
+                                  "cursor-pointer transition-all shrink-0",
+                                  autoStarredIds.has(item.id)
+                                    ? "text-[#eab308] fill-[#eab308]"
+                                    : "text-[#DA7756]/70 hover:text-[#DA7756]"
+                                )}
+                                onClick={() => {
+                                  setAutoStarredIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(item.id)) next.delete(item.id);
+                                    else next.add(item.id);
+                                    return next;
+                                  });
+                                }}
+                              />
+                              <span className={cn(
+                                "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                item.type === "task"
+                                  ? "bg-[#DA7756] text-white"
+                                  : item.type === "issue"
+                                    ? "bg-violet-600 text-white"
+                                    : "bg-amber-500 text-white"
+                              )}>
+                                {item.type}
+                              </span>
+                              <span className="flex-1 text-sm font-medium text-gray-400 line-through truncate select-none">
+                                {item.title}
+                              </span>
+                              <button
+                                onClick={() => {
+                                  if (item.type === "todo") {
+                                    setSelectedTodo(item.originalData);
+                                    setIsDetailsModalOpen(true);
+                                  } else {
+                                    navigate(
+                                      item.type === "task"
+                                        ? `/vas/tasks/${item.originalData?.id}`
+                                        : `/vas/issues/${item.originalData?.id}`
+                                    );
+                                  }
+                                }}
+                                className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                title={`View ${item.type} details`}
+                              >
+                                <Eye size={14} className="text-[#DA7756]" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (item.type === "task") {
+                                    setEditTaskData(item.originalData);
+                                    setIsEditTaskModalOpen(true);
+                                  } else if (item.type === "issue") {
+                                    setEditIssueData(item.originalData);
+                                    setIsEditIssueModalOpen(true);
+                                  } else if (item.type === "todo") {
+                                    setEditTodoData(item.originalData);
+                                    setIsEditTodoModalOpen(true);
+                                  }
+                                }}
+                                className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                title={`Edit ${item.type}`}
+                              >
+                                <Pencil size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
                       {visibleAccomplishments.length === 0 && autoAddedAccomplishments.length === 0 && (
                         <div className="flex flex-col items-center gap-4 text-center py-10 bg-gray-50/50 rounded-[14px] border-2 border-dashed border-gray-100">
                           <div className="h-16 w-16 rounded-full bg-[#ecfdf5] border-2 border-[#10b981]/20 flex items-center justify-center">
@@ -2556,7 +2699,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                       )}
 
-                      <div className="flex gap-2">
+                      {/* <div className="flex gap-2">
                         <Button
                           variant="outline"
                           className="flex-1 h-11 border-[#10b981]/30 text-[#10b981] font-bold text-sm bg-white hover:bg-[#ecfdf5] rounded-[8px] flex items-center justify-center gap-2"
@@ -2581,7 +2724,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             Transfer unchecked to tomorrow
                           </button>
                         )}
-                      </div>
+                      </div> */}
                     </div>
 
                     <div className="pt-6 border-t border-gray-50 flex items-center justify-between">
@@ -2741,30 +2884,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                             : `Total: ${taskIssueCounts.total} items`}
                         </p> */}
                         <div className="flex flex-wrap gap-2 pt-1">
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-[#DA7756]/10 px-3 py-1 text-[10px] font-bold text-[#9e4f36]"
-                          >
-                            Tasks: {taskIssueCounts.tasks}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-violet-100 px-3 py-1 text-[10px] font-bold text-violet-800"
-                          >
-                            Issues: {taskIssueCounts.issues}
-                          </Badge>
-                          <Badge
-                            variant="outline"
-                            className="border-0 bg-yellow-100 px-3 py-1 text-[10px] font-bold text-yellow-800"
-                          >
-                            Todos: {taskIssueCounts.todos}
-                          </Badge>
-                          <Badge
+                          {/* <Badge
                             variant="outline"
                             className="border-0 bg-emerald-100 px-3 py-1 text-[10px] font-bold text-emerald-800"
                           >
                             Completed: {taskIssueCounts.completed}
-                          </Badge>
+                          </Badge> */}
                           <Badge
                             variant="outline"
                             className="border-0 bg-sky-100 px-3 py-1 text-[10px] font-bold text-sky-800"
@@ -2782,6 +2907,12 @@ const BusinessCompassDailyReport: React.FC = () => {
                             className="border-0 bg-amber-100 px-3 py-1 text-[10px] font-bold text-amber-800"
                           >
                             In Progress: {taskIssueCounts.inProgress}
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-0 bg-gray-200 px-3 py-1 text-[10px] font-bold text-gray-800"
+                          >
+                            On Hold: {taskIssueCounts.onHold}
                           </Badge>
                         </div>
                       </div>
@@ -2817,19 +2948,83 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     ) : (
                       <div className="max-h-[600px] overflow-y-auto space-y-3 pr-1" ref={scrollContainerRef}>
+
+                        {/* ── From Yesterday section ── */}
+                        {yesterdaySourceIds.size > 0 && (() => {
+                          const yItems = mergedTasksIssues.filter((item: any) => yesterdaySourceIds.has(item.id));
+                          if (yItems.length === 0) return null;
+                          const isCollapsed = collapsedGroups.has("from_yesterday");
+                          return (
+                            <div key="from_yesterday">
+                              <button
+                                className="w-full flex items-center gap-2 px-3 py-2 rounded-[8px] transition-all mb-1.5 bg-amber-50 hover:bg-amber-100"
+                                onClick={() => setCollapsedGroups((prev) => { const next = new Set(prev); if (next.has("from_yesterday")) next.delete("from_yesterday"); else next.add("from_yesterday"); return next; })}
+                              >
+                                <CalendarIcon size={12} className="text-amber-700 shrink-0" />
+                                <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-amber-700">From Yesterday</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">{yItems.length}</span>
+                                <ChevronRight size={14} className={cn("transition-transform duration-200 ml-1 text-amber-700", !isCollapsed && "rotate-90")} />
+                              </button>
+                              {!isCollapsed && (
+                                <div className="space-y-1.5 pl-1">
+                                  {yItems.map((item: any) => (
+                                    <div key={item.id} className="flex items-center gap-2 p-2.5 rounded-[10px] border transition-all group bg-amber-50/60 border-amber-200">
+                                      <Checkbox
+                                        checked={selectedTasksIssues[item.id] || item.status === "completed" || item.status === "closed"}
+                                        onCheckedChange={(checked) => {
+                                          if (checked && item.status !== "completed" && item.status !== "closed") {
+                                            setPendingConfirmAction({ fn: () => handleCompleteItem(item), label: `complete this ${item.type}` });
+                                          } else {
+                                            markDraftDirty();
+                                            setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: checked as boolean }));
+                                          }
+                                        }}
+                                        className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                      />
+                                      <button
+                                        onClick={() => { if (item.type === "todo") { setSelectedTodo(item.originalData); setIsDetailsModalOpen(true); } else { navigate(item.type === "task" ? `/vas/tasks/${item.originalData?.id}` : `/vas/issues/${item.originalData?.id}`); } }}
+                                        className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                        title={`View ${item.type} details`}
+                                      >
+                                        <Eye size={14} className="text-amber-600" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => { e.stopPropagation(); if (item.type === "task") { setEditTaskData(item.originalData); setIsEditTaskModalOpen(true); } else if (item.type === "issue") { setEditIssueData(item.originalData); setIsEditIssueModalOpen(true); } else if (item.type === "todo") { setEditTodoData(item.originalData); setIsEditTodoModalOpen(true); } }}
+                                        className="p-1 text-gray-500 hover:text-amber-600 transition-colors shrink-0"
+                                        title={`Edit ${item.type}`}
+                                      >
+                                        <Pencil size={13} />
+                                      </button>
+                                      <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0", item.type === "task" ? "bg-[#DA7756] text-white" : item.type === "issue" ? "bg-violet-600 text-white" : "bg-amber-500 text-white")}>
+                                        {item.type}
+                                      </span>
+                                      <div className="flex-1 min-w-0">
+                                        <p className={cn("text-sm font-medium truncate", (item.status === "completed" || item.status === "closed") && "line-through opacity-60")}>{item.title}</p>
+                                      </div>
+                                      <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0" style={{ backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7", color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534" }}>
+                                        {item.priority}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
                         {(
                           [
-                            {
-                              key: "completed_today",
-                              label: "Completed Today",
-                              statuses: ["completed", "closed", "done"],
-                              colorClass: "text-emerald-700",
-                              bgItem: "bg-emerald-50/60 border-emerald-200",
-                              headerBg: "bg-emerald-50 hover:bg-emerald-100",
-                              pillBg: "bg-emerald-100 text-emerald-700",
-                              showAddToTomorrow: false,
-                              showBulkAdd: false,
-                            },
+                            // {
+                            //   key: "completed_today",
+                            //   label: "Completed Today",
+                            //   statuses: ["completed", "closed", "done"],
+                            //   colorClass: "text-emerald-700",
+                            //   bgItem: "bg-emerald-50/60 border-emerald-200",
+                            //   headerBg: "bg-emerald-50 hover:bg-emerald-100",
+                            //   pillBg: "bg-emerald-100 text-emerald-700",
+                            //   showAddToTomorrow: false,
+                            //   showBulkAdd: false,
+                            // },
                             {
                               key: "overdue",
                               label: "Overdue",
@@ -2854,7 +3049,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             },
                             {
                               key: "pending",
-                              label: "Pending",
+                              label: "Open",
                               statuses: ["open", "pending"],
                               colorClass: "text-slate-600",
                               bgItem: "bg-slate-50/60 border-slate-200",
@@ -2888,7 +3083,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                           ] as const
                         ).map((group) => {
                           const items = mergedTasksIssues.filter((item: any) =>
-                            (group.statuses as readonly string[]).includes(item.status)
+                            (group.statuses as readonly string[]).includes(item.status) &&
+                            !yesterdaySourceIds.has(item.id)
                           );
                           if (items.length === 0) return null;
                           const isCollapsed = collapsedGroups.has(group.key);
@@ -2944,161 +3140,255 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     <div
                                       key={item.id}
                                       className={cn(
-                                        "flex items-center gap-2 p-2.5 rounded-[10px] border transition-all group",
+                                        "flex flex-col rounded-[10px] border transition-all group",
                                         group.bgItem
                                       )}
                                     >
-                                      <Checkbox
-                                        checked={
-                                          selectedTasksIssues[item.id] ||
-                                          item.status === "completed" ||
-                                          item.status === "closed"
-                                        }
-                                        onCheckedChange={(checked) => {
-                                          if (checked && item.status !== "completed" && item.status !== "closed") {
-                                            handleCompleteItem(item);
-                                          } else {
-                                            markDraftDirty();
-                                            setSelectedTasksIssues((prev) => ({
-                                              ...prev,
-                                              [item.id]: checked as boolean,
-                                            }));
+                                      <div className="flex items-center gap-2 p-2.5">
+                                        <Checkbox
+                                          checked={
+                                            selectedTasksIssues[item.id] ||
+                                            item.status === "completed" ||
+                                            item.status === "closed"
                                           }
-                                        }}
-                                        className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
-                                      />
+                                          onCheckedChange={(checked) => {
+                                            if (checked && item.status !== "completed" && item.status !== "closed") {
+                                              setPendingConfirmAction({
+                                                fn: () => handleCompleteItem(item),
+                                                label: `complete this ${item.type}`,
+                                              });
+                                            } else {
+                                              markDraftDirty();
+                                              setSelectedTasksIssues((prev) => ({
+                                                ...prev,
+                                                [item.id]: checked as boolean,
+                                              }));
+                                            }
+                                          }}
+                                          className="h-4 w-4 rounded-[4px] border-gray-300 data-[state=checked]:bg-[#1a1a1a] data-[state=checked]:border-[#1a1a1a] shrink-0"
+                                        />
 
-                                      <button
-                                        onClick={() => {
-                                          if (item.type === "todo") {
-                                            setSelectedTodo(item.originalData);
-                                            setIsDetailsModalOpen(true);
-                                          } else {
-                                            navigate(
-                                              item.type === "task"
-                                                ? `/vas/tasks/${item.originalData?.id}`
-                                                : `/vas/issues/${item.originalData?.id}`
-                                            );
-                                          }
-                                        }}
-                                        className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                        title={`View ${item.type} details`}
-                                      >
-                                        <Eye size={14} className="text-[#DA7756]" />
-                                      </button>
-
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          if (item.type === "task") {
-                                            setEditTaskData(item.originalData);
-                                            setIsEditTaskModalOpen(true);
-                                          } else if (item.type === "issue") {
-                                            setEditIssueData(item.originalData);
-                                            setIsEditIssueModalOpen(true);
-                                          } else if (item.type === "todo") {
-                                            setEditTodoData(item.originalData);
-                                            setIsEditTodoModalOpen(true);
-                                          }
-                                        }}
-                                        className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
-                                        title={`Edit ${item.type}`}
-                                      >
-                                        <Pencil size={13} />
-                                      </button>
-
-                                      {/* Play/Pause for tasks */}
-                                      {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
-                                        item.originalData?.is_started ? (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setPauseTaskId(item.originalData.id); setIsPauseModalOpen(true); }}
-                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                            title="Pause task"
-                                          >
-                                            <Pause size={14} className="text-orange-500" />
-                                          </button>
-                                        ) : (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); handlePlayTask(item.originalData.id); }}
-                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                            title="Start task"
-                                          >
-                                            <Play size={14} className="text-green-500" />
-                                          </button>
-                                        )
-                                      )}
-
-                                      {/* Play/Pause for todos linked to tasks */}
-                                      {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
-                                        item.originalData?.task_management?.is_started ? (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); setPauseTaskId(item.originalData.task_management_id); setIsPauseModalOpen(true); }}
-                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                            title="Pause task"
-                                          >
-                                            <Pause size={14} className="text-orange-500" />
-                                          </button>
-                                        ) : (
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); handlePlayTask(item.originalData.task_management_id); }}
-                                            className="p-1 hover:bg-white/60 rounded transition shrink-0"
-                                            title="Start task"
-                                          >
-                                            <Play size={14} className="text-green-500" />
-                                          </button>
-                                        )
-                                      )}
-
-                                      {/* Type badge */}
-                                      <span className={cn(
-                                        "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                        item.type === "task" ? "bg-[#DA7756] text-white" :
-                                          item.type === "issue" ? "bg-violet-600 text-white" :
-                                            "bg-amber-500 text-white"
-                                      )}>
-                                        {item.type}
-                                      </span>
-
-                                      {/* Title + status */}
-                                      <div className="flex-1 min-w-0">
-                                        <p className={cn(
-                                          "text-sm font-medium truncate",
-                                          (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
-                                        )}>
-                                          {item.title}
-                                        </p>
-                                      </div>
-
-                                      {/* Priority badge */}
-                                      <span
-                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                        style={{
-                                          backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                          color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                        }}
-                                      >
-                                        {item.priority}
-                                      </span>
-
-                                      {/* Add to Tomorrow button */}
-                                      {group.showAddToTomorrow && (
                                         <button
-                                          onClick={() =>
-                                            addedToTomorrowIds.has(item.id)
-                                              ? removeItemFromTomorrow(item)
-                                              : addItemToTomorrow(item)
-                                          }
-                                          className={cn(
-                                            "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
-                                            addedToTomorrowIds.has(item.id)
-                                              ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
-                                              : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
-                                          )}
-                                          title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
+                                          onClick={() => {
+                                            if (item.type === "todo") {
+                                              setSelectedTodo(item.originalData);
+                                              setIsDetailsModalOpen(true);
+                                            } else {
+                                              navigate(
+                                                item.type === "task"
+                                                  ? `/vas/tasks/${item.originalData?.id}`
+                                                  : `/vas/issues/${item.originalData?.id}`
+                                              );
+                                            }
+                                          }}
+                                          className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                          title={`View ${item.type} details`}
                                         >
-                                          {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
+                                          <Eye size={14} className="text-[#DA7756]" />
                                         </button>
-                                      )}
+
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (item.type === "task") {
+                                              setEditTaskData(item.originalData);
+                                              setIsEditTaskModalOpen(true);
+                                            } else if (item.type === "issue") {
+                                              setEditIssueData(item.originalData);
+                                              setIsEditIssueModalOpen(true);
+                                            } else if (item.type === "todo") {
+                                              setEditTodoData(item.originalData);
+                                              setIsEditTodoModalOpen(true);
+                                            }
+                                          }}
+                                          className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                          title={`Edit ${item.type}`}
+                                        >
+                                          <Pencil size={13} />
+                                        </button>
+
+                                        {/* Play/Pause for tasks */}
+                                        {item.type === "task" && item.status !== "completed" && item.status !== "closed" && (
+                                          item.originalData?.is_started ? (
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.id); }}
+                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                              title="Pause task"
+                                              disabled={playingTaskIds.has(item.originalData.id)}
+                                            >
+                                              <Pause size={14} className="text-orange-500" />
+                                            </button>
+                                          ) : (
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.id); }}
+                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                              title="Start task"
+                                              disabled={playingTaskIds.has(item.originalData.id)}
+                                            >
+                                              {playingTaskIds.has(item.originalData.id)
+                                                ? <Loader2 size={14} className="text-green-500 animate-spin" />
+                                                : <Play size={14} className="text-green-500" />}
+                                            </button>
+                                          )
+                                        )}
+
+                                        {/* Play/Pause for todos linked to tasks */}
+                                        {item.type === "todo" && item.originalData?.task_management_id && item.status !== "completed" && item.status !== "closed" && (
+                                          item.originalData?.task_management?.is_started ? (
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setPendingPauseTaskId(item.originalData.task_management_id); }}
+                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                              title="Pause task"
+                                              disabled={playingTaskIds.has(item.originalData.task_management_id)}
+                                            >
+                                              <Pause size={14} className="text-orange-500" />
+                                            </button>
+                                          ) : (
+                                            <button
+                                              onClick={(e) => { e.stopPropagation(); setPendingPlayTaskId(item.originalData.task_management_id); }}
+                                              className="p-1 hover:bg-white/60 rounded transition shrink-0"
+                                              title="Start task"
+                                              disabled={playingTaskIds.has(item.originalData.task_management_id)}
+                                            >
+                                              {playingTaskIds.has(item.originalData.task_management_id)
+                                                ? <Loader2 size={14} className="text-green-500 animate-spin" />
+                                                : <Play size={14} className="text-green-500" />}
+                                            </button>
+                                          )
+                                        )}
+
+                                        {/* Type badge */}
+                                        <span className={cn(
+                                          "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                          item.type === "task" ? "bg-[#DA7756] text-white" :
+                                            item.type === "issue" ? "bg-violet-600 text-white" :
+                                              "bg-amber-500 text-white"
+                                        )}>
+                                          {item.type}
+                                        </span>
+
+                                        {/* Title + status */}
+                                        <div className="flex-1 min-w-0">
+                                          <p className={cn(
+                                            "text-sm font-medium truncate",
+                                            (item.status === "completed" || item.status === "closed") && "line-through opacity-60"
+                                          )}>
+                                            {item.title}
+                                          </p>
+                                        </div>
+
+                                        {/* Priority badge */}
+                                        <span
+                                          className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                          style={{
+                                            backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                            color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                          }}
+                                        >
+                                          {item.priority}
+                                        </span>
+
+                                        {/* Add to Tomorrow button */}
+                                        {group.showAddToTomorrow && (
+                                          <button
+                                            onClick={() =>
+                                              addedToTomorrowIds.has(item.id)
+                                                ? removeItemFromTomorrow(item)
+                                                : addItemToTomorrow(item)
+                                            }
+                                            className={cn(
+                                              "shrink-0 text-[10px] font-bold px-2.5 py-1.5 rounded-[6px] transition-all border whitespace-nowrap",
+                                              addedToTomorrowIds.has(item.id)
+                                                ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                                                : "bg-white border-gray-200 text-gray-500 hover:border-[#DA7756] hover:text-[#DA7756] hover:bg-[#DA7756]/5 opacity-0 group-hover:opacity-100"
+                                            )}
+                                            title={addedToTomorrowIds.has(item.id) ? "Remove from tomorrow's plan" : "Add to tomorrow's plan"}
+                                          >
+                                            {addedToTomorrowIds.has(item.id) ? "Added ✓" : "+ Tomorrow"}
+                                          </button>
+                                        )}
+                                      </div>{/* end inner controls row */}
+
+                                      {/* Info row */}
+                                      {(() => {
+                                        const d = item.originalData;
+                                        const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                        const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                        const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+
+                                        // Issue: effort duration from issue_allocation_times
+                                        let issueEffort: string | null = null;
+                                        if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                          const totalMin = d.issue_allocation_times.reduce(
+                                            (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                          );
+                                          if (totalMin > 0) {
+                                            const h = Math.floor(totalMin / 60);
+                                            const m = totalMin % 60;
+                                            issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                          }
+                                        }
+
+                                        // Issue: time left (when not overdue) from end_date
+                                        let timeLeftLabel: string | null = null;
+                                        if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                          const now = new Date();
+                                          const end = new Date(d.end_date);
+                                          end.setHours(23, 59, 59, 999);
+                                          const diff = end.getTime() - now.getTime();
+                                          if (diff > 0) {
+                                            const days = Math.floor(diff / 86400000);
+                                            const hrs = Math.floor((diff % 86400000) / 3600000);
+                                            const mins = Math.floor((diff % 3600000) / 60000);
+                                            if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                            else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                            else timeLeftLabel = `${mins}m left`;
+                                          }
+                                        }
+
+                                        const hasInfo = endDate || effortEst || issueEffort || timeLeftLabel || (item.type === "task" && d?.active_time_till_now);
+                                        if (!hasInfo) return null;
+                                        return (
+                                          <div className="flex items-center gap-3 px-3 pb-2 flex-wrap">
+                                            {endDate && (
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                <CalendarIcon size={9} className="shrink-0" />
+                                                {endDate}
+                                              </span>
+                                            )}
+                                            {overdueLabel && (
+                                              <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                                <AlertCircle size={9} className="shrink-0" />
+                                                {overdueLabel}
+                                              </span>
+                                            )}
+                                            {timeLeftLabel && (
+                                              <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                                <Clock size={9} className="shrink-0" />
+                                                {timeLeftLabel}
+                                              </span>
+                                            )}
+                                            {effortEst && (
+                                              <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                                <Clock size={9} className="shrink-0" />
+                                                Est: {effortEst}
+                                              </span>
+                                            )}
+                                            {issueEffort && (
+                                              <span className="flex items-center gap-1 text-[10px] text-purple-600">
+                                                <Zap size={9} className="shrink-0" />
+                                                Effort: {issueEffort}
+                                              </span>
+                                            )}
+                                            {item.type === "task" && d?.active_time_till_now && (
+                                              <span className="flex items-center gap-1 text-[10px] text-green-600">
+                                                <Zap size={9} className="shrink-0" />
+                                                <ActiveTimer activeTimeTillNow={d.active_time_till_now} isStarted={d.is_started} />
+                                              </span>
+                                            )}
+                                          </div>
+                                        );
+                                      })()}
                                     </div>
                                   ))}
                                 </div>
@@ -3140,9 +3430,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                         Plan for {nextDayLabel || "Tomorrow"}
                       </h3>
                     </div>
-                    <Badge className={badgePoints}>
-                      {dailyScore.planningScore}/20 PTS
-                    </Badge>
+                    <div className="flex items-center gap-4">
+                      <Badge className={badgePoints}>
+                        {dailyScore.planningScore}/20 PTS
+                      </Badge>
+                      <Button
+                        className="rounded-[8px] shadow-md font-semibold text-sm px-4"
+                        onClick={(e) => setPlanningMenuAnchor(e.currentTarget)}
+                        title="Add Task, Issue, or Todo for next day"
+                      >
+                        <Plus size={14} /> Add
+                      </Button>
+                    </div>
                   </div>
 
                   <CardContent className="p-6">
@@ -3169,6 +3468,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   )}
                                   onClick={() => togglePlanningStar(item.id)}
                                 />
+                                {item.source_type && (
+                                  <span className={cn(
+                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                    item.source_type === "task"
+                                      ? "bg-[#DA7756] text-white"
+                                      : item.source_type === "issue"
+                                        ? "bg-violet-600 text-white"
+                                        : "bg-amber-500 text-white"
+                                  )}>
+                                    {item.source_type}
+                                  </span>
+                                )}
                                 <input
                                   type="text"
                                   value={item.text}
@@ -3192,7 +3503,52 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     )}
 
-                    {planningItems.length === 0 && (
+                    {/* ── Next-day scheduled items — disabled, not included in payload ── */}
+                    {(tomorrowScheduledLoading || (tomorrowFetchDone && dedupedTomorrowItems.length > 0)) && (
+                      <div className="mb-4">
+                        {/* {planningItems.length > 0 && (
+                          <div className="flex items-center gap-3 py-2 mb-3">
+                            <div className="flex-1 h-px bg-gray-100" />
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Next Day</span>
+                            <div className="flex-1 h-px bg-gray-100" />
+                          </div>
+                        )} */}
+                        {tomorrowScheduledLoading ? (
+                          <div className="flex items-center gap-2 py-3 text-gray-300">
+                            <Loader2 size={13} className="animate-spin shrink-0" />
+                            <span className="text-xs font-medium">Fetching upcoming assignments…</span>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {dedupedTomorrowItems.map((item) => (
+                              <div
+                                key={item.id}
+                                className="relative animate-in fade-in slide-in-from-top-1 duration-200"
+                              >
+                                <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-[10px] p-3 cursor-not-allowed select-none">
+                                  <Star size={18} className="text-gray-300 shrink-0" />
+                                  <span className={cn(
+                                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                    item.type === "task"
+                                      ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                      : item.type === "issue"
+                                        ? "bg-violet-100 text-violet-700"
+                                        : "bg-yellow-100 text-yellow-700"
+                                  )}>
+                                    {item.type}
+                                  </span>
+                                  <span className="flex-1 text-sm font-medium text-gray-500 truncate">
+                                    {item.title}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {planningItems.length === 0 && !tomorrowScheduledLoading && dedupedTomorrowItems.length === 0 && (
                       <div className="flex flex-col items-center gap-4 text-center mb-8">
                         <div className="flex flex-col items-center gap-3 opacity-30">
                           <Calendar
@@ -3207,93 +3563,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                           List 3-5 key tasks for {nextDayLabel || "tomorrow"}{" "}
                           to stay focused.
                         </p>
-                      </div>
-                    )}
-
-                    <div className="flex gap-2 mt-4">
-                      <Button
-                        className="rounded-[8px] shadow-md font-semibold text-sm flex-1"
-                        onClick={addPlanningItem}
-                      >
-                        <Plus size={14} />
-                        Add Item
-                      </Button>
-                      <Button
-                        className="rounded-[8px] shadow-md font-semibold text-sm px-4"
-                        onClick={(e) => setPlanningMenuAnchor(e.currentTarget)}
-                        title="Add Task, Issue, or Todo for next day"
-                      >
-                        <Plus size={14} />
-                      </Button>
-                    </div>
-
-                    {/* ── Scheduled for Tomorrow — read-only reference ── */}
-                    {(tomorrowScheduledLoading || tomorrowFetchDone) && (
-                      <div className="mt-6 pt-5 border-t border-indigo-100">
-                        <div className="flex items-center gap-2 mb-3">
-                          <CalendarIcon size={14} className="text-indigo-400 shrink-0" />
-                          <span className="text-xs font-bold text-indigo-700 uppercase tracking-wider flex-1">
-                            Scheduled for Tomorrow
-                          </span>
-                          {/* <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full whitespace-nowrap">
-                            Auto-fetched · read-only
-                          </span> */}
-                        </div>
-
-                        {tomorrowScheduledLoading ? (
-                          <div className="flex items-center gap-2 py-3 text-indigo-300">
-                            <Loader2 size={13} className="animate-spin shrink-0" />
-                            <span className="text-xs font-medium">Fetching upcoming assignments…</span>
-                          </div>
-                        ) : (() => {
-                          const manualTitles = new Set(
-                            planningItems.map((p) => cleanReportText(p.text).toLowerCase())
-                          );
-                          const dedupedTomorrow = tomorrowScheduledItems.filter(
-                            (item) => !manualTitles.has(cleanReportText(item.title).toLowerCase())
-                          );
-                          if (dedupedTomorrow.length === 0) {
-                            return (
-                              <div className="flex items-center gap-2 py-3 text-indigo-300">
-                                <CalendarIcon size={13} className="shrink-0" />
-                                <span className="text-xs font-medium">No tasks, issues or todos scheduled for tomorrow.</span>
-                              </div>
-                            );
-                          }
-                          return (
-                            <div className="space-y-1.5">
-                              {dedupedTomorrow.map((item) => (
-                                <div
-                                  key={item.id}
-                                  className="flex items-center gap-2.5 bg-indigo-50/50 border border-indigo-100 rounded-[8px] px-3 py-2 select-none"
-                                >
-                                  <CalendarIcon size={12} className="text-indigo-300 shrink-0" />
-                                  <span
-                                    className={cn(
-                                      "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                      item.type === "task"
-                                        ? "bg-[#DA7756]/10 text-[#9e4f36]"
-                                        : item.type === "issue"
-                                          ? "bg-violet-100 text-violet-700"
-                                          : "bg-yellow-100 text-yellow-700"
-                                    )}
-                                  >
-                                    {item.type}
-                                  </span>
-                                  <span className="flex-1 text-sm font-medium text-indigo-800 truncate">
-                                    {item.title}
-                                  </span>
-                                  <span className="text-[9px] font-bold text-indigo-300 bg-indigo-100 px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                                    not submitted
-                                  </span>
-                                </div>
-                              ))}
-                              <p className="text-[10px] text-indigo-300 font-medium pt-1 pl-0.5">
-                                These items are for reference only and will not be included in your report.
-                              </p>
-                            </div>
-                          );
-                        })()}
                       </div>
                     )}
                   </CardContent>
@@ -5293,6 +5562,116 @@ const BusinessCompassDailyReport: React.FC = () => {
         prefillData={editTodoData || {}}
       />
 
+      {/* Reopen Reason Modal */}
+      {pendingReopenItem && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-[32rem] border border-gray-200">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-1 h-8 bg-[#C72030] rounded-sm"></div>
+              <h2 className="text-lg font-bold text-gray-900 capitalize">Reopen {pendingReopenItem.type}</h2>
+            </div>
+            <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+              Please provide a reason for reopening this {pendingReopenItem.type}. This will help track the reopen history.
+            </p>
+            <div className="mb-6">
+              <label className="block text-xs font-semibold text-gray-700 mb-2 uppercase tracking-wide">Reason</label>
+              <textarea
+                value={reopenReason}
+                onChange={(e) => setReopenReason(e.target.value)}
+                placeholder={`Enter reason for reopening this ${pendingReopenItem.type}...`}
+                className="w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C72030] focus:ring-2 focus:ring-[#C72030] focus:ring-opacity-20 resize-none text-sm bg-white"
+                rows={4}
+                disabled={isReopenLoading}
+              />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => { setPendingReopenItem(null); setReopenReason(""); }}
+                disabled={isReopenLoading}
+                className="px-5 py-2.5 border border-gray-300 rounded-md text-gray-700 font-medium hover:bg-gray-50 disabled:opacity-50 transition-colors text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={!reopenReason.trim() || isReopenLoading}
+                onClick={async () => {
+                  setIsReopenLoading(true);
+                  await handleRevertToOpen(pendingReopenItem, reopenReason);
+                  setIsReopenLoading(false);
+                  setPendingReopenItem(null);
+                  setReopenReason("");
+                }}
+                className="px-5 py-2.5 bg-[#C72030] text-white font-medium rounded-md hover:bg-[#b01c26] disabled:opacity-50 transition-colors text-sm"
+              >
+                {isReopenLoading ? "Processing..." : "Reopen"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Start Task Confirmation */}
+      {pendingPlayTaskId !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                <Play size={18} className="text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
+                <p className="text-xs text-gray-500 mt-0.5">This will start the task.</p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setPendingPlayTaskId(null)}
+                className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { const id = pendingPlayTaskId; setPendingPlayTaskId(null); handlePlayTask(id); }}
+                className="px-4 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+              >
+                Start
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pause Task Confirmation */}
+      {pendingPauseTaskId !== null && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center shrink-0">
+                <Pause size={18} className="text-orange-500" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
+                <p className="text-xs text-gray-500 mt-0.5">This will pause the task.</p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setPendingPauseTaskId(null)}
+                className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { const id = pendingPauseTaskId; setPendingPauseTaskId(null); setPauseTaskId(id); setIsPauseModalOpen(true); }}
+                className="px-4 py-1.5 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors"
+              >
+                Pause
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pause Reason Modal */}
       <PauseReasonModal
         isOpen={isPauseModalOpen}
@@ -5304,6 +5683,42 @@ const BusinessCompassDailyReport: React.FC = () => {
         isLoading={isPauseLoading}
         taskId={pauseTaskId}
       />
+
+      {/* Confirm Action Modal */}
+      {pendingConfirmAction && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                <AlertCircle size={20} className="text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
+                <p className="text-xs text-gray-500 mt-0.5 capitalize">
+                  This will {pendingConfirmAction.label}.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => setPendingConfirmAction(null)}
+                className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  pendingConfirmAction.fn();
+                  setPendingConfirmAction(null);
+                }}
+                className="px-4 py-1.5 text-sm font-medium text-white bg-[#1a1a1a] hover:bg-[#333] rounded-lg transition-colors"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

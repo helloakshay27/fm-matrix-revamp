@@ -11,6 +11,7 @@ import {
     ArrowUpDown,
     Star,
     Loader2,
+    X,
 } from 'lucide-react';
 import {
     Select,
@@ -116,6 +117,190 @@ const STATUS_STYLE: Record<string, string> = {
     missed:    'bg-red-100 text-red-700 border-red-200',
 };
 
+const getBaseUrl = () => {
+    const rawBase = localStorage.getItem('baseUrl') || '';
+    if (!rawBase) return '';
+    return rawBase.startsWith('http://') || rawBase.startsWith('https://') ? rawBase.replace(/\/$/, '') : `https://${rawBase.replace(/\/$/, '')}`;
+};
+
+const isSubmittedReport = (entry: { status?: string; journal_id?: number | null }) =>
+    entry.status === 'submitted' && !!entry.journal_id;
+
+const formatReportValue = (value: any): string => {
+    if (typeof value === 'string') return value;
+    if (value && typeof value === 'object') return value.title || value.text || value.name || JSON.stringify(value);
+    return String(value ?? '-');
+};
+
+const renderDetailReviewValue = (value: any) => {
+    if (Array.isArray(value)) {
+        if (value.length === 0) return '-';
+        return value.map(formatReportValue).join(', ');
+    }
+    if (value && typeof value === 'object') return JSON.stringify(value);
+    return String(value ?? '-');
+};
+
+const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClose: () => void }) => {
+    const [details, setDetails] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (!entry.journal_id) return;
+
+        const fetchDetails = async () => {
+            setLoading(true);
+            try {
+                const res = await axios.get(`${getBaseUrl()}/user_journals/${entry.journal_id}.json`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                setDetails(res.data?.data ?? res.data ?? null);
+            } catch (err) {
+                console.error('Failed to load weekly report details', err);
+                toast.error('Failed to load report details');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDetails();
+    }, [entry.journal_id]);
+
+    const reportData = details?.report_data || details?.weekly_report?.report_data || details?.journal?.report_data || {};
+    const achievements = Array.isArray(reportData.achievements) ? reportData.achievements : [];
+    const plans = reportData.upcoming_week_plan || reportData.tasks || [];
+    const remarks = Array.isArray(reportData.remarks) ? reportData.remarks : [];
+    const detailedReviews = Array.isArray(reportData.detailed_reviews) ? reportData.detailed_reviews : [];
+    const kpiSummary = reportData.kpi_summary && typeof reportData.kpi_summary === 'object' ? reportData.kpi_summary : {};
+
+    return (
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-black/40 px-4 pb-6 pt-20 sm:pt-8">
+            <div className="w-full max-w-3xl max-h-[calc(100vh-7rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+                    <div>
+                        <h3 className="text-base font-bold text-gray-900">{entry.name}</h3>
+                        <p className="text-xs text-gray-500">{entry.email}</p>
+                    </div>
+                    <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100">
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+
+                <div className="max-h-[calc(100vh-12rem)] sm:max-h-[calc(100vh-9rem)] overflow-y-auto p-5 space-y-4">
+                    {loading ? (
+                        <div className="py-12 text-center text-sm text-gray-500">
+                            <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin text-[#DA7756]" />
+                            Loading report...
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                    <p className="text-[11px] font-bold text-gray-400">Score</p>
+                                    <p className="text-sm font-bold text-gray-800">{reportData.total_score ?? entry.score ?? '-'}</p>
+                                </div>
+                                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                    <p className="text-[11px] font-bold text-gray-400">Department</p>
+                                    <p className="text-sm font-bold text-gray-800">{entry.department || 'No Dept.'}</p>
+                                </div>
+                                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                    <p className="text-[11px] font-bold text-gray-400">Submitted</p>
+                                    <p className="text-sm font-bold text-gray-800">{entry.submitted_at ? new Date(entry.submitted_at).toLocaleString() : '-'}</p>
+                                </div>
+                            </div>
+
+                            <section className="rounded-xl border border-gray-100 p-4">
+                                <h4 className="mb-3 text-sm font-bold text-gray-800">Meeting Summary</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                                    <div><span className="font-bold text-gray-500">Total:</span> {reportData.total_members ?? '-'}</div>
+                                    <div><span className="font-bold text-gray-500">Submitted:</span> {reportData.total_submitted ?? '-'}</div>
+                                    <div><span className="font-bold text-gray-500">Missed:</span> {reportData.total_missed ?? '-'}</div>
+                                </div>
+                            </section>
+
+                            <section className="rounded-xl border border-indigo-100 p-4">
+                                <h4 className="mb-3 text-sm font-bold text-indigo-700">KPI Summary</h4>
+                                {Object.keys(kpiSummary).length > 0 ? (
+                                    <div className="space-y-2 text-sm text-gray-700">
+                                        {Object.entries(kpiSummary).map(([name, data]: [string, any]) => (
+                                            <div key={name} className="rounded-lg bg-gray-50 p-3">
+                                                <p className="font-bold break-words">{name}</p>
+                                                <p className="text-xs text-gray-500">Achieved: {data?.achieved ?? 0}/{data?.total ?? 0}</p>
+                                                {Array.isArray(data?.names) && <p className="text-xs text-gray-500 break-words">Members: {data.names.join(', ')}</p>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : <p className="text-sm text-gray-400">No KPI summary recorded</p>}
+                            </section>
+
+                            <section className="rounded-xl border border-purple-100 p-4">
+                                <h4 className="mb-3 text-sm font-bold text-purple-700">Detailed Reviews</h4>
+                                {detailedReviews.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {detailedReviews.map((review: any, idx: number) => (
+                                            <div key={idx} className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                                                <p className="font-bold text-gray-900 break-words">{review.name || `Member ${idx + 1}`}</p>
+                                                {Object.entries(review).filter(([key]) => key !== 'name').map(([key, value]) => (
+                                                    <p key={key} className="break-words">
+                                                        <span className="font-bold capitalize text-gray-500">{key.replace(/_/g, ' ')}:</span> {renderDetailReviewValue(value)}
+                                                    </p>
+                                                ))}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : <p className="text-sm text-gray-400">No detailed reviews recorded</p>}
+                            </section>
+
+                            <section className="rounded-xl border border-green-100 p-4">
+                                <h4 className="mb-3 text-sm font-bold text-green-700">Top Wins</h4>
+                                {achievements.length > 0 ? (
+                                    <ul className="space-y-2 text-sm text-gray-700">
+                                        {achievements.map((item: any, idx: number) => <li key={idx} className="break-words">• {formatReportValue(item)}</li>)}
+                                    </ul>
+                                ) : <p className="text-sm text-gray-400">No achievements recorded</p>}
+                            </section>
+
+                            <section className="rounded-xl border border-blue-100 p-4">
+                                <h4 className="mb-3 text-sm font-bold text-blue-700">Next Week Plan</h4>
+                                {Array.isArray(plans) && plans.length > 0 ? (
+                                    <div className="space-y-2 text-sm text-gray-700">
+                                        {plans.map((plan: any, idx: number) => (
+                                            <div key={idx}>
+                                                {plan && typeof plan === 'object' && !Array.isArray(plan)
+                                                    ? Object.entries(plan).map(([day, items]: [string, any]) => (
+                                                        <div key={day} className="mb-2">
+                                                            <p className="font-bold uppercase text-gray-500">{day}</p>
+                                                            {(Array.isArray(items) ? items : []).map((item, itemIdx) => (
+                                                                <p key={itemIdx} className="break-words">• {formatReportValue(item)}</p>
+                                                            ))}
+                                                        </div>
+                                                    ))
+                                                    : <p className="break-words">• {formatReportValue(plan)}</p>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : <p className="text-sm text-gray-400">No plan recorded</p>}
+                            </section>
+
+                            <section className="rounded-xl border border-orange-100 p-4">
+                                <h4 className="mb-3 text-sm font-bold text-orange-700">Remarks</h4>
+                                {remarks.length > 0 ? (
+                                    <ul className="space-y-2 text-sm text-gray-700">
+                                        {remarks.map((item: any, idx: number) => <li key={idx} className="break-words">• {formatReportValue(item)}</li>)}
+                                    </ul>
+                                ) : <p className="text-sm text-gray-400">No remarks recorded</p>}
+                            </section>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // ── Component ──────────────────────────────────────────────────────────────────
 interface WeeklyLogProps {
     initialWeekDate?: Date;
@@ -140,6 +325,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
     const [departments, setDepartments]   = useState<Department[]>([]);
     const [meetings, setMeetings]         = useState<MeetingConfig[]>([]);
     const [loading, setLoading]           = useState(false);
+    const [selectedReport, setSelectedReport] = useState<WeeklyLogReport | null>(null);
 
     useEffect(() => {
         if (!initialWeekDate) return;
@@ -158,7 +344,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
         Authorization: `Bearer ${localStorage.getItem('token')}`,
         'Content-Type': 'application/json',
     });
-    const baseUrl = () => `https://${localStorage.getItem('baseUrl')}`;
+    const baseUrl = getBaseUrl;
 
     // Fetch departments on mount
     useEffect(() => {
@@ -190,6 +376,12 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                     list = [raw.data];
                 }
                 setMeetings(list);
+                if (list.length > 0) {
+                    const defaultMeeting = list.find((meeting: any) => meeting.is_default && meeting.active !== false);
+                    const firstActiveMeeting = list.find((meeting: any) => meeting.active !== false);
+                    const nextMeeting = defaultMeeting || firstActiveMeeting || list[0];
+                    setMeetingId((current) => current === 'all' ? String(nextMeeting.id) : current);
+                }
             } catch (err) {
                 console.error('Failed to load meetings', err);
             }
@@ -225,7 +417,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
     const reports = logData?.reports ?? [];
 
     return (
-        <div className="mt-6 space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#fffaf8] p-6 shadow-sm">
+        <div className="mt-6 space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#fffaf8] p-4 sm:p-6 shadow-sm max-w-full overflow-x-hidden">
 
             {/* ── Header + Filter bar ── */}
             <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -342,13 +534,13 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
             )}
 
             {/* ── Table ── */}
-            <div className="overflow-hidden rounded-2xl border border-[#DA7756]/18 shadow-sm bg-white">
-                <Table>
+            <div className="max-w-full overflow-x-hidden rounded-2xl border border-[#DA7756]/18 shadow-sm bg-white">
+                <Table className="w-full table-fixed">
                     <TableHeader className="bg-[#fef6f4]">
                         <TableRow className="hover:bg-transparent border-none h-12">
                             {['Week Of', 'User', 'Score', 'Department', 'Rating', 'Status', 'Submitted At'].map(col => (
                                 <TableHead key={col} className="text-[13px] font-bold text-neutral-500">
-                                    <div className="flex items-center gap-1.5 cursor-pointer hover:text-neutral-900 transition-colors">
+                                    <div className="flex items-center gap-1.5 cursor-pointer hover:text-neutral-900 transition-colors min-w-0">
                                         {col} <ArrowUpDown className="w-3.5 h-3.5" />
                                     </div>
                                 </TableHead>
@@ -383,13 +575,13 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                                 return (
                                     <TableRow key={`${entry.user_id}-${idx}`} className="h-16 border-[#f3e6df] hover:bg-[#fef6f4]/50">
                                         {/* Week Of */}
-                                        <TableCell className="text-sm font-bold text-gray-900">{entry.week_of}</TableCell>
+                                        <TableCell className="text-sm font-bold text-gray-900 break-words">{entry.week_of}</TableCell>
 
                                         {/* User */}
                                         <TableCell>
                                             <div className="space-y-0.5">
-                                                <div className="text-sm font-bold text-gray-900">{entry.name}</div>
-                                                <div className="text-[11px] font-medium text-neutral-400">{entry.email}</div>
+                                                <div className="text-sm font-bold text-gray-900 break-words">{entry.name}</div>
+                                                <div className="text-[11px] font-medium text-neutral-400 break-words">{entry.email}</div>
                                             </div>
                                         </TableCell>
 
@@ -441,15 +633,17 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
 
                                         {/* Actions */}
                                         <TableCell className="text-right">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                disabled={!entry.journal_id}
-                                                title={entry.journal_id ? 'View report' : 'No report submitted'}
-                                                className="h-8 w-8 rounded-xl text-[#DA7756] hover:bg-[#fef6f4] hover:text-[#c9673f] disabled:opacity-30"
-                                            >
-                                                <Eye size={16} />
-                                            </Button>
+                                            {isSubmittedReport(entry) && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setSelectedReport(entry)}
+                                                    title="View report"
+                                                    className="h-8 w-8 rounded-xl text-[#DA7756] hover:bg-[#fef6f4] hover:text-[#c9673f]"
+                                                >
+                                                    <Eye size={16} />
+                                                </Button>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 );
@@ -458,6 +652,13 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                     </TableBody>
                 </Table>
             </div>
+
+            {selectedReport && (
+                <ReportDetailsModal
+                    entry={selectedReport}
+                    onClose={() => setSelectedReport(null)}
+                />
+            )}
         </div>
     );
 };

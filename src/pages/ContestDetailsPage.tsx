@@ -141,7 +141,7 @@ export const ContestDetailsPage: React.FC = () => {
   };
 
   const getProbability = (prize: Prize) => {
-    return `${prize.probability_value}/100`;
+    return `${prize.probability_value}`;
   };
 
   const handleDryRun = async () => {
@@ -170,7 +170,7 @@ export const ContestDetailsPage: React.FC = () => {
       }
     } catch (err: any) {
       setDryRunError(
-        err.response?.data?.message || err.message || "Dry run failed"
+        err.response?.data?.message || err.message || "Run failed"
       );
     } finally {
       setDryRunLoading(false);
@@ -292,7 +292,7 @@ export const ContestDetailsPage: React.FC = () => {
                   className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 px-4 py-2"
                 >
                   <FlaskConical className="w-4 h-4 mr-2" />
-                  Dry Run Contest
+                  Run Contest
                 </Button>
               )
             }
@@ -495,104 +495,110 @@ export const ContestDetailsPage: React.FC = () => {
                 No prizes defined yet
               </p>
             ) : (
-              contest.prizes.map((prize, index) => (
-                <div
-                  key={prize.id}
-                  className="mb-8 last:mb-0 border-b pb-6 last:border-b-0"
-                >
-                  <div className="flex items-start gap-3 mb-4">
-                    <span className="text-[#C72030] font-semibold text-lg">
-                      {index + 1}.
-                    </span>
-                    <div className="flex-1">
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-y-5 gap-x-6">
-                        {/* Row 1 */}
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium text-gray-500">
-                            Prize Title
-                          </p>
-                          <p className="text-sm font-medium text-[#1A1A1A]">
-                            {prize.title}
-                          </p>
-                        </div>
+              (() => {
+                // Group by reward_type, then by title within each group
+                const byRewardType = contest.prizes.reduce((acc, prize) => {
+                  const key = prize.reward_type;
+                  if (!acc[key]) acc[key] = [];
+                  acc[key].push(prize);
+                  return acc;
+                }, {} as Record<string, Prize[]>);
 
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium text-gray-500">
-                            {" "}
-                            Reward Type
-                          </p>
-                          <p className="text-sm text-[#1A1A1A]">
-                            {/* {prize.reward_type === "points" ? "Loyalty Points" : "Coupon/Voucher"} */}
-                            {prize.reward_type === "points"
-                              ? "Points"
-                              : prize.reward_type === "coupon"
-                                ? "Coupon Code"
-                                : ""}
-                          </p>
-                        </div>
+                const rewardTypeLabel = (type: string) =>
+                  type === "points" ? "Points" : type === "coupon" ? "Coupon Code" : type;
 
-                        <div className="md:row-span-4 flex items-start justify-end">
-                          <div className="w-48 h-32 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
-                            {prize.image?.url || prize.icon_url ? (
-                              <img
-                                src={prize.image?.url || prize.icon_url || ""}
-                                alt={prize.title}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <p className="text-xs text-gray-500 text-center p-3">
-                                No banner / icon
-                              </p>
-                            )}
-                          </div>
-                        </div>
+                return Object.entries(byRewardType).map(([rewardType, typePrizes], groupIndex) => {
+                  // Sub-group by title — prizes with the same title get coupon codes merged
+                  const byTitle = typePrizes.reduce((acc, prize) => {
+                    const key = prize.title;
+                    if (!acc[key]) acc[key] = [];
+                    acc[key].push(prize);
+                    return acc;
+                  }, {} as Record<string, Prize[]>);
 
-                        {/* Row 2 */}
-                        {/* <div className="space-y-1">
-                          <p className="text-xs font-medium text-gray-500">Coupon Code</p>
-                          <p className="text-sm text-[#1A1A1A]">
-                            {prize.reward_type === "points"
-                              ? `${prize.points_value ?? 0} Points`
-                              : prize.coupon_code ?? "—"}
-                          </p>
-                        </div> */}
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium text-gray-500">
-                            {prize.reward_type === "points"
-                              ? "Points"
-                              : "Coupon Code"}
-                          </p>
+                  return (
+                    <div key={rewardType} className={groupIndex > 0 ? "mt-8 pt-6 border-t border-gray-200" : ""}>
+                      {/* Reward type badge */}
+                      <div className="flex items-center gap-2 mb-5">
+                        <span className="px-3 py-1 bg-[#C72030]/10 text-[#C72030] text-xs font-semibold rounded-full">
+                          {rewardTypeLabel(rewardType)}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {Object.keys(byTitle).length} offer{Object.keys(byTitle).length > 1 ? "s" : ""}
+                        </span>
+                      </div>
 
-                          <p className="text-sm text-[#1A1A1A]">
-                            {prize.reward_type === "points"
-                              ? `${prize.points_value ?? 0} Points`
-                              : (prize.coupon_code ?? "—")}
-                          </p>
-                        </div>
+                      <div className="space-y-6">
+                        {Object.entries(byTitle).map(([title, prizes], index) => {
+                          const rep = prizes[0];
+                          const couponCodes = prizes
+                            .map((p) => p.coupon_code)
+                            .filter(Boolean)
+                            .join(", ");
+                          const totalProb = prizes.reduce(
+                            (sum, p) => sum + (Number(p.probability_value) || 0), 0
+                          );
 
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium text-gray-500">
-                            Partner
-                          </p>
-                          <p className="text-sm text-[#1A1A1A]">
-                            {prize.partner_name ?? "—"}
-                          </p>
-                        </div>
+                          return (
+                            <div key={title} className="border-b pb-6 last:border-b-0 last:pb-0">
+                              <div className="flex items-start gap-3">
+                                <span className="text-[#C72030] font-semibold text-lg shrink-0">
+                                  {index + 1}.
+                                </span>
+                                <div className="flex-1">
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-y-5 gap-x-6">
+                                    <div className="space-y-1">
+                                      <p className="text-xs font-medium text-gray-500">Prize Title</p>
+                                      <p className="text-sm font-medium text-[#1A1A1A]">{title}</p>
+                                    </div>
 
-                        {/* Row 3 */}
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium text-gray-500">
-                            Probability
-                          </p>
-                          <p className="text-sm text-[#1A1A1A]">
-                            {getProbability(prize)}
-                          </p>
-                        </div>
+                                    <div className="space-y-1">
+                                      <p className="text-xs font-medium text-gray-500">
+                                        {rewardType === "points" ? "Points" : "Coupon Code"}
+                                      </p>
+                                      <p className="text-sm text-[#1A1A1A]">
+                                        {rewardType === "points"
+                                          ? `${rep.points_value ?? 0} Points`
+                                          : (couponCodes || "—")}
+                                      </p>
+                                    </div>
+
+                                    <div className="md:row-span-3 flex items-start justify-end">
+                                      <div className="w-48 h-32 bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden">
+                                        {rep.image?.url || rep.icon_url ? (
+                                          <img
+                                            src={rep.image?.url || rep.icon_url || ""}
+                                            alt={title}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <p className="text-xs text-gray-500 text-center p-3">
+                                            No banner / icon
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <p className="text-xs font-medium text-gray-500">Partner</p>
+                                      <p className="text-sm text-[#1A1A1A]">{rep.partner_name ?? "—"}</p>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                      <p className="text-xs font-medium text-gray-500">Probability</p>
+                                      <p className="text-sm text-[#1A1A1A]">{totalProb}</p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  </div>
-                </div>
-              ))
+                  );
+                });
+              })()
             )}
           </CardContent>
         </Card>
@@ -648,7 +654,7 @@ export const ContestDetailsPage: React.FC = () => {
                   <FlaskConical className="w-4 h-4 text-[#C72030]" />
                 </div>
                 <div>
-                  <h2 className="text-sm font-bold text-[#1a1a1a] leading-tight">Dry Run Result</h2>
+                  <h2 className="text-sm font-bold text-[#1a1a1a] leading-tight">Run Result</h2>
                   {contest && (
                     <p className="text-xs text-gray-400 font-medium leading-tight">{contest.name}</p>
                   )}

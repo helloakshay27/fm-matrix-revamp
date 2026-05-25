@@ -48,6 +48,14 @@ interface ReportData {
 interface MeetingConfig {
     id: number
     name: string
+    is_default?: boolean
+    active?: boolean
+}
+
+const pickDefaultMeeting = (list: MeetingConfig[]) => {
+    const defaultMeeting = list.find((meeting) => meeting.is_default && meeting.active !== false)
+    const firstActiveMeeting = list.find((meeting) => meeting.active !== false)
+    return defaultMeeting || firstActiveMeeting || list[0]
 }
 
 const PERIOD_OPTIONS = [
@@ -95,9 +103,9 @@ const WeeklyMeetingReports = () => {
                 else if (Array.isArray(raw?.data))   list = raw.data
                 else if (raw?.data?.id)              list = [raw.data]
                 setMeetings(list)
-                // Auto-select first meeting if available
                 if (list.length > 0) {
-                    setMeetingId(prev => prev === 'all' ? String(list[0].id) : prev)
+                    const nextMeeting = pickDefaultMeeting(list)
+                    setMeetingId(prev => prev === 'all' ? String(nextMeeting.id) : prev)
                 }
             } catch (err) {
                 console.error('Failed to load meetings', err)
