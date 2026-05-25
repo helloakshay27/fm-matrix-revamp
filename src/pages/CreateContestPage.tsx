@@ -91,11 +91,23 @@ export const CreateContestPage: React.FC = () => {
   const [contestType, setContestType] = useState("");
   const [usageType, setUsageType] = useState("");
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+  const [winningProbabilityDisplay, setWinningProbabilityDisplay] = useState("100");
 
   // Reset redemption document when contest type changes away from Scratch
   // Also adjust offers count based on contest type
   const handleContestTypeChange = (newType: string) => {
     setContestType(newType);
+
+    // Clear usage type when switching away from Random
+    if (newType !== "Random") {
+      setUsageType("");
+    }
+
+    // Clear Spin-only fields when switching away from Spin
+    if (newType !== "Spin") {
+      setUsersCap("");
+      setAttemptsRequired("");
+    }
 
     // Reset redemption text for non-Scratch types
     if (newType !== "Scratch") {
@@ -723,18 +735,32 @@ export const CreateContestPage: React.FC = () => {
                     </MuiSelect>
                   </FormControl>
 
-                  <FormControl fullWidth size="small" sx={textFieldSx}>
-                    <InputLabel>Usage Type</InputLabel>
-                    <MuiSelect
-                      value={usageType}
-                      label="Usage Type"
-                      onChange={(e) => setUsageType(e.target.value)}
-                    >
-                      <MenuItem value="high_usage">High Usage</MenuItem>
-                      <MenuItem value="low_usage">Low Usage</MenuItem>
-                      <MenuItem value="na">NA</MenuItem>
-                    </MuiSelect>
-                  </FormControl>
+                  {contestType === "Random" && (
+                    <FormControl fullWidth size="small" sx={textFieldSx}>
+                      <InputLabel>Usage Type</InputLabel>
+                      <MuiSelect
+                        value={usageType}
+                        label="Usage Type"
+                        onChange={(e) => setUsageType(e.target.value)}
+                      >
+                        <MenuItem value="high_usage">High Usage</MenuItem>
+                        <MenuItem value="low_usage">Low Usage</MenuItem>
+                        <MenuItem value="na">NA</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  )}
+
+                  <TextField
+                    fullWidth
+                    label="Winning Probability (%)"
+                    value={winningProbabilityDisplay}
+                    onChange={(e) => setWinningProbabilityDisplay(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    type="number"
+                    inputProps={{ min: 0, max: 100 }}
+                    sx={textFieldSx}
+                  />
                 </div>
 
                 <div className="mt-6">
@@ -968,48 +994,6 @@ export const CreateContestPage: React.FC = () => {
                       size="small"
                     />
 
-                    {(() => {
-                      const maxAvailable = getMaxAvailableProbability(offer.id);
-                      const currentValue = Number(offer.winningProbability) || 0;
-                      const isExceeded = currentValue > maxAvailable;
-                      const suggestedValue = calculateBaseProbability().toFixed(2);
-
-                      // Calculate total at offer level (not per coupon)
-                      const totalOfferLevel = offers.reduce((sum, o) => sum + (Number(o.winningProbability) || calculateBaseProbability()), 0);
-
-                      return (
-                        <TextField
-                          fullWidth
-                          label="Winning Probability (%)"
-                          value={offer.winningProbability || suggestedValue}
-                          onChange={(e) =>
-                            updateOffer(offer.id, "winningProbability", e.target.value)
-                          }
-                          variant="outlined"
-                          size="small"
-                          type="number"
-                          inputProps={{ min: 0, max: maxAvailable, step: 0.01 }}
-                          error={isExceeded}
-                          sx={{
-                            ...textFieldSx,
-                            ...(isExceeded && {
-                              "& .MuiOutlinedInput-root": {
-                                "& fieldset": { borderColor: "#ef4444" },
-                                "&:hover fieldset": { borderColor: "#ef4444" },
-                                "&.Mui-focused fieldset": { borderColor: "#ef4444" },
-                              },
-                              "& .MuiInputLabel-root": { color: "#ef4444" },
-                              "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
-                            }),
-                          }}
-                          helperText={
-                            isExceeded
-                              ? `❌ Exceeded! Max available: ${maxAvailable.toFixed(2)}%`
-                              : `Suggested: ${suggestedValue}% | Max: ${maxAvailable.toFixed(2)}% | Total: ${totalOfferLevel.toFixed(2)}%${Number(offer.winningProbability) ? ` | Each coupon: ${(Number(offer.winningProbability) / countCoupons(offer.couponCode)).toFixed(2)}%` : ""}`
-                          }
-                        />
-                      );
-                    })()}
 
                     <TextField
                       fullWidth
@@ -1191,27 +1175,31 @@ export const CreateContestPage: React.FC = () => {
                   sx={textFieldSx}
                 />
 
-                <TextField
-                  fullWidth
-                  label="Users Cap"
-                  value={usersCap}
-                  onChange={(e) => setUsersCap(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  type="number"
-                  sx={textFieldSx}
-                />
+                {contestType === "Spin" && (
+                  <TextField
+                    fullWidth
+                    label="Users Cap"
+                    value={usersCap}
+                    onChange={(e) => setUsersCap(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    type="number"
+                    sx={textFieldSx}
+                  />
+                )}
 
-                <TextField
-                  fullWidth
-                  label="Attempts Required"
-                  value={attemptsRequired}
-                  onChange={(e) => setAttemptsRequired(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  type="number"
-                  sx={textFieldSx}
-                />
+                {contestType === "Spin" && (
+                  <TextField
+                    fullWidth
+                    label="Attempts Allowed"
+                    value={attemptsRequired}
+                    onChange={(e) => setAttemptsRequired(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    type="number"
+                    sx={textFieldSx}
+                  />
+                )}
               </div>
             </CardContent>
           </Card>
