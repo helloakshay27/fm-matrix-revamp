@@ -89,6 +89,7 @@ export const CreateContestPage: React.FC = () => {
   const [contestName, setContestName] = useState("");
   const [contestDescription, setContestDescription] = useState("");
   const [contestType, setContestType] = useState("");
+  const [usageType, setUsageType] = useState("");
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
 
   // Reset redemption document when contest type changes away from Scratch
@@ -377,6 +378,7 @@ export const CreateContestPage: React.FC = () => {
     formData.append("contest[name]", contestName.trim());
     formData.append("contest[description]", contestDescription.trim());
     formData.append("contest[content_type]", contestType.toLowerCase().replace(/\s+/g, "_"));
+    if (usageType) formData.append("contest[usage_type]", usageType);
     formData.append("contest[active]", String(isActive));
     formData.append("contest[start_at]", buildISO(startDate, startTime));
     formData.append("contest[end_at]", buildISO(endDate, endTime, true));
@@ -718,6 +720,19 @@ export const CreateContestPage: React.FC = () => {
                           {type}
                         </MenuItem>
                       ))}
+                    </MuiSelect>
+                  </FormControl>
+
+                  <FormControl fullWidth size="small" sx={textFieldSx}>
+                    <InputLabel>Usage Type</InputLabel>
+                    <MuiSelect
+                      value={usageType}
+                      label="Usage Type"
+                      onChange={(e) => setUsageType(e.target.value)}
+                    >
+                      <MenuItem value="high_usage">High Usage</MenuItem>
+                      <MenuItem value="low_usage">Low Usage</MenuItem>
+                      <MenuItem value="na">NA</MenuItem>
                     </MuiSelect>
                   </FormControl>
                 </div>
