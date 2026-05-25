@@ -133,9 +133,9 @@ export const ContestListPage: React.FC = () => {
           contestType:
             item.content_type === "spin"
               ? "Spin Wheel"
-              : item.content_type === "scratch"
-                ? "Scratch Card"
-                : "Card Flip",
+              : item.content_type === "random"
+                ? "Random"
+                : "Special Discount",
           attempt: item.user_attemp_remaining ?? 1,
           status,
           isActive: item.active ?? false,
@@ -386,9 +386,9 @@ export const ContestListPage: React.FC = () => {
                         color: "#22c55e",
                       },
                       "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                        {
-                          backgroundColor: "#22c55e",
-                        },
+                      {
+                        backgroundColor: "#22c55e",
+                      },
                     }}
                   />
                   <span className="text-sm font-medium">
