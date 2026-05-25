@@ -1089,7 +1089,7 @@ const ActivityLog = ({ taskId }: { taskId: string }) => {
   return (
     <div className="overflow-x-auto w-full bg-gray-50 rounded-xl shadow-inner mt-3 p-6">
       <div className="flex items-start min-w-max">
-        {sorted.map((log: any, index: number) => {
+        {[...sorted].reverse().map((log: any, index: number) => {
           const changes = parseChanges(log.changed_attr);
           const initials = getInitials(log.changed_by || "");
           const isLast = index === sorted.length - 1;
@@ -1178,8 +1178,8 @@ const ActivityLog = ({ taskId }: { taskId: string }) => {
                   </span>
                   {/* Horizontal line + arrowhead */}
                   <div className="relative w-full flex items-center">
+                    <div className="w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-gray-400 flex-shrink-0 rotate-180" />
                     <div className="flex-1 h-[1.5px] bg-gray-300" />
-                    <div className="w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-gray-400 flex-shrink-0" />
                   </div>
                 </div>
               )}

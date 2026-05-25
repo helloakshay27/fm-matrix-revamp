@@ -18,8 +18,13 @@ import {
   Ticket,
   RefreshCw,
 } from "lucide-react";
+import {
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
 import { toast } from "sonner";
-import { API_CONFIG } from "@/config/apiConfig";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +32,29 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { getUser } from "@/utils/auth";
+import { getToken, getBaseUrl } from "@/utils/auth";
+
+const selectMenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 224,
+      backgroundColor: "white",
+      border: "1px solid #e2e8f0",
+      borderRadius: "8px",
+      boxShadow:
+        "0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)",
+      zIndex: 9999,
+    },
+  },
+  disablePortal: false,
+  disableAutoFocus: true,
+  disableEnforceFocus: true,
+};
+
+const selectFieldSx = {
+  height: 36,
+  "& .MuiInputBase-input, & .MuiSelect-select": { padding: "8px 12px" },
+};
 
 interface UnifiedCalendarEvent {
   id: string;
@@ -148,12 +175,37 @@ export const EmployeeUnifiedCalendar: React.FC<
 
   const userId = localStorage.getItem("userId") || "87989";
 
+  // ── User list for attendees in Create Event modal ───────────────────────
+  const [userList, setUserList] = useState<
+    { id: number; full_name: string; email?: string }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const token = getToken();
+        const baseUrl = getBaseUrl();
+        if (!token || !baseUrl) return;
+        const res = await fetch(
+          `${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        setUserList(data.users || []);
+      } catch {
+        // silently ignore
+      }
+    };
+    fetchUsers();
+  }, []);
+
   // Fetch calendar data from API
   const fetchCalendarData = async () => {
     setIsLoading(true);
     try {
-      const token = API_CONFIG.TOKEN;
-      const baseUrl = API_CONFIG.BASE_URL;
+      const token = getToken();
+      const baseUrl = getBaseUrl();
+      if (!token || !baseUrl) throw new Error("Not authenticated");
 
       // Build API URL with date filter parameters
       let apiUrl = `${baseUrl}/user_calendars.json?access_token=${token}&id=${userId}`;
@@ -289,8 +341,47 @@ export const EmployeeUnifiedCalendar: React.FC<
         });
       });
 
+      // ── Fetch Google Calendar events ────────────────────────────────────
+      try {
+        const gcParams = new URLSearchParams({
+          range_type: "monthly",
+          access_token: token || "",
+        });
+        const gcRes = await fetch(
+          `${baseUrl}/api/google_calendar_events?${gcParams.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+        if (gcRes.ok) {
+          const gcData = await gcRes.json();
+          const gcItems: UnifiedCalendarEvent[] = (
+            gcData.google_calendar_events ||
+            gcData.events ||
+            gcData.data ||
+            []
+          ).map((ev: Record<string, unknown>) => ({
+            id: `gc-${ev.id}`,
+            title: String(ev.title || ev.summary || "Google Event"),
+            start: String(ev.start_time || ev.start || ""),
+            end:
+              ev.end_time || ev.end ? String(ev.end_time || ev.end) : undefined,
+            type: "Google Calendar" as const,
+            color: "#8b5cf6",
+            description: String(ev.description || ""),
+            location: String(ev.location || ""),
+            redirectUrl: String(ev.google_calendar_link || ""),
+          }));
+          mappedEvents.push(...gcItems);
+        }
+      } catch {
+        // Google Calendar fetch failure is non-fatal
+      }
+
       setEvents(mappedEvents);
-      console.log("✅ Fetched events:", mappedEvents.length);
     } catch (error) {
       console.error("Error fetching calendar data:", error);
       toast.error("Failed to load calendar events");
@@ -308,6 +399,152 @@ export const EmployeeUnifiedCalendar: React.FC<
   const [hoveredEvent, setHoveredEvent] = useState<any>(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+
+  // Create Google Calendar Event modal state
+  const [createEventModal, setCreateEventModal] = useState(false);
+  const [createEventForm, setCreateEventForm] = useState({
+    title: "",
+    description: "",
+    location: "",
+    start_time: "",
+    end_time: "",
+    all_day: false,
+    attendees: [] as { id: number; name: string; email: string }[],
+    attendeeInput: "",
+    calendar_email: "",
+  });
+  const [createEventLoading, setCreateEventLoading] = useState(false);
+
+  // ── Find a time: availability for attendees ─────────────────────────────
+  const [findTimeOpen, setFindTimeOpen] = useState(false);
+  const [attendeeAvailability, setAttendeeAvailability] = useState<
+    Record<
+      number,
+      { name: string; events: { title: string; start: string; end: string }[] }
+    >
+  >({});
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+
+  const fetchAttendeeAvailability = async (
+    attendees: { id: number; name: string; email: string }[]
+  ) => {
+    if (!attendees.length) return;
+    setAvailabilityLoading(true);
+    const token = getToken();
+    const baseUrl = getBaseUrl();
+    if (!token || !baseUrl) {
+      setAvailabilityLoading(false);
+      return;
+    }
+
+    const results: typeof attendeeAvailability = {};
+
+    await Promise.all(
+      attendees.map(async (attendee) => {
+        try {
+          const params = new URLSearchParams({
+            range_type: "monthly",
+            user_id: String(attendee.id),
+            access_token: token,
+          });
+          const res = await fetch(
+            `${baseUrl}/api/google_calendar_events?${params.toString()}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const data = await res.json();
+          const rawEvs: Record<string, unknown>[] =
+            data.google_calendar_events || data.events || data.data || [];
+          const evs = rawEvs.map((ev) => ({
+            title: String(ev.title || ev.summary || "Busy"),
+            start: String(ev.start_time || ev.start || ""),
+            end: String(ev.end_time || ev.end || ""),
+          }));
+          results[attendee.id] = { name: attendee.name, events: evs };
+        } catch {
+          results[attendee.id] = { name: attendee.name, events: [] };
+        }
+      })
+    );
+
+    setAttendeeAvailability(results);
+    setAvailabilityLoading(false);
+  };
+
+  const openCreateEventModal = (start: string, end?: string) => {
+    setCreateEventForm({
+      title: "",
+      description: "",
+      location: "",
+      start_time: start,
+      end_time: end || moment(start).add(1, "hour").format("YYYY-MM-DDTHH:mm"),
+      all_day: false,
+      attendees: [],
+      attendeeInput: "",
+      calendar_email: "",
+    });
+    setFindTimeOpen(false);
+    setAttendeeAvailability({});
+    setCreateEventModal(true);
+  };
+
+  const handleCreateEvent = async () => {
+    if (!createEventForm.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+    setCreateEventLoading(true);
+    try {
+      const token = getToken();
+      const baseUrl = getBaseUrl();
+      if (!token || !baseUrl) {
+        toast.error("Not authenticated");
+        return;
+      }
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const calendarEmail = user?.email || "";
+      const payload = {
+        google_calendar_event: {
+          title: createEventForm.title,
+          description: createEventForm.description,
+          location: createEventForm.location,
+          start_time: createEventForm.all_day
+            ? moment(createEventForm.start_time).startOf("day").toISOString()
+            : moment(createEventForm.start_time).toISOString(),
+          end_time: createEventForm.all_day
+            ? moment(createEventForm.start_time).endOf("day").toISOString()
+            : moment(createEventForm.end_time).toISOString(),
+          all_day: createEventForm.all_day,
+          attendees: createEventForm.attendees.map((a) => a.email),
+          calendar_email: calendarEmail,
+        },
+      };
+      const res = await fetch(
+        `${baseUrl}/api/google_calendar_events?access_token=${token}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.message || "Failed to create event");
+      toast.success("Event created on Google Calendar");
+      if (data?.google_calendar_link) {
+        window.open(data.google_calendar_link, "_blank");
+      }
+      setCreateEventModal(false);
+      fetchCalendarData();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to create event"
+      );
+    } finally {
+      setCreateEventLoading(false);
+    }
+  };
 
   // Helper function to parse filter date strings (DD/MM/YYYY format)
   const parseFilterDate = (dateStr: string): Date => {
@@ -795,72 +1032,44 @@ export const EmployeeUnifiedCalendar: React.FC<
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Sync Google Calendar */}
           <Button
             onClick={async () => {
-              const user = getUser();
-              // Try multiple sources for email
+              const user = JSON.parse(localStorage.getItem("user") || "{}");
               const email =
                 user?.email ||
                 localStorage.getItem("userEmail") ||
                 localStorage.getItem("email");
-
-              console.log("User object:", user);
-              console.log("Email found:", email);
-
-              if (email) {
-                try {
-                  toast.info("Checking Google Calendar connection...");
-                  const baseUrl = "lockated-api.gophygital.work";
-
-                  // Step 1: Check connection status
-                  const statusUrl = `https://${baseUrl}/google_calander/status?email=${encodeURIComponent(email)}`;
-                  console.log("Status URL:", statusUrl);
-
-                  const statusResponse = await fetch(statusUrl, {
-                    method: "GET",
-                    headers: {
-                      "Content-Type": "application/json",
-                    },
-                  });
-
-                  if (!statusResponse.ok) {
-                    throw new Error("Failed to check Google Calendar status");
-                  }
-
-                  const statusData = await statusResponse.json();
-                  console.log("Google Calendar status:", statusData);
-
-                  if (statusData.connected === true) {
-                    // Step 2a: If connected, call sync API
-                    toast.info("Syncing Google Calendar events...");
-                    const syncUrl = `https://${baseUrl}/google_calander/sync?email=${encodeURIComponent(email)}`;
-                    console.log("Sync URL:", syncUrl);
-
-                    const syncResponse = await fetch(syncUrl);
-
-                    if (syncResponse.ok) {
-                      toast.success("Google Calendar synced successfully!");
-                      // Refresh calendar data
-                      fetchCalendarData();
-                    } else {
-                      toast.error("Failed to sync Google Calendar");
-                    }
-                  } else {
-                    // Step 2b: If not connected, open connect URL in new tab
-                    toast.info("Opening Google Calendar connection...");
-                    const connectUrl = `https://${baseUrl}/google_oauth/connect?email=${encodeURIComponent(email)}`;
-                    console.log("Connect URL:", connectUrl);
-
-                    // Open in new tab directly
-                    window.open(connectUrl, "_blank");
-                  }
-                } catch (error) {
-                  console.error("Error with Google Calendar:", error);
-                  toast.error("Failed to process Google Calendar request");
-                }
-              } else {
+              if (!email) {
                 toast.error("User email not found. Please log in again.");
-                console.error("No email found in user object or localStorage");
+                return;
+              }
+              try {
+                toast.info("Checking Google Calendar connection...");
+                const domain = getBaseUrl()?.replace(/^https?:\/\//, "") || "";
+                const statusRes = await fetch(
+                  `https://${domain}/google_calander/status?email=${encodeURIComponent(email)}`
+                );
+                if (!statusRes.ok) throw new Error("Failed to check status");
+                const statusData = await statusRes.json();
+                if (statusData.connected === true) {
+                  toast.info("Syncing Google Calendar events...");
+                  const syncRes = await fetch(
+                    `https://${domain}/google_calander/sync?email=${encodeURIComponent(email)}`
+                  );
+                  if (syncRes.ok) {
+                    toast.success("Google Calendar synced!");
+                    fetchCalendarData();
+                  } else toast.error("Failed to sync");
+                } else {
+                  toast.info("Opening Google Calendar connection...");
+                  window.open(
+                    `https://${domain}/google_oauth/connect?email=${encodeURIComponent(email)}`,
+                    "_blank"
+                  );
+                }
+              } catch {
+                toast.error("Failed to process Google Calendar request");
               }
             }}
             variant="outline"
@@ -994,6 +1203,18 @@ export const EmployeeUnifiedCalendar: React.FC<
               nowIndicator={true}
               selectable={true}
               selectMirror={true}
+              dateClick={(info) => {
+                const start = moment(info.dateStr).format("YYYY-MM-DDTHH:mm");
+                const end = moment(info.dateStr)
+                  .add(1, "hour")
+                  .format("YYYY-MM-DDTHH:mm");
+                openCreateEventModal(start, end);
+              }}
+              select={(info) => {
+                const start = moment(info.startStr).format("YYYY-MM-DDTHH:mm");
+                const end = moment(info.endStr).format("YYYY-MM-DDTHH:mm");
+                openCreateEventModal(start, end);
+              }}
               dayHeaderFormat={{ weekday: "short", day: "numeric" }}
               eventContent={(eventInfo) => {
                 const dur = moment(eventInfo.event.end).diff(
@@ -1220,6 +1441,582 @@ export const EmployeeUnifiedCalendar: React.FC<
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Create Google Calendar Event Modal ── */}
+      {createEventModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[85vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900">New Event</h2>
+              <button
+                onClick={() => setCreateEventModal(false)}
+                className="p-1 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            {/* Body — 2-column layout */}
+            <div className="flex gap-0 divide-x divide-gray-100">
+              {/* ── Left column: form fields ── */}
+              <div className="flex-1 px-6 py-5 space-y-4 min-w-0">
+                {/* Title */}
+                <input
+                  type="text"
+                  placeholder="Add title"
+                  value={createEventForm.title}
+                  onChange={(e) =>
+                    setCreateEventForm((f) => ({ ...f, title: e.target.value }))
+                  }
+                  className="w-full text-xl font-medium border-0 border-b-2 border-blue-500 focus:outline-none pb-1 placeholder-gray-300"
+                  autoFocus
+                />
+
+                {/* All Day */}
+                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={createEventForm.all_day}
+                    onChange={(e) =>
+                      setCreateEventForm((f) => ({
+                        ...f,
+                        all_day: e.target.checked,
+                      }))
+                    }
+                    className="rounded border-gray-300 text-blue-600"
+                  />
+                  All day
+                </label>
+
+                {/* Date / Time */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-500 mb-1 block">
+                      Start
+                    </label>
+                    <input
+                      type={createEventForm.all_day ? "date" : "datetime-local"}
+                      value={
+                        createEventForm.all_day
+                          ? createEventForm.start_time.slice(0, 10)
+                          : createEventForm.start_time
+                      }
+                      onChange={(e) =>
+                        setCreateEventForm((f) => ({
+                          ...f,
+                          start_time: e.target.value,
+                        }))
+                      }
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    />
+                  </div>
+                  {!createEventForm.all_day && (
+                    <div>
+                      <label className="text-xs text-gray-500 mb-1 block">
+                        End
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={createEventForm.end_time}
+                        onChange={(e) =>
+                          setCreateEventForm((f) => ({
+                            ...f,
+                            end_time: e.target.value,
+                          }))
+                        }
+                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Location */}
+                <div className="flex items-start gap-2">
+                  <svg
+                    className="w-4 h-4 mt-2 text-gray-400 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Add location"
+                    value={createEventForm.location}
+                    onChange={(e) =>
+                      setCreateEventForm((f) => ({
+                        ...f,
+                        location: e.target.value,
+                      }))
+                    }
+                    className="flex-1 text-sm border-0 border-b border-gray-200 focus:outline-none focus:border-blue-400 py-1"
+                  />
+                </div>
+
+                {/* Description */}
+                <div className="flex items-start gap-2">
+                  <svg
+                    className="w-4 h-4 mt-2 text-gray-400 flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 6h16M4 12h16M4 18h7"
+                    />
+                  </svg>
+                  <textarea
+                    placeholder="Add description"
+                    value={createEventForm.description}
+                    onChange={(e) =>
+                      setCreateEventForm((f) => ({
+                        ...f,
+                        description: e.target.value,
+                      }))
+                    }
+                    rows={3}
+                    className="flex-1 text-sm border-0 border-b border-gray-200 focus:outline-none focus:border-blue-400 py-1 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* ── Right column: attendees ── */}
+              <div className="w-64 flex-shrink-0 px-5 py-5 space-y-3">
+                {/* Section header */}
+                <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                  <svg
+                    className="w-4 h-4 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                  Guests
+                </div>
+
+                {/* Guests dropdown — same style as TaskFilterDialog */}
+                <FormControl fullWidth variant="outlined" size="small">
+                  <InputLabel shrink>Add Guest</InputLabel>
+                  <MuiSelect
+                    value=""
+                    label="Add Guest"
+                    displayEmpty
+                    MenuProps={selectMenuProps}
+                    sx={selectFieldSx}
+                    onChange={(e) => {
+                      const uid = Number(e.target.value);
+                      if (!uid) return;
+                      const user = userList.find((u) => u.id === uid);
+                      if (!user) return;
+                      if (createEventForm.attendees.some((a) => a.id === uid))
+                        return;
+                      setCreateEventForm((f) => ({
+                        ...f,
+                        attendees: [
+                          ...f.attendees,
+                          {
+                            id: user.id,
+                            name: user.full_name,
+                            email: user.email || "",
+                          },
+                        ],
+                      }));
+                    }}
+                  >
+                    <MenuItem value="" disabled>
+                      <em>Select guest…</em>
+                    </MenuItem>
+                    {userList
+                      .filter(
+                        (u) =>
+                          !createEventForm.attendees.some((a) => a.id === u.id)
+                      )
+                      .map((u) => (
+                        <MenuItem key={u.id} value={u.id}>
+                          {u.full_name}
+                          {u.email ? ` (${u.email})` : ""}
+                        </MenuItem>
+                      ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Selected attendees */}
+                {createEventForm.attendees.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {createEventForm.attendees.map((att) => (
+                      <span
+                        key={att.id}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-full px-2.5 py-1"
+                      >
+                        <span className="w-5 h-5 rounded-full bg-blue-200 text-blue-800 flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                          {att.name[0]?.toUpperCase()}
+                        </span>
+                        {att.name}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCreateEventForm((f) => ({
+                              ...f,
+                              attendees: f.attendees.filter(
+                                (a) => a.id !== att.id
+                              ),
+                            }))
+                          }
+                          className="ml-0.5 text-blue-400 hover:text-blue-700 leading-none"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {/* Find a time button */}
+                {createEventForm.attendees.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const opening = !findTimeOpen;
+                      setFindTimeOpen(opening);
+                      if (opening) {
+                        fetchAttendeeAvailability(createEventForm.attendees);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {findTimeOpen ? "Hide availability" : "Find a time"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* ── Find a time panel (full width, below columns) ── */}
+            {findTimeOpen && createEventForm.attendees.length > 0 && (
+              <div className="mx-6 mb-4 border border-blue-100 rounded-xl bg-blue-50/40 p-3">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <span className="text-xs font-semibold text-gray-800">
+                      Find a time
+                    </span>
+                    <span className="ml-2 text-[10px] text-gray-400">
+                      {moment(createEventForm.start_time).format("ddd, MMM D")}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      fetchAttendeeAvailability(createEventForm.attendees)
+                    }
+                    className="text-[10px] text-blue-600 hover:underline flex items-center gap-1"
+                  >
+                    {availabilityLoading ? (
+                      <svg
+                        className="w-3 h-3 animate-spin"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8z"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-3 h-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                    )}
+                    Refresh
+                  </button>
+                </div>
+
+                {availabilityLoading ? (
+                  <div className="flex items-center justify-center py-6 text-xs text-gray-400 gap-2">
+                    <svg
+                      className="w-4 h-4 animate-spin"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                      />
+                    </svg>
+                    Checking availability…
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {(() => {
+                      const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8am–8pm
+                      const dateBase = moment(
+                        createEventForm.start_time
+                      ).format("YYYY-MM-DD");
+                      const dayStart = moment(`${dateBase}T08:00`);
+                      const dayEnd = moment(`${dateBase}T20:00`);
+                      const totalMin = dayEnd.diff(dayStart, "minutes");
+                      const eventStart = moment(createEventForm.start_time);
+                      const eventEnd = moment(
+                        createEventForm.end_time || createEventForm.start_time
+                      ).add(1, "hour");
+
+                      const toPercent = (m: moment.Moment) =>
+                        Math.max(
+                          0,
+                          Math.min(
+                            100,
+                            (m.diff(dayStart, "minutes") / totalMin) * 100
+                          )
+                        );
+                      const toWidth = (s: moment.Moment, e: moment.Moment) =>
+                        Math.max(
+                          1,
+                          Math.min(
+                            100 - toPercent(s),
+                            (e.diff(s, "minutes") / totalMin) * 100
+                          )
+                        );
+
+                      return (
+                        <>
+                          {/* Hour labels */}
+                          <div className="flex ml-[90px] text-[9px] text-gray-400">
+                            {hours.map((h) => (
+                              <div key={h} className="flex-1 text-center">
+                                {h === 12
+                                  ? "12p"
+                                  : h < 12
+                                    ? `${h}a`
+                                    : `${h - 12}p`}
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Your event row */}
+                          <div className="flex items-center gap-2">
+                            <div className="w-[86px] text-[10px] text-blue-600 font-semibold truncate">
+                              Your event
+                            </div>
+                            <div className="flex-1 relative h-4 bg-gray-100 rounded-sm overflow-hidden">
+                              <div
+                                className="absolute top-0 h-full rounded-sm bg-blue-500/60"
+                                style={{
+                                  left: `${toPercent(eventStart)}%`,
+                                  width: `${toWidth(eventStart, eventEnd)}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Divider */}
+                          <div className="border-t border-blue-100 my-1" />
+
+                          {/* Per-attendee rows */}
+                          {createEventForm.attendees.map((att) => {
+                            const info = attendeeAvailability[att.id];
+                            const evs = info?.events || [];
+                            const hasFetched = att.id in attendeeAvailability;
+
+                            return (
+                              <div
+                                key={att.id}
+                                className="flex items-center gap-2"
+                              >
+                                <div
+                                  className="w-[86px] text-[10px] text-gray-700 truncate font-medium"
+                                  title={att.name}
+                                >
+                                  {att.name}
+                                </div>
+                                <div className="flex-1 relative h-4 bg-gray-100 rounded-sm overflow-hidden">
+                                  {!hasFetched && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <svg
+                                        className="w-3 h-3 animate-spin text-gray-300"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <circle
+                                          className="opacity-25"
+                                          cx="12"
+                                          cy="12"
+                                          r="10"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                        />
+                                        <path
+                                          className="opacity-75"
+                                          fill="currentColor"
+                                          d="M4 12a8 8 0 018-8v8z"
+                                        />
+                                      </svg>
+                                    </div>
+                                  )}
+                                  {hasFetched && evs.length === 0 && (
+                                    <div className="absolute inset-0 flex items-center pl-1">
+                                      <span className="text-[9px] text-green-600 font-semibold">
+                                        Free all day
+                                      </span>
+                                    </div>
+                                  )}
+                                  {evs.map((ev, i) => {
+                                    const evS = moment(ev.start);
+                                    const evE = moment(ev.end);
+                                    if (!evS.isValid() || !evE.isValid())
+                                      return null;
+                                    return (
+                                      <div
+                                        key={i}
+                                        title={`${ev.title} · ${evS.format("h:mma")}–${evE.format("h:mma")}`}
+                                        className="absolute top-0 h-full rounded-sm bg-red-400/80"
+                                        style={{
+                                          left: `${toPercent(evS)}%`,
+                                          width: `${toWidth(evS, evE)}%`,
+                                        }}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {/* Legend */}
+                          <div className="flex items-center gap-3 pt-1 ml-[90px]">
+                            <div className="flex items-center gap-1 text-[9px] text-gray-500">
+                              <div className="w-3 h-2 rounded-sm bg-red-400/80" />{" "}
+                              Busy
+                            </div>
+                            <div className="flex items-center gap-1 text-[9px] text-gray-500">
+                              <div className="w-3 h-2 rounded-sm bg-blue-500/60" />{" "}
+                              Your event
+                            </div>
+                            <div className="flex items-center gap-1 text-[9px] text-gray-500">
+                              <div className="w-3 h-2 rounded-sm bg-gray-100 border border-gray-300" />{" "}
+                              Free
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-3 border-t border-gray-100 bg-gray-50">
+              <button
+                onClick={() => setCreateEventModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateEvent}
+                disabled={createEventLoading}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-60 rounded-lg transition-colors flex items-center gap-2"
+              >
+                {createEventLoading && (
+                  <svg
+                    className="w-4 h-4 animate-spin"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
+                  </svg>
+                )}
+                Save
+              </button>
             </div>
           </div>
         </div>
