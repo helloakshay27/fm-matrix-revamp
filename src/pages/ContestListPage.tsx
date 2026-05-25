@@ -30,7 +30,7 @@ interface ContestRecord {
   description: string;
   startDate: string;
   endDate: string;
-  contestType: "Spin Wheel" | "Card Flip" | "Scratch Card";
+  contestType: string;
   attempt: number;
   status: "Active" | "Inactive" | "Expired";
   isActive: boolean;
