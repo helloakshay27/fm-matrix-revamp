@@ -35,6 +35,7 @@ interface Issue {
     tags?: string[];
     attachments?: any[];
     comments?: any[];
+    issue_allocation_times?: any[];
 }
 
 function formatToDDMMYYYY_AMPM(dateString: string | undefined) {
@@ -190,7 +191,7 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
                                         ) : (
                                             <span className="text-gray-500 font-bold text-2xl">FILE</span>
                                         )}
-                                        
+
                                         {/* Button Overlay */}
                                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                                             <button
@@ -209,7 +210,7 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
                                             </button>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="w-full p-2 flex-1 flex flex-col justify-center">
                                         <a
                                             href={fileUrl}
@@ -439,7 +440,7 @@ const ActivityLog = ({ issueId }: { issueId: string }) => {
     return (
         <div className="overflow-x-auto w-full bg-gray-50 rounded-xl shadow-inner mt-3 p-6">
             <div className="flex items-start min-w-max">
-                {sorted.map((log: any, index: number) => {
+                {[...sorted].reverse().map((log: any, index: number) => {
                     const changes = parseChanges(log.changed_attr);
                     const initials = getInitials(log.changed_by || "");
                     const isLast = index === sorted.length - 1;
@@ -519,8 +520,8 @@ const ActivityLog = ({ issueId }: { issueId: string }) => {
                                         {calcDuration(log.created_at, sorted[index + 1].created_at)}
                                     </span>
                                     <div className="relative w-full flex items-center">
+                                        <div className="rotate-180 w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-gray-400 flex-shrink-0" />
                                         <div className="flex-1 h-[1.5px] bg-gray-300" />
-                                        <div className="w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-gray-400 flex-shrink-0" />
                                     </div>
                                 </div>
                             )}
@@ -977,6 +978,91 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
     );
 };
 
+const formatTime = (data) => {
+    console.log(data)
+    const totalMinutes = data?.reduce(
+        (total, item) => total + (item.hours * 60) + item.minutes,
+        0
+    );
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours === 0) {
+        return `${minutes} min`;
+    }
+
+    if (minutes === 0) {
+        return `${hours} hr`;
+    }
+
+    return `${hours} hr ${minutes} min`;
+};
+
+const calculateDuration = (
+    start: string | undefined,
+    end: string | undefined
+): { text: string; isOverdue: boolean } => {
+    if (!start || !end) return { text: "N/A", isOverdue: false };
+
+    const now = new Date();
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    // Set end date to end of the day
+    endDate.setHours(23, 59, 59, 999);
+
+    // Check if task hasn't started yet
+    if (now < startDate) {
+        return { text: "Not started", isOverdue: false };
+    }
+
+    // Calculate time differences (use absolute value to show overdue time)
+    const diffMs = endDate.getTime() - now.getTime();
+    const absDiffMs = Math.abs(diffMs);
+    const isOverdue = diffMs <= 0;
+
+    // Calculate time differences
+    const seconds = Math.floor(absDiffMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    const remainingHours = hours % 24;
+    const remainingMinutes = minutes % 60;
+
+    const timeStr = `${days > 0 ? days + "d " : "0d "}${remainingHours > 0 ? remainingHours + "h " : "0h "}${remainingMinutes > 0 ? remainingMinutes + "m " : "0m"}`;
+    return {
+        text: isOverdue ? `${timeStr}` : timeStr,
+        isOverdue: isOverdue,
+    };
+};
+
+const CountdownTimer = ({
+    startDate,
+    targetDate,
+}: {
+    startDate?: string;
+    targetDate?: string;
+}) => {
+    const [countdown, setCountdown] = useState(
+        calculateDuration(startDate, targetDate)
+    );
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCountdown(calculateDuration(startDate, targetDate));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [targetDate, startDate]);
+
+    const textColor = countdown.isOverdue ? "text-red-600" : "text-[#029464]";
+    return (
+        <div className={`text-left ${textColor} text-[12px]`}>{countdown.text}</div>
+    );
+};
+
 const IssueDetailsPage = () => {
     const { setCurrentSection } = useLayout();
 
@@ -1041,6 +1127,7 @@ const IssueDetailsPage = () => {
                 tags: issueDetail.task_tags || [],
                 attachments: issueDetail.attachments || [],
                 comments: sortCommentsDesc(issueDetail.comments || []),
+                issue_allocation_times: issueDetail.issue_allocation_times || [],
             };
 
             setIssueData(mappedIssue);
@@ -1422,9 +1509,9 @@ const IssueDetailsPage = () => {
                                     <div className="text-left text-[12px]">{issueData?.issue_type_name}</div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
-                                    <div className="text-right text-[12px] font-[500]">MileStone :</div>
+                                    <div className="text-right text-[12px] font-[500]">Project :</div>
                                     <div className="text-left text-[12px]">
-                                        {issueData?.milstone_name || ""}
+                                        {issueData?.project_management_name || ""}
                                     </div>
                                 </div>
                             </div>
@@ -1439,9 +1526,9 @@ const IssueDetailsPage = () => {
                                     </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
-                                    <div className="text-right text-[12px] font-semibold]">Task :</div>
+                                    <div className="text-right text-[12px] font-[500]">MileStone :</div>
                                     <div className="text-left text-[12px]">
-                                        {issueData?.task_management_name || ""}
+                                        {issueData?.milstone_name || ""}
                                     </div>
                                 </div>
                             </div>
@@ -1456,9 +1543,36 @@ const IssueDetailsPage = () => {
                                     </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
-                                    <div className="text-right text-[12px] font-[500]">Project :</div>
+                                    <div className="text-right text-[12px] font-semibold]">Task :</div>
                                     <div className="text-left text-[12px]">
-                                        {issueData?.project_management_name || ""}
+                                        {issueData?.task_management_name || ""}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">Efforts Duration :</div>
+                                    <div className="text-left text-[12px]">
+                                        {formatTime(issueData?.issue_allocation_times)}
+                                    </div>
+                                </div>
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-semibold]">
+                                        {calculateDuration(
+                                            issueData?.start_date,
+                                            issueData?.end_date
+                                        ).isOverdue
+                                            ? "Overdue Time:"
+                                            : "Time Left:"}
+                                    </div>
+                                    <div className="text-left text-[12px]">
+                                        <CountdownTimer
+                                            startDate={issueData?.start_date}
+                                            targetDate={issueData?.end_date}
+                                        />
                                     </div>
                                 </div>
                             </div>
