@@ -18,6 +18,7 @@ import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
 import { createProjectTask, editProjectTask, resetUserAvailability, updateTaskStatus } from "@/store/slices/projectTasksSlice";
+import { updateSprint, fetchSprints } from "@/store/slices/sprintSlice";
 import { useTasks, useChangeTaskStatus, useCreateTask, useUpdateTaskCompletion, useDeleteTask, useImportTasks } from "@/hooks/useTasks";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus, X, Search, ChevronRight, Play, Pause, ArrowLeft } from "lucide-react";
@@ -47,6 +48,13 @@ const Transition = forwardRef(function Transition(
 });
 
 const columns: ColumnConfig[] = [
+    {
+        key: "actions",
+        label: "Actions",
+        sortable: false,
+        draggable: true,
+        defaultVisible: true,
+    },
     {
         key: "id",
         label: "Task ID",
@@ -568,6 +576,47 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     );
 };
 
+const AddToSprintModal = ({ isOpen, onClose, sprints, selectedSprintId, setSelectedSprintId, onSubmit, isLoading }: any) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Add to Sprint</h2>
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Sprint</label>
+                    <Select
+                        value={selectedSprintId}
+                        onChange={(e) => setSelectedSprintId(e.target.value as string)}
+                        displayEmpty
+                        fullWidth
+                        size="small"
+                        variant="outlined"
+                    >
+                        <MenuItem value=""><em>Select a sprint</em></MenuItem>
+                        {sprints.map((sprint: any) => (
+                            <MenuItem key={sprint.id} value={String(sprint.id)}>
+                                {sprint.name || sprint.title}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </div>
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={onSubmit}
+                        disabled={isLoading}
+                        className="bg-[#C72030] text-white hover:bg-[#A01020] disabled:opacity-50"
+                    >
+                        {isLoading ? 'Adding...' : 'Add to Sprint'}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const ProjectTasksPage = () => {
     const { setCurrentSection } = useLayout();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -724,6 +773,77 @@ const ProjectTasksPage = () => {
     const [pendingCompletionPercentage, setPendingCompletionPercentage] = useState<number>(0);
     const [isOverdueLoading, setIsOverdueLoading] = useState(false);
     const [pendingStatusChange, setPendingStatusChange] = useState<{ id: number; status: string } | null>(null);
+
+    // Row selection state
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+    // Add to Sprint state
+    const [isAddToSprintModalOpen, setIsAddToSprintModalOpen] = useState(false);
+    const [sprints, setSprints] = useState<any[]>([]);
+    const [selectedSprintId, setSelectedSprintId] = useState<string>('');
+    const [isAddingToSprint, setIsAddingToSprint] = useState(false);
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedItems(tasks.map((t: any) => String(t.id)));
+        } else {
+            setSelectedItems([]);
+        }
+    };
+
+    const handleSelectItem = (itemId: string, checked: boolean) => {
+        if (checked) {
+            setSelectedItems((prev) => [...prev, itemId]);
+        } else {
+            setSelectedItems((prev) => prev.filter((id) => id !== itemId));
+        }
+    };
+
+    const fetchSprintsList = useCallback(async () => {
+        try {
+            const result = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
+            const list = result?.sprints || result?.data?.sprints || (Array.isArray(result) ? result : []);
+            setSprints(list);
+        } catch (error) {
+            console.error('Failed to fetch sprints:', error);
+        }
+    }, [dispatch, token, baseUrl]);
+
+    const handleAddToSprintSubmit = async () => {
+        if (!selectedSprintId) {
+            toast.error('Please select a sprint');
+            return;
+        }
+        setIsAddingToSprint(true);
+        try {
+            const result = await dispatch(updateSprint({
+                token,
+                baseUrl,
+                id: selectedSprintId,
+                data: { sprint: { task_ids: selectedItems.map(Number) } },
+            })).unwrap();
+
+            const existingTaskIds: number[] = result?.existing_task_ids || [];
+            const existingIssueIds: number[] = result?.existing_issue_ids || [];
+
+            if (existingTaskIds.length > 0) {
+                toast.error(`Tasks with IDs ${existingTaskIds.join(', ')} are already added to this sprint`);
+            }
+            if (existingIssueIds.length > 0) {
+                toast.error(`Issues with IDs ${existingIssueIds.join(', ')} are already added to this sprint`);
+            }
+            if (existingTaskIds.length === 0 && existingIssueIds.length === 0) {
+                toast.success('Tasks added to sprint successfully');
+                setIsAddToSprintModalOpen(false);
+                setSelectedSprintId('');
+                setSelectedItems([]);
+            }
+        } catch (error) {
+            toast.error('Failed to add tasks to sprint');
+        } finally {
+            setIsAddingToSprint(false);
+        }
+    };
 
     const viewDropdownRef = useRef<HTMLDivElement>(null);
     const statusDropdownRef = useRef<HTMLDivElement>(null);
@@ -1569,21 +1689,21 @@ const ProjectTasksPage = () => {
         }
     }
 
-    const renderActions = (item: any) => (
-        <div className="flex items-center justify-center gap-2">
-            {shouldShow("employee_project_tasks", "show") && (
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    className="p-1"
-                    onClick={() => handleView(item.id)}
-                    title="View Task Details"
-                >
-                    <Eye className="w-4 h-4" />
-                </Button>
-            )}
-        </div>
-    );
+    // const renderActions = (item: any) => (
+    // <div className="flex items-center justify-center gap-2">
+    //     {shouldShow("employee_project_tasks", "show") && (
+    //         <Button
+    //             size="sm"
+    //             variant="ghost"
+    //             className="p-1"
+    //             onClick={() => handleView(item.id)}
+    //             title="View Task Details"
+    //         >
+    //             <Eye className="w-4 h-4" />
+    //         </Button>
+    //     )}
+    // </div>
+    // );
 
     const handleStatusChange = async (id: number, status: string) => {
         try {
@@ -2006,6 +2126,20 @@ const ProjectTasksPage = () => {
         };
 
         switch (columnKey) {
+            case "actions":
+                return <div className="flex items-center justify-center gap-2">
+                    {shouldShow("employee_project_tasks", "show") && (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="p-1"
+                            onClick={() => handleView(item.id)}
+                            title="View Task Details"
+                        >
+                            <Eye className="w-4 h-4" />
+                        </Button>
+                    )}
+                </div>
             case "id":
                 return <span className="w-[80px]">{isSubtask ? 'S-' : 'T-'}{item.id}</span>
             case "title":
@@ -2628,7 +2762,7 @@ const ProjectTasksPage = () => {
 
                         {/* Indented actions cell */}
                         <td className="p-4 text-center w-16 min-w-16">
-                            <div className="flex justify-center items-center gap-2 ml-4">
+                            {/* <div className="flex justify-center items-center gap-2 ml-4">
                                 <Button
                                     size="sm"
                                     variant="ghost"
@@ -2638,7 +2772,7 @@ const ProjectTasksPage = () => {
                                 >
                                     <Eye className="w-4 h-4" />
                                 </Button>
-                            </div>
+                            </div> */}
                         </td>
 
                         {/* Subtask data in same columns */}
@@ -2700,7 +2834,7 @@ const ProjectTasksPage = () => {
             <EnhancedTable
                 data={tasks}
                 columns={columns}
-                renderActions={renderActions}
+                // renderActions={renderActions}
                 renderCell={renderCell}
                 leftActions={leftActions}
                 rightActions={rightActions}
@@ -2720,7 +2854,12 @@ const ProjectTasksPage = () => {
                 getChildrenKey={() => "sub_tasks_managements"}
                 renderChildrenRows={renderChildrenRows}
                 enableFreeze={true}
-                freezeColumnsCount={3}
+                freezeColumnsCount={4}
+                selectable={true}
+                selectedItems={selectedItems}
+                onSelectAll={handleSelectAll}
+                onSelectItem={handleSelectItem}
+                getItemId={(item: any) => String(item.id)}
             />
 
             <Dialog
@@ -3186,6 +3325,48 @@ const ProjectTasksPage = () => {
                     onClearSelection={() => setShowActionPanel(false)}
                 />
             )}
+
+            {selectedItems.length > 0 && (
+                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px] selection-panel">
+                    <div className="w-[44px] bg-[#C4B59A] rounded-l-lg flex flex-col items-center justify-center">
+                        <div className="text-[#C72030] font-bold text-lg"></div>
+                    </div>
+                    <div className="flex items-center justify-between gap-4 px-6 flex-1">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-[#1a1a1a]">Action</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                onClick={() => { fetchSprintsList(); setIsAddToSprintModalOpen(true); }}
+                                variant="ghost"
+                                size="sm"
+                                className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+                            >
+                                <Plus className="w-6 h-6 text-black" />
+                                <span className="text-xs text-gray-600">Add to Sprint</span>
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="w-[44px] flex items-center justify-center border-l border-gray-200">
+                        <button
+                            onClick={() => setSelectedItems([])}
+                            className="w-full h-full flex items-center justify-center hover:bg-gray-50 transition-colors duration-200"
+                        >
+                            <X className="w-4 h-4 text-black" />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <AddToSprintModal
+                isOpen={isAddToSprintModalOpen}
+                onClose={() => { setIsAddToSprintModalOpen(false); setSelectedSprintId(''); }}
+                sprints={sprints}
+                selectedSprintId={selectedSprintId}
+                setSelectedSprintId={setSelectedSprintId}
+                onSubmit={handleAddToSprintSubmit}
+                isLoading={isAddingToSprint}
+            />
 
             <CommonImportModal
                 selectedFile={selectedFile}

@@ -13,6 +13,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { createSprint, fetchSprints } from "@/store/slices/sprintSlice";
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
+import Quill from "quill";
+import "quill/dist/quill.snow.css";
 
 const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
@@ -108,9 +110,43 @@ const AddSprintForm = ({ owners, handleClose, onSubmit }: AddSprintFormProps) =>
         endDate: "",
         priority: "",
     });
+    const [description, setDescription] = useState("");
     const [savedSprints, setSavedSprints] = useState<SavedSprint[]>([]);
     const [isDelete, setIsDelete] = useState(false);
     const isSubmittingRef = useRef(false);
+    const quillRef = useRef<HTMLDivElement>(null);
+    const quillEditorRef = useRef<Quill | null>(null);
+
+    useEffect(() => {
+        if (!quillRef.current) return;
+
+        if (quillEditorRef.current) {
+            quillEditorRef.current.off("text-change");
+            quillEditorRef.current = null;
+            quillRef.current.innerHTML = "";
+        }
+
+        const quill = new Quill(quillRef.current, {
+            theme: "snow",
+            placeholder: "Enter sprint description...",
+            modules: {
+                toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ["bold", "italic", "underline", "strike"],
+                    ["blockquote"],
+                    [{ list: "ordered" }, { list: "bullet" }],
+                    ["link"],
+                    ["clean"],
+                ],
+            },
+        });
+
+        quillEditorRef.current = quill;
+
+        quill.on("text-change", () => {
+            setDescription(quill.root.innerHTML);
+        });
+    }, []);
 
     const handleChange = (e: any) => {
         const { name, value } = e.target;
@@ -134,6 +170,7 @@ const AddSprintForm = ({ owners, handleClose, onSubmit }: AddSprintFormProps) =>
     const createSprintPayload = (data: SprintFormData) => ({
         sprint: {
             name: data.title,
+            description,
             owner_id: data.ownerId,
             start_date: data.startDate,
             end_date: data.endDate,
@@ -149,6 +186,10 @@ const AddSprintForm = ({ owners, handleClose, onSubmit }: AddSprintFormProps) =>
             endDate: "",
             priority: "",
         });
+        setDescription("");
+        if (quillEditorRef.current) {
+            quillEditorRef.current.root.innerHTML = "";
+        }
     };
 
     const handleAddSprints = async (e: any) => {
@@ -327,6 +368,28 @@ const AddSprintForm = ({ owners, handleClose, onSubmit }: AddSprintFormProps) =>
                                 onChange={handleChange}
                                 placeholder="Enter Sprint Title"
                             />
+                        </div>
+
+                        <div className="mt-2 space-y-2">
+                            <label className="block text-sm font-medium">Description</label>
+                            <div
+                                style={{
+                                    border: "1px solid rgba(0, 0, 0, 0.23)",
+                                    borderRadius: "4px",
+                                    overflow: "hidden",
+                                }}
+                            >
+                                <style>{`
+                                    .sprint-quill-wrapper .ql-toolbar.ql-snow,
+                                    .sprint-quill-wrapper .ql-container.ql-snow { border: none; }
+                                    .sprint-quill-wrapper .ql-toolbar.ql-snow { border-bottom: 1px solid rgba(0,0,0,0.12); }
+                                `}</style>
+                                <div
+                                    ref={quillRef}
+                                    className="sprint-quill-wrapper"
+                                    style={{ minHeight: "200px" }}
+                                />
+                            </div>
                         </div>
 
                         <div className="flex flex-col gap-4 my-4">
