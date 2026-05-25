@@ -7,6 +7,102 @@ import { MeetingNotes } from './WeeklyReviews/MeetingNotes';
 import { MemberReportCard } from './WeeklyReviews/MemberReportCard';
 import { toast } from 'sonner';
 
+const getBaseUrl = () => {
+    const rawBase = localStorage.getItem('baseUrl') || '';
+    if (!rawBase) return '';
+    return rawBase.startsWith('http://') || rawBase.startsWith('https://') ? rawBase.replace(/\/$/, '') : `https://${rawBase.replace(/\/$/, '')}`;
+};
+
+const getReportItemText = (item: any): string => {
+    if (typeof item === 'string') return item;
+    if (item && typeof item === 'object') return item.title || item.text || item.name || '';
+    return String(item ?? '');
+};
+
+const pushUnique = (arr: any[], item: any, keyFields: string[]) => {
+    const exists = arr.some((current) => keyFields.every((key) => current[key] === item[key]));
+    if (!exists) arr.push(item);
+};
+
+const getItemTitle = (item: any): string => {
+    if (!item) return '';
+    if (typeof item === 'string') return item;
+    if (typeof item === 'object') return String(item.title || item.name || item.text || '');
+    return String(item);
+};
+
+const getItemStatus = (item: any): string => {
+    if (!item || typeof item !== 'object') return 'open';
+    return item.status || 'open';
+};
+
+const getItemType = (item: any): string => {
+    if (!item || typeof item !== 'object') return 'task';
+    return String(item.type || 'task').toLowerCase();
+};
+
+const normalizeReportList = (value: any): any[] => {
+    if (Array.isArray(value)) return value;
+    if (Array.isArray(value?.items)) return value.items;
+    return [];
+};
+
+const normalizeWeeklyReportData = (reportData: any) => {
+    const rd = reportData && typeof reportData === 'object' ? reportData : {};
+    return {
+        achievements: normalizeReportList(rd.achievements || rd.accomplishments),
+        tasks_issues: normalizeReportList(rd.tasks_issues),
+        upcoming_week_plan: normalizeReportList(rd.upcoming_week_plan || rd.tasks),
+        remarks: normalizeReportList(rd.remarks),
+        past_kpis: normalizeReportList(rd.past_kpis),
+        kpi: rd.kpi || '',
+        kpis: rd.kpis && typeof rd.kpis === 'object' ? rd.kpis : {},
+        sections: rd.sections && typeof rd.sections === 'object' ? rd.sections : {},
+        details: rd.details && typeof rd.details === 'object' ? rd.details : {},
+        total_score: rd.total_score ?? null,
+        is_absent: rd.details?.is_absent ?? rd.sections?.is_absent ?? rd.is_absent ?? false,
+        self_rating: rd.details?.self_rating ?? rd.sections?.self_rating ?? rd.self_rating ?? null,
+    };
+};
+
+const normalizeWeekPlan = (plan: any[] = []) => {
+    const byDay: Record<string, string[]> = {};
+    const flat: Array<{ day: string; title: string; status: string; starred: boolean }> = [];
+
+    plan.forEach((entry) => {
+        if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+
+        Object.entries(entry).forEach(([day, values]: [string, any]) => {
+            const list = Array.isArray(values) ? values : [];
+            const titles = list.map(getReportItemText).filter(Boolean);
+            if (titles.length > 0) byDay[day] = titles;
+
+            list.forEach((item: any) => {
+                const title = getReportItemText(item);
+                if (!title) return;
+                flat.push({
+                    day,
+                    title,
+                    status: getItemStatus(item),
+                    starred: !!item?.starred || !!item?.is_starred,
+                });
+            });
+        });
+    });
+
+    return { byDay, flat };
+};
+
+const stripMissedMembersPrefix = (text: string): string => {
+    const markdownHeaderMatch = text.match(/^\*\*Team Members Who Missed Report \(\d+\):\*\*\n(?:- .+\n)*\n?/);
+    if (markdownHeaderMatch) return text.slice(markdownHeaderMatch[0].length);
+
+    const plainHeaderMatch = text.match(/^Team Members who failed to submit Reports \(\d+\):\n(?:.*\n)*?\nKey Discussion Points:\n\n?/);
+    if (plainHeaderMatch) return text.slice(plainHeaderMatch[0].length);
+
+    return text;
+};
+
 interface WeeklyMeetingData {
     config: {
         id: number;
@@ -44,9 +140,10 @@ interface WeeklyMeetingData {
 interface WeeklyReviewsProps {
     initialWeekDate?: Date;
     onWeekDateChange?: (date: Date) => void;
+    onMeetingSaved?: () => void;
 }
 
-const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps = {}) => {
+const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: WeeklyReviewsProps = {}) => {
     const [selectedMeeting, setSelectedMeeting] = useState('');
     const [meetingConfigs, setMeetingConfigs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -57,7 +154,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
     const [markAllAttended, setMarkAllAttended] = useState(false);
     const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<string>('Daily');
-    const [selectedPriorityDay, setSelectedPriorityDay] = useState<string>('Mon');
+    const [selectedPriorityDays, setSelectedPriorityDays] = useState<Record<number, string>>({});
     const [showDayDropdown, setShowDayDropdown] = useState<string | null>(null);
     const [priorityInputs, setPriorityInputs] = useState<Record<number, string>>({});
     const [priorityLoading, setPriorityLoading] = useState<Record<number, boolean>>({});
@@ -93,16 +190,31 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
     }, [initialWeekDate]);
 
     useEffect(() => {
+        if (selectedMeeting || meetingConfigs.length === 0) return;
+        const defaultMeeting = meetingConfigs.find((config: any) => config.is_default && config.active !== false);
+        const firstActiveMeeting = meetingConfigs.find((config: any) => config.active !== false);
+        const nextMeeting = defaultMeeting || firstActiveMeeting || meetingConfigs[0];
+        if (nextMeeting?.id !== undefined && nextMeeting?.id !== null) {
+            setSelectedMeeting(String(nextMeeting.id));
+        }
+    }, [meetingConfigs, selectedMeeting]);
+
+    useEffect(() => {
         onWeekDateChange?.(currentWeek);
     }, [currentWeek, onWeekDateChange]);
 
-    // Helper function to extract KPI summary from member reports
-    const extractKpiSummary = () => {
-        if (!weeklyData?.member_reports) return {};
+    const getSelectedReportRows = () => {
+        if (!weeklyData?.member_reports) return [];
+        return weeklyData.member_reports.filter((report) => report.weekly_report !== null && (markAllAttended || checkedUsers[report.user_id]));
+    };
+
+    // Helper function to extract KPI summary from selected member reports
+    const extractKpiSummary = (reports = getSelectedReportRows()) => {
+        if (!reports.length) return {};
 
         const kpiMap: Record<string, { total: number; achieved: number; names: string[] }> = {};
 
-        weeklyData.member_reports.forEach((report) => {
+        reports.forEach((report) => {
             const kpiData = report.report_data?.kpi || report.weekly_report?.report_data?.kpi;
             if (kpiData && typeof kpiData === 'string') {
                 if (!kpiMap[kpiData]) {
@@ -117,36 +229,152 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
     };
 
     // Helper function to extract open issues and tasks
-    const extractOpenIssues = () => {
-        if (!weeklyData?.member_reports) return [];
+    const extractOpenIssues = (reports = getSelectedReportRows()) => {
+        if (!reports.length) return [];
 
         const issues: Array<{ issue: string; assignee: string; status: string }> = [];
 
-        weeklyData.member_reports.forEach((report) => {
-            const remarks = report.report_data?.remarks || report.weekly_report?.report_data?.remarks || [];
-            if (Array.isArray(remarks)) {
-                remarks.forEach((remark: any) => {
-                    if (typeof remark === 'string' && remark.trim()) {
-                        issues.push({
-                            issue: remark,
-                            assignee: report.name,
-                            status: 'open'
-                        });
-                    }
-                });
-            }
+        reports.forEach((report) => {
+            const reportData = normalizeWeeklyReportData(report.weekly_report?.report_data || report.report_data || {});
+
+            reportData.tasks_issues.forEach((item: any) => {
+                const title = getItemTitle(item);
+                if (title && getItemType(item) === 'issue') {
+                    issues.push({
+                        issue: title,
+                        assignee: report.name,
+                        status: getItemStatus(item)
+                    });
+                }
+            });
+
+            reportData.remarks.forEach((remark: any) => {
+                const title = getItemTitle(remark);
+                if (title) {
+                    issues.push({
+                        issue: title,
+                        assignee: report.name,
+                        status: getItemStatus(remark)
+                    });
+                }
+            });
         });
 
         return issues;
     };
 
+    const buildCombinedData = (reports = getSelectedReportRows()) => {
+        const allAccomplishments: any[] = [];
+        const allTasksIssues: any[] = [];
+        const allUpcomingWeekPlan: any[] = [];
+        const allRemarks: any[] = [];
+        const allPastKpis: any[] = [];
+        let combinedSelfRating = 0;
+        let ratingCount = 0;
+        const combinedKpis = {
+            score: 0,
+            tasks: 0,
+            issues: 0,
+            planning: 0,
+            timing: 0,
+            sop_health: 0,
+            daily_kpi_achievement: 0,
+            weekly_kpi_achievement: 0,
+            remarks: 0,
+        };
+
+        reports.forEach((report) => {
+            const reportData = normalizeWeeklyReportData(report.weekly_report?.report_data || report.report_data || {});
+            const weekPlan = normalizeWeekPlan(reportData.upcoming_week_plan);
+
+            reportData.achievements.forEach((item: any) => {
+                const title = getItemTitle(item);
+                if (!title) return;
+                pushUnique(allAccomplishments, {
+                    title,
+                    text: title,
+                    member: report.name,
+                    user_id: report.user_id,
+                    is_starred: !!item?.is_starred || !!item?.starred,
+                }, ['title', 'user_id']);
+            });
+
+            reportData.tasks_issues.forEach((item: any) => {
+                const title = getItemTitle(item);
+                if (!title) return;
+                pushUnique(allTasksIssues, {
+                    type: getItemType(item),
+                    title,
+                    text: title,
+                    status: getItemStatus(item),
+                    member: report.name,
+                    user_id: report.user_id,
+                }, ['type', 'title', 'user_id']);
+            });
+
+            weekPlan.flat.forEach((item) => {
+                pushUnique(allUpcomingWeekPlan, {
+                    ...item,
+                    member: report.name,
+                    user_id: report.user_id,
+                }, ['day', 'title', 'user_id']);
+            });
+
+            reportData.remarks.forEach((item: any) => {
+                const title = getItemTitle(item);
+                if (!title) return;
+                pushUnique(allRemarks, {
+                    title,
+                    text: title,
+                    type: typeof item === 'object' && item ? Object.keys(item)[0] || 'remark' : 'remark',
+                    member: report.name,
+                    user_id: report.user_id,
+                }, ['title', 'user_id']);
+            });
+
+            reportData.past_kpis.forEach((item: any) => {
+                pushUnique(allPastKpis, {
+                    ...item,
+                    member: report.name,
+                    user_id: report.user_id,
+                }, ['kpi_id', 'user_id']);
+            });
+
+            if (reportData.self_rating !== null && reportData.self_rating !== undefined) {
+                combinedSelfRating += Number(reportData.self_rating) || 0;
+                ratingCount++;
+            }
+
+            const sections = reportData.sections || {};
+            combinedKpis.score += Number(reportData.total_score) || 0;
+            combinedKpis.tasks += Number(sections.tasks_issues) || 0;
+            combinedKpis.issues += reportData.tasks_issues.filter((item: any) => getItemType(item) === 'issue').length;
+            combinedKpis.planning += Number(sections.planning) || 0;
+            combinedKpis.timing += Number(sections.timing) || 0;
+            combinedKpis.sop_health += Number(sections.sop_health) || 0;
+            combinedKpis.daily_kpi_achievement += Number(sections.daily_kpi_achievement) || 0;
+            combinedKpis.weekly_kpi_achievement += Number(sections.weekly_kpi_achievement) || 0;
+            combinedKpis.remarks += Number(sections.remarks) || 0;
+        });
+
+        return {
+            allAccomplishments,
+            allTasksIssues,
+            allUpcomingWeekPlan,
+            allRemarks,
+            allPastKpis,
+            avgSelfRating: ratingCount > 0 ? Math.round(combinedSelfRating / ratingCount) : 0,
+            combinedKpis,
+        };
+    };
+
     // Helper function to extract goals progress
-    const extractGoalsProgress = () => {
-        if (!weeklyData?.member_reports) return [];
+    const extractGoalsProgress = (reports = getSelectedReportRows()) => {
+        if (!reports.length) return [];
 
         const goalsMap: Record<string, { progress: number; status: string }> = {};
 
-        weeklyData.member_reports.forEach((report) => {
+        reports.forEach((report) => {
             const sections = report.report_data?.sections || report.weekly_report?.report_data?.sections || {};
             if (sections.goals && Array.isArray(sections.goals)) {
                 sections.goals.forEach((goal: any) => {
@@ -167,22 +395,17 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
     };
 
     // Helper function to build detailed reviews
-    const buildDetailedReviews = () => {
-        if (!weeklyData?.member_reports) return [];
+    const buildDetailedReviews = (reports = getSelectedReportRows()) => {
+        if (!reports.length) return [];
 
-        return weeklyData.member_reports
-            .filter(report => report.weekly_report !== null && checkedUsers[report.user_id])
+        return reports
             .map((report) => {
-                const reportData = report.report_data || report.weekly_report?.report_data || {};
+                const reportData = normalizeWeeklyReportData(report.weekly_report?.report_data || report.report_data || {});
                 const sections = reportData.sections || {};
-                const tasks = reportData.tasks || [];
-                const achievements = reportData.achievements || [];
+                const weekPlan = normalizeWeekPlan(reportData.upcoming_week_plan);
 
                 // Extract priorities by day
-                const prioritiesByDay: Record<string, string[]> = {};
-                if (Array.isArray(tasks) && tasks.length > 0 && typeof tasks[0] === 'object') {
-                    Object.assign(prioritiesByDay, tasks[0]);
-                }
+                const prioritiesByDay = weekPlan.byDay;
 
                 // Get KPI data
                 const kpiList = [];
@@ -191,27 +414,91 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
                 }
 
                 return {
+                    user_id: report.user_id,
                     name: report.name,
                     email: report.email,
+                    journal_id: report.journal_id,
+                    weekly_report_id: report.weekly_report?.id,
+                    status: report.weekly_report?.status || report.status,
+                    submitted_at: report.weekly_report?.submitted_at || report.submitted_at,
                     department: report.department,
                     attendance: sections.is_absent ? '✗ Absent' : '✓ Present',
-                    selfRating: sections.self_rating || reportData.details?.self_rating || null,
+                    selfRating: reportData.self_rating,
                     kpis: kpiList,
-                    achievements: achievements.filter((a: any) => a && a.trim && a.trim()),
+                    sections,
+                    details: reportData.details,
+                    total_score: reportData.total_score,
+                    achievements: reportData.achievements.map(getReportItemText).filter((text: string) => text.trim()),
+                    accomplishments: reportData.achievements.map((item: any) => ({
+                        title: getItemTitle(item),
+                        done: !!item?.done || !!item?.completed,
+                        is_starred: !!item?.is_starred || !!item?.starred,
+                    })).filter((item: any) => item.title),
+                    tasks_issues: reportData.tasks_issues.map((item: any) => ({
+                        type: getItemType(item),
+                        title: getItemTitle(item),
+                        status: getItemStatus(item),
+                    })).filter((item: any) => item.title),
                     priorities: prioritiesByDay,
-                    weeklyNotes: reportData.remarks || []
+                    upcoming_week_plan: prioritiesByDay,
+                    upcoming_week_plan_items: weekPlan.flat,
+                    weeklyNotes: reportData.remarks || [],
+                    remarks: reportData.remarks.map((item: any) => ({
+                        title: getItemTitle(item),
+                        type: typeof item === 'object' && item ? Object.keys(item)[0] || 'remark' : 'remark',
+                    })).filter((item: any) => item.title),
+                    past_kpis: reportData.past_kpis,
                 };
             });
+    };
+
+    const buildMeetingNotesObject = (selectedReviews: any[], missedMembers: any[], notesText: string) => ({
+        missed_report_members: missedMembers.map((member: any) => member.name || member).filter(Boolean),
+        key_discussion_points: stripMissedMembersPrefix(notesText).trim(),
+        detailed_reports: selectedReviews.map((review: any) => ({
+            user_id: review.user_id,
+            name: review.name,
+            attendance: review.attendance,
+            self_rating: `${review.selfRating || 'N/A'}/10`,
+            kpis: review.kpis,
+            accomplishments: review.accomplishments?.length
+                ? review.accomplishments
+                : review.achievements.map((text: string) => ({ text, done: true })),
+            tasks_issues: review.tasks_issues || [],
+            remarks: review.remarks || [],
+            upcoming_week_plan: review.priorities,
+        })),
+    });
+
+    const getSubmittedMeetingJournal = () => {
+        const reports = weeklyData?.member_reports || [];
+        return reports.find((report: any) => report.journal_id && report.report_data?.meeting_notes) || null;
     };
 
     // Helper function to generate comprehensive meeting notes
     const generateDynamicPayload = () => {
         if (!weeklyData) return null;
 
-        const kpiSummary = extractKpiSummary();
-        const openIssues = extractOpenIssues();
-        const goalsProgress = extractGoalsProgress();
-        const detailedReviews = buildDetailedReviews();
+        const selectedReports = getSelectedReportRows();
+        const selectedUserIds = selectedReports.map((report) => report.user_id).filter(Boolean);
+        const kpiSummary = extractKpiSummary(selectedReports);
+        const openIssues = extractOpenIssues(selectedReports);
+        const goalsProgress = extractGoalsProgress(selectedReports);
+        const detailedReviews = buildDetailedReviews(selectedReports);
+        const {
+            allAccomplishments,
+            allTasksIssues,
+            allUpcomingWeekPlan,
+            allRemarks,
+            allPastKpis,
+            avgSelfRating,
+            combinedKpis,
+        } = buildCombinedData(selectedReports);
+
+        if (detailedReviews.length === 0) {
+            toast.error('Please select at least one submitted report before saving meeting notes');
+            return null;
+        }
 
         // Build comprehensive notes
         let dynamicNotes = '';
@@ -294,20 +581,33 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
             });
         }
 
+        const meetingNotesObj = buildMeetingNotesObject(detailedReviews, weeklyData.missed_members || [], meetingNotes);
+
         return {
             meeting_id: selectedMeeting,
             week: getWeekString(currentWeek),
             week_number: weeklyData.week.replace('W', ''),
             year: weeklyData.year,
-            notes: dynamicNotes,
             report_data: {
+                meeting_notes: meetingNotesObj,
                 kpi_summary: kpiSummary,
                 open_issues: openIssues,
                 goals_progress: goalsProgress,
                 detailed_reviews: detailedReviews,
+                all_tasks_issues: allTasksIssues,
+                all_accomplishments: allAccomplishments,
+                all_upcoming_week_plan: allUpcomingWeekPlan,
+                all_remarks: allRemarks,
+                all_past_kpis: allPastKpis,
                 total_submitted: weeklyData.submitted,
                 total_missed: weeklyData.missed,
-                total_members: weeklyData.total_members
+                total_members: weeklyData.total_members,
+                selected_member_count: detailedReviews.length,
+                mark_all_attended: markAllAttended,
+                average_self_rating: avgSelfRating,
+                combined_kpis: combinedKpis,
+                generated_notes: dynamicNotes,
+                selected_user_ids: selectedUserIds,
             }
         };
     };
@@ -315,7 +615,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
     const handleSaveMeeting = async () => {
         try {
             setSaveMeetingLoading(true);
-            const baseUrl = localStorage.getItem('baseUrl');
+            const baseUrl = getBaseUrl();
             const token = localStorage.getItem('token');
 
             if (!baseUrl || !token) {
@@ -324,16 +624,46 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
                 return;
             }
 
+            const submittedMeetingJournal = getSubmittedMeetingJournal();
+
+            if (submittedMeetingJournal?.journal_id) {
+                const existingReportData = submittedMeetingJournal.report_data || {};
+                const existingMeetingNotes = existingReportData.meeting_notes || {};
+
+                await axios.patch(
+                    `${baseUrl}/user_journals/${submittedMeetingJournal.journal_id}.json`,
+                    {
+                        report_data: {
+                            ...existingReportData,
+                            meeting_notes: {
+                                ...existingMeetingNotes,
+                                missed_report_members: (weeklyData?.missed_members || []).map((member: any) => member.name || member).filter(Boolean),
+                                key_discussion_points: stripMissedMembersPrefix(meetingNotes).trim(),
+                            },
+                        },
+                    },
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+
+                toast.success('Meeting notes updated successfully');
+                onMeetingSaved?.();
+                return;
+            }
+
             const dynamicPayload = generateDynamicPayload();
 
             if (!dynamicPayload) {
                 console.warn('Unable to generate payload - no weekly data available');
-                toast.error('Unable to generate meeting payload');
                 return;
             }
 
-            await axios.post(
-                `https://${baseUrl}/user_journals/submit_weekly_meeting.json`,
+            const response = await axios.post(
+                `${baseUrl}/user_journals/submit_weekly_meeting.json`,
                 dynamicPayload,
                 {
                     headers: {
@@ -343,24 +673,43 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
                 }
             );
 
+            console.log('Meeting saved successfully:', response.data);
             toast.success('Meeting notes saved successfully');
-        } catch (error) {
+            onMeetingSaved?.();
+        } catch (error: any) {
             console.error('Error saving meeting:', error);
-            toast.error('Failed to save meeting notes');
+            const errorMsg = error?.response?.data?.message || error?.message || 'Failed to save meeting notes';
+            toast.error(errorMsg);
         } finally {
             setSaveMeetingLoading(false);
         }
     };
 
-    const handleAddPriority = async (userId: number, priorityText: string, day: string) => {
+    const getSelectedPriorityDay = (userId: number) => selectedPriorityDays[userId] || 'Mon';
+
+    const createPriorityItem = (text: string) => ({
+        id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}`,
+        text,
+        starred: false,
+    });
+
+    const handleAddPriority = async (report: any, priorityText: string, day: string) => {
         if (!priorityText.trim()) {
             console.warn('Priority text is empty');
             return;
         }
 
+        const weeklyReportId = report?.weekly_report?.id;
+        const loadingKey = report?.user_id;
+
+        if (!weeklyReportId || !loadingKey) {
+            toast.error('Priority can be added only after weekly report is submitted');
+            return;
+        }
+
         try {
-            setPriorityLoading(prev => ({ ...prev, [userId]: true }));
-            const baseUrl = localStorage.getItem('baseUrl');
+            setPriorityLoading(prev => ({ ...prev, [loadingKey]: true }));
+            const baseUrl = getBaseUrl();
             const token = localStorage.getItem('token');
 
             if (!baseUrl || !token) {
@@ -368,18 +717,11 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
                 return;
             }
 
-            // Find the report to get existing data
-            const report = weeklyData?.member_reports?.find(r => r?.weekly_report?.id === userId);
-            if (!report) {
-                console.warn('Report not found');
-                return;
-            }
-
             // Get existing report_data or initialize empty
             const existingReportData = report.weekly_report?.report_data || report.report_data || {};
 
             // Get existing tasks or initialize empty array
-            const existingTasks = existingReportData.tasks || [];
+            const existingTasks = existingReportData.upcoming_week_plan || existingReportData.tasks || [];
 
             // Merge new priority with existing tasks
             const dayKey = day.toLowerCase();
@@ -390,13 +732,13 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
                 const dayKeyedObject = existingTasks[0];
                 const updatedDayObject = {
                     ...dayKeyedObject,
-                    [dayKey]: [...(dayKeyedObject[dayKey] || []), priorityText]
+                    [dayKey]: [...(dayKeyedObject[dayKey] || []), createPriorityItem(priorityText)]
                 };
                 mergedTasks = [updatedDayObject];
             } else {
                 // Initialize new day-keyed format
                 mergedTasks = [{
-                    [dayKey]: [priorityText]
+                    [dayKey]: [createPriorityItem(priorityText)]
                 }];
             }
 
@@ -410,8 +752,9 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
                 journal_id: report.journal_id,
                 report_data: {
                     ...existingReportData,
-                    tasks: mergedTasks,
-                    kpi: existingReportData.kpi || 'weekly value',
+                    upcoming_week_plan: mergedTasks,
+                    tasks: existingReportData.tasks || [],
+                    kpi: existingReportData.kpi || '',
                     achievements: existingReportData.achievements || [],
                     remarks: existingReportData.remarks || [],
                     remark_type: existingReportData.remark_type || 'remark',
@@ -431,7 +774,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
             };
 
             await axios.put(
-                `https://${baseUrl}/user_journals/${userId}.json`,
+                `${baseUrl}/user_journals/${weeklyReportId}.json`,
                 payload,
                 {
                     headers: {
@@ -442,14 +785,14 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
             );
 
             // Clear the input after successful submit
-            setPriorityInputs(prev => ({ ...prev, [userId]: '' }));
+            setPriorityInputs(prev => ({ ...prev, [loadingKey]: '' }));
             console.log('Priority added successfully');
 
             // Refresh the weekly data
             if (selectedMeeting) {
                 const weekString = getWeekString(currentWeek);
                 const response = await axios.get(
-                    `https://${baseUrl}/user_journals/weekly_meeting?meeting_id=${selectedMeeting}&week=${weekString}`,
+                    `${baseUrl}/user_journals/weekly_meeting?meeting_id=${selectedMeeting}&week=${weekString}`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -462,14 +805,14 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
         } catch (error) {
             console.error('Error adding priority:', error);
         } finally {
-            setPriorityLoading(prev => ({ ...prev, [userId]: false }));
+            setPriorityLoading(prev => ({ ...prev, [loadingKey]: false }));
         }
     };
 
     const fetchRatings = async (userId: number) => {
         try {
             setRatingsLoading(prev => ({ ...prev, [userId]: true }));
-            const baseUrl = localStorage.getItem('baseUrl');
+            const baseUrl = getBaseUrl();
             const token = localStorage.getItem('token');
 
             if (!baseUrl || !token) {
@@ -477,8 +820,9 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
                 return;
             }
 
+            const loggedInUserId = localStorage.getItem('userId') || '';
             const response = await axios.get(
-                `https://${baseUrl}/ratings.json?resource_id=${userId}&resource_type=User`,
+                `${baseUrl}/ratings?resource_type=User&resource_id=${userId}&rating_from_id=${loggedInUserId}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -511,7 +855,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
 
         try {
             setFeedbackLoading(prev => ({ ...prev, [userId]: true }));
-            const baseUrl = localStorage.getItem('baseUrl');
+            const baseUrl = getBaseUrl();
             const token = localStorage.getItem('token');
 
             if (!baseUrl || !token) {
@@ -520,12 +864,16 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
             }
 
             await axios.post(
-                `https://${baseUrl}/ratings`,
+                `${baseUrl}/ratings`,
                 {
                     resource_type: 'User',
                     resource_id: userId,
+                    rating_from_id: localStorage.getItem('userId') || '',
                     score: score,
-                    reviews: feedbackText
+                    reviews: feedbackText,
+                    positive_opening: '',
+                    constructive_feedback: '',
+                    positive_closing: ''
                 },
                 {
                     headers: {
@@ -567,7 +915,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
         const fetchWeeklyMeetings = async () => {
             try {
                 setLoading(true)
-                const baseUrl = localStorage.getItem('baseUrl')
+                const baseUrl = getBaseUrl()
                 const token = localStorage.getItem('token')
 
                 if (!baseUrl || !token) {
@@ -576,7 +924,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
                 }
 
                 const response = await axios.get(
-                    `https://${baseUrl}/weekly_meeting_configs`,
+                    `${baseUrl}/weekly_meeting_configs`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -586,7 +934,15 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
                 )
 
                 const data = response.data
-                setMeetingConfigs(Array.isArray(data) ? data : data.data || [])
+                const configs = Array.isArray(data) ? data : data.data || []
+                setMeetingConfigs(configs)
+
+                if (configs.length > 0) {
+                    const defaultMeeting = configs.find((config: any) => config.is_default && config.active !== false);
+                    const firstActiveMeeting = configs.find((config: any) => config.active !== false);
+                    const nextMeeting = defaultMeeting || firstActiveMeeting || configs[0];
+                    setSelectedMeeting((current) => current || String(nextMeeting.id));
+                }
             } catch (error) {
                 console.error('Error fetching weekly meetings:', error)
                 // Don't show error toast on initial load
@@ -608,7 +964,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
 
             try {
                 setWeeklyDataLoading(true);
-                const baseUrl = localStorage.getItem('baseUrl');
+                const baseUrl = getBaseUrl();
                 const token = localStorage.getItem('token');
 
                 if (!baseUrl || !token) {
@@ -618,7 +974,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
 
                 const weekString = getWeekString(currentWeek);
                 const response = await axios.get(
-                    `https://${baseUrl}/user_journals/weekly_meeting?meeting_id=${selectedMeeting}&week=${weekString}`,
+                    `${baseUrl}/user_journals/weekly_meeting?meeting_id=${selectedMeeting}&week=${weekString}`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -627,13 +983,19 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
                     }
                 );
 
-                setWeeklyData(response.data.data);
+                const nextWeeklyData = response.data.data;
+                setWeeklyData(nextWeeklyData);
 
-                const noteText =
-                    `**Team Members Who Missed Report (${response.data?.data?.missed_members?.length}):**\n` +
+                const submittedMeetingReport = nextWeeklyData?.member_reports?.find((report: any) => report.journal_id && report.report_data?.meeting_notes);
+                const savedNotes = submittedMeetingReport?.report_data?.meeting_notes?.key_discussion_points;
+
+                const noteText = savedNotes
+                    ? stripMissedMembersPrefix(savedNotes).trim()
+                    : `**Team Members Who Missed Report (${response.data?.data?.missed_members?.length}):**\n` +
                     response.data?.data?.missed_members?.map((m: any) => `- ${m.name}`).join("\n") +
                     `\n\n**Key Discussion Points:**\n`;
                 setMeetingNotes(noteText);
+                setMarkAllAttended(!!submittedMeetingReport?.report_data?.mark_all_attended);
             } catch (error) {
                 console.error('Error fetching weekly data:', error);
                 setWeeklyData(null);
@@ -663,8 +1025,13 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
         }
     }, [showDayDropdown]);
 
+    const submittedReports = weeklyData?.member_reports?.filter((report: any) => report.weekly_report !== null) || [];
+    const missedMembers = weeklyData?.missed_members || [];
+    const submittedMeetingJournal = getSubmittedMeetingJournal();
+    const isSubmittedMeeting = !!submittedMeetingJournal?.journal_id;
+
     return (
-        <div className="space-y-6 mt-6">
+        <div className="space-y-6 mt-6 max-w-full overflow-x-hidden">
             {/* Week Selector and Stats */}
             <WeekSelector
                 currentWeek={currentWeek}
@@ -679,110 +1046,117 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange }: WeeklyReviewsProps
             />
 
             {/* Main Content */}
-            <div className="space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#fffaf8] p-6 shadow-sm">
-                <div className="flex items-center gap-2">
-                    <CalendarIcon className="w-5 h-5 text-[#DA7756]" />
-                    <h2 className="text-lg font-bold text-[#1a1a1a]">
-                        Team Reviews - {weeklyData?.week ? `Week ${weeklyData.week.replace('W', '')}, ${weeklyData.year}` : 'Select a meeting'} {weeklyData?.week_label && `(${weeklyData.week_label})`}
-                    </h2>
-                </div>
-
-                {/* Missed Reports */}
-                <div className="space-y-3 rounded-xl border border-[#DA7756]/20 bg-[#fef6f4] p-4">
-                    <div className="flex items-center gap-2 text-sm font-bold text-[#DA7756]">
-                        <AlertTriangle className="w-5 h-5" />
-                        <span>Missed Reports ({weeklyData?.missed || 0}):</span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        {weeklyData?.missed_members && weeklyData.missed_members.length > 0 ? (
-                            weeklyData.missed_members.map((member: any) => (
-                                <div key={member.id} className="rounded-[6px] bg-[#DA7756] text-xs text-white px-3 py-1">
-                                    {member.name}
-                                </div>
-                            ))
-                        ) : (
-                            <p className="text-sm text-neutral-500">No missed reports</p>
-                        )}
-                    </div>
-                </div>
-
-                {/* Meeting Notes */}
-                <MeetingNotes
-                    meetingNotes={meetingNotes}
-                    markAllAttended={markAllAttended}
-                    saveMeetingLoading={saveMeetingLoading}
-                    onMeetingNotesChange={setMeetingNotes}
-                    onMarkAllAttendedChange={setMarkAllAttended}
-                    onSaveMeeting={handleSaveMeeting}
-                    onClearNotes={() => setMeetingNotes('')}
-                />
-
-                {/* === MEMBER REPORTS SECTION === */}
-                {weeklyDataLoading ? (
-                    <div className="flex flex-col items-center justify-center space-y-4 rounded-2xl bg-[#fef6f4] py-16 text-center border border-[#DA7756]/15">
-                        <p className="text-neutral-700 font-bold text-lg">Loading reviews...</p>
-                    </div>
-                ) : weeklyData?.member_reports && weeklyData.member_reports.length > 0 ? (
-                    <div className="space-y-3">
-                        {weeklyData.submitted > 0 && (
-                            <div className="rounded-xl border border-green-200 bg-green-50 p-4">
-                                <p className="text-sm font-bold text-green-700">{weeklyData.submitted} report(s) submitted</p>
+            <div className="border border-[rgba(218,119,86,0.18)] rounded-2xl shadow-sm overflow-hidden bg-white max-w-full">
+                <div className="p-4 border-b border-[rgba(218,119,86,0.1)] flex justify-between items-start flex-wrap gap-3 bg-[#fff8f5]">
+                    <div>
+                        <h3 className="font-bold text-sm text-neutral-900 flex items-center gap-2">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-white border border-[rgba(218,119,86,0.22)] shadow-sm">
+                                <CalendarIcon className="w-4 h-4 text-[#CE7A5A]" />
                             </div>
-                        )}
-                        <div className="grid gap-4 max-h-[600px] overflow-y-auto">
-                            {weeklyData.member_reports
-                                .filter((report: any) => report.weekly_report !== null)
-                                .map((report: any) => (
-                                    <MemberReportCard
-                                        key={report.user_id}
-                                        report={report}
-                                        isExpanded={expandedUserId === report.user_id}
-                                        isChecked={checkedUsers[report.user_id] || false}
-                                        activeTab={activeTab}
-                                        priorityText={priorityInputs[report.user_id] || ''}
-                                        selectedPriorityDay={selectedPriorityDay}
-                                        showDayDropdown={showDayDropdown}
-                                        priorityLoading={priorityLoading}
-                                        feedbackText={feedbackInputs[report.user_id] || ''}
-                                        feedbackScore={feedbackScores[report.user_id] || 0}
-                                        feedbackLoading={feedbackLoading}
-                                        ratingsData={ratingsData}
-                                        ratingsLoading={ratingsLoading}
-                                        daysOfWeek={daysOfWeek}
-                                        onExpand={() => setExpandedUserId(expandedUserId === report.user_id ? null : report.user_id)}
-                                        onUserCheck={(isChecked) => handleUserCheck(report.user_id, isChecked)}
-                                        onPriorityChange={(text) => setPriorityInputs(prev => ({ ...prev, [report.user_id]: text }))}
-                                        onPriorityDaySelect={(day) => {
-                                            setSelectedPriorityDay(day);
-                                            setShowDayDropdown(null);
-                                        }}
-                                        onTogglePriorityDropdown={() => setShowDayDropdown(showDayDropdown === `priority-${report.user_id}` ? null : `priority-${report.user_id}`)}
-                                        onAddPriority={() => handleAddPriority(report?.weekly_report?.id, priorityInputs[report.user_id] || '', selectedPriorityDay)}
-                                        onFeedbackChange={(text) => setFeedbackInputs(prev => ({ ...prev, [report.user_id]: text }))}
-                                        onFeedbackScoreChange={(score) => setFeedbackScores(prev => ({ ...prev, [report.user_id]: score }))}
-                                        onSubmitFeedback={() => handleSubmitFeedback(report.user_id, report?.weekly_report?.id)}
-                                        onTabChange={setActiveTab}
-                                        onFetchRatings={fetchRatings}
-                                    />
-                                ))}
+                            Weekly Reports
+                        </h3>
+                        <p className="text-xs text-neutral-400 mt-0.5">
+                            {weeklyData?.week ? `Week ${weeklyData.week.replace('W', '')}, ${weeklyData.year}` : 'Select a meeting'} {weeklyData?.week_label && `(${weeklyData.week_label})`}
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap pt-3">
+                        <span className="px-3.5 py-1.5 rounded-full text-xs font-black bg-[#CE7A5A] text-white shadow-sm">
+                            Total: {weeklyData?.total_members || 0}
+                        </span>
+                        <span className="px-3.5 py-1.5 rounded-full text-xs font-black bg-white text-emerald-700 border border-emerald-200 shadow-sm">
+                            Submitted: {submittedReports.length}
+                        </span>
+                        <span className="px-3.5 py-1.5 rounded-full text-xs font-black bg-white text-[#b91c1c] border border-red-200 shadow-sm">
+                            Missed: {missedMembers.length}
+                        </span>
+                    </div>
+                </div>
+
+                {weeklyDataLoading ? (
+                    <div className="p-10 text-center text-sm font-bold text-neutral-400 bg-white">
+                        Loading reviews...
+                    </div>
+                ) : submittedReports.length === 0 && missedMembers.length === 0 ? (
+                    <div className="p-10 text-center text-sm font-bold text-neutral-400 bg-white">
+                        No reports found for this selection.
+                    </div>
+                ) : submittedReports.length > 0 ? (
+                    <div className="p-4 bg-[#f8fafc]">
+                        <MeetingNotes
+                            meetingNotes={meetingNotes}
+                            markAllAttended={markAllAttended}
+                            isSubmittedMeeting={isSubmittedMeeting}
+                            saveMeetingLoading={saveMeetingLoading}
+                            onMeetingNotesChange={setMeetingNotes}
+                            onMarkAllAttendedChange={setMarkAllAttended}
+                            onSaveMeeting={handleSaveMeeting}
+                            onClearNotes={() => setMeetingNotes('')}
+                        />
+
+                        <div className="grid gap-4 max-h-[640px] overflow-y-auto overflow-x-hidden min-w-0 mt-6 pr-1">
+                            {submittedReports.map((report: any) => (
+                                <MemberReportCard
+                                    key={report.user_id}
+                                    report={report}
+                                    isExpanded={expandedUserId === report.user_id}
+                                    isChecked={markAllAttended || checkedUsers[report.user_id] || false}
+                                    activeTab={activeTab}
+                                    priorityText={priorityInputs[report.user_id] || ''}
+                                    selectedPriorityDay={getSelectedPriorityDay(report.user_id)}
+                                    showDayDropdown={showDayDropdown}
+                                    priorityLoading={priorityLoading}
+                                    feedbackText={feedbackInputs[report.user_id] || ''}
+                                    feedbackScore={feedbackScores[report.user_id] || 0}
+                                    feedbackLoading={feedbackLoading}
+                                    ratingsData={ratingsData}
+                                    ratingsLoading={ratingsLoading}
+                                    daysOfWeek={daysOfWeek}
+                                    onExpand={() => setExpandedUserId(expandedUserId === report.user_id ? null : report.user_id)}
+                                    onUserCheck={(isChecked) => handleUserCheck(report.user_id, isChecked)}
+                                    onPriorityChange={(text) => setPriorityInputs(prev => ({ ...prev, [report.user_id]: text }))}
+                                    onPriorityDaySelect={(day) => {
+                                        setSelectedPriorityDays(prev => ({ ...prev, [report.user_id]: day }));
+                                        setShowDayDropdown(null);
+                                    }}
+                                    onTogglePriorityDropdown={() => setShowDayDropdown(showDayDropdown === `priority-${report.user_id}` ? null : `priority-${report.user_id}`)}
+                                    onAddPriority={() => handleAddPriority(report, priorityInputs[report.user_id] || '', getSelectedPriorityDay(report.user_id))}
+                                    onFeedbackChange={(text) => setFeedbackInputs(prev => ({ ...prev, [report.user_id]: text }))}
+                                    onFeedbackScoreChange={(score) => setFeedbackScores(prev => ({ ...prev, [report.user_id]: score }))}
+                                    onSubmitFeedback={() => handleSubmitFeedback(report.user_id, report?.weekly_report?.id)}
+                                    onTabChange={setActiveTab}
+                                    onFetchRatings={fetchRatings}
+                                />
+                            ))}
                         </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center space-y-4 rounded-2xl bg-[#fef6f4] py-16 text-center border border-[#DA7756]/15">
-                        <div className="rounded-2xl border border-[#DA7756]/15 bg-white p-6">
-                            <CalendarIcon className="w-12 h-12 text-[#DA7756]/30" strokeWidth={1.5} />
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-neutral-700 font-bold text-lg">No reviews submitted for this week</p>
-                            {weeklyData && (
-                                <p className="text-neutral-500 font-medium text-sm">
-                                    {weeklyData.total_members} team members - {weeklyData.missed} pending
-                                </p>
-                            )}
-                        </div>
+                    <div className="p-10 text-center text-sm font-bold text-neutral-400 bg-white">
+                        No submitted weekly reports for this selection.
                     </div>
                 )}
             </div>
+
+            {missedMembers.length > 0 && (
+                <div className="bg-[#fff7f7] border border-red-200 rounded-2xl p-5 shadow-sm">
+                    <div className="flex items-center gap-2 text-red-600 font-bold text-sm mb-4">
+                        <AlertTriangle className="w-4 h-4" />
+                        Team Members Who Failed to Submit ({missedMembers.length}):
+                    </div>
+                    <div className="flex flex-wrap gap-2.5">
+                        {missedMembers.map((member: any, index: number) => (
+                            <div
+                                key={member.id ?? index}
+                                className="flex items-center gap-2 bg-white border border-red-100 px-3 py-1.5 rounded-full shadow-sm"
+                            >
+                                <div className="w-2 h-2 rounded-full bg-red-500" />
+                                <span className="text-[12px] font-bold text-gray-700">
+                                    {member.name || member}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
