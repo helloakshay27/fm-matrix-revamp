@@ -2215,7 +2215,7 @@ export const ProjectTaskDetails = () => {
                             taskDetails.expected_start_date,
                             taskDetails.target_date
                           ).isOverdue
-                            ? "Overdued Time:"
+                            ? "Overdue Time:"
                             : "Time Left:"}
                         </p>
                       </div>

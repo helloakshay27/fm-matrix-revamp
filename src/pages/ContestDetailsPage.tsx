@@ -9,6 +9,13 @@ import {
   FileText,
   Calendar,
   MapPin,
+  X,
+  Loader2,
+  FlaskConical,
+  Mail,
+  Tag,
+  User,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,6 +69,13 @@ export const ContestDetailsPage: React.FC = () => {
   const [contest, setContest] = useState<ContestDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [dryRunModalOpen, setDryRunModalOpen] = useState(false);
+  const [dryRunLoading, setDryRunLoading] = useState(false);
+  const [dryRunResult, setDryRunResult] = useState<any>(null);
+  const [dryRunError, setDryRunError] = useState<string | null>(null);
+  const [dryRunChecked, setDryRunChecked] = useState<Record<number, boolean>>({});
+  const [distributing, setDistributing] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -127,6 +141,78 @@ export const ContestDetailsPage: React.FC = () => {
 
   const getProbability = (prize: Prize) => {
     return `${prize.probability_value}/100`;
+  };
+
+  const handleDryRun = async () => {
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    if (!baseUrl || !token) {
+      toast.error("Missing credentials");
+      return;
+    }
+    setDryRunModalOpen(true);
+    setDryRunLoading(true);
+    setDryRunResult(null);
+    setDryRunError(null);
+    setDryRunChecked({});
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/contests/${id}/preview_random.json`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = response.data;
+      setDryRunResult(data);
+      if (Array.isArray(data?.distribution)) {
+        const allChecked: Record<number, boolean> = {};
+        data.distribution.forEach((_: any, i: number) => { allChecked[i] = true; });
+        setDryRunChecked(allChecked);
+      }
+    } catch (err: any) {
+      setDryRunError(
+        err.response?.data?.message || err.message || "Dry run failed"
+      );
+    } finally {
+      setDryRunLoading(false);
+    }
+  };
+
+  const handleDistribute = async () => {
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    if (!baseUrl || !token) { toast.error("Missing credentials"); return; }
+
+    const checkedItems = (dryRunResult?.distribution ?? []).filter(
+      (_: any, i: number) => dryRunChecked[i] !== false
+    );
+    if (checkedItems.length === 0) {
+      toast.error("Select at least one winner to distribute.");
+      return;
+    }
+
+    setDistributing(true);
+    try {
+      await axios.post(
+        `https://${baseUrl}/contests/${id}/distribute_random.json`,
+        {
+          distributions: checkedItems.map((e: any) => ({
+            user_id: e.user_id,
+            prize_id: e.prize_id,
+          })),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      toast.success("Rewards distributed successfully!");
+      setDryRunModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || err.message || "Distribution failed");
+    } finally {
+      setDistributing(false);
+    }
   };
 
   const handleEdit = () => {
@@ -197,6 +283,19 @@ export const ContestDetailsPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-3">
+            {
+              contest.content_type === "random" && (
+                <Button
+                  onClick={handleDryRun}
+                  variant="outline"
+                  className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 px-4 py-2"
+                >
+                  <FlaskConical className="w-4 h-4 mr-2" />
+                  Dry Run Contest
+                </Button>
+              )
+            }
+
             <Button
               onClick={() => handleEdit()}
               variant="outline"
@@ -536,6 +635,185 @@ export const ContestDetailsPage: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dry Run Modal */}
+      {dryRunModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-[#C72030]/10 flex items-center justify-center shrink-0">
+                  <FlaskConical className="w-4 h-4 text-[#C72030]" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-[#1a1a1a] leading-tight">Dry Run Result</h2>
+                  {contest && (
+                    <p className="text-xs text-gray-400 font-medium leading-tight">{contest.name}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setDryRunResult(null);
+                    setDryRunError(null);
+                    handleDryRun();
+                  }}
+                  disabled={dryRunLoading}
+                  title="Refresh"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-[#C72030] bg-[#C72030]/5 hover:bg-[#C72030]/10 border border-[#C72030]/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${dryRunLoading ? "animate-spin" : ""}`} />
+                  Refresh
+                </button>
+                <button
+                  onClick={() => setDryRunModalOpen(false)}
+                  className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal body */}
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              {dryRunLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <Loader2 className="w-8 h-8 text-[#C72030] animate-spin" />
+                  <p className="text-sm text-gray-500 font-medium">Running simulation…</p>
+                </div>
+              ) : dryRunError ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                    <X className="w-5 h-5 text-red-600" />
+                  </div>
+                  <p className="text-sm font-semibold text-red-600">Dry run failed</p>
+                  <p className="text-xs text-gray-500 text-center max-w-sm">{dryRunError}</p>
+                </div>
+              ) : dryRunResult ? (
+                <div className="space-y-4">
+                  {/* Summary bar */}
+                  <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[#C72030]/5 border border-[#C72030]/20">
+                    <Trophy className="w-4 h-4 text-[#C72030] shrink-0" />
+                    <p className="text-sm font-semibold text-[#1a1a1a]">
+                      Total Rewards Distributed:&nbsp;
+                      <span className="text-[#C72030]">{dryRunResult.total_rewards ?? 0}</span>
+                    </p>
+                  </div>
+
+                  {/* Distribution cards */}
+                  {Array.isArray(dryRunResult.distribution) && dryRunResult.distribution.length > 0 ? (
+                    dryRunResult.distribution.map((entry: any, i: number) => (
+                      <div
+                        key={i}
+                        className="rounded-xl border border-gray-200 bg-white overflow-hidden"
+                      >
+                        {/* Card header — winner number + checkbox */}
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-[#F6F4EE] border-b border-gray-200">
+                          <span className="text-xs font-bold text-[#C72030] uppercase tracking-wide">
+                            Winner #{i + 1}
+                          </span>
+                          <input
+                            type="checkbox"
+                            checked={dryRunChecked[i] ?? true}
+                            onChange={(e) =>
+                              setDryRunChecked((prev) => ({ ...prev, [i]: e.target.checked }))
+                            }
+                            className="w-4 h-4 accent-[#C72030] cursor-pointer"
+                          />
+                        </div>
+
+                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {/* User info */}
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-[#C72030]/10 flex items-center justify-center shrink-0">
+                                <User className="w-4 h-4 text-[#C72030]" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 font-medium">User</p>
+                                <p className="text-sm font-semibold text-[#1a1a1a]">{entry.user_name}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                <Mail className="w-4 h-4 text-gray-500" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 font-medium">Email</p>
+                                <p className="text-sm text-[#1a1a1a] break-all">{entry.email}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Prize info */}
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                                <Gift className="w-4 h-4 text-amber-600" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 font-medium">Prize</p>
+                                <p className="text-sm font-semibold text-[#1a1a1a]">{entry.prize_title}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                                <Tag className="w-4 h-4 text-gray-500" />
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 font-medium">
+                                  {entry.reward_type === "points" ? "Points" : "Coupon Code"}
+                                </p>
+                                <p className="text-sm font-semibold text-[#1a1a1a]">
+                                  {entry.reward_type === "points"
+                                    ? `${entry.points_value ?? 0} pts`
+                                    : (entry.coupon_code ?? "—")}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-8">No distribution data returned.</p>
+                  )}
+                </div>
+              ) : null}
+            </div>
+
+            {/* Modal footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <Button
+                onClick={() => setDryRunModalOpen(false)}
+                variant="outline"
+                className="border-gray-300 text-gray-600 hover:bg-gray-100"
+              >
+                Close
+              </Button>
+              <Button
+                onClick={handleDistribute}
+                disabled={distributing || dryRunLoading || !dryRunResult}
+                className="bg-[#C72030] hover:bg-[#a81c28] text-white font-semibold px-5 disabled:opacity-50"
+              >
+                {distributing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Distributing…
+                  </>
+                ) : (
+                  <>
+                    <Gift className="w-4 h-4 mr-2" />
+                    Distribute
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
