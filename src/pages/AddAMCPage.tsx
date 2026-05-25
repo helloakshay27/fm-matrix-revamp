@@ -26,6 +26,31 @@ interface Service {
 const MAX_ATTACHMENT_SIZE_MB = 20;
 const MAX_ATTACHMENT_SIZE_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;
 
+const AMC_DROPDOWN_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+const getDropdownCache = (key: string): unknown | null => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const { data, timestamp } = JSON.parse(raw);
+    if (Date.now() - timestamp > AMC_DROPDOWN_CACHE_TTL) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+};
+
+const setDropdownCache = (key: string, data: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+  } catch {
+    // ignore quota errors silently
+  }
+};
+
 export const AddAMCPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -224,17 +249,25 @@ export const AddAMCPage = () => {
     // initialLoad();
 
     const fetchAssetGroups = async () => {
+      const CACHE_KEY = 'amc_cache_asset_groups';
+      const cached = getDropdownCache(CACHE_KEY);
+      if (cached) {
+        setAssetGroups(cached as Array<{ id: number; name: string; sub_groups: Array<{ id: number; name: string }> }>);
+        return;
+      }
       setLoading(true);
       try {
         const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
+        let groups: Array<{ id: number; name: string; sub_groups: Array<{ id: number; name: string }> }> = [];
         if (Array.isArray(response.data)) {
-          setAssetGroups(response.data);
+          groups = response.data;
         } else if (response.data && Array.isArray(response.data.asset_groups)) {
-          setAssetGroups(response.data.asset_groups);
+          groups = response.data.asset_groups;
         } else {
           console.warn('API response is not an array:', response.data);
-          setAssetGroups([]);
         }
+        setAssetGroups(groups);
+        setDropdownCache(CACHE_KEY, groups);
       } catch (error) {
         console.error('Error fetching asset groups:', error);
         setAssetGroups([]);
@@ -245,16 +278,24 @@ export const AddAMCPage = () => {
     };
 
     const fetchService = async () => {
+      const CACHE_KEY = 'amc_cache_services';
+      const cached = getDropdownCache(CACHE_KEY);
+      if (cached) {
+        setServices(cached as Service[]);
+        return;
+      }
       try {
         const response = await apiClient.get('/pms/services/get_services.json');
+        let svcs: Service[] = [];
         if (Array.isArray(response.data)) {
-          setServices(response.data);
+          svcs = response.data;
         } else if (response.data && Array.isArray(response.data.services)) {
-          setServices(response.data.services);
+          svcs = response.data.services;
         } else {
           console.warn('API response is not an array:', response.data);
-          setServices([]);
         }
+        setServices(svcs);
+        setDropdownCache(CACHE_KEY, svcs);
       } catch (error) {
         console.error('Error fetching services:', error);
         setServices([]);
@@ -267,6 +308,12 @@ export const AddAMCPage = () => {
 
     // Fetch technicians
     const fetchTechnicians = async () => {
+      const CACHE_KEY = 'amc_cache_technicians';
+      const cached = getDropdownCache(CACHE_KEY);
+      if (cached) {
+        setTechnicianOptions(cached as unknown[]);
+        return;
+      }
       setTechniciansLoading(true);
       try {
         const baseUrl = localStorage.getItem('baseUrl');
@@ -282,7 +329,9 @@ export const AddAMCPage = () => {
         );
         if (response.ok) {
           const data = await response.json();
-          setTechnicianOptions(data.users || []);
+          const users = data.users || [];
+          setTechnicianOptions(users);
+          setDropdownCache(CACHE_KEY, users);
         }
       } catch (error) {
         console.error('Error fetching technicians:', error);
@@ -375,9 +424,15 @@ export const AddAMCPage = () => {
     return () => { active = false; clearTimeout(handler); };
   }, [assetQuery]);
 
-  // Reset to initial suppliers when search is cleared (re-fetch base list)
+  // Reset to initial suppliers when search is cleared (use cache or re-fetch base list)
   useEffect(() => {
     if (supplierQuery.length === 0) {
+      const CACHE_KEY = 'amc_cache_suppliers';
+      const cached = getDropdownCache(CACHE_KEY);
+      if (cached) {
+        setSupplierOptions(cached as unknown[]);
+        return;
+      }
       (async () => {
         try {
           const baseUrl = localStorage.getItem('baseUrl');
@@ -389,6 +444,7 @@ export const AddAMCPage = () => {
             const data = await resp.json();
             const arr = Array.isArray(data) ? data : (Array.isArray(data?.pms_suppliers) ? data.pms_suppliers : (Array.isArray(data?.suppliers) ? data.suppliers : []));
             setSupplierOptions(arr);
+            setDropdownCache(CACHE_KEY, arr);
           } else {
             setSupplierOptions([]);
           }
@@ -1137,14 +1193,19 @@ export const AddAMCPage = () => {
   const errorStyles = "text-red-500 text-sm mt-1";
 
   const fetchAsset = async () => {
+    const CACHE_KEY = 'amc_cache_assets';
+    const cached = getDropdownCache(CACHE_KEY);
+    if (cached) {
+      setAssetList(cached as unknown[]);
+      return;
+    }
     const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem("token"); // Get token from localStorage
-
+    const token = localStorage.getItem("token");
     try {
       const response = await fetch(`https://${baseUrl}/pms/assets/get_assets.json`, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Ensure token is a Bearer token if needed
+          'Authorization': `Bearer ${token}`,
         }
       });
 
@@ -1153,8 +1214,8 @@ export const AddAMCPage = () => {
       }
 
       const data = await response.json();
-      setAssetList(data)
-      console.log('SAC data:', data);
+      setAssetList(data);
+      setDropdownCache(CACHE_KEY, data);
       return data;
     } catch (error) {
       console.error('Error fetching SAC:', error);
