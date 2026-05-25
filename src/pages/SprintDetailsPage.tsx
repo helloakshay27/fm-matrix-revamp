@@ -12,6 +12,7 @@ import { useLayout } from "@/contexts/LayoutContext";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { fetchSprintById } from "@/store/slices/sprintSlice";
 import SprintTasks from "@/components/SprintTasks";
+import SprintIssues from "@/components/SprintIssues";
 
 const SlideTransition = forwardRef(function SlideTransition(
   props: TransitionProps & { children: React.ReactElement },
@@ -161,6 +162,7 @@ interface ApiSprint {
   updated_at?: string;
   associated_projects_count?: number;
   sprint_task_managements?: ApiSprintTask[];
+  sprint_issues?: any[];
 }
 
 // Normalize raw status to display value
@@ -320,12 +322,14 @@ export const SprintDetailsPage = () => {
 
   const [sprintDetails, setSprintDetails] = useState<SprintDetails>({});
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [sprintIssues, setSprintIssues] = useState<any[]>([]);
   const [sprintMembers, setSprintMembers] = useState<SprintMember[]>([]);
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const [membersSummary, setMembersSummary] = useState<MemberSummary[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(false);
   const [selectedOption, setSelectedOption] = useState("Open");
+  const [activeTab, setActiveTab] = useState<"tasks" | "issues">("tasks");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
@@ -334,6 +338,7 @@ export const SprintDetailsPage = () => {
       const resp = (await dispatch(fetchSprintById({ token, baseUrl, id })).unwrap()) as ApiSprint;
       setSprintDetails(mapApiToDetails(resp));
       setTasks(mapApiTasks(resp));
+      setSprintIssues(resp.sprint_issues ?? []);
       setSprintMembers(extractMembers(resp));
     } catch (error) {
       toast.error(String(error) || "Failed to fetch sprint details");
@@ -533,36 +538,32 @@ export const SprintDetailsPage = () => {
           </div>
         </div>
 
-        {/* Tasks Section header + table */}
+        {/* Tabs Section */}
         <div>
-          <div className="flex items-center justify-between my-3">
-            <div className="flex items-center gap-10">
-              <div className="text-[14px] font-[400] cursor-pointer">Tasks</div>
-            </div>
+          {/* Tab headers */}
+          <div className="flex items-center gap-0 border-b-[3px] border-[rgba(190,190,190,1)]">
+            {(["tasks", "issues"] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`relative px-5 py-2 text-[14px] font-[500] capitalize transition-colors focus:outline-none ${
+                  activeTab === tab
+                    ? "text-[#E95420]"
+                    : "text-[#323232] hover:text-[#E95420]"
+                }`}
+              >
+                {tab === "tasks" ? "Tasks" : "Issues"}
+                {activeTab === tab && (
+                  <span className="absolute bottom-[-3px] left-0 w-full h-[3px] bg-[#E95420] rounded-t-sm" />
+                )}
+              </button>
+            ))}
           </div>
-          <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+
+          {/* Tab content */}
           <div className="mt-4 overflow-x-auto">
-            {/* <EnhancedTable
-              data={tasks}
-              columns={taskColumns}
-              hideColumnsButton={true}
-              hideTableExport={true}
-              hideTableSearch={true}
-              exportFileName="sprint-tasks"
-              pagination={true}
-              pageSize={10}
-              emptyMessage=""
-              className="min-w-[1200px]"
-              renderCell={renderTaskCell}
-              renderActions={(item) => (
-                <div className="flex items-center justify-center gap-2">
-                  <Button size="sm" variant="ghost" className="p-1" title="View Task Details">
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
-            /> */}
-            <SprintTasks tasks={tasks} />
+            {activeTab === "tasks" && <SprintTasks tasks={tasks} />}
+            {activeTab === "issues" && <SprintIssues issues={sprintIssues} />}
           </div>
         </div>
       </div>
