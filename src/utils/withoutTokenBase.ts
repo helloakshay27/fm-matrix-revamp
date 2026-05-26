@@ -101,6 +101,7 @@ baseClient.interceptors.request.use(
         hostname.includes("club.lockated.com");
       const isPanchshilPulseProd = hostname === "pulse.panchshil.com" ||
         hostname === "localhost";
+      const isPanchshilPulseUat = hostname === "pulse-uat.panchshil.com"
 
       const isDevSite = hostname === "dev-fm-matrix.lockated.com";
 
