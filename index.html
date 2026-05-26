@@ -1,27 +1,25 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <meta
-      http-equiv="Cache-Control"
-      content="no-cache, no-store, must-revalidate"
-    />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- PWA Configuration -->
-    <meta name="theme-color" content="#1976d2" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="FM Admin" />
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 
-    <meta http-equiv="Content-Security-Policy" content="" />
-    <!-- <meta
+  <!-- PWA Configuration -->
+  <meta name="theme-color" content="#1976d2" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="FM Admin" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+
+  <meta http-equiv="Content-Security-Policy" content="" />
+  <!-- <meta
       http-equiv="Content-Security-Policy"
       content="
         default-src 'self'; 
@@ -36,7 +34,7 @@
       "
     /> -->
 
-    <!-- <meta http-equiv="Content-Security-Policy" 
+  <!-- <meta http-equiv="Content-Security-Policy" 
     content="
     default-src 'self'; 
     connect-src 'self' https://live-api.gophygital.work https://recess-club-api.panchshil.com https://uat.lockated.com https://*.gophygital.work https://*.lockated.com; 
@@ -47,9 +45,7 @@
     frame-src 'self' https://preview--nexus-facility-flow.lovable.app;"
     /> -->
 
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="
+  <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
     media-src 'self' https://lockated-public.s3.ap-south-1.amazonaws.com https://*.amazonaws.com blob:;
     connect-src 'self'
@@ -74,62 +70,51 @@
     font-src 'self' data: https://fonts.gstatic.com https://maps.gstatic.com;
     img-src 'self' data: https: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.ggpht.com https://*.tile.openstreetmap.org https://unpkg.com;
     frame-src 'self' https://preview--nexus-facility-flow.lovable.app https://superset.lockated.com https://office.lockated.com https://www.youtube.com https://www.google.com https://recaptcha.google.com;
-  "
-    />
+  " />
 
-    <title>FM Matrix</title>
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="32x32"
-      href="/favicon-32x32.png?v=2"
-    />
-    <link
-      rel="icon"
-      type="image/png"
-      sizes="192x192"
-      href="/pwa-192x192.png?v=2"
-    />
-    <link rel="shortcut icon" href="/favicon-32x32.png?v=2" />
-    <link rel="apple-touch-icon" href="/pwa-192x192.png?v=2" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:300,400,500,600,700&display=swap" rel="stylesheet">
-    <link
-      href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600&family=Open+Sans:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
-  </head>
+  <title>Panchshil Pulse</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=2" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png?v=2" />
+  <link rel="shortcut icon" href="/favicon-32x32.png?v=2" />
+  <link rel="apple-touch-icon" href="/pwa-192x192.png?v=2" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:300,400,500,600,700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600&family=Open+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+</head>
 
-  <body>
-    <div id="root"></div>
+<body>
+  <div id="root"></div>
 
-    <script>
-      if ("serviceWorker" in navigator) {
-        navigator.serviceWorker
-          .getRegistrations()
-          .then(function (registrations) {
-            for (let registration of registrations) {
-              registration.unregister().then(function (success) {
-                console.log("Service Worker unregistered:", success);
-              });
-            }
-          });
-      }
-
-      // Clear all caches
-      if ("caches" in window) {
-        caches.keys().then(function (cacheNames) {
-          return Promise.all(
-            cacheNames.map(function (cacheName) {
-              console.log("Deleting cache:", cacheName);
-              return caches.delete(cacheName);
-            })
-          );
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .getRegistrations()
+        .then(function (registrations) {
+          for (let registration of registrations) {
+            registration.unregister().then(function (success) {
+              console.log("Service Worker unregistered:", success);
+            });
+          }
         });
-      }
-    </script>
+    }
 
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    // Clear all caches
+    if ("caches" in window) {
+      caches.keys().then(function (cacheNames) {
+        return Promise.all(
+          cacheNames.map(function (cacheName) {
+            console.log("Deleting cache:", cacheName);
+            return caches.delete(cacheName);
+          })
+        );
+      });
+    }
+  </script>
+
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
