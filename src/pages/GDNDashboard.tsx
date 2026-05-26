@@ -216,7 +216,7 @@ export const GDNDashboard = () => {
       {/* Add Button */}
       <div className="mb-6">
         <Button 
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+          className="fm-button-fix fm-button-brand px-4 py-2"
           onClick={() => navigate("/finance/gdn/request-add")}
         >
           + Add

@@ -54,6 +54,13 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
+    key: "prType",
+    label: "Pr Type",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
     key: "level",
     label: "Level",
     sortable: true,
@@ -119,6 +126,7 @@ export const PendingApprovalsDashboard = () => {
                     : "Invoice",
         prNo: item.reference_number,
         siteName: item.site_name,
+        prType: item.pr_type,
         supplierName: item.supplier_name,
         level: item.approval_level_name,
         level_id: item.level_id,

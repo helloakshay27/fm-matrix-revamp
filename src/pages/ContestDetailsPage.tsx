@@ -50,12 +50,15 @@ interface ContestDetails {
   name: string;
   description: string | null;
   terms_and_conditions: string | null;
+  redemption_guide: string | null;
   content_type: string;
   active: boolean;
   start_at: string;
   end_at: string;
   user_caps: number | null;
   user_attemp_remaining: number | null;
+  attemp_required: number | null;
+  usage_type: string | null;
   access_type: string | null;
   prizes: Prize[];
   contest_sites: ContestSite[];
@@ -183,7 +186,7 @@ export const ContestDetailsPage: React.FC = () => {
     if (!baseUrl || !token) { toast.error("Missing credentials"); return; }
 
     const checkedItems = (dryRunResult?.distribution ?? []).filter(
-      (_: any, i: number) => dryRunChecked[i] !== false
+      (e: any, i: number) => !e.prize_won && dryRunChecked[i] !== false
     );
     if (checkedItems.length === 0) {
       toast.error("Select at least one winner to distribute.");
@@ -355,6 +358,16 @@ export const ContestDetailsPage: React.FC = () => {
                   {contest.description || "—"}
                 </p>
               </div>
+              {contest.content_type === "random" && (
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-gray-500">Usage Type</p>
+                  <p className="text-base text-[#1A1A1A]">
+                    {contest.usage_type
+                      ? contest.usage_type.charAt(0).toUpperCase() + contest.usage_type.slice(1)
+                      : "—"}
+                  </p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -416,20 +429,36 @@ export const ContestDetailsPage: React.FC = () => {
                   {formatTime(contest.end_at)}
                 </p>
               </div>
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-gray-500">Users Cap</p>
-                <p className="text-base text-[#1A1A1A]">
-                  {contest.user_caps ?? "—"}
-                </p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-gray-500">
-                  Attempts Required
-                </p>
-                <p className="text-base text-[#1A1A1A]">
-                  {contest.user_attemp_remaining ?? "—"}
-                </p>
-              </div>
+              {contest.content_type === "spin" && (
+                <>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gray-500">Users Cap</p>
+                    <p className="text-base text-[#1A1A1A]">
+                      {contest.user_caps ?? "—"}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gray-500">
+                      Attempts Allowed
+                    </p>
+                    <p className="text-base text-[#1A1A1A]">
+                      {contest.attemp_required ?? contest.user_attemp_remaining ?? "—"}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gray-500">
+                      Winning Probability (%)
+                    </p>
+                    <p className="text-base text-[#1A1A1A]">
+                      {contest.prizes.length > 0
+                        ? contest.prizes
+                            .filter((p) => p.title !== "Better luck next time!")
+                            .reduce((sum, p) => sum + (Number(p.probability_value) || 0), 0)
+                        : "—"}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -586,7 +615,7 @@ export const ContestDetailsPage: React.FC = () => {
 
                                     <div className="space-y-1">
                                       <p className="text-xs font-medium text-gray-500">Probability</p>
-                                      <p className="text-sm text-[#1A1A1A]">{totalProb}</p>
+                                      <p className="text-sm text-[#1A1A1A]">{totalProb || "—"}</p>
                                     </div>
                                   </div>
                                 </div>
@@ -614,28 +643,39 @@ export const ContestDetailsPage: React.FC = () => {
                 Terms & Conditions
               </h3>
             </div>
-            {/* <Button
-              onClick={() => handleEdit("terms")}
-              variant="outline"
-              size="sm"
-              className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </Button> */}
           </div>
           <CardContent className="bg-white p-6 rounded-b-lg">
             <div className="prose max-w-none text-sm quill-content">
-              {/* {contest.terms_and_conditions ? (
-                <p>{contest.terms_and_conditions}</p>
-              ) : (
-                <p className="text-gray-500 italic">No terms and conditions provided.</p>
-              )} */}
               <div
                 dangerouslySetInnerHTML={{
                   __html:
                     contest.terms_and_conditions ||
-                    "<p className='text-gray-500'>No terms and conditions provided</p>",
+                    "<p class='text-gray-500'>No terms and conditions provided</p>",
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Redemption Guide */}
+        <Card className="w-full bg-transparent shadow-[0px_1px_8px_rgba(45,45,45,0.05)] border-none">
+          <div className="bg-[#F6F4EE] px-6 py-4 rounded-t-lg flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="bg-[#C4B89D54] p-2 rounded-lg">
+                <FileText className="w-5 h-5 text-[#C72030]" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#1A1A1A]">
+                Redemption Guide
+              </h3>
+            </div>
+          </div>
+          <CardContent className="bg-white p-6 rounded-b-lg">
+            <div className="prose max-w-none text-sm quill-content">
+              <div
+                dangerouslySetInnerHTML={{
+                  __html:
+                    contest.redemption_guide ||
+                    "<p class='text-gray-500'>No redemption guide provided</p>",
                 }}
               />
             </div>
@@ -714,20 +754,28 @@ export const ContestDetailsPage: React.FC = () => {
                     dryRunResult.distribution.map((entry: any, i: number) => (
                       <div
                         key={i}
-                        className="rounded-xl border border-gray-200 bg-white overflow-hidden"
+                        className={`rounded-xl border overflow-hidden ${entry.prize_won ? "border-gray-200 bg-gray-50 opacity-70" : "border-gray-200 bg-white"}`}
                       >
-                        {/* Card header — winner number + checkbox */}
+                        {/* Card header — winner number + already-won tag + checkbox */}
                         <div className="flex items-center justify-between px-4 py-2.5 bg-[#F6F4EE] border-b border-gray-200">
-                          <span className="text-xs font-bold text-[#C72030] uppercase tracking-wide">
-                            Winner #{i + 1}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-[#C72030] uppercase tracking-wide">
+                              Winner #{i + 1}
+                            </span>
+                            {entry.prize_won && (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200">
+                                Already Won
+                              </span>
+                            )}
+                          </div>
                           <input
                             type="checkbox"
-                            checked={dryRunChecked[i] ?? true}
+                            checked={entry.prize_won ? false : (dryRunChecked[i] ?? true)}
+                            disabled={entry.prize_won}
                             onChange={(e) =>
                               setDryRunChecked((prev) => ({ ...prev, [i]: e.target.checked }))
                             }
-                            className="w-4 h-4 accent-[#C72030] cursor-pointer"
+                            className="w-4 h-4 accent-[#C72030] cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
                           />
                         </div>
 

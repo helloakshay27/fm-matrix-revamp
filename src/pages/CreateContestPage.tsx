@@ -38,6 +38,7 @@ interface OfferData {
   id: string;
   offerTitle: string;
   couponCode: string;
+  couponCodeInput: string;
   displayName: string;
   partner: string;
   winningProbability: string;
@@ -69,6 +70,7 @@ export const CreateContestPage: React.FC = () => {
     id: Date.now().toString() + Math.random(),
     offerTitle: "",
     couponCode: "",
+    couponCodeInput: "",
     displayName: "",
     partner: "",
     winningProbability: "",
@@ -595,6 +597,14 @@ export const CreateContestPage: React.FC = () => {
             alert("Please enter points value for all offers");
             return false;
           }
+          if (
+            contestType !== "Random" &&
+            contestType !== "Special Discount" &&
+            !offer.bannerImage
+          ) {
+            alert("Please upload a banner image for all offers");
+            return false;
+          }
 
           const offerProb = Number(offer.winningProbability) || calculateBaseProbability();
           const maxAvailable = getMaxAvailableProbability(offer.id);
@@ -791,7 +801,7 @@ export const CreateContestPage: React.FC = () => {
                         onChange={() => handleShareWithChange("all")}
                         className="w-4 h-4"
                       />
-                      <span className="text-sm font-medium text-gray-700">Share with all</span>
+                      <span className="text-sm font-medium text-gray-700">Share with all parks</span>
                     </label>
                   </div>
 
@@ -805,7 +815,7 @@ export const CreateContestPage: React.FC = () => {
                         onChange={() => handleShareWithChange("individual")}
                         className="w-4 h-4"
                       />
-                      <span className="text-sm font-medium text-gray-700">Share with individual</span>
+                      <span className="text-sm font-medium text-gray-700">Share with individual parks</span>
                     </label>
                   </div>
                 </div>
@@ -909,21 +919,70 @@ export const CreateContestPage: React.FC = () => {
 
                     {offer.rewardType === "Coupon Code" && (
                       <div>
-                        <TextField
-                          fullWidth
-                          label="Coupon Code(s)"
-                          placeholder="e.g., CODE1, CODE2, CODE3"
-                          value={offer.couponCode}
-                          onChange={(e) =>
-                            updateOffer(offer.id, "couponCode", e.target.value)
-                          }
-                          sx={textFieldSx}
-                          size="small"
-                          required
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Enter multiple codes separated by commas. Each code will be a separate offer.
-                        </p>
+                        <div
+                          className="flex flex-wrap gap-1.5 min-h-[40px] w-full px-3 py-2 border border-[#e5e7eb] rounded bg-white focus-within:border-[#C72030] focus-within:ring-2 focus-within:ring-[#C72030]/20 hover:border-[#C72030] transition-colors"
+                        >
+                          {offer.couponCode
+                            .split(",")
+                            .map((c) => c.trim())
+                            .filter(Boolean)
+                            .map((code) => (
+                              <span
+                                key={code}
+                                className="inline-flex items-center gap-1 bg-[#C72030]/10 text-[#C72030] text-xs font-semibold px-2 py-0.5 rounded-full border border-[#C72030]/30"
+                              >
+                                {code}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = offer.couponCode
+                                      .split(",")
+                                      .map((c) => c.trim())
+                                      .filter((c) => c && c !== code)
+                                      .join(",");
+                                    updateOffer(offer.id, "couponCode", updated);
+                                  }}
+                                  className="ml-0.5 hover:text-red-600 transition-colors leading-none"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          <input
+                            type="text"
+                            value={offer.couponCodeInput}
+                            onChange={(e) =>
+                              updateOffer(offer.id, "couponCodeInput", e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === ",") {
+                                e.preventDefault();
+                                const code = offer.couponCodeInput.trim().replace(/,/g, "");
+                                if (!code) return;
+                                const existing = offer.couponCode
+                                  .split(",")
+                                  .map((c) => c.trim())
+                                  .filter(Boolean);
+                                if (!existing.includes(code)) {
+                                  updateOffer(offer.id, "couponCode", [...existing, code].join(","));
+                                }
+                                updateOffer(offer.id, "couponCodeInput", "");
+                              } else if (e.key === "Backspace" && !offer.couponCodeInput) {
+                                const existing = offer.couponCode
+                                  .split(",")
+                                  .map((c) => c.trim())
+                                  .filter(Boolean);
+                                if (existing.length > 0) {
+                                  updateOffer(offer.id, "couponCode", existing.slice(0, -1).join(","));
+                                }
+                              }
+                            }}
+                            placeholder={
+                              offer.couponCode.trim() ? "" : "Enter comma-separated coupon codes"
+                            }
+                            className="flex-1 min-w-[140px] text-sm outline-none bg-transparent placeholder:text-gray-400"
+                          />
+                        </div>
                       </div>
                     )}
 
@@ -994,14 +1053,36 @@ export const CreateContestPage: React.FC = () => {
                       variant="outlined"
                       multiline
                       rows={3}
-                      sx={textFieldSx}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: "auto !important",
+                          padding: "2px !important",
+                          display: "flex",
+                          "& fieldset": { borderColor: "#e5e7eb" },
+                          "&:hover fieldset": { borderColor: "#C72030" },
+                          "&.Mui-focused fieldset": { borderColor: "#C72030" },
+                        },
+                        "& .MuiInputBase-input[aria-hidden='true']": {
+                          flex: 0,
+                          width: 0,
+                          height: 0,
+                          padding: "0 !important",
+                          margin: 0,
+                          display: "none",
+                        },
+                        "& .MuiInputBase-input": {
+                          resize: "none !important",
+                        },
+                      }}
                     />
                   </div>
 
                   <div className="mt-4">
                     <Typography variant="body2" className="text-gray-700 mb-2">
                       Upload Banner Image
-                      <span className="text-[#C72030]">*</span>
+                      {contestType !== "Random" && contestType !== "Special Discount" && (
+                        <span className="text-[#C72030]">*</span>
+                      )}
                     </Typography>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                       <p className="text-sm text-gray-600 mb-2">
