@@ -186,6 +186,9 @@ const VisitingPurposePage = lazy(() => import("./pages/VisitingPurposePage").the
 // Import Carpool pages
 const CarpoolDashboard = lazy(() => import("./pages/pulse/CarpoolDashboard").then(m => ({ default: m.CarpoolDashboard })));
 
+// Import Pulse Analytics Dashboard
+const PulseDashboardPage = lazy(() => import("./pages/pulse/PulseDashboardPage").then(m => ({ default: m.PulseDashboardPage })));
+
 // Import Icons pages
 const IconsDashboard = lazy(() => import("./pages/IconsDashboard").then(m => ({ default: m.IconsDashboard })));
 const AddIconPage = lazy(() => import("./pages/AddIconPage").then(m => ({ default: m.AddIconPage })));
@@ -5962,6 +5965,10 @@ function App() {
                               </ProtectedRoute>
                             }
                           >
+                            <Route
+                              path="/pulse/analytics"
+                              element={<PulseDashboardPage />}
+                            />
                             <Route
                               path="/pulse/community-modules/banner-list"
                               element={<BannerListPage />}
