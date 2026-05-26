@@ -75,6 +75,7 @@ interface ApprovalLevel {
 }
 
 interface Inventory {
+  id: string;
   name?: string;
 }
 
@@ -105,6 +106,7 @@ interface Attachment {
 }
 
 interface MaterialPR {
+  created_by: string;
   pms_po_inventories: any;
   active?: boolean;
   id?: string;
@@ -159,6 +161,7 @@ const columns: ColumnConfig[] = [
     sortable: true,
     defaultVisible: true,
   },
+  { key: "unit", label: "Unit", sortable: true, defaultVisible: true },
   {
     key: "gl_account",
     label: "GL Account",
@@ -1337,6 +1340,23 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
             <p className="text-muted-foreground">
               {pr.terms_conditions ?? "No terms and conditions available"}
             </p>
+            <div className="mt-6">
+              <p className="font-medium text-gray-900">
+                For {pr.supplier?.company_name || "-"} We Confirm & Accept,
+              </p>
+            </div>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <p className="font-medium text-gray-900">
+                  PREPARED BY: {pr.created_by || "-"}
+                </p>
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">
+                  SIGNATURE: -
+                </p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 

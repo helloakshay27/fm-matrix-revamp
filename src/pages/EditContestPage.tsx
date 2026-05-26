@@ -106,12 +106,18 @@ export const EditContestPage: React.FC = () => {
     validity: "",
   });
 
+  // Basic info
   const [contestName, setContestName] = useState("");
   const [contestDescription, setContestDescription] = useState("");
   const [contestType, setContestType] = useState("");
+  const [usageType, setUsageType] = useState("");
+  const [winningProbabilityDisplay, setWinningProbabilityDisplay] = useState("0");
+
+  // Offers
   const [offers, setOffers] = useState<OfferData[]>([createDefaultOffer()]);
   const [deletedOfferIds, setDeletedOfferIds] = useState<number[]>([]);
 
+  // Validity
   const [startDate, setStartDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -120,9 +126,11 @@ export const EditContestPage: React.FC = () => {
   const [attemptsRequired, setAttemptsRequired] = useState("");
   const [isActive, setIsActive] = useState(true);
 
+  // Documents
   const [termsText, setTermsText] = useState("");
   const [redemptionText, setRedemptionText] = useState("");
 
+  // Tech Park
   const [isTechParkModalOpen, setIsTechParkModalOpen] = useState(false);
   const [techParks, setTechParks] = useState<any[]>([]);
   const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
@@ -145,7 +153,9 @@ export const EditContestPage: React.FC = () => {
 
         setContestName(data.name || "");
         setContestDescription(data.description || "");
-        setContestType(apiToContestType(data.content_type || ""));
+        const type = apiToContestType(data.content_type || "");
+        setContestType(type);
+        setUsageType(data.usage_type || "");
         setIsActive(data.active ?? true);
         setStartDate(isoToDateInput(data.start_at));
         setStartTime(isoToTimeInput(data.start_at));
@@ -160,13 +170,9 @@ export const EditContestPage: React.FC = () => {
         setTermsText(data.terms_and_conditions || "");
         setRedemptionText(data.redemption_guide || "");
 
-        if (
-          data.access_type === "single_site" &&
-          data.contest_sites?.length > 0
-        ) {
+        if (data.access_type === "single_site" && data.contest_sites?.length > 0) {
           setShareWith("individual");
           setSelectedTechParks(data.contest_sites.map((s: any) => s.site_id));
-          // Pre-seed techParks so names show before the modal is opened
           setTechParks((prev) => {
             const existing = new Set(prev.map((p: any) => p.id));
             const fromSites = data.contest_sites
@@ -177,7 +183,21 @@ export const EditContestPage: React.FC = () => {
         }
 
         if (data.prizes && data.prizes.length > 0) {
-          const mappedOffers: OfferData[] = data.prizes.map((prize: any) => ({
+          // Filter out "none" prizes — they're the remainder slot, not real offers
+          const realPrizes = data.prizes.filter(
+            (p: any) => p.reward_type !== "none"
+          );
+
+          // For Spin: derive the total win probability from the sum of real prizes
+          if (type === "Spin" && realPrizes.length > 0) {
+            const totalWin = realPrizes.reduce(
+              (sum: number, p: any) => sum + (Number(p.probability_value) || 0),
+              0
+            );
+            setWinningProbabilityDisplay(String(Math.round(totalWin * 100) / 100));
+          }
+
+          const mappedOffers: OfferData[] = realPrizes.map((prize: any) => ({
             id: String(prize.id),
             serverId: prize.id,
             existingBannerUrl: prize.image?.url || prize.icon_url || "",
@@ -224,65 +244,43 @@ export const EditContestPage: React.FC = () => {
     }
   };
 
-  // Quill editors — reinitialize when step changes to ensure DOM is mounted
+  // Quill editors
   useEffect(() => {
     if (termsEditorRef.current && !termsQuillRef.current) {
       termsQuillRef.current = new Quill(termsEditorRef.current, {
         theme: "snow",
         placeholder: "Enter terms and conditions",
-        modules: {
-          toolbar: [
-            ["bold", "italic", "underline"],
-            [{ list: "bullet" }],
-            ["link"],
-          ],
-        },
+        modules: { toolbar: [["bold", "italic", "underline"], [{ list: "bullet" }], ["link"]] },
       });
-      if (termsText) {
-        termsQuillRef.current.root.innerHTML = termsText;
-      }
+      if (termsText) termsQuillRef.current.root.innerHTML = termsText;
       termsQuillRef.current.on("text-change", () => {
         setTermsText(termsQuillRef.current?.root.innerHTML || "");
       });
     }
-
     if (redemptionEditorRef.current && !redemptionQuillRef.current) {
       redemptionQuillRef.current = new Quill(redemptionEditorRef.current, {
         theme: "snow",
         placeholder: "Enter redemption guide",
-        modules: {
-          toolbar: [
-            ["bold", "italic", "underline"],
-            [{ list: "bullet" }],
-            ["link"],
-          ],
-        },
+        modules: { toolbar: [["bold", "italic", "underline"], [{ list: "bullet" }], ["link"]] },
       });
-      if (redemptionText) {
-        redemptionQuillRef.current.root.innerHTML = redemptionText;
-      }
+      if (redemptionText) redemptionQuillRef.current.root.innerHTML = redemptionText;
       redemptionQuillRef.current.on("text-change", () => {
         setRedemptionText(redemptionQuillRef.current?.root.innerHTML || "");
       });
     }
   }, [currentStep]);
 
-  // Sync termsText into quill when it's loaded from API after quill is already mounted
   useEffect(() => {
     if (termsQuillRef.current && termsText && currentStep === 4) {
       const current = termsQuillRef.current.root.innerHTML;
-      if (current !== termsText) {
-        termsQuillRef.current.root.innerHTML = termsText;
-      }
+      if (current !== termsText) termsQuillRef.current.root.innerHTML = termsText;
     }
   }, [termsText, currentStep]);
 
   useEffect(() => {
     if (redemptionQuillRef.current && redemptionText && currentStep === 4) {
       const current = redemptionQuillRef.current.root.innerHTML;
-      if (current !== redemptionText) {
-        redemptionQuillRef.current.root.innerHTML = redemptionText;
-      }
+      if (current !== redemptionText) redemptionQuillRef.current.root.innerHTML = redemptionText;
     }
   }, [redemptionText, currentStep]);
 
@@ -299,8 +297,29 @@ export const EditContestPage: React.FC = () => {
 
   const contestTypes = ["Spin", "Random", "Special Offer"];
 
+  const getInitialOffersCount = (type: string): number => (type === "Spin" ? 4 : 1);
+
   const handleContestTypeChange = (newType: string) => {
     setContestType(newType);
+
+    if (newType !== "Random") setUsageType("");
+
+    if (newType !== "Spin") {
+      setUsersCap("");
+      setAttemptsRequired("");
+      setWinningProbabilityDisplay("0");
+    }
+
+    if (newType !== "Scratch") setRedemptionText("");
+
+    const requiredCount = getInitialOffersCount(newType);
+    const currentCount = offers.length;
+    if (currentCount < requiredCount) {
+      const newOffers = Array.from({ length: requiredCount - currentCount }, () => createDefaultOffer());
+      setOffers([...offers, ...newOffers]);
+    } else if (currentCount > requiredCount) {
+      setOffers(offers.slice(0, requiredCount));
+    }
   };
 
   const calculateBaseProbability = (): number => {
@@ -310,51 +329,35 @@ export const EditContestPage: React.FC = () => {
 
   const countCoupons = (couponCode: string): number => {
     if (!couponCode.trim()) return 1;
-    return couponCode
-      .split(",")
-      .map((c) => c.trim())
-      .filter((c) => c.length > 0).length;
-  };
-
-  const getMaxAvailableProbability = (offerId: string): number => {
-    const otherTotal = offers
-      .filter((o) => o.id !== offerId)
-      .reduce((sum, o) => sum + (Number(o.winningProbability) || 0), 0);
-    return Math.max(0, 100 - otherTotal);
+    return couponCode.split(",").map((c) => c.trim()).filter((c) => c.length > 0).length;
   };
 
   const addOffer = () => setOffers([...offers, createDefaultOffer()]);
 
-  const removeOffer = (id: string) => {
+  const removeOffer = (offerId: string) => {
     if (offers.length > 1) {
-      const offer = offers.find((o) => o.id === id);
-      if (offer?.serverId) {
-        setDeletedOfferIds((prev) => [...prev, offer.serverId!]);
-      }
-      setOffers(offers.filter((o) => o.id !== id));
+      const offer = offers.find((o) => o.id === offerId);
+      if (offer?.serverId) setDeletedOfferIds((prev) => [...prev, offer.serverId!]);
+      setOffers(offers.filter((o) => o.id !== offerId));
     }
   };
 
-  const updateOffer = (id: string, field: keyof OfferData, value: string | File | null) => {
-    setOffers((prev) =>
-      prev.map((o) => (o.id === id ? { ...o, [field]: value } : o))
-    );
+  const updateOffer = (offerId: string, field: keyof OfferData, value: string | File | null) => {
+    setOffers((prev) => prev.map((o) => (o.id === offerId ? { ...o, [field]: value } : o)));
   };
 
-  const handleOfferBannerUpload = (id: string, file: File | null) => {
+  const handleOfferBannerUpload = (offerId: string, file: File | null) => {
     setOffers((prev) =>
       prev.map((o) =>
-        o.id === id
-          ? { ...o, bannerImage: file, bannerImageName: file ? file.name : "" }
-          : o
+        o.id === offerId ? { ...o, bannerImage: file, bannerImageName: file ? file.name : "" } : o
       )
     );
   };
 
-  const handleRewardTypeChange = (id: string, newRewardType: string) => {
+  const handleRewardTypeChange = (offerId: string, newRewardType: string) => {
     setOffers((prev) =>
       prev.map((o) => {
-        if (o.id !== id) return o;
+        if (o.id !== offerId) return o;
         const updated = { ...o, rewardType: newRewardType };
         if (newRewardType === "Coupon Code") updated.pointsValue = "";
         else updated.couponCode = "";
@@ -380,14 +383,16 @@ export const EditContestPage: React.FC = () => {
 
     formData.append("contest[name]", contestName.trim());
     formData.append("contest[description]", contestDescription.trim());
-    formData.append("contest[content_type]", contestType.toLowerCase());
+    formData.append("contest[content_type]", contestType.toLowerCase().replace(/\s+/g, "_"));
+    if (usageType) formData.append("contest[usage_type]", usageType);
     formData.append("contest[active]", String(isActive));
     formData.append("contest[start_at]", buildISO(startDate, startTime));
     formData.append("contest[end_at]", buildISO(endDate, endTime, true));
 
-    if (usersCap) formData.append("contest[user_caps]", usersCap);
-    if (attemptsRequired)
-      formData.append("contest[user_attemp_remaining]", attemptsRequired);
+    if (contestType === "Spin") {
+      if (usersCap) formData.append("contest[user_caps]", usersCap);
+      if (attemptsRequired) formData.append("contest[user_attemp_remaining]", attemptsRequired);
+    }
 
     if (shareWith === "individual") {
       formData.append("contest[access_type]", "single_site");
@@ -400,91 +405,96 @@ export const EditContestPage: React.FC = () => {
 
     let prizeIndex = 0;
 
-    // Append deleted offers with _destroy
+    // Mark deleted offers for destroy
     deletedOfferIds.forEach((serverId) => {
       formData.append(`contest[prizes_attributes][${prizeIndex}][id]`, String(serverId));
       formData.append(`contest[prizes_attributes][${prizeIndex}][_destroy]`, "true");
       prizeIndex++;
     });
 
-    // Expand and append current offers
+    // Expand offers — flatten comma-separated coupon codes
+    const expandedOffers: any[] = [];
     offers.forEach((offer) => {
-      const userProbability =
-        Number(offer.winningProbability) || calculateBaseProbability();
-
       if (offer.rewardType === "Coupon Code") {
         const coupons = offer.couponCode
           .split(",")
           .map((c) => c.trim())
           .filter((c) => c.length > 0);
-
-        const probabilityPerCoupon = userProbability / (coupons.length || 1);
-
         coupons.forEach((coupon, couponIdx) => {
-          const isFirst = couponIdx === 0;
-          // Only attach serverId to the first coupon of an existing offer
-          if (isFirst && offer.serverId) {
-            formData.append(
-              `contest[prizes_attributes][${prizeIndex}][id]`,
-              String(offer.serverId)
-            );
-          }
-          formData.append(`contest[prizes_attributes][${prizeIndex}][title]`, offer.offerTitle.trim());
-          formData.append(`contest[prizes_attributes][${prizeIndex}][reward_type]`, "coupon");
-          formData.append(`contest[prizes_attributes][${prizeIndex}][coupon_code]`, coupon);
-          if (offer.partner.trim())
-            formData.append(`contest[prizes_attributes][${prizeIndex}][partner_name]`, offer.partner.trim());
-          formData.append(`contest[prizes_attributes][${prizeIndex}][probability_value]`, String(probabilityPerCoupon));
-          formData.append(`contest[prizes_attributes][${prizeIndex}][probability_out_of]`, "100");
-          formData.append(`contest[prizes_attributes][${prizeIndex}][position]`, String(prizeIndex + 1));
-          formData.append(`contest[prizes_attributes][${prizeIndex}][active]`, "true");
-          if (offer.bannerImage && isFirst) {
-            formData.append(
-              `contest[prizes_attributes][${prizeIndex}][image_attributes][document]`,
-              offer.bannerImage
-            );
-          }
-          if (offer.validity) {
-            formData.append(
-              `contest[prizes_attributes][${prizeIndex}][validity]`,
-              offer.validity
-            );
-          }
-          prizeIndex++;
+          expandedOffers.push({
+            ...offer,
+            couponCode: coupon,
+            isFirst: couponIdx === 0,
+          });
         });
       } else {
-        if (offer.serverId) {
-          formData.append(`contest[prizes_attributes][${prizeIndex}][id]`, String(offer.serverId));
-        }
-        formData.append(`contest[prizes_attributes][${prizeIndex}][title]`, offer.offerTitle.trim());
-        formData.append(`contest[prizes_attributes][${prizeIndex}][reward_type]`, "points");
-        formData.append(`contest[prizes_attributes][${prizeIndex}][points_value]`, offer.pointsValue.trim());
-        if (offer.partner.trim())
-          formData.append(`contest[prizes_attributes][${prizeIndex}][partner_name]`, offer.partner.trim());
-        formData.append(`contest[prizes_attributes][${prizeIndex}][probability_value]`, String(userProbability));
-        formData.append(`contest[prizes_attributes][${prizeIndex}][probability_out_of]`, "100");
-        formData.append(`contest[prizes_attributes][${prizeIndex}][position]`, String(prizeIndex + 1));
-        formData.append(`contest[prizes_attributes][${prizeIndex}][active]`, "true");
-        if (offer.bannerImage) {
-          formData.append(
-            `contest[prizes_attributes][${prizeIndex}][image_attributes][document]`,
-            offer.bannerImage
-          );
-        }
-        if (offer.validity) {
-          formData.append(
-            `contest[prizes_attributes][${prizeIndex}][validity]`,
-            offer.validity
-          );
-        }
-        prizeIndex++;
+        expandedOffers.push({ ...offer, isFirst: true });
       }
     });
 
-    if (termsText.trim())
-      formData.append("contest[terms_and_conditions]", termsText.trim());
-    if (redemptionText.trim())
-      formData.append("contest[redemption_guide]", redemptionText.trim());
+    // For Spin: total win probability input divided equally across all expanded offers.
+    // Remainder (100 - totalWin) goes as a single "none" entry.
+    let spinProbPerOffer: number | null = null;
+    let spinRemainder: number | null = null;
+    if (contestType === "Spin") {
+      const totalWin = Math.min(100, Math.max(0, Number(winningProbabilityDisplay) || 0));
+      spinProbPerOffer = expandedOffers.length > 0 ? totalWin / expandedOffers.length : 0;
+      spinRemainder = 100 - totalWin;
+    }
+
+    expandedOffers.forEach((offer) => {
+      // Attach serverId only to the first coupon of an existing offer
+      if (offer.isFirst && offer.serverId) {
+        formData.append(`contest[prizes_attributes][${prizeIndex}][id]`, String(offer.serverId));
+      }
+      formData.append(`contest[prizes_attributes][${prizeIndex}][title]`, offer.offerTitle.trim());
+
+      const rewardType = offer.rewardType === "Points" ? "points" : "coupon";
+      formData.append(`contest[prizes_attributes][${prizeIndex}][reward_type]`, rewardType);
+
+      if (offer.rewardType === "Coupon Code") {
+        formData.append(`contest[prizes_attributes][${prizeIndex}][coupon_code]`, offer.couponCode.trim());
+      }
+      if (offer.rewardType === "Points") {
+        formData.append(`contest[prizes_attributes][${prizeIndex}][points_value]`, offer.pointsValue.trim());
+      }
+      if (offer.partner.trim()) {
+        formData.append(`contest[prizes_attributes][${prizeIndex}][partner_name]`, offer.partner.trim());
+      }
+
+      if (contestType === "Spin" && spinProbPerOffer !== null) {
+        formData.append(`contest[prizes_attributes][${prizeIndex}][probability_value]`, String(spinProbPerOffer));
+        formData.append(`contest[prizes_attributes][${prizeIndex}][probability_out_of]`, "100");
+      }
+
+      formData.append(`contest[prizes_attributes][${prizeIndex}][position]`, String(prizeIndex + 1));
+      formData.append(`contest[prizes_attributes][${prizeIndex}][active]`, "true");
+
+      if (offer.bannerImage && offer.isFirst) {
+        formData.append(
+          `contest[prizes_attributes][${prizeIndex}][image_attributes][document]`,
+          offer.bannerImage
+        );
+      }
+      if (offer.validity) {
+        formData.append(`contest[prizes_attributes][${prizeIndex}][validity]`, offer.validity);
+      }
+
+      prizeIndex++;
+    });
+
+    // For Spin: append "none" remainder entry
+    if (contestType === "Spin" && spinRemainder !== null) {
+      formData.append(`contest[prizes_attributes][${prizeIndex}][title]`, "No Reward");
+      formData.append(`contest[prizes_attributes][${prizeIndex}][reward_type]`, "none");
+      formData.append(`contest[prizes_attributes][${prizeIndex}][probability_value]`, String(spinRemainder));
+      formData.append(`contest[prizes_attributes][${prizeIndex}][probability_out_of]`, "100");
+      formData.append(`contest[prizes_attributes][${prizeIndex}][position]`, String(prizeIndex + 1));
+      formData.append(`contest[prizes_attributes][${prizeIndex}][active]`, "true");
+    }
+
+    if (termsText.trim()) formData.append("contest[terms_and_conditions]", termsText.trim());
+    if (redemptionText.trim()) formData.append("contest[redemption_guide]", redemptionText.trim());
 
     try {
       await axios.put(`https://${baseUrl}/contests/${id}.json`, formData, {
@@ -493,8 +503,7 @@ export const EditContestPage: React.FC = () => {
       sonnerToast.success("Contest updated successfully!");
       navigate(`/pulse/contests/${id}`);
     } catch (err: any) {
-      const msg =
-        err.response?.data?.message || err.message || "Failed to update contest";
+      const msg = err.response?.data?.message || err.message || "Failed to update contest";
       sonnerToast.error(msg);
     } finally {
       setSubmitting(false);
@@ -526,9 +535,7 @@ export const EditContestPage: React.FC = () => {
         if (!contestDescription.trim()) { alert("Please enter contest description"); return false; }
         if (!contestType) { alert("Please select contest type"); return false; }
         return true;
-
       case 2:
-        let totalProbability = 0;
         for (const offer of offers) {
           if (!offer.offerTitle.trim()) { alert("Please fill all offer titles"); return false; }
           if (offer.rewardType === "Coupon Code") {
@@ -538,29 +545,15 @@ export const EditContestPage: React.FC = () => {
           if (offer.rewardType === "Points" && !offer.pointsValue.trim()) {
             alert("Please enter points value for all offers"); return false;
           }
-          const offerProb = Number(offer.winningProbability) || calculateBaseProbability();
-          const maxAvailable = getMaxAvailableProbability(offer.id);
-          if (offerProb > maxAvailable) {
-            alert(`Offer "${offer.offerTitle}" has probability ${offerProb.toFixed(2)}% but max available is ${maxAvailable.toFixed(2)}%.`);
-            return false;
-          }
-          totalProbability += offerProb;
-        }
-        if (Math.abs(totalProbability - 100) > 0.01) {
-          alert(`Total winning probability must equal 100%. Current total: ${totalProbability.toFixed(2)}%`);
-          return false;
         }
         return true;
-
       case 3:
         if (!startDate || !startTime || !endDate || !endTime) {
           sonnerToast.error("Please fill all validity fields"); return false;
         }
         return true;
-
       case 4:
         return true;
-
       default:
         return true;
     }
@@ -587,9 +580,7 @@ export const EditContestPage: React.FC = () => {
                   <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
                     <Trophy className="w-5 h-5 text-[#C72030]" />
                   </div>
-                  <h2 className="text-lg font-semibold text-[#1A1A1A]">
-                    Basic Contest Info
-                  </h2>
+                  <h2 className="text-lg font-semibold text-[#1A1A1A]">Basic Contest Info</h2>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -616,6 +607,35 @@ export const EditContestPage: React.FC = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
+
+                  {contestType === "Random" && (
+                    <FormControl fullWidth size="small" sx={textFieldSx}>
+                      <InputLabel>Usage Type</InputLabel>
+                      <MuiSelect
+                        value={usageType}
+                        label="Usage Type"
+                        onChange={(e) => setUsageType(e.target.value)}
+                      >
+                        <MenuItem value="high_usage">High Usage</MenuItem>
+                        <MenuItem value="low_usage">Low Usage</MenuItem>
+                        <MenuItem value="na">NA</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  )}
+
+                  {contestType === "Spin" && (
+                    <TextField
+                      fullWidth
+                      label="Winning Probability (%)"
+                      value={winningProbabilityDisplay}
+                      onChange={(e) => setWinningProbabilityDisplay(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      type="number"
+                      inputProps={{ min: 0, max: 100 }}
+                      sx={textFieldSx}
+                    />
+                  )}
                 </div>
 
                 <div className="mt-6">
@@ -650,9 +670,7 @@ export const EditContestPage: React.FC = () => {
                   <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
                     <Trophy className="w-5 h-5 text-[#C72030]" />
                   </div>
-                  <h2 className="text-lg font-semibold text-[#1A1A1A]">
-                    Share with Tech Parks
-                  </h2>
+                  <h2 className="text-lg font-semibold text-[#1A1A1A]">Share with Tech Parks</h2>
                 </div>
 
                 <div className="flex flex-col md:flex-row md:items-center gap-6">
@@ -702,7 +720,7 @@ export const EditContestPage: React.FC = () => {
                             key={parkId}
                             className="flex items-center gap-2 px-3 py-2 bg-white rounded-md border-l-4 border-[#C72030]"
                           >
-                            <span className="w-2 h-2 bg-[#C72030] rounded-full"></span>
+                            <span className="w-2 h-2 bg-[#C72030] rounded-full" />
                             <span className="text-sm font-medium text-gray-800">{parkName}</span>
                           </div>
                         );
@@ -723,9 +741,7 @@ export const EditContestPage: React.FC = () => {
                 <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
                   <Trophy className="w-5 h-5 text-[#C72030]" />
                 </div>
-                <h2 className="text-lg font-semibold text-[#1A1A1A]">
-                  Offers & Vouchers
-                </h2>
+                <h2 className="text-lg font-semibold text-[#1A1A1A]">Offers & Vouchers</h2>
               </div>
 
               {offers.map((offer, index) => (
@@ -742,9 +758,7 @@ export const EditContestPage: React.FC = () => {
                     </button>
                   )}
 
-                  <h3 className="text-base font-semibold text-[#1A1A1A] mb-4">
-                    {index + 1}.
-                  </h3>
+                  <h3 className="text-base font-semibold text-[#1A1A1A] mb-4">{index + 1}.</h3>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <TextField
@@ -818,48 +832,6 @@ export const EditContestPage: React.FC = () => {
                       sx={textFieldSx}
                       size="small"
                     />
-
-                    {(() => {
-                      const maxAvailable = getMaxAvailableProbability(offer.id);
-                      const currentValue = Number(offer.winningProbability) || 0;
-                      const isExceeded = currentValue > maxAvailable;
-                      const suggestedValue = calculateBaseProbability().toFixed(2);
-                      const totalOfferLevel = offers.reduce(
-                        (sum, o) => sum + (Number(o.winningProbability) || calculateBaseProbability()),
-                        0
-                      );
-
-                      return (
-                        <TextField
-                          fullWidth
-                          label="Winning Probability (%)"
-                          value={offer.winningProbability || suggestedValue}
-                          onChange={(e) => updateOffer(offer.id, "winningProbability", e.target.value)}
-                          variant="outlined"
-                          size="small"
-                          type="number"
-                          inputProps={{ min: 0, max: maxAvailable, step: 0.01 }}
-                          error={isExceeded}
-                          sx={{
-                            ...textFieldSx,
-                            ...(isExceeded && {
-                              "& .MuiOutlinedInput-root": {
-                                "& fieldset": { borderColor: "#ef4444" },
-                                "&:hover fieldset": { borderColor: "#ef4444" },
-                                "&.Mui-focused fieldset": { borderColor: "#ef4444" },
-                              },
-                              "& .MuiInputLabel-root": { color: "#ef4444" },
-                              "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
-                            }),
-                          }}
-                          helperText={
-                            isExceeded
-                              ? `❌ Exceeded! Max available: ${maxAvailable.toFixed(2)}%`
-                              : `Suggested: ${suggestedValue}% | Max: ${maxAvailable.toFixed(2)}% | Total: ${totalOfferLevel.toFixed(2)}%${Number(offer.winningProbability) ? ` | Each coupon: ${(Number(offer.winningProbability) / countCoupons(offer.couponCode)).toFixed(2)}%` : ""}`
-                          }
-                        />
-                      );
-                    })()}
 
                     <TextField
                       fullWidth
@@ -949,9 +921,7 @@ export const EditContestPage: React.FC = () => {
                   <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
                     <Trophy className="w-5 h-5 text-[#C72030]" />
                   </div>
-                  <h2 className="text-lg font-semibold text-[#1A1A1A]">
-                    Validity & Status
-                  </h2>
+                  <h2 className="text-lg font-semibold text-[#1A1A1A]">Validity & Status</h2>
                 </div>
                 <div className="flex items-center gap-3">
                   <Switch
@@ -1006,18 +976,24 @@ export const EditContestPage: React.FC = () => {
                   InputProps={{ endAdornment: <Clock className="w-4 h-4 text-gray-400" /> }}
                   sx={textFieldSx}
                 />
-                <TextField
-                  fullWidth label="Users Cap" value={usersCap}
-                  onChange={(e) => setUsersCap(e.target.value)}
-                  variant="outlined" size="small" type="number"
-                  sx={textFieldSx}
-                />
-                <TextField
-                  fullWidth label="Attempts Required" value={attemptsRequired}
-                  onChange={(e) => setAttemptsRequired(e.target.value)}
-                  variant="outlined" size="small" type="number"
-                  sx={textFieldSx}
-                />
+
+                {contestType === "Spin" && (
+                  <TextField
+                    fullWidth label="Users Cap" value={usersCap}
+                    onChange={(e) => setUsersCap(e.target.value)}
+                    variant="outlined" size="small" type="number"
+                    sx={textFieldSx}
+                  />
+                )}
+
+                {contestType === "Spin" && (
+                  <TextField
+                    fullWidth label="Attempts Allowed" value={attemptsRequired}
+                    onChange={(e) => setAttemptsRequired(e.target.value)}
+                    variant="outlined" size="small" type="number"
+                    sx={textFieldSx}
+                  />
+                )}
               </div>
             </CardContent>
           </Card>
@@ -1032,9 +1008,7 @@ export const EditContestPage: React.FC = () => {
                   <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
                     <Trophy className="w-5 h-5 text-[#C72030]" />
                   </div>
-                  <h2 className="text-lg font-semibold text-[#1A1A1A]">
-                    Terms & Conditions
-                  </h2>
+                  <h2 className="text-lg font-semibold text-[#1A1A1A]">Terms & Conditions</h2>
                 </div>
                 <div
                   ref={termsEditorRef}
@@ -1049,9 +1023,7 @@ export const EditContestPage: React.FC = () => {
                   <div className="w-10 h-10 bg-[#C4B89D54] flex items-center justify-center rounded">
                     <Trophy className="w-5 h-5 text-[#C72030]" />
                   </div>
-                  <h2 className="text-lg font-semibold text-[#1A1A1A]">
-                    Redemption Guide
-                  </h2>
+                  <h2 className="text-lg font-semibold text-[#1A1A1A]">Redemption Guide</h2>
                 </div>
                 <div
                   ref={redemptionEditorRef}
