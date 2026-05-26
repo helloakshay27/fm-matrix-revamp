@@ -191,6 +191,13 @@ const debitCreditColumns: ColumnConfig[] = [
   { key: "attachments", label: "Attachments", sortable: true, draggable: true },
 ];
 
+const formatIndian = (val: string | number | null | undefined): string => {
+  if (val === "" || val === null || val === undefined) return "-";
+  const n = parseFloat(String(val));
+  if (isNaN(n)) return String(val);
+  return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+};
+
 export const WODetailsPage = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
@@ -806,8 +813,9 @@ export const WODetailsPage = () => {
             emptyMessage="No BOQ data available"
             className="min-w-[1200px] h-max"
             renderCell={(item, columnKey) => {
-              if (columnKey === "total_amount") {
-                return <span className="font-medium">{item[columnKey]}</span>;
+              const amountKeys = ["rate", "cgst_amount", "sgst_amount", "igst_amount", "tcs_amount", "tax_amount", "total_amount"];
+              if (amountKeys.includes(columnKey)) {
+                return <span className="font-medium">{formatIndian(item[columnKey])}</span>;
               } else if (columnKey === "expected_date") {
                 return (
                   <span className="font-medium">
@@ -825,26 +833,26 @@ export const WODetailsPage = () => {
         <div className="mt-6 border-t pt-4">
           <div className="flex justify-between items-center py-2">
             <span className="font-medium text-gray-700">Net Amount (INR):</span>
-            <span className="font-medium">{workOrder.totals?.net_amount}</span>
+            <span className="font-medium">{formatIndian(workOrder.totals?.net_amount)}</span>
           </div>
           <div className="flex justify-between items-center py-2">
             <span className="font-medium text-gray-700">
               Total Taxable Value Of WO:
             </span>
             <span className="font-medium">
-              {workOrder.totals?.total_taxable}
+              {formatIndian(workOrder.totals?.total_taxable)}
             </span>
           </div>
           <div className="flex justify-between items-center py-2">
             <span className="font-medium text-gray-700">Taxes (INR):</span>
-            <span className="font-medium">{workOrder.totals?.taxes}</span>
+            <span className="font-medium">{formatIndian(workOrder.totals?.taxes)}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-t">
             <span className="font-semibold text-gray-900">
               Total WO Value (INR):
             </span>
             <span className="font-semibold">
-              {workOrder.totals?.total_value}
+              {formatIndian(workOrder.totals?.total_value)}
             </span>
           </div>
           <div className="mt-4">
@@ -867,14 +875,14 @@ export const WODetailsPage = () => {
 
         <div className="mt-6">
           <p className="text-gray-900 font-medium">
-            For jyoti We Confirm & Accept,
+            For {workOrder.company?.site_name || workOrder.work_order?.contractor || "—"} We Confirm & Accept,
           </p>
         </div>
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
             <p className="font-medium text-gray-900">
-              PREPARED BY: Robert Day2
+              PREPARED BY: {workOrder.work_order?.created_by || "—"}
             </p>
           </div>
           <div>

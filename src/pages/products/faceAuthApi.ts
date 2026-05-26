@@ -1,6 +1,6 @@
 import * as faceapi from "face-api.js";
 import axios from "axios";
-import { getToken, getUser } from "../../utils/auth";
+import { getToken, getBaseUrl, getUser } from "../../utils/auth";
 
 const DEFAULT_FACE_AUTH_API_URL = "https://fm-uat-api.lockated.com";
 const normalizePath = (path: string) =>
@@ -35,7 +35,7 @@ export const getCurrentFaceAuthUser = () => {
 };
 
 export const getFaceAuthApiBaseUrl = () => {
-  const configuredUrl = import.meta.env.VITE_FACE_AUTH_API_URL;
+  const configuredUrl = getBaseUrl() || import.meta.env.VITE_FACE_AUTH_API_URL;
 
   return (configuredUrl || DEFAULT_FACE_AUTH_API_URL).replace(/\/+$/, "");
 };

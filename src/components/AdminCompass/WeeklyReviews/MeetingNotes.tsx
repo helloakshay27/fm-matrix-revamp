@@ -4,11 +4,10 @@ import { Button } from '@/components/ui/button';
 interface MeetingNotesProps {
     meetingNotes: string;
     markAllAttended: boolean;
-    aiSummary: boolean;
+    isSubmittedMeeting?: boolean;
     saveMeetingLoading?: boolean;
     onMeetingNotesChange: (value: string) => void;
     onMarkAllAttendedChange: (value: boolean) => void;
-    onAiSummaryChange: (value: boolean) => void;
     onSaveMeeting: () => void;
     onClearNotes: () => void;
 }
@@ -16,11 +15,10 @@ interface MeetingNotesProps {
 export const MeetingNotes = ({
     meetingNotes,
     markAllAttended,
-    aiSummary,
+    isSubmittedMeeting = false,
     saveMeetingLoading = false,
     onMeetingNotesChange,
     onMarkAllAttendedChange,
-    onAiSummaryChange,
     onSaveMeeting,
     onClearNotes,
 }: MeetingNotesProps) => {
@@ -58,22 +56,14 @@ export const MeetingNotes = ({
                         type="checkbox"
                         checked={markAllAttended}
                         onChange={(e) => onMarkAllAttendedChange(e.target.checked)}
-                        disabled={saveMeetingLoading}
+                        disabled={saveMeetingLoading || isSubmittedMeeting}
                         className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer disabled:opacity-50"
                     />
-                    <span className="text-sm font-medium text-[#1A1A1A]">Mark All Attended</span>
+                    <span className="text-sm font-medium text-[#1A1A1A]">
+                        Select All
+                    </span>
                 </label>
                 <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                        <input
-                            type="checkbox"
-                            checked={aiSummary}
-                            onChange={(e) => onAiSummaryChange(e.target.checked)}
-                            disabled={saveMeetingLoading}
-                            className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer disabled:opacity-50"
-                        />
-                        <span className="text-sm font-medium text-[#1A1A1A]">AI Summary</span>
-                    </label>
                     <Button
                         size="sm"
                         disabled={saveMeetingLoading}
@@ -86,7 +76,7 @@ export const MeetingNotes = ({
                                 <span>Saving...</span>
                             </div>
                         ) : (
-                            'Save Meeting'
+                            isSubmittedMeeting ? 'Update Notes' : 'Save Meeting'
                         )}
                     </Button>
                 </div>

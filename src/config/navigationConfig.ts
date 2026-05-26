@@ -522,6 +522,33 @@ export const modulesByPackage = {
         },
       ],
     },
+    {
+      name: "GDN",
+      icon: PackagePlus,
+      href: "/finance/gdn",
+      subItems: [
+        {
+          name: "GDN",
+          href: "/finance/gdn",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "GDN Request Add",
+          href: "/finance/gdn/request-add",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "GDN Request List",
+          href: "/finance/gdn/request-list",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Pending Approvals",
+          href: "/finance/gdn/pending-approvals",
+          color: "text-[#1a1a1a]",
+        },
+      ],
+    },
     { name: "Invoices", icon: Receipt, href: "/finance/invoices" },
     { name: "Bill Booking", icon: Receipt, href: "/finance/bill-booking" },
     {

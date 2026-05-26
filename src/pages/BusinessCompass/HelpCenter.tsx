@@ -4,10 +4,7 @@ import {
   CheckCircle2,
   HelpCircle,
   Clock,
-  Lightbulb,
   MessageSquare,
-  Play,
-  Send,
   Video,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,17 +15,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AdminViewEmulation } from "@/components/AdminViewEmulation";
 
 // Unified Brand Tokens (Matching Feedback Page)
 const BRAND = {
@@ -380,81 +367,6 @@ function GuideCard({ entry }: { entry: GuideEntry }) {
   );
 }
 
-function SuggestionsTabContent() {
-  const [category, setCategory] = useState("improvement");
-  const [suggestion, setSuggestion] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Hook to API when ready
-    setSuggestion("");
-  };
-
-  return (
-    <Card className="rounded-2xl border border-[rgba(218,119,86,0.18)] bg-white p-6 shadow-sm sm:p-8">
-      <h2 className="text-xl font-bold text-neutral-900 sm:text-2xl">
-        Submit a Suggestion
-      </h2>
-      <p className="mt-2 text-sm text-neutral-500">
-        Help us improve by sharing your ideas and feedback
-      </p>
-
-      <form onSubmit={handleSubmit} className="mt-8 space-y-6 max-w-3xl">
-        <div className="space-y-2">
-          <Label
-            htmlFor="suggestion-category"
-            className="text-sm font-bold text-neutral-800"
-          >
-            Category <span className="text-[#DA7756]">*</span>
-          </Label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger
-              id="suggestion-category"
-              className="h-12 w-full rounded-xl border border-neutral-200 bg-white px-4 text-sm font-medium text-neutral-900 shadow-sm outline-none focus:ring-2 focus:ring-[#DA7756]/20 hover:bg-neutral-50 transition-colors"
-            >
-              <SelectValue placeholder="Improvement" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border border-neutral-200 shadow-md">
-              <SelectItem value="improvement">Improvement</SelectItem>
-              <SelectItem value="feature">Feature request</SelectItem>
-              <SelectItem value="bug">Bug report</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label
-            htmlFor="suggestion-body"
-            className="text-sm font-bold text-neutral-800"
-          >
-            Your Suggestion <span className="text-[#DA7756]">*</span>
-          </Label>
-          <Textarea
-            id="suggestion-body"
-            value={suggestion}
-            onChange={(e) => setSuggestion(e.target.value)}
-            placeholder="Describe your suggestion in detail..."
-            className="min-h-[140px] resize-y rounded-xl border-neutral-200 bg-white p-4 text-sm shadow-sm focus:border-[#DA7756]/40 focus:ring-[#DA7756]/20 transition-all placeholder:text-neutral-400"
-          />
-        </div>
-
-        <div className="pt-2">
-          <button
-            type="submit"
-            className={cn(
-              "inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#DA7756] px-8 text-sm font-bold text-white shadow-sm transition-all hover:bg-[#BC6B4A]"
-            )}
-          >
-            <Send className="h-4 w-4" strokeWidth={2} />
-            Submit Suggestion
-          </button>
-        </div>
-      </form>
-    </Card>
-  );
-}
-
 const HelpCenter = () => {
   const [tab, setTab] = useState("tutorials");
 
@@ -473,7 +385,7 @@ const HelpCenter = () => {
               Help Center
             </h1>
             <p className="mt-1 text-sm font-medium text-neutral-500">
-              Guides, FAQs, and ways to help us improve
+              Guides, FAQs, and tutorials for Business Compass
             </p>
           </div>
         </header>
@@ -500,13 +412,6 @@ const HelpCenter = () => {
             >
               <MessageSquare className="h-4 w-4 shrink-0" />
               FAQ
-            </TabsTrigger>
-            <TabsTrigger
-              value="suggestions"
-              className="h-10 rounded-xl px-5 text-sm font-bold text-neutral-600 transition-colors data-[state=active]:bg-[#DA7756] data-[state=active]:text-white data-[state=active]:shadow-sm hover:bg-[rgba(218,119,86,0.08)] data-[state=active]:hover:bg-[#DA7756] flex items-center gap-2"
-            >
-              <Lightbulb className="h-4 w-4 shrink-0" />
-              Suggestions
             </TabsTrigger>
           </TabsList>
 
@@ -599,13 +504,6 @@ const HelpCenter = () => {
                 ))}
               </div>
             </Card>
-          </TabsContent>
-
-          <TabsContent
-            value="suggestions"
-            className="mt-6 focus-visible:outline-none"
-          >
-            <SuggestionsTabContent />
           </TabsContent>
         </Tabs>
       </div>

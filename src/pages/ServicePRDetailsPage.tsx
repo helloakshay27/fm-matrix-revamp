@@ -158,7 +158,7 @@ interface ServicePR {
   approvals?: Approval[];
   totals?: Totals;
   attachments?: Attachment[];
-  preparedBy?: string;
+  prepared_by?: string;
   signature?: string;
   contractor?: string;
   all_level_approved?: boolean;
@@ -204,6 +204,13 @@ const serviceColumns: ColumnConfig[] = [
     draggable: true,
   },
 ];
+
+const formatIndian = (val: string | number | null | undefined): string => {
+  if (val === "" || val === null || val === undefined) return "-";
+  const n = parseFloat(String(val));
+  if (isNaN(n)) return String(val);
+  return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+};
 
 export const ServicePRDetailsPage = () => {
   const dispatch = useAppDispatch();
@@ -754,17 +761,17 @@ export const ServicePRDetailsPage = () => {
         ? format(item.expected_date, "dd/MM/yyyy")
         : "-",
       product_description: item.product_description || "-",
-      rate: item.rate || 0,
+      rate: formatIndian(item.rate),
       wbs_code: item.wbs_code || "-",
       cgst_rate: item.cgst_rate || 0,
-      cgst_amount: item.cgst_amount || 0,
+      cgst_amount: formatIndian(item.cgst_amount),
       sgst_rate: item.sgst_rate || 0,
-      sgst_amount: item.sgst_amount || 0,
+      sgst_amount: formatIndian(item.sgst_amount),
       igst_rate: item.igst_rate || 0,
-      igst_amount: item.igst_amount || 0,
-      tcs_amount: item.tcs_amount || 0,
-      tax_amount: item.tax_amount || 0,
-      total_amount: item.total_amount || 0,
+      igst_amount: formatIndian(item.igst_amount),
+      tcs_amount: formatIndian(item.tcs_amount),
+      tax_amount: formatIndian(item.tax_amount),
+      total_amount: formatIndian(item.total_amount),
       general_storage: item.general_storage || "-",
       gl_account: item.gl_account || "-",
       tax_code: item.tax_code || "-"
@@ -1250,7 +1257,7 @@ export const ServicePRDetailsPage = () => {
                   Net Amount (INR):
                 </span>
                 <span className="font-medium">
-                  {servicePR.totals?.net_amount ?? "-"}
+                  {formatIndian(servicePR.totals?.net_amount)}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2">
@@ -1258,13 +1265,13 @@ export const ServicePRDetailsPage = () => {
                   Total Taxable Value Of Service PR:
                 </span>
                 <span className="font-medium">
-                  {servicePR.totals?.total_taxable ?? "-"}
+                  {formatIndian(servicePR.totals?.total_taxable)}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="font-medium text-gray-700">Taxes (INR):</span>
                 <span className="font-medium">
-                  {servicePR.totals?.taxes ?? "-"}
+                  {formatIndian(servicePR.totals?.taxes)}
                 </span>
               </div>
               <div className="flex justify-between items-center py-2 border-t">
@@ -1272,7 +1279,7 @@ export const ServicePRDetailsPage = () => {
                   Total Service PR Value (INR):
                 </span>
                 <span className="font-semibold">
-                  {servicePR.totals?.total_value ?? "-"}
+                  {formatIndian(servicePR.totals?.total_value)}
                 </span>
               </div>
               <div className="mt-4">
@@ -1309,7 +1316,7 @@ export const ServicePRDetailsPage = () => {
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <p className="font-medium text-gray-900">
-                  PREPARED BY: {servicePR.preparedBy || "-"}
+                  PREPARED BY: {servicePR.prepared_by || "-"}
                 </p>
               </div>
               <div>

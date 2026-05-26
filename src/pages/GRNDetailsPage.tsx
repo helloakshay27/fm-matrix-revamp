@@ -597,7 +597,7 @@ export const GRNDetailsPage = () => {
           <div className="flex items-start">
             <span className="text-gray-500 min-w-[180px]">PO Number</span>
             <span className="text-gray-500 mx-2">:</span>
-            <span className="text-gray-900 font-medium">{purchaseOrder.reference_number}</span>
+            <span className="text-gray-900 font-medium">{purchaseOrder.external_id}</span>
           </div>
 
           <div className="flex items-start">

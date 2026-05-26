@@ -1,13 +1,16 @@
+import { useState } from "react"
 import WeeklyReviews from "@/components/AdminCompass/WeeklyReviews"
 import WeeklyLog from "@/components/AdminCompass/WeeklyLog"
 import MeetingHistory from "@/components/AdminCompass/MeetingHistory"
 import WeeklyMeetingReports from "@/components/AdminCompass/WeeklyMeetingReports"
 import WeeklyMeetingSettings from "@/components/AdminCompass/WeeklyMeetingSettings"
-import { AdminViewEmulation } from "@/components/AdminViewEmulation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar, ChartColumn, FileText, History, Settings } from "lucide-react"
 
 const WeeklyMeetings = () => {
+    const [selectedWeekDate, setSelectedWeekDate] = useState(() => new Date())
+    const [activeTab, setActiveTab] = useState("weekly")
+
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto bg-[#f6f4ee]">
             {/* Header Section */}
@@ -18,7 +21,7 @@ const WeeklyMeetings = () => {
                 </div>
             </div>
 
-            <Tabs defaultValue="weekly">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className='w-full rounded-2xl bg-[#DA7756] p-1 h-auto'>
                     <TabsTrigger value="weekly" className='w-full rounded-xl text-sm font-semibold text-white/80 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm'>
                         <Calendar className="h-4 w-4 mr-2" />
@@ -43,13 +46,23 @@ const WeeklyMeetings = () => {
                 </TabsList>
 
                 <TabsContent value="weekly" className="mt-5">
-                    <WeeklyReviews />
+                    <WeeklyReviews
+                        initialWeekDate={selectedWeekDate}
+                        onWeekDateChange={setSelectedWeekDate}
+                        onMeetingSaved={() => setActiveTab("meetingHistory")}
+                    />
                 </TabsContent>
                 <TabsContent value="weeklyLog" className="mt-5">
-                    <WeeklyLog />
+                    <WeeklyLog
+                        initialWeekDate={selectedWeekDate}
+                        onWeekDateChange={setSelectedWeekDate}
+                    />
                 </TabsContent>
                 <TabsContent value="meetingHistory" className="mt-5">
-                    <MeetingHistory />
+                    <MeetingHistory
+                        initialWeekDate={selectedWeekDate}
+                        onWeekDateChange={setSelectedWeekDate}
+                    />
                 </TabsContent>
                 <TabsContent value="reports" className="mt-5">
                     <WeeklyMeetingReports />

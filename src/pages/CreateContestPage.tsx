@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Quill from "quill";
+import "quill/dist/quill.snow.css";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -46,6 +47,7 @@ interface OfferData {
   bannerImageName: string;
   rewardType: string;
   pointsValue: string;
+  validity?: string;
 }
 
 export const CreateContestPage: React.FC = () => {
@@ -76,6 +78,7 @@ export const CreateContestPage: React.FC = () => {
     bannerImageName: "",
     rewardType: "Coupon Code",
     pointsValue: "",
+    validity: "",
   });
 
   // Helper function to get initial offers count based on contest type
@@ -87,12 +90,26 @@ export const CreateContestPage: React.FC = () => {
   const [contestName, setContestName] = useState("");
   const [contestDescription, setContestDescription] = useState("");
   const [contestType, setContestType] = useState("");
+  const [usageType, setUsageType] = useState("");
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+  const [winningProbabilityDisplay, setWinningProbabilityDisplay] = useState("0");
 
   // Reset redemption document when contest type changes away from Scratch
   // Also adjust offers count based on contest type
   const handleContestTypeChange = (newType: string) => {
     setContestType(newType);
+
+    // Clear usage type when switching away from Random
+    if (newType !== "Random") {
+      setUsageType("");
+    }
+
+    // Clear Spin-only fields when switching away from Spin
+    if (newType !== "Spin") {
+      setUsersCap("");
+      setAttemptsRequired("");
+      setWinningProbabilityDisplay("0");
+    }
 
     // Reset redemption text for non-Scratch types
     if (newType !== "Scratch") {
@@ -375,6 +392,7 @@ export const CreateContestPage: React.FC = () => {
     formData.append("contest[name]", contestName.trim());
     formData.append("contest[description]", contestDescription.trim());
     formData.append("contest[content_type]", contestType.toLowerCase().replace(/\s+/g, "_"));
+    if (usageType) formData.append("contest[usage_type]", usageType);
     formData.append("contest[active]", String(isActive));
     formData.append("contest[start_at]", buildISO(startDate, startTime));
     formData.append("contest[end_at]", buildISO(endDate, endTime, true));
@@ -395,98 +413,74 @@ export const CreateContestPage: React.FC = () => {
     }
 
     // Add prizes_attributes
-    // First, expand offers with comma-separated coupons
+    // Expand offers — flatten comma-separated coupon codes into individual entries
     const expandedOffers: any[] = [];
     offers.forEach((offer) => {
-      // Use offer-level probability (what user entered or suggested)
-      const userProbability = Number(offer.winningProbability) || calculateBaseProbability();
-
       if (offer.rewardType === "Coupon Code") {
-        // Split comma-separated coupon codes
         const coupons = offer.couponCode
           .split(",")
           .map((code) => code.trim())
           .filter((code) => code.length > 0);
-
-        // Create a separate offer for each coupon with distributed probability
-        const probabilityPerCoupon = userProbability / coupons.length;
         coupons.forEach((coupon) => {
-          expandedOffers.push({
-            ...offer,
-            couponCode: coupon,
-            calculatedProbability: probabilityPerCoupon,
-          });
+          expandedOffers.push({ ...offer, couponCode: coupon });
         });
       } else {
-        // For non-coupon offers, add as-is
-        expandedOffers.push({
-          ...offer,
-          calculatedProbability: userProbability,
-        });
+        expandedOffers.push({ ...offer });
       }
     });
 
-    // Now add all expanded offers to formData
+    // For Spin: total win probability is entered by user; divide it equally across
+    // all expanded offers. The leftover (100 - winProb) goes as a single "none" entry.
+    let spinProbPerOffer: number | null = null;
+    let spinRemainder: number | null = null;
+    if (contestType === "Spin") {
+      const totalWin = Math.min(100, Math.max(0, Number(winningProbabilityDisplay) || 0));
+      spinProbPerOffer = expandedOffers.length > 0 ? totalWin / expandedOffers.length : 0;
+      spinRemainder = 100 - totalWin;
+    }
+
     expandedOffers.forEach((offer, index) => {
-      formData.append(
-        `contest[prizes_attributes][${index}][title]`,
-        offer.offerTitle.trim()
-      );
+      formData.append(`contest[prizes_attributes][${index}][title]`, offer.offerTitle.trim());
 
-      // Determine reward type based on offer.rewardType
       const rewardType = offer.rewardType === "Points" ? "points" : "coupon";
-      formData.append(
-        `contest[prizes_attributes][${index}][reward_type]`,
-        rewardType
-      );
+      formData.append(`contest[prizes_attributes][${index}][reward_type]`, rewardType);
 
-      // Add coupon_code only if reward type is "Coupon Code"
       if (offer.rewardType === "Coupon Code") {
-        formData.append(
-          `contest[prizes_attributes][${index}][coupon_code]`,
-          offer.couponCode.trim()
-        );
+        formData.append(`contest[prizes_attributes][${index}][coupon_code]`, offer.couponCode.trim());
       }
-
-      // Add points_value only if reward type is "Points"
       if (offer.rewardType === "Points") {
-        formData.append(
-          `contest[prizes_attributes][${index}][points_value]`,
-          offer.pointsValue.trim()
-        );
+        formData.append(`contest[prizes_attributes][${index}][points_value]`, offer.pointsValue.trim());
       }
-
-      // Add partner_name only if provided
       if (offer.partner.trim()) {
-        formData.append(
-          `contest[prizes_attributes][${index}][partner_name]`,
-          offer.partner.trim()
-        );
+        formData.append(`contest[prizes_attributes][${index}][partner_name]`, offer.partner.trim());
       }
 
-      // Use calculated probability instead of manual input
-      formData.append(
-        `contest[prizes_attributes][${index}][probability_value]`,
-        String(offer.calculatedProbability)
-      );
-      formData.append(
-        `contest[prizes_attributes][${index}][probability_out_of]`,
-        "100"
-      );
-      formData.append(
-        `contest[prizes_attributes][${index}][position]`,
-        String(index + 1)
-      );
+      if (contestType === "Spin" && spinProbPerOffer !== null) {
+        formData.append(`contest[prizes_attributes][${index}][probability_value]`, String(spinProbPerOffer));
+        formData.append(`contest[prizes_attributes][${index}][probability_out_of]`, "100");
+      }
+
+      formData.append(`contest[prizes_attributes][${index}][position]`, String(index + 1));
       formData.append(`contest[prizes_attributes][${index}][active]`, "true");
 
-      // Add banner image if present
       if (offer.bannerImage) {
-        formData.append(
-          `contest[prizes_attributes][${index}][image_attributes][document]`,
-          offer.bannerImage
-        );
+        formData.append(`contest[prizes_attributes][${index}][image_attributes][document]`, offer.bannerImage);
+      }
+      if (offer.validity) {
+        formData.append(`contest[prizes_attributes][${index}][validity]`, offer.validity);
       }
     });
+
+    // For Spin: append the "none" remainder entry after all real offers
+    if (contestType === "Spin" && spinRemainder !== null) {
+      const noneIndex = expandedOffers.length;
+      formData.append(`contest[prizes_attributes][${noneIndex}][title]`, "Better luck next time!");
+      formData.append(`contest[prizes_attributes][${noneIndex}][reward_type]`, "none");
+      formData.append(`contest[prizes_attributes][${noneIndex}][probability_value]`, String(spinRemainder));
+      formData.append(`contest[prizes_attributes][${noneIndex}][probability_out_of]`, "100");
+      formData.append(`contest[prizes_attributes][${noneIndex}][position]`, String(noneIndex + 1));
+      formData.append(`contest[prizes_attributes][${noneIndex}][active]`, "true");
+    }
 
     // Add terms and conditions text if present
     if (termsText.trim()) {
@@ -710,6 +704,35 @@ export const CreateContestPage: React.FC = () => {
                       ))}
                     </MuiSelect>
                   </FormControl>
+
+                  {contestType === "Random" && (
+                    <FormControl fullWidth size="small" sx={textFieldSx}>
+                      <InputLabel>Usage Type</InputLabel>
+                      <MuiSelect
+                        value={usageType}
+                        label="Usage Type"
+                        onChange={(e) => setUsageType(e.target.value)}
+                      >
+                        <MenuItem value="high_usage">High Usage</MenuItem>
+                        <MenuItem value="low_usage">Low Usage</MenuItem>
+                        <MenuItem value="na">NA</MenuItem>
+                      </MuiSelect>
+                    </FormControl>
+                  )}
+
+                  {contestType === "Spin" && (
+                    <TextField
+                      fullWidth
+                      label="Winning Probability (%)"
+                      value={winningProbabilityDisplay}
+                      onChange={(e) => setWinningProbabilityDisplay(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      type="number"
+                      inputProps={{ min: 0, max: 100 }}
+                      sx={textFieldSx}
+                    />
+                  )}
                 </div>
 
                 <div className="mt-6">
@@ -942,65 +965,18 @@ export const CreateContestPage: React.FC = () => {
                       size="small"
                     />
 
-                    {(() => {
-                      const maxAvailable = getMaxAvailableProbability(offer.id);
-                      const currentValue = Number(offer.winningProbability) || 0;
-                      const isExceeded = currentValue > maxAvailable;
-                      const suggestedValue = calculateBaseProbability().toFixed(2);
 
-                      // Calculate total at offer level (not per coupon)
-                      const totalOfferLevel = offers.reduce((sum, o) => sum + (Number(o.winningProbability) || calculateBaseProbability()), 0);
-
-                      return (
-                        <TextField
-                          fullWidth
-                          label="Winning Probability (%)"
-                          value={offer.winningProbability || suggestedValue}
-                          onChange={(e) =>
-                            updateOffer(offer.id, "winningProbability", e.target.value)
-                          }
-                          variant="outlined"
-                          size="small"
-                          type="number"
-                          inputProps={{ min: 0, max: maxAvailable, step: 0.01 }}
-                          error={isExceeded}
-                          sx={{
-                            ...textFieldSx,
-                            ...(isExceeded && {
-                              "& .MuiOutlinedInput-root": {
-                                "& fieldset": { borderColor: "#ef4444" },
-                                "&:hover fieldset": { borderColor: "#ef4444" },
-                                "&.Mui-focused fieldset": { borderColor: "#ef4444" },
-                              },
-                              "& .MuiInputLabel-root": { color: "#ef4444" },
-                              "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
-                            }),
-                          }}
-                          helperText={
-                            isExceeded
-                              ? `❌ Exceeded! Max available: ${maxAvailable.toFixed(2)}%`
-                              : `Suggested: ${suggestedValue}% | Max: ${maxAvailable.toFixed(2)}% | Total: ${totalOfferLevel.toFixed(2)}%${Number(offer.winningProbability) ? ` | Each coupon: ${(Number(offer.winningProbability) / countCoupons(offer.couponCode)).toFixed(2)}%` : ""}`
-                          }
-                        />
-                      );
-                    })()}
-
-                    {/* <TextField
+                    <TextField
                       fullWidth
-                      label="Probability (Out of)"
-                      value={offer.probabilityOutOf}
-                      onChange={(e) =>
-                        updateOffer(
-                          offer.id,
-                          "probabilityOutOf",
-                          e.target.value
-                        )
-                      }
+                      label="Validity"
+                      value={offer.validity}
+                      onChange={(e) => updateOffer(offer.id, "validity", e.target.value)}
                       sx={textFieldSx}
                       size="small"
-                      type="number"
+                      type="date"
                       inputProps={{ min: 0 }}
-                    /> */}
+                      required
+                    />
                   </div>
 
                   <div className="mt-4">
@@ -1170,27 +1146,31 @@ export const CreateContestPage: React.FC = () => {
                   sx={textFieldSx}
                 />
 
-                <TextField
-                  fullWidth
-                  label="Users Cap"
-                  value={usersCap}
-                  onChange={(e) => setUsersCap(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  type="number"
-                  sx={textFieldSx}
-                />
+                {contestType === "Spin" && (
+                  <TextField
+                    fullWidth
+                    label="Users Cap"
+                    value={usersCap}
+                    onChange={(e) => setUsersCap(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    type="number"
+                    sx={textFieldSx}
+                  />
+                )}
 
-                <TextField
-                  fullWidth
-                  label="Attempts Required"
-                  value={attemptsRequired}
-                  onChange={(e) => setAttemptsRequired(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  type="number"
-                  sx={textFieldSx}
-                />
+                {contestType === "Spin" && (
+                  <TextField
+                    fullWidth
+                    label="Attempts Allowed"
+                    value={attemptsRequired}
+                    onChange={(e) => setAttemptsRequired(e.target.value)}
+                    variant="outlined"
+                    size="small"
+                    type="number"
+                    sx={textFieldSx}
+                  />
+                )}
               </div>
             </CardContent>
           </Card>

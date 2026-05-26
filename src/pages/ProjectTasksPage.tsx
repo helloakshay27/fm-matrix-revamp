@@ -18,6 +18,7 @@ import { ActiveTimer } from "@/pages/ProjectTaskDetails";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useAppDispatch } from "@/store/hooks";
 import { createProjectTask, editProjectTask, resetUserAvailability, updateTaskStatus } from "@/store/slices/projectTasksSlice";
+import { updateSprint, fetchSprints } from "@/store/slices/sprintSlice";
 import { useTasks, useChangeTaskStatus, useCreateTask, useUpdateTaskCompletion, useDeleteTask, useImportTasks } from "@/hooks/useTasks";
 import { useDebounce } from "@/hooks/useDebounce";
 import { ChartNoAxesColumn, ChevronDown, Eye, List, Plus, X, Search, ChevronRight, Play, Pause, ArrowLeft } from "lucide-react";
@@ -47,6 +48,13 @@ const Transition = forwardRef(function Transition(
 });
 
 const columns: ColumnConfig[] = [
+    {
+        key: "actions",
+        label: "Actions",
+        sortable: false,
+        draggable: true,
+        defaultVisible: true,
+    },
     {
         key: "id",
         label: "Task ID",
@@ -126,7 +134,7 @@ const columns: ColumnConfig[] = [
     },
     {
         key: "started_time",
-        label: "Started Time",
+        label: "Actual Efforts Taken",
         sortable: false,
         draggable: true,
         defaultVisible: true,
@@ -395,6 +403,122 @@ const PauseReasonModal = ({ isOpen, onClose, onSubmit, onEndTask, isLoading, tas
     );
 };
 
+// Responsible Person Change Modal Component
+const ResponsiblePersonReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId, pendingResponsiblePersonId = null, users = [] }: any) => {
+    const [reason, setReason] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason('');
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error('Please enter a reason for changing the responsible person');
+            return;
+        }
+        if (taskId && pendingResponsiblePersonId) {
+            onSubmit(reason, taskId, pendingResponsiblePersonId);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Responsible Person Change</h2>
+
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for changing responsible person..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                    <Button
+                        variant="outline"
+                        onClick={onClose}
+                        disabled={isLoading}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                    >
+                        {isLoading ? 'Submitting...' : 'Change Responsible Person'}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Hold Reason Modal Component
+const HoldReasonModal = ({ isOpen, onClose, onSubmit, isLoading, taskId }) => {
+    const [reason, setReason] = useState('');
+
+    useEffect(() => {
+        if (!isOpen) {
+            setReason('');
+        }
+    }, [isOpen]);
+
+    const handleSubmit = () => {
+        if (!reason.trim()) {
+            toast.error('Please enter a reason for putting the task on hold');
+            return;
+        }
+        onSubmit(reason, taskId);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Reason for Hold</h2>
+
+                <div className="mb-6">
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="Enter reason for putting task on hold..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 resize-none"
+                        rows={4}
+                        disabled={isLoading}
+                    />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                    <Button
+                        variant="outline"
+                        onClick={onClose}
+                        disabled={isLoading}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:opacity-50"
+                    >
+                        {isLoading ? 'Submitting...' : 'Put on Hold'}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // Overdue Reason Modal Component
 const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     const [reason, setReason] = useState('');
@@ -445,6 +569,47 @@ const OverdueReasonModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                         className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
                     >
                         {isLoading ? 'Submitting...' : 'Submit'}
+                    </Button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const AddToSprintModal = ({ isOpen, onClose, sprints, selectedSprintId, setSelectedSprintId, onSubmit, isLoading }: any) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+            <div className="bg-white rounded-lg shadow-lg p-6 w-[30rem]">
+                <h2 className="text-lg font-semibold mb-4 text-gray-800">Add to Sprint</h2>
+                <div className="mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Select Sprint</label>
+                    <Select
+                        value={selectedSprintId}
+                        onChange={(e) => setSelectedSprintId(e.target.value as string)}
+                        displayEmpty
+                        fullWidth
+                        size="small"
+                        variant="outlined"
+                    >
+                        <MenuItem value=""><em>Select a sprint</em></MenuItem>
+                        {sprints.map((sprint: any) => (
+                            <MenuItem key={sprint.id} value={String(sprint.id)}>
+                                {sprint.name || sprint.title}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </div>
+                <div className="flex gap-3 justify-end">
+                    <Button variant="outline" onClick={onClose} disabled={isLoading}>
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={onSubmit}
+                        disabled={isLoading}
+                        className="bg-[#C72030] text-white hover:bg-[#A01020] disabled:opacity-50"
+                    >
+                        {isLoading ? 'Adding...' : 'Add to Sprint'}
                     </Button>
                 </div>
             </div>
@@ -591,12 +756,94 @@ const ProjectTasksPage = () => {
     const [pauseTaskId, setPauseTaskId] = useState<number | null>(null);
     const [isPauseLoading, setIsPauseLoading] = useState(false);
 
+    // Hold Reason Modal State
+    const [isHoldModalOpen, setIsHoldModalOpen] = useState(false);
+    const [holdTaskId, setHoldTaskId] = useState<number | null>(null);
+    const [isHoldLoading, setIsHoldLoading] = useState(false);
+
+    // Responsible Person Change Modal State
+    const [isResponsibleModalOpen, setIsResponsibleModalOpen] = useState(false);
+    const [responsibleTaskId, setResponsibleTaskId] = useState<number | null>(null);
+    const [pendingResponsiblePersonId, setPendingResponsiblePersonId] = useState<number | null>(null);
+    const [isResponsibleLoading, setIsResponsibleLoading] = useState(false);
+
     // Overdue Reason Modal State
     const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false);
     const [overdueTaskId, setOverdueTaskId] = useState<number | null>(null);
     const [pendingCompletionPercentage, setPendingCompletionPercentage] = useState<number>(0);
     const [isOverdueLoading, setIsOverdueLoading] = useState(false);
     const [pendingStatusChange, setPendingStatusChange] = useState<{ id: number; status: string } | null>(null);
+
+    // Row selection state
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+
+    // Add to Sprint state
+    const [isAddToSprintModalOpen, setIsAddToSprintModalOpen] = useState(false);
+    const [sprints, setSprints] = useState<any[]>([]);
+    const [selectedSprintId, setSelectedSprintId] = useState<string>('');
+    const [isAddingToSprint, setIsAddingToSprint] = useState(false);
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedItems(tasks.map((t: any) => String(t.id)));
+        } else {
+            setSelectedItems([]);
+        }
+    };
+
+    const handleSelectItem = (itemId: string, checked: boolean) => {
+        if (checked) {
+            setSelectedItems((prev) => [...prev, itemId]);
+        } else {
+            setSelectedItems((prev) => prev.filter((id) => id !== itemId));
+        }
+    };
+
+    const fetchSprintsList = useCallback(async () => {
+        try {
+            const result = await dispatch(fetchSprints({ token, baseUrl })).unwrap();
+            const list = result?.sprints || result?.data?.sprints || (Array.isArray(result) ? result : []);
+            setSprints(list);
+        } catch (error) {
+            console.error('Failed to fetch sprints:', error);
+        }
+    }, [dispatch, token, baseUrl]);
+
+    const handleAddToSprintSubmit = async () => {
+        if (!selectedSprintId) {
+            toast.error('Please select a sprint');
+            return;
+        }
+        setIsAddingToSprint(true);
+        try {
+            const result = await dispatch(updateSprint({
+                token,
+                baseUrl,
+                id: selectedSprintId,
+                data: { sprint: { task_ids: selectedItems.map(Number) } },
+            })).unwrap();
+
+            const existingTaskIds: number[] = result?.existing_task_ids || [];
+            const existingIssueIds: number[] = result?.existing_issue_ids || [];
+
+            if (existingTaskIds.length > 0) {
+                toast.error(`Tasks with IDs ${existingTaskIds.join(', ')} are already added to this sprint`);
+            }
+            if (existingIssueIds.length > 0) {
+                toast.error(`Issues with IDs ${existingIssueIds.join(', ')} are already added to this sprint`);
+            }
+            if (existingTaskIds.length === 0 && existingIssueIds.length === 0) {
+                toast.success('Tasks added to sprint successfully');
+                setIsAddToSprintModalOpen(false);
+                setSelectedSprintId('');
+                setSelectedItems([]);
+            }
+        } catch (error) {
+            toast.error('Failed to add tasks to sprint');
+        } finally {
+            setIsAddingToSprint(false);
+        }
+    };
 
     const viewDropdownRef = useRef<HTMLDivElement>(null);
     const statusDropdownRef = useRef<HTMLDivElement>(null);
@@ -1442,24 +1689,31 @@ const ProjectTasksPage = () => {
         }
     }
 
-    const renderActions = (item: any) => (
-        <div className="flex items-center justify-center gap-2">
-            {shouldShow("employee_project_tasks", "show") && (
-                <Button
-                    size="sm"
-                    variant="ghost"
-                    className="p-1"
-                    onClick={() => handleView(item.id)}
-                    title="View Task Details"
-                >
-                    <Eye className="w-4 h-4" />
-                </Button>
-            )}
-        </div>
-    );
+    // const renderActions = (item: any) => (
+    // <div className="flex items-center justify-center gap-2">
+    //     {shouldShow("employee_project_tasks", "show") && (
+    //         <Button
+    //             size="sm"
+    //             variant="ghost"
+    //             className="p-1"
+    //             onClick={() => handleView(item.id)}
+    //             title="View Task Details"
+    //         >
+    //             <Eye className="w-4 h-4" />
+    //         </Button>
+    //     )}
+    // </div>
+    // );
 
     const handleStatusChange = async (id: number, status: string) => {
         try {
+            // Check if task is being put on hold
+            if (status === 'on_hold') {
+                setHoldTaskId(id);
+                setIsHoldModalOpen(true);
+                return;
+            }
+
             // Check if task is being marked as completed and if it's overdue
             if (status === 'completed') {
                 const task = tasks.find(t => t.id === id);
@@ -1507,12 +1761,60 @@ const ProjectTasksPage = () => {
     }
 
     const handleUpdateTask = async (id: number, responsible_person_id: number) => {
+        // Show modal to ask for reason
+        setResponsibleTaskId(id);
+        setPendingResponsiblePersonId(responsible_person_id);
+        setIsResponsibleModalOpen(true);
+    }
+
+    const handleResponsiblePersonReasonSubmit = async (reason: string, tid: number, newResponsiblePersonId: number) => {
+        if (!tid || !newResponsiblePersonId) return;
+
+        setIsResponsibleLoading(true);
         try {
-            await dispatch(editProjectTask({ token, baseUrl, id: String(id), data: { responsible_person_id } })).unwrap();
-            setCurrentPage(1);
-            toast.success("Task updated successfully");
+            // Get the current task to find old responsible person
+            const task = tasks.find(t => t.id === tid);
+            const oldResponsibleUser = users.find(u => u.id === task?.responsible_person_id);
+            const oldResponsibleName = oldResponsibleUser?.full_name || 'Unknown';
+
+            // Find new responsible person name from users list
+            const newResponsibleUser = users.find(u => u.id === newResponsiblePersonId);
+            const newResponsibleName = newResponsibleUser?.full_name || `User ${newResponsiblePersonId}`;
+
+            // Update task with new responsible person
+            await dispatch(editProjectTask({ token, baseUrl, id: String(tid), data: { responsible_person_id: newResponsiblePersonId } })).unwrap();
+
+            // Save the change reason as a comment
+            const commentPayload = {
+                comment: {
+                    body: `Responsible person changed from ${oldResponsibleName} to ${newResponsibleName} with reason: ${reason}`,
+                    commentable_id: tid,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            };
+
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            toast.success('Responsible person changed with reason');
+            setIsResponsibleModalOpen(false);
+            setResponsibleTaskId(null);
+            setPendingResponsiblePersonId(null);
+
+            // Refresh task list in background
+            refetchTasks();
         } catch (error) {
-            console.log(error)
+            console.error('Failed to update responsible person:', error);
+            toast.error(
+                `Failed to update responsible person: ${error?.response?.data?.error || error?.message || 'Server error'}`
+            );
+        } finally {
+            setIsResponsibleLoading(false);
         }
     }
 
@@ -1571,6 +1873,47 @@ const ProjectTasksPage = () => {
             );
         } finally {
             setIsPauseLoading(false);
+        }
+    };
+
+    const handleHoldReasonSubmit = async (reason: string, tid: number) => {
+        if (!tid) return;
+
+        setIsHoldLoading(true);
+        try {
+            // Update task status to "on_hold"
+            await statusMutation.mutateAsync({ id: tid, status: 'on_hold' });
+
+            // Save the hold reason as a comment
+            const commentPayload = {
+                comment: {
+                    body: `On hold with reason: ${reason}`,
+                    commentable_id: tid,
+                    commentable_type: 'TaskManagement',
+                    commentor_id: JSON.parse(localStorage.getItem('user'))?.id,
+                    active: true,
+                },
+            };
+
+            await axios.post(`https://${baseUrl}/comments.json`, commentPayload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            toast.success('Task put on hold with reason');
+            setIsHoldModalOpen(false);
+            setHoldTaskId(null);
+
+            // Refresh task list in background
+            refetchTasks();
+        } catch (error) {
+            console.error('Failed to put task on hold:', error);
+            toast.error(
+                `Failed to put task on hold: ${error?.response?.data?.error || error?.message || 'Server error'}`
+            );
+        } finally {
+            setIsHoldLoading(false);
         }
     };
 
@@ -1771,7 +2114,7 @@ const ProjectTasksPage = () => {
                             className={`absolute top-0 left-0 h-6 ${color} rounded-full transition-all duration-300`}
                             style={{ width: `${progress}%` }}
                         ></div>
-                        <span className="relative z-10 text-xs font-semibold text-gray-800">
+                        <span className="relative text-xs font-semibold text-gray-800">
                             {Math.round(progress)}%
                         </span>
                     </div>
@@ -1783,6 +2126,20 @@ const ProjectTasksPage = () => {
         };
 
         switch (columnKey) {
+            case "actions":
+                return <div className="flex items-center justify-center gap-2">
+                    {shouldShow("employee_project_tasks", "show") && (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="p-1"
+                            onClick={() => handleView(item.id)}
+                            title="View Task Details"
+                        >
+                            <Eye className="w-4 h-4" />
+                        </Button>
+                    )}
+                </div>
             case "id":
                 return <span className="w-[80px]">{isSubtask ? 'S-' : 'T-'}{item.id}</span>
             case "title":
@@ -2405,7 +2762,7 @@ const ProjectTasksPage = () => {
 
                         {/* Indented actions cell */}
                         <td className="p-4 text-center w-16 min-w-16">
-                            <div className="flex justify-center items-center gap-2 ml-4">
+                            {/* <div className="flex justify-center items-center gap-2 ml-4">
                                 <Button
                                     size="sm"
                                     variant="ghost"
@@ -2415,7 +2772,7 @@ const ProjectTasksPage = () => {
                                 >
                                     <Eye className="w-4 h-4" />
                                 </Button>
-                            </div>
+                            </div> */}
                         </td>
 
                         {/* Subtask data in same columns */}
@@ -2477,7 +2834,7 @@ const ProjectTasksPage = () => {
             <EnhancedTable
                 data={tasks}
                 columns={columns}
-                renderActions={renderActions}
+                // renderActions={renderActions}
                 renderCell={renderCell}
                 leftActions={leftActions}
                 rightActions={rightActions}
@@ -2496,6 +2853,13 @@ const ProjectTasksPage = () => {
                 collapsible={true}
                 getChildrenKey={() => "sub_tasks_managements"}
                 renderChildrenRows={renderChildrenRows}
+                enableFreeze={true}
+                freezeColumnsCount={4}
+                selectable={true}
+                selectedItems={selectedItems}
+                onSelectAll={handleSelectAll}
+                onSelectItem={handleSelectItem}
+                getItemId={(item: any) => String(item.id)}
             />
 
             <Dialog
@@ -2915,6 +3279,33 @@ const ProjectTasksPage = () => {
                 taskId={pauseTaskId}
             />
 
+            {/* Hold Reason Modal */}
+            <HoldReasonModal
+                isOpen={isHoldModalOpen}
+                onClose={() => {
+                    setIsHoldModalOpen(false);
+                    setHoldTaskId(null);
+                }}
+                onSubmit={handleHoldReasonSubmit}
+                isLoading={isHoldLoading}
+                taskId={holdTaskId}
+            />
+
+            {/* Responsible Person Change Reason Modal */}
+            <ResponsiblePersonReasonModal
+                isOpen={isResponsibleModalOpen}
+                onClose={() => {
+                    setIsResponsibleModalOpen(false);
+                    setResponsibleTaskId(null);
+                    setPendingResponsiblePersonId(null);
+                }}
+                onSubmit={handleResponsiblePersonReasonSubmit}
+                isLoading={isResponsibleLoading}
+                taskId={responsibleTaskId}
+                pendingResponsiblePersonId={pendingResponsiblePersonId}
+                users={users}
+            />
+
             {/* Overdue Reason Modal */}
             <OverdueReasonModal
                 isOpen={isOverdueModalOpen}
@@ -2934,6 +3325,48 @@ const ProjectTasksPage = () => {
                     onClearSelection={() => setShowActionPanel(false)}
                 />
             )}
+
+            {selectedItems.length > 0 && (
+                <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.15)] rounded-lg z-50 flex h-[105px] selection-panel">
+                    <div className="w-[44px] bg-[#C4B59A] rounded-l-lg flex flex-col items-center justify-center">
+                        <div className="text-[#C72030] font-bold text-lg"></div>
+                    </div>
+                    <div className="flex items-center justify-between gap-4 px-6 flex-1">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-[#1a1a1a]">Action</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                onClick={() => { fetchSprintsList(); setIsAddToSprintModalOpen(true); }}
+                                variant="ghost"
+                                size="sm"
+                                className="flex flex-col items-center gap-1 h-auto py-2 px-3 hover:bg-gray-50 transition-colors duration-200"
+                            >
+                                <Plus className="w-6 h-6 text-black" />
+                                <span className="text-xs text-gray-600">Add to Sprint</span>
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="w-[44px] flex items-center justify-center border-l border-gray-200">
+                        <button
+                            onClick={() => setSelectedItems([])}
+                            className="w-full h-full flex items-center justify-center hover:bg-gray-50 transition-colors duration-200"
+                        >
+                            <X className="w-4 h-4 text-black" />
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <AddToSprintModal
+                isOpen={isAddToSprintModalOpen}
+                onClose={() => { setIsAddToSprintModalOpen(false); setSelectedSprintId(''); }}
+                sprints={sprints}
+                selectedSprintId={selectedSprintId}
+                setSelectedSprintId={setSelectedSprintId}
+                onSubmit={handleAddToSprintSubmit}
+                isLoading={isAddingToSprint}
+            />
 
             <CommonImportModal
                 selectedFile={selectedFile}

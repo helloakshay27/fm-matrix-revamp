@@ -18,9 +18,9 @@ const C = {
   primaryHov: "#c9673f",
   primaryBg: "#fdf9f7",
   primaryTint: "rgba(218,119,86,0.06)",
-  primaryBord: "#F6F4EE",
+  primaryBord: "#e8e3de",
   primaryBordStrong: "#d4cdc6",
-  pageBg: "#ffffff",
+  pageBg: "#f6f4ee",
   cardBg: "#ffffff",
   tealBg: "#9EC8BA",
   textMain: "#1a1a1a",
@@ -39,6 +39,7 @@ const getBaseUrl = () => {
 };
 
 const BASE_URL = getBaseUrl();
+const AI_CRITICAL_NUMBERS_STORAGE_KEY = "business_plan_ai_critical_numbers";
 
 const getAuthHeaders = (): Record<string, string> => {
   const token = localStorage.getItem("token") || "";
@@ -1292,11 +1293,15 @@ const ThemeStyle = () => (
     .bp-scroll::-webkit-scrollbar-thumb { background: #C4B89D; border-radius: 10px; }
     .bp-scroll::-webkit-scrollbar-thumb:hover { background: #DA7756; }
     .bp-error-banner { background: #fee2e2; border: 1px solid #fca5a5; color: #991b1b; border-radius: 12px; padding: 10px 14px; font-size: 13px; font-weight: 600; }
-    .bp-card-lift { transition: box-shadow .2s, transform .2s; }
-    .bp-card-lift:hover { box-shadow: 0 8px 32px rgba(218,119,86,0.12); transform: translateY(-1px); }
-    .bp-tab-active { background: #fff !important; color: #DA7756 !important; box-shadow: 0 1px 4px rgba(0,0,0,0.10); }
-    .bp-tab-inactive { background: transparent !important; color: rgba(255,255,255,0.80) !important; }
-    .bp-tab-inactive:hover { background: rgba(255,255,255,0.12) !important; color: #fff !important; }
+    .bp-card-lift { transition: box-shadow .2s, transform .2s, border-color .2s, background .2s; }
+    .bp-card-lift:hover { border-color: rgba(218,119,86,0.35) !important; box-shadow: 0 16px 36px rgba(26,26,26,0.08), 0 4px 14px rgba(218,119,86,0.10); transform: translateY(-2px); }
+    .bp-tab-active { background: #DA7756 !important; color: #fff !important; box-shadow: 0 10px 20px rgba(218,119,86,0.20); }
+    .bp-tab-inactive { background: transparent !important; color: #6b7280 !important; }
+    .bp-tab-inactive:hover { background: #fffaf8 !important; color: #DA7756 !important; }
+    .bp-panel { border-radius: 20px; border: 1px solid #e8e3de; background: #ffffff; box-shadow: 0 10px 24px rgba(26,26,26,0.05); }
+    .bp-section-band { border-radius: 20px; border: 1px solid #e8e3de; background: rgba(255,255,255,0.72); box-shadow: 0 10px 24px rgba(26,26,26,0.04); }
+    .bp-soft-card { border-radius: 18px; border: 1px solid #e8e3de; background: #ffffff; box-shadow: 0 10px 24px rgba(26,26,26,0.05); }
+    .bp-icon-tile { border: 1px solid rgba(218,119,86,0.22); background: #fdf9f7; color: #DA7756; }
     .drag-over { border: 2px dashed ${C.primary} !important; opacity: 0.5; }
     .bp-heading-coral { color: #DA7756 !important; }
     @keyframes bp-spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
@@ -1351,13 +1356,13 @@ const AI_PLAN_FIELDS = [
   { key: "purpose", label: "Purpose / Why do we exist?" },
   { key: "core_values", label: "Core Values" },
   { key: "brand_promises", label: "Brand Promises & Promise KPIs" },
-  { key: "target_segments", label: "Target Segments" },
   { key: "bhag", label: "BHAG / 10-Year Goal" },
   { key: "three_year_vision", label: "3-Year Goals & Initiatives" },
   { key: "annual_goals", label: "1-Year Goals & Initiatives" },
-  { key: "quarterly_priorities", label: "Quarterly Goals, Theme, Initiatives & Rewards" },
-  { key: "critical_numbers", label: "Critical Numbers" },
-  { key: "drivers_swot", label: "People Drivers, Process Drivers & SWOT" },
+  { key: "target_markets", label: "Target Markets" },
+  { key: "key_initiatives", label: "Key Initiatives" },
+  { key: "key_metrics", label: "Key Metrics" },
+  { key: "people_process", label: "People & Process" },
 ] as const;
 
 const TOOLTIP_CONTENT: Record<
@@ -1396,8 +1401,13 @@ const CoreValuesInlineCard: React.FC<{ values: CoreValueRecord[] }> = ({
         {(values || []).map((v, idx) => (
           <span
             key={v.id ?? idx}
-            className="px-4 py-1.5 text-[11px] font-black rounded-full shadow-sm text-white tracking-tight"
-            style={{ background: C.primary }}
+            className="px-4 py-2 text-[12px] font-bold rounded-full shadow-sm tracking-tight border"
+            style={{
+              background: "#FFF0EA",
+              borderColor: "#D46342",
+              color: "#1f2933",
+              boxShadow: "0 6px 14px rgba(184,79,52,0.12)",
+            }}
           >
             {v.value}
           </span>
@@ -1922,13 +1932,13 @@ const BusinessPlanAndGoles = () => {
     purpose: aiAnswers[0]?.trim() || "",
     core_values: aiAnswers[1]?.trim() || "",
     brand_promises: aiAnswers[2]?.trim() || "",
-    target_segments: aiAnswers[3]?.trim() || "",
-    bhag: aiAnswers[4]?.trim() || "",
-    three_year_goals: aiAnswers[5]?.trim() || "",
-    one_year_goals: aiAnswers[6]?.trim() || "",
-    quarterly_plan: aiAnswers[7]?.trim() || "",
-    critical_numbers: aiAnswers[8]?.trim() || "",
-    people_process_swot: aiAnswers[9]?.trim() || "",
+    bhag: aiAnswers[3]?.trim() || "",
+    three_year_vision: aiAnswers[4]?.trim() || "",
+    annual_goals: aiAnswers[5]?.trim() || "",
+    target_markets: aiAnswers[6]?.trim() || "",
+    key_initiatives: aiAnswers[7]?.trim() || "",
+    key_metrics: aiAnswers[8]?.trim() || "",
+    people_process: aiAnswers[9]?.trim() || "",
   });
 
   const createAiPlanPreview = () => {
@@ -1939,7 +1949,7 @@ const BusinessPlanAndGoles = () => {
       "",
       `Purpose: ${answer(0)}`,
       `Core Values: ${answer(1)}`,
-      `Target Segments: ${answer(3)}`,
+      `Target Markets: ${answer(6)}`,
       "",
       "EXECUTIVE SUMMARY",
       "-".repeat(60),
@@ -1947,19 +1957,19 @@ const BusinessPlanAndGoles = () => {
       "",
       "STRATEGIC DIRECTION",
       "-".repeat(60),
-      `BHAG / 10-Year Goal: ${answer(4)}`,
-      `3-Year Goals: ${answer(5)}`,
-      `1-Year Goals: ${answer(6)}`,
+      `BHAG / 10-Year Goal: ${answer(3)}`,
+      `3-Year Goals: ${answer(4)}`,
+      `1-Year Goals: ${answer(5)}`,
       "",
-      "QUARTERLY PLAN",
+      "KEY INITIATIVES",
       "-".repeat(60),
       answer(7),
       "",
-      "CRITICAL NUMBERS",
+      "KEY METRICS",
       "-".repeat(60),
       answer(8),
       "",
-      "DRIVERS AND SWOT",
+      "PEOPLE AND PROCESS",
       "-".repeat(60),
       answer(9),
       "",
@@ -2024,19 +2034,82 @@ const BusinessPlanAndGoles = () => {
       : null;
   };
 
-  const normalizeAiPlanForSave = (plan: Record<string, any>) => ({
+  const unwrapAiPlanPayload = (payload: Record<string, any>) => {
+    const plan =
+      payload?.plan ||
+      payload?.data?.plan ||
+      payload?.result?.plan ||
+      payload;
+    return plan && typeof plan === "object" && !Array.isArray(plan)
+      ? plan
+      : {};
+  };
+
+  const normalizeAiPlanForSave = (payload: Record<string, any>) => {
+    const plan = unwrapAiPlanPayload(payload);
+    const brandPromiseKpis = Array.isArray(plan.brand_promise_kpis)
+      ? plan.brand_promise_kpis
+      : Array.isArray(plan["brand Promise KPIs"])
+        ? plan["brand Promise KPIs"]
+        : Array.isArray(plan.brand_promise_KPIs)
+          ? plan.brand_promise_KPIs
+          : [];
+    const brandPromises = Array.isArray(plan.brand_promises)
+      ? plan.brand_promises
+      : [];
+    const baseCriticalNumbers = Array.isArray(plan.critical_numbers)
+      ? plan.critical_numbers
+      : [];
+    const criticalNumberNames = new Set(
+      baseCriticalNumbers
+        .map((item: any) =>
+          String(item?.name || item?.title || item || "")
+            .trim()
+            .toLowerCase()
+        )
+        .filter(Boolean)
+    );
+    const brandKpisAsCriticalNumbers = brandPromiseKpis
+      .map((item: any, index: number) => {
+        const linkedBrandPromise =
+          item?.brand_promise ||
+          item?.brandPromise ||
+          brandPromises[index] ||
+          "";
+
+        return typeof item === "string"
+          ? {
+              name: item,
+              target: "",
+              current: "",
+              brand_promise: linkedBrandPromise,
+              brand_promise_index: index,
+            }
+          : {
+              name: item?.name || item?.title || item?.kpi || "",
+              target: item?.target ?? item?.target_value ?? "",
+              current: item?.current ?? item?.current_value ?? "",
+              brand_promise: linkedBrandPromise,
+              brand_promise_index: index,
+            };
+      })
+      .filter((item: any) => {
+        const key = String(item.name || "").trim().toLowerCase();
+        if (!key || criticalNumberNames.has(key)) return false;
+        criticalNumberNames.add(key);
+        return true;
+      });
+
+    return {
     purpose: plan.purpose || "",
     core_values: Array.isArray(plan.core_values) ? plan.core_values : [],
     core_values_explanation: plan.core_values_explanation || "",
-    brand_promises: Array.isArray(plan.brand_promises)
-      ? plan.brand_promises
-      : [],
-    brand_promise_kpis:
-      plan.brand_promise_kpis ||
-      plan["brand Promise KPIs"] ||
-      plan.brand_promise_KPIs ||
-      [],
+    brand_promises: brandPromises,
+    brand_promise_kpis: brandPromiseKpis,
     target_segments: plan.target_segments || "",
+    bhag_alternatives: Array.isArray(plan.bhag_alternatives)
+      ? plan.bhag_alternatives
+      : [],
     bhag_selected: plan.bhag_selected || "",
     bhag_initiatives: Array.isArray(plan.bhag_initiatives)
       ? plan.bhag_initiatives
@@ -2057,9 +2130,7 @@ const BusinessPlanAndGoles = () => {
     quarterly_rewards: Array.isArray(plan.quarterly_rewards)
       ? plan.quarterly_rewards
       : [],
-    critical_numbers: Array.isArray(plan.critical_numbers)
-      ? plan.critical_numbers
-      : [],
+    critical_numbers: [...baseCriticalNumbers, ...brandKpisAsCriticalNumbers],
     people_drivers:
       plan.people_drivers &&
       typeof plan.people_drivers === "object" &&
@@ -2073,7 +2144,8 @@ const BusinessPlanAndGoles = () => {
     weaknesses: Array.isArray(plan.weaknesses) ? plan.weaknesses : [],
     opportunities: Array.isArray(plan.opportunities) ? plan.opportunities : [],
     threats: Array.isArray(plan.threats) ? plan.threats : [],
-  });
+  };
+  };
 
   const saveAiPlanToApi = async (
     plan: Record<string, any>,
@@ -2082,7 +2154,7 @@ const BusinessPlanAndGoles = () => {
     const res = await fetch(`${BASE_URL}/extra_fields/save_ai_plan`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify(normalizeAiPlanForSave(plan)),
+      body: JSON.stringify(plan),
       signal,
     });
     const json = await res.json().catch(() => ({}));
@@ -2176,8 +2248,20 @@ const BusinessPlanAndGoles = () => {
       });
       const json = await res.json().catch(() => ({}));
 
-      if (!res.ok || !json?.success || !json?.job_id) {
+      if (!res.ok || json?.success === false) {
         throw new Error(json?.message || json?.error || "Failed to start AI plan generation.");
+      }
+
+      if (isAiPlanCompleted(json)) {
+        const completedPlan = getCompletedAiPlan(json);
+        setGeneratedAiPlanPayload(completedPlan);
+        setGeneratedAiPlan(extractAiPlanText(json));
+        setAiBuilderStage("plan");
+        return;
+      }
+
+      if (!json?.job_id) {
+        throw new Error(json?.message || json?.error || "AI plan response is missing plan data.");
       }
 
       setAiPlanJobId(json.job_id);
@@ -2268,7 +2352,14 @@ const BusinessPlanAndGoles = () => {
 
     try {
       setIsSavingAiPlan(true);
-      await saveAiPlanToApi(parsedPlan);
+      const normalizedPlan = normalizeAiPlanForSave(parsedPlan);
+      console.log("Save A.I Plan payload:", normalizedPlan);
+      await saveAiPlanToApi(normalizedPlan);
+      localStorage.setItem(
+        AI_CRITICAL_NUMBERS_STORAGE_KEY,
+        JSON.stringify(normalizedPlan.critical_numbers || [])
+      );
+      window.dispatchEvent(new Event("business-plan-critical-numbers-updated"));
       toast.success("AI plan saved.");
       window.location.reload();
     } catch (err: any) {
@@ -2286,7 +2377,7 @@ const BusinessPlanAndGoles = () => {
       {items.map((item, idx) => (
         <span
           key={`${String(item)}-${idx}`}
-          className="rounded-full px-3 py-1 text-[12px] font-black"
+          className="rounded-full px-3 py-1 text-[12px] font-bold"
           style={{ background: C.primaryBg, color: C.primary }}
         >
           {String(item)}
@@ -2331,7 +2422,7 @@ const BusinessPlanAndGoles = () => {
             className="rounded-xl border bg-white p-3"
             style={{ borderColor: C.primaryBord }}
           >
-            <div className="text-[13px] font-black" style={{ color: C.textMain }}>
+            <div className="text-[13px] font-bold" style={{ color: C.textMain }}>
               {title}
             </div>
             {detail && (
@@ -2371,7 +2462,7 @@ const BusinessPlanAndGoles = () => {
       style={{ borderColor: C.primaryBord }}
     >
       <h4
-        className="mb-2 text-[12px] font-black uppercase tracking-[0.12em]"
+        className="mb-2 text-[12px] font-bold uppercase tracking-[0.12em]"
         style={{ color: C.primary }}
       >
         {title}
@@ -2768,7 +2859,7 @@ const BusinessPlanAndGoles = () => {
       >
         <PlusIcon />
       </div>
-      <span className="text-[13px] font-black" style={{ color: C.primary }}>
+      <span className="text-[13px] font-bold" style={{ color: C.primary }}>
         {label}
       </span>
     </button>
@@ -2776,25 +2867,24 @@ const BusinessPlanAndGoles = () => {
 
   return (
     <div
-      className="bp-wrap min-h-screen px-4 md:px-8 w-full mx-auto space-y-6"
-      style={{ background: "white", color: C.textMain, fontFamily: C.font }}
+      className="bp-wrap min-h-screen px-4 py-5 md:px-8 md:py-8 w-full mx-auto space-y-6"
+      style={{ background: C.pageBg, color: C.textMain, fontFamily: C.font }}
     >
       <ThemeStyle />
 
       {/* ── Page Header ── */}
       <div
-        className="overflow-hidden rounded-2xl border shadow-sm p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
-        style={{ background: C.primaryBord, borderColor: C.primaryBord }}
+        className="bp-panel overflow-hidden p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6"
       >
         <div>
           <p
-            className="text-[10px] font-black uppercase tracking-[0.18em] mb-1"
-            style={{ color: C.textMuted }}
+            className="text-[10px] font-bold uppercase tracking-[0.18em] mb-1"
+            style={{ color: C.primary }}
           >
             Strategic overview and goals alignment
           </p>
           <h1
-            className="text-2xl font-black tracking-tight bp-heading-coral"
+            className="text-2xl font-bold tracking-tight bp-heading-coral"
             style={{ color: "#DA7756" }}
           >
             Business Plan
@@ -2822,8 +2912,7 @@ const BusinessPlanAndGoles = () => {
 
       {/* ── Tab Bar ── */}
       <div
-        className="flex w-fit rounded-2xl p-1 gap-1 overflow-x-auto"
-        style={{ background: C.primary }}
+        className="bp-panel flex w-fit max-w-full rounded-2xl p-1 gap-1 overflow-x-auto"
       >
         {tabs.map((tab) => {
           const isActive = activeMainTab === tab.key;
@@ -2844,17 +2933,15 @@ const BusinessPlanAndGoles = () => {
         <div className="space-y-6">
           {/* Our Business Plan header */}
           <div
-            className="rounded-[8px] p-5 flex items-center justify-between relative"
-            style={{ background: C.primaryBord }}
+            className="bp-panel p-5 flex items-center justify-between relative"
           >
             <div className="flex items-center gap-3">
               <div
-                className="p-2 rounded-full"
-                style={{ background: C.primary }}
+                className="bp-icon-tile p-2 rounded-xl"
               >
-                <EyeIcon color="white" />
+                <EyeIcon />
               </div>
-              <span className="text-[12px] font-black tracking-[0.15em] text-[#070707] uppercase">
+              <span className="text-[12px] font-bold tracking-[0.15em] text-[#070707] uppercase">
                 Our Business Plan
               </span>
             </div>
@@ -2982,8 +3069,7 @@ const BusinessPlanAndGoles = () => {
           {/* Add Content Dropdown */}
           {showAddContent && (
             <div
-              className="rounded-2xl overflow-hidden border"
-              style={{ borderColor: C.primaryBordStrong, background: C.cardBg }}
+              className="bp-panel overflow-hidden"
             >
               <div
                 className="flex border-b"
@@ -2993,7 +3079,7 @@ const BusinessPlanAndGoles = () => {
                   <button
                     key={t}
                     onClick={() => setAddContentTab(t)}
-                    className="flex-1 py-3 text-[13px] font-black transition-colors capitalize"
+                    className="flex-1 py-3 text-[13px] font-bold transition-colors capitalize"
                     style={{
                       background:
                         addContentTab === t ? C.primary : "transparent",
@@ -3035,7 +3121,7 @@ const BusinessPlanAndGoles = () => {
                       <button
                         onClick={handleAddImage}
                         disabled={isSavingImages || !newImageUrl.trim()}
-                        className="px-4 py-2 rounded-xl text-[13px] font-black border transition-all active:scale-[0.97] disabled:opacity-50 flex items-center gap-1.5"
+                        className="px-4 py-2 rounded-xl text-[13px] font-bold border transition-all active:scale-[0.97] disabled:opacity-50 flex items-center gap-1.5"
                         style={{
                           background: C.primaryTint,
                           color: C.primaryHov,
@@ -3063,7 +3149,7 @@ const BusinessPlanAndGoles = () => {
                       >
                         <ImagePlaceholder />
                         <p
-                          className="text-[13px] font-black"
+                          className="text-[13px] font-bold"
                           style={{ color: C.textMuted }}
                         >
                           No images added yet
@@ -3077,7 +3163,7 @@ const BusinessPlanAndGoles = () => {
                       />
                     )}
                     <p
-                      className="text-[11px] mb-2 font-black mt-2"
+                      className="text-[11px] mb-2 font-bold mt-2"
                       style={{ color: C.textMuted }}
                     >
                       Generate with AI:
@@ -3087,8 +3173,8 @@ const BusinessPlanAndGoles = () => {
                       <button
                         onClick={() => handleCopyAiPrompt("overview")}
                         disabled={isCopyingAiPrompt === "overview"}
-                        className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60 flex items-center justify-center gap-1.5"
-                        style={{ borderColor: C.borderLgt }}
+                        className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60 flex items-center justify-center gap-1.5"
+                        style={{ borderColor: C.primaryBord }}
                       >
                         {isCopyingAiPrompt === "overview" ? (
                           <>
@@ -3102,8 +3188,8 @@ const BusinessPlanAndGoles = () => {
                       <button
                         onClick={() => handleCopyAiPrompt("detailed")}
                         disabled={isCopyingAiPrompt === "detailed"}
-                        className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60 flex items-center justify-center gap-1.5"
-                        style={{ borderColor: C.borderLgt }}
+                        className="flex-1 py-2.5 bg-white border rounded-xl text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60 flex items-center justify-center gap-1.5"
+                        style={{ borderColor: C.primaryBord }}
                       >
                         {isCopyingAiPrompt === "detailed" ? (
                           <>
@@ -3132,7 +3218,7 @@ const BusinessPlanAndGoles = () => {
                       <button
                         onClick={handleAddVideo}
                         disabled={isSavingVideos || !newVideoUrl.trim()}
-                        className="px-4 py-2 rounded-xl text-[13px] font-black border transition-all active:scale-[0.97] disabled:opacity-50 flex items-center gap-1.5"
+                        className="px-4 py-2 rounded-xl text-[13px] font-bold border transition-all active:scale-[0.97] disabled:opacity-50 flex items-center gap-1.5"
                         style={{
                           background: C.primaryTint,
                           color: C.primaryHov,
@@ -3144,7 +3230,7 @@ const BusinessPlanAndGoles = () => {
                     </div>
 
                     <p
-                      className="text-[11px] font-black mb-4"
+                      className="text-[11px] font-bold mb-4"
                       style={{ color: C.textMuted }}
                     >
                       {(overviewVideos || []).length}/12 videos added
@@ -3161,7 +3247,7 @@ const BusinessPlanAndGoles = () => {
                       >
                         <VideoPlaceholder />
                         <p
-                          className="text-[13px] font-black"
+                          className="text-[13px] font-bold"
                           style={{ color: C.textMuted }}
                         >
                           No explainer videos added yet
@@ -3175,7 +3261,7 @@ const BusinessPlanAndGoles = () => {
                       />
                     )}
                     <p
-                      className="text-[11px] mb-2 font-black mt-2"
+                      className="text-[11px] mb-2 font-bold mt-2"
                       style={{ color: C.textMuted }}
                     >
                       Generate with AI:
@@ -3184,8 +3270,8 @@ const BusinessPlanAndGoles = () => {
                     <button
                       onClick={() => handleCopyAiPrompt("script")}
                       disabled={isCopyingAiPrompt === "script"}
-                      className="w-full py-2.5 bg-white border rounded-xl flex items-center justify-center text-[13px] font-black hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60 gap-1.5"
-                      style={{ borderColor: C.borderLgt }}
+                      className="w-full py-2.5 bg-white border rounded-xl flex items-center justify-center text-[13px] font-bold hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-60 gap-1.5"
+                      style={{ borderColor: C.primaryBord }}
                     >
                       {isCopyingAiPrompt === "script" ? (
                         <>
@@ -3202,26 +3288,24 @@ const BusinessPlanAndGoles = () => {
           )}
 
           {/* ── 3 Cards ── */}
-          <div
-            className="rounded-[8px] p-6"
-            style={{ background: C.primaryBord }}
-          >
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-black mb-5">
+          <div className="bp-section-band p-6">
+            <p
+              className="text-[10px] font-bold uppercase tracking-[0.18em] mb-5"
+              style={{ color: C.primary }}
+            >
               Strategic Essentials
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Core Values */}
               <div
-                className="bp-card-lift rounded-2xl shadow-sm border p-5 flex flex-col"
+                className="bp-card-lift bp-soft-card p-5 flex flex-col"
                 style={{
-                  background: C.cardBg,
                   borderTop: `4px solid ${C.primary}`,
-                  borderColor: C.borderLgt,
                 }}
               >
                 <div className="flex justify-between items-start mb-4">
                   <h3
-                    className="font-black text-[14px] flex items-center gap-1.5"
+                    className="font-bold text-[14px] flex items-center gap-1.5"
                     style={{ color: C.textMain }}
                   >
                     Core Values
@@ -3285,16 +3369,14 @@ const BusinessPlanAndGoles = () => {
 
               {/* Purpose */}
               <div
-                className="bp-card-lift rounded-2xl shadow-sm border p-5 flex flex-col"
+                className="bp-card-lift bp-soft-card p-5 flex flex-col"
                 style={{
-                  background: C.cardBg,
                   borderTop: `4px solid ${C.primary}`,
-                  borderColor: C.borderLgt,
                 }}
               >
                 <div className="flex justify-between items-start mb-4">
                   <h3
-                    className="font-black text-[14px] flex items-center gap-1.5"
+                    className="font-bold text-[14px] flex items-center gap-1.5"
                     style={{ color: C.textMain }}
                   >
                     Purpose
@@ -3340,7 +3422,7 @@ const BusinessPlanAndGoles = () => {
                     {purposeVideoUrl && <VideoPreview url={purposeVideoUrl} />}
                     {purposeText ? (
                       <p
-                        className="text-[13px] font-black leading-relaxed"
+                        className="text-[13px] font-semibold leading-relaxed"
                         style={{ color: C.primary }}
                       >
                         {purposeText}
@@ -3359,16 +3441,14 @@ const BusinessPlanAndGoles = () => {
 
               {/* Brand Promises */}
               <div
-                className="bp-card-lift rounded-2xl shadow-sm border p-5 flex flex-col"
+                className="bp-card-lift bp-soft-card p-5 flex flex-col"
                 style={{
-                  background: C.cardBg,
                   borderTop: `4px solid ${C.primary}`,
-                  borderColor: C.borderLgt,
                 }}
               >
                 <div className="flex justify-between items-start mb-4">
                   <h3
-                    className="font-black text-[14px] flex items-center gap-1.5"
+                    className="font-bold text-[14px] flex items-center gap-1.5"
                     style={{ color: C.textMain }}
                   >
                     Brand Promises
@@ -3427,7 +3507,7 @@ const BusinessPlanAndGoles = () => {
                         {(brandPromises || []).map((p, idx) => (
                           <li key={p.id ?? idx} className="flex items-start">
                             <span
-                              className="mr-2 mt-0.5 shrink-0 font-black"
+                              className="mr-2 mt-0.5 shrink-0 font-bold"
                               style={{ color: C.primary }}
                             >
                               •
@@ -3541,13 +3621,13 @@ const BusinessPlanAndGoles = () => {
             >
               <div>
                 <div
-                  className="text-[10px] font-black uppercase tracking-[0.18em]"
+                  className="text-[10px] font-semibold uppercase tracking-[0.18em]"
                   style={{ color: C.primary }}
                 >
                   AI Plan Builder
                 </div>
                 <h2
-                  className="mt-1 text-[20px] font-black"
+                  className="mt-1 text-[20px] font-semibold"
                   style={{ color: C.textMain }}
                 >
                   Create Business Plan with A.I
@@ -3574,7 +3654,7 @@ const BusinessPlanAndGoles = () => {
               {aiBuilderStage === "questions" && (
                 <div className="space-y-5">
                   <div>
-                    <div className="mb-2 flex items-center justify-between text-xs font-black">
+                    <div className="mb-2 flex items-center justify-between text-xs font-semibold">
                       <span style={{ color: C.textMuted }}>
                         Question {aiQuestionIndex + 1} of {AI_PLAN_FIELDS.length}
                       </span>
@@ -3601,7 +3681,7 @@ const BusinessPlanAndGoles = () => {
                     style={{ borderColor: C.primaryBord }}
                   >
                     <label
-                      className="mb-3 block text-[15px] font-black leading-snug"
+                      className="mb-3 block text-[15px] font-semibold leading-snug"
                       style={{ color: C.textMain }}
                     >
                       {AI_PLAN_FIELDS[aiQuestionIndex].label}
@@ -3630,7 +3710,7 @@ const BusinessPlanAndGoles = () => {
                   >
                     <LoaderIcon className="w-8 h-8" />
                   </div>
-                  <h3 className="text-xl font-black" style={{ color: C.textMain }}>
+                  <h3 className="text-xl font-semibold" style={{ color: C.textMain }}>
                     Building your AI plan
                   </h3>
                   <p
@@ -3648,7 +3728,7 @@ const BusinessPlanAndGoles = () => {
                   style={{ borderColor: C.primaryBord }}
                 >
                   <h3
-                    className="text-base font-black"
+                    className="text-base font-semibold"
                     style={{ color: C.textMain }}
                   >
                     Generated Business Plan
@@ -3699,7 +3779,7 @@ const BusinessPlanAndGoles = () => {
                                 aiPlanDisplay["brand Promise KPIs"]
                             ) && (
                               <div>
-                                <p className="mb-2 text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
                                   KPIs
                                 </p>
                                 {renderAiPlanStringList(
@@ -3718,7 +3798,7 @@ const BusinessPlanAndGoles = () => {
                           <div className="space-y-3">
                             {aiPlanDisplay.target_segments && (
                               <div>
-                                <p className="text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                <p className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
                                   Target Segments
                                 </p>
                                 <p className="mt-1 text-[13px] font-semibold" style={{ color: C.textMain }}>
@@ -3728,7 +3808,7 @@ const BusinessPlanAndGoles = () => {
                             )}
                             {aiPlanDisplay.bhag_selected && (
                               <div>
-                                <p className="text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                <p className="text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
                                   BHAG
                                 </p>
                                 <p className="mt-1 text-[13px] font-semibold" style={{ color: C.textMain }}>
@@ -3737,6 +3817,13 @@ const BusinessPlanAndGoles = () => {
                               </div>
                             )}
                           </div>
+                        )}
+
+                      {Array.isArray(aiPlanDisplay.bhag_alternatives) &&
+                        aiPlanDisplay.bhag_alternatives.length > 0 &&
+                        renderAiPlanSection(
+                          "BHAG Alternatives",
+                          renderAiPlanObjectList(aiPlanDisplay.bhag_alternatives)
                         )}
 
                       {Array.isArray(aiPlanDisplay.bhag_initiatives) &&
@@ -3785,7 +3872,7 @@ const BusinessPlanAndGoles = () => {
                           <div className="space-y-3">
                             {aiPlanDisplay.quarterly_goals && (
                               <div>
-                                <p className="mb-2 text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
                                   Goals
                                 </p>
                                 {renderAiPlanScalar(aiPlanDisplay.quarterly_goals)}
@@ -3800,7 +3887,7 @@ const BusinessPlanAndGoles = () => {
                               renderAiPlanObjectList(aiPlanDisplay.quarterly_initiatives)}
                             {Array.isArray(aiPlanDisplay.quarterly_rewards) && (
                               <div>
-                                <p className="mb-2 text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
                                   Rewards
                                 </p>
                                 {aiPlanDisplay.quarterly_rewards.some(
@@ -3849,7 +3936,7 @@ const BusinessPlanAndGoles = () => {
                                 Array.isArray(aiPlanDisplay[key]) &&
                                 aiPlanDisplay[key].length > 0 && (
                                   <div key={key}>
-                                    <p className="mb-2 text-[11px] font-black uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
+                                    <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: C.textMuted }}>
                                       {key}
                                     </p>
                                     {renderAiPlanStringList(aiPlanDisplay[key])}
@@ -3892,7 +3979,7 @@ const BusinessPlanAndGoles = () => {
                   </BtnOutline>
                   <button
                     onClick={goToNextAiQuestion}
-                    className="px-6 py-2 text-[13px] font-black text-white rounded-xl transition-colors shadow-sm active:scale-[0.97]"
+                    className="px-6 py-2 text-[13px] font-semibold text-white rounded-xl transition-colors shadow-sm active:scale-[0.97]"
                     style={{ background: "#1a1a1a", fontFamily: C.font }}
                   >
                     {aiQuestionIndex === AI_PLAN_FIELDS.length - 1
@@ -3904,7 +3991,7 @@ const BusinessPlanAndGoles = () => {
                 <>
                   <BtnOutline onClick={closeAiBuilder}>Cancel</BtnOutline>
                   <div
-                    className="flex items-center justify-center gap-2 text-sm font-black"
+                    className="flex items-center justify-center gap-2 text-sm font-semibold"
                     style={{ color: C.primary }}
                   >
                     <LoaderIcon /> Generating plan...
@@ -3918,7 +4005,7 @@ const BusinessPlanAndGoles = () => {
                     <button
                       onClick={saveAiPlan}
                       disabled={isSavingAiPlan}
-                      className="px-6 py-2 text-[13px] font-black text-white rounded-xl transition-colors shadow-sm active:scale-[0.97]"
+                      className="px-6 py-2 text-[13px] font-semibold text-white rounded-xl transition-colors shadow-sm active:scale-[0.97]"
                       style={{ background: "#1a1a1a", fontFamily: C.font }}
                     >
                       {isSavingAiPlan ? "Saving..." : "Save"}
@@ -3952,7 +4039,7 @@ const BusinessPlanAndGoles = () => {
                   }}
                 />
                 <h2
-                  className="font-black text-[17px] m-0"
+                  className="font-bold text-[17px] m-0"
                   style={{ color: C.textMain }}
                 >
                   Edit{" "}
@@ -3990,7 +4077,7 @@ const BusinessPlanAndGoles = () => {
                   )}
                   <div>
                     <label
-                      className="block text-[12px] font-black mb-1.5"
+                      className="block text-[12px] font-bold mb-1.5"
                       style={{ color: C.textMain }}
                     >
                       Explanation / Text{" "}
@@ -4006,7 +4093,7 @@ const BusinessPlanAndGoles = () => {
                   </div>
                   <div>
                     <label
-                      className="block text-[12px] font-black mb-1.5"
+                      className="block text-[12px] font-bold mb-1.5"
                       style={{ color: C.textMain }}
                     >
                       Video URL (Optional)
@@ -4030,7 +4117,7 @@ const BusinessPlanAndGoles = () => {
                   )}
                   <div>
                     <label
-                      className="block text-[12px] font-black mb-3"
+                      className="block text-[12px] font-bold mb-3"
                       style={{ color: C.textMain }}
                     >
                       Core Values
@@ -4056,7 +4143,7 @@ const BusinessPlanAndGoles = () => {
                             onChange={(e) =>
                               handleCoreValueChange(idx, e.target.value)
                             }
-                            className="flex-1 outline-none text-[13px] font-black bg-transparent cursor-text"
+                            className="flex-1 outline-none text-[13px] font-semibold bg-transparent cursor-text"
                             style={{ color: C.textMain }}
                             placeholder="Add core value"
                             autoFocus={
@@ -4075,7 +4162,7 @@ const BusinessPlanAndGoles = () => {
                     </div>
                     <button
                       onClick={handleAddCoreValue}
-                      className="w-full py-3 flex justify-center items-center gap-2 text-[13px] font-black rounded-2xl transition-colors border-2 border-dashed mb-5"
+                      className="w-full py-3 flex justify-center items-center gap-2 text-[13px] font-bold rounded-2xl transition-colors border-2 border-dashed mb-5"
                       style={{ borderColor: C.borderLgt, color: C.primary }}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.background = C.primaryBg)
@@ -4089,7 +4176,7 @@ const BusinessPlanAndGoles = () => {
                   </div>
                   <div>
                     <label
-                      className="block text-[12px] font-black mb-1.5"
+                      className="block text-[12px] font-bold mb-1.5"
                       style={{ color: C.textMain }}
                     >
                       Video URL (Optional)
@@ -4113,7 +4200,7 @@ const BusinessPlanAndGoles = () => {
                   )}
                   <div>
                     <label
-                      className="block text-[12px] font-black mb-1.5"
+                      className="block text-[12px] font-bold mb-1.5"
                       style={{ color: C.textMain }}
                     >
                       Video URL (Optional)
@@ -4128,7 +4215,7 @@ const BusinessPlanAndGoles = () => {
                   </div>
                   <div>
                     <label
-                      className="block text-[12px] font-black mb-3"
+                      className="block text-[12px] font-bold mb-3"
                       style={{ color: C.textMain }}
                     >
                       Promises
@@ -4154,7 +4241,7 @@ const BusinessPlanAndGoles = () => {
                             onChange={(e) =>
                               handleBrandPromiseChange(idx, e.target.value)
                             }
-                            className="flex-1 outline-none text-[13px] font-black bg-transparent cursor-text"
+                            className="flex-1 outline-none text-[13px] font-semibold bg-transparent cursor-text"
                             style={{ color: C.textMain }}
                             placeholder="Add promise"
                             autoFocus={
@@ -4173,7 +4260,7 @@ const BusinessPlanAndGoles = () => {
                     </div>
                     <button
                       onClick={handleAddBrandPromise}
-                      className="w-full py-3 flex justify-center items-center gap-2 text-[13px] font-black rounded-2xl transition-colors border-2 border-dashed mb-5"
+                      className="w-full py-3 flex justify-center items-center gap-2 text-[13px] font-bold rounded-2xl transition-colors border-2 border-dashed mb-5"
                       style={{ borderColor: C.borderLgt, color: C.primary }}
                       onMouseEnter={(e) =>
                         (e.currentTarget.style.background = C.primaryBg)
@@ -4189,7 +4276,7 @@ const BusinessPlanAndGoles = () => {
                   {/* KPI Linking */}
                   <div>
                     <label
-                      className="block text-[12px] font-black mb-3"
+                      className="block text-[12px] font-bold mb-3"
                       style={{ color: C.textMain }}
                     >
                       Link KPIs to Promises{" "}
@@ -4207,7 +4294,7 @@ const BusinessPlanAndGoles = () => {
                             style={{ borderColor: C.borderLgt }}
                           >
                             <div
-                              className="text-[13px] font-black mb-3 leading-snug"
+                              className="text-[13px] font-bold mb-3 leading-snug"
                               style={{ color: C.textMain }}
                             >
                               {item.text}
@@ -4217,7 +4304,7 @@ const BusinessPlanAndGoles = () => {
                                 {item.kpis.map((kpi) => (
                                   <span
                                     key={kpi}
-                                    className="flex items-center gap-1 px-3 py-1 text-[11px] font-black rounded-full text-white"
+                                    className="flex items-center gap-1 px-3 py-1 text-[11px] font-bold rounded-full text-white"
                                     style={{ background: C.primary }}
                                   >
                                     {kpi}
@@ -4298,7 +4385,7 @@ const BusinessPlanAndGoles = () => {
                   else if (activeTopModal === "brand") saveBrandPromises();
                   else setActiveTopModal(null);
                 }}
-                className="px-6 py-2 text-[13px] font-black text-white rounded-xl transition-colors shadow-sm active:scale-[0.97] flex items-center gap-2 disabled:opacity-60"
+                className="px-6 py-2 text-[13px] font-bold text-white rounded-xl transition-colors shadow-sm active:scale-[0.97] flex items-center gap-2 disabled:opacity-60"
                 style={{ background: "#1a1a1a", fontFamily: C.font }}
                 onMouseEnter={(e) => {
                   if (!isSavingAny) e.currentTarget.style.background = "#000";

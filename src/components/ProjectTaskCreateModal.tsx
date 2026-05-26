@@ -1346,9 +1346,9 @@ const ProjectTaskCreateModal = ({
           ...user,
           role:
             user.user_type === "pms_occupant"
-              ? "occupant"
+              ? "Occupant"
               : user.user_type === "pms_admin"
-                ? user.employee_type || "admin"
+                ? "Admin"
                 : user.employee_type || "",
         }));
       setUsers(validUsers);

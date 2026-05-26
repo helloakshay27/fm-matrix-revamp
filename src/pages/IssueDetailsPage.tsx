@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, Fragment } from "react";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -35,6 +35,7 @@ interface Issue {
     tags?: string[];
     attachments?: any[];
     comments?: any[];
+    issue_allocation_times?: any[];
 }
 
 function formatToDDMMYYYY_AMPM(dateString: string | undefined) {
@@ -190,7 +191,7 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
                                         ) : (
                                             <span className="text-gray-500 font-bold text-2xl">FILE</span>
                                         )}
-                                        
+
                                         {/* Button Overlay */}
                                         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                                             <button
@@ -209,7 +210,7 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
                                             </button>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="w-full p-2 flex-1 flex flex-col justify-center">
                                         <a
                                             href={fileUrl}
@@ -282,35 +283,54 @@ const Attachments = ({ attachments, id, baseUrl, token, getIssue, fetchIssueDeta
     );
 };
 
+// Helper to get initials from name
+const getInitials = (name: string): string => {
+    if (!name) return "U";
+    return name.split(" ").map((n) => n.charAt(0)).join("").toUpperCase();
+};
+
 // Activity Log Component
 const ActivityLog = ({ issueId }: { issueId: string }) => {
     const baseUrl = localStorage.getItem("baseUrl") || "";
     const token = localStorage.getItem("token") || "";
-
-    const [issueSystemLogs, setIssueSystemLogs] = useState([]);
+    const [issueSystemLogs, setIssueSystemLogs] = useState<any[]>([]);
+    const [userMapping, setUserMapping] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const fetchLogs = async () => {
             try {
                 const response = await axios.get(
                     `https://${baseUrl}/issues/${issueId}/issue_system_logs.json`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${token}`,
-                        },
-                    }
+                    { headers: { Authorization: `Bearer ${token}` } }
                 );
-
                 setIssueSystemLogs(response.data || []);
             } catch (error) {
                 console.error("Error fetching activity logs:", error);
             }
         };
-
-        if (issueId) {
-            fetchLogs();
-        }
+        if (issueId) fetchLogs();
     }, [issueId, baseUrl, token]);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                const response = await axios.get(
+                    `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Task`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const users = response.data?.users || [];
+                const mapping: Record<string, string> = {};
+                users.forEach((user: any) => {
+                    mapping[user.id?.toString() || user.user_id?.toString()] =
+                        user.full_name || user.name || "Unknown User";
+                });
+                setUserMapping(mapping);
+            } catch (e) {
+                console.error("Error fetching users:", e);
+            }
+        };
+        if (token && baseUrl) fetchUsers();
+    }, [baseUrl, token]);
 
     const formatTimestamp = (dateString: string) => {
         const date = new Date(dateString);
@@ -321,127 +341,193 @@ const ActivityLog = ({ issueId }: { issueId: string }) => {
         const minutes = String(date.getMinutes()).padStart(2, "0");
         const ampm = hours >= 12 ? "PM" : "AM";
         hours = hours % 12 || 12;
-        const hoursStr = String(hours).padStart(2, "0");
-        return `${day} ${month} ${year} ${hoursStr}:${minutes} ${ampm}`;
+        return `${day} ${month} ${year} ${String(hours).padStart(2, "0")}:${minutes} ${ampm}`;
     };
 
-    const getActionFromLog = (log: any) => {
-        if (!log.changed_attr || Object.keys(log.changed_attr).length === 0) {
-            return log.log_type?.replace("Issue", "").trim() || "updated issue";
-        }
+    const calcDuration = (start: string, end: string) => {
+        const diffMs = Math.abs(new Date(end).getTime() - new Date(start).getTime());
+        const h = Math.floor(diffMs / 3600000);
+        const m = Math.floor((diffMs % 3600000) / 60000);
+        const s = Math.floor((diffMs % 60000) / 1000);
+        if (h > 0) return `${h}h ${m}m`;
+        if (m > 0) return `${m}m ${s}s`;
+        return `${s}s`;
+    };
 
-        const changedFields = Object.keys(log.changed_attr);
-        const changes: string[] = [];
+    const SKIP_FIELDS = new Set([
+        "id", "created_at", "updated_at", "resource_id", "resource_type",
+        "created_by_id", "issue_id",
+    ]);
 
-        // Check for status change
-        if (log.changed_attr.status) {
-            const [oldStatus, newStatus] = log.changed_attr.status;
-            changes.push(`changed status from ${oldStatus} to ${newStatus}`);
-        }
+    const FIELD_LABELS: Record<string, string> = {
+        status: "Status",
+        title: "Title",
+        description: "Description",
+        end_date: "End Date",
+        start_date: "Start Date",
+        priority: "Priority",
+        responsible_person_id: "Assigned To",
+        milestone_id: "Milestone",
+        project_management_id: "Project",
+        task_management_id: "Task",
+        issue_type_id: "Issue Type",
+    };
 
-        // Check for description change
-        if (log.changed_attr.description) {
-            changes.push("updated the issue description");
-        }
+    const STATUS_BADGE: Record<string, string> = {
+        open: "bg-blue-100 text-blue-700",
+        in_progress: "bg-yellow-100 text-yellow-700",
+        on_hold: "bg-gray-200 text-gray-700",
+        overdue: "bg-red-100 text-red-700",
+        completed: "bg-green-100 text-green-700",
+        reopen: "bg-yellow-100 text-yellow-700",
+        closed: "bg-green-100 text-green-700",
+        nil: "bg-gray-100 text-gray-400",
+    };
 
-        // Check for priority change
-        if (log.changed_attr.priority) {
-            const [oldPriority, newPriority] = log.changed_attr.priority;
-            changes.push(`changed priority from ${oldPriority} to ${newPriority}`);
-        }
+    const parseChanges = (changed_attr: Record<string, any> | null) => {
+        if (!changed_attr || Object.keys(changed_attr).length === 0) return null;
+        if ("id" in changed_attr) return { isCreation: true, fields: [] };
 
-        // Check for other field changes
-        const otherFields = changedFields.filter(
-            (field) =>
-                ![
-                    "status",
-                    "description",
-                    "priority",
-                    "updated_at",
-                ].includes(field)
-        );
-        if (otherFields.length > 0) {
-            otherFields.forEach((field) => {
-                const label = field
-                    .replace(/_/g, " ")
-                    .replace(/([A-Z])/g, " $1")
-                    .trim();
-                changes.push(`updated ${label}`);
+        const fields = Object.entries(changed_attr)
+            .filter(([key]) => !SKIP_FIELDS.has(key))
+            .map(([key, value]) => {
+                const arr = Array.isArray(value) ? value : [null, value];
+                let oldVal: string;
+                let newVal: string;
+
+                if (arr.length >= 3) {
+                    oldVal = arr[0] === "nil" || arr[0] === null ? "—" : String(arr[0]);
+                    newVal = String(arr[arr.length - 1]);
+                } else {
+                    oldVal = arr[0] === "nil" || arr[0] === null ? "—" : String(arr[0]);
+                    newVal = arr[1] === "nil" || arr[1] === null ? "—" : String(arr[1]);
+                }
+
+                if (key === "responsible_person_id") {
+                    if (oldVal !== "—") oldVal = userMapping[oldVal] || oldVal;
+                    if (newVal !== "—") newVal = userMapping[newVal] || newVal;
+                }
+
+                if (key === "description") {
+                    oldVal = oldVal === "—" ? "—" : oldVal.replace(/<[^>]+>/g, "").trim().slice(0, 60) + (oldVal.length > 60 ? "…" : "");
+                    newVal = newVal === "—" ? "—" : newVal.replace(/<[^>]+>/g, "").trim().slice(0, 60) + (newVal.length > 60 ? "…" : "");
+                }
+
+                return {
+                    key,
+                    label: FIELD_LABELS[key] || key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+                    old: oldVal,
+                    new: newVal,
+                    isStatus: key === "status",
+                };
             });
-        }
 
-        return changes.join(" and ");
+        return { isCreation: false, fields };
     };
 
-    const calculateDuration = (start: string, end: string) => {
-        const startDate = new Date(start);
-        const endDate = new Date(end);
-        const diffMs = Math.abs(endDate.getTime() - startDate.getTime());
-        const hours = Math.floor(diffMs / (1000 * 60 * 60));
-        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
-        return `${hours} hr ${minutes} mins ${seconds} sec`;
-    };
-
-    if (!issueSystemLogs || issueSystemLogs.length === 0) {
+    if (!issueSystemLogs.length) {
         return (
-            <div className="text-center py-8 w-full text-gray-500">
+            <div className="text-center py-8 w-full text-gray-500 text-sm">
                 No activity logs available
             </div>
         );
     }
 
-    const activities = issueSystemLogs.map((log: any) => ({
-        id: log.id,
-        person: log.changed_by,
-        action: getActionFromLog(log),
-        item: "issue",
-        timestamp: formatTimestamp(log.created_at),
-        rawTimestamp: log.created_at,
-    }));
-
-    const sortedActivities = [...activities].sort(
-        (a, b) =>
-            new Date(a.rawTimestamp).getTime() -
-            new Date(b.rawTimestamp).getTime()
+    const sorted = [...issueSystemLogs].sort(
+        (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
 
     return (
-        <div className="overflow-x-auto w-full bg-[rgba(247, 247, 247, 0.51)] shadow rounded-lg mt-3 px-4">
-            <div className="flex items-center p-2 gap-5 text-[12px] my-3 overflow-x-auto">
-                {sortedActivities.map((activity: any, index: number) => (
-                    <div key={activity.id}>
-                        <div className="flex flex-col gap-2 min-w-[150px]">
-                            <span>
-                                <i>
-                                    {activity.person}{" "}
-                                    <span className="text-[#C72030]">
-                                        {activity.action}
-                                    </span>{" "}
-                                </i>
-                            </span>
-                            <span>
-                                <i>{activity.timestamp}</i>
-                            </span>
-                        </div>
-                        {index < sortedActivities.length - 1 && (
-                            <div className="flex flex-col items-center min-w-[100px] mt-2">
-                                <h1 className="text-[12px] text-center">
-                                    {calculateDuration(
-                                        activity.rawTimestamp,
-                                        sortedActivities[index + 1]
-                                            .rawTimestamp
-                                    )}
-                                </h1>
-                                <img
-                                    src="/arrow.png"
-                                    alt="arrow"
-                                    className="mt-1"
-                                />
+        <div className="overflow-x-auto w-full bg-gray-50 rounded-xl shadow-inner mt-3 p-6">
+            <div className="flex items-start min-w-max">
+                {[...sorted].reverse().map((log: any, index: number) => {
+                    const changes = parseChanges(log.changed_attr);
+                    const initials = getInitials(log.changed_by || "");
+                    const isLast = index === sorted.length - 1;
+
+                    return (
+                        <Fragment key={log.id}>
+                            <div className="flex flex-col items-center">
+                                <div
+                                    className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 shadow-md ring-2 ring-white z-10"
+                                    style={{ background: changes?.isCreation ? "#16a34a" : "#C72030" }}
+                                    title={log.changed_by || "System"}
+                                >
+                                    {initials}
+                                </div>
+
+                                <div className="w-px h-4 border-l-2 border-dashed border-gray-300" />
+
+                                <div className="w-[215px] bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                                    <div className="px-3 pt-2.5 pb-2 border-b border-gray-100">
+                                        <p className="text-[11px] font-semibold text-gray-800 truncate leading-snug">
+                                            {log.changed_by || "System"}
+                                        </p>
+                                        <p className="text-[9px] text-gray-400 mt-0.5">
+                                            {formatTimestamp(log.created_at)}
+                                        </p>
+                                    </div>
+
+                                    <div className="px-3 py-2.5 space-y-2.5">
+                                        {!changes || (!changes.isCreation && changes.fields.length === 0) ? (
+                                            <p className="text-[10px] text-gray-400 italic">
+                                                {log.log_type?.replace("Issue", "").trim() || "Updated issue"}
+                                            </p>
+                                        ) : changes.isCreation ? (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-green-500 text-base leading-none">✦</span>
+                                                <span className="text-[11px] font-semibold text-green-700">Issue Created</span>
+                                            </div>
+                                        ) : (
+                                            changes.fields.map((field) => (
+                                                <div key={field.key}>
+                                                    <p className="text-[8px] font-semibold text-gray-400 uppercase tracking-widest mb-1">
+                                                        {field.label}
+                                                    </p>
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        {field.isStatus ? (
+                                                            <>
+                                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium capitalize ${STATUS_BADGE[field.old] || "bg-gray-100 text-gray-500"}`}>
+                                                                    {field.old === "—" ? "—" : field.old.replace(/_/g, " ")}
+                                                                </span>
+                                                                <span className="text-gray-400 text-[10px] font-bold">→</span>
+                                                                <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium capitalize ${STATUS_BADGE[field.new] || "bg-gray-100 text-gray-500"}`}>
+                                                                    {field.new === "—" ? "—" : field.new.replace(/_/g, " ")}
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <div className="flex items-center gap-1 w-full">
+                                                                <span className="text-[9px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded truncate max-w-[70px]" title={field.old}>
+                                                                    {field.old}
+                                                                </span>
+                                                                <span className="text-gray-400 text-[10px] font-bold flex-shrink-0">→</span>
+                                                                <span className="text-[9px] text-gray-800 font-semibold bg-gray-100 px-1.5 py-0.5 rounded truncate max-w-[70px]" title={field.new}>
+                                                                    {field.new}
+                                                                </span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                        )}
-                    </div>
-                ))}
+
+                            {!isLast && (
+                                <div className="flex flex-col items-center flex-shrink-0 min-w-[80px] px-1">
+                                    <span className="text-[9px] text-gray-400 whitespace-nowrap text-center mt-1 mb-1 leading-none">
+                                        {calcDuration(log.created_at, sorted[index + 1].created_at)}
+                                    </span>
+                                    <div className="relative w-full flex items-center">
+                                        <div className="rotate-180 w-0 h-0 border-y-[4px] border-y-transparent border-l-[6px] border-l-gray-400 flex-shrink-0" />
+                                        <div className="flex-1 h-[1.5px] bg-gray-300" />
+                                    </div>
+                                </div>
+                            )}
+                        </Fragment>
+                    );
+                })}
             </div>
         </div>
     );
@@ -892,6 +978,91 @@ const Comments = ({ comments, getIssue, baseUrl, token, id }: any) => {
     );
 };
 
+const formatTime = (data) => {
+    console.log(data)
+    const totalMinutes = data?.reduce(
+        (total, item) => total + (item.hours * 60) + item.minutes,
+        0
+    );
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours === 0) {
+        return `${minutes} min`;
+    }
+
+    if (minutes === 0) {
+        return `${hours} hr`;
+    }
+
+    return `${hours} hr ${minutes} min`;
+};
+
+const calculateDuration = (
+    start: string | undefined,
+    end: string | undefined
+): { text: string; isOverdue: boolean } => {
+    if (!start || !end) return { text: "N/A", isOverdue: false };
+
+    const now = new Date();
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    // Set end date to end of the day
+    endDate.setHours(23, 59, 59, 999);
+
+    // Check if task hasn't started yet
+    if (now < startDate) {
+        return { text: "Not started", isOverdue: false };
+    }
+
+    // Calculate time differences (use absolute value to show overdue time)
+    const diffMs = endDate.getTime() - now.getTime();
+    const absDiffMs = Math.abs(diffMs);
+    const isOverdue = diffMs <= 0;
+
+    // Calculate time differences
+    const seconds = Math.floor(absDiffMs / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    const remainingHours = hours % 24;
+    const remainingMinutes = minutes % 60;
+
+    const timeStr = `${days > 0 ? days + "d " : "0d "}${remainingHours > 0 ? remainingHours + "h " : "0h "}${remainingMinutes > 0 ? remainingMinutes + "m " : "0m"}`;
+    return {
+        text: isOverdue ? `${timeStr}` : timeStr,
+        isOverdue: isOverdue,
+    };
+};
+
+const CountdownTimer = ({
+    startDate,
+    targetDate,
+}: {
+    startDate?: string;
+    targetDate?: string;
+}) => {
+    const [countdown, setCountdown] = useState(
+        calculateDuration(startDate, targetDate)
+    );
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCountdown(calculateDuration(startDate, targetDate));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [targetDate, startDate]);
+
+    const textColor = countdown.isOverdue ? "text-red-600" : "text-[#029464]";
+    return (
+        <div className={`text-left ${textColor} text-[12px]`}>{countdown.text}</div>
+    );
+};
+
 const IssueDetailsPage = () => {
     const { setCurrentSection } = useLayout();
 
@@ -956,6 +1127,7 @@ const IssueDetailsPage = () => {
                 tags: issueDetail.task_tags || [],
                 attachments: issueDetail.attachments || [],
                 comments: sortCommentsDesc(issueDetail.comments || []),
+                issue_allocation_times: issueDetail.issue_allocation_times || [],
             };
 
             setIssueData(mappedIssue);
@@ -1337,9 +1509,9 @@ const IssueDetailsPage = () => {
                                     <div className="text-left text-[12px]">{issueData?.issue_type_name}</div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
-                                    <div className="text-right text-[12px] font-[500]">MileStone :</div>
+                                    <div className="text-right text-[12px] font-[500]">Project :</div>
                                     <div className="text-left text-[12px]">
-                                        {issueData?.milstone_name || ""}
+                                        {issueData?.project_management_name || ""}
                                     </div>
                                 </div>
                             </div>
@@ -1354,9 +1526,9 @@ const IssueDetailsPage = () => {
                                     </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
-                                    <div className="text-right text-[12px] font-semibold]">Task :</div>
+                                    <div className="text-right text-[12px] font-[500]">MileStone :</div>
                                     <div className="text-left text-[12px]">
-                                        {issueData?.task_management_name || ""}
+                                        {issueData?.milstone_name || ""}
                                     </div>
                                 </div>
                             </div>
@@ -1371,9 +1543,36 @@ const IssueDetailsPage = () => {
                                     </div>
                                 </div>
                                 <div className="w-1/2 flex items-center justify-start gap-3">
-                                    <div className="text-right text-[12px] font-[500]">Project :</div>
+                                    <div className="text-right text-[12px] font-semibold]">Task :</div>
                                     <div className="text-left text-[12px]">
-                                        {issueData?.project_management_name || ""}
+                                        {issueData?.task_management_name || ""}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <span className="border h-[1px] inline-block w-full my-4"></span>
+
+                            <div className="flex items-center ml-36">
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-[500]">Efforts Duration :</div>
+                                    <div className="text-left text-[12px]">
+                                        {formatTime(issueData?.issue_allocation_times)}
+                                    </div>
+                                </div>
+                                <div className="w-1/2 flex items-center justify-start gap-3">
+                                    <div className="text-right text-[12px] font-semibold]">
+                                        {calculateDuration(
+                                            issueData?.start_date,
+                                            issueData?.end_date
+                                        ).isOverdue
+                                            ? "Overdue Time:"
+                                            : "Time Left:"}
+                                    </div>
+                                    <div className="text-left text-[12px]">
+                                        <CountdownTimer
+                                            startDate={issueData?.start_date}
+                                            targetDate={issueData?.end_date}
+                                        />
                                     </div>
                                 </div>
                             </div>

@@ -974,8 +974,8 @@ export const PermitDetails = () => {
             }
 
             toast.success('Permit resume request submitted successfully');
-                window.location.reload();
-           
+            window.location.reload();
+
             // Clear form data
             // setResumeReason("");
             // setResumeDate("");
@@ -3556,7 +3556,9 @@ export const PermitDetails = () => {
                                             <td className="border border-gray-200 p-3 text-sm">{(audit?.created_at && format(audit.created_at, 'dd/MM/yyyy hh:mm a')) || '-'}</td>
                                             <td className="border border-gray-200 p-3 text-sm">{audit.submitted_by || '-'}</td>
                                             <td className="border border-gray-200 p-3 text-sm">
-                                                <Badge variant={audit.status === 'Approved' ? 'default' : 'secondary'}>
+                                                <Badge variant={audit.status === 'Approved' ? 'default' : 'secondary'}
+                                                    className="text-black"
+                                                >
                                                     {audit.status}
                                                 </Badge>
                                             </td>

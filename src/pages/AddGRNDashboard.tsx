@@ -171,9 +171,10 @@ export const AddGRNDashboard = () => {
   const fetchSuppliers = async (id: number) => {
     try {
       const response = await dispatch(fetchSupplierDetails({ baseUrl, token, id })).unwrap();
+      setSuppliers([{ id: String(response.id), name: response.company_name }]);
       setGrnDetails((prev) => ({
         ...prev,
-        supplier: response.id,
+        supplier: String(response.id),
       }));
     } catch (error: any) {
       toast.error(error.message || "Failed to fetch supplier details.");
@@ -183,12 +184,12 @@ export const AddGRNDashboard = () => {
   const fetchItem = async (id: number) => {
     try {
       const response = await dispatch(fetchItemDetails({ baseUrl, token, id })).unwrap();
-      setGrnDetails({
-        ...grnDetails,
+      setGrnDetails((prev) => ({
+        ...prev,
         purchaseOrder: id,
-        supplier: response.pms_supplier_id,
-        relatedTo: response.related_to
-      })
+        relatedTo: response.related_to,
+        invoiceAmount: response.total_amount || "",
+      }))
       const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
         const inventoryItem = {
           ...item,

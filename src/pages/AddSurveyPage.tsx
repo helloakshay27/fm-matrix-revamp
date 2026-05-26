@@ -952,6 +952,7 @@ export const AddSurveyPage = () => {
                   </MenuItem>
                   <MenuItem value="patrolling">Patrolling</MenuItem>
                   <MenuItem value="survey">Survey</MenuItem>
+                  <MenuItem value="f_and_b">F&B</MenuItem>
                 </MuiSelect>
               </FormControl>
 

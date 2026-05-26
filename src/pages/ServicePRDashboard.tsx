@@ -67,7 +67,7 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "last_approved_by",
+    key: "approved_by_user",
     label: "Last Approved By",
     sortable: true,
     draggable: true,
