@@ -541,6 +541,11 @@ const InvoicesSESDashboard = lazy(() => import("./pages/InvoicesSESDashboard").t
 const BillBookingDashboard = lazy(() => import("./pages/BillBookingDashboard").then(m => ({ default: m.BillBookingDashboard })));
 const AddBillPage = lazy(() => import("./pages/AddBillPage").then(m => ({ default: m.AddBillPage })));
 const PendingApprovalsDashboard = lazy(() => import("./pages/PendingApprovalsDashboard").then(m => ({ default: m.PendingApprovalsDashboard })));
+const GDNDashboard = lazy(() => import("./pages/GDNDashboard").then(m => ({ default: m.GDNDashboard })));
+const AddGDNPage = lazy(() => import("./pages/AddGDNPage").then(m => ({ default: m.AddGDNPage })));
+const GDNDetailsPage = lazy(() => import("./pages/GDNDetailsPage").then(m => ({ default: m.GDNDetailsPage })));
+const GDNPendingApprovalsDashboard = lazy(() => import("./pages/GDNPendingApprovalsDashboard").then(m => ({ default: m.GDNPendingApprovalsDashboard })));
+const GDNPendingApprovalsDetails = lazy(() => import("./pages/GDNPendingApprovalsDetails").then(m => ({ default: m.GDNPendingApprovalsDetails })));
 const InvoiceDashboard = lazy(() => import("./pages/InvoiceDashboard"));
 
 // Import WBS page
@@ -4360,6 +4365,30 @@ function App() {
                             <Route
                               path="/finance/pending-approvals"
                               element={<PendingApprovalsDashboard />}
+                            />
+                            <Route
+                              path="/finance/gdn"
+                              element={<GDNDashboard />}
+                            />
+                            <Route
+                              path="/finance/gdn/request-add"
+                              element={<AddGDNPage />}
+                            />
+                            <Route
+                              path="/finance/gdn/request-list"
+                              element={<GDNDashboard />}
+                            />
+                            <Route
+                              path="/finance/gdn/details/:id"
+                              element={<GDNDetailsPage />}
+                            />
+                            <Route
+                              path="/finance/gdn/pending-approvals/details/:id"
+                              element={<GDNPendingApprovalsDetails />}
+                            />
+                            <Route
+                              path="/finance/gdn/pending-approvals"
+                              element={<GDNPendingApprovalsDashboard />}
                             />
                             <Route
                               path="/finance/deletion-requests"

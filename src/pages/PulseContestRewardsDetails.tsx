@@ -253,7 +253,7 @@ const PulseContestRewardsDetails = () => {
                         <div className="flex items-start">
                             <span className="text-gray-500 min-w-[140px]">Full Name</span>
                             <span className="text-gray-500 mx-2">:</span>
-                            <span className="text-gray-900 font-medium">{claim?.user?.full_name}</span>
+                            <span className="text-gray-900 font-medium">{claim?.user?.firstname} {claim?.user?.lastname}</span>
                         </div>
                         <div className="flex items-start">
                             <span className="text-gray-500 min-w-[140px]">Email</span>

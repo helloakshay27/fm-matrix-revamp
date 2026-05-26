@@ -158,7 +158,7 @@ interface ServicePR {
   approvals?: Approval[];
   totals?: Totals;
   attachments?: Attachment[];
-  preparedBy?: string;
+  prepared_by?: string;
   signature?: string;
   contractor?: string;
   all_level_approved?: boolean;
@@ -1316,7 +1316,7 @@ export const ServicePRDetailsPage = () => {
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <p className="font-medium text-gray-900">
-                  PREPARED BY: {servicePR.preparedBy || "-"}
+                  PREPARED BY: {servicePR.prepared_by || "-"}
                 </p>
               </div>
               <div>
