@@ -42,6 +42,7 @@ interface ItemData {
   description: string;
   rate: number;
   usage_unit: string;
+   current_stock?: number | null;
   icon?: {
     document_file_name: string | null;
     attachment_url: string;
@@ -483,6 +484,7 @@ const columns = [
   { key: 'purchase_rate', label: 'Purchase Rate', sortable: true },
   { key: 'sale_description', label: 'Description', sortable: false },
   { key: 'sale_rate', label: 'Rate', sortable: true },
+  { key: 'current_stock', label: 'Current Stock', sortable: true },
   { key: 'unit', label: 'Usage Unit', sortable: true },
 ];
 
@@ -530,6 +532,9 @@ const columns = [
         <span>{item.name}</span>
       </div>
     );
+  }
+  if (columnKey === "current_stock") {
+    return item.current_stock ?? "--";
   }
 
   return item[columnKey as keyof ItemData] ?? "--";
