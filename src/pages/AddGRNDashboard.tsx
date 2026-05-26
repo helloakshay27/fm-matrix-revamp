@@ -171,6 +171,7 @@ export const AddGRNDashboard = () => {
   const fetchSuppliers = async (id: number) => {
     try {
       const response = await dispatch(fetchSupplierDetails({ baseUrl, token, id })).unwrap();
+      setSuppliers([{ id: String(response.id), name: response.company_name }]);
       setGrnDetails((prev) => ({
         ...prev,
         supplier: String(response.id),
@@ -187,6 +188,7 @@ export const AddGRNDashboard = () => {
         ...prev,
         purchaseOrder: id,
         relatedTo: response.related_to,
+        invoiceAmount: response.total_amount || "",
       }))
       const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
         const inventoryItem = {
