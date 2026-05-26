@@ -453,7 +453,10 @@ export const CreateContestPage: React.FC = () => {
     }
 
     // Add prizes_attributes
-    // Expand offers — flatten comma-separated coupon codes into individual entries
+    // Equal probability per offer: 100 / numberOfOffers
+    // If an offer has multiple coupons, that offer's share is split equally across each coupon
+    const baseProbabilityPerOffer = offers.length > 0 ? 100 / offers.length : 0;
+
     const expandedOffers: any[] = [];
     offers.forEach((offer) => {
       if (offer.rewardType === "Coupon Code") {
@@ -461,23 +464,14 @@ export const CreateContestPage: React.FC = () => {
           .split(",")
           .map((code) => code.trim())
           .filter((code) => code.length > 0);
-        const probPerCoupon = offer.winningProbability
-          ? String(Number(offer.winningProbability) / coupons.length)
-          : "";
+        const probPerCoupon = coupons.length > 0 ? baseProbabilityPerOffer / coupons.length : baseProbabilityPerOffer;
         coupons.forEach((coupon) => {
-          expandedOffers.push({ ...offer, couponCode: coupon, winningProbability: probPerCoupon });
+          expandedOffers.push({ ...offer, couponCode: coupon, _computedProb: probPerCoupon });
         });
       } else {
-        expandedOffers.push({ ...offer });
+        expandedOffers.push({ ...offer, _computedProb: baseProbabilityPerOffer });
       }
     });
-
-    // For Spin: compute remainder for the "none" entry from sum of offer-level probabilities
-    let spinRemainder: number | null = null;
-    if (contestType === "Spin") {
-      const totalWin = offers.reduce((sum, o) => sum + (Number(o.winningProbability) || 0), 0);
-      spinRemainder = 100 - Math.min(100, Math.max(0, totalWin));
-    }
 
     expandedOffers.forEach((offer, index) => {
       formData.append(`contest[prizes_attributes][${index}][title]`, offer.offerTitle.trim());
@@ -495,10 +489,8 @@ export const CreateContestPage: React.FC = () => {
         formData.append(`contest[prizes_attributes][${index}][partner_name]`, offer.partner.trim());
       }
 
-      if (offer.winningProbability) {
-        formData.append(`contest[prizes_attributes][${index}][probability_value]`, offer.winningProbability);
-        formData.append(`contest[prizes_attributes][${index}][probability_out_of]`, "100");
-      }
+      formData.append(`contest[prizes_attributes][${index}][probability_value]`, String(offer._computedProb));
+      formData.append(`contest[prizes_attributes][${index}][probability_out_of]`, "100");
 
       formData.append(`contest[prizes_attributes][${index}][position]`, String(index + 1));
       formData.append(`contest[prizes_attributes][${index}][active]`, "true");
@@ -510,17 +502,6 @@ export const CreateContestPage: React.FC = () => {
         formData.append(`contest[prizes_attributes][${index}][validity]`, offer.validity);
       }
     });
-
-    // For Spin: append the "none" remainder entry after all real offers
-    if (contestType === "Spin" && spinRemainder !== null) {
-      const noneIndex = expandedOffers.length;
-      formData.append(`contest[prizes_attributes][${noneIndex}][title]`, "Better luck next time!");
-      formData.append(`contest[prizes_attributes][${noneIndex}][reward_type]`, "none");
-      formData.append(`contest[prizes_attributes][${noneIndex}][probability_value]`, String(spinRemainder));
-      formData.append(`contest[prizes_attributes][${noneIndex}][probability_out_of]`, "100");
-      formData.append(`contest[prizes_attributes][${noneIndex}][position]`, String(noneIndex + 1));
-      formData.append(`contest[prizes_attributes][${noneIndex}][active]`, "true");
-    }
 
     // Add terms and conditions text if present
     if (termsText.trim()) {
