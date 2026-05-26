@@ -1572,11 +1572,11 @@ export const AddServicePRDashboard = () => {
 
                   <TextField
                     label="Rate*"
-                    value={formatIndian(detailsData.rate)}
+                    value={detailsData.rate}
                     onChange={(e) => {
-                      const raw = e.target.value.replace(/,/g, "");
-                      if (raw === "" || /^\d*\.?\d{0,2}$/.test(raw)) {
-                        handleDetailsChange(detailsData.id, "rate", raw);
+                      const value = e.target.value;
+                      if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                        handleDetailsChange(detailsData.id, "rate", value);
                       }
                     }}
                     fullWidth
