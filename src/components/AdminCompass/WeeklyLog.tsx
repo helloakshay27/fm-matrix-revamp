@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -45,6 +46,9 @@ interface WeeklyLogReport {
     status: string;
     submitted_at: string | null;
     journal_id: number | null;
+    meeting_journal_id?: number | null;
+    checked_in_meeting?: boolean;
+    report_data?: any;
 }
 
 interface WeeklyLogData {
@@ -123,8 +127,14 @@ const getBaseUrl = () => {
     return rawBase.startsWith('http://') || rawBase.startsWith('https://') ? rawBase.replace(/\/$/, '') : `https://${rawBase.replace(/\/$/, '')}`;
 };
 
+const getWeeklyReportJournalId = (entry: { journal_id?: number | null }) =>
+    entry.journal_id || null;
+
 const isSubmittedReport = (entry: { status?: string; journal_id?: number | null }) =>
-    entry.status === 'submitted' && !!entry.journal_id;
+    entry.status === 'submitted' && !!getWeeklyReportJournalId(entry);
+
+const getDisplayStatus = (entry: { status?: string; journal_id?: number | null }) =>
+    isSubmittedReport(entry) ? 'submitted' : 'missed';
 
 const formatReportValue = (value: any): string => {
     if (typeof value === 'string') return value;
@@ -141,17 +151,171 @@ const renderDetailReviewValue = (value: any) => {
     return String(value ?? '-');
 };
 
+const getItemTitle = (item: any): string => {
+    if (typeof item === 'string') return item;
+    if (item && typeof item === 'object') return String(item.title || item.text || item.name || item.notes || '');
+    return String(item ?? '');
+};
+
+const getItemType = (item: any): string => {
+    if (!item || typeof item !== 'object') return 'task';
+    return String(item.type || 'task').toLowerCase();
+};
+
+const normalizeList = (...values: any[]) => {
+    for (const value of values) {
+        if (Array.isArray(value)) return value;
+        if (Array.isArray(value?.items)) return value.items;
+    }
+    return [];
+};
+
+const normalizePlanItems = (plans: any[] = []) => {
+    const items: any[] = [];
+
+    plans.forEach((plan) => {
+        if (!plan) return;
+        if (typeof plan !== 'object' || Array.isArray(plan)) {
+            items.push(plan);
+            return;
+        }
+
+        if (plan.title || plan.text || plan.day || plan.member || plan.user_id) {
+            items.push(plan);
+            return;
+        }
+
+        Object.entries(plan).forEach(([day, values]: [string, any]) => {
+            const dayItems = Array.isArray(values) ? values : [];
+            dayItems.forEach((item) => {
+                items.push({
+                    ...(item && typeof item === 'object' ? item : { title: item }),
+                    day,
+                });
+            });
+        });
+    });
+
+    return items;
+};
+
+const buildMemberGroups = (reportData: any, fallbackEntry: WeeklyLogReport) => {
+    const groups = new Map<string, any>();
+
+    const ensureGroup = (source: any = {}) => {
+        const userId = source.user_id ?? source.id;
+        const hasMemberIdentity = !!(source.user_id ?? source.id ?? source.member ?? source.name ?? source.user_name);
+        const name = source.member || source.name || source.user_name || (!hasMemberIdentity ? fallbackEntry.name : '') || (userId === fallbackEntry.user_id ? fallbackEntry.name : '') || 'Unknown Member';
+        const normalizedName = String(name).trim().toLowerCase();
+        const userKey = userId ? `user-${userId}` : '';
+        const nameKey = `name-${normalizedName}`;
+        let key = userKey || nameKey;
+
+        if (userKey && groups.has(nameKey) && !groups.has(userKey)) {
+            const existing = groups.get(nameKey);
+            groups.delete(nameKey);
+            existing.key = userKey;
+            existing.user_id = userId;
+            groups.set(userKey, existing);
+        } else if (!userKey) {
+            const existingWithName = Array.from(groups.values()).find((group) => String(group.name).trim().toLowerCase() === normalizedName);
+            if (existingWithName) key = existingWithName.key;
+        }
+
+        if (!groups.has(key)) {
+            groups.set(key, {
+                key,
+                user_id: userId,
+                name,
+                accomplishments: [],
+                tasksIssues: [],
+                plans: [],
+                remarks: [],
+                pastKpis: [],
+                reviews: [],
+            });
+        }
+
+        const group = groups.get(key);
+        if (!group.name && name) group.name = name;
+        if (!group.user_id && userId) group.user_id = userId;
+        if (!group.user_id && !hasMemberIdentity) group.user_id = fallbackEntry.user_id;
+        return group;
+    };
+
+    normalizeList(reportData.detailed_reviews, reportData.meeting_notes?.detailed_reports).forEach((review: any) => {
+        const group = ensureGroup(review);
+        group.reviews.push(review);
+    });
+
+    normalizeList(reportData.accomplishments, reportData.all_accomplishments, reportData.achievements).forEach((item: any) => {
+        ensureGroup(item).accomplishments.push(item);
+    });
+
+    normalizeList(reportData.tasks_issues, reportData.all_tasks_issues).forEach((item: any) => {
+        ensureGroup(item).tasksIssues.push(item);
+    });
+
+    normalizePlanItems(normalizeList(reportData.upcoming_week_plan, reportData.tomorrow_plan, reportData.all_upcoming_week_plan, reportData.tasks)).forEach((item: any) => {
+        ensureGroup(item).plans.push(item);
+    });
+
+    normalizeList(reportData.remarks, reportData.all_remarks).forEach((item: any) => {
+        ensureGroup(item).remarks.push(item);
+    });
+
+    normalizeList(reportData.past_kpis, reportData.all_past_kpis).forEach((item: any) => {
+        ensureGroup(item).pastKpis.push(item);
+    });
+
+    return Array.from(groups.values()).filter((group) =>
+        group.accomplishments.length ||
+        group.tasksIssues.length ||
+        group.plans.length ||
+        group.remarks.length ||
+        group.pastKpis.length ||
+        group.reviews.length
+    );
+};
+
+const filterGroupsForEntry = (groups: any[], entry: WeeklyLogReport) => {
+    const entryUserId = String(entry.user_id || '');
+    const entryName = String(entry.name || '').trim().toLowerCase();
+    const matched = groups.filter((group) => {
+        const groupUserId = String(group.user_id || '');
+        const groupName = String(group.name || '').trim().toLowerCase();
+        return (entryUserId && groupUserId === entryUserId) || (!!entryName && groupName === entryName);
+    });
+
+    return matched.length > 0 ? matched : groups;
+};
+
+const DetailList = ({ items, emptyText, renderItem }: { items: any[]; emptyText: string; renderItem?: (item: any, idx: number) => React.ReactNode }) => (
+    items.length > 0 ? (
+        <ul className="space-y-1.5 text-xs text-gray-700">
+            {items.map((item, idx) => (
+                <li key={idx} className="break-words">
+                    - {renderItem ? renderItem(item, idx) : formatReportValue(item)}
+                </li>
+            ))}
+        </ul>
+    ) : (
+        <p className="text-xs text-gray-400">{emptyText}</p>
+    )
+);
+
 const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClose: () => void }) => {
     const [details, setDetails] = useState<any>(null);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (!entry.journal_id) return;
+        const detailJournalId = getWeeklyReportJournalId(entry);
+        if (!detailJournalId) return;
 
         const fetchDetails = async () => {
             setLoading(true);
             try {
-                const res = await axios.get(`${getBaseUrl()}/user_journals/${entry.journal_id}.json`, {
+                const res = await axios.get(`${getBaseUrl()}/user_journals/${detailJournalId}.json`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`,
                         'Content-Type': 'application/json',
@@ -175,11 +339,15 @@ const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClos
     const remarks = Array.isArray(reportData.remarks) ? reportData.remarks : [];
     const detailedReviews = Array.isArray(reportData.detailed_reviews) ? reportData.detailed_reviews : [];
     const kpiSummary = reportData.kpi_summary && typeof reportData.kpi_summary === 'object' ? reportData.kpi_summary : {};
+    const memberGroups = filterGroupsForEntry(buildMemberGroups(reportData, entry), entry);
 
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-black/40 px-4 pb-6 pt-20 sm:pt-8">
-            <div className="w-full max-w-3xl max-h-[calc(100vh-7rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden rounded-2xl bg-white shadow-2xl">
-                <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] grid place-items-center overflow-hidden bg-black/40 px-4 py-8">
+            <div
+                className="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+                style={{ maxHeight: '82vh' }}
+            >
+                <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4">
                     <div>
                         <h3 className="text-base font-bold text-gray-900">{entry.name}</h3>
                         <p className="text-xs text-gray-500">{entry.email}</p>
@@ -189,7 +357,7 @@ const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClos
                     </button>
                 </div>
 
-                <div className="max-h-[calc(100vh-12rem)] sm:max-h-[calc(100vh-9rem)] overflow-y-auto p-5 space-y-4">
+                <div className="min-h-0 flex-1 overflow-y-auto p-5 space-y-4">
                     {loading ? (
                         <div className="py-12 text-center text-sm text-gray-500">
                             <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin text-[#DA7756]" />
@@ -212,7 +380,7 @@ const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClos
                                 </div>
                             </div>
 
-                            <section className="rounded-xl border border-gray-100 p-4">
+                            <section className="hidden rounded-xl border border-gray-100 p-4">
                                 <h4 className="mb-3 text-sm font-bold text-gray-800">Meeting Summary</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                                     <div><span className="font-bold text-gray-500">Total:</span> {reportData.total_members ?? '-'}</div>
@@ -237,6 +405,115 @@ const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClos
                             </section>
 
                             <section className="rounded-xl border border-purple-100 p-4">
+                                <h4 className="mb-3 text-sm font-bold text-purple-700">Member Wise Details</h4>
+                                {memberGroups.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {memberGroups.map((member) => {
+                                            const tasks = member.tasksIssues.filter((item: any) => getItemType(item) === 'task');
+                                            const issues = member.tasksIssues.filter((item: any) => getItemType(item) === 'issue');
+                                            const others = member.tasksIssues.filter((item: any) => !['task', 'issue'].includes(getItemType(item)));
+
+                                            return (
+                                                <div key={member.key} className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                                                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                                                        <p className="text-sm font-black text-gray-900 break-words">{member.name}</p>
+                                                    </div>
+
+                                                    {member.reviews.length > 0 && (
+                                                        <div className="mb-3 rounded-lg bg-white p-3 text-xs text-gray-700">
+                                                            {member.reviews.map((review: any, idx: number) => (
+                                                                <div key={idx} className="space-y-1">
+                                                                    {Object.entries(review).filter(([key]) => !['name', 'user_id'].includes(key)).map(([key, value]) => (
+                                                                        <p key={key} className="break-words">
+                                                                            <span className="font-bold capitalize text-gray-500">{key.replace(/_/g, ' ')}:</span> {renderDetailReviewValue(value)}
+                                                                        </p>
+                                                                    ))}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                                        <div className="rounded-lg bg-white p-3">
+                                                            <p className="mb-2 text-[11px] font-black uppercase text-green-700">Top Wins</p>
+                                                            <DetailList items={member.accomplishments} emptyText="No achievements recorded" />
+                                                        </div>
+
+                                                        <div className="rounded-lg bg-white p-3">
+                                                            <p className="mb-2 text-[11px] font-black uppercase text-blue-700">Next Week Plan</p>
+                                                            <DetailList
+                                                                items={member.plans}
+                                                                emptyText="No plan recorded"
+                                                                renderItem={(item: any) => (
+                                                                    <>
+                                                                        {item.day && <span className="font-bold uppercase text-gray-500">{item.day}: </span>}
+                                                                        {getItemTitle(item) || formatReportValue(item)}
+                                                                    </>
+                                                                )}
+                                                            />
+                                                        </div>
+
+                                                        <div className="rounded-lg bg-white p-3">
+                                                            <p className="mb-2 text-[11px] font-black uppercase text-amber-700">Tasks</p>
+                                                            <DetailList
+                                                                items={tasks}
+                                                                emptyText="No tasks recorded"
+                                                                renderItem={(item: any) => (
+                                                                    <>
+                                                                        {getItemTitle(item) || formatReportValue(item)}
+                                                                        {item?.status && <span className="text-gray-400"> ({item.status})</span>}
+                                                                    </>
+                                                                )}
+                                                            />
+                                                        </div>
+
+                                                        <div className="rounded-lg bg-white p-3">
+                                                            <p className="mb-2 text-[11px] font-black uppercase text-red-700">Issues</p>
+                                                            <DetailList
+                                                                items={issues}
+                                                                emptyText="No issues recorded"
+                                                                renderItem={(item: any) => (
+                                                                    <>
+                                                                        {getItemTitle(item) || formatReportValue(item)}
+                                                                        {item?.status && <span className="text-gray-400"> ({item.status})</span>}
+                                                                    </>
+                                                                )}
+                                                            />
+                                                            {others.length > 0 && (
+                                                                <div className="mt-3 border-t border-gray-100 pt-3">
+                                                                    <p className="mb-2 text-[11px] font-black uppercase text-gray-500">Other Items</p>
+                                                                    <DetailList items={others} emptyText="" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+
+                                                        <div className="rounded-lg bg-white p-3">
+                                                            <p className="mb-2 text-[11px] font-black uppercase text-orange-700">Remarks</p>
+                                                            <DetailList items={member.remarks} emptyText="No remarks recorded" />
+                                                        </div>
+
+                                                        <div className="rounded-lg bg-white p-3">
+                                                            <p className="mb-2 text-[11px] font-black uppercase text-indigo-700">Past KPIs</p>
+                                                            <DetailList
+                                                                items={member.pastKpis}
+                                                                emptyText="No past KPIs recorded"
+                                                                renderItem={(item: any) => (
+                                                                    <>
+                                                                        KPI {item.kpi_id ?? '-'}: {item.actual_value ?? 0}/{item.target_value ?? '-'}
+                                                                        {item.notes && <span className="text-gray-400"> - {item.notes}</span>}
+                                                                    </>
+                                                                )}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : <p className="text-sm text-gray-400">No member-specific details recorded</p>}
+                            </section>
+
+                            <section className="hidden rounded-xl border border-purple-100 p-4">
                                 <h4 className="mb-3 text-sm font-bold text-purple-700">Detailed Reviews</h4>
                                 {detailedReviews.length > 0 ? (
                                     <div className="space-y-3">
@@ -254,7 +531,7 @@ const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClos
                                 ) : <p className="text-sm text-gray-400">No detailed reviews recorded</p>}
                             </section>
 
-                            <section className="rounded-xl border border-green-100 p-4">
+                            <section className="hidden rounded-xl border border-green-100 p-4">
                                 <h4 className="mb-3 text-sm font-bold text-green-700">Top Wins</h4>
                                 {achievements.length > 0 ? (
                                     <ul className="space-y-2 text-sm text-gray-700">
@@ -263,7 +540,7 @@ const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClos
                                 ) : <p className="text-sm text-gray-400">No achievements recorded</p>}
                             </section>
 
-                            <section className="rounded-xl border border-blue-100 p-4">
+                            <section className="hidden rounded-xl border border-blue-100 p-4">
                                 <h4 className="mb-3 text-sm font-bold text-blue-700">Next Week Plan</h4>
                                 {Array.isArray(plans) && plans.length > 0 ? (
                                     <div className="space-y-2 text-sm text-gray-700">
@@ -285,7 +562,7 @@ const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClos
                                 ) : <p className="text-sm text-gray-400">No plan recorded</p>}
                             </section>
 
-                            <section className="rounded-xl border border-orange-100 p-4">
+                            <section className="hidden rounded-xl border border-orange-100 p-4">
                                 <h4 className="mb-3 text-sm font-bold text-orange-700">Remarks</h4>
                                 {remarks.length > 0 ? (
                                     <ul className="space-y-2 text-sm text-gray-700">
@@ -297,7 +574,8 @@ const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClos
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
@@ -415,6 +693,10 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
     useEffect(() => { fetchLog(); }, [fetchLog]);
 
     const reports = logData?.reports ?? [];
+    const meetingSubmittedReports = reports.filter(isSubmittedReport);
+    const meetingSubmittedCount = meetingSubmittedReports.length;
+    const meetingTotalCount = logData?.total ?? reports.length;
+    const meetingMissedCount = Math.max(meetingTotalCount - meetingSubmittedCount, 0);
 
     return (
         <div className="mt-6 space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#fffaf8] p-4 sm:p-6 shadow-sm max-w-full overflow-x-hidden">
@@ -522,12 +804,17 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                     <div className="ml-auto flex items-center gap-3">
                         <span>
                             Submitted:{' '}
-                            <span className="font-bold text-green-600">{logData.submitted}</span>
+                            <span className="font-bold text-green-600">{meetingSubmittedCount}</span>
                         </span>
                         <span>/</span>
                         <span>
                             Total:{' '}
-                            <span className="font-bold text-neutral-700">{logData.total}</span>
+                            <span className="font-bold text-neutral-700">{meetingTotalCount}</span>
+                        </span>
+                        <span>/</span>
+                        <span>
+                            Missed:{' '}
+                            <span className="font-bold text-red-500">{meetingMissedCount}</span>
                         </span>
                     </div>
                 </div>
@@ -565,10 +852,12 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                             </TableRow>
                         ) : (
                             reports.map((entry, idx) => {
-                                const submittedDate = entry.submitted_at
+                                const isMeetingSubmitted = isSubmittedReport(entry);
+                                const displayStatus = getDisplayStatus(entry);
+                                const submittedDate = isMeetingSubmitted && entry.submitted_at
                                     ? new Date(entry.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                                     : null;
-                                const submittedTime = entry.submitted_at
+                                const submittedTime = isMeetingSubmitted && entry.submitted_at
                                     ? new Date(entry.submitted_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
                                     : null;
 
@@ -587,7 +876,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
 
                                         {/* Score */}
                                         <TableCell className="text-sm font-medium text-neutral-400">
-                                            {entry.score ? entry.score.toFixed(1) : '-'}
+                                            {isMeetingSubmitted && entry.score ? entry.score.toFixed(1) : '-'}
                                         </TableCell>
 
                                         {/* Department */}
@@ -613,9 +902,9 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                                         <TableCell>
                                             <Badge
                                                 variant="outline"
-                                                className={`rounded-[8px] px-3 py-1 text-[11px] font-bold capitalize ${STATUS_STYLE[entry.status] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}
+                                                className={`rounded-[8px] px-3 py-1 text-[11px] font-bold capitalize ${STATUS_STYLE[displayStatus] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}
                                             >
-                                                {entry.status}
+                                                {displayStatus}
                                             </Badge>
                                         </TableCell>
 

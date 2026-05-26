@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import {
@@ -22,6 +23,8 @@ import { WeekPicker } from './WeekPicker';
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface MemberReport {
     journal_id: number | null;
+    meeting_journal_id?: number | null;
+    weekly_report?: { id?: number | null; status?: string | null } | null;
     user_id: number;
     name: string;
     email: string;
@@ -84,8 +87,26 @@ const getBaseUrl = () => {
     return rawBase.startsWith('http://') || rawBase.startsWith('https://') ? rawBase.replace(/\/$/, '') : `https://${rawBase.replace(/\/$/, '')}`;
 };
 
-const isSubmittedMember = (member: MemberReport) =>
-    member.status === 'submitted' && !!member.journal_id;
+const getMemberDetailJournalId = (member: MemberReport) =>
+    member.journal_id || member.weekly_report?.id || null;
+
+const isMeetingSubmitted = (entry: WeekHistory) =>
+    entry.member_reports.some((member) => !!member.meeting_journal_id);
+
+const isSubmittedMember = (member: MemberReport, meetingSubmitted = true) =>
+    meetingSubmitted &&
+    (
+        member.status === 'submitted' ||
+        member.weekly_report?.status === 'submitted'
+    ) &&
+    (
+        !!getMemberDetailJournalId(member) ||
+        !!member.report_data ||
+        !!member.submitted_at
+    );
+
+const getDisplayStatus = (member: MemberReport, meetingSubmitted = true) =>
+    isSubmittedMember(member, meetingSubmitted) ? 'submitted' : 'missed';
 
 const formatReportValue = (value: any): string => {
     if (typeof value === 'string') return value;
@@ -107,12 +128,13 @@ const MemberReportModal = ({ member, onClose }: { member: MemberReport; onClose:
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (!member.journal_id) return;
+        const detailJournalId = getMemberDetailJournalId(member);
+        if (!detailJournalId) return;
 
         const fetchDetails = async () => {
             setLoading(true);
             try {
-                const res = await axios.get(`${getBaseUrl()}/user_journals/${member.journal_id}.json`, {
+                const res = await axios.get(`${getBaseUrl()}/user_journals/${detailJournalId}.json`, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem('token')}`,
                         'Content-Type': 'application/json',
@@ -128,7 +150,7 @@ const MemberReportModal = ({ member, onClose }: { member: MemberReport; onClose:
         };
 
         fetchDetails();
-    }, [member.journal_id]);
+    }, [member.journal_id, member.meeting_journal_id]);
 
     const reportData = details?.report_data || details?.weekly_report?.report_data || details?.journal?.report_data || member.report_data || {};
     const achievements = Array.isArray(reportData.achievements) ? reportData.achievements : [];
@@ -137,10 +159,13 @@ const MemberReportModal = ({ member, onClose }: { member: MemberReport; onClose:
     const detailedReviews = Array.isArray(reportData.detailed_reviews) ? reportData.detailed_reviews : [];
     const kpiSummary = reportData.kpi_summary && typeof reportData.kpi_summary === 'object' ? reportData.kpi_summary : {};
 
-    return (
-        <div className="fixed inset-0 z-[9999] flex items-start justify-center overflow-y-auto bg-black/40 px-4 pb-6 pt-20 sm:pt-8">
-            <div className="w-full max-w-3xl max-h-[calc(100vh-7rem)] sm:max-h-[calc(100vh-4rem)] overflow-hidden rounded-2xl bg-white shadow-2xl">
-                <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] grid place-items-center overflow-hidden bg-black/40 px-4 py-8">
+            <div
+                className="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+                style={{ maxHeight: '82vh' }}
+            >
+                <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4">
                     <div>
                         <h3 className="text-base font-bold text-gray-900">{member.name}</h3>
                         <p className="text-xs text-gray-500">{member.email}</p>
@@ -150,7 +175,7 @@ const MemberReportModal = ({ member, onClose }: { member: MemberReport; onClose:
                     </button>
                 </div>
 
-                <div className="max-h-[calc(100vh-12rem)] sm:max-h-[calc(100vh-9rem)] overflow-y-auto p-5 space-y-4">
+                <div className="min-h-0 flex-1 overflow-y-auto p-5 space-y-4">
                     {loading ? (
                         <div className="py-12 text-center text-sm text-gray-500">
                             <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin text-[#DA7756]" />
@@ -173,7 +198,7 @@ const MemberReportModal = ({ member, onClose }: { member: MemberReport; onClose:
                                 </div>
                             </div>
 
-                            <section className="rounded-xl border border-gray-100 p-4">
+                            <section className="hidden rounded-xl border border-gray-100 p-4">
                                 <h4 className="mb-3 text-sm font-bold text-gray-800">Meeting Summary</h4>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                                     <div><span className="font-bold text-gray-500">Total:</span> {reportData.total_members ?? '-'}</div>
@@ -258,7 +283,8 @@ const MemberReportModal = ({ member, onClose }: { member: MemberReport; onClose:
                     )}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 };
 
@@ -266,7 +292,12 @@ const MemberReportModal = ({ member, onClose }: { member: MemberReport; onClose:
 const WeekCard = ({ entry }: { entry: WeekHistory }) => {
     const [expanded, setExpanded] = useState(false);
     const [selectedMember, setSelectedMember] = useState<MemberReport | null>(null);
-    const submittedPct = entry.total > 0 ? Math.round((entry.submitted / entry.total) * 100) : 0;
+    const meetingSubmitted = isMeetingSubmitted(entry);
+    const meetingSubmittedCount = meetingSubmitted
+        ? entry.member_reports.filter((member) => isSubmittedMember(member, meetingSubmitted)).length
+        : 0;
+    const meetingMissedCount = Math.max(entry.total - meetingSubmittedCount, 0);
+    const submittedPct = entry.total > 0 ? Math.round((meetingSubmittedCount / entry.total) * 100) : 0;
 
     return (
         <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm bg-white max-w-full">
@@ -295,10 +326,10 @@ const WeekCard = ({ entry }: { entry: WeekHistory }) => {
                 {/* Counts */}
                 <div className="flex items-center gap-3 text-sm font-semibold shrink-0">
                     <span className="flex items-center gap-1 text-green-600">
-                        <CheckCircle2 className="w-4 h-4" />{entry.submitted}
+                        <CheckCircle2 className="w-4 h-4" />{meetingSubmittedCount}
                     </span>
                     <span className="flex items-center gap-1 text-red-500">
-                        <XCircle className="w-4 h-4" />{entry.missed}
+                        <XCircle className="w-4 h-4" />{meetingMissedCount}
                     </span>
                     <span className="flex items-center gap-1 text-gray-400">
                         <Users className="w-4 h-4" />{entry.total}
@@ -315,10 +346,12 @@ const WeekCard = ({ entry }: { entry: WeekHistory }) => {
             {expanded && (
                 <div className="border-t border-gray-100 divide-y divide-gray-50">
                     {entry.member_reports.map(member => {
-                        const submittedDate = member.submitted_at
+                        const memberSubmitted = isSubmittedMember(member, meetingSubmitted);
+                        const displayStatus = getDisplayStatus(member, meetingSubmitted);
+                        const submittedDate = memberSubmitted && member.submitted_at
                             ? new Date(member.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                             : null;
-                        const submittedTime = member.submitted_at
+                        const submittedTime = memberSubmitted && member.submitted_at
                             ? new Date(member.submitted_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
                             : null;
 
@@ -349,7 +382,7 @@ const WeekCard = ({ entry }: { entry: WeekHistory }) => {
 
                                 {/* Score */}
                                 <span className="text-sm text-gray-400 font-medium w-12 text-center shrink-0">
-                                    {member.score !== null ? member.score : '—'}
+                                    {memberSubmitted && member.score !== null ? member.score : '—'}
                                 </span>
 
                                 {/* Submitted at */}
@@ -367,13 +400,13 @@ const WeekCard = ({ entry }: { entry: WeekHistory }) => {
                                 {/* Status badge */}
                                 <Badge
                                     variant="outline"
-                                    className={`rounded-[6px] px-2 py-0.5 text-[10px] font-bold capitalize shrink-0 ${STATUS_BADGE[member.status] ?? 'bg-gray-100 text-gray-500 border-gray-200'}`}
+                                    className={`rounded-[6px] px-2 py-0.5 text-[10px] font-bold capitalize shrink-0 ${STATUS_BADGE[displayStatus] ?? 'bg-gray-100 text-gray-500 border-gray-200'}`}
                                 >
-                                    {member.status}
+                                    {displayStatus}
                                 </Badge>
 
                                 {/* View */}
-                                {isSubmittedMember(member) && (
+                                {memberSubmitted && (
                                     <Button
                                         variant="ghost"
                                         size="icon"
