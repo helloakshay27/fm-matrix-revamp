@@ -60,7 +60,7 @@ export const MeetingNotes = ({
                         className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer disabled:opacity-50"
                     />
                     <span className="text-sm font-medium text-[#1A1A1A]">
-                        {isSubmittedMeeting ? 'Meeting Submitted' : 'Mark All Attended'}
+                        Select All
                     </span>
                 </label>
                 <div className="flex items-center gap-2">
