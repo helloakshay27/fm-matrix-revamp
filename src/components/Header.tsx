@@ -558,16 +558,6 @@ export const Header = () => {
                   MSafe Dashboard
                 </button>
               )}
-
-              {isPulseSite && (
-                <button
-                  onClick={() => navigate("/pulse/analytics")}
-                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-                >
-                  <Home className="w-4 h-4" />
-                  Pulse Dashboard
-                </button>
-              )}
             </div>
           )}
 

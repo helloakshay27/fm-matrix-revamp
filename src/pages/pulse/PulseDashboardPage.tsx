@@ -37,9 +37,12 @@ function getDefaultDates() {
 export function PulseDashboardPage() {
   const { selectedSite, sites } = useAppSelector((state) => state.site);
   const [activeSection, setActiveSection] = useState<Section>("customers");
-  const [filters, setFilters] = useState<PulseFilters>({
-    siteIds: [],
-    ...getDefaultDates(),
+  const [filters, setFilters] = useState<PulseFilters>(() => {
+    const storedSiteId = localStorage.getItem("selectedSiteId");
+    return {
+      siteIds: storedSiteId ? [Number(storedSiteId)] : [],
+      ...getDefaultDates(),
+    };
   });
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
     const { fromDate, toDate } = getDefaultDates();
@@ -60,13 +63,18 @@ export function PulseDashboardPage() {
     }
   };
 
-  // Sync siteIds whenever the header's selected site or sites list changes
+  // Sync siteIds from localStorage whenever the selected site changes
   useEffect(() => {
-    const siteIds = selectedSite ? [selectedSite.id] : sites.map((s) => s.id);
+    const storedSiteId = localStorage.getItem("selectedSiteId");
+    const siteIds = storedSiteId ? [Number(storedSiteId)] : [];
     setFilters((f) => ({ ...f, siteIds }));
-  }, [selectedSite, sites]);
+  }, [selectedSite]);
 
-  const allSiteIds = sites.map((s) => s.id);
+  const allSiteIds = (() => {
+    const stored = localStorage.getItem("allSiteIds");
+    if (stored) return stored.split(",").filter(Boolean).map(Number);
+    return sites.map((s) => s.id);
+  })();
 
   return (
     <>
