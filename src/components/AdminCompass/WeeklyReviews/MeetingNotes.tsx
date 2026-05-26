@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 interface MeetingNotesProps {
     meetingNotes: string;
     markAllAttended: boolean;
+    isSubmittedMeeting?: boolean;
     saveMeetingLoading?: boolean;
     onMeetingNotesChange: (value: string) => void;
     onMarkAllAttendedChange: (value: boolean) => void;
@@ -14,6 +15,7 @@ interface MeetingNotesProps {
 export const MeetingNotes = ({
     meetingNotes,
     markAllAttended,
+    isSubmittedMeeting = false,
     saveMeetingLoading = false,
     onMeetingNotesChange,
     onMarkAllAttendedChange,
@@ -54,10 +56,12 @@ export const MeetingNotes = ({
                         type="checkbox"
                         checked={markAllAttended}
                         onChange={(e) => onMarkAllAttendedChange(e.target.checked)}
-                        disabled={saveMeetingLoading}
+                        disabled={saveMeetingLoading || isSubmittedMeeting}
                         className="w-4 h-4 rounded border-gray-300 accent-[#CE7A5A] cursor-pointer disabled:opacity-50"
                     />
-                    <span className="text-sm font-medium text-[#1A1A1A]">Mark All Attended</span>
+                    <span className="text-sm font-medium text-[#1A1A1A]">
+                        Select All
+                    </span>
                 </label>
                 <div className="flex items-center gap-2">
                     <Button
@@ -72,7 +76,7 @@ export const MeetingNotes = ({
                                 <span>Saving...</span>
                             </div>
                         ) : (
-                            'Save Meeting'
+                            isSubmittedMeeting ? 'Update Notes' : 'Save Meeting'
                         )}
                     </Button>
                 </div>

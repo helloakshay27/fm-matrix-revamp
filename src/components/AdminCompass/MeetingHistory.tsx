@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import {
@@ -13,6 +14,7 @@ import {
     XCircle,
     Loader2,
     Eye,
+    X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +23,8 @@ import { WeekPicker } from './WeekPicker';
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface MemberReport {
     journal_id: number | null;
+    meeting_journal_id?: number | null;
+    weekly_report?: { id?: number | null; status?: string | null } | null;
     user_id: number;
     name: string;
     email: string;
@@ -77,17 +81,230 @@ const getISOWeekKey = (date: Date) => {
     return `${year}-W${String(week).padStart(2, '0')}`;
 };
 
+const getBaseUrl = () => {
+    const rawBase = localStorage.getItem('baseUrl') || '';
+    if (!rawBase) return '';
+    return rawBase.startsWith('http://') || rawBase.startsWith('https://') ? rawBase.replace(/\/$/, '') : `https://${rawBase.replace(/\/$/, '')}`;
+};
+
+const getMemberDetailJournalId = (member: MemberReport) =>
+    member.journal_id || member.weekly_report?.id || null;
+
+const isMeetingSubmitted = (entry: WeekHistory) =>
+    entry.member_reports.some((member) => !!member.meeting_journal_id);
+
+const isSubmittedMember = (member: MemberReport, meetingSubmitted = true) =>
+    meetingSubmitted &&
+    (
+        member.status === 'submitted' ||
+        member.weekly_report?.status === 'submitted'
+    ) &&
+    (
+        !!getMemberDetailJournalId(member) ||
+        !!member.report_data ||
+        !!member.submitted_at
+    );
+
+const getDisplayStatus = (member: MemberReport, meetingSubmitted = true) =>
+    isSubmittedMember(member, meetingSubmitted) ? 'submitted' : 'missed';
+
+const formatReportValue = (value: any): string => {
+    if (typeof value === 'string') return value;
+    if (value && typeof value === 'object') return value.title || value.text || value.name || JSON.stringify(value);
+    return String(value ?? '-');
+};
+
+const renderDetailReviewValue = (value: any) => {
+    if (Array.isArray(value)) {
+        if (value.length === 0) return '-';
+        return value.map(formatReportValue).join(', ');
+    }
+    if (value && typeof value === 'object') return JSON.stringify(value);
+    return String(value ?? '-');
+};
+
+const MemberReportModal = ({ member, onClose }: { member: MemberReport; onClose: () => void }) => {
+    const [details, setDetails] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const detailJournalId = getMemberDetailJournalId(member);
+        if (!detailJournalId) return;
+
+        const fetchDetails = async () => {
+            setLoading(true);
+            try {
+                const res = await axios.get(`${getBaseUrl()}/user_journals/${detailJournalId}.json`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                setDetails(res.data?.data ?? res.data ?? null);
+            } catch (err) {
+                console.error('Failed to load weekly report details', err);
+                toast.error('Failed to load report details');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDetails();
+    }, [member.journal_id, member.meeting_journal_id]);
+
+    const reportData = details?.report_data || details?.weekly_report?.report_data || details?.journal?.report_data || member.report_data || {};
+    const achievements = Array.isArray(reportData.achievements) ? reportData.achievements : [];
+    const plans = (reportData.upcoming_week_plan || reportData.tasks || []) as any[];
+    const remarks = Array.isArray(reportData.remarks) ? reportData.remarks : [];
+    const detailedReviews = Array.isArray(reportData.detailed_reviews) ? reportData.detailed_reviews : [];
+    const kpiSummary = reportData.kpi_summary && typeof reportData.kpi_summary === 'object' ? reportData.kpi_summary : {};
+
+    return createPortal(
+        <div className="fixed inset-0 z-[9999] grid place-items-center overflow-hidden bg-black/40 px-4 py-8">
+            <div
+                className="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+                style={{ maxHeight: '82vh' }}
+            >
+                <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-5 py-4">
+                    <div>
+                        <h3 className="text-base font-bold text-gray-900">{member.name}</h3>
+                        <p className="text-xs text-gray-500">{member.email}</p>
+                    </div>
+                    <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100">
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+
+                <div className="min-h-0 flex-1 overflow-y-auto p-5 space-y-4">
+                    {loading ? (
+                        <div className="py-12 text-center text-sm text-gray-500">
+                            <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin text-[#DA7756]" />
+                            Loading report...
+                        </div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                    <p className="text-[11px] font-bold text-gray-400">Score</p>
+                                    <p className="text-sm font-bold text-gray-800">{reportData.total_score ?? member.score ?? '-'}</p>
+                                </div>
+                                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                    <p className="text-[11px] font-bold text-gray-400">Department</p>
+                                    <p className="text-sm font-bold text-gray-800">{member.department || 'No Dept.'}</p>
+                                </div>
+                                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                    <p className="text-[11px] font-bold text-gray-400">Submitted</p>
+                                    <p className="text-sm font-bold text-gray-800">{member.submitted_at ? new Date(member.submitted_at).toLocaleString() : '-'}</p>
+                                </div>
+                            </div>
+
+                            <section className="hidden rounded-xl border border-gray-100 p-4">
+                                <h4 className="mb-3 text-sm font-bold text-gray-800">Meeting Summary</h4>
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                                    <div><span className="font-bold text-gray-500">Total:</span> {reportData.total_members ?? '-'}</div>
+                                    <div><span className="font-bold text-gray-500">Submitted:</span> {reportData.total_submitted ?? '-'}</div>
+                                    <div><span className="font-bold text-gray-500">Missed:</span> {reportData.total_missed ?? '-'}</div>
+                                </div>
+                            </section>
+
+                            <section className="rounded-xl border border-indigo-100 p-4">
+                                <h4 className="mb-3 text-sm font-bold text-indigo-700">KPI Summary</h4>
+                                {Object.keys(kpiSummary).length > 0 ? (
+                                    <div className="space-y-2 text-sm text-gray-700">
+                                        {Object.entries(kpiSummary).map(([name, data]: [string, any]) => (
+                                            <div key={name} className="rounded-lg bg-gray-50 p-3">
+                                                <p className="font-bold break-words">{name}</p>
+                                                <p className="text-xs text-gray-500">Achieved: {data?.achieved ?? 0}/{data?.total ?? 0}</p>
+                                                {Array.isArray(data?.names) && <p className="text-xs text-gray-500 break-words">Members: {data.names.join(', ')}</p>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : <p className="text-sm text-gray-400">No KPI summary recorded</p>}
+                            </section>
+
+                            <section className="rounded-xl border border-purple-100 p-4">
+                                <h4 className="mb-3 text-sm font-bold text-purple-700">Detailed Reviews</h4>
+                                {detailedReviews.length > 0 ? (
+                                    <div className="space-y-3">
+                                        {detailedReviews.map((review: any, idx: number) => (
+                                            <div key={idx} className="rounded-lg bg-gray-50 p-3 text-sm text-gray-700">
+                                                <p className="font-bold text-gray-900 break-words">{review.name || `Member ${idx + 1}`}</p>
+                                                {Object.entries(review).filter(([key]) => key !== 'name').map(([key, value]) => (
+                                                    <p key={key} className="break-words">
+                                                        <span className="font-bold capitalize text-gray-500">{key.replace(/_/g, ' ')}:</span> {renderDetailReviewValue(value)}
+                                                    </p>
+                                                ))}
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : <p className="text-sm text-gray-400">No detailed reviews recorded</p>}
+                            </section>
+
+                            <section className="rounded-xl border border-green-100 p-4">
+                        <h4 className="mb-3 text-sm font-bold text-green-700">Top Wins</h4>
+                        {achievements.length > 0 ? (
+                            <ul className="space-y-2 text-sm text-gray-700">
+                                {achievements.map((item: any, idx: number) => <li key={idx} className="break-words">• {formatReportValue(item)}</li>)}
+                            </ul>
+                        ) : <p className="text-sm text-gray-400">No achievements recorded</p>}
+                            </section>
+
+                            <section className="rounded-xl border border-blue-100 p-4">
+                        <h4 className="mb-3 text-sm font-bold text-blue-700">Next Week Plan</h4>
+                        {Array.isArray(plans) && plans.length > 0 ? (
+                            <div className="space-y-2 text-sm text-gray-700">
+                                {plans.map((plan: any, idx: number) => (
+                                    <div key={idx}>
+                                        {plan && typeof plan === 'object' && !Array.isArray(plan)
+                                            ? Object.entries(plan).map(([day, items]: [string, any]) => (
+                                                <div key={day} className="mb-2">
+                                                    <p className="font-bold uppercase text-gray-500">{day}</p>
+                                                    {(Array.isArray(items) ? items : []).map((item, itemIdx) => (
+                                                        <p key={itemIdx} className="break-words">• {formatReportValue(item)}</p>
+                                                    ))}
+                                                </div>
+                                            ))
+                                            : <p className="break-words">• {formatReportValue(plan)}</p>}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : <p className="text-sm text-gray-400">No plan recorded</p>}
+                            </section>
+
+                            <section className="rounded-xl border border-orange-100 p-4">
+                        <h4 className="mb-3 text-sm font-bold text-orange-700">Remarks</h4>
+                        {remarks.length > 0 ? (
+                            <ul className="space-y-2 text-sm text-gray-700">
+                                {remarks.map((item: any, idx: number) => <li key={idx} className="break-words">• {formatReportValue(item)}</li>)}
+                            </ul>
+                        ) : <p className="text-sm text-gray-400">No remarks recorded</p>}
+                            </section>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>,
+        document.body
+    );
+};
+
 // ── Week accordion card ────────────────────────────────────────────────────────
 const WeekCard = ({ entry }: { entry: WeekHistory }) => {
     const [expanded, setExpanded] = useState(false);
-    const submittedPct = entry.total > 0 ? Math.round((entry.submitted / entry.total) * 100) : 0;
+    const [selectedMember, setSelectedMember] = useState<MemberReport | null>(null);
+    const meetingSubmitted = isMeetingSubmitted(entry);
+    const meetingSubmittedCount = meetingSubmitted
+        ? entry.member_reports.filter((member) => isSubmittedMember(member, meetingSubmitted)).length
+        : 0;
+    const meetingMissedCount = Math.max(entry.total - meetingSubmittedCount, 0);
+    const submittedPct = entry.total > 0 ? Math.round((meetingSubmittedCount / entry.total) * 100) : 0;
 
     return (
-        <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm bg-white">
+        <div className="border border-gray-100 rounded-2xl overflow-hidden shadow-sm bg-white max-w-full">
             {/* Week header row */}
             <button
                 onClick={() => setExpanded(v => !v)}
-                className="w-full flex items-center gap-4 px-5 py-4 hover:bg-[#fef6f4]/60 transition-colors text-left"
+                className="w-full flex flex-wrap items-center gap-4 px-5 py-4 hover:bg-[#fef6f4]/60 transition-colors text-left"
             >
                 {/* Week label */}
                 <div className="min-w-[110px]">
@@ -109,10 +326,10 @@ const WeekCard = ({ entry }: { entry: WeekHistory }) => {
                 {/* Counts */}
                 <div className="flex items-center gap-3 text-sm font-semibold shrink-0">
                     <span className="flex items-center gap-1 text-green-600">
-                        <CheckCircle2 className="w-4 h-4" />{entry.submitted}
+                        <CheckCircle2 className="w-4 h-4" />{meetingSubmittedCount}
                     </span>
                     <span className="flex items-center gap-1 text-red-500">
-                        <XCircle className="w-4 h-4" />{entry.missed}
+                        <XCircle className="w-4 h-4" />{meetingMissedCount}
                     </span>
                     <span className="flex items-center gap-1 text-gray-400">
                         <Users className="w-4 h-4" />{entry.total}
@@ -129,17 +346,19 @@ const WeekCard = ({ entry }: { entry: WeekHistory }) => {
             {expanded && (
                 <div className="border-t border-gray-100 divide-y divide-gray-50">
                     {entry.member_reports.map(member => {
-                        const submittedDate = member.submitted_at
+                        const memberSubmitted = isSubmittedMember(member, meetingSubmitted);
+                        const displayStatus = getDisplayStatus(member, meetingSubmitted);
+                        const submittedDate = memberSubmitted && member.submitted_at
                             ? new Date(member.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                             : null;
-                        const submittedTime = member.submitted_at
+                        const submittedTime = memberSubmitted && member.submitted_at
                             ? new Date(member.submitted_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
                             : null;
 
                         return (
                             <div
                                 key={member.user_id}
-                                className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50/60 transition-colors"
+                                className="flex flex-wrap items-center gap-4 px-5 py-3 hover:bg-gray-50/60 transition-colors"
                             >
                                 {/* Avatar initials */}
                                 <div className="w-8 h-8 rounded-full bg-[#DA7756]/10 flex items-center justify-center shrink-0">
@@ -163,7 +382,7 @@ const WeekCard = ({ entry }: { entry: WeekHistory }) => {
 
                                 {/* Score */}
                                 <span className="text-sm text-gray-400 font-medium w-12 text-center shrink-0">
-                                    {member.score !== null ? member.score : '—'}
+                                    {memberSubmitted && member.score !== null ? member.score : '—'}
                                 </span>
 
                                 {/* Submitted at */}
@@ -181,24 +400,33 @@ const WeekCard = ({ entry }: { entry: WeekHistory }) => {
                                 {/* Status badge */}
                                 <Badge
                                     variant="outline"
-                                    className={`rounded-[6px] px-2 py-0.5 text-[10px] font-bold capitalize shrink-0 ${STATUS_BADGE[member.status] ?? 'bg-gray-100 text-gray-500 border-gray-200'}`}
+                                    className={`rounded-[6px] px-2 py-0.5 text-[10px] font-bold capitalize shrink-0 ${STATUS_BADGE[displayStatus] ?? 'bg-gray-100 text-gray-500 border-gray-200'}`}
                                 >
-                                    {member.status}
+                                    {displayStatus}
                                 </Badge>
 
                                 {/* View */}
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    disabled={!member.journal_id}
-                                    className="h-7 w-7 rounded-lg text-[#DA7756] hover:bg-[#fef6f4] disabled:opacity-25 shrink-0"
-                                >
-                                    <Eye className="w-3.5 h-3.5" />
-                                </Button>
+                                {memberSubmitted && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setSelectedMember(member)}
+                                        className="h-7 w-7 rounded-lg text-[#DA7756] hover:bg-[#fef6f4] shrink-0"
+                                    >
+                                        <Eye className="w-3.5 h-3.5" />
+                                    </Button>
+                                )}
                             </div>
                         );
                     })}
                 </div>
+            )}
+
+            {selectedMember && (
+                <MemberReportModal
+                    member={selectedMember}
+                    onClose={() => setSelectedMember(null)}
+                />
             )}
         </div>
     );
@@ -232,7 +460,7 @@ const MeetingHistory = ({ initialWeekDate, onWeekDateChange }: MeetingHistoryPro
         Authorization: `Bearer ${localStorage.getItem('token')}`,
         'Content-Type': 'application/json',
     });
-    const apiBase = () => `https://${localStorage.getItem('baseUrl')}`;
+    const apiBase = getBaseUrl;
 
     const fetchHistory = useCallback(async () => {
         setLoading(true);
@@ -262,7 +490,7 @@ const MeetingHistory = ({ initialWeekDate, onWeekDateChange }: MeetingHistoryPro
     const config  = historyData?.config;
 
     return (
-        <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm space-y-6 mt-6">
+        <div className="bg-white border border-gray-100 rounded-xl p-4 sm:p-6 shadow-sm space-y-6 mt-6 max-w-full overflow-x-hidden">
             {/* ── Header ── */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">

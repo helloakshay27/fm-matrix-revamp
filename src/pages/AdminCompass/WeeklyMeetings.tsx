@@ -9,6 +9,7 @@ import { Calendar, ChartColumn, FileText, History, Settings } from "lucide-react
 
 const WeeklyMeetings = () => {
     const [selectedWeekDate, setSelectedWeekDate] = useState(() => new Date())
+    const [activeTab, setActiveTab] = useState("weekly")
 
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto bg-[#f6f4ee]">
@@ -20,7 +21,7 @@ const WeeklyMeetings = () => {
                 </div>
             </div>
 
-            <Tabs defaultValue="weekly">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className='w-full rounded-2xl bg-[#DA7756] p-1 h-auto'>
                     <TabsTrigger value="weekly" className='w-full rounded-xl text-sm font-semibold text-white/80 data-[state=active]:bg-white data-[state=active]:text-[#DA7756] data-[state=active]:shadow-sm'>
                         <Calendar className="h-4 w-4 mr-2" />
@@ -48,6 +49,7 @@ const WeeklyMeetings = () => {
                     <WeeklyReviews
                         initialWeekDate={selectedWeekDate}
                         onWeekDateChange={setSelectedWeekDate}
+                        onMeetingSaved={() => setActiveTab("meetingHistory")}
                     />
                 </TabsContent>
                 <TabsContent value="weeklyLog" className="mt-5">

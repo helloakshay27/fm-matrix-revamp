@@ -65,9 +65,12 @@ export const ItemsDetails = () => {
 
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
+     const lock_account_id = localStorage.getItem("lock_account_id");
 
     const [loading, setLoading] = useState(false);
     const [itemData, setItemData] = useState<any>(null);
+const [stockLedger, setStockLedger] = useState<any[]>([]);
+const [stockLoading, setStockLoading] = useState(false);
 
     const [activeTab, setActiveTab] = useState<
         "overview" | "transactions" | "history"
@@ -157,6 +160,39 @@ export const ItemsDetails = () => {
 
         if (id) fetchItemDetails();
     }, [id, baseUrl, token]);
+
+    const fetchStockLedger = async () => {
+    try {
+        setStockLoading(true);
+
+        let apiBase = baseUrl || "https://club-uat-api.lockated.com";
+
+        if (!apiBase.startsWith("http")) {
+            apiBase = `https://${apiBase}`;
+        }
+
+        const response = await axios.get(
+            `${apiBase}/lock_account_items/${id}/stock_ledger?lock_account_id=${lock_account_id}`,
+            {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                },
+            }
+        );
+
+        setStockLedger(response.data?.movements || []);
+
+    } catch (error) {
+        console.log(error);
+        toast.error("Failed to fetch stock ledger");
+    } finally {
+        setStockLoading(false);
+    }
+};
+if (id) {
+    // fetchItemDetails();
+    fetchStockLedger();
+}
 
     const handleClose = () => navigate("/accounting/items");
 
@@ -276,6 +312,65 @@ export const ItemsDetails = () => {
                             </p>
                         </div>
 
+
+
+{/* STOCK MOVEMENTS TABLE */}
+<div className="border p-6 rounded bg-white">
+    <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold text-lg">
+            Stock Movements
+        </h3>
+
+        <div className="text-sm text-gray-500">
+            Current Stock :
+            <span className="font-semibold text-black ml-1">
+                {itemData?.current_stock || 0}
+            </span>
+        </div>
+    </div>
+
+    {stockLoading ? (
+        <div className="py-6 text-center">
+            <CircularProgress size={24} />
+        </div>
+    ) : (
+        <EnhancedTaskTable
+            data={stockLedger || []}
+            columns={[
+                { key: "date", label: "Date" },
+                { key: "transaction_type", label: "Transaction Type" },
+                { key: "transaction_number", label: "Transaction #" },
+                { key: "direction", label: "Direction" },
+                { key: "quantity", label: "Quantity" },
+                { key: "rate", label: "Rate" },
+                { key: "total_amount", label: "Amount" },
+                { key: "balance", label: "Balance" },
+            ]}
+            renderRow={(row) => ({
+                ...row,
+
+                direction: (
+                    <Chip
+                        label={row.direction}
+                        size="small"
+                        color={row.direction === "in" ? "success" : "error"}
+                        variant="outlined"
+                    />
+                ),
+
+                quantity: Number(row.quantity || 0).toFixed(2),
+
+                rate: `₹ ${Number(row.rate || 0).toLocaleString()}`,
+
+                total_amount: `₹ ${Number(
+                    row.total_amount || 0
+                ).toLocaleString()}`,
+
+                balance: Number(row.balance || 0).toFixed(2),
+            })}
+        />
+    )}
+</div>
                     </div>
                 )}
 
@@ -532,6 +627,8 @@ export const ItemsDetails = () => {
                         </div>
                     </div>
                 )}
+
+                
 
             </div>
         </ThemeProvider>
