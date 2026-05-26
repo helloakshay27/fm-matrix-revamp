@@ -520,7 +520,7 @@ export const WODetailsPage = () => {
           {
             !shouldShowButtons && (
               <>
-                <Button
+                {/* <Button
                   size="sm"
                   variant="outline"
                   className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
@@ -528,7 +528,7 @@ export const WODetailsPage = () => {
                 >
                   <Copy className="w-4 h-4 mr-1" />
                   Clone
-                </Button>
+                </Button> */}
                 <Button variant="outline" size="sm" onClick={handlePrint} disabled={printing}>
                   {
                     printing ? (

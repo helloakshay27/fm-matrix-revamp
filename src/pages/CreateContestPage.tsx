@@ -801,7 +801,7 @@ export const CreateContestPage: React.FC = () => {
                         onChange={() => handleShareWithChange("all")}
                         className="w-4 h-4"
                       />
-                      <span className="text-sm font-medium text-gray-700">Share with all</span>
+                      <span className="text-sm font-medium text-gray-700">Share with all parks</span>
                     </label>
                   </div>
 
@@ -815,7 +815,7 @@ export const CreateContestPage: React.FC = () => {
                         onChange={() => handleShareWithChange("individual")}
                         className="w-4 h-4"
                       />
-                      <span className="text-sm font-medium text-gray-700">Share with individual</span>
+                      <span className="text-sm font-medium text-gray-700">Share with individual parks</span>
                     </label>
                   </div>
                 </div>
