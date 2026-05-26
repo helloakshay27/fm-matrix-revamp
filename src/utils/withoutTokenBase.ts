@@ -108,7 +108,10 @@ baseClient.interceptors.request.use(
       // Build API URL based on site type and available parameters
       let apiUrl = "";
 
-      if (isPanchshilPulseProd && (organizationId || orgId)) {
+      if (isPanchshilPulseUat && (organizationId || orgId)) {
+        apiUrl = `https://pulse-uat-api.panchshil.com/api/users/get_organizations_by_email.json?org_id=${organizationId || orgId}`;
+        console.log("🔍 Using org_id for Panchshil Pulse Uat site:", organizationId || orgId);
+      } else if (isPanchshilPulseProd && (organizationId || orgId)) {
         // Panchshil Pulse Prod: use organization_id if available
         apiUrl = `https://pulse-api.panchshil.com/api/users/get_organizations_by_email.json?org_id=${organizationId || orgId}`;
         console.log("🔍 Using org_id for Panchshil Pulse Prod site:", organizationId || orgId);
