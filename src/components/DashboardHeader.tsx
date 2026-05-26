@@ -274,7 +274,7 @@ export const DashboardHeader = () => {
             )}
 
             {/* Dashboard/Executive Buttons */}
-            {!isRestrictedUser && (
+            {!isRestrictedUser && location.pathname !== "/pulse/analytics" && (
               location.pathname === "/dashboard-executive" ? (
                 <button
                   onClick={() => (window.location.href = "/dashboard")}

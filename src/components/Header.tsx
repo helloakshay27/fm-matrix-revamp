@@ -211,7 +211,7 @@ export const Header = () => {
             role_name: data?.role_name,
           });
         })
-        .catch(() => {});
+        .catch(() => { });
     } catch {
       /* no-op */
     }
@@ -532,7 +532,7 @@ export const Header = () => {
                 </button>
               )} */}
 
-               {isViSite && (selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
+              {isViSite && (selectedCompany?.id !== 294 || selectedCompany?.id === 145) && !isWebSite && (
                 <button
                   onClick={() => navigate("/msafedashboard")}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
@@ -542,15 +542,15 @@ export const Header = () => {
                 </button>
               )}
 
-               {!isViSite && (selectedCompany?.id !== 294 || selectedCompany?.id === 145) && (!isWebSite || selectedCompany?.id === 145) && (
+              {!isViSite && (selectedCompany?.id !== 294 || selectedCompany?.id === 145) && (!isWebSite || selectedCompany?.id === 145) && (
                 <button
                   onClick={() =>
                     selectedCompany?.id === 145
                       ? navigate("/msafedashboard")
                       : window.open(
-                          "https://web.gophygital.work/msafedashboard",
-                          "_blank"
-                        )
+                        "https://web.gophygital.work/msafedashboard",
+                        "_blank"
+                      )
                   }
                   className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
                 >
@@ -558,8 +558,18 @@ export const Header = () => {
                   MSafe Dashboard
                 </button>
               )}
+
+              {isPulseSite && (
+                <button
+                  onClick={() => navigate("/pulse/analytics")}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+                >
+                  <Home className="w-4 h-4" />
+                  Pulse Dashboard
+                </button>
+              )}
             </div>
-          )} 
+          )}
 
           {/* Project Dropdown */}
         </div>
@@ -747,17 +757,15 @@ export const Header = () => {
                       <button
                         key={notification.id}
                         onClick={() => handleNotificationClick(notification)}
-                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${
-                          !notification.read ? "bg-blue-50/30" : ""
-                        }`}
+                        className={`w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors ${!notification.read ? "bg-blue-50/30" : ""
+                          }`}
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                              !notification.read
-                                ? "bg-[#C72030]"
-                                : "bg-gray-300"
-                            }`}
+                            className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${!notification.read
+                              ? "bg-[#C72030]"
+                              : "bg-gray-300"
+                              }`}
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
@@ -843,7 +851,7 @@ export const Header = () => {
                 <p className="text-sm font-semibold text-gray-900">
                   {isViSite && viAccount
                     ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim() ||
-                      "User"
+                    "User"
                     : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-0.5">
