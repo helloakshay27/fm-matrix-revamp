@@ -15,6 +15,35 @@ interface GatePassOutwardsFilterModalProps {
   setFilters: (filters: any) => void;
 }
 
+type VendorOption = { id: number; name: string };
+
+const getVendorList = (data: unknown): unknown[] => {
+  if (Array.isArray(data)) return data;
+
+  if (data && typeof data === 'object') {
+    const response = data as { suppliers?: unknown; pms_suppliers?: unknown };
+    if (Array.isArray(response.suppliers)) return response.suppliers;
+    if (Array.isArray(response.pms_suppliers)) return response.pms_suppliers;
+  }
+
+  return [];
+};
+
+const normalizeVendors = (data: unknown): VendorOption[] => {
+  return getVendorList(data)
+    .map(vendor => {
+      if (!vendor || typeof vendor !== 'object') return null;
+
+      const vendorRecord = vendor as Record<string, unknown>;
+      const id = Number(vendorRecord.id);
+      const rawName = vendorRecord.name || vendorRecord.company_name || vendorRecord.full_name;
+      const name = typeof rawName === 'string' ? rawName : String(rawName || '');
+
+      return id && name ? { id, name } : null;
+    })
+    .filter((vendor): vendor is VendorOption => Boolean(vendor));
+};
+
 export const GatePassOutwardsFilterModal = ({ isOpen, onClose, filters, setFilters }: GatePassOutwardsFilterModalProps) => {
   const defaultFilters = {
     gateNumber: '',
@@ -47,14 +76,17 @@ export const GatePassOutwardsFilterModal = ({ isOpen, onClose, filters, setFilte
   }, [isOpen]);
 
   useEffect(() => {
-    fetch(`${API_CONFIG.BASE_URL}/pms/suppliers/get_suppliers.json`, {
+    fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SUPPLIERS}`, {
       headers: {
-        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+        'Authorization': getAuthHeader(),
         'Content-Type': 'application/json',
       },
     })
-      .then(res => res.json())
-      .then(data => setVendors(data || []))
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch vendors');
+        return res.json();
+      })
+      .then(data => setVendors(normalizeVendors(data)))
       .catch(() => setVendors([]));
     gatePassTypeService.getGatePassTypes().then(setGatePassTypes).catch(() => setGatePassTypes([]));
     if (siteId) {
