@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Quill from "quill";
+import "quill/dist/quill.snow.css";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,6 +38,7 @@ interface OfferData {
   id: string;
   offerTitle: string;
   couponCode: string;
+  couponCodeInput: string;
   displayName: string;
   partner: string;
   winningProbability: string;
@@ -68,6 +70,7 @@ export const CreateContestPage: React.FC = () => {
     id: Date.now().toString() + Math.random(),
     offerTitle: "",
     couponCode: "",
+    couponCodeInput: "",
     displayName: "",
     partner: "",
     winningProbability: "",
@@ -91,7 +94,7 @@ export const CreateContestPage: React.FC = () => {
   const [contestType, setContestType] = useState("");
   const [usageType, setUsageType] = useState("");
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
-  const [winningProbabilityDisplay, setWinningProbabilityDisplay] = useState("100");
+  const [winningProbabilityDisplay, setWinningProbabilityDisplay] = useState("0");
 
   // Reset redemption document when contest type changes away from Scratch
   // Also adjust offers count based on contest type
@@ -107,6 +110,7 @@ export const CreateContestPage: React.FC = () => {
     if (newType !== "Spin") {
       setUsersCap("");
       setAttemptsRequired("");
+      setWinningProbabilityDisplay("0");
     }
 
     // Reset redemption text for non-Scratch types
@@ -411,106 +415,74 @@ export const CreateContestPage: React.FC = () => {
     }
 
     // Add prizes_attributes
-    // First, expand offers with comma-separated coupons
+    // Expand offers — flatten comma-separated coupon codes into individual entries
     const expandedOffers: any[] = [];
     offers.forEach((offer) => {
-      // Use offer-level probability (what user entered or suggested)
-      const userProbability = Number(offer.winningProbability) || calculateBaseProbability();
-
       if (offer.rewardType === "Coupon Code") {
-        // Split comma-separated coupon codes
         const coupons = offer.couponCode
           .split(",")
           .map((code) => code.trim())
           .filter((code) => code.length > 0);
-
-        // Create a separate offer for each coupon with distributed probability
-        const probabilityPerCoupon = userProbability / coupons.length;
         coupons.forEach((coupon) => {
-          expandedOffers.push({
-            ...offer,
-            couponCode: coupon,
-            calculatedProbability: probabilityPerCoupon,
-          });
+          expandedOffers.push({ ...offer, couponCode: coupon });
         });
       } else {
-        // For non-coupon offers, add as-is
-        expandedOffers.push({
-          ...offer,
-          calculatedProbability: userProbability,
-        });
+        expandedOffers.push({ ...offer });
       }
     });
 
-    // Now add all expanded offers to formData
+    // For Spin: total win probability is entered by user; divide it equally across
+    // all expanded offers. The leftover (100 - winProb) goes as a single "none" entry.
+    let spinProbPerOffer: number | null = null;
+    let spinRemainder: number | null = null;
+    if (contestType === "Spin") {
+      const totalWin = Math.min(100, Math.max(0, Number(winningProbabilityDisplay) || 0));
+      spinProbPerOffer = expandedOffers.length > 0 ? totalWin / expandedOffers.length : 0;
+      spinRemainder = 100 - totalWin;
+    }
+
     expandedOffers.forEach((offer, index) => {
-      formData.append(
-        `contest[prizes_attributes][${index}][title]`,
-        offer.offerTitle.trim()
-      );
+      formData.append(`contest[prizes_attributes][${index}][title]`, offer.offerTitle.trim());
 
-      // Determine reward type based on offer.rewardType
       const rewardType = offer.rewardType === "Points" ? "points" : "coupon";
-      formData.append(
-        `contest[prizes_attributes][${index}][reward_type]`,
-        rewardType
-      );
+      formData.append(`contest[prizes_attributes][${index}][reward_type]`, rewardType);
 
-      // Add coupon_code only if reward type is "Coupon Code"
       if (offer.rewardType === "Coupon Code") {
-        formData.append(
-          `contest[prizes_attributes][${index}][coupon_code]`,
-          offer.couponCode.trim()
-        );
+        formData.append(`contest[prizes_attributes][${index}][coupon_code]`, offer.couponCode.trim());
       }
-
-      // Add points_value only if reward type is "Points"
       if (offer.rewardType === "Points") {
-        formData.append(
-          `contest[prizes_attributes][${index}][points_value]`,
-          offer.pointsValue.trim()
-        );
+        formData.append(`contest[prizes_attributes][${index}][points_value]`, offer.pointsValue.trim());
       }
-
-      // Add partner_name only if provided
       if (offer.partner.trim()) {
-        formData.append(
-          `contest[prizes_attributes][${index}][partner_name]`,
-          offer.partner.trim()
-        );
+        formData.append(`contest[prizes_attributes][${index}][partner_name]`, offer.partner.trim());
       }
 
-      // Use calculated probability instead of manual input
-      formData.append(
-        `contest[prizes_attributes][${index}][probability_value]`,
-        String(offer.calculatedProbability)
-      );
-      formData.append(
-        `contest[prizes_attributes][${index}][probability_out_of]`,
-        "100"
-      );
-      formData.append(
-        `contest[prizes_attributes][${index}][position]`,
-        String(index + 1)
-      );
+      if (contestType === "Spin" && spinProbPerOffer !== null) {
+        formData.append(`contest[prizes_attributes][${index}][probability_value]`, String(spinProbPerOffer));
+        formData.append(`contest[prizes_attributes][${index}][probability_out_of]`, "100");
+      }
+
+      formData.append(`contest[prizes_attributes][${index}][position]`, String(index + 1));
       formData.append(`contest[prizes_attributes][${index}][active]`, "true");
 
-      // Add banner image if present
       if (offer.bannerImage) {
-        formData.append(
-          `contest[prizes_attributes][${index}][image_attributes][document]`,
-          offer.bannerImage
-        );
+        formData.append(`contest[prizes_attributes][${index}][image_attributes][document]`, offer.bannerImage);
       }
-
-      // Add validity if present
       if (offer.validity) {
-        formData.append(
-          `contest[prizes_attributes][${index}][validity]`,
-          offer.validity
-        );
+        formData.append(`contest[prizes_attributes][${index}][validity]`, offer.validity);
       }
     });
+
+    // For Spin: append the "none" remainder entry after all real offers
+    if (contestType === "Spin" && spinRemainder !== null) {
+      const noneIndex = expandedOffers.length;
+      formData.append(`contest[prizes_attributes][${noneIndex}][title]`, "Better luck next time!");
+      formData.append(`contest[prizes_attributes][${noneIndex}][reward_type]`, "none");
+      formData.append(`contest[prizes_attributes][${noneIndex}][probability_value]`, String(spinRemainder));
+      formData.append(`contest[prizes_attributes][${noneIndex}][probability_out_of]`, "100");
+      formData.append(`contest[prizes_attributes][${noneIndex}][position]`, String(noneIndex + 1));
+      formData.append(`contest[prizes_attributes][${noneIndex}][active]`, "true");
+    }
 
     // Add terms and conditions text if present
     if (termsText.trim()) {
@@ -623,6 +595,14 @@ export const CreateContestPage: React.FC = () => {
           }
           if (offer.rewardType === "Points" && !offer.pointsValue.trim()) {
             alert("Please enter points value for all offers");
+            return false;
+          }
+          if (
+            contestType !== "Random" &&
+            contestType !== "Special Discount" &&
+            !offer.bannerImage
+          ) {
+            alert("Please upload a banner image for all offers");
             return false;
           }
 
@@ -750,17 +730,19 @@ export const CreateContestPage: React.FC = () => {
                     </FormControl>
                   )}
 
-                  <TextField
-                    fullWidth
-                    label="Winning Probability (%)"
-                    value={winningProbabilityDisplay}
-                    onChange={(e) => setWinningProbabilityDisplay(e.target.value)}
-                    variant="outlined"
-                    size="small"
-                    type="number"
-                    inputProps={{ min: 0, max: 100 }}
-                    sx={textFieldSx}
-                  />
+                  {contestType === "Spin" && (
+                    <TextField
+                      fullWidth
+                      label="Winning Probability (%)"
+                      value={winningProbabilityDisplay}
+                      onChange={(e) => setWinningProbabilityDisplay(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      type="number"
+                      inputProps={{ min: 0, max: 100 }}
+                      sx={textFieldSx}
+                    />
+                  )}
                 </div>
 
                 <div className="mt-6">
@@ -819,7 +801,7 @@ export const CreateContestPage: React.FC = () => {
                         onChange={() => handleShareWithChange("all")}
                         className="w-4 h-4"
                       />
-                      <span className="text-sm font-medium text-gray-700">Share with all</span>
+                      <span className="text-sm font-medium text-gray-700">Share with all parks</span>
                     </label>
                   </div>
 
@@ -833,7 +815,7 @@ export const CreateContestPage: React.FC = () => {
                         onChange={() => handleShareWithChange("individual")}
                         className="w-4 h-4"
                       />
-                      <span className="text-sm font-medium text-gray-700">Share with individual</span>
+                      <span className="text-sm font-medium text-gray-700">Share with individual parks</span>
                     </label>
                   </div>
                 </div>
@@ -932,27 +914,75 @@ export const CreateContestPage: React.FC = () => {
                       >
                         <MenuItem value="Coupon Code">Coupon Code</MenuItem>
                         <MenuItem value="Points">Points</MenuItem>
-                        <MenuItem value="None">None</MenuItem>
                       </MuiSelect>
                     </FormControl>
 
                     {offer.rewardType === "Coupon Code" && (
                       <div>
-                        <TextField
-                          fullWidth
-                          label="Coupon Code(s)"
-                          placeholder="e.g., CODE1, CODE2, CODE3"
-                          value={offer.couponCode}
-                          onChange={(e) =>
-                            updateOffer(offer.id, "couponCode", e.target.value)
-                          }
-                          sx={textFieldSx}
-                          size="small"
-                          required
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Enter multiple codes separated by commas. Each code will be a separate offer.
-                        </p>
+                        <div
+                          className="flex flex-wrap gap-1.5 min-h-[40px] w-full px-3 py-2 border border-[#e5e7eb] rounded bg-white focus-within:border-[#C72030] focus-within:ring-2 focus-within:ring-[#C72030]/20 hover:border-[#C72030] transition-colors"
+                        >
+                          {offer.couponCode
+                            .split(",")
+                            .map((c) => c.trim())
+                            .filter(Boolean)
+                            .map((code) => (
+                              <span
+                                key={code}
+                                className="inline-flex items-center gap-1 bg-[#C72030]/10 text-[#C72030] text-xs font-semibold px-2 py-0.5 rounded-full border border-[#C72030]/30"
+                              >
+                                {code}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = offer.couponCode
+                                      .split(",")
+                                      .map((c) => c.trim())
+                                      .filter((c) => c && c !== code)
+                                      .join(",");
+                                    updateOffer(offer.id, "couponCode", updated);
+                                  }}
+                                  className="ml-0.5 hover:text-red-600 transition-colors leading-none"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          <input
+                            type="text"
+                            value={offer.couponCodeInput}
+                            onChange={(e) =>
+                              updateOffer(offer.id, "couponCodeInput", e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === ",") {
+                                e.preventDefault();
+                                const code = offer.couponCodeInput.trim().replace(/,/g, "");
+                                if (!code) return;
+                                const existing = offer.couponCode
+                                  .split(",")
+                                  .map((c) => c.trim())
+                                  .filter(Boolean);
+                                if (!existing.includes(code)) {
+                                  updateOffer(offer.id, "couponCode", [...existing, code].join(","));
+                                }
+                                updateOffer(offer.id, "couponCodeInput", "");
+                              } else if (e.key === "Backspace" && !offer.couponCodeInput) {
+                                const existing = offer.couponCode
+                                  .split(",")
+                                  .map((c) => c.trim())
+                                  .filter(Boolean);
+                                if (existing.length > 0) {
+                                  updateOffer(offer.id, "couponCode", existing.slice(0, -1).join(","));
+                                }
+                              }
+                            }}
+                            placeholder={
+                              offer.couponCode.trim() ? "" : "Enter comma-separated coupon codes"
+                            }
+                            className="flex-1 min-w-[140px] text-sm outline-none bg-transparent placeholder:text-gray-400"
+                          />
+                        </div>
                       </div>
                     )}
 
@@ -1023,14 +1053,36 @@ export const CreateContestPage: React.FC = () => {
                       variant="outlined"
                       multiline
                       rows={3}
-                      sx={textFieldSx}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: "auto !important",
+                          padding: "2px !important",
+                          display: "flex",
+                          "& fieldset": { borderColor: "#e5e7eb" },
+                          "&:hover fieldset": { borderColor: "#C72030" },
+                          "&.Mui-focused fieldset": { borderColor: "#C72030" },
+                        },
+                        "& .MuiInputBase-input[aria-hidden='true']": {
+                          flex: 0,
+                          width: 0,
+                          height: 0,
+                          padding: "0 !important",
+                          margin: 0,
+                          display: "none",
+                        },
+                        "& .MuiInputBase-input": {
+                          resize: "none !important",
+                        },
+                      }}
                     />
                   </div>
 
                   <div className="mt-4">
                     <Typography variant="body2" className="text-gray-700 mb-2">
                       Upload Banner Image
-                      <span className="text-[#C72030]">*</span>
+                      {contestType !== "Random" && contestType !== "Special Discount" && (
+                        <span className="text-[#C72030]">*</span>
+                      )}
                     </Typography>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                       <p className="text-sm text-gray-600 mb-2">

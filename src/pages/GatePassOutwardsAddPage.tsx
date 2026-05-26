@@ -8,7 +8,7 @@ import { gateNumberService } from '@/services/gateNumberService';
 import { gatePassInwardService } from '@/services/gatePassInwardService';
 import { gatePassTypeService } from '@/services/gatePassTypeService';
 import { useToast } from '@/hooks/use-toast';
-import { API_CONFIG } from '@/config/apiConfig';
+import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { useSelector } from 'react-redux';
 import { toast } from "sonner";
 import { Loader2 } from 'lucide-react';
@@ -20,6 +20,33 @@ interface DropdownOption {
   quantity?: number;
   unit?: string;
 }
+
+const getVendorList = (data: unknown): unknown[] => {
+  if (Array.isArray(data)) return data;
+
+  if (data && typeof data === 'object') {
+    const response = data as { suppliers?: unknown; pms_suppliers?: unknown };
+    if (Array.isArray(response.suppliers)) return response.suppliers;
+    if (Array.isArray(response.pms_suppliers)) return response.pms_suppliers;
+  }
+
+  return [];
+};
+
+const normalizeVendors = (data: unknown): DropdownOption[] => {
+  return getVendorList(data)
+    .map(vendor => {
+      if (!vendor || typeof vendor !== 'object') return null;
+
+      const vendorRecord = vendor as Record<string, unknown>;
+      const id = Number(vendorRecord.id);
+      const rawName = vendorRecord.name || vendorRecord.company_name || vendorRecord.full_name;
+      const name = typeof rawName === 'string' ? rawName : String(rawName || '');
+
+      return id && name ? { id, name } : null;
+    })
+    .filter((vendor): vendor is DropdownOption => Boolean(vendor));
+};
 
 interface AttachmentFile {
   id: string;
@@ -94,14 +121,17 @@ export const GatePassOutwardsAddPage = () => {
 
   useEffect(() => {
     // Fetch suppliers for Company Name dropdown
-    fetch(`${API_CONFIG.BASE_URL}/pms/suppliers/get_suppliers.json`, {
+    fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SUPPLIERS}`, {
       headers: {
-        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+        'Authorization': getAuthHeader(),
         'Content-Type': 'application/json',
       },
     })
-      .then(res => res.json())
-      .then(data => setCompanies(Array.isArray(data) ? data : []))
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch vendors');
+        return res.json();
+      })
+      .then(data => setCompanies(normalizeVendors(data)))
       .catch(() => setCompanies([]));
 
     gatePassInwardService.getInventoryTypes().then(setItemTypeOptions);
@@ -160,7 +190,7 @@ export const GatePassOutwardsAddPage = () => {
   };
 
   const handleRowChange = async (id: number, field: keyof Omit<MaterialRow, 'id'>, value: any) => {
-    let newRows = materialRows.map(row => row.id === id ? { ...row, [field]: value } : row);
+    const newRows = materialRows.map(row => row.id === id ? { ...row, [field]: value } : row);
 
     if (field === 'itemTypeId') {
       const updatedRows = newRows.map(row => row.id === id ? { ...row, itemCategoryId: null, itemNameId: null, maxQuantity: null, quantity: '', unit: '' } : row);
@@ -884,9 +914,9 @@ export const GatePassOutwardsAddPage = () => {
                     </td>
                     <td className="px-4 py-4"><TextField variant="outlined" placeholder='Unit' size="small" sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} value={row.unit} onChange={(e) => {
                       const value = e.target.value;
-                      if (/^[a-zA-Z\s]*$/.test(value)) handleRowChange(row.id, 'unit', value);
+                      if (/^[a-zA-Z ]*$/.test(value)) handleRowChange(row.id, 'unit', value);
                     }}
-                      inputProps={{ pattern: "[a-zA-Z\s]*" }}
+                      inputProps={{ pattern: "[a-zA-Z ]*" }}
                     /></td>
                     <td className="px-4 py-4"><TextField placeholder='Enter Description' variant="outlined" size="small" value={row.description} sx={{ '& .MuiOutlinedInput-root': { borderRadius: '4px' } }} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
                     <td className="px-4 py-4">

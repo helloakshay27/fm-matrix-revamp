@@ -93,6 +93,16 @@ const normalizeWeekPlan = (plan: any[] = []) => {
     return { byDay, flat };
 };
 
+const mapPlanItemForPayload = (item: any) => ({
+    day: item.day,
+    title: item.title || item.text || '',
+    text: item.text || item.title || '',
+    status: item.status || 'open',
+    starred: !!item.starred || !!item.is_starred,
+    member: item.member,
+    user_id: item.user_id,
+});
+
 const stripMissedMembersPrefix = (text: string): string => {
     const markdownHeaderMatch = text.match(/^\*\*Team Members Who Missed Report \(\d+\):\*\*\n(?:- .+\n)*\n?/);
     if (markdownHeaderMatch) return text.slice(markdownHeaderMatch[0].length);
@@ -132,6 +142,7 @@ interface WeeklyMeetingData {
         department: string | null;
         status: string;
         journal_id: number | null;
+        checked_in_meeting?: boolean;
         report_data: any;
         weekly_report: any;
     }>;
@@ -151,7 +162,6 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
     const [currentWeek, setCurrentWeek] = useState(() => initialWeekDate || new Date());
     const [weeklyData, setWeeklyData] = useState<WeeklyMeetingData | null>(null);
     const [meetingNotes, setMeetingNotes] = useState('');
-    const [markAllAttended, setMarkAllAttended] = useState(false);
     const [expandedUserId, setExpandedUserId] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<string>('Daily');
     const [selectedPriorityDays, setSelectedPriorityDays] = useState<Record<number, string>>({});
@@ -164,12 +174,22 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
     const [feedbackScores, setFeedbackScores] = useState<Record<number, number>>({});
     const [feedbackLoading, setFeedbackLoading] = useState<Record<number, boolean>>({});
     const [saveMeetingLoading, setSaveMeetingLoading] = useState(false);
-    const [checkedUsers, setCheckedUsers] = useState<Record<number, boolean>>({});
+    const [selectedReports, setSelectedReports] = useState<any[]>([]);
+    const [submittedMeetingJournalOverride, setSubmittedMeetingJournalOverride] = useState<any>(null);
 
     const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-    const handleUserCheck = (userId: number, isChecked: boolean) => {
-        setCheckedUsers(prev => ({ ...prev, [userId]: isChecked }));
+    const isCheckedInMeeting = (report: any) => report?.checked_in_meeting === true;
+    const getReportSelectionKey = (report: any) => report?.journal_id || report?.user_id;
+
+    const handleUserCheck = (report: any, isChecked: boolean) => {
+        const reportKey = getReportSelectionKey(report);
+        if (!reportKey) return;
+        setSelectedReports(prev =>
+            isChecked
+                ? [...prev, reportKey]
+                : prev.filter((id) => String(id) !== String(reportKey))
+        );
     };
 
     const handlePreviousWeek = () => {
@@ -203,9 +223,23 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
         onWeekDateChange?.(currentWeek);
     }, [currentWeek, onWeekDateChange]);
 
+    useEffect(() => {
+        if (!weeklyData) return;
+        const checkedInIds = (weeklyData.member_reports || [])
+            .filter((report: any) => report.checked_in_meeting === true)
+            .map((report: any) => getReportSelectionKey(report))
+            .filter(Boolean);
+
+        setSelectedReports((prev) => {
+            const combined = new Set([...prev, ...checkedInIds]);
+            return Array.from(combined);
+        });
+    }, [weeklyData]);
+
     const getSelectedReportRows = () => {
         if (!weeklyData?.member_reports) return [];
-        return weeklyData.member_reports.filter((report) => report.weekly_report !== null && (markAllAttended || checkedUsers[report.user_id]));
+        const selectedKeys = new Set(selectedReports.map((id) => String(id)));
+        return weeklyData.member_reports.filter((report) => report.weekly_report !== null && selectedKeys.has(String(getReportSelectionKey(report))));
     };
 
     // Helper function to extract KPI summary from selected member reports
@@ -470,9 +504,48 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
         })),
     });
 
+    const getSubmittedMeetingReport = (reports: any[] = []) =>
+        reports.find((report: any) => report.journal_id && report.report_data?.meeting_notes)
+        || reports.find((report: any) => report.journal_id && report.checked_in_meeting === true)
+        || null;
+
     const getSubmittedMeetingJournal = () => {
         const reports = weeklyData?.member_reports || [];
-        return reports.find((report: any) => report.journal_id && report.report_data?.meeting_notes) || null;
+        return getSubmittedMeetingReport(reports) || submittedMeetingJournalOverride;
+    };
+
+    const fetchJournalDetails = async (journalId: number, token: string) => {
+        const detailResponse = await axios.get(`${getBaseUrl()}/user_journals/${journalId}.json`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        return detailResponse.data?.data ?? detailResponse.data ?? {};
+    };
+
+    const findSubmittedMeetingJournalFromDetails = async (reports: any[], token: string) => {
+        const candidateIds = [...new Set(
+            reports
+                .map((report: any) => report?.journal_id)
+                .filter((id: any) => Number.isFinite(Number(id)))
+        )];
+
+        for (const journalId of candidateIds) {
+            try {
+                const detail = await fetchJournalDetails(Number(journalId), token);
+                if (detail?.report_data?.meeting_notes) {
+                    return {
+                        journal_id: Number(journalId),
+                        report_data: detail.report_data,
+                    };
+                }
+            } catch (detailError) {
+                console.error('Error checking weekly meeting journal details:', detailError);
+            }
+        }
+
+        return null;
     };
 
     // Helper function to generate comprehensive meeting notes
@@ -481,6 +554,9 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
 
         const selectedReports = getSelectedReportRows();
         const selectedUserIds = selectedReports.map((report) => report.user_id).filter(Boolean);
+        const submittedReportRows = weeklyData.member_reports?.filter((report: any) => report.weekly_report !== null) || [];
+        const selectedKeys = new Set(selectedReports.map((report: any) => String(getReportSelectionKey(report))));
+        const allSubmittedSelected = submittedReportRows.length > 0 && submittedReportRows.every((report: any) => selectedKeys.has(String(getReportSelectionKey(report))));
         const kpiSummary = extractKpiSummary(selectedReports);
         const openIssues = extractOpenIssues(selectedReports);
         const goalsProgress = extractGoalsProgress(selectedReports);
@@ -588,8 +664,27 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
             week: getWeekString(currentWeek),
             week_number: weeklyData.week.replace('W', ''),
             year: weeklyData.year,
+            user_ids: selectedUserIds,
+            member_ids: selectedUserIds,
             report_data: {
                 meeting_notes: meetingNotesObj,
+                accomplishments: allAccomplishments.map((item: any) => ({
+                    title: item.title || item.text || '',
+                    text: item.text || item.title || '',
+                    member: item.member,
+                    user_id: item.user_id,
+                    is_starred: !!item.is_starred || !!item.starred,
+                })),
+                tasks_issues: allTasksIssues.map((item: any) => ({
+                    type: getItemType(item),
+                    title: item.title || item.text || '',
+                    text: item.text || item.title || '',
+                    status: item.status || 'open',
+                    member: item.member,
+                    user_id: item.user_id,
+                })),
+                upcoming_week_plan: allUpcomingWeekPlan.map(mapPlanItemForPayload),
+                tomorrow_plan: allUpcomingWeekPlan.map(mapPlanItemForPayload),
                 kpi_summary: kpiSummary,
                 open_issues: openIssues,
                 goals_progress: goalsProgress,
@@ -603,7 +698,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
                 total_missed: weeklyData.missed,
                 total_members: weeklyData.total_members,
                 selected_member_count: detailedReviews.length,
-                mark_all_attended: markAllAttended,
+                mark_all_attended: allSubmittedSelected,
                 average_self_rating: avgSelfRating,
                 combined_kpis: combinedKpis,
                 generated_notes: dynamicNotes,
@@ -637,7 +732,6 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
                             ...existingReportData,
                             meeting_notes: {
                                 ...existingMeetingNotes,
-                                missed_report_members: (weeklyData?.missed_members || []).map((member: any) => member.name || member).filter(Boolean),
                                 key_discussion_points: stripMissedMembersPrefix(meetingNotes).trim(),
                             },
                         },
@@ -964,6 +1058,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
 
             try {
                 setWeeklyDataLoading(true);
+                setSubmittedMeetingJournalOverride(null);
                 const baseUrl = getBaseUrl();
                 const token = localStorage.getItem('token');
 
@@ -986,16 +1081,24 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
                 const nextWeeklyData = response.data.data;
                 setWeeklyData(nextWeeklyData);
 
-                const submittedMeetingReport = nextWeeklyData?.member_reports?.find((report: any) => report.journal_id && report.report_data?.meeting_notes);
-                const savedNotes = submittedMeetingReport?.report_data?.meeting_notes?.key_discussion_points;
+                let submittedMeetingReport = getSubmittedMeetingReport(nextWeeklyData?.member_reports || []);
+                let savedNotes = submittedMeetingReport?.report_data?.meeting_notes?.key_discussion_points || '';
+
+                if (!savedNotes) {
+                    const detailMeetingReport = await findSubmittedMeetingJournalFromDetails(nextWeeklyData?.member_reports || [], token);
+                    if (detailMeetingReport) {
+                        submittedMeetingReport = detailMeetingReport;
+                        setSubmittedMeetingJournalOverride(detailMeetingReport);
+                        savedNotes = detailMeetingReport.report_data?.meeting_notes?.key_discussion_points || '';
+                    }
+                }
 
                 const noteText = savedNotes
                     ? stripMissedMembersPrefix(savedNotes).trim()
                     : `**Team Members Who Missed Report (${response.data?.data?.missed_members?.length}):**\n` +
                     response.data?.data?.missed_members?.map((m: any) => `- ${m.name}`).join("\n") +
                     `\n\n**Key Discussion Points:**\n`;
-                setMeetingNotes(noteText);
-                setMarkAllAttended(!!submittedMeetingReport?.report_data?.mark_all_attended);
+                setMeetingNotes(submittedMeetingReport ? stripMissedMembersPrefix(noteText).trim() : noteText);
             } catch (error) {
                 console.error('Error fetching weekly data:', error);
                 setWeeklyData(null);
@@ -1029,6 +1132,24 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
     const missedMembers = weeklyData?.missed_members || [];
     const submittedMeetingJournal = getSubmittedMeetingJournal();
     const isSubmittedMeeting = !!submittedMeetingJournal?.journal_id;
+    const visibleReportIds = submittedReports.map((report: any) => String(getReportSelectionKey(report)));
+    const selectedReportKeys = selectedReports.map((id) => String(id));
+    const areAllVisibleReportsSelected =
+        visibleReportIds.length > 0 &&
+        visibleReportIds.every((id: string) => selectedReportKeys.includes(id));
+
+    const handleSelectAll = (isChecked: boolean) => {
+        if (isChecked) {
+            setSelectedReports(submittedReports.map((report: any) => getReportSelectionKey(report)).filter(Boolean));
+            return;
+        }
+
+        const checkedInIds = submittedReports
+            .filter((report: any) => report.checked_in_meeting === true)
+            .map((report: any) => getReportSelectionKey(report))
+            .filter(Boolean);
+        setSelectedReports(checkedInIds);
+    };
 
     return (
         <div className="space-y-6 mt-6 max-w-full overflow-x-hidden">
@@ -1084,11 +1205,11 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
                     <div className="p-4 bg-[#f8fafc]">
                         <MeetingNotes
                             meetingNotes={meetingNotes}
-                            markAllAttended={markAllAttended}
+                            markAllAttended={areAllVisibleReportsSelected}
                             isSubmittedMeeting={isSubmittedMeeting}
                             saveMeetingLoading={saveMeetingLoading}
                             onMeetingNotesChange={setMeetingNotes}
-                            onMarkAllAttendedChange={setMarkAllAttended}
+                            onMarkAllAttendedChange={handleSelectAll}
                             onSaveMeeting={handleSaveMeeting}
                             onClearNotes={() => setMeetingNotes('')}
                         />
@@ -1099,7 +1220,8 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
                                     key={report.user_id}
                                     report={report}
                                     isExpanded={expandedUserId === report.user_id}
-                                    isChecked={markAllAttended || checkedUsers[report.user_id] || false}
+                                    isChecked={isCheckedInMeeting(report) || selectedReportKeys.includes(String(getReportSelectionKey(report)))}
+                                    isAttendanceLocked={isSubmittedMeeting || isCheckedInMeeting(report)}
                                     activeTab={activeTab}
                                     priorityText={priorityInputs[report.user_id] || ''}
                                     selectedPriorityDay={getSelectedPriorityDay(report.user_id)}
@@ -1112,7 +1234,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
                                     ratingsLoading={ratingsLoading}
                                     daysOfWeek={daysOfWeek}
                                     onExpand={() => setExpandedUserId(expandedUserId === report.user_id ? null : report.user_id)}
-                                    onUserCheck={(isChecked) => handleUserCheck(report.user_id, isChecked)}
+                                    onUserCheck={(isChecked) => handleUserCheck(report, isChecked)}
                                     onPriorityChange={(text) => setPriorityInputs(prev => ({ ...prev, [report.user_id]: text }))}
                                     onPriorityDaySelect={(day) => {
                                         setSelectedPriorityDays(prev => ({ ...prev, [report.user_id]: day }));

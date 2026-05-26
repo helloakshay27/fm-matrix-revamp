@@ -32,6 +32,7 @@ import {
   Pencil,
   Play,
   Pause,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
@@ -462,22 +463,31 @@ const BusinessCompassDailyReport: React.FC = () => {
           ? (todosRes.value.data?.todos || [])
           : [];
 
+      const isCompleted = (status: string) =>
+        status === "completed" || status === "closed" || status === "done";
+
       const combined = [
-        ...tasks.map((t: any) => ({
-          id: `task-${t.id}`,
-          title: t.title || t.name || "",
-          type: "task" as const,
-        })),
-        ...issues.map((i: any) => ({
-          id: `issue-${i.id}`,
-          title: i.title || "",
-          type: "issue" as const,
-        })),
-        ...todos.map((t: any) => ({
-          id: `todo-${t.id}`,
-          title: t.title || "",
-          type: "todo" as const,
-        })),
+        ...tasks
+          .filter((t: any) => !isCompleted(t.status))
+          .map((t: any) => ({
+            id: `task-${t.id}`,
+            title: t.title || t.name || "",
+            type: "task" as const,
+          })),
+        ...issues
+          .filter((i: any) => !isCompleted(i.status))
+          .map((i: any) => ({
+            id: `issue-${i.id}`,
+            title: i.title || "",
+            type: "issue" as const,
+          })),
+        ...todos
+          .filter((t: any) => !isCompleted(t.status))
+          .map((t: any) => ({
+            id: `todo-${t.id}`,
+            title: t.title || "",
+            type: "todo" as const,
+          })),
       ].filter((item) => item.title.trim() !== "");
 
       setTomorrowScheduledItems(combined);
@@ -668,16 +678,39 @@ const BusinessCompassDailyReport: React.FC = () => {
       originalData: issue,
     }));
 
-    const transformedTodos = todos.map((todo: any) => ({
-      id: `todo-${todo.id}`,
-      title: todo.title,
-      type: "todo",
-      status: todo.status || "open",
-      priority: todo.priority || "Medium",
-      created_at: todo.created_at,
-      responsible: todo.user_id,
-      originalData: todo,
-    }));
+    const transformedTodos = todos.map((todo: any) => {
+      if (todo.task_management) {
+        const task = todo.task_management;
+        return {
+          id: `task-${task.id}`,
+          title: task.title || todo.title,
+          type: "task",
+          status: task.status || "open",
+          priority: task.priority || todo.priority || "Medium",
+          created_at: task.created_at,
+          responsible: task.responsible_person_id,
+          originalData: task,
+        };
+      }
+      return {
+        id: `todo-${todo.id}`,
+        title: todo.title,
+        type: "todo",
+        status: todo.status || "open",
+        priority: todo.priority || "Medium",
+        created_at: todo.created_at,
+        responsible: todo.user_id,
+        originalData: todo,
+      };
+    });
+
+    // Deduplicate: if a todo was promoted to a task, exclude that task ID from the direct tasks list
+    const todoPromotedTaskIds = new Set(
+      transformedTodos.filter((t) => t.type === "task").map((t) => t.id)
+    );
+    const dedupedTasks = transformedTasks.filter(
+      (t: any) => !todoPromotedTaskIds.has(t.id)
+    );
 
     const sortItems = (items: any[]) =>
       items.sort((a, b) => {
@@ -690,7 +723,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         );
       });
 
-    const newData = sortItems([...transformedTasks, ...transformedIssues, ...transformedTodos]);
+    const newData = sortItems([...dedupedTasks, ...transformedIssues, ...transformedTodos]);
 
     if (currentTasksPage === 1 && currentIssuesPage === 1) {
       setMergedTasksIssues(newData);
@@ -928,11 +961,25 @@ const BusinessCompassDailyReport: React.FC = () => {
 
   const toggleAccomplishment = (id: string) => {
     markDraftDirty();
+    const item = accomplishments.find((a) => a.id === id);
     setAccomplishments(
       accomplishments.map((a) =>
         a.id === id ? { ...a, completed: !a.completed } : a
       )
     );
+    // When unchecking a manually added item, mirror it into Plan for Tomorrow
+    if (item && item.completed) {
+      const text = cleanReportText(item.text);
+      const alreadyInPlan = planningItems.some(
+        (p) => cleanReportText(p.text).toLowerCase() === text.toLowerCase()
+      );
+      if (text && !alreadyInPlan) {
+        setPlanningItems((prev) => [
+          ...prev,
+          { id: `from-accom-${id}`, text: item.text, starred: item.starred },
+        ]);
+      }
+    }
   };
 
   const toggleStar = (id: string) => {
@@ -2541,13 +2588,13 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 className={cn(
                                   "h-6 w-6 rounded-[6px] flex items-center justify-center cursor-pointer transition-colors border-2 shrink-0",
                                   item.completed
-                                    ? "bg-[#1a1a1a] border-[#1a1a1a]"
+                                    ? "bg-[#DA7756] border-[#DA7756]"
                                     : "bg-white border-gray-300"
                                 )}
                                 onClick={() => toggleAccomplishment(item.id)}
                               >
                                 {item.completed && (
-                                  <CheckCircle2 size={14} className="text-white" />
+                                  <Check size={14} className="text-white" />
                                 )}
                               </div>
 
@@ -2605,11 +2652,11 @@ const BusinessCompassDailyReport: React.FC = () => {
                           <div className="flex flex-col gap-1 bg-[#DA7756]/10 border border-[#DA7756]/10 rounded-[10px] p-3">
                             <div className="flex items-center gap-4">
                               <div
-                                className="h-6 w-6 rounded-[6px] flex items-center justify-center border-2 shrink-0 bg-[#1a1a1a] border-[#1a1a1a] cursor-pointer hover:opacity-70 transition-opacity"
+                                className="h-6 w-6 rounded-[6px] flex items-center justify-center border-2 shrink-0 bg-[#DA7756] border-[#DA7756] cursor-pointer hover:opacity-70 transition-opacity"
                                 onClick={() => { setPendingReopenItem(item); setReopenReason(""); }}
                                 title="Mark as open"
                               >
-                                <CheckCircle2 size={14} className="text-white" />
+                                <Check size={14} className="text-white" />
                               </div>
                               <Star
                                 size={18}
@@ -2683,7 +2730,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                       ))}
 
-                      {visibleAccomplishments.length === 0 && autoAddedAccomplishments.length === 0 && (
+                      {autoAddedAccomplishments.length === 0 && (
                         <div className="flex flex-col items-center gap-4 text-center py-10 bg-gray-50/50 rounded-[14px] border-2 border-dashed border-gray-100">
                           <div className="h-16 w-16 rounded-full bg-[#ecfdf5] border-2 border-[#10b981]/20 flex items-center justify-center">
                             <CheckCircle2 size={32} className="text-[#10b981]/30" />
@@ -2699,7 +2746,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                       )}
 
-                      {/* <div className="flex gap-2">
+                      <div className="flex gap-2">
                         <Button
                           variant="outline"
                           className="flex-1 h-11 border-[#10b981]/30 text-[#10b981] font-bold text-sm bg-white hover:bg-[#ecfdf5] rounded-[8px] flex items-center justify-center gap-2"
@@ -2708,7 +2755,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                           <Plus size={18} />
                           Add Item
                         </Button>
-                        {visibleAccomplishments.some((a) => !a.completed) && (
+                        {/* {visibleAccomplishments.some((a) => !a.completed) && (
                           <button
                             type="button"
                             style={{
@@ -2723,8 +2770,8 @@ const BusinessCompassDailyReport: React.FC = () => {
                             <CalendarCheck size={16} />
                             Transfer unchecked to tomorrow
                           </button>
-                        )}
-                      </div> */}
+                        )} */}
+                      </div>
                     </div>
 
                     <div className="pt-6 border-t border-gray-50 flex items-center justify-between">
@@ -2961,7 +3008,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 onClick={() => setCollapsedGroups((prev) => { const next = new Set(prev); if (next.has("from_yesterday")) next.delete("from_yesterday"); else next.add("from_yesterday"); return next; })}
                               >
                                 <CalendarIcon size={12} className="text-amber-700 shrink-0" />
-                                <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-amber-700">From Yesterday</span>
+                                <span className="text-xs font-black uppercase tracking-wider flex-1 text-left text-amber-700">Plan for Today</span>
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">{yItems.length}</span>
                                 <ChevronRight size={14} className={cn("transition-transform duration-200 ml-1 text-amber-700", !isCollapsed && "rotate-90")} />
                               </button>
@@ -3565,6 +3612,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </p>
                       </div>
                     )}
+
+                    <div className="mt-4">
+                      <Button
+                        variant="outline"
+                        className="w-full h-11 border-[#DA7756]/30 text-[#DA7756] font-bold text-sm bg-white hover:bg-[#DA7756]/5 rounded-[8px] flex items-center justify-center gap-2"
+                        onClick={addPlanningItem}
+                      >
+                        <Plus size={18} />
+                        Add Item
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -4734,7 +4792,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                             </div>
                           )}
 
-                        {report.report_data?.tasks_issues &&
+                        {/* {report.report_data?.tasks_issues &&
                           report.report_data.tasks_issues.filter((item: any) => item.status === "completed").length > 0 && (
                             <div className="bg-[#DA7756]/5 border border-[#DA7756]/20 rounded-[10px] p-4 mb-6">
                               <div className="flex items-center gap-2 mb-3">
@@ -4758,7 +4816,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                                         <span className="text-red-600 font-bold mt-0.5">
                                           ✓
                                         </span>
-                                        {/* UPDATED: Fallback to item.title if item.name is missing */}
                                         <span className="text-sm text-gray-700">
                                           {item.name ||
                                             item.title ||
@@ -4771,7 +4828,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                                   )}
                               </div>
                             </div>
-                          )}
+                          )} */}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="border border-[#DA7756]/20 rounded-[10px] overflow-hidden bg-[#DA7756]/5">

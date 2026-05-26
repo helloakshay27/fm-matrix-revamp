@@ -70,6 +70,7 @@ interface MemberReportCardProps {
     report: any;
     isExpanded: boolean;
     isChecked?: boolean;
+    isAttendanceLocked?: boolean;
     activeTab: string;
     priorityText: string;
     selectedPriorityDay: string;
@@ -98,6 +99,7 @@ export const MemberReportCard = ({
     report,
     isExpanded,
     isChecked = false,
+    isAttendanceLocked = false,
     activeTab,
     priorityText,
     selectedPriorityDay,
@@ -137,7 +139,8 @@ export const MemberReportCard = ({
                         type="checkbox"
                         checked={isChecked}
                         onChange={(e) => onUserCheck?.(e.target.checked)}
-                        className="mt-1 h-5 w-5 shrink-0 cursor-pointer rounded-md border-gray-300 accent-blue-600"
+                        disabled={isAttendanceLocked}
+                        className="mt-1 h-5 w-5 shrink-0 cursor-pointer rounded-md border-gray-300 accent-blue-600 disabled:cursor-default disabled:opacity-80"
                     />
                     <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
