@@ -2853,8 +2853,8 @@ const ProjectTasksPage = () => {
                 collapsible={true}
                 getChildrenKey={() => "sub_tasks_managements"}
                 renderChildrenRows={renderChildrenRows}
-                enableFreeze={true}
-                freezeColumnsCount={4}
+                // enableFreeze={true}
+                // freezeColumnsCount={4}
                 selectable={true}
                 selectedItems={selectedItems}
                 onSelectAll={handleSelectAll}

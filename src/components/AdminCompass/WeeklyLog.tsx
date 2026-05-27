@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -13,6 +13,9 @@ import {
     Star,
     Loader2,
     X,
+    Check,
+    ChevronDown,
+    ChevronRight,
 } from 'lucide-react';
 import {
     Select,
@@ -59,7 +62,12 @@ interface WeeklyLogData {
     config: Record<string, unknown>;
     submitted: number;
     total: number;
-    reports: WeeklyLogReport[];
+    reports?: WeeklyLogReport[];
+    grouped_by_department?: Array<{
+        department: string;
+        members: WeeklyLogReport[];
+        count?: number;
+    }>;
 }
 
 interface Department {
@@ -71,6 +79,93 @@ interface MeetingConfig {
     id: number;
     name: string;
 }
+
+interface SearchableSelectOption {
+    value: string;
+    label: string;
+}
+
+const SearchableSelect = ({
+    value,
+    onChange,
+    options,
+    placeholder = 'Search...',
+}: {
+    value: string;
+    onChange: (value: string) => void;
+    options: SearchableSelectOption[];
+    placeholder?: string;
+}) => {
+    const [open, setOpen] = useState(false);
+    const [query, setQuery] = useState('');
+    const ref = useRef<HTMLDivElement>(null);
+    const selected = options.find((option) => option.value === value);
+    const filtered = options.filter((option) =>
+        option.label.toLowerCase().includes(query.trim().toLowerCase())
+    );
+
+    useEffect(() => {
+        const handleOutside = (event: MouseEvent) => {
+            if (ref.current && !ref.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleOutside);
+        return () => document.removeEventListener('mousedown', handleOutside);
+    }, []);
+
+    return (
+        <div ref={ref} className="relative w-[150px]" style={{ zIndex: open ? 50 : 1 }}>
+            <input
+                type="text"
+                value={open ? query : selected?.label || ''}
+                placeholder={placeholder}
+                readOnly={!open}
+                onClick={() => {
+                    setOpen(true);
+                    setQuery('');
+                }}
+                onChange={(event) => {
+                    setQuery(event.target.value);
+                    setOpen(true);
+                }}
+                className="h-8 w-full cursor-pointer rounded-xl border border-[#DA7756]/25 bg-white px-3 pr-8 text-sm font-medium text-neutral-700 outline-none transition-colors placeholder:text-neutral-400 focus:border-[#DA7756]/60 focus:ring-2 focus:ring-[#DA7756]/15"
+            />
+            <ChevronDown
+                className={`pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 transition-transform ${open ? 'rotate-180' : ''}`}
+            />
+            {open && (
+                <div className="absolute left-0 right-0 top-[calc(100%+4px)] max-h-56 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-xl">
+                    {filtered.length === 0 ? (
+                        <div className="px-3 py-2 text-center text-xs font-medium text-neutral-400">
+                            No results found
+                        </div>
+                    ) : (
+                        filtered.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                    onChange(option.value);
+                                    setOpen(false);
+                                    setQuery('');
+                                }}
+                                className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold transition-colors ${
+                                    option.value === value
+                                        ? 'bg-[#fff3ee] text-[#DA7756]'
+                                        : 'text-neutral-700 hover:bg-[#fff8f5] hover:text-[#DA7756]'
+                                }`}
+                            >
+                                <span className="truncate">{option.label}</span>
+                                {option.value === value && <Check className="h-3.5 w-3.5 shrink-0" />}
+                            </button>
+                        ))
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function getISOWeekStr(date: Date): string {
@@ -583,18 +678,21 @@ const ReportDetailsModal = ({ entry, onClose }: { entry: WeeklyLogReport; onClos
 interface WeeklyLogProps {
     initialWeekDate?: Date;
     onWeekDateChange?: (date: Date) => void;
+    selectedMeetingId?: string;
+    onSelectedMeetingChange?: (meetingId: string) => void;
 }
 
-const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) => {
+const WeeklyLog = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: externalSelectedMeetingId, onSelectedMeetingChange }: WeeklyLogProps = {}) => {
     const weekOptions = generateWeekOptions(14);
     const currentWeek = getISOWeekStr(initialWeekDate || new Date());
 
     // Filter state
     const [search, setSearch]             = useState('');
-    const [meetingId, setMeetingId]       = useState('all');
+    const [meetingId, setMeetingIdState]  = useState(externalSelectedMeetingId || '');
     const [departmentId, setDeptId]       = useState('all');
     const [selectedWeek, setSelectedWeek] = useState(currentWeek);
     const [groupByDept, setGroupByDept]   = useState(false);
+    const [expandedDepartments, setExpandedDepartments] = useState<Set<string>>(new Set());
 
     const debouncedSearch = useDebounce(search, 600);
 
@@ -616,6 +714,18 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
     useEffect(() => {
         onWeekDateChange?.(getDateFromISOWeekStr(selectedWeek));
     }, [selectedWeek, onWeekDateChange]);
+
+    useEffect(() => {
+        if (!externalSelectedMeetingId) return;
+        setMeetingIdState((current) =>
+            current === externalSelectedMeetingId ? current : externalSelectedMeetingId
+        );
+    }, [externalSelectedMeetingId]);
+
+    const setMeetingId = (nextMeetingId: string) => {
+        setMeetingIdState(nextMeetingId);
+        if (nextMeetingId) onSelectedMeetingChange?.(String(nextMeetingId));
+    };
 
     // ── API helpers ──
     const getHeaders = () => ({
@@ -658,7 +768,12 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                     const defaultMeeting = list.find((meeting: any) => meeting.is_default && meeting.active !== false);
                     const firstActiveMeeting = list.find((meeting: any) => meeting.active !== false);
                     const nextMeeting = defaultMeeting || firstActiveMeeting || list[0];
-                    setMeetingId((current) => current === 'all' ? String(nextMeeting.id) : current);
+                    setMeetingIdState((current) => {
+                        if (current) return current;
+                        const nextMeetingId = String(nextMeeting.id);
+                        onSelectedMeetingChange?.(nextMeetingId);
+                        return nextMeetingId;
+                    });
                 }
             } catch (err) {
                 console.error('Failed to load meetings', err);
@@ -669,10 +784,13 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
 
     // Fetch weekly log whenever filters change
     const fetchLog = useCallback(async () => {
+        if (!meetingId) {
+            setLogData(null);
+            return;
+        }
         setLoading(true);
         try {
-            const params: Record<string, string> = { week: selectedWeek };
-            if (meetingId !== 'all')      params.meeting_id    = meetingId;
+            const params: Record<string, string> = { week: selectedWeek, meeting_id: meetingId };
             if (departmentId !== 'all')   params.department_id = departmentId;
             if (debouncedSearch.trim())   params.search        = debouncedSearch.trim();
             if (groupByDept)              params.group_by_dept = 'true';
@@ -692,11 +810,121 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
 
     useEffect(() => { fetchLog(); }, [fetchLog]);
 
-    const reports = logData?.reports ?? [];
+    const reports = logData?.reports ?? logData?.grouped_by_department?.flatMap((group) => group.members || []) ?? [];
+    const fallbackDepartmentGroups = reports.reduce<Array<{ department: string; reports: WeeklyLogReport[]; count?: number }>>((groups, report) => {
+        const department = report.department || 'No Dept.';
+        const existing = groups.find((group) => group.department === department);
+        if (existing) {
+            existing.reports.push(report);
+        } else {
+            groups.push({ department, reports: [report] });
+        }
+        return groups;
+    }, []);
+    const departmentGroups = (logData?.grouped_by_department || []).length > 0
+        ? (logData?.grouped_by_department || []).map((group) => ({
+            department: group.department || 'No Dept.',
+            reports: group.members || [],
+            count: group.count,
+        }))
+        : fallbackDepartmentGroups;
     const meetingSubmittedReports = reports.filter(isSubmittedReport);
     const meetingSubmittedCount = meetingSubmittedReports.length;
     const meetingTotalCount = logData?.total ?? reports.length;
     const meetingMissedCount = Math.max(meetingTotalCount - meetingSubmittedCount, 0);
+    const departmentOptions = [
+        { value: 'all', label: 'All Departments' },
+        ...departments.map((department) => ({
+            value: String(department.id),
+            label: department.department_name,
+        })),
+    ];
+
+    useEffect(() => {
+        if (!groupByDept) return;
+        setExpandedDepartments(new Set(departmentGroups.map((group) => group.department)));
+    }, [groupByDept, reports.length]);
+
+    const toggleDepartmentExpansion = (department: string) => {
+        setExpandedDepartments((current) => {
+            const next = new Set(current);
+            if (next.has(department)) next.delete(department);
+            else next.add(department);
+            return next;
+        });
+    };
+
+    const renderReportRow = (entry: WeeklyLogReport, idx: number) => {
+        const isMeetingSubmitted = isSubmittedReport(entry);
+        const displayStatus = getDisplayStatus(entry);
+        const submittedDate = isMeetingSubmitted && entry.submitted_at
+            ? new Date(entry.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            : null;
+        const submittedTime = isMeetingSubmitted && entry.submitted_at
+            ? new Date(entry.submitted_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+            : null;
+
+        return (
+            <TableRow key={`${entry.user_id}-${idx}`} className="h-16 border-[#f3e6df] hover:bg-[#fef6f4]/50">
+                <TableCell className="text-sm font-bold text-gray-900 break-words">{entry.week_of}</TableCell>
+                <TableCell>
+                    <div className="space-y-0.5">
+                        <div className="text-sm font-bold text-gray-900 break-words">{entry.name}</div>
+                        <div className="text-[11px] font-medium text-neutral-400 break-words">{entry.email}</div>
+                    </div>
+                </TableCell>
+                <TableCell className="text-sm font-medium text-neutral-400">
+                    {isMeetingSubmitted && entry.score ? entry.score.toFixed(1) : '-'}
+                </TableCell>
+                <TableCell>
+                    <Badge variant="outline" className="rounded-[8px] border-[#DA7756]/20 bg-white px-3 py-1 text-[11px] font-bold text-neutral-700">
+                        {entry.department || 'No Dept.'}
+                    </Badge>
+                </TableCell>
+                <TableCell>
+                    {entry.rating > 0 ? (
+                        <Badge className="flex w-fit items-center gap-1.5 rounded-[8px] bg-[#DA7756] px-2.5 text-white shadow-sm hover:bg-[#DA7756]">
+                            <Star className="w-3.5 h-3.5 fill-white" />
+                            <span className="text-[11px] font-bold">{entry.rating}/10</span>
+                        </Badge>
+                    ) : (
+                        <span className="text-sm text-neutral-400">-</span>
+                    )}
+                </TableCell>
+                <TableCell>
+                    <Badge
+                        variant="outline"
+                        className={`rounded-[8px] px-3 py-1 text-[11px] font-bold capitalize ${STATUS_STYLE[displayStatus] ?? 'bg-gray-100 text-gray-600 border-gray-200'}`}
+                    >
+                        {displayStatus}
+                    </Badge>
+                </TableCell>
+                <TableCell>
+                    {submittedDate ? (
+                        <div className="space-y-0.5">
+                            <div className="text-[11px] font-bold text-neutral-500">{submittedDate}</div>
+                            <div className="text-[11px] font-medium text-neutral-400">{submittedTime}</div>
+                        </div>
+                    ) : (
+                        <span className="text-sm text-neutral-400">-</span>
+                    )}
+                </TableCell>
+                <TableCell className="text-right">
+                    {isSubmittedReport(entry) && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setSelectedReport(entry)}
+                            title="View report"
+                            className="h-8 w-8 rounded-xl text-[#DA7756] hover:bg-[#fef6f4] hover:text-[#c9673f]"
+                        >
+                            <Eye size={16} />
+                        </Button>
+                    )}
+                </TableCell>
+            </TableRow>
+        );
+    };
 
     return (
         <div className="mt-6 space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#fffaf8] p-4 sm:p-6 shadow-sm max-w-full overflow-x-hidden">
@@ -725,27 +953,19 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                     </div>
 
                     {/* Department */}
-                    <Select value={departmentId} onValueChange={setDeptId}>
-                        <SelectTrigger className="w-[150px] h-8 rounded-xl border border-[#DA7756]/25 bg-white">
-                            <SelectValue placeholder="Department" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Departments</SelectItem>
-                            {departments.map(d => (
-                                <SelectItem key={d.id} value={String(d.id)}>
-                                    {d.department_name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <SearchableSelect
+                        value={departmentId}
+                        onChange={setDeptId}
+                        options={departmentOptions}
+                        placeholder="Search department..."
+                    />
 
                     {/* Meeting */}
                     <Select value={meetingId} onValueChange={setMeetingId}>
                         <SelectTrigger className="w-[150px] h-8 rounded-xl border border-[#DA7756]/25 bg-white">
                             <SelectValue placeholder="Meeting" />
                         </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Meetings</SelectItem>
+                        <SelectContent side="bottom" align="start" avoidCollisions={false} className="max-h-60 overflow-y-auto">
                             {meetings.map(m => (
                                 <SelectItem key={m.id} value={String(m.id)}>
                                     {m.name}
@@ -759,7 +979,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                         <SelectTrigger className="w-[175px] h-8 rounded-xl border border-[#DA7756]/25 bg-white">
                             <SelectValue placeholder="Select Week" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent side="bottom" align="start" avoidCollisions={false} className="max-h-60 overflow-y-auto">
                             {weekOptions.map(w => (
                                 <SelectItem key={w.value} value={w.value}>
                                     {w.label}
@@ -821,6 +1041,79 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
             )}
 
             {/* ── Table ── */}
+            {groupByDept && (
+                <div className="space-y-3">
+                    {loading ? (
+                        <div className="rounded-2xl border border-[#DA7756]/18 bg-white py-14 text-center shadow-sm">
+                            <Loader2 className="w-6 h-6 animate-spin text-[#DA7756] mx-auto mb-2" />
+                            <p className="text-sm text-neutral-400">Loading...</p>
+                        </div>
+                    ) : reports.length === 0 ? (
+                        <div className="rounded-2xl border border-[#DA7756]/18 bg-white py-14 text-center text-sm text-neutral-400 shadow-sm">
+                            No records found for the selected filters.
+                        </div>
+                    ) : (
+                        departmentGroups.map((group) => {
+                            const submittedCount = group.reports.filter(isSubmittedReport).length;
+                            const missedCount = Math.max(group.reports.length - submittedCount, 0);
+                            const isExpanded = expandedDepartments.has(group.department);
+
+                            return (
+                                <div key={group.department} className="overflow-hidden rounded-2xl border border-[#DA7756]/18 bg-white shadow-sm">
+                                    <button
+                                        type="button"
+                                        onClick={() => toggleDepartmentExpansion(group.department)}
+                                        className="flex w-full items-center gap-3 bg-[#DA7756]/5 px-5 py-4 text-left transition-colors hover:bg-[#DA7756]/10"
+                                    >
+                                        {isExpanded ? (
+                                            <ChevronDown className="h-4 w-4 shrink-0 text-[#DA7756]" />
+                                        ) : (
+                                            <ChevronRight className="h-4 w-4 shrink-0 text-[#DA7756]" />
+                                        )}
+                                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-[#DA7756]/20 bg-white">
+                                            <FileText className="h-4 w-4 text-[#DA7756]" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-bold text-[#1a1a1a]">{group.department}</p>
+                                            <p className="text-[11px] font-semibold text-neutral-400">{group.count ?? group.reports.length} members</p>
+                                        </div>
+                                        <div className="flex shrink-0 items-center gap-2 text-xs font-bold">
+                                            <span className="rounded-full bg-green-100 px-2.5 py-1 text-green-700">Submitted {submittedCount}</span>
+                                            <span className="rounded-full bg-red-100 px-2.5 py-1 text-red-600">Missed {missedCount}</span>
+                                        </div>
+                                    </button>
+
+                                    {isExpanded && (
+                                        <div className="border-t border-[#f3e6df] p-3">
+                                            <div className="max-w-full overflow-x-auto rounded-xl border border-[#DA7756]/12">
+                                                <Table className="w-full min-w-[980px] table-fixed">
+                                                    <TableHeader className="bg-[#fef6f4]">
+                                                        <TableRow className="hover:bg-transparent border-none h-12">
+                                                            {['Week Of', 'User', 'Score', 'Department', 'Rating', 'Status', 'Submitted At'].map(col => (
+                                                                <TableHead key={col} className="text-[13px] font-bold text-neutral-500">
+                                                                    <div className="flex items-center gap-1.5 cursor-pointer hover:text-neutral-900 transition-colors min-w-0">
+                                                                        {col} <ArrowUpDown className="w-3.5 h-3.5" />
+                                                                    </div>
+                                                                </TableHead>
+                                                            ))}
+                                                            <TableHead className="text-[13px] font-bold text-neutral-500 text-right">Actions</TableHead>
+                                                        </TableRow>
+                                                    </TableHeader>
+                                                    <TableBody>
+                                                        {group.reports.map((entry, idx) => renderReportRow(entry, idx))}
+                                                    </TableBody>
+                                                </Table>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            )}
+
+            {!groupByDept && (
             <div className="max-w-full overflow-x-hidden rounded-2xl border border-[#DA7756]/18 shadow-sm bg-white">
                 <Table className="w-full table-fixed">
                     <TableHeader className="bg-[#fef6f4]">
@@ -941,6 +1234,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                     </TableBody>
                 </Table>
             </div>
+            )}
 
             {selectedReport && (
                 <ReportDetailsModal

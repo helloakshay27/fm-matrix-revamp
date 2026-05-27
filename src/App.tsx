@@ -1048,6 +1048,7 @@ const ContestListPage = lazy(() => import("./pages/ContestListPage").then(m => (
 const CreateContestPage = lazy(() => import("./pages/CreateContestPage").then(m => ({ default: m.CreateContestPage })));
 const ContestDetailsPage = lazy(() => import("./pages/ContestDetailsPage").then(m => ({ default: m.ContestDetailsPage })));
 const EditContestPage = lazy(() => import("./pages/EditContestPage").then(m => ({ default: m.EditContestPage })));
+const RunContestPage = lazy(() => import("./pages/RunContestPage").then(m => ({ default: m.RunContestPage })));
 
 const SpinnerContest = lazy(() => import("./components/mobile/SpinnerContest").then(m => ({ default: m.SpinnerContest })));
 const ScratchCard = lazy(() => import("./components/mobile/ScratchCard").then(m => ({ default: m.ScratchCard })));
@@ -4659,6 +4660,11 @@ function App() {
                               element={<DetailsVendorPage />}
                             />
                             <Route
+                              path="/maintenance/vendor/edit/:id"
+                              element={<EditVendorPage />}
+                            ></Route>
+
+                            <Route
                               path="/vas/projects"
                               element={<ProjectsDashboard />}
                             />
@@ -6030,6 +6036,10 @@ function App() {
                             <Route
                               path="/pulse/contests/:id/edit"
                               element={<EditContestPage />}
+                            />
+                            <Route
+                              path="/pulse/contests/:id/run"
+                              element={<RunContestPage />}
                             />
                             <Route
                               path="/pulse/rewards"

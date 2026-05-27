@@ -21,6 +21,7 @@ interface GDNInventoryItem {
   assetId: string;
   consumingIn: string;
   reason: string;
+  comment: string;
 }
 
 interface InventoryOption {
@@ -99,6 +100,94 @@ const multilineFieldSx = {
   },
 };
 
+const basicDateFieldSx = {
+  marginTop: "6px",
+  marginRight: "0px",
+  marginBottom: "0px",
+  marginLeft: "0px",
+  "& .MuiInputBase-root": {
+    minHeight: 38,
+    borderRadius: "0px",
+    backgroundColor: "#fff",
+    fontSize: "13px",
+  },
+  "& .MuiInputBase-input": {
+    boxSizing: "border-box",
+    padding: "9px 10px",
+    fontSize: "13px",
+  },
+  "& .MuiInputLabel-root": {
+    backgroundColor: "#fff",
+    color: "#111827",
+    fontSize: "13px",
+    lineHeight: 1,
+    px: "4px",
+    top: "-8px",
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: BRAND_RED,
+  },
+  "& .MuiOutlinedInput-root": {
+    "& fieldset": {
+      borderColor: "#d6dce3",
+    },
+    "&:hover fieldset": {
+      borderColor: "#b8c0cc",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: BRAND_RED,
+      borderWidth: "1px",
+    },
+  },
+};
+
+const basicDescriptionFieldSx = {
+  marginTop: "0px",
+  marginRight: "0px",
+  marginBottom: "0px",
+  marginLeft: "0px",
+  "& .MuiInputBase-root": {
+    minHeight: 80,
+    borderRadius: "0px",
+    backgroundColor: "#fff",
+    alignItems: "flex-start",
+    fontSize: "13px",
+  },
+  "& .MuiOutlinedInput-root": {
+    padding: "0px",
+    "& fieldset": {
+      borderColor: "#d6dce3",
+    },
+    "&:hover fieldset": {
+      borderColor: "#b8c0cc",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: BRAND_RED,
+      borderWidth: "1px",
+    },
+  },
+  "& .MuiInputBase-input": {
+    boxSizing: "border-box",
+    minHeight: "78px !important",
+    overflow: "auto",
+    padding: "9px 10px",
+    fontSize: "13px",
+    lineHeight: "20px",
+    resize: "none",
+  },
+  "& .MuiInputLabel-root": {
+    backgroundColor: "#fff",
+    color: "#111827",
+    fontSize: "13px",
+    lineHeight: 1,
+    px: "4px",
+    top: "-8px",
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: BRAND_RED,
+  },
+};
+
 const inventoryMenuProps = {
   disablePortal: true,
   PaperProps: {
@@ -174,6 +263,7 @@ const emptyInventoryItem = (): GDNInventoryItem => ({
   assetId: "",
   consumingIn: "",
   reason: "",
+  comment: "",
 });
 
 const SectionHeader = ({ title }: { title: string }) => (
@@ -347,10 +437,11 @@ export const AddGDNPage = () => {
           string,
           {
             pms_inventory_id: number;
-            company_staff_id: number;
+            // company_staff_id: number;
             quantity: number;
             // pms_asset_id: number;
             gdn_status: string;
+            reason: string;
             // consuming_in: string;
             // reason: string;
           }
@@ -358,10 +449,11 @@ export const AddGDNPage = () => {
       >((attributes, item, index) => {
         attributes[String(index)] = {
           pms_inventory_id: Number(item.inventory),
-          company_staff_id: Number(item.companyStaffId),
+          // company_staff_id: Number(item.companyStaffId),
           quantity: Number(item.quantity),
           // pms_asset_id: Number(item.assetId),
           gdn_status: "Pending",
+          reason: item.comment.trim(),
           // consuming_in: item.consumingIn.trim(),
           // reason: item.reason.trim(),
         };
@@ -427,31 +519,33 @@ export const AddGDNPage = () => {
         <section className="bg-white border border-gray-200 rounded-md shadow-sm p-4">
           <SectionHeader title="Basic Details" />
 
-          <div className="grid grid-cols-1 md:grid-cols-[160px_minmax(280px,520px)] gap-6 md:pl-9">
-            <TextField
-              label={requiredLabel("GDN Date")}
-              type="date"
-              value={gdnDate}
-              onChange={(event) => setGdnDate(event.target.value)}
-              placeholder="Enter Date"
-              fullWidth
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              sx={compactFieldSx}
-            />
+          <div className="border border-gray-200 rounded-md shadow-sm p-3 md:ml-2 max-w-5xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start pr-0 md:pr-9">
+              <TextField
+                label={requiredLabel("GDN Date")}
+                type="date"
+                value={gdnDate}
+                onChange={(event) => setGdnDate(event.target.value)}
+                placeholder="Enter Date"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={compactFieldSx}
+              />
 
-            <TextField
-              label={requiredLabel("Description")}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Description"
-              fullWidth
-              multiline
-              minRows={2}
-              variant="outlined"
-              InputLabelProps={{ shrink: true }}
-              sx={multilineFieldSx}
-            />
+              <TextField
+                label={requiredLabel("Description")}
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Description"
+                fullWidth
+                multiline
+                minRows={2}
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={compactFieldSx}
+              />
+            </div>
           </div>
         </section>
 
@@ -607,6 +701,21 @@ export const AddGDNPage = () => {
                     />
 
                     <TextField
+                      label="Comment"
+                      value={item.comment}
+                      onChange={(event) =>
+                        updateInventoryItem(index, {
+                          comment: event.target.value,
+                        })
+                      }
+                      placeholder="Enter Comment"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={compactFieldSx}
+                    />
+
+                    {/* <TextField
                       label={requiredLabel("Company Staff ID")}
                       type="number"
                       value={item.companyStaffId}
@@ -620,7 +729,7 @@ export const AddGDNPage = () => {
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
                       sx={compactFieldSx}
-                    />
+                    /> */}
 
                     {/*
                     <TextField

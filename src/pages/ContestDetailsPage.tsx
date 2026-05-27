@@ -290,7 +290,7 @@ export const ContestDetailsPage: React.FC = () => {
             {
               contest.content_type === "random" && (
                 <Button
-                  onClick={handleDryRun}
+                  onClick={() => navigate(`/pulse/contests/${id}/run`)}
                   variant="outline"
                   className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 px-4 py-2"
                 >
@@ -613,10 +613,12 @@ export const ContestDetailsPage: React.FC = () => {
                                       <p className="text-sm text-[#1A1A1A]">{rep.partner_name ?? "—"}</p>
                                     </div>
 
-                                    <div className="space-y-1">
-                                      <p className="text-xs font-medium text-gray-500">Probability</p>
-                                      <p className="text-sm text-[#1A1A1A]">{totalProb || "—"}</p>
-                                    </div>
+                                    {contest.content_type === "spin" && (
+                                      <div className="space-y-1">
+                                        <p className="text-xs font-medium text-gray-500">Probability</p>
+                                        <p className="text-sm text-[#1A1A1A]">{totalProb || "—"}</p>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>

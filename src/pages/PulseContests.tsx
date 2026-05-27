@@ -163,7 +163,7 @@ const PulseContests: React.FC = () => {
                     endDate: end.toLocaleDateString(),
                     contestType:
                         item.content_type === "spin"
-                            ? "Spin Wheel"
+                            ? "Spin"
                             : item.content_type === "random"
                                 ? "Random"
                                 : "Special Discount",
@@ -261,7 +261,7 @@ const PulseContests: React.FC = () => {
             formData.append("contest[id]", String(contestId));
 
             const response = await axios.put(
-                `${url}/contests/${contestId}`,
+                `${url}/contests/${contestId}.json`,
                 formData,
                 {
                     headers: {

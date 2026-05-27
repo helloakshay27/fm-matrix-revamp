@@ -79,8 +79,13 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 }
 
 // ── Main component ─────────────────────────────────────────────────────────────
-const WeeklyMeetingReports = () => {
-    const [meetingId, setMeetingId]   = useState('all')
+interface WeeklyMeetingReportsProps {
+    selectedMeetingId?: string;
+    onSelectedMeetingChange?: (meetingId: string) => void;
+}
+
+const WeeklyMeetingReports = ({ selectedMeetingId: externalSelectedMeetingId, onSelectedMeetingChange }: WeeklyMeetingReportsProps = {}) => {
+    const [meetingId, setMeetingIdState]   = useState(externalSelectedMeetingId || '')
     const [period, setPeriod]         = useState('last_12_weeks')
     const [meetings, setMeetings]     = useState<MeetingConfig[]>([])
     const [reportData, setReportData] = useState<ReportData | null>(null)
@@ -91,6 +96,18 @@ const WeeklyMeetingReports = () => {
         'Content-Type': 'application/json',
     })
     const apiBase = () => `https://${localStorage.getItem('baseUrl')}`
+
+    useEffect(() => {
+        if (!externalSelectedMeetingId) return;
+        setMeetingIdState((current) =>
+            current === externalSelectedMeetingId ? current : externalSelectedMeetingId
+        );
+    }, [externalSelectedMeetingId]);
+
+    const setMeetingId = (nextMeetingId: string) => {
+        setMeetingIdState(nextMeetingId);
+        if (nextMeetingId) onSelectedMeetingChange?.(String(nextMeetingId));
+    };
 
     // Fetch meeting configs for the dropdown
     useEffect(() => {
@@ -105,7 +122,12 @@ const WeeklyMeetingReports = () => {
                 setMeetings(list)
                 if (list.length > 0) {
                     const nextMeeting = pickDefaultMeeting(list)
-                    setMeetingId(prev => prev === 'all' ? String(nextMeeting.id) : prev)
+                    setMeetingIdState(prev => {
+                        if (prev) return prev
+                        const nextMeetingId = String(nextMeeting.id)
+                        onSelectedMeetingChange?.(nextMeetingId)
+                        return nextMeetingId
+                    })
                 }
             } catch (err) {
                 console.error('Failed to load meetings', err)
@@ -116,10 +138,13 @@ const WeeklyMeetingReports = () => {
 
     // Fetch report data whenever filters change
     const fetchReport = useCallback(async () => {
+        if (!meetingId) {
+            setReportData(null)
+            return
+        }
         setLoading(true)
         try {
-            const params: Record<string, string> = { period }
-            if (meetingId !== 'all') params.meeting_id = meetingId
+            const params: Record<string, string> = { period, meeting_id: meetingId }
 
             const res = await axios.get(`${apiBase()}/user_journals/weekly_meeting_report`, {
                 headers: getHeaders(),
@@ -159,7 +184,6 @@ const WeeklyMeetingReports = () => {
                             <SelectValue placeholder="Select Meeting" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-[#DA7756]/20">
-                            <SelectItem value="all">All Meetings</SelectItem>
                             {meetings.map(m => (
                                 <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>
                             ))}

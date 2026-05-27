@@ -142,6 +142,7 @@ interface WeeklyMeetingData {
         department: string | null;
         status: string;
         journal_id: number | null;
+        meeting_journal_id?: number | null;
         checked_in_meeting?: boolean;
         report_data: any;
         weekly_report: any;
@@ -151,11 +152,13 @@ interface WeeklyMeetingData {
 interface WeeklyReviewsProps {
     initialWeekDate?: Date;
     onWeekDateChange?: (date: Date) => void;
+    selectedMeetingId?: string;
+    onSelectedMeetingChange?: (meetingId: string) => void;
     onMeetingSaved?: () => void;
 }
 
-const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: WeeklyReviewsProps = {}) => {
-    const [selectedMeeting, setSelectedMeeting] = useState('');
+const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: externalSelectedMeetingId, onSelectedMeetingChange, onMeetingSaved }: WeeklyReviewsProps = {}) => {
+    const [selectedMeeting, setSelectedMeetingState] = useState(externalSelectedMeetingId || '');
     const [meetingConfigs, setMeetingConfigs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [weeklyDataLoading, setWeeklyDataLoading] = useState(false);
@@ -210,6 +213,18 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
     }, [initialWeekDate]);
 
     useEffect(() => {
+        if (!externalSelectedMeetingId) return;
+        setSelectedMeetingState((current) =>
+            current === externalSelectedMeetingId ? current : externalSelectedMeetingId
+        );
+    }, [externalSelectedMeetingId]);
+
+    const setSelectedMeeting = (meetingId: string) => {
+        setSelectedMeetingState(meetingId);
+        if (meetingId) onSelectedMeetingChange?.(String(meetingId));
+    };
+
+    useEffect(() => {
         if (selectedMeeting || meetingConfigs.length === 0) return;
         const defaultMeeting = meetingConfigs.find((config: any) => config.is_default && config.active !== false);
         const firstActiveMeeting = meetingConfigs.find((config: any) => config.active !== false);
@@ -230,10 +245,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
             .map((report: any) => getReportSelectionKey(report))
             .filter(Boolean);
 
-        setSelectedReports((prev) => {
-            const combined = new Set([...prev, ...checkedInIds]);
-            return Array.from(combined);
-        });
+        setSelectedReports(checkedInIds);
     }, [weeklyData]);
 
     const getSelectedReportRows = () => {
@@ -241,6 +253,17 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
         const selectedKeys = new Set(selectedReports.map((id) => String(id)));
         return weeklyData.member_reports.filter((report) => report.weekly_report !== null && selectedKeys.has(String(getReportSelectionKey(report))));
     };
+
+    const getSubmittedWeeklyReports = (data = weeklyData) =>
+        data?.member_reports?.filter((report: any) => report.weekly_report !== null) || [];
+
+    const getMissedWeeklyMembers = (data = weeklyData) =>
+        data?.member_reports
+            ?.filter((report: any) => report.weekly_report === null)
+            .map((report: any) => ({
+                id: report.user_id,
+                name: report.name,
+            })) || [];
 
     // Helper function to extract KPI summary from selected member reports
     const extractKpiSummary = (reports = getSelectedReportRows()) => {
@@ -504,10 +527,22 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
         })),
     });
 
+    const getMeetingJournalId = (report: any) => report?.meeting_journal_id || report?.journal_id || null;
+
+    const normalizeMeetingJournal = (report: any) => report
+        ? {
+            ...report,
+            journal_id: getMeetingJournalId(report),
+        }
+        : null;
+
     const getSubmittedMeetingReport = (reports: any[] = []) =>
-        reports.find((report: any) => report.journal_id && report.report_data?.meeting_notes)
-        || reports.find((report: any) => report.journal_id && report.checked_in_meeting === true)
-        || null;
+        normalizeMeetingJournal(
+            reports.find((report: any) => getMeetingJournalId(report) && report.report_data?.meeting_notes)
+            || reports.find((report: any) => getMeetingJournalId(report) && report.checked_in_meeting === true)
+            || reports.find((report: any) => getMeetingJournalId(report))
+            || null
+        );
 
     const getSubmittedMeetingJournal = () => {
         const reports = weeklyData?.member_reports || [];
@@ -527,7 +562,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
     const findSubmittedMeetingJournalFromDetails = async (reports: any[], token: string) => {
         const candidateIds = [...new Set(
             reports
-                .map((report: any) => report?.journal_id)
+                .flatMap((report: any) => [report?.meeting_journal_id, report?.journal_id])
                 .filter((id: any) => Number.isFinite(Number(id)))
         )];
 
@@ -554,7 +589,8 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
 
         const selectedReports = getSelectedReportRows();
         const selectedUserIds = selectedReports.map((report) => report.user_id).filter(Boolean);
-        const submittedReportRows = weeklyData.member_reports?.filter((report: any) => report.weekly_report !== null) || [];
+        const submittedReportRows = getSubmittedWeeklyReports();
+        const missedWeeklyMembers = getMissedWeeklyMembers();
         const selectedKeys = new Set(selectedReports.map((report: any) => String(getReportSelectionKey(report))));
         const allSubmittedSelected = submittedReportRows.length > 0 && submittedReportRows.every((report: any) => selectedKeys.has(String(getReportSelectionKey(report))));
         const kpiSummary = extractKpiSummary(selectedReports);
@@ -580,9 +616,9 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
         let dynamicNotes = '';
 
         // Team Members who failed to submit
-        dynamicNotes += `Team Members who failed to submit Reports (${weeklyData.missed}):\n\n`;
-        if (weeklyData.missed_members && weeklyData.missed_members.length > 0) {
-            weeklyData.missed_members.forEach((member) => {
+        dynamicNotes += `Team Members who failed to submit Reports (${missedWeeklyMembers.length}):\n\n`;
+        if (missedWeeklyMembers.length > 0) {
+            missedWeeklyMembers.forEach((member) => {
                 dynamicNotes += `${member.name}\n`;
             });
         }
@@ -657,10 +693,12 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
             });
         }
 
-        const meetingNotesObj = buildMeetingNotesObject(detailedReviews, weeklyData.missed_members || [], meetingNotes);
+        const meetingNotesObj = buildMeetingNotesObject(detailedReviews, missedWeeklyMembers, meetingNotes);
 
         return {
             meeting_id: selectedMeeting,
+            meeting_config_id: Number(selectedMeeting),
+            meeting_config_type: 'WeeklyMeetingConfig',
             week: getWeekString(currentWeek),
             week_number: weeklyData.week.replace('W', ''),
             year: weeklyData.year,
@@ -694,8 +732,8 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
                 all_upcoming_week_plan: allUpcomingWeekPlan,
                 all_remarks: allRemarks,
                 all_past_kpis: allPastKpis,
-                total_submitted: weeklyData.submitted,
-                total_missed: weeklyData.missed,
+                total_submitted: submittedReportRows.length,
+                total_missed: missedWeeklyMembers.length,
                 total_members: weeklyData.total_members,
                 selected_member_count: detailedReviews.length,
                 mark_all_attended: allSubmittedSelected,
@@ -768,6 +806,14 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
             );
 
             console.log('Meeting saved successfully:', response.data);
+            const savedMeetingJournal = response.data?.data ?? response.data;
+            if (savedMeetingJournal?.id) {
+                setSubmittedMeetingJournalOverride({
+                    ...savedMeetingJournal,
+                    journal_id: savedMeetingJournal.id,
+                    report_data: savedMeetingJournal.report_data || dynamicPayload.report_data,
+                });
+            }
             toast.success('Meeting notes saved successfully');
             onMeetingSaved?.();
         } catch (error: any) {
@@ -1035,7 +1081,12 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
                     const defaultMeeting = configs.find((config: any) => config.is_default && config.active !== false);
                     const firstActiveMeeting = configs.find((config: any) => config.active !== false);
                     const nextMeeting = defaultMeeting || firstActiveMeeting || configs[0];
-                    setSelectedMeeting((current) => current || String(nextMeeting.id));
+                    setSelectedMeetingState((current) => {
+                        if (current) return current;
+                        const nextMeetingId = String(nextMeeting.id);
+                        onSelectedMeetingChange?.(nextMeetingId);
+                        return nextMeetingId;
+                    });
                 }
             } catch (error) {
                 console.error('Error fetching weekly meetings:', error)
@@ -1059,6 +1110,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
             try {
                 setWeeklyDataLoading(true);
                 setSubmittedMeetingJournalOverride(null);
+                setSelectedReports([]);
                 const baseUrl = getBaseUrl();
                 const token = localStorage.getItem('token');
 
@@ -1093,10 +1145,11 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
                     }
                 }
 
+                const missedWeeklyMembers = getMissedWeeklyMembers(nextWeeklyData);
                 const noteText = savedNotes
                     ? stripMissedMembersPrefix(savedNotes).trim()
-                    : `**Team Members Who Missed Report (${response.data?.data?.missed_members?.length}):**\n` +
-                    response.data?.data?.missed_members?.map((m: any) => `- ${m.name}`).join("\n") +
+                    : `**Team Members Who Missed Report (${missedWeeklyMembers.length}):**\n` +
+                    missedWeeklyMembers.map((m: any) => `- ${m.name}`).join("\n") +
                     `\n\n**Key Discussion Points:**\n`;
                 setMeetingNotes(submittedMeetingReport ? stripMissedMembersPrefix(noteText).trim() : noteText);
             } catch (error) {
@@ -1128,8 +1181,8 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
         }
     }, [showDayDropdown]);
 
-    const submittedReports = weeklyData?.member_reports?.filter((report: any) => report.weekly_report !== null) || [];
-    const missedMembers = weeklyData?.missed_members || [];
+    const submittedReports = getSubmittedWeeklyReports();
+    const missedMembers = getMissedWeeklyMembers();
     const submittedMeetingJournal = getSubmittedMeetingJournal();
     const isSubmittedMeeting = !!submittedMeetingJournal?.journal_id;
     const visibleReportIds = submittedReports.map((report: any) => String(getReportSelectionKey(report)));

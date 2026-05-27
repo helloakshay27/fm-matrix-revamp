@@ -1187,11 +1187,11 @@ export const EditMaterialPRDashboard = () => {
                     {/* Rate */}
                     <TextField
                       label="Rate"
-                      value={formatIndian(item.each)}
+                      value={item.each}
                       onChange={(e) => {
-                        const raw = e.target.value.replace(/,/g, "");
-                        if (raw === "" || /^\d*\.?\d{0,2}$/.test(raw)) {
-                          handleItemChange(item.id, "each", raw);
+                        const value = e.target.value;
+                        if (value === "" || /^\d*\.?\d{0,2}$/.test(value)) {
+                          handleItemChange(item.id, "each", value);
                         }
                       }}
                       placeholder="Enter Number"
