@@ -230,7 +230,7 @@ export const EditContestPage: React.FC = () => {
                 bannerImageName: "",
                 rewardType: "Coupon Code",
                 pointsValue: "",
-                validity: rep.validity || "",
+                validity: rep.validity.split("T")[0] || "",
               };
             }),
             ...nonCouponPrizes.map((prize: any) => ({
@@ -1067,7 +1067,27 @@ export const EditContestPage: React.FC = () => {
                       variant="outlined"
                       multiline
                       rows={3}
-                      sx={textFieldSx}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: "auto !important",
+                          padding: "2px !important",
+                          display: "flex",
+                          "& fieldset": { borderColor: "#e5e7eb" },
+                          "&:hover fieldset": { borderColor: "#C72030" },
+                          "&.Mui-focused fieldset": { borderColor: "#C72030" },
+                        },
+                        "& .MuiInputBase-input[aria-hidden='true']": {
+                          flex: 0,
+                          width: 0,
+                          height: 0,
+                          padding: "0 !important",
+                          margin: 0,
+                          display: "none",
+                        },
+                        "& .MuiInputBase-input": {
+                          resize: "none !important",
+                        },
+                      }}
                     />
                   </div>
 
