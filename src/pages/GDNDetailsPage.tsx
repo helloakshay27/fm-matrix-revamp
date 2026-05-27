@@ -1,8 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FileText, Loader2 } from "lucide-react";
+import { FileText, Loader2, Send, X } from "lucide-react";
 import { toast } from "sonner";
+import {
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select as MuiSelect,
+  SelectChangeEvent,
+} from "@mui/material";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -39,6 +55,11 @@ interface GDNDetails {
   can_take_action: boolean;
 }
 
+interface DispatchUser {
+  id: string;
+  name: string;
+}
+
 const toTitleCase = (value?: string | null) => {
   if (!value) return "-";
 
@@ -49,10 +70,100 @@ const toTitleCase = (value?: string | null) => {
     .join(" ");
 };
 
+const getUserName = (user: any) => {
+  const fullName = String(user?.full_name ?? user?.name ?? "").trim();
+  if (fullName) return fullName;
+
+  const firstName = String(user?.firstname ?? user?.first_name ?? "").trim();
+  const lastName = String(user?.lastname ?? user?.last_name ?? "").trim();
+  const joinedName = `${firstName} ${lastName}`.trim();
+
+  return joinedName || String(user?.email ?? user?.mobile ?? "User").trim();
+};
+
+const normalizeDispatchUsers = (items: any[]): DispatchUser[] =>
+  items
+    .map((user) => ({
+      id: String(user?.id ?? user?.user_id ?? user?.value ?? ""),
+      name: getUserName(user),
+    }))
+    .filter((user) => user.id && user.name);
+
+const dispatchSelectSx = {
+  "& .MuiInputLabel-root": {
+    backgroundColor: "#fff",
+    color: "#111827",
+    fontSize: "14px",
+    lineHeight: 1,
+    px: "4px",
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#111827",
+  },
+  "& .MuiOutlinedInput-root": {
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: "0px",
+    minHeight: "54px",
+    "& fieldset": {
+      borderColor: "#d8d8d8",
+    },
+    "&:hover fieldset": {
+      borderColor: "#c7c7c7",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#d8d8d8",
+      borderWidth: "1px",
+    },
+  },
+  "& .MuiSelect-select": {
+    alignItems: "center",
+    backgroundColor: "#f7f7f7",
+    color: "#C72030",
+    display: "flex",
+    fontSize: "13px",
+    height: "34px",
+    lineHeight: "34px",
+    margin: "10px 10px 8px",
+    minHeight: "0 !important",
+    padding: "0 32px 0 12px !important",
+  },
+  "& .MuiSelect-icon": {
+    color: "#9ca3af",
+    right: "14px",
+  },
+};
+
+const dispatchMenuProps = {
+  PaperProps: {
+    sx: {
+      mt: 0.5,
+      maxHeight: 180,
+      borderRadius: "0px",
+      boxShadow: "0 8px 18px rgba(15, 23, 42, 0.16)",
+      zIndex: 1600,
+      "& .MuiMenuItem-root": {
+        minHeight: 34,
+        whiteSpace: "normal",
+        wordBreak: "break-word",
+        fontSize: "13px",
+      },
+    },
+  },
+  MenuListProps: {
+    dense: true,
+  },
+};
+
 export const GDNDetailsPage = () => {
   const { id } = useParams();
   const [gdnDetails, setGdnDetails] = useState<GDNDetails | null>(null);
   const [loading, setLoading] = useState(false);
+  const [dispatchDialogOpen, setDispatchDialogOpen] = useState(false);
+  const [handOverUsers, setHandOverUsers] = useState<DispatchUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [selectedHandOverTo, setSelectedHandOverTo] = useState("");
+  const [dispatchSubmitting, setDispatchSubmitting] = useState(false);
 
   const fetchGdnDetails = async () => {
     if (!id) return;
@@ -104,6 +215,116 @@ export const GDNDetailsPage = () => {
     fetchGdnDetails();
   }, [id]);
 
+  const fetchHandOverUsers = async () => {
+    setUsersLoading(true);
+
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      if (!baseUrl) {
+        throw new Error("Base URL is not configured.");
+      }
+
+      const url = new URL("/pms/users/get_escalate_to_users.json", baseUrl);
+      url.searchParams.set("per_page", "1000");
+
+      const response = await fetch(url.toString(), {
+        headers: {
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch users (${response.status})`);
+      }
+
+      const result = await response.json();
+      const source = Array.isArray(result.users)
+        ? result.users
+        : Array.isArray(result.data)
+          ? result.data
+          : Array.isArray(result.fm_users)
+            ? result.fm_users
+            : [];
+
+      setHandOverUsers(normalizeDispatchUsers(source));
+    } catch (error) {
+      console.error("Error fetching hand over users:", error);
+      toast.error("Failed to load hand over users. Please try again.");
+      setHandOverUsers([]);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (dispatchDialogOpen && handOverUsers.length === 0) {
+      fetchHandOverUsers();
+    }
+  }, [dispatchDialogOpen]);
+
+  const handleDispatchDialogChange = (open: boolean) => {
+    setDispatchDialogOpen(open);
+
+    if (!open) {
+      setSelectedHandOverTo("");
+    }
+  };
+
+  const handleDispatchSubmit = async () => {
+    if (!id) {
+      toast.error("GDN ID is missing.");
+      return;
+    }
+
+    if (!selectedHandOverTo) {
+      toast.error("Please select hand over to.");
+      return;
+    }
+
+    setDispatchSubmitting(true);
+
+    try {
+      const baseUrl = API_CONFIG.BASE_URL;
+      if (!baseUrl) {
+        throw new Error("Base URL is not configured.");
+      }
+
+      const url = new URL(`/pms/srns/${id}/dispatch_now.json`, baseUrl);
+      const response = await fetch(url.toString(), {
+        method: "POST",
+        headers: {
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          hand_over_to: Number(selectedHandOverTo),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData?.message ||
+            errorData?.error ||
+            `Failed to dispatch GDN (${response.status})`
+        );
+      }
+
+      toast.success("GDN dispatched successfully.");
+      handleDispatchDialogChange(false);
+      fetchGdnDetails();
+    } catch (error) {
+      console.error("Error dispatching GDN:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to dispatch GDN."
+      );
+    } finally {
+      setDispatchSubmitting(false);
+    }
+  };
+
   const getStatusBadgeClass = (status?: string) => {
     switch (status?.toLowerCase()) {
       case "approved":
@@ -122,6 +343,9 @@ export const GDNDetailsPage = () => {
     return value;
   };
 
+  const selectedHandOverUserName =
+    handOverUsers.find((user) => user.id === selectedHandOverTo)?.name || "";
+
   if (loading && !gdnDetails) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -137,21 +361,32 @@ export const GDNDetailsPage = () => {
         <span className="font-medium text-black">GDN Request</span>
       </div>
 
-      <div className="flex items-center flex-wrap gap-x-4 gap-y-2 mb-2">
-        {gdnDetails?.approval_levels?.map((level) => (
-          <div key={level.level_id} className="flex items-center gap-1">
-            <span className="font-semibold text-black">
-              {toTitleCase(level.level_name)} Approval:
-            </span>
-            <span
-              className={`px-2 py-1 rounded text-sm ${getStatusBadgeClass(
-                level.status
-              )}`}
-            >
-              {displayValue(level.status)}
-            </span>
-          </div>
-        ))}
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          {gdnDetails?.approval_levels?.map((level) => (
+            <div key={level.level_id} className="flex items-center gap-1">
+              <span className="font-semibold text-black">
+                {toTitleCase(level.level_name)} Approval:
+              </span>
+              <span
+                className={`px-2 py-1 rounded text-sm ${getStatusBadgeClass(
+                  level.status
+                )}`}
+              >
+                {displayValue(level.status)}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <Button
+          className="gap-2 bg-[#6B2C65] px-4 py-2 text-white hover:bg-[#5a2455]"
+          disabled={loading || dispatchSubmitting || !id}
+          onClick={() => setDispatchDialogOpen(true)}
+        >
+          <Send className="h-4 w-4" />
+          Dispatch Now
+        </Button>
       </div>
 
       <section className="bg-white border border-gray-200 rounded-md shadow-sm mb-4 p-3">
@@ -238,6 +473,84 @@ export const GDNDetailsPage = () => {
           </TableBody>
         </Table>
       </div>
+
+      <Dialog
+        open={dispatchDialogOpen}
+        onOpenChange={handleDispatchDialogChange}
+      >
+        <DialogContent className="top-1/2 max-w-[300px] gap-0 overflow-visible rounded-[4px] border-0 bg-white p-0 shadow-xl sm:max-w-[300px] sm:rounded-[4px]">
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0 border-b border-gray-200 px-4 py-4 text-left">
+            <DialogTitle className="text-xl font-semibold text-gray-900">
+              Dispatch Now
+            </DialogTitle>
+            <DialogClose asChild>
+              <button
+                aria-label="Close"
+                className="flex h-7 w-7 items-center justify-center text-gray-500 hover:text-gray-800"
+                type="button"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </DialogClose>
+          </DialogHeader>
+
+          <div className="px-7 py-8">
+            <FormControl
+              fullWidth
+              size="small"
+              sx={dispatchSelectSx}
+              variant="outlined"
+            >
+              <InputLabel id="dispatch-hand-over-to-label" shrink>
+                Hand Over To <span style={{ color: "#C72030" }}>*</span>
+              </InputLabel>
+              <MuiSelect
+                displayEmpty
+                disabled={usersLoading || dispatchSubmitting}
+                id="dispatch-hand-over-to"
+                label="Hand Over To *"
+                labelId="dispatch-hand-over-to-label"
+                MenuProps={dispatchMenuProps}
+                onChange={(event: SelectChangeEvent) =>
+                  setSelectedHandOverTo(event.target.value)
+                }
+                renderValue={(selected) => {
+                  if (usersLoading) return "Loading users...";
+                  if (!selected) return "Select hand over to";
+                  return selectedHandOverUserName || "Select hand over to";
+                }}
+                value={selectedHandOverTo}
+              >
+                {usersLoading ? (
+                  <MenuItem value="" disabled>
+                    Loading users...
+                  </MenuItem>
+                ) : handOverUsers.length ? (
+                  handOverUsers.map((user) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.name}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem value="" disabled>
+                    No users found
+                  </MenuItem>
+                )}
+              </MuiSelect>
+            </FormControl>
+          </div>
+
+          <DialogFooter className="border-t border-gray-200 px-5 py-4 sm:justify-end sm:space-x-0">
+            <Button
+              className="h-9 min-w-[94px] rounded-[4px] bg-[#6B2C65] px-6 text-sm text-white hover:bg-[#5a2455]"
+              disabled={dispatchSubmitting || usersLoading}
+              onClick={handleDispatchSubmit}
+            >
+              {dispatchSubmitting ? "Submitting..." : "Submit"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
