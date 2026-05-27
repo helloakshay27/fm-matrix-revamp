@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { WeekPicker } from './WeekPicker';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 interface MemberReport {
@@ -44,6 +43,8 @@ interface WeekHistory {
     missed: number;
     total: number;
     member_reports: MemberReport[];
+    config?: HistoryConfig;
+    meeting_key?: string;
 }
 
 interface HistoryConfig {
@@ -52,11 +53,12 @@ interface HistoryConfig {
     meeting_time: string;
     day_of_week: number;
     duration_minutes: number;
-    meeting_head: { id: number; name: string };
+    meeting_head?: { id: number; name: string };
+    meeting_heads?: Array<{ id: number; name: string }>;
 }
 
 interface HistoryResponse {
-    config: HistoryConfig;
+    config?: HistoryConfig;
     history: WeekHistory[];
 }
 
@@ -81,6 +83,13 @@ const getISOWeekKey = (date: Date) => {
     return `${year}-W${String(week).padStart(2, '0')}`;
 };
 
+const formatDateInputValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 const getBaseUrl = () => {
     const rawBase = localStorage.getItem('baseUrl') || '';
     if (!rawBase) return '';
@@ -89,6 +98,16 @@ const getBaseUrl = () => {
 
 const getMemberDetailJournalId = (member: MemberReport) =>
     member.journal_id || member.weekly_report?.id || null;
+
+const parseMeetingConfigs = (raw: any): HistoryConfig[] => {
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw?.data)) return raw.data;
+    if (raw?.data && typeof raw.data === 'object') return [raw.data];
+    return [];
+};
+
+const getMeetingHeadLabel = (config?: HistoryConfig) =>
+    config?.meeting_head?.name || config?.meeting_heads?.map((head) => head.name).filter(Boolean).join(', ') || '';
 
 const isMeetingSubmitted = (entry: WeekHistory) =>
     entry.member_reports.some((member) => !!member.meeting_journal_id);
@@ -310,6 +329,9 @@ const WeekCard = ({ entry }: { entry: WeekHistory }) => {
                 <div className="min-w-[110px]">
                     <span className="text-sm font-bold text-[#DA7756]">{entry.week}, {entry.year}</span>
                     <p className="text-xs text-gray-400 font-medium">{entry.label}</p>
+                    {entry.config?.name && (
+                        <p className="mt-1 text-[11px] font-semibold text-gray-600">{entry.config.name}</p>
+                    )}
                 </div>
 
                 {/* Progress bar */}
@@ -466,11 +488,47 @@ const MeetingHistory = ({ initialWeekDate, onWeekDateChange }: MeetingHistoryPro
         setLoading(true);
         try {
             const { week, year } = getISOWeek(currentWeek);
-            const res = await axios.get(`${apiBase()}/user_journals/weekly_history`, {
-                headers: getHeaders(),
-                params: { week: `${year}-W${String(week).padStart(2, '0')}` },
+            const weekParam = `${year}-W${String(week).padStart(2, '0')}`;
+            const meetingsRes = await axios.get(`${apiBase()}/weekly_meeting_configs`, { headers: getHeaders() });
+            const meetingConfigs = parseMeetingConfigs(meetingsRes.data);
+
+            if (meetingConfigs.length === 0) {
+                const res = await axios.get(`${apiBase()}/user_journals/weekly_history`, {
+                    headers: getHeaders(),
+                    params: { week: weekParam },
+                });
+                setHistoryData(res.data?.data ?? res.data ?? null);
+                return;
+            }
+
+            const responses = await Promise.all(
+                meetingConfigs.map(async (meetingConfig) => {
+                    try {
+                        const res = await axios.get(`${apiBase()}/user_journals/weekly_history`, {
+                            headers: getHeaders(),
+                            params: {
+                                week: weekParam,
+                                meeting_id: String(meetingConfig.id),
+                                meeting_config_id: String(meetingConfig.id),
+                            },
+                        });
+                        const data: HistoryResponse = res.data?.data ?? res.data ?? { history: [] };
+                        const config = data.config || meetingConfig;
+                        return (data.history ?? []).map((entry) => ({
+                            ...entry,
+                            config,
+                            meeting_key: `${config.id}-${entry.year}-${entry.week}`,
+                        }));
+                    } catch (historyError) {
+                        console.error('Failed to load meeting history for config', meetingConfig.id, historyError);
+                        return [];
+                    }
+                })
+            );
+
+            setHistoryData({
+                history: responses.flat(),
             });
-            setHistoryData(res.data?.data ?? res.data ?? null);
         } catch (err) {
             console.error('Failed to load meeting history', err);
             toast.error('Failed to load meeting history');
@@ -486,8 +544,22 @@ const MeetingHistory = ({ initialWeekDate, onWeekDateChange }: MeetingHistoryPro
     const handleNextWeek = () =>
         setCurrentWeek(d => new Date(d.getTime() + 7 * 24 * 60 * 60 * 1000));
 
-    const history = historyData?.history ?? [];
-    const config  = historyData?.config;
+    const selectedWeekMeta = getISOWeek(currentWeek);
+    const selectedWeekLabel = `W${String(selectedWeekMeta.week).padStart(2, '0')}`;
+    const history = (historyData?.history ?? []).filter((entry) =>
+        entry.year === selectedWeekMeta.year && entry.week === selectedWeekLabel
+    );
+    const rawConfig = historyData?.config;
+    const meetingHeadLabel = getMeetingHeadLabel(rawConfig);
+    const config = rawConfig
+        ? {
+            ...rawConfig,
+            meeting_head: rawConfig.meeting_head?.name ? rawConfig.meeting_head : { id: 0, name: meetingHeadLabel },
+        }
+        : undefined;
+    const historySubtitle = config
+        ? [config.name, meetingHeadLabel].filter(Boolean).join(' · ')
+        : 'All weekly meetings';
 
     return (
         <div className="bg-white border border-gray-100 rounded-xl p-4 sm:p-6 shadow-sm space-y-6 mt-6 max-w-full overflow-x-hidden">
@@ -515,7 +587,15 @@ const MeetingHistory = ({ initialWeekDate, onWeekDateChange }: MeetingHistoryPro
                         >
                             <ChevronLeft className="w-4 h-4 text-gray-600" />
                         </Button>
-                        <WeekPicker currentWeek={currentWeek} onWeekChange={setCurrentWeek} />
+                        <input
+                            type="date"
+                            value={formatDateInputValue(currentWeek)}
+                            onChange={(event) => {
+                                if (!event.target.value) return;
+                                setCurrentWeek(new Date(`${event.target.value}T00:00:00`));
+                            }}
+                            className="h-9 rounded-[8px] border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 shadow-sm outline-none focus:border-[#DA7756]/60 focus:ring-2 focus:ring-[#DA7756]/15"
+                        />
                         <Button
                             variant="outline"
                             size="icon"
@@ -556,7 +636,7 @@ const MeetingHistory = ({ initialWeekDate, onWeekDateChange }: MeetingHistoryPro
             ) : (
                 <div className="space-y-3">
                     {history.map(entry => (
-                        <WeekCard key={`${entry.year}-${entry.week}`} entry={entry} />
+                        <WeekCard key={entry.meeting_key || `${entry.config?.id || 'meeting'}-${entry.year}-${entry.week}`} entry={entry} />
                     ))}
                 </div>
             )}

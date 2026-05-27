@@ -30,6 +30,8 @@ interface User {
     id: number;
     full_name: string;
     has_won_reward?: boolean;
+    email: string;
+    entity_title: string;
 }
 
 const REWARD_TYPES = ["coupon", "points", "none"];
@@ -376,7 +378,7 @@ const PulseContestRewardCreate = () => {
                                         ) : (
                                             users.map((u) => (
                                                 <MenuItem key={u.id} value={String(u.id)} disabled={u.has_won_reward}>
-                                                    {u.full_name}
+                                                    {u.email} - {u.entity_title}
                                                 </MenuItem>
                                             ))
                                         )}

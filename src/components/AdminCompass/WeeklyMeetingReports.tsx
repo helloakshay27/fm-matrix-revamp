@@ -80,7 +80,7 @@ const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?:
 
 // ── Main component ─────────────────────────────────────────────────────────────
 const WeeklyMeetingReports = () => {
-    const [meetingId, setMeetingId]   = useState('all')
+    const [meetingId, setMeetingId]   = useState('')
     const [period, setPeriod]         = useState('last_12_weeks')
     const [meetings, setMeetings]     = useState<MeetingConfig[]>([])
     const [reportData, setReportData] = useState<ReportData | null>(null)
@@ -105,7 +105,7 @@ const WeeklyMeetingReports = () => {
                 setMeetings(list)
                 if (list.length > 0) {
                     const nextMeeting = pickDefaultMeeting(list)
-                    setMeetingId(prev => prev === 'all' ? String(nextMeeting.id) : prev)
+                    setMeetingId(prev => prev || String(nextMeeting.id))
                 }
             } catch (err) {
                 console.error('Failed to load meetings', err)
@@ -116,10 +116,13 @@ const WeeklyMeetingReports = () => {
 
     // Fetch report data whenever filters change
     const fetchReport = useCallback(async () => {
+        if (!meetingId) {
+            setReportData(null)
+            return
+        }
         setLoading(true)
         try {
-            const params: Record<string, string> = { period }
-            if (meetingId !== 'all') params.meeting_id = meetingId
+            const params: Record<string, string> = { period, meeting_id: meetingId }
 
             const res = await axios.get(`${apiBase()}/user_journals/weekly_meeting_report`, {
                 headers: getHeaders(),
@@ -159,7 +162,6 @@ const WeeklyMeetingReports = () => {
                             <SelectValue placeholder="Select Meeting" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-[#DA7756]/20">
-                            <SelectItem value="all">All Meetings</SelectItem>
                             {meetings.map(m => (
                                 <SelectItem key={m.id} value={String(m.id)}>{m.name}</SelectItem>
                             ))}

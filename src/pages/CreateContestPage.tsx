@@ -90,11 +90,50 @@ export const CreateContestPage: React.FC = () => {
 
   // Form data ────────────────────────────────────────────────────────────────
   const [contestName, setContestName] = useState("");
+  const [nameValidating, setNameValidating] = useState(false);
+  const [nameExists, setNameExists] = useState<boolean | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [contestDescription, setContestDescription] = useState("");
   const [contestType, setContestType] = useState("");
   const [usageType, setUsageType] = useState("");
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
-  const [winningProbabilityDisplay, setWinningProbabilityDisplay] = useState("0");
+
+  const handleContestNameChange = (value: string) => {
+    setContestName(value);
+    setNameExists(null);
+    setNameError(null);
+
+    if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
+
+    if (!value.trim()) return;
+
+    nameDebounceRef.current = setTimeout(async () => {
+      setNameValidating(true);
+      try {
+        const base = localStorage.getItem("baseUrl") || "";
+        const tok = localStorage.getItem("token") || "";
+        const res = await axios.post(
+          `https://${base}/contests/validate_name.json`,
+          { contest: { name: value.trim() } },
+          { headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" } }
+        );
+        setNameExists(res.data?.exists ?? false);
+        setNameError(null);
+      } catch (error: any) {
+        if (error.response?.status === 422) {
+          const errors = error.response.data?.errors;
+          setNameError(Array.isArray(errors) ? errors[0] : "Name has already been taken");
+          setNameExists(true);
+        } else {
+          setNameExists(null);
+          setNameError(null);
+        }
+      } finally {
+        setNameValidating(false);
+      }
+    }, 500);
+  };
 
   // Reset redemption document when contest type changes away from Scratch
   // Also adjust offers count based on contest type
@@ -110,7 +149,6 @@ export const CreateContestPage: React.FC = () => {
     if (newType !== "Spin") {
       setUsersCap("");
       setAttemptsRequired("");
-      setWinningProbabilityDisplay("0");
     }
 
     // Reset redemption text for non-Scratch types
@@ -415,7 +453,10 @@ export const CreateContestPage: React.FC = () => {
     }
 
     // Add prizes_attributes
-    // Expand offers — flatten comma-separated coupon codes into individual entries
+    // Equal probability per offer: 100 / numberOfOffers
+    // If an offer has multiple coupons, that offer's share is split equally across each coupon
+    const baseProbabilityPerOffer = offers.length > 0 ? 100 / offers.length : 0;
+
     const expandedOffers: any[] = [];
     offers.forEach((offer) => {
       if (offer.rewardType === "Coupon Code") {
@@ -423,23 +464,14 @@ export const CreateContestPage: React.FC = () => {
           .split(",")
           .map((code) => code.trim())
           .filter((code) => code.length > 0);
+        const probPerCoupon = coupons.length > 0 ? baseProbabilityPerOffer / coupons.length : baseProbabilityPerOffer;
         coupons.forEach((coupon) => {
-          expandedOffers.push({ ...offer, couponCode: coupon });
+          expandedOffers.push({ ...offer, couponCode: coupon, _computedProb: probPerCoupon });
         });
       } else {
-        expandedOffers.push({ ...offer });
+        expandedOffers.push({ ...offer, _computedProb: baseProbabilityPerOffer });
       }
     });
-
-    // For Spin: total win probability is entered by user; divide it equally across
-    // all expanded offers. The leftover (100 - winProb) goes as a single "none" entry.
-    let spinProbPerOffer: number | null = null;
-    let spinRemainder: number | null = null;
-    if (contestType === "Spin") {
-      const totalWin = Math.min(100, Math.max(0, Number(winningProbabilityDisplay) || 0));
-      spinProbPerOffer = expandedOffers.length > 0 ? totalWin / expandedOffers.length : 0;
-      spinRemainder = 100 - totalWin;
-    }
 
     expandedOffers.forEach((offer, index) => {
       formData.append(`contest[prizes_attributes][${index}][title]`, offer.offerTitle.trim());
@@ -457,10 +489,8 @@ export const CreateContestPage: React.FC = () => {
         formData.append(`contest[prizes_attributes][${index}][partner_name]`, offer.partner.trim());
       }
 
-      if (contestType === "Spin" && spinProbPerOffer !== null) {
-        formData.append(`contest[prizes_attributes][${index}][probability_value]`, String(spinProbPerOffer));
-        formData.append(`contest[prizes_attributes][${index}][probability_out_of]`, "100");
-      }
+      formData.append(`contest[prizes_attributes][${index}][probability_value]`, String(offer._computedProb));
+      formData.append(`contest[prizes_attributes][${index}][probability_out_of]`, "100");
 
       formData.append(`contest[prizes_attributes][${index}][position]`, String(index + 1));
       formData.append(`contest[prizes_attributes][${index}][active]`, "true");
@@ -472,17 +502,6 @@ export const CreateContestPage: React.FC = () => {
         formData.append(`contest[prizes_attributes][${index}][validity]`, offer.validity);
       }
     });
-
-    // For Spin: append the "none" remainder entry after all real offers
-    if (contestType === "Spin" && spinRemainder !== null) {
-      const noneIndex = expandedOffers.length;
-      formData.append(`contest[prizes_attributes][${noneIndex}][title]`, "Better luck next time!");
-      formData.append(`contest[prizes_attributes][${noneIndex}][reward_type]`, "none");
-      formData.append(`contest[prizes_attributes][${noneIndex}][probability_value]`, String(spinRemainder));
-      formData.append(`contest[prizes_attributes][${noneIndex}][probability_out_of]`, "100");
-      formData.append(`contest[prizes_attributes][${noneIndex}][position]`, String(noneIndex + 1));
-      formData.append(`contest[prizes_attributes][${noneIndex}][active]`, "true");
-    }
 
     // Add terms and conditions text if present
     if (termsText.trim()) {
@@ -563,15 +582,23 @@ export const CreateContestPage: React.FC = () => {
     switch (currentStep) {
       case 1:
         if (!contestName.trim()) {
-          alert("Please enter contest name");
+          sonnerToast.error("Please enter contest name");
+          return false;
+        }
+        if (nameValidating) {
+          sonnerToast.error("Please wait while we validate the contest name");
+          return false;
+        }
+        if (nameExists === true) {
+          sonnerToast.error(nameError || "This contest name already exists. Please choose a different name.");
           return false;
         }
         if (!contestDescription.trim()) {
-          alert("Please enter contest description");
+          sonnerToast.error("Please enter contest description");
           return false;
         }
         if (!contestType) {
-          alert("Please select contest type");
+          sonnerToast.error("Please select contest type");
           return false;
         }
         return true;
@@ -580,7 +607,7 @@ export const CreateContestPage: React.FC = () => {
         let totalProbability = 0;
         for (const offer of offers) {
           if (!offer.offerTitle.trim()) {
-            alert("Please fill all offer titles");
+            sonnerToast.error("Please fill all offer titles");
             return false;
           }
           if (offer.rewardType === "Coupon Code") {
@@ -589,12 +616,12 @@ export const CreateContestPage: React.FC = () => {
               .map((code) => code.trim())
               .filter((code) => code.length > 0);
             if (coupons.length === 0) {
-              alert("Please enter at least one coupon code (comma-separated) for all offers");
+              sonnerToast.error("Please enter at least one coupon code (comma-separated) for all offers");
               return false;
             }
           }
           if (offer.rewardType === "Points" && !offer.pointsValue.trim()) {
-            alert("Please enter points value for all offers");
+            sonnerToast.error("Please enter points value for all offers");
             return false;
           }
           if (
@@ -602,7 +629,7 @@ export const CreateContestPage: React.FC = () => {
             contestType !== "Special Discount" &&
             !offer.bannerImage
           ) {
-            alert("Please upload a banner image for all offers");
+            sonnerToast.error("Please upload a banner image for all offers");
             return false;
           }
 
@@ -610,7 +637,7 @@ export const CreateContestPage: React.FC = () => {
           const maxAvailable = getMaxAvailableProbability(offer.id);
 
           if (offerProb > maxAvailable) {
-            alert(`Offer "${offer.offerTitle}" has probability ${offerProb.toFixed(2)}% but max available is ${maxAvailable.toFixed(2)}%. Please adjust the probabilities so total equals 100%.`);
+            sonnerToast.error(`Offer "${offer.offerTitle}" has probability ${offerProb.toFixed(2)}% but max available is ${maxAvailable.toFixed(2)}%. Please adjust the probabilities so total equals 100%.`);
             return false;
           }
 
@@ -618,7 +645,7 @@ export const CreateContestPage: React.FC = () => {
         }
 
         if (Math.abs(totalProbability - 100) > 0.01) {
-          alert(`Total winning probability must equal 100%. Current total: ${totalProbability.toFixed(2)}%`);
+          sonnerToast.error(`Total winning probability must equal 100%. Current total: ${totalProbability.toFixed(2)}%`);
           return false;
         }
         return true;
@@ -694,10 +721,46 @@ export const CreateContestPage: React.FC = () => {
                     label="Contest Name"
                     placeholder="Enter Title"
                     value={contestName}
-                    onChange={(e) => setContestName(e.target.value)}
+                    onChange={(e) => handleContestNameChange(e.target.value)}
                     variant="outlined"
                     size="small"
-                    sx={textFieldSx}
+                    error={nameExists === true}
+                    helperText={
+                      nameValidating
+                        ? "Checking availability…"
+                        : nameError
+                          ? `⚠ ${nameError}`
+                          : nameExists === false && contestName.trim()
+                            ? "✓ Name is available"
+                            : ""
+                    }
+                    FormHelperTextProps={{
+                      sx: {
+                        color: nameExists === true ? "#ef4444" : nameExists === false ? "#16a34a" : "#6b7280",
+                        fontWeight: 500,
+                      },
+                    }}
+                    sx={{
+                      ...textFieldSx,
+                      ...(nameExists === true && {
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": { borderColor: "#ef4444" },
+                          "&:hover fieldset": { borderColor: "#ef4444" },
+                          "&.Mui-focused fieldset": { borderColor: "#ef4444" },
+                        },
+                        "& .MuiInputLabel-root": { color: "#ef4444" },
+                        "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
+                      }),
+                      ...(nameExists === false && contestName.trim() && {
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": { borderColor: "#16a34a" },
+                          "&:hover fieldset": { borderColor: "#16a34a" },
+                          "&.Mui-focused fieldset": { borderColor: "#16a34a" },
+                        },
+                        "& .MuiInputLabel-root": { color: "#16a34a" },
+                        "& .MuiInputLabel-root.Mui-focused": { color: "#16a34a" },
+                      }),
+                    }}
                   />
 
                   <FormControl fullWidth size="small" sx={textFieldSx}>
@@ -730,19 +793,6 @@ export const CreateContestPage: React.FC = () => {
                     </FormControl>
                   )}
 
-                  {contestType === "Spin" && (
-                    <TextField
-                      fullWidth
-                      label="Winning Probability (%)"
-                      value={winningProbabilityDisplay}
-                      onChange={(e) => setWinningProbabilityDisplay(e.target.value)}
-                      variant="outlined"
-                      size="small"
-                      type="number"
-                      inputProps={{ min: 0, max: 100 }}
-                      sx={textFieldSx}
-                    />
-                  )}
                 </div>
 
                 <div className="mt-6">
@@ -914,6 +964,7 @@ export const CreateContestPage: React.FC = () => {
                       >
                         <MenuItem value="Coupon Code">Coupon Code</MenuItem>
                         <MenuItem value="Points">Points</MenuItem>
+                        <MenuItem value="None">None</MenuItem>
                       </MuiSelect>
                     </FormControl>
 
@@ -1024,6 +1075,42 @@ export const CreateContestPage: React.FC = () => {
                       size="small"
                     />
 
+
+                    {contestType === "Spin" && (() => {
+                      const maxAvailable = getMaxAvailableProbability(offer.id);
+                      const currentValue = Number(offer.winningProbability) || 0;
+                      const isExceeded = currentValue > maxAvailable;
+                      const suggestedValue = calculateBaseProbability().toFixed(2);
+
+                      return (
+                        <TextField
+                          fullWidth
+                          label="Winning Probability (%)"
+                          value={offer.winningProbability}
+                          placeholder={suggestedValue}
+                          onChange={(e) =>
+                            updateOffer(offer.id, "winningProbability", e.target.value)
+                          }
+                          variant="outlined"
+                          size="small"
+                          type="number"
+                          inputProps={{ min: 0, max: maxAvailable, step: 0.01 }}
+                          error={isExceeded}
+                          sx={{
+                            ...textFieldSx,
+                            ...(isExceeded && {
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": { borderColor: "#ef4444" },
+                                "&:hover fieldset": { borderColor: "#ef4444" },
+                                "&.Mui-focused fieldset": { borderColor: "#ef4444" },
+                              },
+                              "& .MuiInputLabel-root": { color: "#ef4444" },
+                              "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
+                            }),
+                          }}
+                        />
+                      );
+                    })()}
 
                     <TextField
                       fullWidth

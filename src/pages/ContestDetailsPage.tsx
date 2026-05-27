@@ -290,7 +290,7 @@ export const ContestDetailsPage: React.FC = () => {
             {
               contest.content_type === "random" && (
                 <Button
-                  onClick={handleDryRun}
+                  onClick={() => navigate(`/pulse/contests/${id}/run`)}
                   variant="outline"
                   className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 px-4 py-2"
                 >
