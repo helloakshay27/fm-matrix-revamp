@@ -142,6 +142,7 @@ interface WeeklyMeetingData {
         department: string | null;
         status: string;
         journal_id: number | null;
+        meeting_journal_id?: number | null;
         checked_in_meeting?: boolean;
         report_data: any;
         weekly_report: any;
@@ -230,10 +231,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
             .map((report: any) => getReportSelectionKey(report))
             .filter(Boolean);
 
-        setSelectedReports((prev) => {
-            const combined = new Set([...prev, ...checkedInIds]);
-            return Array.from(combined);
-        });
+        setSelectedReports(checkedInIds);
     }, [weeklyData]);
 
     const getSelectedReportRows = () => {
@@ -504,10 +502,22 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
         })),
     });
 
+    const getMeetingJournalId = (report: any) => report?.meeting_journal_id || report?.journal_id || null;
+
+    const normalizeMeetingJournal = (report: any) => report
+        ? {
+            ...report,
+            journal_id: getMeetingJournalId(report),
+        }
+        : null;
+
     const getSubmittedMeetingReport = (reports: any[] = []) =>
-        reports.find((report: any) => report.journal_id && report.report_data?.meeting_notes)
-        || reports.find((report: any) => report.journal_id && report.checked_in_meeting === true)
-        || null;
+        normalizeMeetingJournal(
+            reports.find((report: any) => getMeetingJournalId(report) && report.report_data?.meeting_notes)
+            || reports.find((report: any) => getMeetingJournalId(report) && report.checked_in_meeting === true)
+            || reports.find((report: any) => getMeetingJournalId(report))
+            || null
+        );
 
     const getSubmittedMeetingJournal = () => {
         const reports = weeklyData?.member_reports || [];
@@ -527,7 +537,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
     const findSubmittedMeetingJournalFromDetails = async (reports: any[], token: string) => {
         const candidateIds = [...new Set(
             reports
-                .map((report: any) => report?.journal_id)
+                .flatMap((report: any) => [report?.meeting_journal_id, report?.journal_id])
                 .filter((id: any) => Number.isFinite(Number(id)))
         )];
 
@@ -661,6 +671,8 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
 
         return {
             meeting_id: selectedMeeting,
+            meeting_config_id: Number(selectedMeeting),
+            meeting_config_type: 'WeeklyMeetingConfig',
             week: getWeekString(currentWeek),
             week_number: weeklyData.week.replace('W', ''),
             year: weeklyData.year,
@@ -768,6 +780,14 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
             );
 
             console.log('Meeting saved successfully:', response.data);
+            const savedMeetingJournal = response.data?.data ?? response.data;
+            if (savedMeetingJournal?.id) {
+                setSubmittedMeetingJournalOverride({
+                    ...savedMeetingJournal,
+                    journal_id: savedMeetingJournal.id,
+                    report_data: savedMeetingJournal.report_data || dynamicPayload.report_data,
+                });
+            }
             toast.success('Meeting notes saved successfully');
             onMeetingSaved?.();
         } catch (error: any) {
@@ -1059,6 +1079,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
             try {
                 setWeeklyDataLoading(true);
                 setSubmittedMeetingJournalOverride(null);
+                setSelectedReports([]);
                 const baseUrl = getBaseUrl();
                 const token = localStorage.getItem('token');
 

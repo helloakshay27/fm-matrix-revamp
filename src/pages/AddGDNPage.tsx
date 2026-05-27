@@ -21,6 +21,7 @@ interface GDNInventoryItem {
   assetId: string;
   consumingIn: string;
   reason: string;
+  comment: string;
 }
 
 interface InventoryOption {
@@ -174,6 +175,7 @@ const emptyInventoryItem = (): GDNInventoryItem => ({
   assetId: "",
   consumingIn: "",
   reason: "",
+  comment: "",
 });
 
 const SectionHeader = ({ title }: { title: string }) => (
@@ -347,10 +349,11 @@ export const AddGDNPage = () => {
           string,
           {
             pms_inventory_id: number;
-            company_staff_id: number;
+            // company_staff_id: number;
             quantity: number;
             // pms_asset_id: number;
             gdn_status: string;
+            reason: string;
             // consuming_in: string;
             // reason: string;
           }
@@ -358,10 +361,11 @@ export const AddGDNPage = () => {
       >((attributes, item, index) => {
         attributes[String(index)] = {
           pms_inventory_id: Number(item.inventory),
-          company_staff_id: Number(item.companyStaffId),
+          // company_staff_id: Number(item.companyStaffId),
           quantity: Number(item.quantity),
           // pms_asset_id: Number(item.assetId),
           gdn_status: "Pending",
+          reason: item.comment.trim(),
           // consuming_in: item.consumingIn.trim(),
           // reason: item.reason.trim(),
         };
@@ -607,6 +611,21 @@ export const AddGDNPage = () => {
                     />
 
                     <TextField
+                      label="Comment"
+                      value={item.comment}
+                      onChange={(event) =>
+                        updateInventoryItem(index, {
+                          comment: event.target.value,
+                        })
+                      }
+                      placeholder="Enter Comment"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={compactFieldSx}
+                    />
+
+                    {/* <TextField
                       label={requiredLabel("Company Staff ID")}
                       type="number"
                       value={item.companyStaffId}
@@ -620,7 +639,7 @@ export const AddGDNPage = () => {
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
                       sx={compactFieldSx}
-                    />
+                    /> */}
 
                     {/*
                     <TextField

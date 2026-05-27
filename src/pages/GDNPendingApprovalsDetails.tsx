@@ -333,14 +333,14 @@ export const GDNPendingApprovalsDetails = () => {
       {shouldShowButtons && (
         <div className="flex items-center justify-center gap-3 mt-6">
           <Button
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-green-600 text-white py-2 px-4 rounded-md"
             disabled={submitting}
             onClick={() => updateApproval(true)}
           >
             Approve
           </Button>
           <Button
-            className="bg-[#DC3545] hover:bg-[#C82333] text-white"
+            className="bg-[#C72030] text-white py-2 px-4 rounded-md"
             disabled={submitting}
             onClick={() => setOpenRejectDialog(true)}
           >
