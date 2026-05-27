@@ -299,10 +299,13 @@ const fetchDailyMeetingStatusForCalendar = async (dateStr, meetingId) => {
 };
 
 // ── MAIN COMPONENT ──
-const ReportsTab = () => {
+const ReportsTab = ({
+  selectedMeetingId: externalSelectedMeetingId,
+  onSelectedMeetingChange,
+} = {}) => {
   // Main States
   const [dynamicMeetings, setDynamicMeetings] = useState([]);
-  const [selectedMeetingId, setSelectedMeetingId] = useState("");
+  const [selectedMeetingId, setSelectedMeetingIdState] = useState(externalSelectedMeetingId || "");
   const [isFetchingMeetings, setIsFetchingMeetings] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("last_7_days");
 
@@ -317,6 +320,18 @@ const ReportsTab = () => {
   const [weeklyStatusData, setWeeklyStatusData] = useState([]);
   const [isCalendarLoading, setIsCalendarLoading] = useState(false);
 
+  useEffect(() => {
+    if (!externalSelectedMeetingId) return;
+    setSelectedMeetingIdState((current) =>
+      current === externalSelectedMeetingId ? current : externalSelectedMeetingId
+    );
+  }, [externalSelectedMeetingId]);
+
+  const setSelectedMeetingId = (meetingId) => {
+    setSelectedMeetingIdState(meetingId);
+    if (meetingId) onSelectedMeetingChange?.(String(meetingId));
+  };
+
   // 1. Fetch Meetings List on Mount
   useEffect(() => {
     const loadMeetingsDropdown = async () => {
@@ -327,7 +342,9 @@ const ReportsTab = () => {
         if (fetchedList.length > 0) {
           // 🛠 FIX: Look for default meeting, else select the first one
           const defaultMeeting = fetchedList.find((m) => m.is_default);
-          if (defaultMeeting) {
+          if (externalSelectedMeetingId) {
+            setSelectedMeetingId(String(externalSelectedMeetingId));
+          } else if (defaultMeeting) {
             setSelectedMeetingId(String(defaultMeeting.id));
           } else {
             setSelectedMeetingId(String(fetchedList[0].id));
@@ -340,7 +357,7 @@ const ReportsTab = () => {
       }
     };
     loadMeetingsDropdown();
-  }, []);
+  }, [externalSelectedMeetingId]);
 
   // 2. Fetch Main Report
   const loadReport = useCallback(async () => {

@@ -152,11 +152,13 @@ interface WeeklyMeetingData {
 interface WeeklyReviewsProps {
     initialWeekDate?: Date;
     onWeekDateChange?: (date: Date) => void;
+    selectedMeetingId?: string;
+    onSelectedMeetingChange?: (meetingId: string) => void;
     onMeetingSaved?: () => void;
 }
 
-const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: WeeklyReviewsProps = {}) => {
-    const [selectedMeeting, setSelectedMeeting] = useState('');
+const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: externalSelectedMeetingId, onSelectedMeetingChange, onMeetingSaved }: WeeklyReviewsProps = {}) => {
+    const [selectedMeeting, setSelectedMeetingState] = useState(externalSelectedMeetingId || '');
     const [meetingConfigs, setMeetingConfigs] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [weeklyDataLoading, setWeeklyDataLoading] = useState(false);
@@ -209,6 +211,18 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
                 : initialWeekDate
         );
     }, [initialWeekDate]);
+
+    useEffect(() => {
+        if (!externalSelectedMeetingId) return;
+        setSelectedMeetingState((current) =>
+            current === externalSelectedMeetingId ? current : externalSelectedMeetingId
+        );
+    }, [externalSelectedMeetingId]);
+
+    const setSelectedMeeting = (meetingId: string) => {
+        setSelectedMeetingState(meetingId);
+        if (meetingId) onSelectedMeetingChange?.(String(meetingId));
+    };
 
     useEffect(() => {
         if (selectedMeeting || meetingConfigs.length === 0) return;
@@ -1055,7 +1069,12 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, onMeetingSaved }: We
                     const defaultMeeting = configs.find((config: any) => config.is_default && config.active !== false);
                     const firstActiveMeeting = configs.find((config: any) => config.active !== false);
                     const nextMeeting = defaultMeeting || firstActiveMeeting || configs[0];
-                    setSelectedMeeting((current) => current || String(nextMeeting.id));
+                    setSelectedMeetingState((current) => {
+                        if (current) return current;
+                        const nextMeetingId = String(nextMeeting.id);
+                        onSelectedMeetingChange?.(nextMeetingId);
+                        return nextMeetingId;
+                    });
                 }
             } catch (error) {
                 console.error('Error fetching weekly meetings:', error)
