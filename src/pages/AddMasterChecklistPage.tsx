@@ -387,32 +387,35 @@ export const AddMasterChecklistPage = () => {
             ))}
 
             <div className="flex justify-end">
-              <Button
+              <button
                 type="button"
                 onClick={() => addQuestion(section.id)}
-                className="!bg-[#da7756] !text-white hover:!bg-[#C4623C] h-9 px-4 text-sm font-medium flex items-center gap-2"
+                style={{ backgroundColor: '#da7756' }}
+                className="text-white rounded-md h-10 px-4 text-sm font-medium flex items-center gap-2 hover:opacity-90 transition-opacity"
               >
-                <Plus className="w-4 h-4" /> Action Question
-              </Button>
+                <Plus className="w-4 h-4" /> Add Question
+              </button>
             </div>
           </div>
         ))}
 
         <div className="flex flex-wrap justify-between gap-4">
-          <Button
+          <button
             type="button"
             onClick={addTaskSection}
-            className="!bg-[#da7756] !text-white hover:!bg-[#C4623C] h-9 px-4 text-sm font-medium flex items-center gap-2"
+            style={{ backgroundColor: '#da7756' }}
+            className="text-white rounded-md h-10 px-5 text-sm font-medium flex items-center gap-2 hover:opacity-90 transition-opacity"
           >
-            <Plus className="w-4 h-4" /> Action Section
-          </Button>
+            <Plus className="w-4 h-4" /> Add Task
+          </button>
 
-          <Button
+          <button
             type="submit"
-            className="!bg-[#da7756] !text-white hover:!bg-[#C4623C] h-9 px-4 text-sm font-medium flex items-center gap-2"
+            style={{ backgroundColor: '#da7756' }}
+            className="text-white rounded-md h-10 px-6 text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             Submit
-          </Button>
+          </button>
         </div>
       </form>
     </div>

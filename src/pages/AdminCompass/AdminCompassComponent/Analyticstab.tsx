@@ -248,15 +248,30 @@ const fetchDynamicMeetings = async () => {
 };
 
 // ── MAIN COMPONENT ──
-const AnalyticsTab = () => {
+const AnalyticsTab = ({
+  selectedMeetingId: externalSelectedMeetingId,
+  onSelectedMeetingChange,
+} = {}) => {
   const [dynamicMeetings, setDynamicMeetings] = useState([]);
-  const [selectedMeetingId, setSelectedMeetingId] = useState("");
+  const [selectedMeetingId, setSelectedMeetingIdState] = useState(externalSelectedMeetingId || "");
   const [isFetchingMeetings, setIsFetchingMeetings] = useState(false);
   const [period, setPeriod] = useState("last_14_days");
 
   const [analytics, setAnalytics] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState(null);
+
+  useEffect(() => {
+    if (!externalSelectedMeetingId) return;
+    setSelectedMeetingIdState((current) =>
+      current === externalSelectedMeetingId ? current : externalSelectedMeetingId
+    );
+  }, [externalSelectedMeetingId]);
+
+  const setSelectedMeetingId = (meetingId) => {
+    setSelectedMeetingIdState(meetingId);
+    if (meetingId) onSelectedMeetingChange?.(String(meetingId));
+  };
 
   // 1. Fetch Meetings List on Mount
   useEffect(() => {
@@ -268,7 +283,9 @@ const AnalyticsTab = () => {
         if (fetchedList.length > 0) {
           // 🛠 FIX: Look for default meeting, else select the first one
           const defaultMeeting = fetchedList.find((m) => m.is_default);
-          if (defaultMeeting) {
+          if (externalSelectedMeetingId) {
+            setSelectedMeetingId(String(externalSelectedMeetingId));
+          } else if (defaultMeeting) {
             setSelectedMeetingId(String(defaultMeeting.id));
           } else {
             setSelectedMeetingId(String(fetchedList[0].id));
@@ -281,7 +298,7 @@ const AnalyticsTab = () => {
       }
     };
     loadMeetingsDropdown();
-  }, []);
+  }, [externalSelectedMeetingId]);
 
   // 2. Load Analytics Data
   useEffect(() => {
