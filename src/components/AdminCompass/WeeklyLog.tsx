@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -13,6 +13,8 @@ import {
     Star,
     Loader2,
     X,
+    Check,
+    ChevronDown,
 } from 'lucide-react';
 import {
     Select,
@@ -71,6 +73,93 @@ interface MeetingConfig {
     id: number;
     name: string;
 }
+
+interface SearchableSelectOption {
+    value: string;
+    label: string;
+}
+
+const SearchableSelect = ({
+    value,
+    onChange,
+    options,
+    placeholder = 'Search...',
+}: {
+    value: string;
+    onChange: (value: string) => void;
+    options: SearchableSelectOption[];
+    placeholder?: string;
+}) => {
+    const [open, setOpen] = useState(false);
+    const [query, setQuery] = useState('');
+    const ref = useRef<HTMLDivElement>(null);
+    const selected = options.find((option) => option.value === value);
+    const filtered = options.filter((option) =>
+        option.label.toLowerCase().includes(query.trim().toLowerCase())
+    );
+
+    useEffect(() => {
+        const handleOutside = (event: MouseEvent) => {
+            if (ref.current && !ref.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleOutside);
+        return () => document.removeEventListener('mousedown', handleOutside);
+    }, []);
+
+    return (
+        <div ref={ref} className="relative w-[150px]" style={{ zIndex: open ? 50 : 1 }}>
+            <input
+                type="text"
+                value={open ? query : selected?.label || ''}
+                placeholder={placeholder}
+                readOnly={!open}
+                onClick={() => {
+                    setOpen(true);
+                    setQuery('');
+                }}
+                onChange={(event) => {
+                    setQuery(event.target.value);
+                    setOpen(true);
+                }}
+                className="h-8 w-full cursor-pointer rounded-xl border border-[#DA7756]/25 bg-white px-3 pr-8 text-sm font-medium text-neutral-700 outline-none transition-colors placeholder:text-neutral-400 focus:border-[#DA7756]/60 focus:ring-2 focus:ring-[#DA7756]/15"
+            />
+            <ChevronDown
+                className={`pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400 transition-transform ${open ? 'rotate-180' : ''}`}
+            />
+            {open && (
+                <div className="absolute left-0 right-0 top-[calc(100%+4px)] max-h-56 overflow-y-auto rounded-xl border border-gray-200 bg-white py-1 shadow-xl">
+                    {filtered.length === 0 ? (
+                        <div className="px-3 py-2 text-center text-xs font-medium text-neutral-400">
+                            No results found
+                        </div>
+                    ) : (
+                        filtered.map((option) => (
+                            <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => {
+                                    onChange(option.value);
+                                    setOpen(false);
+                                    setQuery('');
+                                }}
+                                className={`flex w-full items-center justify-between px-3 py-2 text-left text-xs font-semibold transition-colors ${
+                                    option.value === value
+                                        ? 'bg-[#fff3ee] text-[#DA7756]'
+                                        : 'text-neutral-700 hover:bg-[#fff8f5] hover:text-[#DA7756]'
+                                }`}
+                            >
+                                <span className="truncate">{option.label}</span>
+                                {option.value === value && <Check className="h-3.5 w-3.5 shrink-0" />}
+                            </button>
+                        ))
+                    )}
+                </div>
+            )}
+        </div>
+    );
+};
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 function getISOWeekStr(date: Date): string {
@@ -591,7 +680,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
 
     // Filter state
     const [search, setSearch]             = useState('');
-    const [meetingId, setMeetingId]       = useState('all');
+    const [meetingId, setMeetingId]       = useState('');
     const [departmentId, setDeptId]       = useState('all');
     const [selectedWeek, setSelectedWeek] = useState(currentWeek);
     const [groupByDept, setGroupByDept]   = useState(false);
@@ -658,7 +747,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                     const defaultMeeting = list.find((meeting: any) => meeting.is_default && meeting.active !== false);
                     const firstActiveMeeting = list.find((meeting: any) => meeting.active !== false);
                     const nextMeeting = defaultMeeting || firstActiveMeeting || list[0];
-                    setMeetingId((current) => current === 'all' ? String(nextMeeting.id) : current);
+                    setMeetingId((current) => current || String(nextMeeting.id));
                 }
             } catch (err) {
                 console.error('Failed to load meetings', err);
@@ -669,10 +758,13 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
 
     // Fetch weekly log whenever filters change
     const fetchLog = useCallback(async () => {
+        if (!meetingId) {
+            setLogData(null);
+            return;
+        }
         setLoading(true);
         try {
-            const params: Record<string, string> = { week: selectedWeek };
-            if (meetingId !== 'all')      params.meeting_id    = meetingId;
+            const params: Record<string, string> = { week: selectedWeek, meeting_id: meetingId };
             if (departmentId !== 'all')   params.department_id = departmentId;
             if (debouncedSearch.trim())   params.search        = debouncedSearch.trim();
             if (groupByDept)              params.group_by_dept = 'true';
@@ -697,6 +789,13 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
     const meetingSubmittedCount = meetingSubmittedReports.length;
     const meetingTotalCount = logData?.total ?? reports.length;
     const meetingMissedCount = Math.max(meetingTotalCount - meetingSubmittedCount, 0);
+    const departmentOptions = [
+        { value: 'all', label: 'All Departments' },
+        ...departments.map((department) => ({
+            value: String(department.id),
+            label: department.department_name,
+        })),
+    ];
 
     return (
         <div className="mt-6 space-y-6 rounded-2xl border border-[#DA7756]/20 bg-[#fffaf8] p-4 sm:p-6 shadow-sm max-w-full overflow-x-hidden">
@@ -725,27 +824,19 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                     </div>
 
                     {/* Department */}
-                    <Select value={departmentId} onValueChange={setDeptId}>
-                        <SelectTrigger className="w-[150px] h-8 rounded-xl border border-[#DA7756]/25 bg-white">
-                            <SelectValue placeholder="Department" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Departments</SelectItem>
-                            {departments.map(d => (
-                                <SelectItem key={d.id} value={String(d.id)}>
-                                    {d.department_name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <SearchableSelect
+                        value={departmentId}
+                        onChange={setDeptId}
+                        options={departmentOptions}
+                        placeholder="Search department..."
+                    />
 
                     {/* Meeting */}
                     <Select value={meetingId} onValueChange={setMeetingId}>
                         <SelectTrigger className="w-[150px] h-8 rounded-xl border border-[#DA7756]/25 bg-white">
                             <SelectValue placeholder="Meeting" />
                         </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Meetings</SelectItem>
+                        <SelectContent side="bottom" align="start" avoidCollisions={false} className="max-h-60 overflow-y-auto">
                             {meetings.map(m => (
                                 <SelectItem key={m.id} value={String(m.id)}>
                                     {m.name}
@@ -759,7 +850,7 @@ const WeeklyLog = ({ initialWeekDate, onWeekDateChange }: WeeklyLogProps = {}) =
                         <SelectTrigger className="w-[175px] h-8 rounded-xl border border-[#DA7756]/25 bg-white">
                             <SelectValue placeholder="Select Week" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent side="bottom" align="start" avoidCollisions={false} className="max-h-60 overflow-y-auto">
                             {weekOptions.map(w => (
                                 <SelectItem key={w.value} value={w.value}>
                                     {w.label}
