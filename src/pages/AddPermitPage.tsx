@@ -1907,7 +1907,7 @@ export const AddPermitPage = () => {
 
               sx={fieldStyles}
             /> */}
-            <TextField
+            {/* <TextField
               label="Comment (Optional)"
               value={permitData.comment}
               onChange={(e) => handleInputChange('comment', e.target.value)}
@@ -1915,6 +1915,40 @@ export const AddPermitPage = () => {
               variant="outlined"
               multiline
               sx={{ ...fieldStyles, width: "100%", mb: 1 }}
+            /> */}
+            <TextField
+              label="Comment (Optional)"
+              value={permitData.comment}
+              onChange={(e) => handleInputChange('comment', e.target.value)}
+              fullWidth
+              variant="outlined"
+              multiline
+              minRows={3}
+              sx={{
+                width: '100%',
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '8px',
+                  backgroundColor: 'white',
+                  '& fieldset': {
+                    borderColor: '#e5e7eb',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#9ca3af',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#C72030',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#6b7280',
+                  '&.Mui-focused': {
+                    color: '#C72030',
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  padding: '12px',
+                },
+              }}
             />
           </div>
         </CardContent>
