@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +52,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import axios from "axios";
+import PurchaseDocumentPdf from "./purchasepdftamplate";
 // Types
 interface SalesOrderItem {
   id: number;
@@ -224,6 +227,9 @@ export const RecurringBillDetails = () => {
   const [activeTab, setActiveTab] = useState("order-details");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showApprovalLog, setShowApprovalLog] = useState(false);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+  const recurringBillPdfRef = useRef<HTMLDivElement | null>(null);
   const [transactionRecords, setTransactionRecords] = useState<
     TransactionRecord[]
   >([]);
@@ -336,20 +342,55 @@ export const RecurringBillDetails = () => {
   };
 
   const handlePrint = () => {
-    window.print();
+    setActiveTab("pdf");
+    setTimeout(() => window.print(), 0);
   };
 
-  const handleDownload = () => {
-    sonnerToast.success("Downloading sales order PDF...");
-  };
+  const handleDownload = async () => {
+    try {
+      setPdfGenerating(true);
+      setRenderDownloadPdf(true);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
 
-  const handleSendEmail = () => {
-    sonnerToast.success("Email sent successfully");
-  };
+      if (!recurringBillPdfRef.current) {
+        throw new Error("PDF preview is not ready yet");
+      }
 
-  const handleClone = () => {
-    sonnerToast.success("Sales order cloned successfully");
-    navigate("/accounting/sales-order/create");
+      const canvas = await html2canvas(recurringBillPdfRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`RecurringBill-${salesOrder?.bill_number || id || "download"}.pdf`);
+      sonnerToast.success("Recurring bill PDF downloaded successfully");
+    } catch (error) {
+      console.error("Error generating recurring bill PDF:", error);
+      sonnerToast.error("Failed to download recurring bill PDF");
+    } finally {
+      setPdfGenerating(false);
+      setRenderDownloadPdf(false);
+    }
   };
 
   const handleConvertToBill = () => {
@@ -399,6 +440,13 @@ export const RecurringBillDetails = () => {
 
     return d.toLocaleDateString("en-IN");
   };
+
+  const formatCurrency = (amount?: number | string | null) =>
+    `Rs. ${Number(amount || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -429,6 +477,25 @@ export const RecurringBillDetails = () => {
             <Badge className={`${getStatusColor(salesOrder.status)} border`}>
               {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
             </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setActiveTab("pdf")}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              PDF
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDownload}
+              disabled={pdfGenerating}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {pdfGenerating ? "Downloading..." : "Download PDF"}
+            </Button>
             {(salesOrder as any)?.approval_status?.approval_levels?.length > 0 && (
               <Button
                 size="sm"
@@ -523,6 +590,7 @@ export const RecurringBillDetails = () => {
                 { label: "Vendor Info", value: "customer-info" },
                 { label: "History", value: "history" },
                 { label: "Activity Logs", value: "activity-logs" },
+                { label: "PDF", value: "pdf" },
               ].map((tab) => (
                 <TabsTrigger
                   key={tab.value}
@@ -1124,9 +1192,81 @@ export const RecurringBillDetails = () => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent
+              value="pdf"
+              className="p-3 sm:p-6 space-y-6"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      Recurring Bill PDF
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={handlePrint}>
+                        <Printer className="h-4 w-4 mr-2" />
+                        Print
+                      </Button>
+                      <Button size="sm" onClick={handleDownload} disabled={pdfGenerating}>
+                        <Download className="h-4 w-4 mr-2" />
+                        {pdfGenerating ? "Downloading..." : "Download PDF"}
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-auto rounded-lg border bg-muted/30 p-4">
+                    <div className="mx-auto bg-white" ref={activeTab === "pdf" ? recurringBillPdfRef : null}>
+                      <PurchaseDocumentPdf
+                        documentTitle="RECURRING BILL"
+                        documentNumber={salesOrder.bill_number}
+                        documentDate={(salesOrder as any)?.bill_date || (salesOrder as any)?.recurring_detail?.start_date}
+                        status={salesOrder.status}
+                        vendorName={(salesOrder as any)?.vendor_name}
+                        partyLabel="Vendor"
+                        items={salesOrder.item_details || []}
+                        data={salesOrder}
+                        taxRows={taxRows}
+                        formatDate={formatDate}
+                        formatCurrency={formatCurrency}
+                        secondaryDateLabel="Start Date"
+                        secondaryDate={(salesOrder as any)?.recurring_detail?.start_date}
+                        referenceNumber={(salesOrder as any)?.order_number}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      {renderDownloadPdf && activeTab !== "pdf" && (
+        <div className="fixed left-[-10000px] top-0">
+          <div ref={recurringBillPdfRef}>
+            <PurchaseDocumentPdf
+              documentTitle="RECURRING BILL"
+              documentNumber={salesOrder.bill_number}
+              documentDate={(salesOrder as any)?.bill_date || (salesOrder as any)?.recurring_detail?.start_date}
+              status={salesOrder.status}
+              vendorName={(salesOrder as any)?.vendor_name}
+              partyLabel="Vendor"
+              items={salesOrder.item_details || []}
+              data={salesOrder}
+              taxRows={taxRows}
+              formatDate={formatDate}
+              formatCurrency={formatCurrency}
+              secondaryDateLabel="Start Date"
+              secondaryDate={(salesOrder as any)?.recurring_detail?.start_date}
+              referenceNumber={(salesOrder as any)?.order_number}
+            />
+          </div>
+        </div>
+      )}
 
       <Dialog open={showApprovalLog} onOpenChange={setShowApprovalLog}>
         <DialogContent className="max-w-4xl">
