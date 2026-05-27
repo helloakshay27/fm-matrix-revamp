@@ -193,53 +193,17 @@ export const EditContestPage: React.FC = () => {
             (p: any) => p.reward_type !== "none"
           );
 
-          // For Spin: derive the total win probability from the sum of real prizes
+          let mappedOffers: OfferData[];
 
-          // Group coupon prizes by title so multiple coupon records for the
-          // same prize appear as one card with capsule tags.
-          const couponGroups: Record<string, any[]> = {};
-          const nonCouponPrizes: any[] = [];
-
-          realPrizes.forEach((prize: any) => {
-            if (prize.reward_type === "coupon") {
-              const key = prize.title || "";
-              if (!couponGroups[key]) couponGroups[key] = [];
-              couponGroups[key].push(prize);
-            } else {
-              nonCouponPrizes.push(prize);
-            }
-          });
-
-          const mappedOffers: OfferData[] = [
-            ...Object.values(couponGroups).map((prizes: any[]) => {
-              const rep = prizes[0];
-              return {
-                id: String(rep.id),
-                serverId: rep.id,
-                couponServerIds: prizes.map((p: any) => p.id),
-                existingBannerUrl: rep.image?.url || rep.icon_url || "",
-                offerTitle: rep.title || "",
-                couponCode: prizes.map((p: any) => p.coupon_code).filter(Boolean).join(", "),
-                couponCodeInput: "",
-                displayName: rep.display_name || "",
-                partner: rep.partner_name || "",
-                winningProbability: String(prizes.reduce((sum: number, p: any) => sum + (Number(p.probability_value) || 0), 0)),
-                probabilityOutOf: String(rep.probability_out_of ?? "100"),
-                offerDescription: rep.description || "",
-                bannerImage: null,
-                bannerImageName: "",
-                rewardType: "Coupon Code",
-                pointsValue: "",
-                validity: rep.validity.split("T")[0] || "",
-              };
-            }),
-            ...nonCouponPrizes.map((prize: any) => ({
+          if (type === "Spin") {
+            // For Spin: each prize is a separate offer — no grouping
+            mappedOffers = realPrizes.map((prize: any) => ({
               id: String(prize.id),
               serverId: prize.id,
-              couponServerIds: [],
+              couponServerIds: prize.reward_type === "coupon" ? [prize.id] : [],
               existingBannerUrl: prize.image?.url || prize.icon_url || "",
               offerTitle: prize.title || "",
-              couponCode: "",
+              couponCode: prize.reward_type === "coupon" ? (prize.coupon_code || "") : "",
               couponCodeInput: "",
               displayName: prize.display_name || "",
               partner: prize.partner_name || "",
@@ -248,11 +212,71 @@ export const EditContestPage: React.FC = () => {
               offerDescription: prize.description || "",
               bannerImage: null,
               bannerImageName: "",
-              rewardType: prize.reward_type === "points" ? "Points" : "None",
+              rewardType: prize.reward_type === "coupon" ? "Coupon Code" : prize.reward_type === "points" ? "Points" : "None",
               pointsValue: prize.reward_type === "points" ? String(prize.points_value ?? "") : "",
-              validity: prize.validity || "",
-            })),
-          ];
+              validity: prize.validity?.split("T")[0] || prize.validity || "",
+            }));
+          } else {
+            // For non-Spin: group coupon prizes by title so multiple coupon codes
+            // for the same prize appear as one card with capsule tags.
+            const couponGroups: Record<string, any[]> = {};
+            const nonCouponPrizes: any[] = [];
+
+            realPrizes.forEach((prize: any) => {
+              if (prize.reward_type === "coupon") {
+                const key = prize.title || "";
+                if (!couponGroups[key]) couponGroups[key] = [];
+                couponGroups[key].push(prize);
+              } else {
+                nonCouponPrizes.push(prize);
+              }
+            });
+
+            mappedOffers = [
+              ...Object.values(couponGroups).map((prizes: any[]) => {
+                const rep = prizes[0];
+                return {
+                  id: String(rep.id),
+                  serverId: rep.id,
+                  couponServerIds: prizes.map((p: any) => p.id),
+                  existingBannerUrl: rep.image?.url || rep.icon_url || "",
+                  offerTitle: rep.title || "",
+                  couponCode: prizes.map((p: any) => p.coupon_code).filter(Boolean).join(", "),
+                  couponCodeInput: "",
+                  displayName: rep.display_name || "",
+                  partner: rep.partner_name || "",
+                  winningProbability: String(prizes.reduce((sum: number, p: any) => sum + (Number(p.probability_value) || 0), 0)),
+                  probabilityOutOf: String(rep.probability_out_of ?? "100"),
+                  offerDescription: rep.description || "",
+                  bannerImage: null,
+                  bannerImageName: "",
+                  rewardType: "Coupon Code",
+                  pointsValue: "",
+                  validity: rep.validity.split("T")[0] || "",
+                };
+              }),
+              ...nonCouponPrizes.map((prize: any) => ({
+                id: String(prize.id),
+                serverId: prize.id,
+                couponServerIds: [],
+                existingBannerUrl: prize.image?.url || prize.icon_url || "",
+                offerTitle: prize.title || "",
+                couponCode: "",
+                couponCodeInput: "",
+                displayName: prize.display_name || "",
+                partner: prize.partner_name || "",
+                winningProbability: String(prize.probability_value ?? ""),
+                probabilityOutOf: String(prize.probability_out_of ?? "100"),
+                offerDescription: prize.description || "",
+                bannerImage: null,
+                bannerImageName: "",
+                rewardType: prize.reward_type === "points" ? "Points" : "None",
+                pointsValue: prize.reward_type === "points" ? String(prize.points_value ?? "") : "",
+                validity: prize.validity || "",
+              })),
+            ];
+          }
+
           setOffers(mappedOffers);
         }
       } catch (err: any) {

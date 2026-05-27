@@ -742,8 +742,8 @@ const MilestoneList = ({ selectedView, setSelectedView, setOpenDialog }) => {
                 }}
                 renderEditableCell={renderEditableCell}
                 newRowPlaceholder="Click to add new milestone"
-                enableFreeze={true}
-                freezeColumnsCount={3}
+            // enableFreeze={true}
+            // freezeColumnsCount={3}
             />
 
             {/* Infinite Scroll Loader - Show at table bottom while fetching next page */}
