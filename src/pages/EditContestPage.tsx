@@ -141,6 +141,7 @@ export const EditContestPage: React.FC = () => {
   const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
   const [isLoadingTechParks, setIsLoadingTechParks] = useState(false);
   const [shareWith, setShareWith] = useState("all");
+  const techParksLoadedRef = useRef(false);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -272,7 +273,7 @@ export const EditContestPage: React.FC = () => {
   }, [id]);
 
   const fetchTechParks = async () => {
-    if (techParks.length > 0) return;
+    if (techParksLoadedRef.current) return;
     setIsLoadingTechParks(true);
     try {
       const response = await axios.get(
@@ -280,6 +281,7 @@ export const EditContestPage: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTechParks(response.data.sites || []);
+      techParksLoadedRef.current = true;
     } catch {
       sonnerToast.error("Failed to load tech parks");
     } finally {

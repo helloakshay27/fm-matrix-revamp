@@ -1087,7 +1087,8 @@ export const CreateContestPage: React.FC = () => {
                         <TextField
                           fullWidth
                           label="Winning Probability (%)"
-                          value={offer.winningProbability || suggestedValue}
+                          value={offer.winningProbability}
+                          placeholder={suggestedValue}
                           onChange={(e) =>
                             updateOffer(offer.id, "winningProbability", e.target.value)
                           }
