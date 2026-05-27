@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { usePermissions } from "../contexts/PermissionsContext";
 import { findFirstAccessibleRoute } from "@/utils/dynamicNavigation";
 

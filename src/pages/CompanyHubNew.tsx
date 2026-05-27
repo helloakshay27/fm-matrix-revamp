@@ -90,6 +90,27 @@ const CompanyHubNew: React.FC<CompanyHubNewProps> = ({ userName }) => {
 
   useEffect(() => {
     setCurrentSection("Company Hub New");
+    
+    // Check if user is returning from an Explore link
+    const exploredFromHub = sessionStorage.getItem("exploredFromHub");
+    if (exploredFromHub === "true") {
+      setIsExploreOpen(true);
+      sessionStorage.removeItem("exploredFromHub");
+    }
+
+    // Handle browser back button
+    const handlePopState = () => {
+      const exploredFromHub = sessionStorage.getItem("exploredFromHub");
+      if (exploredFromHub === "true") {
+        setIsExploreOpen(true);
+        sessionStorage.removeItem("exploredFromHub");
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
   }, [setCurrentSection]);
   const [activeTimeView, setActiveTimeView] = useState<
     "hourly" | "weekly" | "monthly"
