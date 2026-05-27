@@ -4660,6 +4660,11 @@ function App() {
                               element={<DetailsVendorPage />}
                             />
                             <Route
+                              path="/maintenance/vendor/edit/:id"
+                              element={<EditVendorPage />}
+                            ></Route>
+
+                            <Route
                               path="/vas/projects"
                               element={<ProjectsDashboard />}
                             />
