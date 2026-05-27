@@ -163,7 +163,7 @@ const PulseContests: React.FC = () => {
                     endDate: end.toLocaleDateString(),
                     contestType:
                         item.content_type === "spin"
-                            ? "Spin Wheel"
+                            ? "Spin"
                             : item.content_type === "random"
                                 ? "Random"
                                 : "Special Discount",
