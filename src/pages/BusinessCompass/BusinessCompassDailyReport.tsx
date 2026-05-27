@@ -2730,7 +2730,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                       ))}
 
-                      {autoAddedAccomplishments.length === 0 && (
+                      {visibleAccomplishments.length === 0 && autoAddedAccomplishments.length === 0 && (
                         <div className="flex flex-col items-center gap-4 text-center py-10 bg-gray-50/50 rounded-[14px] border-2 border-dashed border-gray-100">
                           <div className="h-16 w-16 rounded-full bg-[#ecfdf5] border-2 border-[#10b981]/20 flex items-center justify-center">
                             <CheckCircle2 size={32} className="text-[#10b981]/30" />
