@@ -254,6 +254,17 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
         return weeklyData.member_reports.filter((report) => report.weekly_report !== null && selectedKeys.has(String(getReportSelectionKey(report))));
     };
 
+    const getSubmittedWeeklyReports = (data = weeklyData) =>
+        data?.member_reports?.filter((report: any) => report.weekly_report !== null) || [];
+
+    const getMissedWeeklyMembers = (data = weeklyData) =>
+        data?.member_reports
+            ?.filter((report: any) => report.weekly_report === null)
+            .map((report: any) => ({
+                id: report.user_id,
+                name: report.name,
+            })) || [];
+
     // Helper function to extract KPI summary from selected member reports
     const extractKpiSummary = (reports = getSelectedReportRows()) => {
         if (!reports.length) return {};
@@ -578,7 +589,8 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
 
         const selectedReports = getSelectedReportRows();
         const selectedUserIds = selectedReports.map((report) => report.user_id).filter(Boolean);
-        const submittedReportRows = weeklyData.member_reports?.filter((report: any) => report.weekly_report !== null) || [];
+        const submittedReportRows = getSubmittedWeeklyReports();
+        const missedWeeklyMembers = getMissedWeeklyMembers();
         const selectedKeys = new Set(selectedReports.map((report: any) => String(getReportSelectionKey(report))));
         const allSubmittedSelected = submittedReportRows.length > 0 && submittedReportRows.every((report: any) => selectedKeys.has(String(getReportSelectionKey(report))));
         const kpiSummary = extractKpiSummary(selectedReports);
@@ -604,9 +616,9 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
         let dynamicNotes = '';
 
         // Team Members who failed to submit
-        dynamicNotes += `Team Members who failed to submit Reports (${weeklyData.missed}):\n\n`;
-        if (weeklyData.missed_members && weeklyData.missed_members.length > 0) {
-            weeklyData.missed_members.forEach((member) => {
+        dynamicNotes += `Team Members who failed to submit Reports (${missedWeeklyMembers.length}):\n\n`;
+        if (missedWeeklyMembers.length > 0) {
+            missedWeeklyMembers.forEach((member) => {
                 dynamicNotes += `${member.name}\n`;
             });
         }
@@ -681,7 +693,7 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
             });
         }
 
-        const meetingNotesObj = buildMeetingNotesObject(detailedReviews, weeklyData.missed_members || [], meetingNotes);
+        const meetingNotesObj = buildMeetingNotesObject(detailedReviews, missedWeeklyMembers, meetingNotes);
 
         return {
             meeting_id: selectedMeeting,
@@ -720,8 +732,8 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
                 all_upcoming_week_plan: allUpcomingWeekPlan,
                 all_remarks: allRemarks,
                 all_past_kpis: allPastKpis,
-                total_submitted: weeklyData.submitted,
-                total_missed: weeklyData.missed,
+                total_submitted: submittedReportRows.length,
+                total_missed: missedWeeklyMembers.length,
                 total_members: weeklyData.total_members,
                 selected_member_count: detailedReviews.length,
                 mark_all_attended: allSubmittedSelected,
@@ -1133,10 +1145,11 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
                     }
                 }
 
+                const missedWeeklyMembers = getMissedWeeklyMembers(nextWeeklyData);
                 const noteText = savedNotes
                     ? stripMissedMembersPrefix(savedNotes).trim()
-                    : `**Team Members Who Missed Report (${response.data?.data?.missed_members?.length}):**\n` +
-                    response.data?.data?.missed_members?.map((m: any) => `- ${m.name}`).join("\n") +
+                    : `**Team Members Who Missed Report (${missedWeeklyMembers.length}):**\n` +
+                    missedWeeklyMembers.map((m: any) => `- ${m.name}`).join("\n") +
                     `\n\n**Key Discussion Points:**\n`;
                 setMeetingNotes(submittedMeetingReport ? stripMissedMembersPrefix(noteText).trim() : noteText);
             } catch (error) {
@@ -1168,8 +1181,8 @@ const WeeklyReviews = ({ initialWeekDate, onWeekDateChange, selectedMeetingId: e
         }
     }, [showDayDropdown]);
 
-    const submittedReports = weeklyData?.member_reports?.filter((report: any) => report.weekly_report !== null) || [];
-    const missedMembers = weeklyData?.missed_members || [];
+    const submittedReports = getSubmittedWeeklyReports();
+    const missedMembers = getMissedWeeklyMembers();
     const submittedMeetingJournal = getSubmittedMeetingJournal();
     const isSubmittedMeeting = !!submittedMeetingJournal?.journal_id;
     const visibleReportIds = submittedReports.map((report: any) => String(getReportSelectionKey(report)));
