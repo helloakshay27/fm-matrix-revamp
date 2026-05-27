@@ -1449,7 +1449,12 @@ const ReportDetailModal = ({ log, onClose, onReportUpdated }) => {
 // ─────────────────────────────────────────────
 // DailyLogTab — Main Component
 // ─────────────────────────────────────────────
-const DailyLogTab = ({ initialDate, onSelectedDateChange } = {}) => {
+const DailyLogTab = ({
+  initialDate,
+  onSelectedDateChange,
+  selectedMeetingId: externalSelectedMeetingId,
+  onSelectedMeetingChange,
+} = {}) => {
   const [selectedDate, setSelectedDate] = useState(
     () => initialDate || new Date().toISOString().split("T")[0]
   );
@@ -1489,6 +1494,13 @@ const DailyLogTab = ({ initialDate, onSelectedDateChange } = {}) => {
     onSelectedDateChange?.(selectedDate);
   }, [selectedDate, onSelectedDateChange]);
 
+  useEffect(() => {
+    if (!externalSelectedMeetingId) return;
+    setSelectedMeetingFilter((current) =>
+      current === externalSelectedMeetingId ? current : externalSelectedMeetingId
+    );
+  }, [externalSelectedMeetingId]);
+
   // ── Debounce search ──
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchQuery), 500);
@@ -1519,16 +1531,17 @@ const DailyLogTab = ({ initialDate, onSelectedDateChange } = {}) => {
       setMeetings(data);
       if (data.length > 0) {
         const defaultMeeting = data.find((m) => m.is_default);
-        setSelectedMeetingFilter(
-          defaultMeeting ? defaultMeeting.id : data[0].id
-        );
+        const nextMeetingId =
+          externalSelectedMeetingId || (defaultMeeting ? defaultMeeting.id : data[0].id);
+        setSelectedMeetingFilter(nextMeetingId);
+        if (!externalSelectedMeetingId) onSelectedMeetingChange?.(String(nextMeetingId));
       }
     } catch (err) {
       console.error(err);
     } finally {
       setIsFetchingMeetings(false);
     }
-  }, []);
+  }, [externalSelectedMeetingId]);
 
   useEffect(() => {
     loadMeetings();
@@ -1958,7 +1971,10 @@ const DailyLogTab = ({ initialDate, onSelectedDateChange } = {}) => {
 
           <CustomSelect
             value={selectedMeetingFilter}
-            onChange={setSelectedMeetingFilter}
+            onChange={(value) => {
+              setSelectedMeetingFilter(value);
+              onSelectedMeetingChange?.(String(value));
+            }}
             disabled={isFetchingMeetings}
             placeholder="Meeting"
             options={meetings.map((m) => ({ value: m.id, label: m.label }))}

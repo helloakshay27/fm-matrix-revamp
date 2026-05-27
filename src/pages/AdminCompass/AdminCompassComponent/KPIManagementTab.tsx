@@ -934,7 +934,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
       )}
 
       <Dialog open={!!manageKpi} onOpenChange={(open) => !open && handleCloseManage()}>
-        <DialogContent className="!gap-0 !p-0 h-[min(88vh,720px)] w-[min(calc(100vw-2rem),920px)] overflow-hidden !rounded-[22px] border border-[rgba(218,119,86,0.24)] bg-[#fef6f4] shadow-[0_24px_64px_rgba(26,26,26,0.2)]">
+        <DialogContent className="!gap-0 !p-0 h-[min(94vh,780px)] w-[min(calc(100vw-2rem),760px)] !max-w-[760px] overflow-hidden !rounded-[22px] border border-[rgba(218,119,86,0.24)] bg-[#fef6f4] shadow-[0_24px_64px_rgba(26,26,26,0.2)]">
           {manageKpi && (
             <div className="flex h-full flex-col overflow-hidden rounded-[inherit]">
               <div className="shrink-0 flex items-center justify-between border-b border-neutral-100 px-6 pb-4 pt-6 sm:px-8">
@@ -975,7 +975,7 @@ const KPIManagementTab: React.FC<KPIManagementTabProps> = ({
                   />
                 </div>
 
-                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-2">
+                <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overflow-x-hidden pr-2">
                   {manageUsers.length === 0 ? (
                     <div className="rounded-xl border border-neutral-200 bg-white px-4 py-5 text-sm text-neutral-500">
                       No users found for this department.

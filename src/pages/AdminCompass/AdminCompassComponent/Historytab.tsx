@@ -1137,11 +1137,15 @@ const AllMeetingsView = ({
 const HistoryTab = ({
   initialDate,
   onSelectedDateChange,
+  selectedMeetingId: externalSelectedMeetingId,
+  onSelectedMeetingChange,
 }: {
   initialDate?: string;
   onSelectedDateChange?: (date: string) => void;
+  selectedMeetingId?: string;
+  onSelectedMeetingChange?: (meetingId: string) => void;
 }) => {
-  const [selectedMeetingId, setSelectedMeetingId] = useState("all");
+  const [selectedMeetingId, setSelectedMeetingIdState] = useState(externalSelectedMeetingId || "all");
   const [selectedDate, setSelectedDate] = useState(
     () => initialDate || new Date().toISOString().split("T")[0]
   );
@@ -1163,6 +1167,18 @@ const HistoryTab = ({
   }, [selectedDate, onSelectedDateChange]);
 
   useEffect(() => {
+    if (!externalSelectedMeetingId) return;
+    setSelectedMeetingIdState((current) =>
+      current === externalSelectedMeetingId ? current : externalSelectedMeetingId
+    );
+  }, [externalSelectedMeetingId]);
+
+  const setSelectedMeetingId = (meetingId: string) => {
+    setSelectedMeetingIdState(meetingId);
+    if (meetingId && meetingId !== "all") onSelectedMeetingChange?.(String(meetingId));
+  };
+
+  useEffect(() => {
     setIsFetchingMeetings(true);
     fetch(`${getBaseUrl()}/daily_meeting_configs`, {
       headers: getAuthHeaders(),
@@ -1175,15 +1191,16 @@ const HistoryTab = ({
           const defaultMeeting = list.find(
             (m: any) => m.is_default || m.isDefault
           );
-          setSelectedMeetingId(
-            defaultMeeting ? String(defaultMeeting.id) : "all"
-          );
+          const nextMeetingId =
+            externalSelectedMeetingId ||
+            (defaultMeeting ? String(defaultMeeting.id) : String(list[0].id));
+          setSelectedMeetingId(nextMeetingId);
           setRefreshKey((k) => k + 1);
         }
       })
       .catch(console.error)
       .finally(() => setIsFetchingMeetings(false));
-  }, []);
+  }, [externalSelectedMeetingId]);
 
   useEffect(() => {
     if (!selectedMeetingId || selectedMeetingId === "all") {
