@@ -261,7 +261,7 @@ const PulseContests: React.FC = () => {
             formData.append("contest[id]", String(contestId));
 
             const response = await axios.put(
-                `${url}/contests/${contestId}`,
+                `${url}/contests/${contestId}.json`,
                 formData,
                 {
                     headers: {

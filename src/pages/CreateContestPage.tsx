@@ -650,12 +650,22 @@ export const CreateContestPage: React.FC = () => {
         }
         return true;
 
-      case 3:
+      case 3: {
         if (!startDate || !startTime || !endDate || !endTime) {
           sonnerToast.error("Please fill all validity fields");
           return false;
         }
+        const today = new Date().toISOString().split("T")[0];
+        if (startDate < today) {
+          sonnerToast.error("Start date cannot be a past date");
+          return false;
+        }
+        if (endDate < startDate) {
+          sonnerToast.error("End date cannot be before start date");
+          return false;
+        }
         return true;
+      }
 
       case 4:
         // Files are optional for now — change to required if needed
@@ -1120,7 +1130,8 @@ export const CreateContestPage: React.FC = () => {
                       sx={textFieldSx}
                       size="small"
                       type="date"
-                      inputProps={{ min: 0 }}
+                      inputProps={{ min: new Date().toISOString().split("T")[0] }}
+                      InputLabelProps={{ shrink: true }}
                       required
                     />
                   </div>
@@ -1247,56 +1258,63 @@ export const CreateContestPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <TextField
-                  fullWidth
-                  label="Start Date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    endAdornment: (
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                    ),
-                  }}
-                  sx={textFieldSx}
-                />
+              {(() => {
+                const today = new Date().toISOString().split("T")[0];
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <TextField
+                      fullWidth
+                      label="Start Date"
+                      value={startDate}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setStartDate(val);
+                        if (endDate && val && endDate < val) setEndDate("");
+                      }}
+                      variant="outlined"
+                      size="small"
+                      type="date"
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ min: today }}
+                      InputProps={{
+                        endAdornment: <Calendar className="w-4 h-4 text-gray-400" />,
+                      }}
+                      sx={textFieldSx}
+                    />
 
-                <TextField
-                  fullWidth
-                  label="Start Time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  type="time"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    endAdornment: <Clock className="w-4 h-4 text-gray-400" />,
-                  }}
-                  sx={textFieldSx}
-                />
+                    <TextField
+                      fullWidth
+                      label="Start Time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      type="time"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{
+                        endAdornment: <Clock className="w-4 h-4 text-gray-400" />,
+                      }}
+                      sx={textFieldSx}
+                    />
 
-                <TextField
-                  fullWidth
-                  label="End Date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  variant="outlined"
-                  size="small"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{
-                    endAdornment: (
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                    ),
-                  }}
-                  sx={textFieldSx}
-                />
-              </div>
+                    <TextField
+                      fullWidth
+                      label="End Date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      type="date"
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ min: startDate || today }}
+                      InputProps={{
+                        endAdornment: <Calendar className="w-4 h-4 text-gray-400" />,
+                      }}
+                      sx={textFieldSx}
+                    />
+                  </div>
+                );
+              })()}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 <TextField
