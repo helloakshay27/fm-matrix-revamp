@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { usePermissions } from "../contexts/PermissionsContext";
 import { findFirstAccessibleRoute } from "@/utils/dynamicNavigation";
 
@@ -177,7 +177,11 @@ export const ViewSelectionModal: React.FC<ViewSelectionModalProps> = ({
           {/* Employee View Card */}
           <button
             onClick={() => setSelectedView("employee")}
-            className="fm-button-fix fm-button-brand px-4 py-2"
+            className={`relative p-6 rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
+              selectedView === "employee"
+                ? "border-[#C72030] bg-red-50 shadow-lg"
+                : "border-gray-200 bg-white hover:border-gray-300"
+            }`}
           >
             <div className="flex flex-col items-center text-center space-y-4">
               <div
