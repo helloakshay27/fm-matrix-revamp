@@ -2482,7 +2482,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 
   return (
     <div
-      className={`min-h-screen bg-white font-sans select-none relative transition-all duration-300 ${isBlurred ? "blur-2xl" : ""}`}
+      className={`min-h-screen bg-white font-sans select-none relative transition-all duration-500 ${isBlurred ? "blur-2xl" : ""}`}
       style={
         {
           WebkitUserSelect: "none",

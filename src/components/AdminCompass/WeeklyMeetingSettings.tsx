@@ -1189,11 +1189,11 @@ const WeeklyMeetingSettings = () => {
             {/* Delete Confirmation Dialog */}
             {/* Delete Confirmation Dialog */}
             <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-                <DialogContent className="sm:max-w-[400px] bg-white">
+                <DialogContent className="sm:max-w-[420px] bg-white rounded-2xl border border-red-100 p-0 overflow-hidden">
                     <DialogHeader>
-                        <DialogTitle className="text-lg font-bold text-[#1a1a1a]">Delete Meeting?</DialogTitle>
+                        <DialogTitle className="px-6 pt-6 text-lg font-bold text-[#1a1a1a]">Delete Meeting?</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4">
+                    <div className="space-y-5 px-6 pb-6">
                         <p className="text-gray-600">
                             Are you sure you want to delete <span className="font-semibold">{meetingToDelete?.name}</span>? This action cannot be undone.
                         </p>
@@ -1202,19 +1202,27 @@ const WeeklyMeetingSettings = () => {
                                 variant="outline"
                                 onClick={() => setIsDeleteConfirmOpen(false)}
                                 disabled={isDeleting}
+                                className="h-10 rounded-[8px] border-red-200 px-5 font-semibold text-[#DA7756] hover:bg-red-50 hover:text-[#c9673f]"
                             >
                                 Cancel
                             </Button>
                             <Button
                                 onClick={handleDeleteMeeting}
-                                className="bg-red-600 hover:bg-red-700 text-white"
+                                className="h-10 min-w-[104px] rounded-[8px] bg-[#DA7756] px-5 font-semibold text-white shadow-sm hover:bg-[#c9673f]"
+                                style={{ backgroundColor: '#DA7756', color: '#ffffff' }}
+                                onMouseEnter={(e) => {
+                                    if (!isDeleting) e.currentTarget.style.backgroundColor = '#c9673f';
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (!isDeleting) e.currentTarget.style.backgroundColor = '#DA7756';
+                                }}
                                 disabled={isDeleting}
                             >
                                 {isDeleting ? (
-                                    <>
+                                    <span className="inline-flex items-center">
                                         <Loader2 className="w-4 h-4 animate-spin mr-2" />
                                         Deleting...
-                                    </>
+                                    </span>
                                 ) : (
                                     'Delete'
                                 )}
