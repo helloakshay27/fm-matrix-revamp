@@ -1076,12 +1076,11 @@ export const CreateContestPage: React.FC = () => {
                     />
 
 
-                    {(() => {
+                    {contestType === "Spin" && (() => {
                       const maxAvailable = getMaxAvailableProbability(offer.id);
                       const currentValue = Number(offer.winningProbability) || 0;
                       const isExceeded = currentValue > maxAvailable;
                       const suggestedValue = calculateBaseProbability().toFixed(2);
-                      const totalOfferLevel = offers.reduce((sum, o) => sum + (Number(o.winningProbability) || calculateBaseProbability()), 0);
 
                       return (
                         <TextField
@@ -1109,11 +1108,6 @@ export const CreateContestPage: React.FC = () => {
                               "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
                             }),
                           }}
-                        // helperText={
-                        //   isExceeded
-                        //     ? `❌ Exceeded! Max available: ${maxAvailable.toFixed(2)}%`
-                        //     : `Suggested: ${suggestedValue}% | Max: ${maxAvailable.toFixed(2)}% | Total: ${totalOfferLevel.toFixed(2)}%${Number(offer.winningProbability) ? ` | Each coupon: ${(Number(offer.winningProbability) / countCoupons(offer.couponCode)).toFixed(2)}%` : ""}`
-                        // }
                         />
                       );
                     })()}
