@@ -351,6 +351,7 @@ const WeeklyReports = () => {
     const [overdueItem, setOverdueItem] = useState<any>(null);
     const [overdueReason, setOverdueReason] = useState("");
     const [isOverdueLoading, setIsOverdueLoading] = useState(false);
+    const [pendingConfirmAction, setPendingConfirmAction] = useState<{ fn: () => void; label: string } | null>(null);
     const [currentTasksPage, setCurrentTasksPage] = useState(1);
     const [currentIssuesPage, setCurrentIssuesPage] = useState(1);
     const [hasMoreTasks, setHasMoreTasks] = useState(true);
@@ -1328,6 +1329,62 @@ const WeeklyReports = () => {
             });
         }
         return false;
+    };
+
+    const reopenTaskIssueTodo = async (item: any) => {
+        if (!item || !normalizedBaseUrl) return;
+
+        const realId = String(item.id || "")
+            .replace("task-", "")
+            .replace("issue-", "")
+            .replace("todo-", "");
+
+        setMergedTasksIssues((prev) =>
+            prev.map((existing) =>
+                existing.id === item.id ? { ...existing, status: "open" } : existing
+            )
+        );
+        setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: false }));
+
+        try {
+            const headers = {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            };
+
+            if (item.type === "task") {
+                await axios.put(
+                    `${normalizedBaseUrl}/task_managements/${realId}.json`,
+                    { task_management: { status: "open" } },
+                    { headers }
+                );
+            } else if (item.type === "issue") {
+                await axios.put(
+                    `${normalizedBaseUrl}/issues/${realId}.json`,
+                    { issue: { status: "open" } },
+                    { headers }
+                );
+            } else {
+                await axios.put(
+                    `${normalizedBaseUrl}/todos/${realId}.json`,
+                    { todo: { status: "open" } },
+                    { headers }
+                );
+            }
+
+            toast.success(`${item.type.charAt(0).toUpperCase() + item.type.slice(1)} reopened successfully`);
+        } catch (error) {
+            console.error("Error reopening item:", error);
+            toast.error(`Failed to reopen ${item.type}`);
+            // Revert UI on failure
+            setMergedTasksIssues((prev) =>
+                prev.map((existing) =>
+                    existing.id === item.id ? { ...existing, status: item.status } : existing
+                )
+            );
+            setSelectedTasksIssues((prev) => ({ ...prev, [item.id]: true }));
+        }
     };
 
     const handleCompleteTaskIssueTodo = async (item: any) => {
@@ -2921,8 +2978,13 @@ const WeeklyReports = () => {
                                         >
                                             <Checkbox
                                                 checked
-                                                disabled
-                                                className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                                                onCheckedChange={() => {
+                                                    setPendingConfirmAction({
+                                                        fn: () => reopenTaskIssueTodo(item),
+                                                        label: `reopen this ${item.type} (status will change to open)`,
+                                                    });
+                                                }}
+                                                className="mt-1 rounded border-blue-400 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500 cursor-pointer"
                                             />
                                             <button
                                                 type="button"
@@ -3370,7 +3432,10 @@ const WeeklyReports = () => {
                                                                                         item.status !== "completed" &&
                                                                                         item.status !== "closed"
                                                                                     ) {
-                                                                                        handleCompleteTaskIssueTodo(item);
+                                                                                        setPendingConfirmAction({
+                                                                                            fn: () => handleCompleteTaskIssueTodo(item),
+                                                                                            label: `complete this ${item.type}`,
+                                                                                        });
                                                                                     } else {
                                                                                         setSelectedTasksIssues((prev) => ({
                                                                                             ...prev,
@@ -5564,6 +5629,42 @@ const WeeklyReports = () => {
                     </div>
                 </div>
             </MuiDialog>
+
+            {/* Task completion confirmation modal */}
+            {pendingConfirmAction && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]">
+                    <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="h-10 w-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                                <AlertCircle size={20} className="text-amber-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-gray-900">Are you sure?</p>
+                                <p className="text-xs text-gray-500 mt-0.5 capitalize">
+                                    This will {pendingConfirmAction.label}.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                            <button
+                                onClick={() => setPendingConfirmAction(null)}
+                                className="px-4 py-1.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    pendingConfirmAction.fn();
+                                    setPendingConfirmAction(null);
+                                }}
+                                className="px-4 py-1.5 text-sm font-medium text-white bg-[#1a1a1a] hover:bg-[#333] rounded-lg transition-colors"
+                            >
+                                Confirm
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
