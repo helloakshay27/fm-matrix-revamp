@@ -443,10 +443,14 @@ const DailyTab = ({
   onMeetingSaved,
   selectedDate,
   onSelectedDateChange,
+  selectedMeetingId: externalSelectedMeetingId,
+  onSelectedMeetingChange,
 }: {
   onMeetingSaved?: (date: string) => void;
   selectedDate?: string;
   onSelectedDateChange?: (date: string) => void;
+  selectedMeetingId?: string;
+  onSelectedMeetingChange?: (meetingId: string) => void;
 }) => {
   const getLocalDateKey = (date = new Date()) => {
     const year = date.getFullYear();
@@ -459,8 +463,8 @@ const DailyTab = ({
   );
   const [meetingsList, setMeetingsList] = useState<any[]>([]);
   const [meetingsLoaded, setMeetingsLoaded] = useState(false);
-  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(
-    null
+  const [selectedMeetingId, setSelectedMeetingIdState] = useState<string | null>(
+    () => externalSelectedMeetingId || null
   );
   const [membersList, setMembersList] = useState<any[]>([]);
   const [selectedMember, setSelectedMember] = useState("all");
@@ -498,6 +502,18 @@ const DailyTab = ({
     onSelectedDateChange?.(activeDate);
   }, [activeDate, onSelectedDateChange]);
 
+  useEffect(() => {
+    if (!externalSelectedMeetingId) return;
+    setSelectedMeetingIdState((current) =>
+      current === externalSelectedMeetingId ? current : externalSelectedMeetingId
+    );
+  }, [externalSelectedMeetingId]);
+
+  const setSelectedMeetingId = (meetingId: string | null) => {
+    setSelectedMeetingIdState(meetingId);
+    if (meetingId) onSelectedMeetingChange?.(String(meetingId));
+  };
+
   const navigate = useNavigate();
 
   // ── Auto-populate checked in reports into selectedReports ──
@@ -523,7 +539,9 @@ const DailyTab = ({
         setMeetingsLoaded(true);
         if (list?.length > 0) {
           const defaultMeeting = list.find((m) => m.is_default);
-          if (defaultMeeting) {
+          if (externalSelectedMeetingId) {
+            setSelectedMeetingId(externalSelectedMeetingId);
+          } else if (defaultMeeting) {
             setSelectedMeetingId(defaultMeeting.id);
           } else {
             setSelectedMeetingId(list[0].id);

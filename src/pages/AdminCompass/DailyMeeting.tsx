@@ -40,6 +40,7 @@ const DailyMeeting = () => {
   const [selectedMeetingDate, setSelectedMeetingDate] = useState(
     () => getLocalDateKey()
   );
+  const [selectedMeetingId, setSelectedMeetingId] = useState("");
 
   const handleMeetingSaved = (date: string) => {
     setSelectedMeetingDate(date);
@@ -107,6 +108,8 @@ const DailyMeeting = () => {
             <DailyTab
               selectedDate={selectedMeetingDate}
               onSelectedDateChange={setSelectedMeetingDate}
+              selectedMeetingId={selectedMeetingId}
+              onSelectedMeetingChange={setSelectedMeetingId}
               onMeetingSaved={handleMeetingSaved}
             />
           )}
@@ -114,16 +117,30 @@ const DailyMeeting = () => {
             <DailyLogTab
               initialDate={selectedMeetingDate}
               onSelectedDateChange={setSelectedMeetingDate}
+              selectedMeetingId={selectedMeetingId}
+              onSelectedMeetingChange={setSelectedMeetingId}
             />
           )}
           {activeTab === "History" && (
             <HistoryTab
               initialDate={selectedMeetingDate}
               onSelectedDateChange={setSelectedMeetingDate}
+              selectedMeetingId={selectedMeetingId}
+              onSelectedMeetingChange={setSelectedMeetingId}
             />
           )}
-          {activeTab === "Reports" && <ReportsTab />}
-          {activeTab === "Analytics" && <AnalyticsTab />}
+          {activeTab === "Reports" && (
+            <ReportsTab
+              selectedMeetingId={selectedMeetingId}
+              onSelectedMeetingChange={setSelectedMeetingId}
+            />
+          )}
+          {activeTab === "Analytics" && (
+            <AnalyticsTab
+              selectedMeetingId={selectedMeetingId}
+              onSelectedMeetingChange={setSelectedMeetingId}
+            />
+          )}
           {activeTab === "Settings" && <SettingsTab />}
         </div>
       </div>

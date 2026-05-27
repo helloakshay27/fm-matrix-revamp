@@ -22,6 +22,8 @@ import {
   Save,
   Plus,
   Trash2,
+  Loader2,
+  Target,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -240,6 +242,40 @@ interface DocumentEntry {
   url: string | null; // existing remote URL (if any)
 }
 
+type UserKpi = {
+  id: string | number;
+  name: string;
+  target?: string | number | null;
+  currentValue?: string | number | null;
+  unit?: string | null;
+  frequency?: string | null;
+  priority?: string | null;
+  status?: string | null;
+};
+
+const normalizeUserKpis = (raw: any): UserKpi[] => {
+  const list = Array.isArray(raw)
+    ? raw
+    : Array.isArray(raw?.data)
+      ? raw.data
+      : Array.isArray(raw?.kpis)
+        ? raw.kpis
+        : Array.isArray(raw?.data?.kpis)
+          ? raw.data.kpis
+          : [];
+
+  return list.map((item: any) => ({
+    id: item.id,
+    name: item.name ?? item.kpi_name ?? item.title ?? "Untitled KPI",
+    target: item.target ?? item.target_value ?? item.planned_value ?? null,
+    currentValue: item.value ?? item.current_value ?? item.actual_value ?? null,
+    unit: item.unit ?? item.measurement_unit ?? "",
+    frequency: item.frequency ?? item.period ?? "",
+    priority: item.priority ?? "",
+    status: item.status ?? item.badge ?? "Active",
+  }));
+};
+
 const BusinessCompassProfile = () => {
   type ProfileFormData = {
     displayName: string;
@@ -404,6 +440,9 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 });  const [docTitle, setDocTitle] = useState("");
   const [docFile, setDocFile] = useState<File | null>(null);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
+  const [userKpis, setUserKpis] = useState<UserKpi[]>([]);
+  const [isKpisLoading, setIsKpisLoading] = useState(false);
+  const [kpisError, setKpisError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const docFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -449,8 +488,48 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
     fetchProfileDetails();
   }, []);
 
+  useEffect(() => {
+    const fetchUserKpis = async () => {
+      const baseUrl = getBaseUrl();
+      const token = getToken();
+      const userId = localStorage.getItem("userId") || String(getUser()?.id || "");
+
+      if (!baseUrl || !token || !userId) {
+        setUserKpis([]);
+        return;
+      }
+
+      try {
+        setIsKpisLoading(true);
+        setKpisError(null);
+        const response = await fetch(
+          `${baseUrl}/kpis?q[assignee_id_eq]=${encodeURIComponent(userId)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/json",
+            },
+          }
+        );
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        setUserKpis(normalizeUserKpis(data));
+      } catch (error: any) {
+        console.error("Failed to load user KPIs", error);
+        setUserKpis([]);
+        setKpisError(error?.message || "Failed to load KPIs");
+      } finally {
+        setIsKpisLoading(false);
+      }
+    };
+
+    fetchUserKpis();
+  }, []);
+
   // Sync documents to localStorage whenever they change
-useEffect(() => {
+  useEffect(() => {
   const docsToSave = documents.map((doc) => ({
     id: doc.id,
     title: doc.title,
@@ -1051,16 +1130,69 @@ useEffect(() => {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="flex items-center gap-2 text-lg font-bold text-green-700">
             <Star size={20} className="fill-green-500 text-green-500" />
-            My Objectives (KPIs)
+            My KPIs
           </CardTitle>
           <Badge className="bg-green-100 text-green-700 border-green-200 px-3 h-6 rounded-full font-bold">
-            0 Active
+            {userKpis.length} Active
           </Badge>
         </CardHeader>
-        <CardContent className="py-12 flex items-center justify-center opacity-40">
-          <p className="text-gray-400 font-bold tracking-tight">
-            Focus targets haven't been assigned yet.
-          </p>
+        <CardContent className="py-6">
+          {isKpisLoading ? (
+            <div className="flex items-center justify-center gap-2 py-10 text-gray-400">
+              <Loader2 size={18} className="animate-spin" />
+              <p className="font-bold tracking-tight">Loading KPIs...</p>
+            </div>
+          ) : kpisError ? (
+            <div className="py-10 text-center">
+              <p className="text-sm font-semibold text-red-500">
+                Unable to load KPIs.
+              </p>
+            </div>
+          ) : userKpis.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {userKpis.map((kpi) => (
+                <div
+                  key={kpi.id}
+                  className="rounded-xl border border-green-100 bg-green-50/40 p-4 shadow-sm"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-green-600 border border-green-100">
+                      <Target size={16} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-gray-800 line-clamp-2">
+                        {kpi.name}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {kpi.frequency && (
+                          <Badge variant="outline" className="bg-white text-green-700 border-green-100">
+                            {kpi.frequency}
+                          </Badge>
+                        )}
+                        {kpi.priority && (
+                          <Badge variant="outline" className="bg-white text-gray-600 border-gray-100">
+                            {kpi.priority}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="mt-3 text-xs font-semibold text-gray-500">
+                        Target:{" "}
+                        <span className="text-gray-800">
+                          {kpi.target ?? "-"} {kpi.unit || ""}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-10 flex items-center justify-center opacity-40">
+              <p className="text-gray-400 font-bold tracking-tight">
+                Focus targets haven't been assigned yet.
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
