@@ -729,7 +729,7 @@ export const CreateContestPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <TextField
                     fullWidth
-                    label="Contest Name"
+                    label={<span>Contest Name<span className="text-red-500">*</span></span>}
                     placeholder="Enter Title"
                     value={contestName}
                     onChange={(e) => handleContestNameChange(e.target.value)}
@@ -775,7 +775,7 @@ export const CreateContestPage: React.FC = () => {
                   />
 
                   <FormControl fullWidth size="small" sx={textFieldSx}>
-                    <InputLabel>Contest Type</InputLabel>
+                    <InputLabel>Contest Type<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={contestType}
                       label="Contest Type"
@@ -809,7 +809,7 @@ export const CreateContestPage: React.FC = () => {
                 <div className="mt-6">
                   <TextField
                     fullWidth
-                    label="Contest Description"
+                    label={<span>Contest Description<span className="text-red-500">*</span></span>}
                     placeholder="Enter Description"
                     value={contestDescription}
                     onChange={(e) => setContestDescription(e.target.value)}
