@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   procurementManagementDetailedSWOTTable,
   procurementManagementThreatsTable,
-} from "./products/types";
+} from "@/pages/products/types";
 
 // Convert table-shaped SWOT data (columns/rows) into the UI-friendly detailedSWOT shape
 type SWOTTable = {
@@ -25,8 +25,8 @@ const tableToDetailedSWOT = (table: SWOTTable) => {
     threats: mapRows(table?.threats?.rows || []),
   };
 };
-import { useProductSecurity } from "./products/useProductSecurity";
-import { SecurityOverlays } from "./products/SecurityOverlays";
+import { useProductSecurity } from "@/pages/products/useProductSecurity";
+import { SecurityOverlays } from "@/pages/products/SecurityOverlays";
 import {
   ArrowLeft,
   Monitor,
