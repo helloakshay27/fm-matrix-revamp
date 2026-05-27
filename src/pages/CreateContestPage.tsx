@@ -475,6 +475,7 @@ export const CreateContestPage: React.FC = () => {
 
     expandedOffers.forEach((offer, index) => {
       formData.append(`contest[prizes_attributes][${index}][title]`, offer.offerTitle.trim());
+      formData.append(`contest[prizes_attributes][${index}][display_name]`, offer.displayName.trim());
 
       const rewardType = offer.rewardType === "Points" ? "points" : "coupon";
       formData.append(`contest[prizes_attributes][${index}][reward_type]`, rewardType);
