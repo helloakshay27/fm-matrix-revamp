@@ -613,10 +613,12 @@ export const ContestDetailsPage: React.FC = () => {
                                       <p className="text-sm text-[#1A1A1A]">{rep.partner_name ?? "—"}</p>
                                     </div>
 
-                                    <div className="space-y-1">
-                                      <p className="text-xs font-medium text-gray-500">Probability</p>
-                                      <p className="text-sm text-[#1A1A1A]">{totalProb || "—"}</p>
-                                    </div>
+                                    {contest.content_type === "spin" && (
+                                      <div className="space-y-1">
+                                        <p className="text-xs font-medium text-gray-500">Probability</p>
+                                        <p className="text-sm text-[#1A1A1A]">{totalProb || "—"}</p>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </div>
