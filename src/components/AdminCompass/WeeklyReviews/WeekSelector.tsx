@@ -33,6 +33,8 @@ export const WeekSelector = ({
     const meetingHeads = selectedConfig?.meeting_heads || [];
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const meetingDay = selectedConfig?.day_name || dayNames[selectedConfig?.day_of_week] || '';
+    const submittedCount = weeklyData?.member_reports?.filter((report: any) => report.weekly_report !== null).length ?? weeklyData?.submitted ?? 0;
+    const missedCount = weeklyData?.member_reports?.filter((report: any) => report.weekly_report === null).length ?? weeklyData?.missed ?? 0;
 
     return (
         <div className="rounded-2xl border border-[#DA7756]/20 bg-[#fff8f5] p-4 shadow-sm min-w-0 max-w-full overflow-hidden">
@@ -119,13 +121,13 @@ export const WeekSelector = ({
                     <div className="inline-flex h-10 items-center gap-2 rounded-xl border border-emerald-200 bg-white px-3 shadow-sm">
                         <span className="text-xs font-bold text-neutral-500">Submitted</span>
                         <Badge className="rounded-[6px] bg-emerald-600 text-xs font-bold text-white hover:bg-emerald-600">
-                            {weeklyData?.submitted || 0}
+                            {submittedCount}
                         </Badge>
                     </div>
                     <div className="inline-flex h-10 items-center gap-2 rounded-xl border border-red-200 bg-white px-3 shadow-sm">
                         <span className="text-xs font-bold text-neutral-500">Missed</span>
                         <Badge className="rounded-[6px] bg-red-600 text-xs font-bold text-white hover:bg-red-600">
-                            {weeklyData?.missed || 0}
+                            {missedCount}
                         </Badge>
                     </div>
                 </div>

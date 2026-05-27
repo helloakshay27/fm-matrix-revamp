@@ -1373,8 +1373,8 @@ export const ProjectsDashboard = () => {
         enableExport={true}
         exportFileName="projects"
         hideTableExport={true}
-        enableFreeze={true}
-        freezeColumnsCount={3}
+      // enableFreeze={true}
+      // freezeColumnsCount={3}
       />
 
       {/* Infinite Scroll Loader - Only visible when loading more data */}

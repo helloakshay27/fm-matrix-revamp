@@ -452,8 +452,9 @@ export const EmployeeUnifiedCalendar: React.FC<
             { headers: { Authorization: `Bearer ${token}` } }
           );
           const data = await res.json();
-          const rawEvs: Record<string, unknown>[] =
-            data.google_calendar_events || data.events || data.data || [];
+          const rawEvs: Record<string, unknown>[] = Array.isArray(data.data)
+            ? data.data
+            : data.google_calendar_events || data.events || [];
           const evs = rawEvs.map((ev) => ({
             title: String(ev.title || ev.summary || "Busy"),
             start: String(ev.start_time || ev.start || ""),
@@ -1741,24 +1742,90 @@ export const EmployeeUnifiedCalendar: React.FC<
               </div>
             </div>
 
-            {/* ── Find a time panel (full width, below columns) ── */}
+            {/* ── Find a time panel (Google Calendar style) ── */}
             {findTimeOpen && createEventForm.attendees.length > 0 && (
-              <div className="mx-6 mb-4 border border-blue-100 rounded-xl bg-blue-50/40 p-3">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
+              <div className="mx-6 mb-4 border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 text-[#C72030]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
                     <span className="text-xs font-semibold text-gray-800">
-                      Find a time
+                      Scheduling assistant
                     </span>
-                    <span className="ml-2 text-[10px] text-gray-400">
-                      {moment(createEventForm.start_time).format("ddd, MMM D")}
-                    </span>
+                    {/* Day navigation */}
+                    <div className="flex items-center gap-1 ml-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const prev = moment(
+                            createEventForm.start_time
+                          ).subtract(1, "day");
+                          const startT = moment(
+                            createEventForm.start_time
+                          ).format("HH:mm");
+                          const endT = moment(createEventForm.end_time).format(
+                            "HH:mm"
+                          );
+                          const d = prev.format("YYYY-MM-DD");
+                          setCreateEventForm((f) => ({
+                            ...f,
+                            start_time: `${d}T${startT}`,
+                            end_time: `${d}T${endT}`,
+                          }));
+                        }}
+                        className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 text-gray-500"
+                      >
+                        ‹
+                      </button>
+                      <span className="text-xs font-medium text-gray-700 min-w-[80px] text-center">
+                        {moment(createEventForm.start_time).format(
+                          "ddd, MMM D"
+                        )}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = moment(createEventForm.start_time).add(
+                            1,
+                            "day"
+                          );
+                          const startT = moment(
+                            createEventForm.start_time
+                          ).format("HH:mm");
+                          const endT = moment(createEventForm.end_time).format(
+                            "HH:mm"
+                          );
+                          const d = next.format("YYYY-MM-DD");
+                          setCreateEventForm((f) => ({
+                            ...f,
+                            start_time: `${d}T${startT}`,
+                            end_time: `${d}T${endT}`,
+                          }));
+                        }}
+                        className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 text-gray-500"
+                      >
+                        ›
+                      </button>
+                    </div>
                   </div>
                   <button
                     type="button"
                     onClick={() =>
                       fetchAttendeeAvailability(createEventForm.attendees)
                     }
-                    className="text-[10px] text-blue-600 hover:underline flex items-center gap-1"
+                    className="text-[10px] text-[#C72030] hover:underline flex items-center gap-1 font-medium"
                   >
                     {availabilityLoading ? (
                       <svg
@@ -1800,9 +1867,9 @@ export const EmployeeUnifiedCalendar: React.FC<
                 </div>
 
                 {availabilityLoading ? (
-                  <div className="flex items-center justify-center py-6 text-xs text-gray-400 gap-2">
+                  <div className="flex items-center justify-center py-8 text-xs text-gray-400 gap-2">
                     <svg
-                      className="w-4 h-4 animate-spin"
+                      className="w-4 h-4 animate-spin text-[#C72030]"
                       fill="none"
                       viewBox="0 0 24 24"
                     >
@@ -1823,120 +1890,151 @@ export const EmployeeUnifiedCalendar: React.FC<
                     Checking availability…
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {(() => {
-                      const hours = Array.from({ length: 13 }, (_, i) => i + 8); // 8am–8pm
-                      const dateBase = moment(
-                        createEventForm.start_time
-                      ).format("YYYY-MM-DD");
-                      const dayStart = moment(`${dateBase}T08:00`);
-                      const dayEnd = moment(`${dateBase}T20:00`);
-                      const totalMin = dayEnd.diff(dayStart, "minutes");
-                      const eventStart = moment(createEventForm.start_time);
-                      const eventEnd = moment(
-                        createEventForm.end_time || createEventForm.start_time
-                      ).add(1, "hour");
+                  (() => {
+                    const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8–20
+                    const dateBase = moment(createEventForm.start_time).format(
+                      "YYYY-MM-DD"
+                    );
+                    const dayStart = moment(`${dateBase}T08:00`);
+                    const dayEnd = moment(`${dateBase}T20:00`);
+                    const totalMin = dayEnd.diff(dayStart, "minutes"); // 720
 
-                      const toPercent = (m: moment.Moment) =>
-                        Math.max(
-                          0,
-                          Math.min(
-                            100,
-                            (m.diff(dayStart, "minutes") / totalMin) * 100
-                          )
-                        );
-                      const toWidth = (s: moment.Moment, e: moment.Moment) =>
-                        Math.max(
-                          1,
-                          Math.min(
-                            100 - toPercent(s),
-                            (e.diff(s, "minutes") / totalMin) * 100
-                          )
-                        );
+                    const toLeft = (m: moment.Moment) =>
+                      `${Math.max(0, Math.min(100, (m.diff(dayStart, "minutes") / totalMin) * 100))}%`;
+                    const toWidth = (s: moment.Moment, e: moment.Moment) =>
+                      `${Math.max(0.5, Math.min(100 - parseFloat(toLeft(s)), (e.diff(s, "minutes") / totalMin) * 100))}%`;
 
-                      return (
-                        <>
-                          {/* Hour labels */}
-                          <div className="flex ml-[90px] text-[9px] text-gray-400">
-                            {hours.map((h) => (
-                              <div key={h} className="flex-1 text-center">
-                                {h === 12
-                                  ? "12p"
-                                  : h < 12
-                                    ? `${h}a`
-                                    : `${h - 12}p`}
-                              </div>
-                            ))}
-                          </div>
+                    const evStart = moment(createEventForm.start_time);
+                    const evEnd = moment(
+                      createEventForm.end_time || createEventForm.start_time
+                    ).add(
+                      moment(createEventForm.end_time).isValid() ? 0 : 1,
+                      "hour"
+                    );
 
-                          {/* Your event row */}
-                          <div className="flex items-center gap-2">
-                            <div className="w-[86px] text-[10px] text-blue-600 font-semibold truncate">
-                              Your event
-                            </div>
-                            <div className="flex-1 relative h-4 bg-gray-100 rounded-sm overflow-hidden">
-                              <div
-                                className="absolute top-0 h-full rounded-sm bg-blue-500/60"
-                                style={{
-                                  left: `${toPercent(eventStart)}%`,
-                                  width: `${toWidth(eventStart, eventEnd)}%`,
-                                }}
-                              />
-                            </div>
-                          </div>
+                    // Filter each attendee's events to this day
+                    const evsByAttendee: Record<
+                      number,
+                      { title: string; start: string; end: string }[]
+                    > = {};
+                    createEventForm.attendees.forEach((att) => {
+                      const info = attendeeAvailability[att.id];
+                      evsByAttendee[att.id] = (info?.events || []).filter(
+                        (ev) =>
+                          moment(ev.start).format("YYYY-MM-DD") === dateBase
+                      );
+                    });
 
-                          {/* Divider */}
-                          <div className="border-t border-blue-100 my-1" />
+                    const ROW_H = 32; // px
 
-                          {/* Per-attendee rows */}
-                          {createEventForm.attendees.map((att) => {
-                            const info = attendeeAvailability[att.id];
-                            const evs = info?.events || [];
-                            const hasFetched = att.id in attendeeAvailability;
-
-                            return (
+                    return (
+                      <div className="px-0 pb-0">
+                        {/* Time grid */}
+                        <div className="flex">
+                          {/* Name column */}
+                          <div className="flex-shrink-0 w-[110px] border-r border-gray-100">
+                            {/* spacer for hour header */}
+                            <div style={{ height: 28 }} />
+                            {createEventForm.attendees.map((att) => (
                               <div
                                 key={att.id}
-                                className="flex items-center gap-2"
+                                style={{ height: ROW_H }}
+                                className="flex items-center px-3 border-t border-gray-100"
                               >
-                                <div
-                                  className="w-[86px] text-[10px] text-gray-700 truncate font-medium"
+                                <div className="w-6 h-6 rounded-full bg-[#C72030]/10 flex items-center justify-center text-[10px] font-bold text-[#C72030] flex-shrink-0">
+                                  {att.name[0]?.toUpperCase()}
+                                </div>
+                                <span
+                                  className="ml-1.5 text-[10px] text-gray-700 font-medium truncate"
                                   title={att.name}
                                 >
-                                  {att.name}
+                                  {att.name.split(" ")[0]}
+                                </span>
+                              </div>
+                            ))}
+                            {/* Your event row label */}
+                            <div
+                              style={{ height: ROW_H }}
+                              className="flex items-center px-3 border-t border-gray-100 bg-[#C72030]/5"
+                            >
+                              <div className="w-6 h-6 rounded-full bg-[#C72030] flex items-center justify-center flex-shrink-0">
+                                <svg
+                                  className="w-3 h-3 text-white"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              </div>
+                              <span className="ml-1.5 text-[10px] text-[#C72030] font-semibold truncate">
+                                Your event
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Timeline */}
+                          <div className="flex-1 overflow-x-auto">
+                            {/* Hour header */}
+                            <div
+                              className="flex border-b border-gray-200 bg-gray-50"
+                              style={{ height: 28 }}
+                            >
+                              {HOURS.map((h) => (
+                                <div
+                                  key={h}
+                                  className="flex-1 text-center text-[9px] text-gray-400 font-medium flex items-center justify-center border-r border-gray-100 last:border-r-0"
+                                >
+                                  {h === 12
+                                    ? "12 PM"
+                                    : h < 12
+                                      ? `${h} AM`
+                                      : `${h - 12} PM`}
                                 </div>
-                                <div className="flex-1 relative h-4 bg-gray-100 rounded-sm overflow-hidden">
+                              ))}
+                            </div>
+
+                            {/* Attendee rows */}
+                            {createEventForm.attendees.map((att) => {
+                              const hasFetched = att.id in attendeeAvailability;
+                              const dayEvs = evsByAttendee[att.id] || [];
+                              return (
+                                <div
+                                  key={att.id}
+                                  style={{ height: ROW_H }}
+                                  className="relative border-t border-gray-100"
+                                >
+                                  {/* Hour grid lines */}
+                                  <div className="absolute inset-0 flex pointer-events-none">
+                                    {HOURS.map((h) => (
+                                      <div
+                                        key={h}
+                                        className="flex-1 border-r border-gray-50 last:border-r-0"
+                                      />
+                                    ))}
+                                  </div>
+
                                   {!hasFetched && (
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                      <svg
-                                        className="w-3 h-3 animate-spin text-gray-300"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <circle
-                                          className="opacity-25"
-                                          cx="12"
-                                          cy="12"
-                                          r="10"
-                                          stroke="currentColor"
-                                          strokeWidth="4"
-                                        />
-                                        <path
-                                          className="opacity-75"
-                                          fill="currentColor"
-                                          d="M4 12a8 8 0 018-8v8z"
-                                        />
-                                      </svg>
+                                      <div
+                                        className="h-3 rounded bg-gray-100 animate-pulse"
+                                        style={{ width: "60%" }}
+                                      />
                                     </div>
                                   )}
-                                  {hasFetched && evs.length === 0 && (
-                                    <div className="absolute inset-0 flex items-center pl-1">
-                                      <span className="text-[9px] text-green-600 font-semibold">
-                                        Free all day
+                                  {hasFetched && dayEvs.length === 0 && (
+                                    <div className="absolute inset-0 flex items-center pl-2">
+                                      <span className="text-[9px] text-emerald-600 font-medium">
+                                        Free
                                       </span>
                                     </div>
                                   )}
-                                  {evs.map((ev, i) => {
+                                  {dayEvs.map((ev, i) => {
                                     const evS = moment(ev.start);
                                     const evE = moment(ev.end);
                                     if (!evS.isValid() || !evE.isValid())
@@ -1944,39 +2042,86 @@ export const EmployeeUnifiedCalendar: React.FC<
                                     return (
                                       <div
                                         key={i}
-                                        title={`${ev.title} · ${evS.format("h:mma")}–${evE.format("h:mma")}`}
-                                        className="absolute top-0 h-full rounded-sm bg-red-400/80"
+                                        title={`${ev.title}\n${evS.format("h:mma")} – ${evE.format("h:mma")}`}
+                                        className="absolute top-1 bottom-1 rounded flex items-center overflow-hidden"
                                         style={{
-                                          left: `${toPercent(evS)}%`,
-                                          width: `${toWidth(evS, evE)}%`,
+                                          left: toLeft(evS),
+                                          width: toWidth(evS, evE),
+                                          backgroundColor: "#C72030",
+                                          opacity: 0.75,
                                         }}
-                                      />
+                                      >
+                                        <span className="text-white text-[8px] font-medium px-1 truncate leading-none">
+                                          {ev.title}
+                                        </span>
+                                      </div>
                                     );
                                   })}
                                 </div>
-                              </div>
-                            );
-                          })}
+                              );
+                            })}
 
-                          {/* Legend */}
-                          <div className="flex items-center gap-3 pt-1 ml-[90px]">
-                            <div className="flex items-center gap-1 text-[9px] text-gray-500">
-                              <div className="w-3 h-2 rounded-sm bg-red-400/80" />{" "}
-                              Busy
-                            </div>
-                            <div className="flex items-center gap-1 text-[9px] text-gray-500">
-                              <div className="w-3 h-2 rounded-sm bg-blue-500/60" />{" "}
-                              Your event
-                            </div>
-                            <div className="flex items-center gap-1 text-[9px] text-gray-500">
-                              <div className="w-3 h-2 rounded-sm bg-gray-100 border border-gray-300" />{" "}
-                              Free
+                            {/* Your event row */}
+                            <div
+                              style={{ height: ROW_H }}
+                              className="relative border-t border-gray-200 bg-[#C72030]/5"
+                            >
+                              <div className="absolute inset-0 flex pointer-events-none">
+                                {HOURS.map((h) => (
+                                  <div
+                                    key={h}
+                                    className="flex-1 border-r border-[#C72030]/10 last:border-r-0"
+                                  />
+                                ))}
+                              </div>
+                              {evStart.format("YYYY-MM-DD") === dateBase && (
+                                <div
+                                  className="absolute top-1 bottom-1 rounded flex items-center overflow-hidden"
+                                  style={{
+                                    left: toLeft(evStart),
+                                    width: toWidth(evStart, evEnd),
+                                    backgroundColor: "#C72030",
+                                  }}
+                                >
+                                  <span className="text-white text-[8px] font-semibold px-1 truncate leading-none">
+                                    {createEventForm.title || "New Event"}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
-                        </>
-                      );
-                    })()}
-                  </div>
+                        </div>
+
+                        {/* Footer legend */}
+                        <div className="flex items-center gap-4 px-4 py-2 border-t border-gray-100 bg-gray-50 text-[9px] text-gray-500">
+                          <div className="flex items-center gap-1">
+                            <div
+                              className="w-3 h-2.5 rounded-sm"
+                              style={{
+                                backgroundColor: "#C72030",
+                                opacity: 0.75,
+                              }}
+                            />
+                            Busy
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-2.5 rounded-sm bg-emerald-100 border border-emerald-300" />
+                            Free
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <div
+                              className="w-3 h-2.5 rounded-sm"
+                              style={{ backgroundColor: "#C72030" }}
+                            />
+                            Your event
+                          </div>
+                          <span className="ml-auto text-gray-400">
+                            Use ‹ › to navigate days
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()
                 )}
               </div>
             )}

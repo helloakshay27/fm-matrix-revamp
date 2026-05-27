@@ -59,8 +59,10 @@ interface BOQDetail {
     id: string;
     selectedBOQ: string;
     quantity: string;
+    totalQuantity: string;
     workCompleted: string;
     rate: string;
+    taxRate: string;
     taxableAmount: string;
     invoiceAmount: string;
     totalInvoiceAmount: string;
@@ -112,11 +114,13 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
             id: '1',
             selectedBOQ: "",
             quantity: "",
+            totalQuantity: "",
             workCompleted: "",
             rate: "",
-            taxableAmount: "",
-            invoiceAmount: "",
-            totalInvoiceAmount: ""
+            taxRate: "0",
+            taxableAmount: "0.00",
+            invoiceAmount: "0.00",
+            totalInvoiceAmount: "0.00"
         }
     ]);
     const [attachmentPreviews, setAttachmentPreviews] = useState<{ file: File, preview: string }[]>([]);
@@ -174,11 +178,14 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                     boq.id === boqDetailId
                         ? {
                             ...boq,
-                            quantity: data.quantity || "",
+                            totalQuantity: String(data.quantity || ""),
                             rate: data.rate || "",
-                            taxableAmount: data.total_tax_per || "0.00",
-                            invoiceAmount: calculateInvoiceAmount(data.quantity || "", data.rate || "", data.total_tax_per || "0.00"),
-                            totalInvoiceAmount: calculateTotalInvoiceAmount(data.total_tax_per || "0.00", calculateInvoiceAmount(data.quantity || "", data.rate || "", data.total_tax_per || "0.00"))
+                            taxRate: String(data.total_tax_per || "0"),
+                            quantity: "",
+                            workCompleted: "",
+                            taxableAmount: "0.00",
+                            invoiceAmount: "0.00",
+                            totalInvoiceAmount: "0.00",
                         }
                         : boq
                 )
@@ -189,19 +196,21 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         }
     };
 
-    const calculateInvoiceAmount = (quantity: string, rate: string, taxableAmount: string): string => {
-        const qty = parseFloat(quantity) || 0;
-        const rt = parseFloat(rate) || 0;
-        const tax = parseFloat(taxableAmount) || 0;
-        const invoiceAmount = (qty * rt) + tax;
-        return invoiceAmount.toFixed(2);
-    };
-
-    const calculateTotalInvoiceAmount = (taxableAmount: string, invoiceAmount: string): string => {
-        const tax = parseFloat(taxableAmount) || 0;
-        const invoice = parseFloat(invoiceAmount) || 0;
-        const totalInvoiceAmount = tax + invoice;
-        return totalInvoiceAmount.toFixed(2);
+    const recalculate = (qty: string, rate: string, taxRate: string, totalQty: string) => {
+        const q = parseFloat(qty) || 0;
+        const r = parseFloat(rate) || 0;
+        const tRate = parseFloat(taxRate) || 0;
+        const tQty = parseFloat(totalQty) || 0;
+        const invoiceAmt = q * r;
+        const taxAmt = (invoiceAmt * tRate) / 100;
+        const totalAmt = invoiceAmt + taxAmt;
+        const workPct = tQty > 0 ? ((q / tQty) * 100).toFixed(2) : "0.00";
+        return {
+            invoiceAmount: invoiceAmt.toFixed(2),
+            taxableAmount: taxAmt.toFixed(2),
+            totalInvoiceAmount: totalAmt.toFixed(2),
+            workCompleted: workPct,
+        };
     };
 
     useEffect(() => {
@@ -224,8 +233,10 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 id: Date.now().toString(),
                 selectedBOQ: "",
                 quantity: "",
+                totalQuantity: "",
                 workCompleted: "",
                 rate: "",
+                taxRate: "0",
                 taxableAmount: "0.00",
                 invoiceAmount: "0.00",
                 totalInvoiceAmount: "0.00"
@@ -271,8 +282,10 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
             id: Date.now().toString(),
             selectedBOQ: "",
             quantity: "",
+            totalQuantity: "",
             workCompleted: "",
             rate: "",
+            taxRate: "0",
             taxableAmount: "0.00",
             invoiceAmount: "0.00",
             totalInvoiceAmount: "0.00"
@@ -290,16 +303,9 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         setBOQDetails(boqDetails.map(boq => {
             if (boq.id === id) {
                 const updatedBOQ = { ...boq, [field]: value };
-                if (field === 'quantity' || field === 'rate' || field === 'taxableAmount') {
-                    updatedBOQ.invoiceAmount = calculateInvoiceAmount(
-                        updatedBOQ.quantity,
-                        updatedBOQ.rate,
-                        updatedBOQ.taxableAmount
-                    );
-                    updatedBOQ.totalInvoiceAmount = calculateTotalInvoiceAmount(
-                        updatedBOQ.taxableAmount,
-                        updatedBOQ.invoiceAmount
-                    );
+                if (field === 'quantity') {
+                    const calc = recalculate(value, updatedBOQ.rate, updatedBOQ.taxRate, updatedBOQ.totalQuantity);
+                    return { ...updatedBOQ, ...calc };
                 }
                 return updatedBOQ;
             }

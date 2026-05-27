@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { format } from "date-fns";
 import { useParams, useNavigate } from "react-router-dom";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +55,8 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import { CloudUpload } from "@mui/icons-material";
+import PurchaseDocumentPdf from "./purchasepdftamplate";
+
 // Types
 interface SalesOrderItem {
   id: number;
@@ -274,6 +278,9 @@ export const BillDetails = () => {
   const [reference, setReference] = useState("");
   const [notes, setNotes] = useState("");
   const [paymentAttachments, setPaymentAttachments] = useState<File[]>([]);
+  const [pdfGenerating, setPdfGenerating] = useState(false);
+  const [renderDownloadPdf, setRenderDownloadPdf] = useState(false);
+  const billPdfRef = useRef<HTMLDivElement | null>(null);
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const lock_account_id = localStorage.getItem("lock_account_id");
@@ -675,12 +682,69 @@ export const BillDetails = () => {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const formatDate = (date?: string | null) => {
+    if (!date) return "N/A";
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) return "N/A";
+    return format(parsedDate, "dd/MM/yyyy");
   };
 
-  const handleDownload = () => {
-    sonnerToast.success("Downloading sales order PDF...");
+  const formatCurrency = (amount?: number | string | null) =>
+    `Rs. ${Number(amount || 0).toLocaleString("en-IN", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
+
+  const handlePrint = () => {
+    setActiveTab("pdf");
+    setTimeout(() => window.print(), 0);
+  };
+
+  const handleDownload = async () => {
+    try {
+      setPdfGenerating(true);
+      setRenderDownloadPdf(true);
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+
+      if (!billPdfRef.current) {
+        throw new Error("PDF preview is not ready yet");
+      }
+
+      const canvas = await html2canvas(billPdfRef.current, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, pageWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`Bill-${salesOrder?.bill_number || id || "download"}.pdf`);
+      sonnerToast.success("Bill PDF downloaded successfully");
+    } catch (error) {
+      console.error("Error generating bill PDF:", error);
+      sonnerToast.error("Failed to download bill PDF");
+    } finally {
+      setPdfGenerating(false);
+      setRenderDownloadPdf(false);
+    }
   };
 
   const handleSendEmail = () => {
@@ -809,6 +873,11 @@ const totalReverseTax = groupedReverseTax.reduce(
   (sum, t) => sum + t.amount,
   0
 );
+  const billPdfTaxRows =
+    salesOrder?.reverse_charge === true || salesOrder?.reverse_charge === "true"
+      ? []
+      : taxRows;
+
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -843,6 +912,25 @@ const totalReverseTax = groupedReverseTax.reduce(
             <Badge className={`${getStatusColor(salesOrder.status)} border`}>
               {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
             </Badge>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setActiveTab("pdf")}
+              className="gap-2"
+            >
+              <FileText className="h-4 w-4" />
+              PDF
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleDownload}
+              disabled={pdfGenerating}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              {pdfGenerating ? "Downloading..." : "Download PDF"}
+            </Button>
             {(salesOrder as any)?.approval_status?.approval_levels?.length >
               0 && (
                 <Button
@@ -1026,6 +1114,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                 { label: "Vendor Info", value: "customer-info" },
                 { label: "History", value: "history" },
                 { label: "Activity Logs", value: "activity-logs" },
+                { label: "PDF", value: "pdf" },
               ].map((tab) => (
                 <TabsTrigger
                   key={tab.value}
@@ -1289,20 +1378,6 @@ const totalReverseTax = groupedReverseTax.reduce(
                           -₹{salesOrder?.discount_amount?.toFixed(2)}
                         </span>
                       </div>
-                      {/* {taxRows.map(([name, tax], index) => (
-                        <div
-                          key={index}
-                          className="flex justify-between items-center py-2"
-                        >
-                          <span className="text-sm font-medium text-muted-foreground">
-                            {name} ({tax.rate}%)
-                          </span>
-                          <span className="font-semibold text-base">
-                            ₹{tax.amount.toFixed(2)}
-                          </span>
-                        </div>
-                      ))} */}
-
                       {!(
                         salesOrder?.reverse_charge === true ||
                         salesOrder?.reverse_charge === "true"
@@ -1803,7 +1878,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                                     <CardTitle className="text-base flex items-center gap-2">
                                         <MapPin className="h-4 w-4 text-primary" />
                                         Billing Address
-                                    </CardTitle>
+                                    </CardHeader>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-sm text-muted-foreground">{salesOrder.customer.billingAddress}</p>
@@ -1815,7 +1890,7 @@ const totalReverseTax = groupedReverseTax.reduce(
                                     <CardTitle className="text-base flex items-center gap-2">
                                         <MapPin className="h-4 w-4 text-primary" />
                                         Shipping Address
-                                    </CardTitle>
+                                    </CardHeader>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-sm text-muted-foreground">{salesOrder.customer.shippingAddress}</p>
@@ -1942,9 +2017,81 @@ const totalReverseTax = groupedReverseTax.reduce(
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent
+              value="pdf"
+              className="p-3 sm:p-6 space-y-6"
+              style={{ backgroundColor: "rgba(250, 250, 250, 1)" }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <CardTitle className="flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      Bill PDF
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={handlePrint}>
+                        <Printer className="h-4 w-4 mr-2" />
+                        Print
+                      </Button>
+                      <Button size="sm" onClick={handleDownload} disabled={pdfGenerating}>
+                        <Download className="h-4 w-4 mr-2" />
+                        {pdfGenerating ? "Downloading..." : "Download PDF"}
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-auto rounded-lg border bg-muted/30 p-4">
+                    <div className="mx-auto bg-white" ref={activeTab === "pdf" ? billPdfRef : null}>
+                      <PurchaseDocumentPdf
+                        documentTitle="BILL"
+                        documentNumber={salesOrder.bill_number}
+                        documentDate={salesOrder.bill_date}
+                        status={salesOrder.status}
+                        vendorName={salesOrder.vendor_name}
+                        partyLabel="Vendor"
+                        items={salesOrder.item_details || []}
+                        data={salesOrder}
+                        taxRows={billPdfTaxRows}
+                        formatDate={formatDate}
+                        formatCurrency={formatCurrency}
+                        secondaryDateLabel="Due Date"
+                        secondaryDate={salesOrder.due_date}
+                        referenceNumber={salesOrder.order_number}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      {renderDownloadPdf && activeTab !== "pdf" && (
+        <div className="fixed left-[-10000px] top-0">
+          <div ref={billPdfRef}>
+            <PurchaseDocumentPdf
+              documentTitle="BILL"
+              documentNumber={salesOrder.bill_number}
+              documentDate={salesOrder.bill_date}
+              status={salesOrder.status}
+              vendorName={salesOrder.vendor_name}
+              partyLabel="Vendor"
+              items={salesOrder.item_details || []}
+              data={salesOrder}
+              taxRows={billPdfTaxRows}
+              formatDate={formatDate}
+              formatCurrency={formatCurrency}
+              secondaryDateLabel="Due Date"
+              secondaryDate={salesOrder.due_date}
+              referenceNumber={salesOrder.order_number}
+            />
+          </div>
+        </div>
+      )}
 
       <Dialog open={showApprovalLog} onOpenChange={setShowApprovalLog}>
         <DialogContent className="max-w-4xl">

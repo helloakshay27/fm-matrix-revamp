@@ -1,8 +1,14 @@
-
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Eye } from "lucide-react";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 import { toast } from "sonner";
@@ -66,7 +72,9 @@ export const GDNDashboard = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch GDN request list (${response.status})`);
+        throw new Error(
+          `Failed to fetch GDN request list (${response.status})`
+        );
       }
 
       const result = await response.json();
@@ -92,16 +100,16 @@ export const GDNDashboard = () => {
 
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
-      case 'approved':
-        return 'bg-green-500 text-white';
-      case 'rejected':
-        return 'bg-red-500 text-white';
-      case 'pending':
-        return 'bg-yellow-500 text-black';
-      case 'dispatched':
-        return 'bg-blue-500 text-white';
+      case "approved":
+        return "bg-green-500 text-white";
+      case "rejected":
+        return "bg-red-500 text-white";
+      case "pending":
+        return "bg-yellow-500 text-black";
+      case "dispatched":
+        return "bg-blue-500 text-white";
       default:
-        return 'bg-gray-500 text-white';
+        return "bg-gray-500 text-white";
     }
   };
 
@@ -215,8 +223,8 @@ export const GDNDashboard = () => {
 
       {/* Add Button */}
       <div className="mb-6">
-        <Button 
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+        <Button
+          className="fm-button-fix fm-button-brand px-4 py-2"
           onClick={() => navigate("/finance/gdn/request-add")}
         >
           + Add
@@ -241,13 +249,19 @@ export const GDNDashboard = () => {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                <TableCell
+                  colSpan={8}
+                  className="text-center py-8 text-gray-500"
+                >
                   Loading GDN requests...
                 </TableCell>
               </TableRow>
             ) : gdnData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                <TableCell
+                  colSpan={8}
+                  className="text-center py-8 text-gray-500"
+                >
                   No GDN requests found
                 </TableCell>
               </TableRow>
@@ -259,7 +273,9 @@ export const GDNDashboard = () => {
                       size="sm"
                       variant="ghost"
                       className="p-1"
-                      onClick={() => navigate(`/finance/gdn/details/${item.id}`)}
+                      onClick={() =>
+                        navigate(`/finance/gdn/details/${item.id}`)
+                      }
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -268,7 +284,9 @@ export const GDNDashboard = () => {
                   <TableCell>{item.gdn_date || "-"}</TableCell>
                   <TableCell>{item.inventory_count ?? "-"}</TableCell>
                   <TableCell>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.status)}`}>
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.status)}`}
+                    >
                       {item.status || "-"}
                     </span>
                   </TableCell>
@@ -288,22 +306,39 @@ export const GDNDashboard = () => {
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                  className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  onClick={() =>
+                    handlePageChange(Math.max(1, pagination.current_page - 1))
+                  }
+                  className={
+                    pagination.current_page === 1 || loading
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
               {renderPaginationItems()}
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                  className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  onClick={() =>
+                    handlePageChange(
+                      Math.min(
+                        pagination.total_pages,
+                        pagination.current_page + 1
+                      )
+                    )
+                  }
+                  className={
+                    pagination.current_page === pagination.total_pages ||
+                    loading
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
             </PaginationContent>
           </Pagination>
         </div>
       )}
-
     </div>
   );
 };

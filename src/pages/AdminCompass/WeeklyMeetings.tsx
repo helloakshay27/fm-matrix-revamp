@@ -10,6 +10,7 @@ import { Calendar, ChartColumn, FileText, History, Settings } from "lucide-react
 const WeeklyMeetings = () => {
     const [selectedWeekDate, setSelectedWeekDate] = useState(() => new Date())
     const [activeTab, setActiveTab] = useState("weekly")
+    const [selectedMeetingId, setSelectedMeetingId] = useState("")
 
     return (
         <div className="p-6 space-y-6 max-w-7xl mx-auto bg-[#f6f4ee]">
@@ -49,6 +50,8 @@ const WeeklyMeetings = () => {
                     <WeeklyReviews
                         initialWeekDate={selectedWeekDate}
                         onWeekDateChange={setSelectedWeekDate}
+                        selectedMeetingId={selectedMeetingId}
+                        onSelectedMeetingChange={setSelectedMeetingId}
                         onMeetingSaved={() => setActiveTab("meetingHistory")}
                     />
                 </TabsContent>
@@ -56,6 +59,8 @@ const WeeklyMeetings = () => {
                     <WeeklyLog
                         initialWeekDate={selectedWeekDate}
                         onWeekDateChange={setSelectedWeekDate}
+                        selectedMeetingId={selectedMeetingId}
+                        onSelectedMeetingChange={setSelectedMeetingId}
                     />
                 </TabsContent>
                 <TabsContent value="meetingHistory" className="mt-5">
@@ -65,7 +70,10 @@ const WeeklyMeetings = () => {
                     />
                 </TabsContent>
                 <TabsContent value="reports" className="mt-5">
-                    <WeeklyMeetingReports />
+                    <WeeklyMeetingReports
+                        selectedMeetingId={selectedMeetingId}
+                        onSelectedMeetingChange={setSelectedMeetingId}
+                    />
                 </TabsContent>
                 <TabsContent value="settings" className="mt-5">
                     <WeeklyMeetingSettings />

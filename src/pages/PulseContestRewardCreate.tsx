@@ -29,6 +29,9 @@ interface Prize {
 interface User {
     id: number;
     full_name: string;
+    has_won_reward?: boolean;
+    email: string;
+    entity_title: string;
 }
 
 const REWARD_TYPES = ["coupon", "points", "none"];
@@ -59,6 +62,7 @@ const PulseContestRewardCreate = () => {
     const [contests, setContests] = useState<Contest[]>([]);
     const [contestsLoading, setContestsLoading] = useState(false);
     const [prizes, setPrizes] = useState<Prize[]>([]);
+    console.log(prizes)
     const [users, setUsers] = useState<User[]>([]);
     const [usersLoading, setUsersLoading] = useState(false);
 
@@ -78,14 +82,17 @@ const PulseContestRewardCreate = () => {
 
     useEffect(() => {
         fetchContests();
-        fetchUsers();
     }, []);
+
+    useEffect(() => {
+        fetchUsers();
+    }, [form.contest_id]);
 
     const fetchUsers = async () => {
         setUsersLoading(true);
         try {
             const response = await axios.get(
-                `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset`,
+                `https://${baseUrl}/pms/users/get_escalate_to_users.json?type=Asset&contest_id=${form.contest_id}`,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }
@@ -257,51 +264,6 @@ const PulseContestRewardCreate = () => {
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                 {/* Left column — main form (2/3 width) */}
                 <div className="xl:col-span-2 space-y-6">
-                    {/* User Section */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                        <SectionHeader icon={Trophy} title="User" />
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <FormControl
-                                    fullWidth
-                                    size="small"
-                                    error={!!errors.user_id}
-                                    sx={fieldSx}
-                                >
-                                    <InputLabel>User *</InputLabel>
-                                    <MuiSelect
-                                        value={form.user_id}
-                                        label="User *"
-                                        onChange={(e) =>
-                                            handleChange("user_id", e.target.value as string)
-                                        }
-                                        disabled={usersLoading}
-                                        endAdornment={
-                                            usersLoading ? (
-                                                <Loader2 className="w-4 h-4 animate-spin mr-3 text-gray-400" />
-                                            ) : undefined
-                                        }
-                                    >
-                                        {usersLoading ? (
-                                            <MenuItem disabled>Loading users...</MenuItem>
-                                        ) : users.length === 0 ? (
-                                            <MenuItem disabled>No users available</MenuItem>
-                                        ) : (
-                                            users.map((u) => (
-                                                <MenuItem key={u.id} value={String(u.id)}>
-                                                    {u.full_name}
-                                                </MenuItem>
-                                            ))
-                                        )}
-                                    </MuiSelect>
-                                </FormControl>
-                                {errors.user_id && (
-                                    <p className="text-red-500 text-xs mt-1">{errors.user_id}</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
                     {/* Contest & Prize Section */}
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                         <SectionHeader icon={Trophy} title="Contest & Prize" />
@@ -367,8 +329,6 @@ const PulseContestRewardCreate = () => {
                                     >
                                         {!form.contest_id ? (
                                             <MenuItem disabled>Select a contest first</MenuItem>
-                                        ) : prizes.filter((p) => p.prize_allocated).length === 0 ? (
-                                            <MenuItem disabled>No unallocated prizes available</MenuItem>
                                         ) : (
                                             prizes
                                                 .map((p) => (
@@ -381,6 +341,51 @@ const PulseContestRewardCreate = () => {
                                 </FormControl>
                                 {errors.prize_id && (
                                     <p className="text-red-500 text-xs mt-1">{errors.prize_id}</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* User Section */}
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                        <SectionHeader icon={Trophy} title="User" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <FormControl
+                                    fullWidth
+                                    size="small"
+                                    error={!!errors.user_id}
+                                    sx={fieldSx}
+                                >
+                                    <InputLabel>User *</InputLabel>
+                                    <MuiSelect
+                                        value={form.user_id}
+                                        label="User *"
+                                        onChange={(e) =>
+                                            handleChange("user_id", e.target.value as string)
+                                        }
+                                        disabled={usersLoading}
+                                        endAdornment={
+                                            usersLoading ? (
+                                                <Loader2 className="w-4 h-4 animate-spin mr-3 text-gray-400" />
+                                            ) : undefined
+                                        }
+                                    >
+                                        {usersLoading ? (
+                                            <MenuItem disabled>Loading users...</MenuItem>
+                                        ) : users.length === 0 ? (
+                                            <MenuItem disabled>No users available</MenuItem>
+                                        ) : (
+                                            users.map((u) => (
+                                                <MenuItem key={u.id} value={String(u.id)} disabled={u.has_won_reward}>
+                                                    {u.email} - {u.entity_title}
+                                                </MenuItem>
+                                            ))
+                                        )}
+                                    </MuiSelect>
+                                </FormControl>
+                                {errors.user_id && (
+                                    <p className="text-red-500 text-xs mt-1">{errors.user_id}</p>
                                 )}
                             </div>
                         </div>
@@ -405,6 +410,7 @@ const PulseContestRewardCreate = () => {
                                         onChange={(e) =>
                                             handleChange("reward_type", e.target.value as string)
                                         }
+                                        disabled
                                     >
                                         {REWARD_TYPES.map((t) => (
                                             <MenuItem key={t} value={t}>
@@ -432,6 +438,7 @@ const PulseContestRewardCreate = () => {
                                     error={!!errors.coupon_code}
                                     helperText={errors.coupon_code}
                                     sx={fieldSx}
+                                    disabled
                                 />
                             )}
 
