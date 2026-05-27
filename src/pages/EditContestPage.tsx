@@ -34,9 +34,11 @@ interface ContestStep {
 interface OfferData {
   id: string;
   serverId?: number;
+  couponServerIds: number[];   // one server ID per coupon code, in order
   existingBannerUrl?: string;
   offerTitle: string;
-  couponCode: string;
+  couponCode: string;          // comma-separated internal store
+  couponCodeInput: string;     // live input text
   displayName: string;
   partner: string;
   winningProbability: string;
@@ -70,8 +72,8 @@ const apiToContestType = (apiType: string): string => {
   const map: Record<string, string> = {
     spin: "Spin",
     random: "Random",
-    special_offer: "Special Offer",
-    "special offer": "Special Offer",
+    special_discount: "Special Discount",
+    "special discount": "Special Discount",
   };
   return map[apiType?.toLowerCase()] || apiType;
 };
@@ -92,8 +94,10 @@ export const EditContestPage: React.FC = () => {
 
   const createDefaultOffer = (): OfferData => ({
     id: Date.now().toString() + Math.random(),
+    couponServerIds: [],
     offerTitle: "",
     couponCode: "",
+    couponCodeInput: "",
     displayName: "",
     partner: "",
     winningProbability: "",
@@ -111,11 +115,11 @@ export const EditContestPage: React.FC = () => {
   const [contestDescription, setContestDescription] = useState("");
   const [contestType, setContestType] = useState("");
   const [usageType, setUsageType] = useState("");
-  const [winningProbabilityDisplay, setWinningProbabilityDisplay] = useState("0");
 
   // Offers
   const [offers, setOffers] = useState<OfferData[]>([createDefaultOffer()]);
   const [deletedOfferIds, setDeletedOfferIds] = useState<number[]>([]);
+  const [editingCoupon, setEditingCoupon] = useState<{ offerId: string; code: string; value: string } | null>(null);
 
   // Validity
   const [startDate, setStartDate] = useState("");
@@ -136,6 +140,7 @@ export const EditContestPage: React.FC = () => {
   const [selectedTechParks, setSelectedTechParks] = useState<number[]>([]);
   const [isLoadingTechParks, setIsLoadingTechParks] = useState(false);
   const [shareWith, setShareWith] = useState("all");
+  const techParksLoadedRef = useRef(false);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -189,34 +194,65 @@ export const EditContestPage: React.FC = () => {
           );
 
           // For Spin: derive the total win probability from the sum of real prizes
-          if (type === "Spin" && realPrizes.length > 0) {
-            const totalWin = realPrizes.reduce(
-              (sum: number, p: any) => sum + (Number(p.probability_value) || 0),
-              0
-            );
-            setWinningProbabilityDisplay(String(Math.round(totalWin * 100) / 100));
-          }
 
-          const mappedOffers: OfferData[] = realPrizes.map((prize: any) => ({
-            id: String(prize.id),
-            serverId: prize.id,
-            existingBannerUrl: prize.image?.url || prize.icon_url || "",
-            offerTitle: prize.title || "",
-            couponCode: prize.coupon_code || "",
-            displayName: prize.display_name || "",
-            partner: prize.partner_name || "",
-            winningProbability: String(prize.probability_value ?? ""),
-            probabilityOutOf: String(prize.probability_out_of ?? "100"),
-            offerDescription: prize.description || "",
-            bannerImage: null,
-            bannerImageName: "",
-            rewardType: prize.reward_type === "points" ? "Points" : "Coupon Code",
-            pointsValue:
-              prize.reward_type === "points"
-                ? String(prize.points_value ?? "")
-                : "",
-            validity: prize.validity || "",
-          }));
+          // Group coupon prizes by title so multiple coupon records for the
+          // same prize appear as one card with capsule tags.
+          const couponGroups: Record<string, any[]> = {};
+          const nonCouponPrizes: any[] = [];
+
+          realPrizes.forEach((prize: any) => {
+            if (prize.reward_type === "coupon") {
+              const key = prize.title || "";
+              if (!couponGroups[key]) couponGroups[key] = [];
+              couponGroups[key].push(prize);
+            } else {
+              nonCouponPrizes.push(prize);
+            }
+          });
+
+          const mappedOffers: OfferData[] = [
+            ...Object.values(couponGroups).map((prizes: any[]) => {
+              const rep = prizes[0];
+              return {
+                id: String(rep.id),
+                serverId: rep.id,
+                couponServerIds: prizes.map((p: any) => p.id),
+                existingBannerUrl: rep.image?.url || rep.icon_url || "",
+                offerTitle: rep.title || "",
+                couponCode: prizes.map((p: any) => p.coupon_code).filter(Boolean).join(", "),
+                couponCodeInput: "",
+                displayName: rep.display_name || "",
+                partner: rep.partner_name || "",
+                winningProbability: String(prizes.reduce((sum: number, p: any) => sum + (Number(p.probability_value) || 0), 0)),
+                probabilityOutOf: String(rep.probability_out_of ?? "100"),
+                offerDescription: rep.description || "",
+                bannerImage: null,
+                bannerImageName: "",
+                rewardType: "Coupon Code",
+                pointsValue: "",
+                validity: rep.validity || "",
+              };
+            }),
+            ...nonCouponPrizes.map((prize: any) => ({
+              id: String(prize.id),
+              serverId: prize.id,
+              couponServerIds: [],
+              existingBannerUrl: prize.image?.url || prize.icon_url || "",
+              offerTitle: prize.title || "",
+              couponCode: "",
+              couponCodeInput: "",
+              displayName: prize.display_name || "",
+              partner: prize.partner_name || "",
+              winningProbability: String(prize.probability_value ?? ""),
+              probabilityOutOf: String(prize.probability_out_of ?? "100"),
+              offerDescription: prize.description || "",
+              bannerImage: null,
+              bannerImageName: "",
+              rewardType: prize.reward_type === "points" ? "Points" : "None",
+              pointsValue: prize.reward_type === "points" ? String(prize.points_value ?? "") : "",
+              validity: prize.validity || "",
+            })),
+          ];
           setOffers(mappedOffers);
         }
       } catch (err: any) {
@@ -229,7 +265,7 @@ export const EditContestPage: React.FC = () => {
   }, [id]);
 
   const fetchTechParks = async () => {
-    if (techParks.length > 0) return;
+    if (techParksLoadedRef.current) return;
     setIsLoadingTechParks(true);
     try {
       const response = await axios.get(
@@ -237,6 +273,7 @@ export const EditContestPage: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setTechParks(response.data.sites || []);
+      techParksLoadedRef.current = true;
     } catch {
       sonnerToast.error("Failed to load tech parks");
     } finally {
@@ -295,7 +332,7 @@ export const EditContestPage: React.FC = () => {
     { id: 4, title: "Terms & Conditions", completed: completedSteps.includes(4), active: currentStep === 4 },
   ];
 
-  const contestTypes = ["Spin", "Random", "Special Offer"];
+  const contestTypes = ["Spin", "Random", "Special Discount"];
 
   const getInitialOffersCount = (type: string): number => (type === "Spin" ? 4 : 1);
 
@@ -307,7 +344,6 @@ export const EditContestPage: React.FC = () => {
     if (newType !== "Spin") {
       setUsersCap("");
       setAttemptsRequired("");
-      setWinningProbabilityDisplay("0");
     }
 
     if (newType !== "Scratch") setRedemptionText("");
@@ -332,14 +368,86 @@ export const EditContestPage: React.FC = () => {
     return couponCode.split(",").map((c) => c.trim()).filter((c) => c.length > 0).length;
   };
 
+  const getMaxAvailableProbability = (offerId: string): number => {
+    const otherOffersTotal = offers
+      .filter((o) => o.id !== offerId)
+      .reduce((sum, o) => sum + (Number(o.winningProbability) || 0), 0);
+    return Math.max(0, 100 - otherOffersTotal);
+  };
+
   const addOffer = () => setOffers([...offers, createDefaultOffer()]);
 
   const removeOffer = (offerId: string) => {
     if (offers.length > 1) {
       const offer = offers.find((o) => o.id === offerId);
-      if (offer?.serverId) setDeletedOfferIds((prev) => [...prev, offer.serverId!]);
+      if (offer) {
+        if (offer.couponServerIds.length > 0) {
+          setDeletedOfferIds((prev) => [...prev, ...offer.couponServerIds]);
+        } else if (offer.serverId) {
+          setDeletedOfferIds((prev) => [...prev, offer.serverId!]);
+        }
+      }
       setOffers(offers.filter((o) => o.id !== offerId));
     }
+  };
+
+  const addCouponCode = (offerId: string, input: string) => {
+    const code = input.trim().replace(/,$/, "").trim();
+    if (!code) return;
+    setOffers((prev) =>
+      prev.map((o) => {
+        if (o.id !== offerId) return o;
+        const existing = o.couponCode.split(",").map((c) => c.trim()).filter(Boolean);
+        if (existing.includes(code)) return { ...o, couponCodeInput: "" };
+        return { ...o, couponCode: [...existing, code].join(", "), couponCodeInput: "" };
+      })
+    );
+  };
+
+  const removeCouponCode = (offerId: string, code: string) => {
+    setOffers((prev) =>
+      prev.map((o) => {
+        if (o.id !== offerId) return o;
+        const remaining = o.couponCode.split(",").map((c) => c.trim()).filter((c) => c && c !== code).join(", ");
+        return { ...o, couponCode: remaining };
+      })
+    );
+  };
+
+  const removeLastCouponCode = (offerId: string) => {
+    setOffers((prev) =>
+      prev.map((o) => {
+        if (o.id !== offerId) return o;
+        const codes = o.couponCode.split(",").map((c) => c.trim()).filter(Boolean);
+        if (codes.length === 0) return o;
+        codes.pop();
+        return { ...o, couponCode: codes.join(", ") };
+      })
+    );
+  };
+
+  const commitCouponEdit = () => {
+    if (!editingCoupon) return;
+    const newCode = editingCoupon.value.trim();
+    if (!newCode || newCode === editingCoupon.code) {
+      setEditingCoupon(null);
+      return;
+    }
+    setOffers((prev) =>
+      prev.map((o) => {
+        if (o.id !== editingCoupon.offerId) return o;
+        const codes = o.couponCode.split(",").map((c) => c.trim()).filter(Boolean);
+        const idx = codes.indexOf(editingCoupon.code);
+        if (idx === -1) return o;
+        if (codes.includes(newCode)) {
+          codes.splice(idx, 1);
+        } else {
+          codes[idx] = newCode;
+        }
+        return { ...o, couponCode: codes.join(", ") };
+      })
+    );
+    setEditingCoupon(null);
   };
 
   const updateOffer = (offerId: string, field: keyof OfferData, value: string | File | null) => {
@@ -412,40 +520,64 @@ export const EditContestPage: React.FC = () => {
       prizeIndex++;
     });
 
-    // Expand offers — flatten comma-separated coupon codes
+    // Expand offers — flatten comma-separated coupon codes.
+    // Each coupon gets its own server ID (couponServerIds[idx]) so the API
+    // can update the correct existing record. Extra old server IDs are destroyed.
     const expandedOffers: any[] = [];
     offers.forEach((offer) => {
+      const offerProb = Number(offer.winningProbability) || calculateBaseProbability();
       if (offer.rewardType === "Coupon Code") {
         const coupons = offer.couponCode
           .split(",")
           .map((c) => c.trim())
           .filter((c) => c.length > 0);
+        const probPerCoupon = coupons.length > 0 ? offerProb / coupons.length : offerProb;
         coupons.forEach((coupon, couponIdx) => {
           expandedOffers.push({
             ...offer,
             couponCode: coupon,
             isFirst: couponIdx === 0,
+            couponServerId: offer.couponServerIds[couponIdx] ?? null,
+            _computedProb: probPerCoupon,
           });
         });
+        // If existing records outnumber new coupons, mark extras for destruction
+        for (let i = coupons.length; i < offer.couponServerIds.length; i++) {
+          expandedOffers.push({
+            ...offer,
+            _destroy: true,
+            couponServerId: offer.couponServerIds[i],
+          });
+        }
       } else {
-        expandedOffers.push({ ...offer, isFirst: true });
+        expandedOffers.push({ ...offer, isFirst: true, couponServerId: null, _computedProb: offerProb });
       }
     });
 
-    // For Spin: total win probability input divided equally across all expanded offers.
-    // Remainder (100 - totalWin) goes as a single "none" entry.
-    let spinProbPerOffer: number | null = null;
     let spinRemainder: number | null = null;
     if (contestType === "Spin") {
-      const totalWin = Math.min(100, Math.max(0, Number(winningProbabilityDisplay) || 0));
-      spinProbPerOffer = expandedOffers.length > 0 ? totalWin / expandedOffers.length : 0;
-      spinRemainder = 100 - totalWin;
+      const totalWin = offers.reduce(
+        (sum, o) => sum + (Number(o.winningProbability) || calculateBaseProbability()),
+        0
+      );
+      spinRemainder = Math.max(0, 100 - totalWin);
     }
 
     expandedOffers.forEach((offer) => {
-      // Attach serverId only to the first coupon of an existing offer
-      if (offer.isFirst && offer.serverId) {
-        formData.append(`contest[prizes_attributes][${prizeIndex}][id]`, String(offer.serverId));
+      // Handle entries marked for destruction (coupon codes removed by user)
+      if (offer._destroy) {
+        formData.append(`contest[prizes_attributes][${prizeIndex}][id]`, String(offer.couponServerId));
+        formData.append(`contest[prizes_attributes][${prizeIndex}][_destroy]`, "true");
+        prizeIndex++;
+        return;
+      }
+
+      // For coupon offers: use the per-coupon serverId; for others: use serverId on first only
+      const recordId = offer.rewardType === "Coupon Code"
+        ? offer.couponServerId
+        : (offer.isFirst ? offer.serverId : null);
+      if (recordId) {
+        formData.append(`contest[prizes_attributes][${prizeIndex}][id]`, String(recordId));
       }
       formData.append(`contest[prizes_attributes][${prizeIndex}][title]`, offer.offerTitle.trim());
 
@@ -462,8 +594,8 @@ export const EditContestPage: React.FC = () => {
         formData.append(`contest[prizes_attributes][${prizeIndex}][partner_name]`, offer.partner.trim());
       }
 
-      if (contestType === "Spin" && spinProbPerOffer !== null) {
-        formData.append(`contest[prizes_attributes][${prizeIndex}][probability_value]`, String(spinProbPerOffer));
+      if (contestType === "Spin") {
+        formData.append(`contest[prizes_attributes][${prizeIndex}][probability_value]`, String(offer._computedProb ?? 0));
         formData.append(`contest[prizes_attributes][${prizeIndex}][probability_out_of]`, "100");
       }
 
@@ -537,13 +669,23 @@ export const EditContestPage: React.FC = () => {
         return true;
       case 2:
         for (const offer of offers) {
-          if (!offer.offerTitle.trim()) { alert("Please fill all offer titles"); return false; }
+          if (!offer.offerTitle.trim()) { sonnerToast.error("Please fill all offer titles"); return false; }
           if (offer.rewardType === "Coupon Code") {
             const coupons = offer.couponCode.split(",").map((c) => c.trim()).filter((c) => c.length > 0);
-            if (coupons.length === 0) { alert("Please enter at least one coupon code for all offers"); return false; }
+            if (coupons.length === 0) { sonnerToast.error("Please enter at least one coupon code for all offers"); return false; }
           }
           if (offer.rewardType === "Points" && !offer.pointsValue.trim()) {
-            alert("Please enter points value for all offers"); return false;
+            sonnerToast.error("Please enter points value for all offers"); return false;
+          }
+        }
+        if (contestType === "Spin") {
+          const totalProbability = offers.reduce(
+            (sum, o) => sum + (Number(o.winningProbability) || calculateBaseProbability()),
+            0
+          );
+          if (Math.abs(totalProbability - 100) > 0.01) {
+            sonnerToast.error(`Total winning probability must equal 100%. Current total: ${totalProbability.toFixed(2)}%`);
+            return false;
           }
         }
         return true;
@@ -623,19 +765,6 @@ export const EditContestPage: React.FC = () => {
                     </FormControl>
                   )}
 
-                  {contestType === "Spin" && (
-                    <TextField
-                      fullWidth
-                      label="Winning Probability (%)"
-                      value={winningProbabilityDisplay}
-                      onChange={(e) => setWinningProbabilityDisplay(e.target.value)}
-                      variant="outlined"
-                      size="small"
-                      type="number"
-                      inputProps={{ min: 0, max: 100 }}
-                      sx={textFieldSx}
-                    />
-                  )}
                 </div>
 
                 <div className="mt-6">
@@ -785,18 +914,65 @@ export const EditContestPage: React.FC = () => {
 
                     {offer.rewardType === "Coupon Code" && (
                       <div>
-                        <TextField
-                          fullWidth
-                          label="Coupon Code(s)"
-                          placeholder="e.g., CODE1, CODE2, CODE3"
-                          value={offer.couponCode}
-                          onChange={(e) => updateOffer(offer.id, "couponCode", e.target.value)}
-                          sx={textFieldSx}
-                          size="small"
-                          required
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Enter multiple codes separated by commas.
+                        <p className="text-xs font-medium text-gray-600 mb-1">
+                          Coupon Code(s) <span className="text-[#C72030]">*</span>
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 min-h-[40px] w-full px-3 py-2 border border-[#e5e7eb] rounded bg-white focus-within:border-[#C72030] focus-within:ring-1 focus-within:ring-[#C72030]/20 transition-colors cursor-text">
+                          {offer.couponCode.split(",").map((c) => c.trim()).filter(Boolean).map((code) => (
+                            <span
+                              key={code}
+                              className="inline-flex items-center gap-1 bg-[#C72030]/10 text-[#C72030] text-xs font-medium px-2 py-0.5 rounded-full"
+                            >
+                              {editingCoupon?.offerId === offer.id && editingCoupon?.code === code ? (
+                                <input
+                                  autoFocus
+                                  value={editingCoupon.value}
+                                  onChange={(e) => setEditingCoupon({ ...editingCoupon, value: e.target.value })}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") { e.preventDefault(); commitCouponEdit(); }
+                                    if (e.key === "Escape") setEditingCoupon(null);
+                                  }}
+                                  onBlur={commitCouponEdit}
+                                  className="outline-none bg-transparent text-[#C72030] text-xs font-medium min-w-[60px] w-auto"
+                                  style={{ width: `${Math.max(editingCoupon.value.length, 4)}ch` }}
+                                />
+                              ) : (
+                                <span
+                                  onClick={() => setEditingCoupon({ offerId: offer.id, code, value: code })}
+                                  className="cursor-text"
+                                  title="Click to edit"
+                                >
+                                  {code}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => removeCouponCode(offer.id, code)}
+                                className="text-[#C72030] hover:text-[#a81c28] leading-none"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                          <input
+                            value={offer.couponCodeInput}
+                            onChange={(e) => updateOffer(offer.id, "couponCodeInput", e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === ",") {
+                                e.preventDefault();
+                                addCouponCode(offer.id, offer.couponCodeInput);
+                              }
+                              if (e.key === "Backspace" && !offer.couponCodeInput) {
+                                removeLastCouponCode(offer.id);
+                              }
+                            }}
+                            onBlur={() => { if (offer.couponCodeInput.trim()) addCouponCode(offer.id, offer.couponCodeInput); }}
+                            placeholder={offer.couponCode ? "" : "Type code and press Enter or comma"}
+                            className="flex-1 min-w-[160px] outline-none text-sm bg-transparent py-0.5"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Press Enter or comma to add each code.
                         </p>
                       </div>
                     )}
@@ -832,6 +1008,42 @@ export const EditContestPage: React.FC = () => {
                       sx={textFieldSx}
                       size="small"
                     />
+
+                    {contestType === "Spin" && (() => {
+                      const maxAvailable = getMaxAvailableProbability(offer.id);
+                      const currentValue = Number(offer.winningProbability) || 0;
+                      const isExceeded = currentValue > maxAvailable;
+                      const suggestedValue = calculateBaseProbability().toFixed(2);
+
+                      return (
+                        <TextField
+                          fullWidth
+                          label="Winning Probability (%)"
+                          value={offer.winningProbability}
+                          placeholder={suggestedValue}
+                          onChange={(e) =>
+                            updateOffer(offer.id, "winningProbability", e.target.value)
+                          }
+                          variant="outlined"
+                          size="small"
+                          type="number"
+                          inputProps={{ min: 0, max: maxAvailable, step: 0.01 }}
+                          error={isExceeded}
+                          sx={{
+                            ...textFieldSx,
+                            ...(isExceeded && {
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": { borderColor: "#ef4444" },
+                                "&:hover fieldset": { borderColor: "#ef4444" },
+                                "&.Mui-focused fieldset": { borderColor: "#ef4444" },
+                              },
+                              "& .MuiInputLabel-root": { color: "#ef4444" },
+                              "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
+                            }),
+                          }}
+                        />
+                      );
+                    })()}
 
                     <TextField
                       fullWidth

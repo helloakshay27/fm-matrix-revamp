@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -94,7 +94,7 @@ export const GDNPendingApprovalsDetails = () => {
     }
   };
 
-  const fetchGdnDetails = async () => {
+  const fetchGdnDetails = useCallback(async () => {
     if (!id) return;
 
     setLoading(true);
@@ -138,11 +138,11 @@ export const GDNPendingApprovalsDetails = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     fetchGdnDetails();
-  }, [id]);
+  }, [fetchGdnDetails]);
 
   const updateApproval = async (approve: boolean, rejectionReason = "") => {
     if (!id || !levelId || !userId) {
@@ -158,24 +158,21 @@ export const GDNPendingApprovalsDetails = () => {
         throw new Error("Base URL is not configured.");
       }
 
-      const url = new URL(`/pms/srns/${id}/update_approval.json`, baseUrl);
-      const payload: Record<string, string> = {
-        level_id: levelId,
-        approve: approve ? "true" : "false",
-        user_id: userId,
-      };
+      const url = new URL(`/pms/srns/${id}/status_confirmation`, baseUrl);
+      url.searchParams.set("approve", approve ? "true" : "false");
+      url.searchParams.set("user_id", userId);
+      url.searchParams.set("level_id", levelId);
 
       if (!approve) {
-        payload.rejection_reason = rejectionReason;
+        url.searchParams.set("rejection_reason", rejectionReason);
       }
 
       const response = await fetch(url.toString(), {
-        method: "PUT",
+        method: "GET",
         headers: {
           Authorization: getAuthHeader(),
-          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -191,9 +188,13 @@ export const GDNPendingApprovalsDetails = () => {
         approve ? "GDN approved successfully" : "GDN rejected successfully"
       );
       navigate("/finance/gdn/pending-approvals");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error updating GDN approval:", error);
-      toast.error(error.message || "Failed to update GDN approval.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update GDN approval."
+      );
     } finally {
       setSubmitting(false);
       setOpenRejectDialog(false);
@@ -332,14 +333,14 @@ export const GDNPendingApprovalsDetails = () => {
       {shouldShowButtons && (
         <div className="flex items-center justify-center gap-3 mt-6">
           <Button
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-green-600 text-white py-2 px-4 rounded-md"
             disabled={submitting}
             onClick={() => updateApproval(true)}
           >
             Approve
           </Button>
           <Button
-            className="bg-[#DC3545] hover:bg-[#C82333] text-white"
+            className="bg-[#C72030] text-white py-2 px-4 rounded-md"
             disabled={submitting}
             onClick={() => setOpenRejectDialog(true)}
           >

@@ -38,6 +38,7 @@ interface OfferData {
   id: string;
   offerTitle: string;
   couponCode: string;
+  couponCodeInput: string;
   displayName: string;
   partner: string;
   winningProbability: string;
@@ -69,6 +70,7 @@ export const CreateContestPage: React.FC = () => {
     id: Date.now().toString() + Math.random(),
     offerTitle: "",
     couponCode: "",
+    couponCodeInput: "",
     displayName: "",
     partner: "",
     winningProbability: "",
@@ -88,11 +90,50 @@ export const CreateContestPage: React.FC = () => {
 
   // Form data ────────────────────────────────────────────────────────────────
   const [contestName, setContestName] = useState("");
+  const [nameValidating, setNameValidating] = useState(false);
+  const [nameExists, setNameExists] = useState<boolean | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [contestDescription, setContestDescription] = useState("");
   const [contestType, setContestType] = useState("");
   const [usageType, setUsageType] = useState("");
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
-  const [winningProbabilityDisplay, setWinningProbabilityDisplay] = useState("0");
+
+  const handleContestNameChange = (value: string) => {
+    setContestName(value);
+    setNameExists(null);
+    setNameError(null);
+
+    if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
+
+    if (!value.trim()) return;
+
+    nameDebounceRef.current = setTimeout(async () => {
+      setNameValidating(true);
+      try {
+        const base = localStorage.getItem("baseUrl") || "";
+        const tok = localStorage.getItem("token") || "";
+        const res = await axios.post(
+          `https://${base}/contests/validate_name.json`,
+          { contest: { name: value.trim() } },
+          { headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" } }
+        );
+        setNameExists(res.data?.exists ?? false);
+        setNameError(null);
+      } catch (error: any) {
+        if (error.response?.status === 422) {
+          const errors = error.response.data?.errors;
+          setNameError(Array.isArray(errors) ? errors[0] : "Name has already been taken");
+          setNameExists(true);
+        } else {
+          setNameExists(null);
+          setNameError(null);
+        }
+      } finally {
+        setNameValidating(false);
+      }
+    }, 500);
+  };
 
   // Reset redemption document when contest type changes away from Scratch
   // Also adjust offers count based on contest type
@@ -108,7 +149,6 @@ export const CreateContestPage: React.FC = () => {
     if (newType !== "Spin") {
       setUsersCap("");
       setAttemptsRequired("");
-      setWinningProbabilityDisplay("0");
     }
 
     // Reset redemption text for non-Scratch types
@@ -413,7 +453,10 @@ export const CreateContestPage: React.FC = () => {
     }
 
     // Add prizes_attributes
-    // Expand offers — flatten comma-separated coupon codes into individual entries
+    // Equal probability per offer: 100 / numberOfOffers
+    // If an offer has multiple coupons, that offer's share is split equally across each coupon
+    const baseProbabilityPerOffer = offers.length > 0 ? 100 / offers.length : 0;
+
     const expandedOffers: any[] = [];
     offers.forEach((offer) => {
       if (offer.rewardType === "Coupon Code") {
@@ -421,23 +464,14 @@ export const CreateContestPage: React.FC = () => {
           .split(",")
           .map((code) => code.trim())
           .filter((code) => code.length > 0);
+        const probPerCoupon = coupons.length > 0 ? baseProbabilityPerOffer / coupons.length : baseProbabilityPerOffer;
         coupons.forEach((coupon) => {
-          expandedOffers.push({ ...offer, couponCode: coupon });
+          expandedOffers.push({ ...offer, couponCode: coupon, _computedProb: probPerCoupon });
         });
       } else {
-        expandedOffers.push({ ...offer });
+        expandedOffers.push({ ...offer, _computedProb: baseProbabilityPerOffer });
       }
     });
-
-    // For Spin: total win probability is entered by user; divide it equally across
-    // all expanded offers. The leftover (100 - winProb) goes as a single "none" entry.
-    let spinProbPerOffer: number | null = null;
-    let spinRemainder: number | null = null;
-    if (contestType === "Spin") {
-      const totalWin = Math.min(100, Math.max(0, Number(winningProbabilityDisplay) || 0));
-      spinProbPerOffer = expandedOffers.length > 0 ? totalWin / expandedOffers.length : 0;
-      spinRemainder = 100 - totalWin;
-    }
 
     expandedOffers.forEach((offer, index) => {
       formData.append(`contest[prizes_attributes][${index}][title]`, offer.offerTitle.trim());
@@ -455,10 +489,8 @@ export const CreateContestPage: React.FC = () => {
         formData.append(`contest[prizes_attributes][${index}][partner_name]`, offer.partner.trim());
       }
 
-      if (contestType === "Spin" && spinProbPerOffer !== null) {
-        formData.append(`contest[prizes_attributes][${index}][probability_value]`, String(spinProbPerOffer));
-        formData.append(`contest[prizes_attributes][${index}][probability_out_of]`, "100");
-      }
+      formData.append(`contest[prizes_attributes][${index}][probability_value]`, String(offer._computedProb));
+      formData.append(`contest[prizes_attributes][${index}][probability_out_of]`, "100");
 
       formData.append(`contest[prizes_attributes][${index}][position]`, String(index + 1));
       formData.append(`contest[prizes_attributes][${index}][active]`, "true");
@@ -470,17 +502,6 @@ export const CreateContestPage: React.FC = () => {
         formData.append(`contest[prizes_attributes][${index}][validity]`, offer.validity);
       }
     });
-
-    // For Spin: append the "none" remainder entry after all real offers
-    if (contestType === "Spin" && spinRemainder !== null) {
-      const noneIndex = expandedOffers.length;
-      formData.append(`contest[prizes_attributes][${noneIndex}][title]`, "Better luck next time!");
-      formData.append(`contest[prizes_attributes][${noneIndex}][reward_type]`, "none");
-      formData.append(`contest[prizes_attributes][${noneIndex}][probability_value]`, String(spinRemainder));
-      formData.append(`contest[prizes_attributes][${noneIndex}][probability_out_of]`, "100");
-      formData.append(`contest[prizes_attributes][${noneIndex}][position]`, String(noneIndex + 1));
-      formData.append(`contest[prizes_attributes][${noneIndex}][active]`, "true");
-    }
 
     // Add terms and conditions text if present
     if (termsText.trim()) {
@@ -561,15 +582,23 @@ export const CreateContestPage: React.FC = () => {
     switch (currentStep) {
       case 1:
         if (!contestName.trim()) {
-          alert("Please enter contest name");
+          sonnerToast.error("Please enter contest name");
+          return false;
+        }
+        if (nameValidating) {
+          sonnerToast.error("Please wait while we validate the contest name");
+          return false;
+        }
+        if (nameExists === true) {
+          sonnerToast.error(nameError || "This contest name already exists. Please choose a different name.");
           return false;
         }
         if (!contestDescription.trim()) {
-          alert("Please enter contest description");
+          sonnerToast.error("Please enter contest description");
           return false;
         }
         if (!contestType) {
-          alert("Please select contest type");
+          sonnerToast.error("Please select contest type");
           return false;
         }
         return true;
@@ -578,7 +607,7 @@ export const CreateContestPage: React.FC = () => {
         let totalProbability = 0;
         for (const offer of offers) {
           if (!offer.offerTitle.trim()) {
-            alert("Please fill all offer titles");
+            sonnerToast.error("Please fill all offer titles");
             return false;
           }
           if (offer.rewardType === "Coupon Code") {
@@ -587,12 +616,20 @@ export const CreateContestPage: React.FC = () => {
               .map((code) => code.trim())
               .filter((code) => code.length > 0);
             if (coupons.length === 0) {
-              alert("Please enter at least one coupon code (comma-separated) for all offers");
+              sonnerToast.error("Please enter at least one coupon code (comma-separated) for all offers");
               return false;
             }
           }
           if (offer.rewardType === "Points" && !offer.pointsValue.trim()) {
-            alert("Please enter points value for all offers");
+            sonnerToast.error("Please enter points value for all offers");
+            return false;
+          }
+          if (
+            contestType !== "Random" &&
+            contestType !== "Special Discount" &&
+            !offer.bannerImage
+          ) {
+            sonnerToast.error("Please upload a banner image for all offers");
             return false;
           }
 
@@ -600,7 +637,7 @@ export const CreateContestPage: React.FC = () => {
           const maxAvailable = getMaxAvailableProbability(offer.id);
 
           if (offerProb > maxAvailable) {
-            alert(`Offer "${offer.offerTitle}" has probability ${offerProb.toFixed(2)}% but max available is ${maxAvailable.toFixed(2)}%. Please adjust the probabilities so total equals 100%.`);
+            sonnerToast.error(`Offer "${offer.offerTitle}" has probability ${offerProb.toFixed(2)}% but max available is ${maxAvailable.toFixed(2)}%. Please adjust the probabilities so total equals 100%.`);
             return false;
           }
 
@@ -608,7 +645,7 @@ export const CreateContestPage: React.FC = () => {
         }
 
         if (Math.abs(totalProbability - 100) > 0.01) {
-          alert(`Total winning probability must equal 100%. Current total: ${totalProbability.toFixed(2)}%`);
+          sonnerToast.error(`Total winning probability must equal 100%. Current total: ${totalProbability.toFixed(2)}%`);
           return false;
         }
         return true;
@@ -684,10 +721,46 @@ export const CreateContestPage: React.FC = () => {
                     label="Contest Name"
                     placeholder="Enter Title"
                     value={contestName}
-                    onChange={(e) => setContestName(e.target.value)}
+                    onChange={(e) => handleContestNameChange(e.target.value)}
                     variant="outlined"
                     size="small"
-                    sx={textFieldSx}
+                    error={nameExists === true}
+                    helperText={
+                      nameValidating
+                        ? "Checking availability…"
+                        : nameError
+                          ? `⚠ ${nameError}`
+                          : nameExists === false && contestName.trim()
+                            ? "✓ Name is available"
+                            : ""
+                    }
+                    FormHelperTextProps={{
+                      sx: {
+                        color: nameExists === true ? "#ef4444" : nameExists === false ? "#16a34a" : "#6b7280",
+                        fontWeight: 500,
+                      },
+                    }}
+                    sx={{
+                      ...textFieldSx,
+                      ...(nameExists === true && {
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": { borderColor: "#ef4444" },
+                          "&:hover fieldset": { borderColor: "#ef4444" },
+                          "&.Mui-focused fieldset": { borderColor: "#ef4444" },
+                        },
+                        "& .MuiInputLabel-root": { color: "#ef4444" },
+                        "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
+                      }),
+                      ...(nameExists === false && contestName.trim() && {
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": { borderColor: "#16a34a" },
+                          "&:hover fieldset": { borderColor: "#16a34a" },
+                          "&.Mui-focused fieldset": { borderColor: "#16a34a" },
+                        },
+                        "& .MuiInputLabel-root": { color: "#16a34a" },
+                        "& .MuiInputLabel-root.Mui-focused": { color: "#16a34a" },
+                      }),
+                    }}
                   />
 
                   <FormControl fullWidth size="small" sx={textFieldSx}>
@@ -720,19 +793,6 @@ export const CreateContestPage: React.FC = () => {
                     </FormControl>
                   )}
 
-                  {contestType === "Spin" && (
-                    <TextField
-                      fullWidth
-                      label="Winning Probability (%)"
-                      value={winningProbabilityDisplay}
-                      onChange={(e) => setWinningProbabilityDisplay(e.target.value)}
-                      variant="outlined"
-                      size="small"
-                      type="number"
-                      inputProps={{ min: 0, max: 100 }}
-                      sx={textFieldSx}
-                    />
-                  )}
                 </div>
 
                 <div className="mt-6">
@@ -791,7 +851,7 @@ export const CreateContestPage: React.FC = () => {
                         onChange={() => handleShareWithChange("all")}
                         className="w-4 h-4"
                       />
-                      <span className="text-sm font-medium text-gray-700">Share with all</span>
+                      <span className="text-sm font-medium text-gray-700">Share with all parks</span>
                     </label>
                   </div>
 
@@ -805,7 +865,7 @@ export const CreateContestPage: React.FC = () => {
                         onChange={() => handleShareWithChange("individual")}
                         className="w-4 h-4"
                       />
-                      <span className="text-sm font-medium text-gray-700">Share with individual</span>
+                      <span className="text-sm font-medium text-gray-700">Share with individual parks</span>
                     </label>
                   </div>
                 </div>
@@ -904,26 +964,76 @@ export const CreateContestPage: React.FC = () => {
                       >
                         <MenuItem value="Coupon Code">Coupon Code</MenuItem>
                         <MenuItem value="Points">Points</MenuItem>
+                        <MenuItem value="None">None</MenuItem>
                       </MuiSelect>
                     </FormControl>
 
                     {offer.rewardType === "Coupon Code" && (
                       <div>
-                        <TextField
-                          fullWidth
-                          label="Coupon Code(s)"
-                          placeholder="e.g., CODE1, CODE2, CODE3"
-                          value={offer.couponCode}
-                          onChange={(e) =>
-                            updateOffer(offer.id, "couponCode", e.target.value)
-                          }
-                          sx={textFieldSx}
-                          size="small"
-                          required
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Enter multiple codes separated by commas. Each code will be a separate offer.
-                        </p>
+                        <div
+                          className="flex flex-wrap gap-1.5 min-h-[40px] w-full px-3 py-2 border border-[#e5e7eb] rounded bg-white focus-within:border-[#C72030] focus-within:ring-2 focus-within:ring-[#C72030]/20 hover:border-[#C72030] transition-colors"
+                        >
+                          {offer.couponCode
+                            .split(",")
+                            .map((c) => c.trim())
+                            .filter(Boolean)
+                            .map((code) => (
+                              <span
+                                key={code}
+                                className="inline-flex items-center gap-1 bg-[#C72030]/10 text-[#C72030] text-xs font-semibold px-2 py-0.5 rounded-full border border-[#C72030]/30"
+                              >
+                                {code}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updated = offer.couponCode
+                                      .split(",")
+                                      .map((c) => c.trim())
+                                      .filter((c) => c && c !== code)
+                                      .join(",");
+                                    updateOffer(offer.id, "couponCode", updated);
+                                  }}
+                                  className="ml-0.5 hover:text-red-600 transition-colors leading-none"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))}
+                          <input
+                            type="text"
+                            value={offer.couponCodeInput}
+                            onChange={(e) =>
+                              updateOffer(offer.id, "couponCodeInput", e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === ",") {
+                                e.preventDefault();
+                                const code = offer.couponCodeInput.trim().replace(/,/g, "");
+                                if (!code) return;
+                                const existing = offer.couponCode
+                                  .split(",")
+                                  .map((c) => c.trim())
+                                  .filter(Boolean);
+                                if (!existing.includes(code)) {
+                                  updateOffer(offer.id, "couponCode", [...existing, code].join(","));
+                                }
+                                updateOffer(offer.id, "couponCodeInput", "");
+                              } else if (e.key === "Backspace" && !offer.couponCodeInput) {
+                                const existing = offer.couponCode
+                                  .split(",")
+                                  .map((c) => c.trim())
+                                  .filter(Boolean);
+                                if (existing.length > 0) {
+                                  updateOffer(offer.id, "couponCode", existing.slice(0, -1).join(","));
+                                }
+                              }
+                            }}
+                            placeholder={
+                              offer.couponCode.trim() ? "" : "Enter comma-separated coupon codes"
+                            }
+                            className="flex-1 min-w-[140px] text-sm outline-none bg-transparent placeholder:text-gray-400"
+                          />
+                        </div>
                       </div>
                     )}
 
@@ -966,6 +1076,42 @@ export const CreateContestPage: React.FC = () => {
                     />
 
 
+                    {contestType === "Spin" && (() => {
+                      const maxAvailable = getMaxAvailableProbability(offer.id);
+                      const currentValue = Number(offer.winningProbability) || 0;
+                      const isExceeded = currentValue > maxAvailable;
+                      const suggestedValue = calculateBaseProbability().toFixed(2);
+
+                      return (
+                        <TextField
+                          fullWidth
+                          label="Winning Probability (%)"
+                          value={offer.winningProbability}
+                          placeholder={suggestedValue}
+                          onChange={(e) =>
+                            updateOffer(offer.id, "winningProbability", e.target.value)
+                          }
+                          variant="outlined"
+                          size="small"
+                          type="number"
+                          inputProps={{ min: 0, max: maxAvailable, step: 0.01 }}
+                          error={isExceeded}
+                          sx={{
+                            ...textFieldSx,
+                            ...(isExceeded && {
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": { borderColor: "#ef4444" },
+                                "&:hover fieldset": { borderColor: "#ef4444" },
+                                "&.Mui-focused fieldset": { borderColor: "#ef4444" },
+                              },
+                              "& .MuiInputLabel-root": { color: "#ef4444" },
+                              "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
+                            }),
+                          }}
+                        />
+                      );
+                    })()}
+
                     <TextField
                       fullWidth
                       label="Validity"
@@ -994,14 +1140,36 @@ export const CreateContestPage: React.FC = () => {
                       variant="outlined"
                       multiline
                       rows={3}
-                      sx={textFieldSx}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          height: "auto !important",
+                          padding: "2px !important",
+                          display: "flex",
+                          "& fieldset": { borderColor: "#e5e7eb" },
+                          "&:hover fieldset": { borderColor: "#C72030" },
+                          "&.Mui-focused fieldset": { borderColor: "#C72030" },
+                        },
+                        "& .MuiInputBase-input[aria-hidden='true']": {
+                          flex: 0,
+                          width: 0,
+                          height: 0,
+                          padding: "0 !important",
+                          margin: 0,
+                          display: "none",
+                        },
+                        "& .MuiInputBase-input": {
+                          resize: "none !important",
+                        },
+                      }}
                     />
                   </div>
 
                   <div className="mt-4">
                     <Typography variant="body2" className="text-gray-700 mb-2">
                       Upload Banner Image
-                      <span className="text-[#C72030]">*</span>
+                      {contestType !== "Random" && contestType !== "Special Discount" && (
+                        <span className="text-[#C72030]">*</span>
+                      )}
                     </Typography>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                       <p className="text-sm text-gray-600 mb-2">

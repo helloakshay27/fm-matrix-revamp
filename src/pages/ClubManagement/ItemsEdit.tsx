@@ -163,6 +163,7 @@ const ItemsEdit = () => {
         intra_state_tax: "",
         inter_state_tax: "",
         exemption_reason: "",
+         track_inventory: false,
     });
     const [loading, setLoading] = useState(false);
     const [accountGroups, setAccountGroups] = React.useState([]);
@@ -239,6 +240,7 @@ const ItemsEdit = () => {
                     sku: data.sku || "",
                     hsn_code: data.hsn_code || "",
                     sac_code: data.sac || "",
+                     track_inventory: data.track_inventory ?? false, // ✅
                     sellable: data.can_be_sold ?? true,
                     purchasable: data.can_be_purchased ?? true,
                     selling_price: data.sale_rate?.toString() || "",
@@ -352,6 +354,7 @@ const ItemsEdit = () => {
             toast.error("HSN Code is required.");
             return;
         }
+        
 
         if (!form.tax_preference) {
             toast.error("Please select Tax Preference");
@@ -461,6 +464,10 @@ const ItemsEdit = () => {
             );
         }
 
+        formData.append(
+    "lock_account_item[track_inventory]",
+    form.track_inventory.toString()
+);
         if (form.sellable) {
             formData.append("lock_account_item[sale_description]", form.sales_description);
             formData.append("lock_account_item[sale_rate]", form.selling_price);
@@ -688,6 +695,20 @@ const ItemsEdit = () => {
                                 </Select>
                             </FormControl>
                         )}
+
+
+                        <div className="mb-6">
+    <FormControlLabel
+        control={
+            <Checkbox
+                checked={form.track_inventory}
+                name="track_inventory"
+                onChange={handleChange}
+            />
+        }
+        label="Is Inventory"
+    />
+</div>
 
                     </div>
 
