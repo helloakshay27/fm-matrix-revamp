@@ -149,6 +149,7 @@ interface TableRow {
   wbs_code?: string;
   general_storage?: string;
   gl_account?: string;
+  tax_code?: string;
 }
 
 // Column configuration
@@ -165,6 +166,12 @@ const columns: ColumnConfig[] = [
   {
     key: "gl_account",
     label: "GL Account",
+    sortable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "tax_code",
+    label: "Tax Code",
     sortable: true,
     defaultVisible: true,
   },
@@ -836,7 +843,7 @@ const initialTaxCodes = response.pms_po_inventories?.reduce(
       wbs_code: item.wbs_code ?? "-",
       general_storage: item.general_storage ?? "-",
       gl_account: item.gl_account ?? "-",
-
+      tax_code: item.tax_code ?? "-",
     })) ?? [];
 
   const renderCell = (item: any, columnKey: string) => {
