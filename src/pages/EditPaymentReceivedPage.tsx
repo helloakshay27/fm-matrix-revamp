@@ -110,7 +110,7 @@ export const EditPaymentReceivedPage = () => {
     const fetchPaymentReceived = async () => {
       try {
         const response = await axios.get(
-          `https://${baseUrl}/api/payments-received/${id}`,
+          `https://${baseUrl}/lock_payments/${id}.json`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = response.data.data || response.data;
@@ -137,7 +137,7 @@ export const EditPaymentReceivedPage = () => {
       }
     };
 
-    if (id) fetchPaymentReceived();
+    if (id && baseUrl && token) fetchPaymentReceived();
   }, [id, baseUrl, token]);
 
   // Fetch customers
@@ -240,7 +240,7 @@ export const EditPaymentReceivedPage = () => {
       });
 
       const response = await axios.put(
-        `https://${baseUrl}/api/payments-received/${id}`,
+        `https://${baseUrl}/lock_payments/${id}.json`,
         formDataToSend,
         {
           headers: {

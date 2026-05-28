@@ -1114,11 +1114,13 @@ const NewRecurringExpensePage = lazy(() => import("./pages/New Recurring Expense
 const RecurringExpensesListPage = lazy(() => import("./pages/ClubManagement/RecurringExpensesListPage"));
 const RecurringExpenseDetailPage = lazy(() => import("./pages/ClubManagement/RecurringExpenseDetailPage"));
 const RecurringInvoicesCreatePage = lazy(() => import("./pages/ClubManagement/RecurringInvoicesCreatePage").then(m => ({ default: m.RecurringInvoicesCreatePage })));
+const EditRecurringInvoicePage = lazy(() => import("./pages/EditRecurringInvoicePage").then(m => ({ default: m.EditRecurringInvoicePage })));
 const RecurringInvoicesListPage = lazy(() => import("./pages/ClubManagement/RecurringInvoicesListPage").then(m => ({ default: m.RecurringInvoicesListPage })));
 const RecurringBillDetails = lazy(() => import("./pages/ClubManagement/RecurringBillDetails"));
 const RecurringJournalDashboard = lazy(() => import("./pages/ClubManagement/RecurringJournalDashboard").then(m => ({ default: m.RecurringJournalDashboard })));
 const RecurringJournalDetails = lazy(() => import("./pages/ClubManagement/RecurringJournalDetails").then(m => ({ default: m.RecurringJournalDetails })));
 const SalesOrderCreatePage = lazy(() => import("./pages/SalesOrderCreatePage").then(m => ({ default: m.SalesOrderCreatePage })));
+const EditSalesOrderPage = lazy(() => import("./pages/EditSalesOrderPage").then(m => ({ default: m.EditSalesOrderPage })));
 const SalesOrderDetailPage = lazy(() => import("./pages/SalesOrderDetailPage").then(m => ({ default: m.SalesOrderDetailPage })));
 const SalesOrderListPage = lazy(() => import("./pages/SalesOrderListPage").then(m => ({ default: m.SalesOrderListPage })));
 const TransactionsDetails = lazy(() => import("./pages/ClubManagement/TransationsDetails").then(m => ({ default: m.TransactionsDetails })));
@@ -1158,7 +1160,7 @@ const ClubGroupMembershipDetails = lazy(() => import("./pages/ClubManagement/Clu
 const ClubMembershipDashboard = lazy(() => import("./pages/ClubManagement/ClubMembershipDashboard"));
 const ClubMembershipDetailPage = lazy(() => import("./pages/ClubManagement/ClubMembershipDetailPage"));
 const CustomersAdd = lazy(() => import("./pages/ClubManagement/CustomersAdd"));
-const CustomersEdit = lazy(() => import("./pages/ClubManagement/CustomersEdit").then(m => ({ default: m.CustomersEdit })).catch(() => import("./pages/ClubManagement/CustomersEdit")));
+const CustomersEdit = lazy(() => import("./pages/ClubManagement/CustomersEdit"));
 const CustomersDashboard = lazy(() => import("./pages/ClubManagement/CustomersDashboard"));
 const DetailsSaleCustomerReport = lazy(() => import("./pages/ClubManagement/DetailsSaleCustomerReport"));
 const SalesByItemReport = lazy(() => import("./pages/ClubManagement/SalesByItemReport"));
@@ -1196,6 +1198,7 @@ import { LoginPageWrapper } from "./components/LoginPageWrapper";
 import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
+const EditInvoicePage = lazy(() => import("./pages/EditInvoicePage").then(m => ({ default: m.EditInvoicePage })));
 const InvoiceDashboardAccounting = lazy(() => import("./pages/ClubManagement/InvoiceDashboard").then(m => ({ default: m.InvoiceDashboardAccounting })));
 const InvoiceDashboardDetailsPage = lazy(() => import("./pages/ClubManagement/InvoiceDashboardDetailsPage").then(m => ({ default: m.InvoiceDashboardDetailsPage })));
 const QuotesDashboard = lazy(() => import("./pages/ClubManagement/QuotesDashboard").then(m => ({ default: m.QuotesDashboard })));
@@ -1212,6 +1215,7 @@ const DeliveryChallansDashboard = lazy(() => import("./pages/ClubManagement/Deli
 const DeliveryChallansAdd = lazy(() => import("./pages/ClubManagement/DeliveryChallansAdd").then(m => ({ default: m.DeliveryChallansAdd })));
 const PaymentsReceivedListPage = lazy(() => import("./pages/PaymentsReceivedListPage"));
 const RecordPaymentPage = lazy(() => import("./pages/RecordPaymentPage"));
+const EditPaymentReceivedPage = lazy(() => import("./pages/EditPaymentReceivedPage").then(m => ({ default: m.EditPaymentReceivedPage })));
 const PaymentReceivedDetailsPage = lazy(() => import("./pages/PaymentReceivedDetailsPage"));
 const SectionMaster = lazy(() => import("./pages/ClubManagement/SectionMaster"));
 const CreditNoteListPage = lazy(() => import("./pages/ClubManagement/CreditNoteListPage"));
@@ -3406,7 +3410,7 @@ function App() {
                             />
                             <Route
                               path="/accounting/sales-order/edit/:id"
-                              element={<SalesOrderCreatePage />}
+                              element={<EditSalesOrderPage />}
                             />
                             <Route
                               path="/accounting/invoices/list"
@@ -3418,7 +3422,7 @@ function App() {
                             />
                             <Route
                               path="/accounting/invoices/edit/:id"
-                              element={<InvoiceAdd />}
+                              element={<EditInvoicePage />}
                             />
                             <Route
                               path="/accounting/dashboard/invoices/:id"
@@ -3458,7 +3462,7 @@ function App() {
                             />
                             <Route
                               path="/accounting/recurring-invoices/edit/:id"
-                              element={<RecurringInvoicesCreatePage />}
+                              element={<EditRecurringInvoicePage />}
                             />
                              <Route
                               path="/accounting/recurring-invoices/details/:id"
@@ -3474,7 +3478,7 @@ function App() {
                             />
                             <Route
                               path="/accounting/payments-received/edit/:id"
-                              element={<RecordPaymentPage />}
+                              element={<EditPaymentReceivedPage />}
                             />
                             <Route
                               path="/accounting/payments-received/:id"
@@ -3606,7 +3610,7 @@ function App() {
                               />
                               <Route
                                 path="/settings/sales-order/edit/:id"
-                                element={<SalesOrderCreatePage />}
+                                element={<EditSalesOrderPage />}
                               />
                               <Route
                                 path="/accounting/payment-terms"

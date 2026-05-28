@@ -140,7 +140,7 @@ export const EditSalesOrderPage = () => {
     const fetchSalesOrder = async () => {
       try {
         const response = await axios.get(
-          `https://${baseUrl}/lock_account_sales_orders/${id}.json`,
+          `https://${baseUrl}/sale_orders/${id}.json`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = response.data;
@@ -173,7 +173,7 @@ export const EditSalesOrderPage = () => {
       }
     };
 
-    if (id) fetchSalesOrder();
+    if (id && baseUrl && token) fetchSalesOrder();
   }, [id, baseUrl, token]);
 
   // Fetch customers
@@ -364,7 +364,7 @@ export const EditSalesOrderPage = () => {
       });
 
       const response = await axios.put(
-        `https://${baseUrl}/lock_account_sales_orders/${id}.json`,
+        `https://${baseUrl}/sale_orders/${id}.json`,
         formDataToSend,
         {
           headers: {

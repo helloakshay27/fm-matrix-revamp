@@ -443,6 +443,91 @@ export const QuotesEdit: React.FC = () => {
         document.title = isEdit ? 'Edit Quote' : 'New Quote';
     }, [isEdit]);
 
+    useEffect(() => {
+        const fetchQuoteForEdit = async () => {
+            if (!isEdit || !id) return;
+            try {
+                const baseUrl = localStorage.getItem('baseUrl');
+                const token = localStorage.getItem('token');
+                const res = await axios.get(`https://${baseUrl}/lock_account_quotes/${id}.json`, {
+                    headers: { Authorization: token ? `Bearer ${token}` : undefined }
+                });
+                const data = res.data;
+                if (data) {
+                    setSubject(data.subject || '');
+                    setSalesOrderNumber(data.quote_number || data.sales_order_number || '');
+                    setReferenceNumber(data.reference_number || '');
+                    setSalesOrderDate(data.quote_date || '');
+                    setExpectedShipmentDate(data.expiry_date || data.expected_shipment_date || '');
+                    setCustomerNotes(data.customer_notes || '');
+                    setTermsAndConditions(data.terms_and_conditions || '');
+                    
+                    if (data.customer) {
+                        setSelectedCustomer({
+                            id: data.customer.id,
+                            name: data.customer.name,
+                            company_name: data.customer.company_name,
+                            email: data.customer.email,
+                            work_phone: data.customer.work_phone
+                        } as any);
+                    } else if (data.lock_account_customer_id) {
+                        setSelectedCustomer({
+                            id: data.lock_account_customer_id,
+                            name: data.customer_name || 'Customer'
+                        } as any);
+                    }
+
+                    if (data.sale_order_items && data.sale_order_items.length > 0) {
+                        setItems(data.sale_order_items.map((item: any) => ({
+                            id: item.id || Date.now().toString() + Math.random(),
+                            line_item_id: item.id,
+                            name: item.item_name || '',
+                            item_id: item.lock_account_item_id || null,
+                            description: item.description || '',
+                            quantity: item.quantity || 1,
+                            rate: item.rate || 0,
+                            discount: item.discount_amount || 0,
+                            discountType: item.discount_per ? 'percentage' : 'amount',
+                            tax: item.tax_name || '',
+                            taxRate: item.tax_percentage || 0,
+                            amount: item.total_amount || 0,
+                            item_tax_type: item.tax_type || '',
+                            tax_group_id: item.tax_group_id || null,
+                            tax_exemption_id: item.tax_exemption_id || null,
+                        })));
+                    }
+
+                    if (data.discount_per) {
+                        setDiscountTypeOnTotal('percentage');
+                        setDiscountOnTotal(data.discount_per);
+                    } else if (data.discount_amount) {
+                        setDiscountTypeOnTotal('amount');
+                        setDiscountOnTotal(data.discount_amount);
+                    }
+
+                    if (data.charge_amount) {
+                        setAdjustment(data.charge_amount);
+                        setAdjustmentLabel(data.charge_name || 'Adjustment');
+                    }
+
+                    if (data.tax_type) {
+                        setTaxType((data.tax_type.toUpperCase() as 'TDS' | 'TCS') || 'TDS');
+                    }
+                    if (data.lock_account_tax_id) {
+                        setSelectedTax(data.lock_account_tax_id);
+                    }
+                    if (data.place_of_supply) {
+                        setPlaceOfSupply(data.place_of_supply);
+                    }
+                }
+            } catch (err) {
+                console.error("Error fetching quote details", err);
+                toast.error("Failed to load quote details");
+            }
+        };
+        fetchQuoteForEdit();
+    }, [isEdit, id]);
+
     // Customer data
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -1645,18 +1730,29 @@ export const QuotesEdit: React.FC = () => {
                 formData.append(`lock_account_quote[attachments_attributes][${idx}][active]`, 'true');
             });
 
-            await axios.post(
-                `https://${baseUrl}/lock_account_quotes.json?lock_account_id=${lock_account_id}`,
-                formData,
-                {
-                    headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined
-                        // Do NOT set Content-Type manually for FormData
+            if (isEdit) {
+                await axios.put(
+                    `https://${baseUrl}/lock_account_quotes/${id}.json`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: token ? `Bearer ${token}` : undefined
+                        }
                     }
-                }
-            );
-
-            toast.success(saveAsDraft ? 'Quote saved as draft successfully' : 'Quote created successfully');
+                );
+                toast.success('Quote updated successfully');
+            } else {
+                await axios.post(
+                    `https://${baseUrl}/lock_account_quotes.json?lock_account_id=${lock_account_id}`,
+                    formData,
+                    {
+                        headers: {
+                            Authorization: token ? `Bearer ${token}` : undefined
+                        }
+                    }
+                );
+                toast.success(saveAsDraft ? 'Quote saved as draft successfully' : 'Quote created successfully');
+            }
             navigate('/accounting/quotes');
         } catch (error) {
             console.error('Error submitting quote:', error);
