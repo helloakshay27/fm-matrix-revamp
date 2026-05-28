@@ -12,7 +12,8 @@ const statusOptions = [
     { label: "On Hold", value: "on_hold", color: "bg-gray-500" },
     { label: "Completed", value: "completed", color: "bg-teal-500" },
     { label: "Reopen", value: "reopen", color: "bg-orange-500" },
-    { label: "Closed", value: "closed", color: "bg-red-500" },
+    { label: "Closed", value: "closed", color: "bg-green-800" },
+    { label: "Overdued", value: "overdue", color: "bg-red-500" },
 ];
 
 const priorityOptions = [

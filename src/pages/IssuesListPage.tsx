@@ -195,6 +195,7 @@ const ISSUSE_STATUS = [
   { value: "completed", label: "Completed" },
   { value: "reopen", label: "Reopen" },
   { value: "closed", label: "Closed" },
+  { value: "overdue", label: "Overdued" },
 ];
 
 const AddToSprintModal = ({ isOpen, onClose, sprints, selectedSprintId, setSelectedSprintId, onSubmit, isLoading }: any) => {
@@ -894,7 +895,8 @@ const IssuesListPage = ({
         on_hold: { dot: "bg-gray-500" },
         completed: { dot: "bg-teal-500" },
         reopen: { dot: "bg-orange-500" },
-        closed: { dot: "bg-red-500" },
+        closed: { dot: "bg-green-800" },
+        overdue: { dot: "bg-red-500" },
       };
 
       const colors =
