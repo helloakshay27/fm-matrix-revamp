@@ -82,6 +82,7 @@ export const EditRecurringInvoicePage = () => {
   const { id } = useParams();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
+  const lock_account_id = localStorage.getItem('lock_account_id');
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -114,25 +115,25 @@ export const EditRecurringInvoicePage = () => {
     const fetchRecurringInvoice = async () => {
       try {
         const response = await axios.get(
-          `https://${baseUrl}/api/recurring-invoices/${id}`,
+          `https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=${lock_account_id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        const data = response.data.data || response.data;
+        const data = response.data?.data || response.data;
         setRecurringInvoice(data);
         setFormData({
-          invoice_name: data.invoice_name || '',
-          customer_id: data.customer_id?.toString() || '',
-          customer_name: data.customer_name || '',
-          start_date: data.start_date?.split('T')[0] || '',
+          invoice_name: data.invoice_name || data.title || '',
+          customer_id: data.lock_account_customer_id?.toString() || data.customer_id?.toString() || '',
+          customer_name: data.customer_name || data.customer?.name || '',
+          start_date: data.start_date?.split('T')[0] || data.invoice_date?.split('T')[0] || '',
           end_date: data.end_date?.split('T')[0] || '',
-          recurrence_type: data.recurrence_type || 'MONTHLY',
-          recurrence_day: data.recurrence_day || 1,
-          due_days: data.due_days || 30,
+          recurrence_type: data.recurrence_type || data.recurrence || 'MONTHLY',
+          recurrence_day: data.recurrence_day || data.day_of_month || 1,
+          due_days: data.due_days || data.payment_terms_days || 30,
           status: data.status || 'ACTIVE',
           is_active: data.is_active !== false,
-          notes: data.notes || '',
-          terms: data.terms || '',
-          line_items: data.line_items || []
+          notes: data.notes || data.description || '',
+          terms: data.terms || data.terms_and_conditions || '',
+          line_items: data.item_details || data.sale_order_items || data.line_items || []
         });
         setExistingAttachments(data.attachments || []);
       } catch (error) {
@@ -143,8 +144,8 @@ export const EditRecurringInvoicePage = () => {
       }
     };
 
-    if (id) fetchRecurringInvoice();
-  }, [id, baseUrl, token]);
+    if (id && baseUrl && token && lock_account_id) fetchRecurringInvoice();
+  }, [id, baseUrl, token, lock_account_id]);
 
   // Fetch customers
   useEffect(() => {
@@ -152,10 +153,15 @@ export const EditRecurringInvoicePage = () => {
       try {
         setCustomersLoading(true);
         const response = await axios.get(
-          `https://${baseUrl}/api/customers`,
+          `https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setCustomers(response.data.data || response.data);
+        setCustomers((response.data?.data || response.data || []).map((c: any) => ({
+          id: c.id,
+          name: c.name || c.company_name || `${c.first_name || ''} ${c.last_name || ''}`.trim(),
+          email: c.email,
+          phone: c.mobile || c.phone,
+        })));
       } catch (error) {
         console.error('Failed to fetch customers:', error);
       } finally {
@@ -163,8 +169,8 @@ export const EditRecurringInvoicePage = () => {
       }
     };
 
-    if (baseUrl && token) fetchCustomers();
-  }, [baseUrl, token]);
+    if (baseUrl && token && lock_account_id) fetchCustomers();
+  }, [baseUrl, token, lock_account_id]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -255,7 +261,7 @@ export const EditRecurringInvoicePage = () => {
       });
 
       const response = await axios.put(
-        `https://${baseUrl}/api/recurring-invoices/${id}`,
+        `https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=${lock_account_id}`,
         formDataToSend,
         {
           headers: {

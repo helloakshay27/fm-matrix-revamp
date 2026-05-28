@@ -76,6 +76,7 @@ export const EditInvoicePage = () => {
   const { id } = useParams();
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
+  const lock_account_id = localStorage.getItem('lock_account_id');
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -104,21 +105,21 @@ export const EditInvoicePage = () => {
     const fetchInvoice = async () => {
       try {
         const response = await axios.get(
-          `https://${baseUrl}/api/invoices/${id}`,
+          `https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=${lock_account_id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        const data = response.data.data || response.data;
+        const data = response.data?.data || response.data;
         setInvoice(data);
         setFormData({
           invoice_number: data.invoice_number || '',
-          invoice_date: data.invoice_date?.split('T')[0] || '',
+          invoice_date: data.invoice_date?.split('T')[0] || data.date?.split('T')[0] || '',
           due_date: data.due_date?.split('T')[0] || '',
-          customer_id: data.customer_id?.toString() || '',
+          customer_id: data.lock_account_customer_id?.toString() || data.customer_id?.toString() || '',
           customer_name: data.customer_name || '',
           status: data.status || 'DRAFT',
           notes: data.notes || '',
-          terms: data.terms || '',
-          line_items: data.line_items || []
+          terms: data.terms || data.terms_and_conditions || '',
+          line_items: data.sale_order_items || data.item_details || data.line_items || []
         });
         setExistingAttachments(data.attachments || []);
       } catch (error) {
@@ -129,8 +130,8 @@ export const EditInvoicePage = () => {
       }
     };
 
-    if (id) fetchInvoice();
-  }, [id, baseUrl, token]);
+    if (id && baseUrl && token && lock_account_id) fetchInvoice();
+  }, [id, baseUrl, token, lock_account_id]);
 
   // Fetch customers
   useEffect(() => {
@@ -138,10 +139,15 @@ export const EditInvoicePage = () => {
       try {
         setCustomersLoading(true);
         const response = await axios.get(
-          `https://${baseUrl}/api/customers`,
+          `https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setCustomers(response.data.data || response.data);
+        setCustomers((response.data?.data || response.data || []).map((c: any) => ({
+          id: c.id,
+          name: c.name || c.company_name || `${c.first_name || ''} ${c.last_name || ''}`.trim(),
+          email: c.email,
+          phone: c.mobile || c.phone,
+        })));
       } catch (error) {
         console.error('Failed to fetch customers:', error);
       } finally {
@@ -149,8 +155,8 @@ export const EditInvoicePage = () => {
       }
     };
 
-    if (baseUrl && token) fetchCustomers();
-  }, [baseUrl, token]);
+    if (baseUrl && token && lock_account_id) fetchCustomers();
+  }, [baseUrl, token, lock_account_id]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
