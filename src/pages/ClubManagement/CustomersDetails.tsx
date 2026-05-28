@@ -193,13 +193,13 @@ export const CustomersDetails = () => {
                             Back to Customers
                         </Button>
                         <div className="flex items-center gap-2">
-                            {/* <Button
+                            <Button
                                 variant="outline"
                                 onClick={handleEditClick}
                                 className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
                             >
                                 Edit
-                            </Button> */}
+                            </Button>
                         </div>
                     </div>
                 </div>

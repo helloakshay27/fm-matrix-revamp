@@ -1,0 +1,2145 @@
+import React, { useState } from "react";
+import {
+    // TextField,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
+    Checkbox,
+    FormControlLabel,
+    RadioGroup,
+    Radio,
+} from "@mui/material";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { Button } from "@/components/ui/button";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
+import { InputAdornment, TextField } from "@mui/material";
+import axios from "axios";
+import { Loader2, TrendingUp, Target, Users, DollarSign, BarChart3, Globe } from "lucide-react";
+
+// MARKET ANALYSIS TAB COMPONENT
+const MarketAnalysisTab = ({ productData }) => {
+    return (
+        <div className="space-y-10">
+            <div className="bg-gray-200 text-gray-800 p-4 rounded-t-xl mb-0 flex justify-between items-center">
+                <h2 className="text-xl font-semibold uppercase tracking-tight font-poppins">
+                    {productData?.name || 'Product'} - Market Analysis
+                </h2>
+            </div>
+            {productData?.extendedContent?.detailedMarketAnalysis ? (
+                <div className="space-y-8">
+                    <div className="space-y-4">
+                        <div className="bg-gray-200 text-gray-800 px-4 py-2 font-semibold font-poppins text-sm uppercase italic">
+                            MARKET ANALYSIS OVERVIEW
+                        </div>
+                        <div className="overflow-x-auto border border-[#C4B89D] rounded-xl shadow-lg">
+                            <table className="w-full border-collapse text-[10px] bg-white text-left font-poppins">
+                                <thead>
+                                    <tr className="bg-gray-200 text-gray-800 font-semibold uppercase">
+                                        <th className="border border-[#C4B89D] p-2 w-[15%]">
+                                            Category
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[20%]">
+                                            Key Insights
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[30%]">
+                                            Data Points & Metrics
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[20%]">
+                                            Strategic Implications
+                                        </th>
+                                        <th className="border border-[#C4B89D] p-2 w-[15%]">
+                                            Priority Level
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {productData.extendedContent.detailedMarketAnalysis.map(
+                                        (analysis, i) => (
+                                            <tr
+                                                key={i}
+                                                className={`${i % 2 === 0 ? "bg-white" : "bg-[#F6F4EE]/50"} hover:bg-[#F6F4EE] transition-colors align-top`}
+                                            >
+                                                <td className="border border-[#C4B89D] p-2 font-semibold text-gray-700 break-words">
+                                                    {analysis.category}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/80 font-medium leading-relaxed whitespace-pre-line break-words">
+                                                    {analysis.keyInsights}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C] leading-relaxed whitespace-pre-line break-words">
+                                                    {analysis.dataPoints}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/70 font-medium italic whitespace-pre-line break-words">
+                                                    {analysis.strategicImplications}
+                                                </td>
+                                                <td className="border border-[#C4B89D] p-2 text-[#2C2C2C]/60 font-bold text-center">
+                                                    {analysis.priorityLevel}
+                                                </td>
+                                            </tr>
+                                        )
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="bg-gray-200 text-gray-800 px-4 py-2 font-semibold font-poppins text-sm uppercase italic">
+                            MARKET POSITION SUMMARY
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <TrendingUp className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Market Share
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    {productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.marketShare || 0), 0)}%
+                                </div>
+                                <p className="text-xs text-gray-500">Current position</p>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <Target className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Growth Potential
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    {productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.growthPotential || 0), 0)}%
+                                </div>
+                                <p className="text-xs text-gray-500">Projected growth</p>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <Users className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Target Segments
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    {productData.extendedContent.detailedMarketAnalysis.length}
+                                </div>
+                                <p className="text-xs text-gray-500">Identified segments</p>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl border border-[#C4B89D] shadow-sm hover:shadow-md transition-all">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                        <DollarSign className="w-5 h-5 text-gray-600" />
+                                    </div>
+                                    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                        Revenue Opportunity
+                                    </h3>
+                                </div>
+                                <div className="text-2xl font-bold text-gray-600 mb-2">
+                                    ${productData.extendedContent.detailedMarketAnalysis.reduce((sum, item) => sum + (item.revenueOpportunity || 0), 0)}M
+                                </div>
+                                <p className="text-xs text-gray-500">Potential value</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <div className="p-20 text-center text-[#D3D1C7] font-semibold uppercase text-xl border-4 border-dashed border-[#D3D1C7] rounded-[3rem]">
+                    Market Analysis Data Coming Soon
+                </div>
+            )}
+        </div>
+    );
+};
+
+
+const muiTheme = createTheme({
+    components: {
+        MuiTextField: {
+            styleOverrides: {
+                root: {
+                    width: "100%",
+                    "& .MuiOutlinedInput-root:not(.MuiInputBase-multiline)": {
+                        borderRadius: "6px",
+                        height: "44px",
+                    },
+                    "& .MuiOutlinedInput-root.MuiInputBase-multiline": {
+                        borderRadius: "6px",
+                        height: "auto",
+                    },
+                },
+            },
+        },
+
+        MuiFormControl: {
+            styleOverrides: {
+                root: {
+                    width: "100%",
+                    "& .MuiOutlinedInput-root:not(.MuiInputBase-multiline)": {
+                        borderRadius: "6px",
+                        height: "44px",
+                    },
+                    "& .MuiOutlinedInput-root.MuiInputBase-multiline": {
+                        borderRadius: "6px",
+                        height: "auto",
+                    },
+                },
+            },
+        },
+
+        // ✅ Checkbox color
+        MuiCheckbox: {
+            styleOverrides: {
+                root: {
+                    color: "#bf213e",
+                    "&.Mui-checked": {
+                        color: "#bf213e",
+                    },
+                },
+            },
+        },
+
+        // ✅ Radio button color
+        MuiRadio: {
+            styleOverrides: {
+                root: {
+                    color: "#bf213e",
+                    "&.Mui-checked": {
+                        color: "#bf213e",
+                    },
+                },
+            },
+        },
+
+        // ✅ Disabled input background + text
+        MuiOutlinedInput: {
+            styleOverrides: {
+                root: {
+                    "&.Mui-disabled": {
+                        backgroundColor: "#f5f5f5",
+                        cursor: "not-allowed",
+                    },
+                },
+                input: {
+                    "&.Mui-disabled": {
+                        WebkitTextFillColor: "#9e9e9e",
+                    },
+                },
+            },
+        },
+
+        // ✅ Disabled label color
+        MuiInputLabel: {
+            styleOverrides: {
+                root: {
+                    "&.Mui-disabled": {
+                        color: "#9e9e9e",
+                    },
+                },
+            },
+        },
+    },
+});
+
+const TABS = [
+    { key: "other", label: "Other Details" },
+    { key: "opening-balance", label: "Opening Balance" },
+    { key: "address", label: "Address" },
+    { key: "contact", label: "Contact Persons" },
+    { key: "custom", label: "Custom Fields" },
+    { key: "reporting", label: "Reporting Tags" },
+    { key: "market", label: "Market Analysis" },
+    { key: "remarks", label: "Remarks" },
+];
+
+
+// TAB 2 → ADDRESS
+//
+const AddressTab = ({ billing, setBilling, shipping, setShipping }) => {
+
+    const sanitizeAddressField = (name: string, value: string): string | null => {
+        // Attention, City: alphabets and spaces only
+        if (name === 'attention' || name === 'city') {
+            if (value !== '' && !/^[a-zA-Z\s]*$/.test(value)) return null;
+            return value;
+        }
+        // Pin Code: only digits, max 6
+        if (name === 'pincode') {
+            const cleaned = value.replace(/[^0-9]/g, '');
+            if (cleaned.length > 6) return null;
+            return cleaned;
+        }
+        // Phone: digits and + only, max 10 digits
+        if (name === 'phone') {
+            const cleaned = value.replace(/[^0-9+]/g, '');
+            const digitsOnly = cleaned.replace(/[^0-9]/g, '');
+            if (digitsOnly.length > 10) return null;
+            return cleaned;
+        }
+        // Fax: digits only, max 10
+        if (name === 'fax') {
+            const cleaned = value.replace(/[^0-9]/g, '');
+            if (cleaned.length > 10) return null;
+            return cleaned;
+        }
+        return value;
+    };
+
+    const handleBillingChange = (e) => {
+        const { name, value } = e.target;
+        const sanitized = sanitizeAddressField(name, value);
+        if (sanitized === null) return;
+        setBilling((prev) => ({ ...prev, [name]: sanitized }));
+    };
+    const handleShippingChange = (e) => {
+        const { name, value } = e.target;
+        const sanitized = sanitizeAddressField(name, value);
+        if (sanitized === null) return;
+        setShipping((prev) => ({ ...prev, [name]: sanitized }));
+    };
+    const copyBillingToShipping = () => {
+        setShipping({ ...billing });
+    };
+
+    // Sample country and state options
+    const countryOptions = [
+        { code: 'IN', name: 'India' },
+        { code: 'US', name: 'United States' },
+        { code: 'GB', name: 'United Kingdom' },
+    ];
+    const stateOptions = {
+        IN: ['Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu'],
+        US: ['California', 'Texas', 'New York', 'Florida'],
+        GB: ['England', 'Scotland', 'Wales', 'Northern Ireland'],
+    };
+    const billingStates = stateOptions[billing.country] || [];
+    const shippingStates = stateOptions[shipping.country] || [];
+
+    return (
+        <div className="grid grid-cols-2 gap-8">
+            {/* Billing */}
+            <div>
+                <h3 className="font-semibold mb-3">Billing Address</h3>
+                <div className="space-y-3">
+                    <TextField label="Attention" name="attention" value={billing.attention} onChange={handleBillingChange} fullWidth placeholder="Enter attention name" />
+                    <FormControl fullWidth>
+                        <InputLabel>Country/Region</InputLabel>
+                        <Select
+                            name="country"
+                            value={billing.country}
+                            label="Country/Region"
+                            onChange={handleBillingChange}
+                        >
+                            <MenuItem value="" disabled>Select country</MenuItem>
+                            {countryOptions.map(opt => (
+                                <MenuItem key={opt.code} value={opt.code}>{opt.name}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <TextField label="Street 1" name="street1" value={billing.street1} onChange={handleBillingChange} fullWidth placeholder="Enter street address line 1" />
+                    <TextField label="Street 2" name="street2" value={billing.street2} onChange={handleBillingChange} fullWidth placeholder="Enter street address line 2" />
+                    <TextField label="City" name="city" value={billing.city} onChange={handleBillingChange} fullWidth placeholder="Enter city name" />
+                    <FormControl fullWidth>
+                        <InputLabel>State</InputLabel>
+                        <Select
+                            name="state"
+                            value={billing.state}
+                            label="State"
+                            onChange={handleBillingChange}
+                            disabled={!billing.country}
+                        >
+                            <MenuItem value="" disabled>Select state</MenuItem>
+                            {billingStates.map(state => (
+                                <MenuItem key={state} value={state}>{state}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <TextField label="Pin Code" name="pincode" value={billing.pincode} onChange={handleBillingChange} fullWidth placeholder="Enter pin code" inputProps={{ maxLength: 6 }} />
+                    <TextField label="Phone" name="phone" value={billing.phone} onChange={handleBillingChange} fullWidth placeholder="Enter phone number" inputProps={{ maxLength: 11 }} />
+                    <TextField label="Fax Number" name="fax" value={billing.fax} onChange={handleBillingChange} fullWidth placeholder="Enter fax number" inputProps={{ maxLength: 10 }} />
+                </div>
+            </div>
+
+            {/* Shipping */}
+            <div>
+                <h3 className="font-semibold mb-3">
+                    Shipping Address
+                    <span className="text-blue-600 text-sm ml-2 cursor-pointer" onClick={copyBillingToShipping}>
+                        (Copy billing address)
+                    </span>
+                </h3>
+
+                <div className="space-y-3">
+                    <TextField label="Attention" name="attention" value={shipping.attention} onChange={handleShippingChange} fullWidth placeholder="Enter attention name" />
+                    <FormControl fullWidth>
+                        <InputLabel>Country/Region</InputLabel>
+                        <Select
+                            name="country"
+                            value={shipping.country}
+                            label="Country/Region"
+                            onChange={handleShippingChange}
+                        >
+                            <MenuItem value="" disabled>Select country</MenuItem>
+                            {countryOptions.map(opt => (
+                                <MenuItem key={opt.code} value={opt.code}>{opt.name}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <TextField label="Street 1" name="street1" value={shipping.street1} onChange={handleShippingChange} fullWidth placeholder="Enter street address line 1" />
+                    <TextField label="Street 2" name="street2" value={shipping.street2} onChange={handleShippingChange} fullWidth placeholder="Enter street address line 2" />
+                    <TextField label="City" name="city" value={shipping.city} onChange={handleShippingChange} fullWidth placeholder="Enter city name" />
+                    <FormControl fullWidth>
+                        <InputLabel>State</InputLabel>
+                        <Select
+                            name="state"
+                            value={shipping.state}
+                            label="State"
+                            onChange={handleShippingChange}
+                            disabled={!shipping.country}
+                        >
+                            <MenuItem value="" disabled>Select state</MenuItem>
+                            {shippingStates.map(state => (
+                                <MenuItem key={state} value={state}>{state}</MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <TextField label="Pin Code" name="pincode" value={shipping.pincode} onChange={handleShippingChange} fullWidth placeholder="Enter pin code" inputProps={{ maxLength: 6 }} />
+                    <TextField label="Phone" name="phone" value={shipping.phone} onChange={handleShippingChange} fullWidth placeholder="Enter phone number" inputProps={{ maxLength: 11 }} />
+                    <TextField label="Fax Number" name="fax" value={shipping.fax} onChange={handleShippingChange} fullWidth placeholder="Enter fax number" inputProps={{ maxLength: 10 }} />
+                </div>
+            </div>
+        </div>
+    );
+};
+const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPaymentTerms, fetchPaymentTerms, form, handleChange, setForm }) => {
+
+    const [showMore, setShowMore] = React.useState(false);
+    // paymentTerms and setPaymentTerms now come from props
+    const [editTerms, setEditTerms] = React.useState([]);
+    // const [selectedTerm, setSelectedTerm] = React.useState('Due on Receipt');
+    const [showConfig, setShowConfig] = React.useState(false);
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const [newRows, setNewRows] = React.useState([]); // Editable new rows
+    const [customerExemptions, setCustomerExemptions] = React.useState<any[]>([]);
+    const [ledgers, setLedgers] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        const fetchLedgers = async () => {
+            const baseUrl = localStorage.getItem("baseUrl");
+            const token = localStorage.getItem("token");
+            const lock_account_id = localStorage.getItem("lock_account_id");
+            try {
+                const res = await axios.get(`https://${baseUrl}/lock_accounts/${lock_account_id}/lock_account_groups?format=flat`, {
+                    headers: { Authorization: token ? `Bearer ${token}` : undefined }
+                });
+                const groups = res.data.data || [];
+                const allLedgers = groups.flatMap((g: any) => g.ledgers || []).filter((l: any) => l.name === 'Accounts Receivable');
+                setLedgers(allLedgers);
+            } catch (err) { }
+        };
+        fetchLedgers();
+    }, []);
+
+    React.useEffect(() => {
+        if (showConfig) {
+            setEditTerms(paymentTerms.map(term => ({ id: term.id, name: term.name, days: term.days })));
+        }
+    }, [showConfig]);
+    const filteredTerms = paymentTerms.filter(term =>
+        term.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleAddNewTerm = () => {
+        setEditTerms([...editTerms, { name: '', days: '' }]);
+    };
+
+    const handleNewRowChange = (idx, field, value) => {
+        setEditTerms(rows => rows.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+    };
+
+    const handleRemoveNewRow = (idx) => {
+        setEditTerms(rows => rows.filter((_, i) => i !== idx));
+    };
+
+
+    const handleSaveTerms = async () => {
+
+        // Only add valid new rows
+        const validEdit = editTerms.filter(row => row.name.trim());
+        setEditTerms([]);
+        setShowConfig(false);
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const lock_account_id = localStorage.getItem("lock_account_id");
+
+        // Build payment_terms array for API
+        const paymentTermsPayload = validEdit.map(term => ({
+            id: term.id ?? null,
+            name: term.name,
+            no_of_days: term.days || 0
+        }));
+        // console.log("Saving Payment Terms Payload:", paymentTermsPayload);
+        const payload = {
+            payment_terms: paymentTermsPayload,
+            lock_account_id: lock_account_id
+        };
+
+        await axios.post(
+            `https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`,
+            payload,
+            {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    'Content-Type': 'application/json'
+                }
+            }
+        )
+            .then(res => {
+                // Optionally handle success
+            })
+            .catch(err => {
+                alert('Failed to save payment terms');
+            });
+
+        // Refresh payment terms list after save
+        fetchPaymentTerms();
+    };
+
+    // Remove (deactivate) payment term by id
+    const handleRemovePaymentTerm = async (id, idx) => {
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const lock_account_id = localStorage.getItem("lock_account_id");
+        try {
+            await axios.patch(
+                `https://${baseUrl}/payment_terms/${id}.json`,
+                { payment_term: { id, active: false } },
+                {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+        } catch (err) {
+            alert('Failed to deactivate payment term');
+        }
+        setEditTerms(terms => terms.filter((_, i) => i !== idx));
+        fetchPaymentTerms();
+    };
+
+    React.useEffect(() => {
+        const fetchCustomerExemptions = async () => {
+            try {
+                const baseUrl = localStorage.getItem("baseUrl");
+                const token = localStorage.getItem("token");
+                const lock_account_id = localStorage.getItem("lock_account_id");
+
+                const res = await axios.get(
+                    `https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=customer`,
+                    {
+                        headers: {
+                            Authorization: token ? `Bearer ${token}` : undefined,
+                        },
+                    }
+                );
+
+                // console.log("Customer Tax Exemptions:", res.data);
+                setCustomerExemptions(res.data || []); // update state
+            } catch (err) {
+                console.error("Failed to fetch customer exemptions", err);
+                setCustomerExemptions([]);
+            }
+        };
+
+        fetchCustomerExemptions();
+    }, []);
+    return (
+        <div className="grid grid-cols-2 gap-4">
+
+            <TextField
+                select
+                label={<span>GST Treatment <span className="text-red-600">*</span></span>}
+                name="gst_treatment"
+                value={form.gst_treatment}
+                onChange={handleChange}
+                fullWidth
+            >
+                <MenuItem value="">Select GST Treatment</MenuItem>
+                <MenuItem value="registered_regular">Registered Business – Regular</MenuItem>
+                <MenuItem value="registered_composition">Registered Business – Composition</MenuItem>
+                <MenuItem value="unregistered">Unregistered Business</MenuItem>
+                <MenuItem value="consumer">Consumer</MenuItem>
+                <MenuItem value="overseas">Overseas</MenuItem>
+                <MenuItem value="sez_unit">Special Economic Zone (SEZ) Unit</MenuItem>
+                <MenuItem value="deemed_export">Deemed Export</MenuItem>
+                <MenuItem value="tax_deductor">Tax Deductor</MenuItem>
+                <MenuItem value="sez_developer">SEZ Developer</MenuItem>
+                <MenuItem value="isd">Input Service Distributor (ISD)</MenuItem>
+            </TextField>
+
+
+
+
+
+            {/* <div className="col-span-2">
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            name="overseas"
+                            checked={form.overseas}
+                            onChange={(e) =>
+                                setForm(prev => ({
+                                    ...prev,
+                                    overseas: e.target.checked
+                                }))
+                            }
+                        />
+                    }
+                    label="Overseas Customer"
+                />
+            </div> */}
+
+            {(form.gst_treatment === "registered_regular" ||
+                form.gst_treatment === "registered_composition") && (
+                    <>
+                        {/* GSTIN / UIN */}
+                        <TextField
+                            label="GSTIN / UIN"
+                            name="gstin"
+                            value={form.gstin}
+                            onChange={handleChange}
+                            fullWidth
+                            error={!!form.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(form.gstin)}
+                            helperText={
+                                form.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/.test(form.gstin)
+                                    ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5'
+                                    : ''
+                            }
+                            inputProps={{ maxLength: 15, style: { textTransform: 'uppercase' } }}
+                            placeholder="Enter 15 digit GSTIN"
+                        />
+
+                        {/* Get Taxpayer Details Button */}
+                        {/* <div>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          // Call GST lookup API here
+          // console.log("Fetch GST details for:", form.gstin);
+        }}
+      >
+        Get Taxpayer Details
+      </Button>
+    </div> */}
+
+                        {/* Business Legal Name */}
+                        <TextField
+                            label="Business Legal Name"
+                            name="business_legal_name"
+                            value={form.business_legal_name}
+                            onChange={handleChange}
+                            fullWidth
+                        />
+
+                        {/* Business Trade Name */}
+                        <TextField
+                            label="Business Trade Name"
+                            name="business_trade_name"
+                            value={form.business_trade_name}
+                            onChange={handleChange}
+                            fullWidth
+                        />
+                    </>
+                )}
+
+            {form.gst_treatment !== "overseas" && (
+                <TextField
+                    select
+                    label="Place of Supply"
+                    name="place_of_supply"
+                    value={form.place_of_supply || ""}
+                    onChange={handleChange}
+                    fullWidth
+                >
+                    <MenuItem value="">Select State</MenuItem>
+                    <MenuItem value="Maharashtra">Maharashtra</MenuItem>
+                    <MenuItem value="Karnataka">Karnataka</MenuItem>
+                    <MenuItem value="Delhi">Delhi</MenuItem>
+                </TextField>
+            )}
+            {/* <TextField label="PAN" fullWidth /> */}
+            <TextField
+                label="PAN NO"
+                name="pan"
+                value={form.pan}
+                onChange={handleChange}
+                fullWidth
+                error={!!form.pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.pan)}
+                helperText={
+                    form.pan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.pan)
+                        ? 'Invalid PAN format'
+                        : ''
+                }
+                inputProps={{ maxLength: 10, style: { textTransform: 'uppercase' } }}
+                placeholder="Enter PAN number"
+            />
+
+            {/* <TextField select label="Currency" fullWidth>
+                    <MenuItem value="INR">INR - Indian Rupee</MenuItem>
+                </TextField> */}
+
+
+            <div className="col-span-2 mt-4">
+                <div className="font-medium mb-2">Tax Preference</div>
+
+                <RadioGroup
+                    row
+                    name="tax_preference"
+                    value={form.tax_preference}
+                    onChange={handleChange}
+                >
+                    <FormControlLabel value="taxable" control={<Radio />} label="Taxable" />
+                    <FormControlLabel value="exempt" control={<Radio />} label="Tax Exempt" />
+                </RadioGroup>
+            </div>
+
+            {form.tax_preference === "exempt" && (
+
+
+                <TextField
+                    select
+                    label="Exemption Reason"
+                    name="exemption_reason"
+                    value={form.exemption_reason}
+                    onChange={handleChange}
+                    fullWidth
+                >
+                    <MenuItem value="" disabled>Select reason</MenuItem>
+                    {customerExemptions.map(ex => (
+                        <MenuItem key={ex.id} value={ex.id}>
+                            {ex.reason}
+                        </MenuItem>
+                    ))}
+                </TextField>
+            )}
+
+
+            {form.tax_preference === "taxable" && (
+                <FormControlLabel
+                    className="col-span-2"
+                    control={
+                        <Checkbox
+                            name="apply_gst_tds"
+                            checked={form.apply_gst_tds}
+                            onChange={(e) =>
+                                setForm((prev) => ({
+                                    ...prev,
+                                    apply_gst_tds: e.target.checked,
+                                }))
+                            }
+                        />
+                    }
+                    label="Apply GST TDS for this customer"
+                />
+            )}
+
+
+            <TextField
+                select
+                label="Currency"
+                name="currency"
+                value={form.currency || ""}
+                onChange={handleChange}
+                fullWidth
+            >
+                <MenuItem value="">Select currency</MenuItem>
+                <MenuItem value="INR">INR - Indian Rupee</MenuItem>
+            </TextField>
+
+            <TextField
+                select
+                label="Accounts Receivable"
+                name="lock_account_ledger_id"
+                value={form.lock_account_ledger_id || ""}
+                onChange={handleChange}
+                fullWidth
+            >
+                <MenuItem value="">Select Ledger</MenuItem>
+                {ledgers.map((l: any) => (
+                    <MenuItem key={l.id} value={l.id}>{l.name}</MenuItem>
+                ))}
+            </TextField>
+
+
+            {/* Payment Terms dropdown with search and configure */}
+            <FormControl fullWidth>
+                <InputLabel>Payment Terms</InputLabel>
+                <Select
+                    value={selectedTerm}
+                    label="Payment Terms"
+                    onChange={e => setSelectedTerm(e.target.value)}
+                    renderValue={val => val}
+                >
+                    <MenuItem value="" disabled>Search or select payment term</MenuItem>
+                    {/* <MenuItem>
+                            <TextField
+                                placeholder="Search Payment Terms"
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                size="small"
+                                fullWidth
+                            />
+                        </MenuItem> */}
+                    {filteredTerms.map(term => (
+                        <MenuItem key={term.name} value={term.name}>{term.name}</MenuItem>
+                    ))}
+                    {/* <MenuItem>
+                        <span className="text-blue-600 cursor-pointer" onClick={() => setShowConfig(true)}>
+                            Configure Terms
+                        </span>
+                    </MenuItem> */}
+                </Select>
+            </FormControl>
+
+            {/* Configure Payment Terms Modal */}
+            {showConfig && (
+                <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
+                        <h2 className="text-lg font-semibold mb-4">Configure Payment Terms</h2>
+                        <table className="w-full mb-4 text-sm">
+                            <thead>
+                                <tr className="bg-gray-100">
+                                    <th className="p-2 border">Term Name</th>
+                                    <th className="p-2 border">Number of Days</th>
+                                    <th className="p-2 border"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {editTerms.map((row, idx) => (
+                                    <tr key={idx}>
+                                        <td className="border p-2">
+                                            <input
+                                                className="border rounded px-2 py-1 w-full"
+                                                placeholder="Term Name"
+                                                value={row.name}
+                                                onChange={e => handleNewRowChange(idx, 'name', e.target.value)}
+                                            />
+                                        </td>
+                                        <td className="border p-2">
+                                            <input
+                                                className="border rounded px-2 py-1 w-full"
+                                                placeholder="Days"
+                                                type="number"
+                                                value={row.days}
+                                                onChange={e => handleNewRowChange(idx, 'days', e.target.value)}
+                                            />
+                                        </td>
+                                        <td className="border p-2">
+                                            <button className="text-red-600 text-xs" onClick={async () => {
+                                                if (row.id) {
+                                                    await handleRemovePaymentTerm(row.id, idx);
+                                                } else {
+                                                    handleRemoveNewRow(idx);
+                                                }
+                                            }}>Remove</button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        <div className="flex gap-2 mb-2">
+                            <button
+                                className="text-blue-600 text-sm"
+                                onClick={handleAddNewTerm}
+                            >
+                                + Add New
+                            </button>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                                onClick={handleSaveTerms}
+                            >
+                                Save
+                            </button>
+                            <button
+                                className="bg-gray-200 px-4 py-2 rounded"
+                                onClick={() => {
+                                    setEditTerms(paymentTerms.map(term => ({ ...term })));
+                                    setShowConfig(false);
+                                }}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Documents upload */}
+            <div className="col-span-2 flex items-center gap-4">
+                <label className="font-medium">Documents</label>
+                <input type="file" multiple className="border rounded px-2 py-1" />
+                <span className="text-xs text-gray-500">You can upload a maximum of 10 files, 10MB each</span>
+            </div>
+
+            <div className="col-span-2">
+                <FormControlLabel
+                    control={<Checkbox />}
+                    label="Allow portal access for this customer"
+                />
+            </div>
+
+            {/* More Details toggle */}
+            <div className="col-span-2">
+                <span className="text-blue-600 text-sm cursor-pointer" onClick={() => setShowMore(v => !v)}>
+                    {showMore ? 'Hide More Details' : 'Add More Details'}
+                </span>
+            </div>
+
+            {showMore && (
+                <>
+                    <TextField label="Website URL" fullWidth placeholder="ex: www.zylker.com" />
+                    <TextField label="Department" fullWidth />
+                    <TextField label="Designation" fullWidth />
+
+                    {/* X (social link) */}
+                    <div className="col-span-1">
+                        <TextField
+                            label="X"
+                            placeholder="https://x.com/username"
+                            fullWidth
+                        />
+                    </div>
+
+                    {/* Skype Name/Number */}
+                    <div className="col-span-1">
+                        <TextField
+                            label="Skype Name/Number"
+                            placeholder="Skype ID or number"
+                            fullWidth
+                        />
+                    </div>
+
+                    {/* Facebook */}
+                    <div className="col-span-1">
+                        <TextField
+                            label="Facebook"
+                            placeholder="http://www.facebook.com/username"
+                            fullWidth
+                        />
+                    </div>
+                </>
+            )}
+
+            {/* Customer Owner info (display only) */}
+            {/* <div className="col-span-2 text-xs text-gray-500 mt-2">
+                    Customer Owner: Assign a user as the customer owner to provide access only to the data of this customer. <a href="#" className="text-blue-600">Learn More</a>
+                </div> */}
+        </div>
+    );
+};
+
+// const OpeningBalanceTab = ({ form, handleChange }) => {
+//     return (
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//             <TextField
+//                 label="Bill No"
+//                 name="opening_balance_bill_no"
+//                 value={form.opening_balance_bill_no || ""}
+//                 onChange={handleChange}
+//                 fullWidth
+//                 placeholder="Enter bill no"
+//             />
+//             <TextField
+//                 label="Bill Date"
+//                 name="opening_balance_bill_date"
+//                 type="date"
+//                 value={form.opening_balance_bill_date || ""}
+//                 onChange={handleChange}
+//                 fullWidth
+//                 InputLabelProps={{ shrink: true }}
+//             />
+//             <TextField
+//                 label="Due Date"
+//                 name="opening_balance_due_date"
+//                 type="date"
+//                 value={form.opening_balance_due_date || ""}
+//                 onChange={handleChange}
+//                 fullWidth
+//                 InputLabelProps={{ shrink: true }}
+//             />
+//             <TextField
+//                 label="Amount"
+//                 name="opening_balance"
+//                 value={form.opening_balance}
+//                 onChange={handleChange}
+//                 fullWidth
+//                 placeholder="Enter amount"
+//             />
+//         </div>
+//     );
+// };
+
+
+const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
+
+    const handleChange = (index, field, value) => {
+        const updated = [...openingBalances];
+        updated[index][field] = value;
+        setOpeningBalances(updated);
+    };
+
+    const addRow = () => {
+        setOpeningBalances([
+            ...openingBalances,
+            { bill_no: "", date: new Date().toISOString().split('T')[0], due_date: "", amount: "" }
+        ]);
+    };
+
+    const removeRow = (index) => {
+        const updated = openingBalances.filter((_, i) => i !== index);
+        setOpeningBalances(updated);
+    };
+
+    return (
+        <div>
+            {openingBalances?.map((row, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-3">
+
+                    <TextField
+                        label="Bill No"
+                        value={row.bill_no}
+                        placeholder="Enter bill number"
+                        onChange={(e) => handleChange(index, "bill_no", e.target.value)}
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                    />
+
+                    <TextField
+                        label="Bill Date"
+                        type="date"
+                        value={row.date}
+                        onChange={(e) => handleChange(index, "date", e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                    />
+
+                    <TextField
+                        label="Due Date"
+                        type="date"
+                        value={row.due_date}
+                        onChange={(e) => handleChange(index, "due_date", e.target.value)}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                        inputProps={{ min: new Date().toISOString().split('T')[0] }}
+                    />
+
+                    <TextField
+                        label="Amount"
+                        placeholder="Enter amount"
+                        value={row.amount}
+                        onChange={(e) => handleChange(index, "amount", e.target.value)}
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                    />
+
+                    <div className="flex items-center gap-2">
+                        <Button onClick={addRow} className="bg-[#C72030] text-white">
+                            +
+                        </Button>
+
+                        {openingBalances.length > 1 && (
+                            <Button
+                                onClick={() => removeRow(index)}
+                                variant="outline"
+                                className="border-red-500 text-red-500"
+                            >
+                                -
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+//
+
+//
+// TAB 3 → CONTACT PERSONS
+//
+const ContactPersonsTab = ({ rows, setRows }) => {
+    const [rowErrors, setRowErrors] = React.useState<Record<number, Record<string, string>>>({});
+
+    const validateContactField = (field: string, value: string): string => {
+        switch (field) {
+            case 'firstName':
+            case 'lastName': {
+                if (value && !/^[a-zA-Z\s]*$/.test(value)) {
+                    return `${field === 'firstName' ? 'First' : 'Last'} Name must contain only alphabets`;
+                }
+                return '';
+            }
+            case 'email': {
+                if (value && !/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(value)) {
+                    return 'Please enter a valid email (e.g. example@gmail.com)';
+                }
+                return '';
+            }
+            case 'workPhone':
+            case 'mobile': {
+                const digitsOnly = value.replace(/[^0-9]/g, '');
+                if (digitsOnly.length > 10) {
+                    return 'Phone number cannot exceed 10 digits';
+                }
+                return '';
+            }
+            default:
+                return '';
+        }
+    };
+
+    const handleRowChange = (idx, field, value) => {
+        // Block non-alpha characters for name fields
+        if ((field === 'firstName' || field === 'lastName') && value !== '' && !/^[a-zA-Z\s]*$/.test(value)) {
+            return;
+        }
+        // Strip non-numeric/non-plus characters for phone fields, enforce 10-digit limit
+        if (field === 'workPhone' || field === 'mobile') {
+            value = value.replace(/[^0-9+]/g, '');
+            const digitsOnly = value.replace(/[^0-9]/g, '');
+            if (digitsOnly.length > 10) return;
+        }
+
+        setRows(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+
+        // Update error state
+        const error = validateContactField(field, value);
+        setRowErrors(prev => ({
+            ...prev,
+            [idx]: { ...(prev[idx] || {}), [field]: error }
+        }));
+    };
+
+    const handleAddRow = () => {
+        setRows(prev => [...prev, { salutation: '', firstName: '', lastName: '', email: '', workPhone: '', mobile: '' }]);
+    };
+
+    const handleDeleteRow = (idx) => {
+        setRows(prev => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx));
+        // Clean up errors for deleted row
+        setRowErrors(prev => {
+            const updated = { ...prev };
+            delete updated[idx];
+            return updated;
+        });
+    };
+
+    return (
+        <div>
+            <table className="w-full border text-sm">
+                <thead className="bg-gray-100">
+                    <tr>
+                        <th className="p-2 border">Salutation</th>
+                        <th className="p-2 border">First Name</th>
+                        <th className="p-2 border">Last Name</th>
+                        <th className="p-2 border">Email</th>
+                        <th className="p-2 border">Work Phone</th>
+                        <th className="p-2 border">Mobile</th>
+                        <th className="p-2 border"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map((row, idx) => (
+                        <tr key={idx}>
+                            <td className="border p-2">
+                                <select
+                                    className="border rounded px-2 py-1 w-full"
+                                    value={row.salutation}
+                                    onChange={e => handleRowChange(idx, 'salutation', e.target.value)}
+                                >
+                                    <option value="">Select</option>
+                                    <option value="Mr">Mr</option>
+                                    <option value="Ms">Ms</option>
+                                    <option value="Mrs">Mrs</option>
+                                </select>
+                            </td>
+                            <td className="border p-2">
+                                <input
+                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.firstName ? 'border-red-500' : ''}`}
+                                    value={row.firstName}
+                                    onChange={e => handleRowChange(idx, 'firstName', e.target.value)}
+                                    placeholder="First Name"
+                                />
+                                {rowErrors[idx]?.firstName && (
+                                    <span className="text-red-500 text-xs">{rowErrors[idx].firstName}</span>
+                                )}
+                            </td>
+                            <td className="border p-2">
+                                <input
+                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.lastName ? 'border-red-500' : ''}`}
+                                    value={row.lastName}
+                                    onChange={e => handleRowChange(idx, 'lastName', e.target.value)}
+                                    placeholder="Last Name"
+                                />
+                                {rowErrors[idx]?.lastName && (
+                                    <span className="text-red-500 text-xs">{rowErrors[idx].lastName}</span>
+                                )}
+                            </td>
+                            <td className="border p-2">
+                                <input
+                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.email ? 'border-red-500' : ''}`}
+                                    value={row.email}
+                                    onChange={e => handleRowChange(idx, 'email', e.target.value)}
+                                    placeholder="example@gmail.com"
+                                    type="email"
+                                />
+                                {rowErrors[idx]?.email && (
+                                    <span className="text-red-500 text-xs">{rowErrors[idx].email}</span>
+                                )}
+                            </td>
+                            <td className="border p-2">
+                                <input
+                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.workPhone ? 'border-red-500' : ''}`}
+                                    value={row.workPhone}
+                                    onChange={e => handleRowChange(idx, 'workPhone', e.target.value)}
+                                    placeholder="Work Phone"
+                                    type="tel"
+                                />
+                                {rowErrors[idx]?.workPhone && (
+                                    <span className="text-red-500 text-xs">{rowErrors[idx].workPhone}</span>
+                                )}
+                            </td>
+                            <td className="border p-2">
+                                <input
+                                    className={`border rounded px-2 py-1 w-full ${rowErrors[idx]?.mobile ? 'border-red-500' : ''}`}
+                                    value={row.mobile}
+                                    onChange={e => handleRowChange(idx, 'mobile', e.target.value)}
+                                    placeholder="Mobile"
+                                    type="tel"
+                                />
+                                {rowErrors[idx]?.mobile && (
+                                    <span className="text-red-500 text-xs">{rowErrors[idx].mobile}</span>
+                                )}
+                            </td>
+                            <td className="border p-2 text-center">
+                                <button
+                                    type="button"
+                                    className="text-red-500 text-lg px-2"
+                                    onClick={() => handleDeleteRow(idx)}
+                                    title="Delete Row"
+                                    disabled={rows.length === 1}
+                                >
+                                    &#10005;
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+            <button
+                type="button"
+                className="mt-3 text-blue-600 text-sm"
+                onClick={handleAddRow}
+            >
+                + Add Contact Person
+            </button>
+        </div>
+    );
+};
+
+const CustomFieldsTab = () => (
+    <div className="text-sm text-gray-500">
+        No custom fields configured.
+    </div>
+);
+const ReportingTagsTab = () => (
+    <div className="text-sm text-gray-500">
+        No reporting tags available.
+    </div>
+);
+
+const RemarksTab = ({ remarks, setRemarks }) => (
+    <div className="flex flex-col">
+        <label className="text-sm text-gray-600 mb-1">Remarks</label>
+        <textarea
+            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+            rows={5}
+            placeholder="Enter remarks (max 500 characters)"
+            value={remarks}
+            maxLength={500}
+            onChange={(e) => {
+                if (e.target.value.length <= 500) {
+                    setRemarks(e.target.value);
+                }
+            }}
+        />
+        <div className="text-xs text-gray-400 text-right mt-1">
+            {remarks.length}/500
+        </div>
+    </div>
+);
+
+const CustomersEdit = () => {
+    // Payment Terms state and fetch logic lifted to parent
+    // const [paymentTerms, setPaymentTerms] = React.useState([]);
+    // const fetchPaymentTerms = React.useCallback(async () => {
+    const fetchPaymentTerms = async () => {
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const lock_account_id = localStorage.getItem("lock_account_id");
+        try {
+            const res = await axios?.get?.(
+                `https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+            if (res && res.data && Array.isArray(res.data)) {
+                setPaymentTerms(res.data.map(pt => ({ id: pt.id, name: pt.name, days: pt.no_of_days })));
+            }
+        } catch (err) {
+            // Optionally handle error
+        }
+    };
+    React.useEffect(() => {
+        fetchPaymentTerms();
+    }, []);
+    // React.useEffect(() => {
+    //     fetchPaymentTerms();
+    // }, [fetchPaymentTerms]);
+    const navigate = useNavigate();
+    const { id } = useParams();
+    const isEdit = !!id;
+    const [editIds, setEditIds] = useState({
+        billingId: null,
+        shippingId: null,
+        primaryGstDetailId: null,
+    });
+
+    const fetchCustomerDetails = async () => {
+        try {
+            const baseUrl = localStorage.getItem("baseUrl");
+            const token = localStorage.getItem("token");
+            const res = await axios.get(
+                `https://${baseUrl}/lock_account_customers/${id}.json`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const data = res.data;
+            if (data) {
+                setForm(prev => ({
+                    ...prev,
+                    customer_type: data.customer_type || "business",
+                    salutation: data.salutation || "",
+                    first_name: data.first_name || "",
+                    last_name: data.last_name || "",
+                    company_name: data.company_name || "",
+                    display_name: data.name || "",
+                    email: data.email || "",
+                    work_phone: data.work_phone || "",
+                    mobile: data.mobile || "",
+                    currency: data.currency_code || "INR",
+                    pan: data.pan || "",
+                    opening_balance: data.opening_balance || "",
+                    enable_portal: data.enable_portal || false,
+                    remarks: data.remarks || "",
+                    gst_treatment: data.gst_preference || "",
+                    place_of_supply: data.primary_gst_detail?.place_of_supply || "",
+                    tax_preference: data.tax_preference === "non_taxable" ? "exempt" : "taxable",
+                    exemption_reason: data.tax_exemption_id || "",
+                    apply_gst_tds: data.gst_tds_enabled || false,
+                    gstin: data.primary_gst_detail?.gstin || "",
+                    business_legal_name: data.primary_gst_detail?.business_legal_name || "",
+                    business_trade_name: data.primary_gst_detail?.business_trade_name || "",
+                    lock_account_ledger_id: data.lock_account_ledger_id || "",
+                }));
+
+                if (data.billing_address) {
+                    setBilling({
+                        attention: data.billing_address.attention || "",
+                        country: data.billing_address.country || "",
+                        street1: data.billing_address.address || "",
+                        street2: data.billing_address.address_line_two || "",
+                        city: data.billing_address.city || "",
+                        state: data.billing_address.state || "",
+                        pincode: data.billing_address.pin_code || "",
+                        phone: data.billing_address.telephone_number || "",
+                        fax: data.billing_address.fax_number || "",
+                    });
+                }
+
+                if (data.shipping_address) {
+                    setShipping({
+                        attention: data.shipping_address.attention || "",
+                        country: data.shipping_address.country || "",
+                        street1: data.shipping_address.address || "",
+                        street2: data.shipping_address.address_line_two || "",
+                        city: data.shipping_address.city || "",
+                        state: data.shipping_address.state || "",
+                        pincode: data.shipping_address.pin_code || "",
+                        phone: data.shipping_address.telephone_number || "",
+                        fax: data.shipping_address.fax_number || "",
+                        mobile: data.shipping_address.mobile || "",
+                        email: data.shipping_address.email || "",
+                    });
+                }
+
+                if (data.contact_persons && data.contact_persons.length > 0) {
+                    setContactPersons(data.contact_persons.map((cp: any) => ({
+                        id: cp.id,
+                        salutation: cp.salutation || "",
+                        firstName: cp.first_name || "",
+                        lastName: cp.last_name || "",
+                        email: cp.email || "",
+                        workPhone: cp.work_phone || "",
+                        mobile: cp.mobile || ""
+                    })));
+                }
+
+                if (data.opening_balances && data.opening_balances.length > 0) {
+                    setOpeningBalances(data.opening_balances.map((ob: any) => ({
+                        id: ob.id,
+                        bill_no: ob.bill_no || "",
+                        date: ob.date || new Date().toISOString().split('T')[0],
+                        due_date: ob.due_date || "",
+                        amount: ob.amount || ""
+                    })));
+                }
+
+                setEditIds({
+                    billingId: data.billing_address?.id || null,
+                    shippingId: data.shipping_address?.id || null,
+                    primaryGstDetailId: data.primary_gst_detail?.id || null,
+                });
+                
+                if (data.payment_term) {
+                    setSelectedTerm(data.payment_term.name || "");
+                }
+            }
+        } catch (err) {
+            toast.error("Failed to fetch customer details for editing");
+        }
+    };
+
+    React.useEffect(() => {
+        if (isEdit) {
+            fetchCustomerDetails();
+        }
+    }, [isEdit, id]);
+
+    const baseUrl = localStorage.getItem("baseUrl");
+    const token = localStorage.getItem("token");
+    const lock_account_id = localStorage.getItem("lock_account_id");
+    const [activeTab, setActiveTab] = useState("other");
+    const [form, setForm] = useState({
+        customer_type: "business",
+        salutation: "",
+        first_name: "",
+        last_name: "",
+        company_name: "",
+        display_name: "",
+        email: "",
+        work_phone: "",
+        mobile: "",
+        language: "English",
+        currency: "INR",
+        pan: "",
+        opening_balance: "",
+        opening_balance_bill_no: "",
+        opening_balance_bill_date: "",
+        opening_balance_due_date: "",
+        enable_portal: false,
+        remarks: "",
+
+        // ✅ NEW GST FIELDS
+        gst_treatment: "",
+        place_of_supply: "",
+        tax_preference: "taxable",
+        exemption_reason: "",
+        apply_gst_tds: false,
+        overseas: false,
+        // gst_treatment: "",
+        gstin: "",
+        business_legal_name: "",
+        business_trade_name: "",
+
+
+
+
+        gst_preference: "",
+        tax_exemption_id: "",
+        gst_tds_enabled: false,
+        lock_account_ledger_id: "",
+        //   department: "",
+        //   designation: "",
+
+    });
+
+    // ADDRESS
+    const [billing, setBilling] = useState({
+        attention: "",
+        country: "",
+        street1: "",
+        street2: "",
+        city: "",
+        state: "",
+        pincode: "",
+        phone: "",
+        fax: "",
+    });
+
+
+
+    const [shipping, setShipping] = useState({
+        attention: "",
+        country: "",
+        street1: "",
+        street2: "",
+        city: "",
+        state: "",
+        pincode: "",
+        phone: "",
+        fax: "",
+        mobile: "",
+        email: "",
+    });
+
+    // CONTACT PERSONS
+    const [contactPersons, setContactPersons] = useState([
+        { salutation: "", firstName: "", lastName: "", email: "", workPhone: "", mobile: "" }
+    ]);
+
+    const [openingBalances, setOpeningBalances] = useState([
+        {
+            bill_no: "",
+            date: new Date().toISOString().split('T')[0],
+            due_date: "",
+            amount: ""
+        }
+    ]);
+
+    // REMARKS
+    const [remarks, setRemarks] = useState("");
+
+    // PAYMENT TERM
+    const [selectedTerm, setSelectedTerm] = useState("");
+
+    // PAYMENT TERM
+    const [paymentTerms, setPaymentTerms] = React.useState([]);
+
+    const [loading, setLoading] = useState(false);
+
+    // ── Validation state ──
+    const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+    // ── Validation helpers ──
+    const alphabetsOnly = (v: string) => /^[a-zA-Z\s]*$/.test(v);
+    const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/;
+    const phoneClean = (v: string) => v.replace(/[^0-9+]/g, '');
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { name: string; value: string } }) => {
+        const { name, value: rawValue } = e.target;
+        let value = rawValue;
+
+        // ── First Name / Last Name: block non-alphabets ──
+        if (name === 'first_name' || name === 'last_name') {
+            if (value !== '' && !alphabetsOnly(value)) return; // silently reject
+        }
+
+        // ── Work Phone / Mobile: strip invalid chars, enforce 10-digit limit ──
+        if (name === 'work_phone' || name === 'mobile') {
+            value = phoneClean(value);
+            const digitsOnly = value.replace(/[^0-9]/g, '');
+            if (digitsOnly.length > 10) return;
+        }
+
+        // ── PAN: auto-uppercase ──
+        if (name === 'pan') {
+            value = value.toUpperCase();
+            // Allow max 10 chars
+            if (value.length > 10) return;
+        }
+
+        // ── GSTIN: auto-uppercase ──
+        if (name === 'gstin') {
+            value = value.toUpperCase();
+            if (value.length > 15) return;
+        }
+
+        // ── Opening Balance: numeric only, allow up to 2 decimal places ──
+        if (name === 'opening_balance') {
+            // Allow empty string
+            if (value === '') {
+                setForm((p) => ({ ...p, [name]: value }));
+                return;
+            }
+            // Allow only digits and one decimal point, max 2 decimal places
+            if (!/^\d*\.?\d{0,2}$/.test(value)) return;
+        }
+
+        setForm((p) => ({ ...p, [name]: value }));
+
+        // ── Live validation (set / clear error) ──
+        const newErrors = { ...fieldErrors };
+
+        if (name === 'email') {
+            if (value && !emailRegex.test(value)) {
+                newErrors.email = 'Please enter a valid email (e.g. example@gmail.com)';
+            } else {
+                delete newErrors.email;
+            }
+        }
+
+        if (name === 'pan') {
+            if (value && !panRegex.test(value)) {
+                newErrors.pan = 'PAN must follow format: ABCDE1234F (5 letters + 4 digits + 1 letter)';
+            } else {
+                delete newErrors.pan;
+            }
+        }
+
+        if (name === 'work_phone' || name === 'mobile') {
+            const digits = value.replace(/[^0-9]/g, '');
+            if (digits.length > 0 && digits.length < 10) {
+                newErrors[name] = 'Phone number must be 10 digits';
+            } else {
+                delete newErrors[name];
+            }
+        }
+
+        setFieldErrors(newErrors);
+    };
+
+
+
+    const handleSubmit = () => {
+
+        // ── Inline field validations before submit ──
+        const submitErrors: Record<string, string> = {};
+
+        if (!form.display_name?.trim()) {
+            toast.error("Display Name is a mandatory field");
+            return;
+        }
+
+        if (!form.gst_treatment) {
+            toast.error("GST Treatment is a mandatory field");
+            return;
+        }
+
+        if (form.first_name && !alphabetsOnly(form.first_name)) {
+            submitErrors.first_name = 'First Name must contain only alphabets';
+        }
+        if (form.last_name && !alphabetsOnly(form.last_name)) {
+            submitErrors.last_name = 'Last Name must contain only alphabets';
+        }
+        if (form.email && !emailRegex.test(form.email)) {
+            submitErrors.email = 'Please enter a valid email (e.g. example@gmail.com)';
+        }
+        if (form.work_phone) {
+            const wpDigits = form.work_phone.replace(/[^0-9]/g, '');
+            if (wpDigits.length !== 10) {
+                submitErrors.work_phone = 'Work Phone must be exactly 10 digits';
+            }
+        }
+        if (form.mobile) {
+            const mobDigits = form.mobile.replace(/[^0-9]/g, '');
+            if (mobDigits.length !== 10) {
+                submitErrors.mobile = 'Mobile must be exactly 10 digits';
+            }
+        }
+        if (form.pan && !panRegex.test(form.pan)) {
+            submitErrors.pan = 'PAN must follow format: ABCDE1234F (5 letters + 4 digits + 1 letter)';
+        }
+        if (form.gstin && !gstinRegex.test(form.gstin)) {
+            submitErrors.gstin = 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5';
+        }
+
+        if (Object.keys(submitErrors).length > 0) {
+            setFieldErrors(submitErrors);
+            const firstError = Object.values(submitErrors)[0];
+            toast.error(firstError);
+            return;
+        }
+
+        if (form.gst_treatment === "registered_regular" || form.gst_treatment === "registered_composition") {
+            if (!form.gstin) {
+                toast.error("GSTIN is required for Regular/Composition customers");
+                return;
+            }
+        }
+
+        if (form.tax_preference === "non_taxable" && !form.tax_exemption_id) {
+            toast.error("Exemption Reason is required");
+            return;
+        }
+        // Build customer payload for API from all tabs
+        const baseUrl = localStorage.getItem("baseUrl");
+        const token = localStorage.getItem("token");
+        const lock_account_id = localStorage.getItem("lock_account_id");
+
+        // Get payment term id
+        const paymentTerm = paymentTerms.find(pt => pt.name === selectedTerm);
+        const payment_term_id = paymentTerm ? paymentTerm.id : null;
+
+        // Use lifted billing, shipping, contactPersons, remarks state
+        const billingPayload = {
+            attention: billing.attention || '',
+            address: billing.street1 || '',
+            active: true,
+            address_line_two: billing.street2 || '',
+            address_line_three: '',
+            country: billing.country || 'India',
+            state: billing.state || '',
+            city: billing.city || '',
+            pin_code: billing.pincode || '',
+            telephone_number: billing.phone || '',
+            fax_number: billing.fax || '',
+            mobile: form.mobile || '',
+            contact_person: billing.attention || ''
+        };
+
+
+
+        const shippingPayload = {
+            attention: shipping.attention || '',
+            address: shipping.street1 || '',
+            active: true,
+            email: shipping.email || '',
+            address_line_two: shipping.street2 || '',
+            address_line_three: '',
+            country: shipping.country || 'India',
+            state: shipping.state || '',
+            city: shipping.city || '',
+            pin_code: shipping.pincode || '',
+            telephone_number: shipping.phone || '',
+            fax_number: shipping.fax || '',
+            mobile: shipping.mobile || '',
+            contact_person: shipping.attention || ''
+        };
+
+        const contactPersonsPayload = contactPersons.map(row => ({
+            first_name: row.firstName,
+            last_name: row.lastName,
+            salutation: row.salutation,
+            email: row.email,
+            mobile: row.mobile,
+            work_phone: row.workPhone
+        }));
+
+        const openingBalancePayload = openingBalances
+            .filter(row => row.bill_no || row.amount) // skip empty rows
+            .map(row => ({
+                bill_no: row.bill_no || null,
+                date: row.date || null,
+                due_date: row.due_date || null,
+                amount: row.amount ? Number(row.amount) : 0
+            }));
+
+        // Use lifted remarks state
+        const remarksPayload = remarks || '';
+
+        // Build main payload
+        const payload = {
+            lock_account_customer: {
+                customer_type: form.customer_type,
+                company_name: form.company_name,
+                name: form.display_name || form.company_name,
+                salutation: form.salutation,
+                first_name: form.first_name,
+                last_name: form.last_name,
+                email: form.email,
+                mobile: form.mobile,
+                work_phone: form.work_phone,
+                pan: form.pan || '',
+                language_code: 'en',
+                currency_code: 'INR',
+                opening_balance: form.opening_balance || 0,
+                // opening_balance_bill_no: form.opening_balance_bill_no || null,
+                // opening_balance_bill_date: form.opening_balance_bill_date || null,
+                // opening_balance_due_date: form.opening_balance_due_date || null,
+
+                opening_balance_details_attributes: openingBalancePayload,
+                payment_term_id,
+                enable_portal: form.enable_portal || false,
+                lock_account_ledger_id: form.lock_account_ledger_id || null,
+
+                // gstin: form.gstin || null,
+                gst_preference: form.gst_treatment || null,
+                tax_preference: form.tax_preference || null,
+
+                tax_exemption_id:
+                    form.tax_preference === "non_taxable"
+                        ? form.tax_exemption_id || null
+                        : null,
+
+                // business_legal_name:
+                //     form.gst_preference === "regular" ||
+                //         form.gst_preference === "composition"
+                //         ? form.business_legal_name || null
+                //         : null,
+
+                // business_trade_name:
+                //     form.gst_preference === "regular" ||
+                //         form.gst_preference === "composition"
+                //         ? form.business_trade_name || null
+                //         : null,
+
+                gst_tds_enabled:
+                    form.tax_preference === "taxable"
+                        ? form.gst_tds_enabled
+                        : false,
+
+                remarks: remarksPayload,
+                default_billing_address_attributes: billingPayload,
+                default_shipping_address_attributes: shippingPayload,
+                contact_persons_attributes: contactPersonsPayload,
+
+                primary_gst_detail_attributes: {
+                    gstin: form.gstin || null,
+
+                    business_legal_name:
+                        form.gst_treatment === "registered_regular" ||
+                            form.gst_treatment === "registered_composition"
+                            ? form.business_legal_name || null
+                            : null,
+
+                    place_of_supply:
+                        form.gst_treatment === "overseas" ? null : form.place_of_supply || null,
+
+                    business_trade_name:
+                        form.gst_treatment === "registered_regular" ||
+                            form.gst_treatment === "registered_composition"
+                            ? form.business_trade_name || null
+                            : null,
+                }
+            }
+        };
+        // console.log("Submitting Customer Payload:", payload);
+        
+        const method = isEdit ? "patch" : "post";
+        const url = isEdit 
+            ? `https://${baseUrl}/lock_account_customers/${id}.json?lock_account_id=${lock_account_id}`
+            : `https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`;
+            
+        if (isEdit) {
+            if (editIds.billingId) payload.customer.default_billing_address_attributes.id = editIds.billingId;
+            if (editIds.shippingId) payload.customer.default_shipping_address_attributes.id = editIds.shippingId;
+            if (editIds.primaryGstDetailId) payload.customer.primary_gst_detail_attributes.id = editIds.primaryGstDetailId;
+        }
+
+        setLoading(true);
+        axios[method](
+            url,
+            payload,
+            {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    'Content-Type': 'application/json'
+                }
+            }
+        )
+            .then(res => {
+                toast.success(isEdit ? "Customer updated successfully!" : "Customer saved successfully!");
+                navigate("/accounting/customers");
+            })
+            .catch(err => {
+                toast.error(isEdit ? "Failed to update customer" : "Failed to save customer");
+                console.error("Customer save error:", err);
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    };
+
+
+    return (
+        <ThemeProvider theme={muiTheme}>
+            <div className="p-6 bg-white min-h-screen">
+                <h1 className="text-2xl font-semibold mb-6">New Customer</h1>
+
+                {/* CUSTOMER TYPE */}
+                <div className="flex items-center gap-6 mb-6">
+                    <div className="font-medium w-40">Customer Type</div>
+
+                    <RadioGroup
+                        row
+                        name="customer_type"
+                        value={form.customer_type}
+                        onChange={handleChange}
+                    >
+                        <FormControlLabel value="business" control={<Radio />} label="Business" />
+                        <FormControlLabel value="individual" control={<Radio />} label="Individual" />
+                    </RadioGroup>
+                </div>
+
+                {/* PRIMARY CONTACT */}
+                <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
+                    <div>Primary Contact</div>
+
+                    <div className="grid md:grid-cols-3 gap-4">
+                        <FormControl>
+                            <InputLabel>Salutation</InputLabel>
+                            <Select
+                                name="salutation"
+                                value={form.salutation}
+                                label="Salutation"
+                                onChange={handleChange}
+                            >
+                                <MenuItem value="Mr">Mr</MenuItem>
+                                <MenuItem value="Ms">Ms</MenuItem>
+                                <MenuItem value="Mrs">Mrs</MenuItem>
+                            </Select>
+                        </FormControl>
+
+                        <TextField
+                            name="first_name"
+                            label="First Name"
+                            value={form.first_name}
+                            onChange={handleChange}
+                            error={!!fieldErrors.first_name}
+                            helperText={fieldErrors.first_name || ''}
+                            placeholder="Enter first name"
+                        />
+
+                        <TextField
+                            name="last_name"
+                            label="Last Name"
+                            value={form.last_name}
+                            onChange={handleChange}
+                            error={!!fieldErrors.last_name}
+                            helperText={fieldErrors.last_name || ''}
+                            placeholder="Enter last name"
+                        />
+                    </div>
+                </div>
+
+                {/* COMPANY NAME */}
+                <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
+                    <div>Company Name</div>
+                    <TextField
+                        name="company_name"
+                        value={form.company_name}
+                        onChange={handleChange}
+                        placeholder="Enter company name"
+                    />
+                </div>
+
+                {/* DISPLAY NAME */}
+                <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
+                    <div className="text-red-600">Display Name *</div>
+                    <TextField
+                        name="display_name"
+                        placeholder="Enter display name"
+                        value={form.display_name}
+                        onChange={handleChange}
+                    />
+                </div>
+
+                {/* EMAIL */}
+                <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
+                    <div>Email Address</div>
+                    <TextField
+                        name="email"
+                        value={form.email}
+                        onChange={handleChange}
+                        error={!!fieldErrors.email}
+                        helperText={fieldErrors.email || ''}
+                        placeholder="example@gmail.com"
+                    />
+                </div>
+
+                {/* PHONE */}
+                <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
+                    <div>Phone</div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <TextField
+                            name="work_phone"
+                            label="Work Phone"
+                            value={form.work_phone}
+                            onChange={handleChange}
+                            error={!!fieldErrors.work_phone}
+                            helperText={fieldErrors.work_phone || ''}
+                            placeholder="e.g. 9876543210"
+                            inputProps={{ maxLength: 11 }}
+                        />
+
+                        <TextField
+                            name="mobile"
+                            label="Mobile"
+                            value={form.mobile}
+                            onChange={handleChange}
+                            error={!!fieldErrors.mobile}
+                            helperText={fieldErrors.mobile || ''}
+                            placeholder="e.g. 9876543210"
+                            inputProps={{ maxLength: 11 }}
+                        />
+                    </div>
+                </div>
+
+                {/* LANGUAGE */}
+                <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-6">
+                    <div>Customer Language</div>
+                    <FormControl>
+                        <Select
+                            name="language"
+                            value={form.language}
+                            onChange={handleChange}
+                        >
+                            <MenuItem value="English">English</MenuItem>
+                            <MenuItem value="Hindi">Hindi</MenuItem>
+                        </Select>
+                    </FormControl>
+                </div>
+
+                {/* TABS PLACEHOLDER */}
+                {/* <div className="p-4"> */}
+                {/* Tabs Header */}
+                <div className="bg-white rounded-lg border p-6 mb-6">
+                    {/* <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 border-b mb-6"> */}
+                    <div className="flex flex-wrap md:flex-nowrap overflow-x-auto border-b mb-6">
+                        {TABS.map((tab) => (
+                            //                 <button
+                            //                     key={tab.key}
+                            //                     type="button"
+                            //                     onClick={() => setActiveTab(tab.key)}
+                            //                     className={`px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors
+                            //     ${activeTab === tab.key
+                            //                             ? "text-[#C72030] border-b-2 border-[#C72030] bg-[#f9f7f2]/50"
+                            //                             : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"}
+                            //   `}
+                            //                 >
+                            //                     {tab.label}
+                            //                 </button>
+
+
+                            <button
+                                key={tab.key}
+                                type="button"
+                                onClick={() => setActiveTab(tab.key)}
+                                className={`flex-1 text-center px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors
+    ${activeTab === tab.key
+                                        ? "text-[#C72030] border-b-2 border-[#C72030] bg-[#f9f7f2]/50"
+                                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                    }
+  `}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+                    {/* </div> */}
+
+                    {/* Tab Content */}
+                    {/* <div className="mt-4">
+                        {activeTab === "other" && <OtherDetailsTab />}
+                        {activeTab === "address" && <AddressTab />}
+                        {activeTab === "contact" && <ContactPersonsTab />}
+
+                        {activeTab === "custom" && <CustomFieldsTab />}
+                        {activeTab === "reporting" && <ReportingTagsTab />}
+                        {activeTab === "remarks" && <RemarksTab />}
+
+                    </div> */}
+
+                    {activeTab === "other" && (
+                        <OtherDetailsTab
+                            selectedTerm={selectedTerm}
+                            setSelectedTerm={setSelectedTerm}
+                            paymentTerms={paymentTerms}
+                            setPaymentTerms={setPaymentTerms}
+                            fetchPaymentTerms={fetchPaymentTerms}
+                            form={form}
+                            handleChange={handleChange}
+                            setForm={setForm}
+                        />
+                    )}
+
+                    {/* {activeTab === "opening-balance" && (
+                        <OpeningBalanceTab form={form} handleChange={handleChange} />
+                    )} */}
+                    {activeTab === "opening-balance" && (
+                        <OpeningBalanceTab
+                            openingBalances={openingBalances}
+                            setOpeningBalances={setOpeningBalances}
+                        />
+                    )}
+
+                    {activeTab === "address" && (
+                        <AddressTab
+                            billing={billing}
+                            setBilling={setBilling}
+                            shipping={shipping}
+                            setShipping={setShipping}
+                        />
+                    )}
+
+                    {activeTab === "contact" && (
+                        <ContactPersonsTab
+                            rows={contactPersons}
+                            setRows={setContactPersons}
+                        />
+                    )}
+
+                    {activeTab === "custom" && <CustomFieldsTab />}
+                    {activeTab === "reporting" && <ReportingTagsTab />}
+
+                    {activeTab === "market" && (
+                        <MarketAnalysisTab productData={{
+                            name: form.display_name || form.company_name || 'Customer',
+                            extendedContent: {
+                                detailedMarketAnalysis: []
+                            }
+                        }} />
+                    )}
+
+                    {activeTab === "remarks" && (
+                        <RemarksTab remarks={remarks} setRemarks={setRemarks} />
+                    )}
+                </div>
+
+                {/* BUTTONS */}
+                <div className="flex gap-3 justify-center">
+                    <Button
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[100px]"
+                    >
+                        {loading ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Please wait
+                            </>
+                        ) : (
+                            isEdit ? "Update" : "Save"
+                        )}
+                    </Button>
+
+                    <Button variant="outline" onClick={() => navigate("/accounting/customers")}>
+                        Cancel
+                    </Button>
+                </div>
+            </div>
+        </ThemeProvider>
+    );
+};
+
+
+export default CustomersEdit;

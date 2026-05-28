@@ -65,6 +65,7 @@ export const EditServicePRPage = () => {
   const [showRadio, setShowRadio] = useState(false);
   const [glAccountOptions, setGlAccountOptions] = useState([]);
   const [taxCodeOptions, setTaxCodeOptions] = useState([]);
+  const [storageLocationOptions, setStorageLocationOptions] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
@@ -114,6 +115,7 @@ export const EditServicePRPage = () => {
       amount: "",
       totalAmount: "",
       wbsCode: "",
+      storageLocation: "",
       _destroy: 0,
     },
   ]);
@@ -145,6 +147,20 @@ export const EditServicePRPage = () => {
       }
     } catch (error) {
       console.error("Error fetching Tax Code options:", error);
+    }
+  };
+
+  const fetchStorageLocationOptions = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/get_additional_fields.json?q[fields_for_eq]=storage_location`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.additional_fields && Array.isArray(response.data.additional_fields)) {
+        setStorageLocationOptions(response.data.additional_fields);
+      }
+    } catch (error) {
+      console.error("Error fetching Storage Location options:", error);
     }
   };
 
@@ -242,6 +258,7 @@ export const EditServicePRPage = () => {
     fetchServices();
     fetchGlAccountOptions();
     fetchTaxCodeOptions();
+    fetchStorageLocationOptions();
   }, [dispatch, baseUrl, token]);
 
   useEffect(() => {
@@ -292,6 +309,7 @@ export const EditServicePRPage = () => {
             amount: item.total_value,
             totalAmount: (Number(item.total_value) + Number(item.tax_amount)).toFixed(2),
             wbsCode: item.wbs_code,
+            storageLocation: item.general_storage || "",
             _destroy: 0,
           }))
         );
@@ -410,6 +428,7 @@ export const EditServicePRPage = () => {
       amount: "",
       totalAmount: "",
       wbsCode: "",
+      storageLocation: "",
       _destroy: 0,
     };
     setDetailsForms((prev) => [...prev, newForm]);
@@ -604,6 +623,7 @@ export const EditServicePRPage = () => {
           total_amount: item.totalAmount,
           gl_account: wbsSelection === "overall" ? overallGlCode : item.glCode,
           tax_code: item.taxCode,
+          general_storage: item.storageLocation,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
           _destroy: item._destroy,
         })),
@@ -1318,6 +1338,26 @@ export const EditServicePRPage = () => {
                           <em>Select Tax Code</em>
                         </MenuItem>
                         {taxCodeOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.content.code}>
+                            {option.content.code} - {option.content.name}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
+
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel shrink>Storage Location*</InputLabel>
+                      <MuiSelect
+                        label="Storage Location*"
+                        value={detailsData.storageLocation}
+                        onChange={(e) =>
+                          handleDetailsChange(detailsData.id, "storageLocation", e.target.value)
+                        }
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value=""><em>Select Storage Location</em></MenuItem>
+                        {storageLocationOptions.map((option) => (
                           <MenuItem key={option.id} value={option.content.code}>
                             {option.content.code} - {option.content.name}
                           </MenuItem>

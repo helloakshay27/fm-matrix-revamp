@@ -3,3 +3,5 @@ export { ProactiveReactiveCard } from './ProactiveReactiveCard';
 export { CategoryWiseProactiveReactiveCard } from './CategoryWiseProactiveReactiveCard';
 export { UnitCategoryWiseCard } from './UnitCategoryWiseCard';
 export { TicketAgingMatrixCard } from './TicketAgingMatrixCard';
+export { IssueBreakdownCategoryWiseCard } from './IssueBreakdownCategoryWiseCard';
+export { SiteWiseIssueSummaryCard } from './SiteWiseIssueSummaryCard';
