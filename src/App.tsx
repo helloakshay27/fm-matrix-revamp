@@ -1192,6 +1192,7 @@ const RideDetail = lazy(() => import("./pages/pulse/RideDetail").then(m => ({ de
 import { OccupantUserListWrapper } from "./components/OccupantUserListWrapper";
 import { OccupantUserDetailWrapper } from "./components/OccupantUserDetailWrapper";
 import { LoginPageWrapper } from "./components/LoginPageWrapper";
+import RecurringInvoiceDetailsPage from "./pages/ClubManagement/RecurringInvoiceDetails.tsx";
 const ModulesManagement = lazy(() => import("./pages/settings/ModulesManagement"));
 const InvoiceAdd = lazy(() => import("./pages/ClubManagement/InvoiceAdd").then(m => ({ default: m.InvoiceAdd })));
 const InvoiceDashboardAccounting = lazy(() => import("./pages/ClubManagement/InvoiceDashboard").then(m => ({ default: m.InvoiceDashboardAccounting })));
@@ -3440,6 +3441,10 @@ function App() {
                             <Route
                               path="/accounting/recurring-invoices/create"
                               element={<RecurringInvoicesCreatePage />}
+                            />
+                             <Route
+                              path="/accounting/recurring-invoices/details/:id"
+                              element={<RecurringInvoiceDetailsPage />}
                             />
                             <Route
                               path="/accounting/payments-received"
