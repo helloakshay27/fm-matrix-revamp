@@ -235,6 +235,8 @@ export const MobileSurveyLanding: React.FC = () => {
     switch (currentQuestion.qtype) {
       case "multiple":
         return selectedOptions.length > 0;
+      case "checkbox":
+        return selectedOptions.length > 0;
       case "input":
       case "input_box":
       case "text":
@@ -245,9 +247,23 @@ export const MobileSurveyLanding: React.FC = () => {
       case "emoji":
       case "smiley":
         return selectedRating !== null;
+      case "date":
+        return currentQuestionValue.trim() !== "";
       default:
         return true;
     }
+  };
+
+  // Handle checkbox selection (multi-select)
+  const handleCheckboxSelect = (option: SurveyOption): void => {
+    setSelectedOptions((prev) => {
+      const isSelected = prev.some((opt) => opt.id === option.id);
+      if (isSelected) {
+        return prev.filter((opt) => opt.id !== option.id);
+      } else {
+        return [...prev, option];
+      }
+    });
   };
 
   // Handle option selection for multiple choice
@@ -492,6 +508,12 @@ export const MobileSurveyLanding: React.FC = () => {
         answerData.comments = comments || "";
         break;
       }
+      case "checkbox": {
+        answerData.selectedOptions = selectedOptions;
+        answerData.value = selectedOptions.map((opt) => opt.qname).join(", ");
+        answerData.comments = comments || "";
+        break;
+      }
       case "rating": {
         answerData.rating = rating || selectedRating;
         answerData.value = rating || selectedRating;
@@ -535,6 +557,11 @@ export const MobileSurveyLanding: React.FC = () => {
       }
       case "input_box": {
         // Handle input_box same as other text inputs
+        answerData.value = currentQuestionValue;
+        answerData.comments = comments || "";
+        break;
+      }
+      case "date": {
         answerData.value = currentQuestionValue;
         answerData.comments = comments || "";
         break;
@@ -696,6 +723,24 @@ export const MobileSurveyLanding: React.FC = () => {
           }
           break;
         }
+
+        case "checkbox":
+          if (currentAnswer.selectedOptions && currentAnswer.selectedOptions.length > 0) {
+            surveyResponseItem.response_text = currentAnswer.selectedOptions.map((opt) => opt.qname).join(", ");
+            surveyResponseItem.ans_descr = surveyResponseItem.response_text;
+          }
+          surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "checkbox_selection";
+          break;
+
+        case "date":
+          if (currentAnswer.value && currentAnswer.value.toString().trim()) {
+            surveyResponseItem.response_text = currentAnswer.value.toString();
+            surveyResponseItem.ans_descr = currentAnswer.value.toString();
+          }
+          surveyResponseItem.answer_type = currentQuestion.qtype;
+          surveyResponseItem.answer_mode = "date_selection";
+          break;
 
         case "input_box":
         case "input":
@@ -1132,6 +1177,18 @@ export const MobileSurveyLanding: React.FC = () => {
               }
               break;
 
+              case "checkbox":
+              if (savedAnswer.selectedOptions) {
+                setSelectedOptions(savedAnswer.selectedOptions);
+              }
+              break;
+
+            case "date":
+              if (savedAnswer.value) {
+                setCurrentQuestionValue(savedAnswer.value.toString());
+              }
+              break;
+
             case "input":
             case "text":
             case "description":
@@ -1324,6 +1381,24 @@ export const MobileSurveyLanding: React.FC = () => {
             }
             break;
           }
+
+          case "checkbox":
+            if (answer.selectedOptions && answer.selectedOptions.length > 0) {
+              surveyResponseItem.response_text = answer.selectedOptions.map((opt) => opt.qname).join(", ");
+              surveyResponseItem.ans_descr = surveyResponseItem.response_text;
+            }
+            surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "checkbox_selection";
+            break;
+
+          case "date":
+            if (answer.value && answer.value.toString().trim()) {
+              surveyResponseItem.response_text = answer.value.toString().trim();
+              surveyResponseItem.ans_descr = answer.value.toString().trim();
+            }
+            surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "date_selection";
+            break;
 
           case "input":
           case "text":
@@ -1738,6 +1813,24 @@ export const MobileSurveyLanding: React.FC = () => {
             }
             break;
 
+          case "checkbox":
+            if (answer.selectedOptions && answer.selectedOptions.length > 0) {
+              surveyResponseItem.response_text = answer.selectedOptions.map((opt) => opt.qname).join(", ");
+              surveyResponseItem.ans_descr = surveyResponseItem.response_text;
+            }
+            surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "checkbox_selection";
+            break;
+
+          case "date":
+            if (answer.value && answer.value.toString().trim()) {
+              surveyResponseItem.response_text = answer.value.toString().trim();
+              surveyResponseItem.ans_descr = answer.value.toString().trim();
+            }
+            surveyResponseItem.answer_type = question.qtype;
+            surveyResponseItem.answer_mode = "date_selection";
+            break;
+
           case "input":
           case "text":
           case "description":
@@ -2078,6 +2171,80 @@ export const MobileSurveyLanding: React.FC = () => {
                           </div>
                         )}
 
+                      {/* Checkbox Question (Multi-Select) */}
+                      {currentQuestion.qtype === "checkbox" &&
+                        !showGenericTags && (
+                          <div className="space-y-3">
+                            {currentQuestion.snag_quest_options.map(
+                              (option) => (
+                                <button
+                                  type="button"
+                                  key={option.id}
+                                  onClick={() => handleCheckboxSelect(option)}
+                                  className={`w-full p-4 rounded-lg border-2 text-left transition-all shadow-md ${
+                                    selectedOptions.some(
+                                      (opt) => opt.id === option.id
+                                    )
+                                      ? "border-blue-600 bg-blue-50 text-gray-900"
+                                      : "border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:border-blue-400"
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="font-semibold text-base">
+                                      {option.qname}
+                                    </span>
+                                    <div
+                                      className={`w-6 h-6 rounded border-2 flex items-center justify-center ${
+                                        selectedOptions.some(
+                                          (opt) => opt.id === option.id
+                                        )
+                                          ? "bg-blue-600 border-blue-600"
+                                          : "border-gray-300"
+                                      }`}
+                                    >
+                                      {selectedOptions.some(
+                                        (opt) => opt.id === option.id
+                                      ) && (
+                                        <svg
+                                          className="w-4 h-4 text-white"
+                                          fill="currentColor"
+                                          viewBox="0 0 20 20"
+                                        >
+                                          <path
+                                            fillRule="evenodd"
+                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                            clipRule="evenodd"
+                                          />
+                                        </svg>
+                                      )}
+                                    </div>
+                                  </div>
+                                </button>
+                              )
+                            )}
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const isSingleQuestion =
+                                  (surveyData?.snag_checklist?.questions_count ?? 0) ===
+                                  1;
+                                const answerData = saveCurrentAnswer();
+                                if (isSingleQuestion) {
+                                  handleSingleQuestionSubmit(answerData);
+                                } else {
+                                  handleNextQuestion();
+                                }
+                              }}
+                              disabled={!isCurrentAnswerValid()}
+                              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                            >
+                              {(surveyData?.snag_checklist?.questions_count ?? 0) === 1
+                                ? "Submit Survey"
+                                : "Continue"}
+                            </button>
+                          </div>
+                        )}
+
                       {/* Input Question */}
                       {currentQuestion.qtype === "input" && (
                         <>
@@ -2284,6 +2451,43 @@ export const MobileSurveyLanding: React.FC = () => {
                             </div>
                           </>
                         )}
+
+                      {/* Date Question */}
+                      {currentQuestion.qtype === "date" && (
+                        <>
+                          <div className="mt-4">
+                            <input
+                              type="date"
+                              value={currentQuestionValue}
+                              onChange={(e) =>
+                                setCurrentQuestionValue(e.target.value)
+                              }
+                              className="w-full p-4 border-2 border-gray-300 bg-white text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const isSingleQuestion =
+                                (surveyData?.snag_checklist?.questions_count ?? 0) ===
+                                1;
+                              const answerData = saveCurrentAnswer();
+                              if (isSingleQuestion) {
+                                handleSingleQuestionSubmit(answerData);
+                              } else {
+                                handleNextQuestion();
+                              }
+                            }}
+                            disabled={!isCurrentAnswerValid()}
+                            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed shadow-md"
+                          >
+                            {(surveyData?.snag_checklist?.questions_count ?? 0) === 1
+                              ? "Submit Survey"
+                              : "Continue"}
+                          </button>
+                        </>
+                      )}
 
                       {/* Emoji/Smiley Question */}
                       {(currentQuestion.qtype === "emoji" ||
