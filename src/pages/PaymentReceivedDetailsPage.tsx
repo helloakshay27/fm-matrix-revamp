@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 // Simple details page for a Payment Received (uses existing theme / tailwind styles)
@@ -284,6 +284,17 @@ export const PaymentReceivedDetailsPage: React.FC = () => {
                 </span>
               )}
             </div>
+            {selected && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300"
+                onClick={() => navigate(`/accounting/payments-received/edit/${selected.id}`)}
+              >
+                <Edit2 className="w-4 h-4 mr-1" />
+                Edit
+              </Button>
+            )}
           </div>
 
           <div className="bg-white shadow-sm border rounded">

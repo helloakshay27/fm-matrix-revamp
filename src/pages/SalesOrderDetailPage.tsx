@@ -503,6 +503,16 @@ export const SalesOrderDetailPage = () => {
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => navigate(`/accounting/sales-order/edit/${id}`)}
+                            className="gap-2"
+                        >
+                            <Edit className="h-4 w-4" />
+                            Edit
+                        </Button>
+
                         <Badge className={`${getStatusColor(salesOrder.status)} border`}>
                             {salesOrder.status?.replace(/_/g, " ").toUpperCase()}
                         </Badge>
