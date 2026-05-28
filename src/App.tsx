@@ -1158,6 +1158,7 @@ const ClubGroupMembershipDetails = lazy(() => import("./pages/ClubManagement/Clu
 const ClubMembershipDashboard = lazy(() => import("./pages/ClubManagement/ClubMembershipDashboard"));
 const ClubMembershipDetailPage = lazy(() => import("./pages/ClubManagement/ClubMembershipDetailPage"));
 const CustomersAdd = lazy(() => import("./pages/ClubManagement/CustomersAdd"));
+const CustomersEdit = lazy(() => import("./pages/ClubManagement/CustomersEdit").then(m => ({ default: m.CustomersEdit })).catch(() => import("./pages/ClubManagement/CustomersEdit")));
 const CustomersDashboard = lazy(() => import("./pages/ClubManagement/CustomersDashboard"));
 const DetailsSaleCustomerReport = lazy(() => import("./pages/ClubManagement/DetailsSaleCustomerReport"));
 const SalesByItemReport = lazy(() => import("./pages/ClubManagement/SalesByItemReport"));
@@ -1199,6 +1200,7 @@ const InvoiceDashboardAccounting = lazy(() => import("./pages/ClubManagement/Inv
 const InvoiceDashboardDetailsPage = lazy(() => import("./pages/ClubManagement/InvoiceDashboardDetailsPage").then(m => ({ default: m.InvoiceDashboardDetailsPage })));
 const QuotesDashboard = lazy(() => import("./pages/ClubManagement/QuotesDashboard").then(m => ({ default: m.QuotesDashboard })));
 const QuotesAdd = lazy(() => import("./pages/ClubManagement/QuotesAdd").then(m => ({ default: m.QuotesAdd })));
+const QuotesEdit = lazy(() => import("./pages/ClubManagement/QuotesEdit").then(m => ({ default: m.QuotesEdit })).catch(() => import("./pages/ClubManagement/QuotesEdit")));
 const QuotesDetails = lazy(() => import("./pages/ClubManagement/QuotesDetails").then(m => ({ default: m.QuotesDetails })));
 const RideReviews = lazy(() => import("./pages/pulse/RideReviews").then(m => ({ default: m.RideReviews })));
 const UserDetail = lazy(() => import("./pages/pulse/UserDetail").then(m => ({ default: m.UserDetail })));
@@ -3382,6 +3384,10 @@ function App() {
                               element={<CustomersAdd />}
                             />
                             <Route
+                              path="/accounting/customers/edit/:id"
+                              element={<CustomersEdit />}
+                            />
+                            <Route
                               path="/accounting/customers/details/:id"
                               element={<CustomersDetails />}
                             />
@@ -3411,6 +3417,10 @@ function App() {
                               element={<InvoiceAdd />}
                             />
                             <Route
+                              path="/accounting/invoices/edit/:id"
+                              element={<InvoiceAdd />}
+                            />
+                            <Route
                               path="/accounting/dashboard/invoices/:id"
                               element={<InvoiceDashboardDetailsPage />}
                             />
@@ -3421,6 +3431,10 @@ function App() {
                             <Route
                               path="/accounting/quotes/add"
                               element={<QuotesAdd />}
+                            />
+                            <Route
+                              path="/accounting/quotes/edit/:id"
+                              element={<QuotesEdit />}
                             />
                             <Route
                               path="/accounting/quotes/details/:id"
@@ -3442,6 +3456,10 @@ function App() {
                               path="/accounting/recurring-invoices/create"
                               element={<RecurringInvoicesCreatePage />}
                             />
+                            <Route
+                              path="/accounting/recurring-invoices/edit/:id"
+                              element={<RecurringInvoicesCreatePage />}
+                            />
                              <Route
                               path="/accounting/recurring-invoices/details/:id"
                               element={<RecurringInvoiceDetailsPage />}
@@ -3452,6 +3470,10 @@ function App() {
                             />
                             <Route
                               path="/accounting/payments-received/create"
+                              element={<RecordPaymentPage />}
+                            />
+                            <Route
+                              path="/accounting/payments-received/edit/:id"
                               element={<RecordPaymentPage />}
                             />
                             <Route
