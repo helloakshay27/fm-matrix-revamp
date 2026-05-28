@@ -449,7 +449,8 @@ export const QuotesEdit: React.FC = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl');
                 const token = localStorage.getItem('token');
-                const res = await axios.get(`https://${baseUrl}/lock_account_quotes/${id}.json`, {
+                const lock_account_id = localStorage.getItem('lock_account_id');
+                const res = await axios.get(`https://${baseUrl}/lock_account_quotes/${id}.json?lock_account_id=${lock_account_id}`, {
                     headers: { Authorization: token ? `Bearer ${token}` : undefined }
                 });
                 const data = res.data;
@@ -468,13 +469,42 @@ export const QuotesEdit: React.FC = () => {
                             name: data.customer.name,
                             company_name: data.customer.company_name,
                             email: data.customer.email,
-                            work_phone: data.customer.work_phone
+                            work_phone: data.customer.work_phone,
+                            currency: data.customer.currency || 'INR'
                         } as any);
                     } else if (data.lock_account_customer_id) {
                         setSelectedCustomer({
                             id: data.lock_account_customer_id,
-                            name: data.customer_name || 'Customer'
+                            name: data.customer_name || 'Customer',
+                            currency: data.currency || 'INR'
                         } as any);
+                    }
+
+                    const customerId = data.lock_account_customer_id || data.customer?.id;
+                    if (customerId) {
+                        const customerDetailResult = await fetchCustomerDetail(customerId);
+                        const billingId = data.address_detail?.billing_address_id || data.address_detail?.billing_address?.id || customerDetailResult?.defaultBilling?.id || null;
+                        const shippingId = data.address_detail?.shipping_address_id || data.address_detail?.shipping_address?.id || customerDetailResult?.defaultShipping?.id || null;
+
+                        setSelectedBillingAddressId(billingId);
+                        setSelectedShippingAddressId(shippingId);
+
+                        const billingAddressFromQuote = customerDetailResult?.nextBilling.find((addr: CustomerAddress) => String(addr.id) === String(billingId))
+                            || customerDetailResult?.defaultBilling
+                            || (data.address_detail?.billing_address ? mapAddress(data.address_detail.billing_address, 'billing') : null);
+                        const shippingAddressFromQuote = customerDetailResult?.nextShipping.find((addr: CustomerAddress) => String(addr.id) === String(shippingId))
+                            || customerDetailResult?.defaultShipping
+                            || (data.address_detail?.shipping_address ? mapAddress(data.address_detail.shipping_address, 'shipping') : null);
+
+                        setBillingAddress(formatAddressText(billingAddressFromQuote));
+                        setShippingAddress(formatAddressText(shippingAddressFromQuote));
+
+                        if (data.address_detail?.gst_detail_id) {
+                            setSelectedGstDetailId(data.address_detail.gst_detail_id);
+                        }
+                        if (data.address_detail?.gst_detail?.place_of_supply) {
+                            setPlaceOfSupply(data.address_detail.gst_detail.place_of_supply);
+                        }
                     }
 
                     if (data.sale_order_items && data.sale_order_items.length > 0) {
@@ -769,12 +799,14 @@ export const QuotesEdit: React.FC = () => {
             setSelectedShippingAddressId(finalShipping?.id ?? null);
             setBillingAddress(formatAddressText(finalBilling));
             setShippingAddress(formatAddressText(finalShipping));
+            return { nextBilling, nextShipping, defaultBilling: finalBilling, defaultShipping: finalShipping, customerDetail: data };
         } catch (error) {
             console.error("Error fetching customer details:", error);
             toast.error("Failed to fetch customer details");
         } finally {
             setCustomerDetailLoading(false);
         }
+        return null;
     };
 
     const openCustomerDrawer = () => {
