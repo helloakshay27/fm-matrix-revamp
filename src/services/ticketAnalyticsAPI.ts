@@ -32,6 +32,14 @@ export interface TicketStatusData {
       closed: number;
     };
   };
+  detailed_summary?: {
+    info: string;
+    total_issues: number;
+    statuses: {
+      [key: string]: number;
+    };
+    critical_issues_p1: number;
+  };
 }
 
 export interface TicketAgingMatrix {
@@ -146,6 +154,41 @@ export interface ResponseTATData {
   info: string;
 }
 
+export interface IssueBreakdownCategoryWise {
+  info: string;
+  categories: Array<{
+    category: string;
+    total_issues: number;
+    statuses: {
+      [key: string]: number;
+    };
+    critical_p1: number;
+    avg_tat_days: number;
+  }>;
+  totals: {
+    total_issues: number;
+    statuses: {
+      [key: string]: number;
+    };
+    critical_p1: number;
+    avg_tat_days: number;
+  };
+}
+
+export interface SiteWiseIssueSummary {
+  info: string;
+  buildings: Array<{
+    building_id: number;
+    location: string;
+    categories: Record<string, { open: number; closed: number }>;
+    total_open: number;
+    total_closed: number;
+    critical: number;
+    escalated: number;
+    avg_tat_days: number;
+  }>;
+}
+
 export interface ResolutionTATReportData {
   success: number;
   message: string;
@@ -243,14 +286,38 @@ export const ticketAnalyticsAPI = {
     return response.data;
   },
 
+  // Get issue breakdown category wise data
+  async getIssueBreakdownCategoryWise(fromDate: Date, toDate: Date): Promise<IssueBreakdownCategoryWise> {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+    
+    const url = `/pms/admin/complaints/issue_breakdown_category_wise.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
+    
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
   // Get resolution TAT report data
   async getResolutionTATReportData(fromDate: Date, toDate: Date): Promise<ResolutionTATReportData> {
     const siteId = getCurrentSiteId();
     const fromDateStr = formatDateForAPI(fromDate);
     const toDateStr = formatDateForAPI(toDate);
-    
+
     const url = `/pms/admin/complaints/chart_resolution_tat_report.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}&access_token=${API_CONFIG.TOKEN}`;
-    
+
+    const response = await apiClient.get(url);
+    return response.data;
+  },
+
+  // Get site-wise issue summary
+  async getSiteWiseIssueSummary(fromDate: Date, toDate: Date): Promise<SiteWiseIssueSummary> {
+    const siteId = getCurrentSiteId();
+    const fromDateStr = formatDateForAPI(fromDate);
+    const toDateStr = formatDateForAPI(toDate);
+
+    const url = `/pms/admin/complaints/site_wise_issue_summary.json?site_id=${siteId}&from_date=${fromDateStr}&to_date=${toDateStr}`;
+
     const response = await apiClient.get(url);
     return response.data;
   }
