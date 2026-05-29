@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { InputAdornment, TextField } from "@mui/material";
 import axios from "axios";
@@ -199,9 +199,9 @@ const muiTheme = createTheme({
         MuiCheckbox: {
             styleOverrides: {
                 root: {
-                    color: "#DA7756",
+                    color: "#bf213e",
                     "&.Mui-checked": {
-                        color: "#DA7756",
+                        color: "#bf213e",
                     },
                 },
             },
@@ -211,9 +211,9 @@ const muiTheme = createTheme({
         MuiRadio: {
             styleOverrides: {
                 root: {
-                    color: "#DA7756",
+                    color: "#bf213e",
                     "&.Mui-checked": {
-                        color: "#DA7756",
+                        color: "#bf213e",
                     },
                 },
             },
@@ -567,7 +567,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
 
             <TextField
                 select
-                label={<span>GST Treatment <span className="text-[#DA7756]">*</span></span>}
+                label={<span>GST Treatment <span className="text-red-600">*</span></span>}
                 name="gst_treatment"
                 value={form.gst_treatment}
                 onChange={handleChange}
@@ -845,7 +845,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                                             />
                                         </td>
                                         <td className="border p-2">
-                                            <button className="text-[#DA7756] text-xs" onClick={async () => {
+                                            <button className="text-red-600 text-xs" onClick={async () => {
                                                 if (row.id) {
                                                     await handleRemovePaymentTerm(row.id, idx);
                                                 } else {
@@ -867,7 +867,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                         </div>
                         <div className="flex gap-2">
                             <button
-                                className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
+                                className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
                                 onClick={handleSaveTerms}
                             >
                                 Save
@@ -1055,7 +1055,7 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
                     />
 
                     <div className="flex items-center gap-2">
-                        <Button onClick={addRow} className="bg-[#DA7756] hover:bg-[#C45F40] text-white">
+                        <Button onClick={addRow} className="bg-[#C72030] text-white">
                             +
                         </Button>
 
@@ -1063,7 +1063,7 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
                             <Button
                                 onClick={() => removeRow(index)}
                                 variant="outline"
-                                className="border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756]/10"
+                                className="border-red-500 text-red-500"
                             >
                                 -
                             </Button>
@@ -1237,7 +1237,7 @@ const ContactPersonsTab = ({ rows, setRows }) => {
                             <td className="border p-2 text-center">
                                 <button
                                     type="button"
-                                    className="text-[#DA7756] text-lg px-2"
+                                    className="text-red-500 text-lg px-2"
                                     onClick={() => handleDeleteRow(idx)}
                                     title="Delete Row"
                                     disabled={rows.length === 1}
@@ -1275,7 +1275,7 @@ const RemarksTab = ({ remarks, setRemarks }) => (
     <div className="flex flex-col">
         <label className="text-sm text-gray-600 mb-1">Remarks</label>
         <textarea
-            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
+            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
             rows={5}
             placeholder="Enter remarks (max 500 characters)"
             value={remarks}
@@ -1292,7 +1292,7 @@ const RemarksTab = ({ remarks, setRemarks }) => (
     </div>
 );
 
-const CustomersAdd = () => {
+const CustomersEdit = () => {
     // Payment Terms state and fetch logic lifted to parent
     // const [paymentTerms, setPaymentTerms] = React.useState([]);
     // const fetchPaymentTerms = React.useCallback(async () => {
@@ -1323,6 +1323,124 @@ const CustomersAdd = () => {
     //     fetchPaymentTerms();
     // }, [fetchPaymentTerms]);
     const navigate = useNavigate();
+    const { id } = useParams();
+    const isEdit = !!id;
+    const [editIds, setEditIds] = useState({
+        billingId: null,
+        shippingId: null,
+        primaryGstDetailId: null,
+    });
+
+    const fetchCustomerDetails = async () => {
+        try {
+            const baseUrl = localStorage.getItem("baseUrl");
+            const token = localStorage.getItem("token");
+            const res = await axios.get(
+                `https://${baseUrl}/lock_account_customers/${id}.json`,
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            const data = res.data;
+            if (data) {
+                setForm(prev => ({
+                    ...prev,
+                    customer_type: data.customer_type || "business",
+                    salutation: data.salutation || "",
+                    first_name: data.first_name || "",
+                    last_name: data.last_name || "",
+                    company_name: data.company_name || "",
+                    display_name: data.name || "",
+                    email: data.email || "",
+                    work_phone: data.work_phone || "",
+                    mobile: data.mobile || "",
+                    currency: data.currency_code || "INR",
+                    pan: data.pan || "",
+                    opening_balance: data.opening_balance || "",
+                    enable_portal: data.enable_portal || false,
+                    remarks: data.remarks || "",
+                    gst_treatment: data.gst_preference || "",
+                    place_of_supply: data.primary_gst_detail?.place_of_supply || "",
+                    tax_preference: data.tax_preference === "non_taxable" ? "exempt" : "taxable",
+                    exemption_reason: data.tax_exemption_id || "",
+                    apply_gst_tds: data.gst_tds_enabled || false,
+                    gstin: data.primary_gst_detail?.gstin || "",
+                    business_legal_name: data.primary_gst_detail?.business_legal_name || "",
+                    business_trade_name: data.primary_gst_detail?.business_trade_name || "",
+                    lock_account_ledger_id: data.lock_account_ledger_id || "",
+                }));
+
+                if (data.billing_address) {
+                    setBilling({
+                        attention: data.billing_address.attention || "",
+                        country: data.billing_address.country || "",
+                        street1: data.billing_address.address || "",
+                        street2: data.billing_address.address_line_two || "",
+                        city: data.billing_address.city || "",
+                        state: data.billing_address.state || "",
+                        pincode: data.billing_address.pin_code || "",
+                        phone: data.billing_address.telephone_number || "",
+                        fax: data.billing_address.fax_number || "",
+                    });
+                }
+
+                if (data.shipping_address) {
+                    setShipping({
+                        attention: data.shipping_address.attention || "",
+                        country: data.shipping_address.country || "",
+                        street1: data.shipping_address.address || "",
+                        street2: data.shipping_address.address_line_two || "",
+                        city: data.shipping_address.city || "",
+                        state: data.shipping_address.state || "",
+                        pincode: data.shipping_address.pin_code || "",
+                        phone: data.shipping_address.telephone_number || "",
+                        fax: data.shipping_address.fax_number || "",
+                        mobile: data.shipping_address.mobile || "",
+                        email: data.shipping_address.email || "",
+                    });
+                }
+
+                if (data.contact_persons && data.contact_persons.length > 0) {
+                    setContactPersons(data.contact_persons.map((cp: any) => ({
+                        id: cp.id,
+                        salutation: cp.salutation || "",
+                        firstName: cp.first_name || "",
+                        lastName: cp.last_name || "",
+                        email: cp.email || "",
+                        workPhone: cp.work_phone || "",
+                        mobile: cp.mobile || ""
+                    })));
+                }
+
+                if (data.opening_balances && data.opening_balances.length > 0) {
+                    setOpeningBalances(data.opening_balances.map((ob: any) => ({
+                        id: ob.id,
+                        bill_no: ob.bill_no || "",
+                        date: ob.date || new Date().toISOString().split('T')[0],
+                        due_date: ob.due_date || "",
+                        amount: ob.amount || ""
+                    })));
+                }
+
+                setEditIds({
+                    billingId: data.billing_address?.id || null,
+                    shippingId: data.shipping_address?.id || null,
+                    primaryGstDetailId: data.primary_gst_detail?.id || null,
+                });
+                
+                if (data.payment_term) {
+                    setSelectedTerm(data.payment_term.name || "");
+                }
+            }
+        } catch (err) {
+            toast.error("Failed to fetch customer details for editing");
+        }
+    };
+
+    React.useEffect(() => {
+        if (isEdit) {
+            fetchCustomerDetails();
+        }
+    }, [isEdit, id]);
+
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
     const lock_account_id = localStorage.getItem("lock_account_id");
@@ -1714,9 +1832,21 @@ const CustomersAdd = () => {
             }
         };
         // console.log("Submitting Customer Payload:", payload);
+        
+        const method = isEdit ? "patch" : "post";
+        const url = isEdit 
+            ? `https://${baseUrl}/lock_account_customers/${id}.json?lock_account_id=${lock_account_id}`
+            : `https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`;
+            
+        if (isEdit) {
+            if (editIds.billingId) payload.customer.default_billing_address_attributes.id = editIds.billingId;
+            if (editIds.shippingId) payload.customer.default_shipping_address_attributes.id = editIds.shippingId;
+            if (editIds.primaryGstDetailId) payload.customer.primary_gst_detail_attributes.id = editIds.primaryGstDetailId;
+        }
+
         setLoading(true);
-        axios.post(
-            `https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`,
+        axios[method](
+            url,
             payload,
             {
                 headers: {
@@ -1726,11 +1856,11 @@ const CustomersAdd = () => {
             }
         )
             .then(res => {
-                toast.success("Customer saved successfully!");
+                toast.success(isEdit ? "Customer updated successfully!" : "Customer saved successfully!");
                 navigate("/accounting/customers");
             })
             .catch(err => {
-                toast.error("Failed to save customer");
+                toast.error(isEdit ? "Failed to update customer" : "Failed to save customer");
                 console.error("Customer save error:", err);
             })
             .finally(() => {
@@ -1813,7 +1943,7 @@ const CustomersAdd = () => {
 
                 {/* DISPLAY NAME */}
                 <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
-                    <div className="text-[#DA7756]">Display Name *</div>
+                    <div className="text-red-600">Display Name *</div>
                     <TextField
                         name="display_name"
                         placeholder="Enter display name"
@@ -1906,7 +2036,7 @@ const CustomersAdd = () => {
                                 onClick={() => setActiveTab(tab.key)}
                                 className={`flex-1 text-center px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors
     ${activeTab === tab.key
-                                        ? "text-[#DA7756] border-b-2 border-[#DA7756] bg-[#f9f7f2]/50"
+                                        ? "text-[#C72030] border-b-2 border-[#C72030] bg-[#f9f7f2]/50"
                                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                                     }
   `}
@@ -1990,7 +2120,7 @@ const CustomersAdd = () => {
                     <Button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="fm-button-fix fm-button-brand min-w-[100px]"
+                        className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[100px]"
                     >
                         {loading ? (
                             <>
@@ -1998,7 +2128,7 @@ const CustomersAdd = () => {
                                 Please wait
                             </>
                         ) : (
-                            "Save"
+                            isEdit ? "Update" : "Save"
                         )}
                     </Button>
 
@@ -2012,4 +2142,4 @@ const CustomersAdd = () => {
 };
 
 
-export default CustomersAdd;
+export default CustomersEdit;

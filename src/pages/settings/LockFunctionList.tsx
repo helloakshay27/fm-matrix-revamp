@@ -468,7 +468,7 @@ export const LockFunctionList = () => {
                 </Button>
                 <Button
                   onClick={handleImportClick}
-                  className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white"
+                  className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
                   disabled={importing}
                 >
                   {importing ? (

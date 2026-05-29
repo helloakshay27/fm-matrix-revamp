@@ -270,7 +270,7 @@ export const RetainerInvoicesDashboard = () => {
         leftActions={
           <div className="flex items-center gap-2">
             <Button
-              className="bg-red-600 text-white hover:bg-red-700 shadow-sm"
+              className="fm-button-fix fm-button-brand px-4 py-2P"
               onClick={() => navigate("/accounting/retainer-invoices/new")}
             >
               <Plus className="w-4 h-4 mr-2" /> New
@@ -278,15 +278,15 @@ export const RetainerInvoicesDashboard = () => {
           </div>
         }
         rightActions={
-          <div className="flex items-center gap-2">
+          <div className="fm-button-fix flex items-center gap-1">
             <Button
               variant="outline"
               size="icon"
               onClick={() => navigate("/accounting/retainer-invoices/import")}
-              className="border-gray-300 hover:bg-gray-100"
+              className="border-red-500 hover:bg-red-50"
               title="Import"
             >
-              <ArrowDown className="w-4 h-4 text-gray-600" />
+              <ArrowDown className="w-4 h-4 text-red-500" />
             </Button>
 
             <Button
@@ -305,7 +305,7 @@ export const RetainerInvoicesDashboard = () => {
                   size="icon"
                   className="border-gray-300 hover:bg-gray-100"
                 >
-                  <MoreHorizontal className="w-4 h-4 text-gray-600" />
+                  <MoreHorizontal className="w-4 h-4 text-red-500" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">

@@ -1,9 +1,34 @@
 import React, { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import PaymentReceivedPdf from "./ClubManagement/PaymentReceivedPdfTemplate";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+    // ArrowLeft,
+    FileText,
+    Package,
+    Calendar,
+    User,
+    Mail,
+    Phone,
+    MapPin,
+    Edit,
+    Trash2,
+    Download,
+    Printer,
+    Send,
+    Copy,
+    Share2,
+    ShoppingCart,
+    CirclePlus,
+    Eye,
+    ClipboardList,
+    X,
+} from "lucide-react";
 // Simple details page for a Payment Received (uses existing theme / tailwind styles)
 interface PaymentReceived {
   id: number;
@@ -139,11 +164,12 @@ const mapLockPayment = (lp: LockPaymentAPI): PaymentReceived => {
 export const PaymentReceivedDetailsPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const pdfRef = React.useRef<HTMLDivElement>(null);
   const lock_account_id = localStorage.getItem("lock_account_id");
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
   const authHeaders = { Authorization: `Bearer ${token}` };
-
+const [showPdfPreview, setShowPdfPreview] = React.useState(false);
   const [payment, setPayment] = React.useState<PaymentReceived | null>(null);
   const [sidebarList, setSidebarList] = React.useState<PaymentReceived[]>([]);
   const [customerName, setCustomerName] = React.useState<string>("");
@@ -152,7 +178,7 @@ export const PaymentReceivedDetailsPage: React.FC = () => {
     TransactionRecord[]
   >([]);
   const [billPayments, setBillPayments] = React.useState<BillPayment[]>([]);
-
+const [activeTab, setActiveTab] = React.useState("details");
   // fetch payment details
   React.useEffect(() => {
     if (!id) return;
@@ -251,44 +277,201 @@ export const PaymentReceivedDetailsPage: React.FC = () => {
 
   const notesText = selected?.notes || "";
 
+
+  const handleDownloadPdf = async () => {
+  try {
+    const input = pdfRef.current;
+
+    if (!input) return;
+
+    const canvas = await html2canvas(input, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF({
+      orientation: "portrait",
+      unit: "px",
+      format: "a4",
+    });
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight =
+      (canvas.height * pdfWidth) / canvas.width;
+
+    pdf.addImage(
+      imgData,
+      "PNG",
+      0,
+      0,
+      pdfWidth,
+      pdfHeight
+    );
+
+    pdf.save(
+      `payment-received-${selected?.payment_number || "receipt"}.pdf`
+    );
+  } catch (error) {
+    console.error("PDF download failed", error);
+  }
+};
   return (
     <div className="p-6">
       <div className="flex gap-6">
         {/* Left sidebar - static for now, clickable items navigate to detail route */}
 
-        {/* Main content */}
-        <main className="flex-1">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                className="p-2"
-                onClick={() => navigate(-1)}
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              <h2 className="text-2xl font-semibold">
-                Payment Received - {selected ? selected.payment_number : "-"}
-              </h2>
-              {selected && (
-                <span
-                  className={`ml-3 px-3 py-1 rounded-full text-xs font-medium ${
-                    selected.status === "PAID"
-                      ? "bg-green-100 text-green-700"
-                      : selected.status === "VOID"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-yellow-100 text-yellow-700"
-                  }`}
-                >
-                  {selected.status}
-                </span>
-              )}
-            </div>
-          </div>
 
-          <div className="bg-white shadow-sm border rounded">
-            {/* Ribbon */}
-            <div className="relative">
+
+
+
+
+        {/* Main content */}
+      
+
+
+
+
+        <main className="flex-1">
+  {/* Header */}
+  <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center gap-3">
+      <Button
+        variant="ghost"
+        className="p-2"
+        onClick={() => navigate(-1)}
+      >
+        <ArrowLeft className="w-4 h-4" />
+      </Button>
+
+      <h2 className="text-2xl font-semibold">
+        Payment Received -{" "}
+        {selected ? selected.payment_number : "-"}
+      </h2>
+
+      {selected && (
+        <span
+          className={`ml-3 px-3 py-1 rounded-full text-xs font-medium ${
+            selected.status === "PAID"
+              ? "bg-green-100 text-green-700"
+              : selected.status === "VOID"
+              ? "bg-red-100 text-red-700"
+              : "bg-yellow-100 text-yellow-700"
+          }`}
+        >
+          {selected.status}
+        </span>
+      )}
+    </div>
+
+  
+
+    <div className="flex items-center gap-3">
+  <Button
+    variant="outline"
+    onClick={() => setActiveTab("pdf")}
+  >
+    <FileText className="h-4 w-4" />
+    PDF
+  </Button>
+
+  <Button
+    onClick={handleDownloadPdf}
+    className="bg-blue-600 hover:bg-blue-700 text-white"
+  >
+      <Download className="h-4 w-4 mr-2" />
+    Download PDF
+  </Button>
+</div>
+            {selected && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300"
+                onClick={() => navigate(`/accounting/payments-received/edit/${selected.id}`)}
+              >
+                <Edit2 className="w-4 h-4 mr-1" />
+                Edit
+              </Button>
+            )}
+  </div>
+
+  {/* Tabs */}
+  {/* <Tabs defaultValue="details" className="w-full"> */}
+    <Tabs
+  value={activeTab}
+  onValueChange={setActiveTab}
+  className="w-full"
+>
+    <TabsList className="mb-6 bg-transparent border-b rounded-none h-auto p-0 gap-8">
+      <TabsTrigger value="details">
+        Details View
+      </TabsTrigger>
+
+      <TabsTrigger value="pdf">
+        PDF View
+      </TabsTrigger>
+
+      {/* <TabsTrigger
+  value="details"
+  className="rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:text-red-600 bg-transparent px-0 pb-3"
+>
+  Details
+</TabsTrigger>
+
+<TabsTrigger
+  value="pdf"
+  className="rounded-none border-b-2 border-transparent data-[state=active]:border-red-500 data-[state=active]:text-red-600 bg-transparent px-0 pb-3"
+>
+  PDF
+</TabsTrigger> */}
+    </TabsList>
+
+    
+
+    {/* DETAILS TAB */}
+    <TabsContent value="details">
+      <div className="bg-white shadow-sm border rounded">
+        <div className="relative">
+          {selected && (
+            <div className="absolute -top-3 left-0 z-10">
+              <div
+                className={`text-white px-4 py-1 rotate-[-45deg] transform origin-left shadow text-sm font-medium ${
+                  selected.status === "PAID"
+                    ? "bg-green-500"
+                    : selected.status === "VOID"
+                    ? "bg-red-500"
+                    : "bg-yellow-500"
+                }`}
+              >
+                {selected.status === "PAID"
+                  ? "Paid"
+                  : selected.status === "VOID"
+                  ? "Void"
+                  : "Draft"}
+              </div>
+            </div>
+          )}
+
+          <div className="p-10">
+            {/* YOUR EXISTING DETAILS UI HERE */}
+
+            {/* keep all your existing:
+                company info
+                payment info
+                tables
+                ledger records
+                more information
+
+
+
+            */}
+
+
+
+              <div className="relative">
               {selected && (
                 <div className="absolute -top-3 left-0 z-10">
                   <div
@@ -382,9 +565,9 @@ export const PaymentReceivedDetailsPage: React.FC = () => {
                             : "")}
                       </a>
                     </div>
-                    <div className="mt-8 text-gray-400 text-sm text-right">
+                    {/* <div className="mt-8 text-gray-400 text-sm text-right">
                       Authorized Signature
-                    </div>
+                    </div> */}
                   </div>
                 </div>
 
@@ -530,7 +713,160 @@ export const PaymentReceivedDetailsPage: React.FC = () => {
               </div>
             </div>
           </div>
-        </main>
+        </div>
+      </div>
+    </TabsContent>
+
+    {/* PDF TAB */}
+    {/* <TabsContent value="pdf">
+      <div className="bg-gray-100 border rounded p-6 overflow-auto">
+        <div
+          ref={pdfRef}
+          className="flex justify-center"
+        >
+          <PaymentReceivedPdf
+            data={{
+              status: selected?.status,
+              amount: selected?.amount,
+              payment_date: selected?.date,
+              payment_mode: selected?.mode,
+              reference_number:
+                selected?.reference_number,
+              notes: selected?.notes,
+              customer_name: customerName,
+              billing_address: {
+                address: "",
+                city: "",
+                state: "",
+                country: "India",
+              },
+            }}
+            invoices={billPayments.map((bp) => ({
+              id: bp.id,
+              invoice_number:
+                bp.formatted_number ||
+                `INV-${bp.resource_id}`,
+              invoice_date: bp.payment_date,
+              invoice_amount: bp.amount,
+              payment_amount: bp.amount,
+            }))}
+            formatDate={(date: any) => {
+              if (!date) return "-";
+
+              return new Date(date).toLocaleDateString(
+                "en-GB",
+                {
+                  day: "2-digit",
+                  month: "2-digit",
+                  year: "numeric",
+                }
+              );
+            }}
+            formatCurrency={(amount: number) =>
+              `₹${Number(amount || 0).toLocaleString(
+                "en-IN",
+                {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }
+              )}`
+            }
+          />
+        </div>
+      </div>
+    </TabsContent> */}
+
+
+
+    <TabsContent value="pdf">
+  <div className="bg-white shadow-sm border rounded">
+    
+    {/* PDF HEADER */}
+    <div className="flex items-center justify-between border-b px-6 py-4">
+      <h3 className="text-lg font-semibold">
+        Payment Receipt PDF
+      </h3>
+
+      <div className="flex items-center gap-3">
+        
+        <Button
+          variant="outline"
+          onClick={() => window.print()}
+        >
+          <Printer className="h-4 w-4 mr-2" />
+          Print
+        </Button>
+
+        <Button
+          onClick={handleDownloadPdf}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
+            <Download className="h-4 w-4 mr-2" />
+          Download PDF
+        </Button>
+      </div>
+    </div>
+
+    {/* PDF PREVIEW */}
+    <div className="bg-gray-100 p-6 overflow-auto">
+      <div
+        ref={pdfRef}
+        className="flex justify-center"
+      >
+        <PaymentReceivedPdf
+          data={{
+            status: selected?.status,
+            amount: selected?.amount,
+            payment_date: selected?.date,
+            payment_mode: selected?.mode,
+            reference_number:
+              selected?.reference_number,
+            notes: selected?.notes,
+            customer_name: customerName,
+            billing_address: {
+              address: "",
+              city: "",
+              state: "",
+              country: "India",
+            },
+          }}
+          invoices={billPayments.map((bp) => ({
+            id: bp.id,
+            invoice_number:
+              bp.formatted_number ||
+              `INV-${bp.resource_id}`,
+            invoice_date: bp.payment_date,
+            invoice_amount: bp.amount,
+            payment_amount: bp.amount,
+          }))}
+          formatDate={(date: any) => {
+            if (!date) return "-";
+
+            return new Date(date).toLocaleDateString(
+              "en-GB",
+              {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              }
+            );
+          }}
+          formatCurrency={(amount: number) =>
+            `₹${Number(amount || 0).toLocaleString(
+              "en-IN",
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }
+            )}`
+          }
+        />
+      </div>
+    </div>
+  </div>
+</TabsContent>
+  </Tabs>
+</main>
       </div>
     </div>
   );

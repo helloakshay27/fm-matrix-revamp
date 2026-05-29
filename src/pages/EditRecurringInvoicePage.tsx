@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import ItemSearchInput from '@/components/ItemSearchInput';
 import {
     TextField,
@@ -30,12 +30,13 @@ import {
     Close,
     Add,
     Delete,
+    EditOutlined,
     CloudUpload,
     AttachFile,
     PersonAdd,
-    EditOutlined
+    ChevronRight
 } from '@mui/icons-material';
-import { ShoppingCart, Package, Calendar, FileText, ChevronDown, ChevronUp, Mail, Phone, Smartphone, Star, ChevronRight, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Package, Calendar, FileText } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -67,17 +68,34 @@ interface Customer {
     outstandingReceivables: number;
     unusedCredits: number;
     contactPersons: ContactPerson[];
+    billing_address?: {
+        address: string;
+        address_line_two?: string;
+        city?: string;
+        state?: string;
+        pin_code?: string;
+    };
+    shipping_address?: {
+        address: string;
+        address_line_two?: string;
+        city?: string;
+        state?: string;
+        pin_code?: string;
+    };
+    contact_persons?: ContactPerson[];
 }
 
-interface DetailContactPerson {
+interface ContactPerson {
     id: string;
     salutation: string;
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
+    first_name?: string;
+    last_name?: string;
     email: string;
-    work_phone: string;
+    workPhone: string;
     mobile: string;
-    phone: string;
+    skype: string;
     designation: string;
     department: string;
 }
@@ -101,23 +119,9 @@ interface CustomerDetail {
     pan: string;
     place_of_supply: string;
     tax_preference: string;
-    contact_persons: DetailContactPerson[];
-    billing_address: {
-        address: string;
-        address_line_two: string;
-        city: string;
-        state: string;
-        pin_code: string;
-        country: string;
-    };
-    shipping_address: {
-        address: string;
-        address_line_two: string;
-        city: string;
-        state: string;
-        pin_code: string;
-        country: string;
-    };
+    contact_persons: any[];
+    billing_address: any;
+    shipping_address: any;
     billing_addresses?: CustomerAddress[];
     shipping_addresses?: CustomerAddress[];
     default_billing_address?: any;
@@ -148,19 +152,10 @@ interface GstDetail {
     primary: boolean;
 }
 
-interface ContactPerson {
-    id: string;
-    salutation: string;
-    firstName: string;
-    lastName: string;
+interface ExternalUser {
+    name: string;
     email: string;
-    workPhone: string;
-    mobile: string;
-    skype: string;
-    designation: string;
-    department: string;
 }
-
 interface Item {
     id: string;
     name: string;
@@ -183,13 +178,15 @@ interface ExternalUser {
     email: string;
 }
 
-export const SalesOrderCreatePage: React.FC = () => {
+export const EditRecurringInvoicePage: React.FC = () => {
+    // Subject field
+    const [subject, setSubject] = useState('');
     // Fetch item list from API
-    const lock_account_id = localStorage.getItem("lock_account_id");
     useEffect(() => {
         const fetchItems = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
             try {
                 const res = await axios.get(`https://${baseUrl}/lock_account_items.json?lock_account_id=${lock_account_id}&q[can_be_sold_eq]=1`, {
                     headers: {
@@ -198,8 +195,11 @@ export const SalesOrderCreatePage: React.FC = () => {
                     }
                 });
                 if (res && res.data && Array.isArray(res.data)) {
-                    setItemOptions(res.data.map(item => ({
-                        id: item.id, name: item.name, rate: item.sale_rate, description: item.sale_description,
+                    setItemOptions(res.data.map((item: any) => ({
+                        id: item.id,
+                        name: item.name,
+                        rate: item.sale_rate,
+                        description: item.sale_description,
                         tax_preference: item.tax_preference,
                         tax_exemption_id: item.tax_exemption_id,
                         tax_group_id: Number(item.intra_state_tax_rate_id) || null,
@@ -219,6 +219,7 @@ export const SalesOrderCreatePage: React.FC = () => {
         const fetchSalespersons = async () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
             try {
                 const res = await axios.get(`https://${baseUrl}/sales_persons.json?lock_account_id=${lock_account_id}&q[active_eq]=1`, {
                     headers: {
@@ -235,7 +236,32 @@ export const SalesOrderCreatePage: React.FC = () => {
         };
         fetchSalespersons();
     }, []);
-
+    // Fetch payment terms from API and set as dropdown options
+    useEffect(() => {
+        const fetchPaymentTerms = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            try {
+                const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
+                    headers: {
+                        Authorization: token ? `Bearer ${token}` : undefined,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (res && res.data && Array.isArray(res.data)) {
+                    setPaymentTermsList(res.data.map(pt => ({ id: pt.id, name: pt.name, days: pt.no_of_days })));
+                    const dueOnReceipt = paymentTermsList.find(t => t.name.toLowerCase() === 'due on receipt');
+                    if (dueOnReceipt) {
+                        setSelectedTerm(dueOnReceipt.id);
+                    }
+                }
+            } catch (err) {
+                setPaymentTermsList([]);
+            }
+        };
+        fetchPaymentTerms();
+    }, []);
     // Payment Terms Modal Handlers
     const handleAddNewTerm = () => {
         setEditTerms((prev) => [...prev, { name: '', days: '' }]);
@@ -255,75 +281,176 @@ export const SalesOrderCreatePage: React.FC = () => {
     const filteredTerms = paymentTermsList.filter(term =>
         term.name?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    const handleRemovePaymentTerm = async (id: string, idx: number) => {
+        // Implementation for removing payment term from API
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            await axios.delete(`https://${baseUrl}/payment_terms/${id}.json`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined
+                }
+            });
+            setPaymentTermsList(prev => prev.filter(t => t.id !== id));
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleSaveTerms = async () => {
+        // Implementation for saving payment terms
+        setShowConfig(false);
+    };
     const navigate = useNavigate();
-    const location = useLocation();
+    const { id } = useParams<{ id: string }>();
+    const [loading, setLoading] = useState(true);
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     useEffect(() => {
-        document.title = 'New Sales Order';
+        document.title = 'Edit Recurring Invoice';
     }, []);
 
-    // Pre-fill from quote when navigated via Convert to Sales Order
+    // Load existing Recurring Invoice details on mount
     useEffect(() => {
-        const quoteId = location.state?.quoteData?.id;
-        if (!quoteId) return;
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
-        axios.get(`https://${baseUrl}/lock_account_quotes/${quoteId}.json`, {
-            headers: { Authorization: token ? `Bearer ${token}` : undefined }
-        }).then(async (res) => {
-            const q = res.data;
-            // Keep the new sales order's reference/order number blank, same as invoice conversion flow.
-            if (q.quote_number) {
-                setReferenceNumber(q.quote_number);
-            }
-            if (q.date) setSalesOrderDate(q.date);
-            if (q.customer_notes) setCustomerNotes(q.customer_notes);
-            if (q.terms_and_conditions) setTermsAndConditions(q.terms_and_conditions);
-            if (q.sales_person_id) setSalesperson(String(q.sales_person_id));
-            if (q.payment_term_id) setSelectedTerm(String(q.payment_term_id));
-            // Set place of supply directly from quote
-            const quotePlaceOfSupply = q.place_of_supply || q.address_detail?.gst_detail?.place_of_supply || '';
-            if (quotePlaceOfSupply) setPlaceOfSupply(quotePlaceOfSupply);
-            if (q.lock_account_customer_id) {
-                setSelectedCustomer({ id: String(q.lock_account_customer_id), name: q.customer_name || '' } as any);
-                // Fetch customer details (addresses, GST), then re-apply quote's place of supply
-                await fetchCustomerDetail(String(q.lock_account_customer_id));
-                if (quotePlaceOfSupply) setPlaceOfSupply(quotePlaceOfSupply);
-            }
-            if (Array.isArray(q.item_details) && q.item_details.length > 0) {
-                setItems(q.item_details.map((item: any, idx: number) => ({
-                    id: String(idx + 1),
-                    name: item.item_name || '',
-                    item_id: item.lock_account_item_id ? String(item.lock_account_item_id) : null,
-                    description: item.description || '',
-                    quantity: item.quantity || '',
-                    rate: item.rate || '',
-                    discount: 0,
-                    discountType: 'percentage' as const,
-                    tax: item.tax_group?.name || '',
-                    taxRate: 0,
-                    amount: item.total_amount || 0,
-                    item_tax_type: item.tax_type || '',
-                    tax_group_id: item.tax_group?.id || null,
-                    tax_exemption_id: null,
-                })));
-            }
-        }).catch((err) => {
-            console.error('Failed to fetch quote for pre-fill:', err);
-        });
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+        const lock_account_id = localStorage.getItem('lock_account_id');
 
+        const fetchRecurringInvoice = async () => {
+            if (!id) return;
+            setLoading(true);
+            try {
+                const res = await axios.get(`https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=${lock_account_id}`, {
+                    headers: { Authorization: token ? `Bearer ${token}` : undefined }
+                });
+                const data = res.data?.data || res.data;
+                if (data) {
+                    setReferenceNumber(data.order_number || data.reference_number || '');
+                    setDeliveryMethod(data.delivery_method || '');
+                    setSalesperson(data.sales_person_id ? String(data.sales_person_id) : '');
+                    setSelectedTerm(data.payment_term_id ? String(data.payment_term_id) : '');
+                    setCustomerNotes(data.customer_notes || '');
+                    setTermsAndConditions(data.terms_and_conditions || '');
+                    setSubject(data.subject || '');
+                    setProfileName(data.profile_name || '');
+
+                    const recDetail = data.recurring_detail || {};
+                    setRepeatCount(recDetail.repeat_value || data.repeat_value || '');
+                    setRepeatType(recDetail.repeat_type || data.repeat_type || 'month');
+                    setNeverExpires(recDetail.never_expires === true || recDetail.never_expires === 'true' || data.never_expires === true || false);
+                    setSalesOrderDate(recDetail.start_date ? recDetail.start_date.split('T')[0] : (data.date ? data.date.split('T')[0] : ''));
+                    setExpectedShipmentDate(recDetail.end_date ? recDetail.end_date.split('T')[0] : (data.due_date ? data.due_date.split('T')[0] : ''));
+
+                    if (data.discount_per) {
+                        setDiscountTypeOnTotal('percentage');
+                        setDiscountOnTotal(Number(data.discount_per) || 0);
+                    } else if (data.discount_amount) {
+                        setDiscountTypeOnTotal('amount');
+                        setDiscountOnTotal(Number(data.discount_amount) || 0);
+                    } else {
+                        setDiscountOnTotal(0);
+                    }
+
+                    if (data.charge_amount) {
+                        setAdjustment(Number(data.charge_amount) || 0);
+                        setAdjustmentLabel(data.charge_name || 'Adjustment');
+                    }
+
+                    if (data.tax_type) {
+                        setTaxType((data.tax_type.toUpperCase() as 'TDS' | 'TCS') || 'TDS');
+                    }
+                    if (data.lock_account_tax_id) {
+                        setSelectedTax(String(data.lock_account_tax_id));
+                    }
+                    if (data.place_of_supply) {
+                        setPlaceOfSupply(data.place_of_supply);
+                    }
+
+                    // Pre-fill selected customer and detail book
+                    if (data.lock_account_customer_id) {
+                        setSelectedCustomer({
+                            id: String(data.lock_account_customer_id),
+                            name: data.customer_name || 'Customer',
+                            currency: data.currency || 'INR'
+                        } as any);
+
+                        const customerDetailResult = await fetchCustomerDetail(data.lock_account_customer_id);
+
+                        const billingId = data.address_detail?.billing_address_id || data.address_detail?.billing_address?.id || customerDetailResult?.defaultBilling?.id || null;
+                        const shippingId = data.address_detail?.shipping_address_id || data.address_detail?.shipping_address?.id || customerDetailResult?.defaultShipping?.id || null;
+
+                        setSelectedBillingAddressId(billingId);
+                        setSelectedShippingAddressId(shippingId);
+
+                        const billingAddressFromOrder = customerDetailResult?.nextBilling.find((addr: CustomerAddress) => String(addr.id) === String(billingId))
+                            || customerDetailResult?.defaultBilling
+                            || (data.address_detail?.billing_address ? mapAddress(data.address_detail.billing_address, 'billing') : null);
+                        const shippingAddressFromOrder = customerDetailResult?.nextShipping.find((addr: CustomerAddress) => String(addr.id) === String(shippingId))
+                            || customerDetailResult?.defaultShipping
+                            || (data.address_detail?.shipping_address ? mapAddress(data.address_detail.shipping_address, 'shipping') : null);
+
+                        setBillingAddress(formatAddressText(billingAddressFromOrder));
+                        setShippingAddress(formatAddressText(shippingAddressFromOrder));
+
+                        if (data.address_detail?.gst_detail_id) {
+                            setSelectedGstDetailId(data.address_detail.gst_detail_id);
+                        }
+                        if (data.address_detail?.gst_detail?.place_of_supply) {
+                            setPlaceOfSupply(data.address_detail.gst_detail.place_of_supply);
+                        }
+                    }
+
+                    // Map line items
+                    const lineItems = data.item_details || data.sale_order_items || [];
+                    if (lineItems.length > 0) {
+                        setItems(lineItems.map((item: any, idx: number) => ({
+                            id: String(idx + 1),
+                            line_item_id: item.id,
+                            name: item.item_name || item.name || '',
+                            item_id: item.lock_account_item_id ? String(item.lock_account_item_id) : null,
+                            description: item.description || '',
+                            quantity: item.quantity || '',
+                            rate: item.rate || '',
+                            discount: 0,
+                            discountType: 'percentage' as const,
+                            tax: '',
+                            taxRate: 0,
+                            amount: item.total_amount || 0,
+                            item_tax_type: item.tax_type || '',
+                            tax_group_id: item.tax_group_id || null,
+                            tax_exemption_id: item.tax_exemption_id || null
+                        })));
+                    }
+
+                    // Map existing attachments
+                    if (data.attachments && data.attachments.length > 0) {
+                        setExistingAttachments(data.attachments.map((att: any) => ({
+                            id: att.id,
+                            name: att.name || att.document_file_name || 'Attachment',
+                            url: att.url || att.document_url
+                        })));
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load recurring invoice details:', err);
+                toast.error('Failed to load recurring invoice details');
+            } finally {
+                setLoading(false);
+                setIsInitialLoad(false);
+            }
+        };
+
+        if (id && baseUrl && token) fetchRecurringInvoice();
+    }, [id]);
+
+    // Customer data
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
     const [loadingCustomers, setLoadingCustomers] = useState(false);
-
-    // Customer Details Drawer State
     const [customerDrawerOpen, setCustomerDrawerOpen] = useState(false);
     const [customerDetail, setCustomerDetail] = useState<CustomerDetail | null>(null);
     const [customerDetailLoading, setCustomerDetailLoading] = useState(false);
-    const [drawerActiveTab, setDrawerActiveTab] = useState(0);
-    const [addressExpanded, setAddressExpanded] = useState(true);
-    const [contactPersonsExpanded, setContactPersonsExpanded] = useState(true);
     const [billingAddressBook, setBillingAddressBook] = useState<CustomerAddress[]>([]);
     const [shippingAddressBook, setShippingAddressBook] = useState<CustomerAddress[]>([]);
     const [selectedBillingAddressId, setSelectedBillingAddressId] = useState<number | string | null>(null);
@@ -348,6 +475,235 @@ export const SalesOrderCreatePage: React.FC = () => {
         business_legal_name: '',
         business_trade_name: ''
     });
+    // Contact persons selected for email
+    const [selectedContactPersons, setSelectedContactPersons] = useState<number[]>([]);
+
+    // Address
+    const [billingAddress, setBillingAddress] = useState('');
+    const [shippingAddress, setShippingAddress] = useState('');
+    const [sameAsBilling, setSameAsBilling] = useState(false);
+
+    // Sales Order Details
+    const [salesOrderNumber, setSalesOrderNumber] = useState('');
+    const [referenceNumber, setReferenceNumber] = useState('');
+    const [salesOrderDate, setSalesOrderDate] = useState('');
+    const [expectedShipmentDate, setExpectedShipmentDate] = useState('');
+    const [paymentTerms, setPaymentTerms] = useState('');
+    const [deliveryMethod, setDeliveryMethod] = useState('');
+    const [salesperson, setSalesperson] = useState('');
+    const [profileName, setProfileName] = useState("");
+    const [repeatCount, setRepeatCount] = useState("");
+    const [repeatType, setRepeatType] = useState("month");
+    const [neverExpires, setNeverExpires] = useState(false);
+
+    // Items
+    const [deletedItemIds, setDeletedItemIds] = useState<number[]>([]);
+    const [deletedAttachmentIds, setDeletedAttachmentIds] = useState<number[]>([]);
+    const [items, setItems] = useState<Item[]>([
+        {
+            id: Date.now().toString(),
+            name: '',
+            description: '',
+            quantity: 1,
+            rate: 0,
+            discount: 0,
+            discountType: 'percentage',
+            tax: '',
+            taxRate: 0,
+            amount: 0,
+            item_tax_type: "",
+            tax_group_id: "",
+            tax_exemption_id: ""
+        }
+    ]);
+
+    const taxTypeOptions = [
+        { value: "non_taxable", label: "Non-Taxable" },
+        { value: "out_of_scope", label: "Out of Scope" },
+        { value: "non_gst_supply", label: "Non-GST Supply" },
+        //   { value: "tax_group", label: "Tax Group" }
+    ];
+    const [placeOfSupply, setPlaceOfSupply] = useState("");
+    const [orgState, setOrgState] = useState<string>("");
+    const [taxGroups, setTaxGroups] = useState<any[]>([]);
+    const [loadingTaxGroups, setLoadingTaxGroups] = useState(false);
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+
+        setLoadingTaxGroups(true);
+
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then((res) => {
+                setTaxGroups(res.data || []);
+            })
+            .catch((error) => {
+                console.error("Error fetching tax groups:", error);
+            })
+            .finally(() => {
+                setLoadingTaxGroups(false);
+            });
+    }, []);
+
+    const [taxRates, setTaxRates] = useState<any[]>([]);
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+        axios
+            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
+                headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
+            })
+            .then((res) => setTaxRates(res.data || []))
+            .catch((error) => console.error("Error fetching IGST tax rates:", error));
+    }, []);
+
+    // Fetch organisation state on mount
+    useEffect(() => {
+        const fetchOrgState = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
+            const organisation_id = localStorage.getItem('org_id') || localStorage.getItem('organisation_id');
+            if (!organisation_id || !baseUrl || !token) return;
+            try {
+                const res = await axios.get(
+                    `https://${baseUrl}/organizations/${organisation_id}.json?lock_account_id=${lock_account_id}`,
+                    { headers: { Authorization: `Bearer ${token}` } }
+                );
+                const org = res.data?.organization || res.data;
+                const state = org?.address?.state || '';
+                console.log('[RecurringInvoices] Org state from API:', state);
+                setOrgState(state);
+            } catch (err) {
+                console.error('[RecurringInvoices] Failed to fetch org state:', err);
+            }
+        };
+        fetchOrgState();
+    }, []);
+
+    // Re-preselect tax on all taxable items when place of supply or orgState changes
+    useEffect(() => {
+        if (!placeOfSupply) return;
+        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
+        setItems(prev => prev.map(item => {
+            if (!["tax_group", "tax_rate"].includes(item.item_tax_type || '')) return item;
+            const matched = (itemOptions as any[]).find(opt => opt.name === item.name);
+            if (!matched) return item;
+            return {
+                ...item,
+                item_tax_type: isSameState ? "tax_group" : "tax_rate",
+                tax_group_id: isSameState ? matched.tax_group_id : matched.inter_state_tax_rate_id,
+            };
+        }));
+    }, [placeOfSupply, orgState]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
+    const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
+    const [selectedExemption, setSelectedExemption] = useState("");
+    const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
+
+    const [customerExemptions, setCustomerExemptions] = useState<any[]>([]);
+    const [loadingExemptions, setLoadingExemptions] = useState(false);
+
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+
+        setLoadingExemptions(true);
+
+        axios
+            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
+                headers: {
+                    Authorization: token ? `Bearer ${token}` : undefined,
+                    "Content-Type": "application/json"
+                }
+            })
+            .then((res) => {
+                setCustomerExemptions(res.data || []);
+            })
+            .catch((error) => {
+                console.error("Error fetching tax exemptions:", error);
+            })
+            .finally(() => {
+                setLoadingExemptions(false);
+            });
+    }, []);
+
+
+    // Summary
+    const [discountOnTotal, setDiscountOnTotal] = useState<number | ''>(0);
+    const [discountTypeOnTotal, setDiscountTypeOnTotal] = useState<'percentage' | 'amount'>('percentage');
+    // const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
+    // const [selectedTax, setSelectedTax] = useState('');
+    const [adjustment, setAdjustment] = useState(0);
+    const [adjustmentLabel, setAdjustmentLabel] = useState('Adjustment');
+
+    // Notes & Attachments
+    const [customerNotes, setCustomerNotes] = useState('');
+    const [termsAndConditions, setTermsAndConditions] = useState('');
+    const [attachments, setAttachments] = useState<File[]>([]);
+    const [existingAttachments, setExistingAttachments] = useState<any[]>([]);
+    const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
+
+    // Email Communications
+    const [sendEmailToCustomer, setSendEmailToCustomer] = useState(false);
+    const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
+    const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+    const [newUserName, setNewUserName] = useState('');
+    const [newUserEmail, setNewUserEmail] = useState('');
+
+    // Contact Person Dialog
+    const [contactPersonDialogOpen, setContactPersonDialogOpen] = useState(false);
+    const [newContactPerson, setNewContactPerson] = useState<ContactPerson>({
+        id: '',
+        salutation: '',
+        firstName: '',
+        lastName: '',
+        email: '',
+        workPhone: '',
+        mobile: '',
+        skype: '',
+        designation: '',
+        department: ''
+    });
+
+    // Dropdowns data
+    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number; description: string; tax_preference: string; tax_exemption_id: number | null; tax_group_id: number | null; inter_state_tax_rate_id?: any }[]>([]);
+    const [salespersons, setSalespersons] = useState<{ id: string; name: string }[]>([]);
+    // const [taxOptions, setTaxOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
+    const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
+    const [taxOptions, setTaxOptions] = useState<any[]>([]);
+    const [selectedTax, setSelectedTax] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errors, setErrors] = useState<Record<string, string>>({});
+
+
+    const fieldStyles = {
+        height: { xs: 28, sm: 36, md: 45 },
+        '& .MuiInputBase-input, & .MuiSelect-select': {
+            padding: { xs: '8px', sm: '10px', md: '12px' },
+        },
+    };
+    const modalPrimaryButtonSx = {
+        backgroundColor: '#C72030',
+        textTransform: 'none',
+        '&:hover': { backgroundColor: '#A01926' }
+    };
+    const modalSecondaryButtonSx = {
+        color: '#C72030',
+        borderColor: '#C72030',
+        textTransform: 'none',
+        '&:hover': { borderColor: '#C72030', backgroundColor: 'rgba(199, 32, 48, 0.06)' }
+    };
     const gstTreatmentOptions = [
         { value: 'registered_regular', label: 'Registered Business - Regular' },
         { value: 'registered_composition', label: 'Registered Business - Composition' },
@@ -409,8 +765,7 @@ export const SalesOrderCreatePage: React.FC = () => {
         const contact = [addr.telephone_number, addr.fax_number ? `Fax: ${addr.fax_number}` : ''].filter(Boolean).join(' ');
         return [...parts, contact].filter(Boolean).join(', ');
     };
-    const getAddressBookByType = (type: 'billing' | 'shipping') =>
-        type === 'billing' ? billingAddressBook : shippingAddressBook;
+    const getAddressBookByType = (type: 'billing' | 'shipping') => type === 'billing' ? billingAddressBook : shippingAddressBook;
     const selectedBillingAddress = billingAddressBook.find(a => String(a.id) === String(selectedBillingAddressId)) || billingAddressBook[0] || null;
     const selectedShippingAddress = shippingAddressBook.find(a => String(a.id) === String(selectedShippingAddressId)) || shippingAddressBook[0] || null;
     const selectedGstDetail = gstDetails.find(g => String(g.id) === String(selectedGstDetailId)) || gstDetails.find(g => g.primary) || gstDetails[0] || null;
@@ -420,19 +775,14 @@ export const SalesOrderCreatePage: React.FC = () => {
         preferredGstin?: string,
         newAddressToSelect?: { type: 'billing' | 'shipping', attention: string, address: string, pin_code: string }
     ) => {
-        const baseUrl = localStorage.getItem("baseUrl");
-        const token = localStorage.getItem("token");
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem("lock_account_id");
         setCustomerDetailLoading(true);
         try {
-            const response = await fetch(
-                `https://${baseUrl}/lock_account_customers/${customerId}.json`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "Content-Type": "application/json",
-                    },
-                }
-            );
+            const response = await fetch(`https://${baseUrl}/lock_account_customers/${customerId}.json?lock_account_id=${lock_account_id}`, {
+                headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+            });
             const data = await response.json();
             setCustomerDetail(data);
             const nextBilling = Array.isArray(data.billing_addresses) && data.billing_addresses.length
@@ -452,12 +802,10 @@ export const SalesOrderCreatePage: React.FC = () => {
                 null;
             if (defaultGst) {
                 setSelectedGstDetailId(defaultGst.id);
-                setPlaceOfSupply(defaultGst.place_of_supply || data.place_of_supply || (data.billing_address as any)?.state || placeOfSupply);
+                setPlaceOfSupply(defaultGst.place_of_supply || placeOfSupply);
                 setCustomerDetail((prev) => (prev ? { ...prev, gstin: defaultGst.gstin } : prev));
             } else {
                 setSelectedGstDetailId(null);
-                const fallbackSupply = data.place_of_supply || (data.billing_address as any)?.state || '';
-                if (fallbackSupply) setPlaceOfSupply(fallbackSupply);
             }
 
             // Billing address logic
@@ -501,21 +849,13 @@ export const SalesOrderCreatePage: React.FC = () => {
             setBillingAddress(formatAddressText(finalBilling));
             setShippingAddress(formatAddressText(finalShipping));
         } catch (error) {
-            console.error("Error fetching customer details:", error);
-            toast.error("Failed to fetch customer details");
+            console.error('Error fetching customer detail:', error);
+            toast.error('Failed to load customer details');
         } finally {
             setCustomerDetailLoading(false);
         }
     };
 
-    const openCustomerDrawer = () => {
-        if (!selectedCustomer?.id) {
-            toast.error("Please select a customer first");
-            return;
-        }
-        setCustomerDrawerOpen(true);
-        fetchCustomerDetail(selectedCustomer.id);
-    };
     const openAddressListModal = (type: 'billing' | 'shipping') => {
         setActiveAddressType(type);
         setAddressListModalOpen(true);
@@ -534,11 +874,7 @@ export const SalesOrderCreatePage: React.FC = () => {
         setAddressFormModalOpen(true);
     };
     const openGstModal = () => {
-        setGstTreatmentDraft(
-            customerDetail?.gst_preference ||
-            customerDetail?.gst_treatment ||
-            ''
-        );
+        setGstTreatmentDraft(customerDetail?.gst_preference || customerDetail?.gst_treatment || '');
         setGstModalOpen(true);
     };
     const openGstManageModal = () => {
@@ -548,241 +884,6 @@ export const SalesOrderCreatePage: React.FC = () => {
         setGstManageModalOpen(true);
     };
     const openGstPickerModal = () => setGstPickerModalOpen(true);
-    // Contact persons selected for email
-    const [selectedContactPersons, setSelectedContactPersons] = useState<number[]>([]);
-
-    // Address
-    const [billingAddress, setBillingAddress] = useState('');
-    const [shippingAddress, setShippingAddress] = useState('');
-    const [sameAsBilling, setSameAsBilling] = useState(false);
-
-    // Sales Order Details
-    const [salesOrderNumber, setSalesOrderNumber] = useState('');
-    const [referenceNumber, setReferenceNumber] = useState('');
-    const [salesOrderDate, setSalesOrderDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-    const [expectedShipmentDate, setExpectedShipmentDate] = useState('');
-    const [paymentTerms, setPaymentTerms] = useState('');
-    const [deliveryMethod, setDeliveryMethod] = useState('');
-    const [salesperson, setSalesperson] = useState('');
-    const [placeOfSupply, setPlaceOfSupply] = useState("");
-    const [orgState, setOrgState] = useState<string>("");
-    // Items
-    const [items, setItems] = useState<Item[]>([
-        {
-            id: Date.now().toString(),
-            name: '',
-            description: '',
-            quantity: 1,
-            rate: 0,
-            discount: 0,
-            discountType: 'percentage',
-            tax: '',
-            taxRate: 0,
-            amount: 0,
-            item_tax_type: "",
-            tax_group_id: "",
-            tax_exemption_id: ""
-        }
-    ]);
-
-    const taxTypeOptions = [
-        { value: "non_taxable", label: "Non-Taxable" },
-        { value: "out_of_scope", label: "Out of Scope" },
-        { value: "non_gst_supply", label: "Non-GST Supply" },
-        //   { value: "tax_group", label: "Tax Group" }
-    ];
-    const [taxGroups, setTaxGroups] = useState<any[]>([]);
-    const [loadingTaxGroups, setLoadingTaxGroups] = useState(false);
-    useEffect(() => {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-
-        setLoadingTaxGroups(true);
-
-        axios
-            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_groups_view.json`, {
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined,
-                    "Content-Type": "application/json"
-                }
-            })
-            .then((res) => {
-                setTaxGroups(res.data || []);
-            })
-            .catch((error) => {
-                console.error("Error fetching tax groups:", error);
-            })
-            .finally(() => {
-                setLoadingTaxGroups(false);
-            });
-    }, []);
-
-    const [taxRates, setTaxRates] = useState<any[]>([]);
-    useEffect(() => {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-        const lock_account_id = localStorage.getItem('lock_account_id');
-        axios
-            .get(`https://${baseUrl}/lock_accounts/${lock_account_id}/tax_rates.json?q[rate_type_eq]=IGST`, {
-                headers: { Authorization: token ? `Bearer ${token}` : undefined, "Content-Type": "application/json" }
-            })
-            .then((res) => setTaxRates(res.data || []))
-            .catch((error) => console.error("Error fetching IGST tax rates:", error));
-    }, []);
-
-    // Fetch organisation state on mount
-    useEffect(() => {
-        const fetchOrgState = async () => {
-            const baseUrl = localStorage.getItem('baseUrl');
-            const token = localStorage.getItem('token');
-            const lock_account_id = localStorage.getItem('lock_account_id');
-            const organisation_id = localStorage.getItem('org_id') || localStorage.getItem('organisation_id');
-            if (!organisation_id || !baseUrl || !token) return;
-            try {
-                const res = await axios.get(
-                    `https://${baseUrl}/organizations/${organisation_id}.json?lock_account_id=${lock_account_id}`,
-                    { headers: { Authorization: `Bearer ${token}` } }
-                );
-                const org = res.data?.organization || res.data;
-                const state = org?.address?.state || '';
-                console.log('[SalesOrder] Org state from API:', state);
-                setOrgState(state);
-            } catch (err) {
-                console.error('[SalesOrder] Failed to fetch org state:', err);
-            }
-        };
-        fetchOrgState();
-    }, []);
-
-    // Re-preselect tax on all taxable items when place of supply or orgState changes
-    useEffect(() => {
-        if (!placeOfSupply) return;
-        const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
-        setItems(prev => prev.map(item => {
-            if (!["tax_group", "tax_rate"].includes(item.item_tax_type)) return item;
-            const matched = (itemOptions as any[]).find(opt => opt.name === item.name);
-            if (!matched) return item;
-            return {
-                ...item,
-                item_tax_type: isSameState ? "tax_group" : "tax_rate",
-                tax_group_id: isSameState ? matched.tax_group_id : matched.inter_state_tax_rate_id,
-            };
-        }));
-    }, [placeOfSupply, orgState]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    const [exemptionModalOpen, setExemptionModalOpen] = useState(false);
-    const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
-    const [selectedExemption, setSelectedExemption] = useState("");
-    const [currentItemIndex, setCurrentItemIndex] = useState<number | null>(null);
-
-    const [customerExemptions, setCustomerExemptions] = useState<any[]>([]);
-    const [loadingExemptions, setLoadingExemptions] = useState(false);
-
-    useEffect(() => {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-
-        setLoadingExemptions(true);
-
-        axios
-            .get(`https://${baseUrl}/tax_exemptions.json?lock_account_id=${lock_account_id}&q[exemption_type_eq]=item`, {
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined,
-                    "Content-Type": "application/json"
-                }
-            })
-            .then((res) => {
-                setCustomerExemptions(res.data || []);
-            })
-            .catch((error) => {
-                console.error("Error fetching tax exemptions:", error);
-            })
-            .finally(() => {
-                setLoadingExemptions(false);
-            });
-    }, []);
-
-
-
-    // Summary
-    const [discountOnTotal, setDiscountOnTotal] = useState(0);
-    const [discountTypeOnTotal, setDiscountTypeOnTotal] = useState<'percentage' | 'amount'>('percentage');
-    const [adjustment, setAdjustment] = useState(0);
-    const [adjustmentLabel, setAdjustmentLabel] = useState('Adjustment');
-
-    // Notes & Attachments
-    const [customerNotes, setCustomerNotes] = useState('');
-    const [termsAndConditions, setTermsAndConditions] = useState('');
-    const [attachments, setAttachments] = useState<File[]>([]);
-    const [displayAttachmentsInPortal, setDisplayAttachmentsInPortal] = useState(false);
-
-    // Email Communications
-    const [sendEmailToCustomer, setSendEmailToCustomer] = useState(false);
-    const [externalUsers, setExternalUsers] = useState<ExternalUser[]>([]);
-    const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
-    const [newUserName, setNewUserName] = useState('');
-    const [newUserEmail, setNewUserEmail] = useState('');
-
-    // Contact Person Dialog
-    const [contactPersonDialogOpen, setContactPersonDialogOpen] = useState(false);
-    const [newContactPerson, setNewContactPerson] = useState<ContactPerson>({
-        id: '',
-        salutation: '',
-        firstName: '',
-        lastName: '',
-        email: '',
-        workPhone: '',
-        mobile: '',
-        skype: '',
-        designation: '',
-        department: ''
-    });
-
-    // Dropdowns data
-    const [itemOptions, setItemOptions] = useState<{ id: string; name: string; rate: number; description?: string; tax_preference?: string; tax_exemption_id?: number | null; tax_group_id?: number | null; inter_state_tax_rate_id?: any }[]>([]);
-    const [salespersons, setSalespersons] = useState<{ id: string; name: string }[]>([]);
-    // const [taxOptions, setTaxOptions] = useState<{ id: string; name: string; rate: number }[]>([]);
-    const [taxType, setTaxType] = useState<'TDS' | 'TCS'>('TDS');
-    const [taxOptions, setTaxOptions] = useState<any[]>([]);
-    const [selectedTax, setSelectedTax] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-
-    // Delete confirmation dialog state
-    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-    const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
-    const [deleteTargetType, setDeleteTargetType] = useState<'item' | 'attachment'>('item');
-
-    const handleDeleteConfirm = () => {
-        if (deleteTargetIndex !== null) {
-            if (deleteTargetType === 'item') {
-                removeItem(deleteTargetIndex);
-            } else {
-                removeAttachment(deleteTargetIndex);
-            }
-        }
-        setDeleteConfirmOpen(false);
-        setDeleteTargetIndex(null);
-    };
-
-    const fieldStyles = {
-        height: { xs: 28, sm: 36, md: 45 },
-        '& .MuiInputBase-input, & .MuiSelect-select': {
-            padding: { xs: '8px', sm: '10px', md: '12px' },
-        },
-    };
-    const modalPrimaryButtonSx = {
-        textTransform: 'none',
-        bgcolor: '#C72030',
-        color: '#fff',
-        '&:hover': { bgcolor: '#A01020' }
-    };
-    const modalSecondaryButtonSx = {
-        textTransform: 'none',
-        borderColor: '#C72030',
-        color: '#C72030',
-        '&:hover': { borderColor: '#A01020', bgcolor: '#f8f1f1', color: '#A01020' }
-    };
 
     // Generate auto sales order number
     useEffect(() => {
@@ -799,6 +900,7 @@ export const SalesOrderCreatePage: React.FC = () => {
         setLoadingCustomers(true);
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
         // Fetch customer list
         axios
             .get(`https://${baseUrl}/lock_account_customers.json?lock_account_id=${lock_account_id}`, {
@@ -833,108 +935,17 @@ export const SalesOrderCreatePage: React.FC = () => {
     }, []);
 
     console.log('Customers:', customers)
-    // Fetch payment terms from API and set as dropdown options
-    const fetchPaymentTerms = async () => {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-        try {
-            const res = await axios.get(`https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`, {
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (res && res.data && Array.isArray(res.data)) {
-                const terms = res.data.map((pt: any) => ({ id: pt.id, name: pt.name, days: pt.no_of_days }));
-                setPaymentTermsList(terms);
-
-                const defaultTerm = terms.find((t: any) => t.name.toLowerCase() === 'due on receipt' || t.name.toLowerCase() === 'due on reciept');
-                if (defaultTerm) {
-                    setSelectedTerm((prev: any) => prev || defaultTerm.id);
-                }
-            }
-        } catch (err) {
-            setPaymentTermsList([]);
-        }
-    };
-
-    useEffect(() => {
-        fetchPaymentTerms();
-    }, []);
     // Fetch items, salespersons, taxes
     useEffect(() => {
-        // Set default terms and conditions
+
         // setTermsAndConditions('1. Use this to issue for all sales orders of all customers.\n2. Payment should be made within 30 days of the invoice date.\n3. Late payments may incur additional charges.');
     }, []);
 
-    const handleSaveTerms = async () => {
-
-        // Only add valid new rows
-        const validEdit = editTerms.filter(row => row.name.trim());
-        setEditTerms([]);
-        setShowConfig(false);
-        const baseUrl = localStorage.getItem("baseUrl");
-        const token = localStorage.getItem("token");
-
-        // Build payment_terms array for API
-        const paymentTermsPayload = validEdit.map(term => ({
-            id: term.id ?? null,
-            name: term.name,
-            no_of_days: term.days || 0
-        }));
-        console.log("Saving Payment Terms Payload:", paymentTermsPayload);
-        const payload = {
-            payment_terms: paymentTermsPayload,
-            lock_account_id: lock_account_id
-        };
-
-        await axios.post(
-            `https://${baseUrl}/payment_terms.json?lock_account_id=${lock_account_id}`,
-            payload,
-            {
-                headers: {
-                    Authorization: token ? `Bearer ${token}` : undefined,
-                    'Content-Type': 'application/json'
-                }
-            }
-        )
-            .then(res => {
-                // Optionally handle success
-            })
-            .catch(err => {
-                alert('Failed to save payment terms');
-            });
-
-        // Refresh payment terms list after save
-        fetchPaymentTerms();
-    };
-
-    // Remove (deactivate) payment term by id
-    const handleRemovePaymentTerm = async (id, idx) => {
-        const baseUrl = localStorage.getItem("baseUrl");
-        const token = localStorage.getItem("token");
-        try {
-            await axios.patch(
-                `https://${baseUrl}/payment_terms/${id}.json`,
-                { payment_term: { id, active: false } },
-                {
-                    headers: {
-                        Authorization: token ? `Bearer ${token}` : undefined,
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-        } catch (err) {
-            alert('Failed to deactivate payment term');
-        }
-        setEditTerms(terms => terms.filter((_, i) => i !== idx));
-        fetchPaymentTerms();
-    };
     // When customer is selected
     useEffect(() => {
         if (selectedCustomer) {
-            setBillingAddress(selectedCustomer.billingAddress);
-            setShippingAddress(selectedCustomer.shippingAddress);
+            // setBillingAddress(selectedCustomer.billingAddress);
+            // setShippingAddress(selectedCustomer.shippingAddress);
             setPaymentTerms(selectedCustomer.paymentTerms);
         }
     }, [selectedCustomer]);
@@ -946,21 +957,14 @@ export const SalesOrderCreatePage: React.FC = () => {
         }
     }, [sameAsBilling, billingAddress]);
     useEffect(() => {
-        if (selectedBillingAddress) {
-            setBillingAddress(formatAddressText(selectedBillingAddress));
-        }
+        if (selectedBillingAddress) setBillingAddress(formatAddressText(selectedBillingAddress));
     }, [selectedBillingAddressId, billingAddressBook.length]);
     useEffect(() => {
-        if (!sameAsBilling && selectedShippingAddress) {
-            setShippingAddress(formatAddressText(selectedShippingAddress));
-        }
+        if (!sameAsBilling && selectedShippingAddress) setShippingAddress(formatAddressText(selectedShippingAddress));
     }, [selectedShippingAddressId, shippingAddressBook.length, sameAsBilling]);
 
     const handleSaveAddressForm = async () => {
-        if (!selectedCustomer?.id) {
-            toast.error("Please select a customer first");
-            return;
-        }
+        if (!selectedCustomer?.id) return toast.error("Please select a customer first");
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
         const lock_account_id = localStorage.getItem("lock_account_id");
@@ -985,9 +989,7 @@ export const SalesOrderCreatePage: React.FC = () => {
             contact_person: addressForm.attention || '',
             gst_detail_id: selectedAddressTaxInfoId ? Number(selectedAddressTaxInfoId) : null
         };
-        if (addressFormMode === 'edit' && !String(targetId).startsWith(`${activeAddressType}-`)) {
-            addressAttr.id = Number(targetId) || targetId;
-        }
+        if (addressFormMode === 'edit' && !String(targetId).startsWith(`${activeAddressType}-`)) addressAttr.id = Number(targetId) || targetId;
         const updatePayload = {
             lock_account_customer: {
                 id: selectedCustomer.id,
@@ -995,19 +997,13 @@ export const SalesOrderCreatePage: React.FC = () => {
             }
         };
         try {
-            const response = await fetch(
-                `https://${baseUrl}/lock_account_customers/${selectedCustomer.id}.json?lock_account_id=${lock_account_id}`,
-                {
-                    method: 'PUT',
-                    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                    body: JSON.stringify(updatePayload)
-                }
-            );
+            const response = await fetch(`https://${baseUrl}/lock_account_customers/${selectedCustomer.id}.json?lock_account_id=${lock_account_id}`, {
+                method: 'PUT',
+                headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+                body: JSON.stringify(updatePayload)
+            });
             if (!response.ok) throw new Error(`Address save failed (${response.status})`);
-            setBook(prev => addressFormMode === 'edit'
-                ? prev.map(item => (String(item.id) === String(targetId) ? payload : item))
-                : [...prev, payload]
-            );
+            setBook(prev => addressFormMode === 'edit' ? prev.map(item => (String(item.id) === String(targetId) ? payload : item)) : [...prev, payload]);
             setSelectedId(targetId);
             setAddressFormModalOpen(false);
             setAddressListModalOpen(false);
@@ -1040,10 +1036,7 @@ export const SalesOrderCreatePage: React.FC = () => {
         if (!newGstForm.gstin || !newGstForm.place_of_supply) return toast.error("GSTIN and Place of Supply are required");
         const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
         const normalizedGstin = String(newGstForm.gstin || '').toUpperCase().trim();
-        if (!gstinRegex.test(normalizedGstin)) {
-            toast.error('Invalid GSTIN format. e.g. 27AAAAA1234A1Z5');
-            return;
-        }
+        if (!gstinRegex.test(normalizedGstin)) return toast.error('Invalid GSTIN format. e.g. 27AAAAA1234A1Z5');
         const baseUrl = localStorage.getItem("baseUrl");
         const token = localStorage.getItem("token");
         const lock_account_id = localStorage.getItem("lock_account_id");
@@ -1105,12 +1098,12 @@ export const SalesOrderCreatePage: React.FC = () => {
 
     // Calculate item amount
     const calculateItemAmount = (item: Item): number => {
-        const baseAmount = item.quantity * item.rate;
+        const baseAmount = Number(item.quantity || 0) * Number(item.rate || 0);
         const discountAmount = item.discountType === 'percentage'
-            ? (baseAmount * item.discount) / 100
-            : item.discount;
+            ? (baseAmount * Number(item.discount || 0)) / 100
+            : Number(item.discount || 0);
         const afterDiscount = baseAmount - discountAmount;
-        const taxAmount = (afterDiscount * item.taxRate) / 100;
+        const taxAmount = (afterDiscount * Number(item.taxRate || 0)) / 100;
         return afterDiscount + taxAmount;
     };
 
@@ -1151,27 +1144,57 @@ export const SalesOrderCreatePage: React.FC = () => {
         }]);
     };
 
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
+    const [deleteTargetType, setDeleteTargetType] = useState<'item' | 'attachment' | null>(null);
+
+    const handleDeleteConfirm = () => {
+        if (deleteTargetIndex !== null) {
+            if (deleteTargetType === 'item') {
+                removeItem(deleteTargetIndex);
+            } else if (deleteTargetType === 'attachment') {
+                removeAttachment(deleteTargetIndex);
+            }
+        }
+        setDeleteConfirmOpen(false);
+        setDeleteTargetIndex(null);
+        setDeleteTargetType(null);
+    };
+
     // Remove item
     const removeItem = (index: number) => {
+        const itemToRemove = items[index];
+        if (itemToRemove && itemToRemove.line_item_id) {
+            setDeletedItemIds(prev => [...prev, itemToRemove.line_item_id]);
+        }
         if (items.length > 1) {
             setItems(prev => prev.filter((_, i) => i !== index));
         }
+    };
+
+    // Remove existing attachment
+    const removeExistingAttachment = (index: number) => {
+        const attToRemove = existingAttachments[index];
+        if (attToRemove && attToRemove.id) {
+            setDeletedAttachmentIds(prev => [...prev, attToRemove.id]);
+        }
+        setExistingAttachments(prev => prev.filter((_, i) => i !== index));
     };
     const [taxAmount2, setTaxAmount2] = useState(0);
     const [totalAmount2, setTotalAmount2] = useState(0);
 
     // Calculate totals
-    const subTotal = items.reduce((sum, item) => sum + (item.quantity * item.rate), 0);
+    const subTotal = items.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.rate || 0)), 0);
     const totalDiscount = discountTypeOnTotal === 'percentage'
-        ? (subTotal * discountOnTotal) / 100
-        : discountOnTotal;
+        ? (subTotal * (Number(discountOnTotal) || 0)) / 100
+        : (Number(discountOnTotal) || 0);
     const afterDiscount = subTotal - totalDiscount;
     const taxAmount = items.reduce((sum, item) => {
-        const itemSubtotal = item.quantity * item.rate;
+        const itemSubtotal = Number(item.quantity || 0) * Number(item.rate || 0);
         const itemDiscount = item.discountType === 'percentage'
-            ? (itemSubtotal * item.discount) / 100
-            : item.discount;
-        return sum + ((itemSubtotal - itemDiscount) * item.taxRate / 100);
+            ? (itemSubtotal * Number(item.discount || 0)) / 100
+            : Number(item.discount || 0);
+        return sum + ((itemSubtotal - itemDiscount) * Number(item.taxRate || 0) / 100);
     }, 0);
     // Update totalAmount to subtract TDS/TCS (taxAmount2)
     const totalAmount = afterDiscount + adjustment - taxAmount2;
@@ -1249,47 +1272,37 @@ export const SalesOrderCreatePage: React.FC = () => {
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
 
-        if (!selectedCustomer) {
-            newErrors.customer = 'Customer is required';
-            toast.error('Customer is required');
-        }
-        if (!salesOrderDate) {
-            newErrors.salesOrderDate = 'Sales order date is required';
-            toast.error('Sales order date is required');
-        }
-        if (!expectedShipmentDate) {
+        if (!selectedCustomer) newErrors.customer = 'Customer is required';
+        if (!salesOrderDate) newErrors.salesOrderDate = 'Sales order date is required';
+        if (!neverExpires && !expectedShipmentDate) {
             newErrors.expectedShipmentDate = 'Expected shipment date is required';
-            toast.error('Expected shipment date is required');
-        } else if (salesOrderDate && new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
-            newErrors.expectedShipmentDate = 'Cannot be earlier than Sales Order Date';
-            toast.error('Expected shipment date cannot be earlier than Sales Order Date');
+        } else if (!neverExpires && expectedShipmentDate && salesOrderDate && new Date(expectedShipmentDate) < new Date(salesOrderDate)) {
+            newErrors.expectedShipmentDate = 'Cannot be earlier than Start On Date';
         }
-        if (!selectedTerm) {
-            newErrors.paymentTerms = 'Payment terms is required';
-            toast.error('Payment terms is required');
-        }
+        if (!paymentTerms) newErrors.paymentTerms = 'Payment terms is required';
 
-        const hasValidItems = items.some(item => item.name && item.quantity > 0 && item.rate > 0);
-        if (!hasValidItems) {
-            newErrors.items = 'At least one valid item with quantity and rate is required';
-            toast.error('At least one valid item is required');
-        }
+        const hasValidItems = items.some(item => (item.name && Number(item.quantity) > 0 && Number(item.rate) > 0));
+        if (!hasValidItems) newErrors.items = 'At least one valid item is required';
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const saleOrderPayload2 = {
-        sale_order: {
+
+    // --- INVOICE PAYLOADS ---
+
+    const invoicePayload2 = {
+        lock_account_invoice: {
             lock_account_customer_id: selectedCustomer?.id,
-            reference_number: referenceNumber,
+            order_number: referenceNumber,
             date: salesOrderDate,
-            shipment_date: expectedShipmentDate,
+            due_date: expectedShipmentDate,
             payment_term_id: selectedTerm,
             delivery_method: deliveryMethod,
             sales_person_id: salespersons.find(sp => sp.name === salesperson)?.id || salesperson,
             customer_notes: customerNotes,
             terms_and_conditions: termsAndConditions,
+            subject: subject,
             status: 'draft',
             total_amount: totalAmount,
             discount_per: discountTypeOnTotal === 'percentage' ? discountOnTotal : undefined,
@@ -1302,7 +1315,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                 const found = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
                 return found && found.id ? found.id : selectedTax || '';
             })(),
-            sale_order_items_attributes: items.map(item => {
+            lock_account_invoice_items_attributes: items.map(item => {
                 const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
                 return {
                     ...(resolvedId ? { lock_account_item_id: resolvedId } : { item_name: item.name }),
@@ -1312,13 +1325,6 @@ export const SalesOrderCreatePage: React.FC = () => {
                     description: item.description || ''
                 };
             }),
-            // email_contact_persons_attributes: externalUsers.map((user, idx) => ({
-            //     contact_person_id: user.id || idx + 1 // Replace with actual contact person id
-            // })),
-            // attachments_attributes: attachments.map(f => ({
-            //     document: '', // Replace with actual document upload logic
-            //     active: true
-            // }))
             email_contact_persons_attributes: selectedContactPersons.map(id => ({ contact_person_id: id })),
             attachments_attributes: attachments.map(f => ({
                 document: f,
@@ -1326,21 +1332,22 @@ export const SalesOrderCreatePage: React.FC = () => {
             }))
         }
     };
-    console.log('Sale Order Payload:', saleOrderPayload2);
+    console.log('Invoice Payload:', invoicePayload2);
 
     // Handle submit
     const handleSubmit = async (saveAsDraft: boolean = false) => {
-        if (!validate()) {
-            return;
-        }
+        // if (!saveAsDraft && !validate()) {
+        //     return;
+        // }
 
         setIsSubmitting(true);
 
         try {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
+            const lock_account_id = localStorage.getItem('lock_account_id');
 
-            // Build FormData for sale order
+            // Build FormData for invoice
             const formData = new FormData();
 
             const totalGSTAmount = taxBreakdown.reduce(
@@ -1349,89 +1356,144 @@ export const SalesOrderCreatePage: React.FC = () => {
             );
 
             formData.append(
-                'sale_order[sub_total_amount]',
+                'lock_account_invoice[sub_total_amount]',
                 String(subTotal)
             );
 
             formData.append(
-                'sale_order[taxable_amount]',
+                'lock_account_invoice[taxable_amount]',
                 String(totalGSTAmount)
             );
 
             formData.append(
-                'sale_order[lock_account_tax_amount]',
+                'lock_account_invoice[lock_account_tax_amount]',
                 String(taxAmount2)
             );
-            formData.append('sale_order[lock_account_customer_id]', selectedCustomer?.id || '');
-            formData.append('sale_order[reference_number]', referenceNumber);
-            formData.append('sale_order[date]', salesOrderDate);
-            formData.append('sale_order[shipment_date]', expectedShipmentDate);
-            formData.append('sale_order[payment_term_id]', selectedTerm);
-            formData.append('sale_order[delivery_method]', deliveryMethod);
-            formData.append('sale_order[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
-            formData.append('sale_order[customer_notes]', customerNotes);
-            formData.append('sale_order[terms_and_conditions]', termsAndConditions);
-            formData.append('sale_order[status]', saveAsDraft ? 'draft' : 'confirmed');
-            formData.append('sale_order[total_amount]', String(totalAmount2));
+            formData.append('lock_account_invoice[lock_account_customer_id]', selectedCustomer?.id || '');
+            formData.append('lock_account_invoice[order_number]', referenceNumber);
+            formData.append('lock_account_invoice[payment_term_id]', selectedTerm);
+            formData.append('lock_account_invoice[delivery_method]', deliveryMethod);
+            formData.append('lock_account_invoice[sales_person_id]', salespersons.find(sp => sp.name === salesperson)?.id || salesperson);
+            formData.append('lock_account_invoice[customer_notes]', customerNotes);
+            formData.append('lock_account_invoice[terms_and_conditions]', termsAndConditions);
+            formData.append('lock_account_invoice[subject]', subject);
+            // formData.append('lock_account_invoice[status]', 'draft');
+            formData.append(
+                'lock_account_invoice[status]',
+                saveAsDraft ? 'draft' : 'submit'
+            );
+            formData.append('lock_account_invoice[total_amount]', String(totalAmount2));
             if (discountTypeOnTotal === 'percentage') {
-                formData.append('sale_order[discount_per]', String(discountOnTotal));
-                formData.append('sale_order[discount_amount]', String(totalDiscount));
+                formData.append('lock_account_invoice[discount_per]', String(discountOnTotal));
+                formData.append('lock_account_invoice[discount_amount]', String(totalDiscount));
             } else {
-                formData.append('sale_order[discount_amount]', String(discountOnTotal));
+                formData.append('lock_account_invoice[discount_amount]', String(discountOnTotal));
             }
-            formData.append('sale_order[charge_amount]', String(adjustment));
-            formData.append('sale_order[charge_name]', adjustmentLabel);
-            formData.append('sale_order[charge_type]', adjustment >= 0 ? 'plus' : 'minus');
-            formData.append('sale_order[tax_type]', taxType.toLowerCase());
+            formData.append('lock_account_invoice[charge_amount]', String(adjustment));
+            formData.append('lock_account_invoice[charge_name]', adjustmentLabel);
+            formData.append('lock_account_invoice[charge_type]', adjustment >= 0 ? 'plus' : 'minus');
+            formData.append('lock_account_invoice[tax_type]', taxType.toLowerCase());
             const foundTax = taxOptions.find(t => t.id === selectedTax || t.name === selectedTax);
-            formData.append('sale_order[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
-            formData.append('sale_order[place_of_supply]', placeOfSupply); //new added
-            // Converted from quote
-            if (location.state?.quoteData) {
-                formData.append('sale_order[converted_from_type]', 'LockAccountQuote');
-                formData.append('sale_order[converted_from_id]', String(location.state.quoteData.id));
-            }
-
-            // Address detail attributes mapping (same as quotes flow)
+            formData.append('lock_account_invoice[lock_account_tax_id]', (foundTax && foundTax.id ? foundTax.id : selectedTax || ''));
+            formData.append('lock_account_invoice[place_of_supply]', placeOfSupply); //new added
             const selectedOrFirstBillingId = selectedBillingAddressId ?? billingAddressBook[0]?.id ?? '';
             const selectedOrFirstShippingId = selectedShippingAddressId ?? shippingAddressBook[0]?.id ?? '';
             const selectedOrFirstGstDetailId = selectedGstDetailId ?? gstDetails[0]?.id ?? '';
             const gstPreferenceValue = customerDetail?.gst_preference || customerDetail?.gst_treatment || '';
-            formData.append('sale_order[address_detail_attributes][billing_address_id]', String(selectedOrFirstBillingId));
-            formData.append('sale_order[address_detail_attributes][shipping_address_id]', String(selectedOrFirstShippingId));
-            formData.append('sale_order[address_detail_attributes][gst_detail_id]', String(selectedOrFirstGstDetailId));
-            formData.append('sale_order[address_detail_attributes][gst_preference]', String(gstPreferenceValue));
+            formData.append('lock_account_invoice[address_detail_attributes][billing_address_id]', String(selectedOrFirstBillingId));
+            formData.append('lock_account_invoice[address_detail_attributes][shipping_address_id]', String(selectedOrFirstShippingId));
+            formData.append('lock_account_invoice[address_detail_attributes][gst_detail_id]', String(selectedOrFirstGstDetailId));
+            formData.append('lock_account_invoice[address_detail_attributes][gst_preference]', String(gstPreferenceValue));
+            formData.append('lock_account_invoice[recurring]', 'true');
+            formData.append('lock_account_invoice[profile_name]', profileName);
 
-            // Sale order items
+            // formData.append('lock_account_invoice[recurring_detail][start_date]', salesOrderDate);
+            // formData.append('lock_account_invoice[recurring_detail][end_date]', neverExpires ? '' : expectedShipmentDate);
+
+            // formData.append(
+            //     'lock_account_invoice[recurring_detail][repeat_type]',
+            //     repeatType
+            // );
+
+            // formData.append(
+            //     'lock_account_invoice[recurring_detail][repeat_value]',
+            //     String(repeatCount)
+            // );
+
+            // formData.append(
+            //     'lock_account_invoice[recurring_detail][never_expires]',
+            //     neverExpires ? 'true' : 'false'
+            // );
+
+            formData.append('recurring_detail[start_date]', salesOrderDate);
+
+            formData.append(
+                'recurring_detail[end_date]',
+                neverExpires ? '' : expectedShipmentDate
+            );
+
+            formData.append(
+                'recurring_detail[repeat_type]',
+                repeatType
+            );
+
+            formData.append(
+                'recurring_detail[repeat_value]',
+                String(repeatCount)
+            );
+
+            formData.append(
+                'recurring_detail[never_expires]',
+                neverExpires ? 'true' : 'false'
+            );
+            // Invoice items
             items.forEach((item, idx) => {
+                if (item.line_item_id) {
+                    formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][id]`, String(item.line_item_id));
+                }
                 const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
                 if (resolvedId) {
-                    formData.append(`sale_order[sale_order_items_attributes][${idx}][lock_account_item_id]`, String(resolvedId));
+                    formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][lock_account_item_id]`, String(resolvedId));
                 } else {
-                    formData.append(`sale_order[sale_order_items_attributes][${idx}][item_name]`, item.name);
+                    formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][item_name]`, item.name);
                 }
-                formData.append(`sale_order[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
-                formData.append(`sale_order[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
-                formData.append(`sale_order[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
-                formData.append(`sale_order[sale_order_items_attributes][${idx}][description]`, item.description || '');
-                formData.append(`sale_order[sale_order_items_attributes][${idx}][tax_type]`, String(item.item_tax_type));
-                formData.append(`sale_order[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
-                formData.append(`sale_order[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][rate]`, String(item.rate));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][quantity]`, String(item.quantity));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][total_amount]`, String(item.amount));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][description]`, item.description || '');
+
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][tax_type]`, String(item.item_tax_type));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][tax_group_id]`, String(item.tax_group_id));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
+            });
+
+            // Deleted items
+            deletedItemIds.forEach((dbId, idx) => {
+                const index = items.length + idx;
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${index}][id]`, String(dbId));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${index}][_destroy]`, 'true');
             });
 
             // Email contact persons
             selectedContactPersons.forEach((id, idx) => {
-                formData.append(`sale_order[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
+                formData.append(`lock_account_invoice[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
             });
 
             // Attachments
             attachments.forEach((file, idx) => {
-                formData.append(`sale_order[attachments_attributes][${idx}][document]`, file);
-                formData.append(`sale_order[attachments_attributes][${idx}][active]`, 'true');
+                formData.append(`lock_account_invoice[attachments_attributes][${idx}][document]`, file);
+                formData.append(`lock_account_invoice[attachments_attributes][${idx}][active]`, 'true');
             });
 
-            await fetch(`https://${baseUrl}/sale_orders.json?lock_account_id=${lock_account_id}`, {
-                method: 'POST',
+            // Deleted attachments
+            deletedAttachmentIds.forEach((dbId, idx) => {
+                const index = attachments.length + idx;
+                formData.append(`lock_account_invoice[attachments_attributes][${index}][id]`, String(dbId));
+                formData.append(`lock_account_invoice[attachments_attributes][${index}][_destroy]`, 'true');
+            });
+
+            await fetch(`https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=${lock_account_id}`, {
+                method: 'PUT',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined
                     // Do NOT set Content-Type, browser will set it for FormData
@@ -1439,23 +1501,27 @@ export const SalesOrderCreatePage: React.FC = () => {
                 body: formData
             });
 
-            toast.success(`Sales order ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
-            navigate('/accounting/sales-order');
+            // alert(`Recurring Invoice ${saveAsDraft ? 'saved as draft' : 'created'} successfully!`);
+            navigate('/accounting/recurring-invoices');
         } catch (error) {
-            console.error('Error submitting sales order:', error);
-            toast.error('Failed to create sales order');
+            console.error('Error submitting invoice:', error);
+            alert('Failed to create invoice');
         } finally {
             setIsSubmitting(false);
         }
     };
 
     // --- Tax Section State and Effect ---
+
+
+
     useEffect(() => {
         // Fetch tax options based on taxType, using baseUrl and Bearer token
         const fetchTaxSections = async () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl');
                 const token = localStorage.getItem('token');
+                const lock_account_id = localStorage.getItem('lock_account_id');
                 const type = taxType.toLowerCase();
                 const url =
 
@@ -1492,46 +1558,27 @@ export const SalesOrderCreatePage: React.FC = () => {
         }
     }, [selectedTax, taxOptions, afterDiscount]);
 
-
-
-    console.log('Tax Options:', taxOptions);
-
-
-
-    const selectedTaxGroups = items
-        .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
-        .map(item => {
-            const group = taxGroups.find(g => g.id === item.tax_group_id);
-            return {
-                itemAmount: item.amount,
-                taxRates: group?.tax_rates || []
-            };
-        });
     const taxBreakdown: any[] = [];
 
-    selectedTaxGroups.forEach(group => {
-        group.taxRates.forEach(rate => {
-            const taxAmount = (group.itemAmount * rate.rate) / 100;
-
-            const existing = taxBreakdown.find(t => t.name === rate.name);
-
-            if (existing) {
-                existing.amount += taxAmount;
-            } else {
-                taxBreakdown.push({
-                    name: rate.name,
-                    rate: rate.rate,
-                    amount: taxAmount
-                });
-            }
+    // Intra-state (Tax Groups)
+    items
+        .filter(item => item.item_tax_type === "tax_group" && item.tax_group_id)
+        .forEach(item => {
+            const group = taxGroups.find(g => g.id === item.tax_group_id);
+            if (!group) return;
+            group.tax_rates.forEach((rate: any) => {
+                const taxAmount = (item.amount * rate.rate) / 100;
+                const existing = taxBreakdown.find(t => t.name === rate.name);
+                if (existing) existing.amount += taxAmount;
+                else taxBreakdown.push({ name: rate.name, rate: rate.rate, amount: taxAmount });
+            });
         });
-    });
 
     // Inter-state (IGST Tax Rates)
     items
         .filter(item => item.item_tax_type === "tax_rate" && item.tax_group_id)
         .forEach(item => {
-            const rate = taxRates.find(r => String(r.id) === String(item.tax_group_id));
+            const rate = taxRates.find(r => r.id === item.tax_group_id);
             if (!rate) return;
             const taxAmount = (item.amount * rate.rate) / 100;
             const existing = taxBreakdown.find(t => t.name === rate.name);
@@ -1552,7 +1599,7 @@ export const SalesOrderCreatePage: React.FC = () => {
 
 
     }, [afterDiscount, totalTax, taxAmount2, adjustment]);
-
+    console.log('Tax Options:', taxOptions);
     const states = [
         "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
         "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
@@ -1571,18 +1618,8 @@ export const SalesOrderCreatePage: React.FC = () => {
                 </div>
             )}
 
-            <div className="mb-2">
-                <button
-                    onClick={() => navigate('/accounting/sales-order')}
-                    className="flex items-center gap-2 text-gray-900 hover:text-gray-700 font-medium tracking-wide"
-                >
-                    <ArrowLeft className="w-5 h-5" />
-                    Back to Sales Orders List
-                </button>
-            </div>
-
             <header className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold">New Sales Order</h1>
+                <h1 className="text-2xl font-bold">New Recurring Invoice</h1>
             </header>
 
             <div className="space-y-6">
@@ -1654,12 +1691,18 @@ export const SalesOrderCreatePage: React.FC = () => {
                                             displayEmpty: true
                                         }}
                                     >
-                                        <MenuItem value="">Select  Place of Supply</MenuItem>
+                                        <MenuItem value="">Select Place of Supply</MenuItem>
+                                        {/* <MenuItem value="India">India</MenuItem>
+                                        <MenuItem value="United States">United States</MenuItem>
+                                        <MenuItem value="United Kingdom">United Kingdom</MenuItem>
+                                        <MenuItem value="Australia">Australia</MenuItem>
+                                        <MenuItem value="Canada">Canada</MenuItem> */}
                                         {states.map((state) => (
                                             <MenuItem key={state} value={state}>
                                                 {state}
                                             </MenuItem>
                                         ))}
+
                                     </TextField>
                                 </div>
                             </div>
@@ -1668,7 +1711,6 @@ export const SalesOrderCreatePage: React.FC = () => {
                         {selectedCustomer && customerDetail && (
                             <div className="mt-6 space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 border-t border-gray-100 pt-6">
-                                    {/* Billing Address */}
                                     <div>
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Billing Address
@@ -1679,31 +1721,17 @@ export const SalesOrderCreatePage: React.FC = () => {
                                         {selectedBillingAddress?.address ? (
                                             <div className="text-sm text-gray-700 leading-relaxed">
                                                 <div className="font-medium">{selectedBillingAddress.address}</div>
-                                                {selectedBillingAddress.address_line_two && (
-                                                    <div>{selectedBillingAddress.address_line_two}</div>
-                                                )}
+                                                {selectedBillingAddress.address_line_two && (<div>{selectedBillingAddress.address_line_two}</div>)}
                                                 <div>
-                                                    {[selectedBillingAddress.city, selectedBillingAddress.state]
-                                                        .filter(Boolean)
-                                                        .join(", ")}
+                                                    {[selectedBillingAddress.city, selectedBillingAddress.state].filter(Boolean).join(", ")}
                                                     {selectedBillingAddress.pin_code ? ` - ${selectedBillingAddress.pin_code}` : ""}
                                                 </div>
-                                                {selectedBillingAddress.country && (
-                                                    <div>{selectedBillingAddress.country}</div>
-                                                )}
+                                                {selectedBillingAddress.country && (<div>{selectedBillingAddress.country}</div>)}
                                             </div>
                                         ) : (
-                                            <button
-                                                type="button"
-                                                onClick={() => openAddressFormModal('new', 'billing')}
-                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
-                                            >
-                                                New Address
-                                            </button>
+                                            <button type="button" onClick={() => openAddressFormModal('new', 'billing')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">New Address</button>
                                         )}
                                     </div>
-
-                                    {/* Shipping Address */}
                                     <div>
                                         <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                                             Shipping Address
@@ -1714,32 +1742,18 @@ export const SalesOrderCreatePage: React.FC = () => {
                                         {selectedShippingAddress?.address ? (
                                             <div className="text-sm text-gray-700 leading-relaxed">
                                                 <div className="font-medium">{selectedShippingAddress.address}</div>
-                                                {selectedShippingAddress.address_line_two && (
-                                                    <div>{selectedShippingAddress.address_line_two}</div>
-                                                )}
+                                                {selectedShippingAddress.address_line_two && (<div>{selectedShippingAddress.address_line_two}</div>)}
                                                 <div>
-                                                    {[selectedShippingAddress.city, selectedShippingAddress.state]
-                                                        .filter(Boolean)
-                                                        .join(", ")}
+                                                    {[selectedShippingAddress.city, selectedShippingAddress.state].filter(Boolean).join(", ")}
                                                     {selectedShippingAddress.pin_code ? ` - ${selectedShippingAddress.pin_code}` : ""}
                                                 </div>
-                                                {selectedShippingAddress.country && (
-                                                    <div>{selectedShippingAddress.country}</div>
-                                                )}
+                                                {selectedShippingAddress.country && (<div>{selectedShippingAddress.country}</div>)}
                                             </div>
                                         ) : (
-                                            <button
-                                                type="button"
-                                                onClick={() => openAddressFormModal('new', 'shipping')}
-                                                className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block"
-                                            >
-                                                New Address
-                                            </button>
+                                            <button type="button" onClick={() => openAddressFormModal('new', 'shipping')} className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">New Address</button>
                                         )}
                                     </div>
                                 </div>
-
-                                {/* GST Information */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm pt-2">
                                     <div className="flex items-center gap-2">
                                         <span className="text-gray-500">GST Treatment:</span>
@@ -1756,15 +1770,6 @@ export const SalesOrderCreatePage: React.FC = () => {
                                         </IconButton>
                                     </div>
                                 </div>
-
-                                <div className="flex items-center gap-2 pt-2">
-                                    <button
-                                        onClick={openCustomerDrawer}
-                                        className="text-[#C72030] text-sm font-medium hover:underline flex items-center gap-1"
-                                    >
-                                        View Customer Details <ChevronRight className="w-4 h-4" />
-                                    </button>
-                                </div>
                             </div>
                         )}
                         {!customerDetail && selectedCustomer && customerDetailLoading && (
@@ -1772,6 +1777,17 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 <CircularProgress size={24} color="error" />
                             </div>
                         )}
+
+                        {/* {selectedCustomer && (
+                            <Button
+                                variant="outlined"
+                                onClick={() => setCustomerDrawerOpen(true)}
+                                endIcon={<ChevronRight />}
+                                sx={{ textTransform: 'none' }}
+                            >
+                                View Customer Details
+                            </Button>
+                        )} */}
                     </div>
                 </Section>
 
@@ -1783,13 +1799,16 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 Billing Address
                             </label>
                             <textarea
-                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${selectedCustomer?.billing_address?.address ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
-                                value={billingAddress}
+                                value={selectedCustomer?.billing_address?.address
+                                    ? `${selectedCustomer.billing_address.address}${selectedCustomer.billing_address.address_line_two ? ', ' + selectedCustomer.billing_address.address_line_two : ''}${selectedCustomer.billing_address.city ? ', ' + selectedCustomer.billing_address.city : ''}${selectedCustomer.billing_address.state ? ', ' + selectedCustomer.billing_address.state : ''}${selectedCustomer.billing_address.pin_code ? ' - ' + selectedCustomer.billing_address.pin_code : ''}`
+                                    : billingAddress}
                                 onChange={(e) => {
                                     if (e.target.value.length <= 500) setBillingAddress(e.target.value);
                                 }}
                                 placeholder="Enter billing address (max 500 characters)"
+                                disabled={!!selectedCustomer?.billing_address?.address}
                                 maxLength={500}
                             />
                             <div className="text-xs text-gray-400 text-right mt-1">
@@ -1802,14 +1821,16 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 Shipping Address
                             </label>
                             <textarea
-                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${sameAsBilling ? 'bg-gray-50' : ''}`}
+                                className={`w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y ${!!selectedCustomer?.shipping_address?.address || sameAsBilling ? 'bg-gray-100 cursor-not-allowed text-gray-500' : ''}`}
                                 rows={4}
-                                value={shippingAddress}
+                                value={selectedCustomer?.shipping_address?.address
+                                    ? `${selectedCustomer.shipping_address.address}${selectedCustomer.shipping_address.address_line_two ? ', ' + selectedCustomer.shipping_address.address_line_two : ''}${selectedCustomer.shipping_address.city ? ', ' + selectedCustomer.shipping_address.city : ''}${selectedCustomer.shipping_address.state ? ', ' + selectedCustomer.shipping_address.state : ''}${selectedCustomer.shipping_address.pin_code ? ' - ' + selectedCustomer.shipping_address.pin_code : ''}`
+                                    : shippingAddress}
                                 onChange={(e) => {
                                     if (e.target.value.length <= 500) setShippingAddress(e.target.value);
                                 }}
                                 placeholder="Enter shipping address (max 500 characters)"
-                                readOnly={sameAsBilling}
+                                disabled={!!selectedCustomer?.shipping_address?.address || sameAsBilling}
                                 maxLength={500}
                             />
                             <div className="text-xs text-gray-400 text-right mt-1">
@@ -1830,24 +1851,76 @@ export const SalesOrderCreatePage: React.FC = () => {
                 </Section>
 
                 {/* Sales Order Details */}
-                <Section title="Sales Order Details" icon={<Calendar className="w-5 h-5" />}>
+                <Section title=" Recurring Invoice Details" icon={<Calendar className="w-5 h-5" />}>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+
                         <div>
                             <label className="block text-sm font-medium mb-2">
-                                Reference #
+                                Profile Name<span className="text-red-500">*</span>
+                            </label>
+                            <TextField
+                                fullWidth
+                                value={profileName}
+                                onChange={(e) => setProfileName(e.target.value)}
+                                placeholder="Enter profile name"
+                                sx={fieldStyles}
+                            />
+                        </div>
+
+
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Order Number
                             </label>
                             <TextField
                                 fullWidth
                                 value={referenceNumber}
                                 onChange={(e) => setReferenceNumber(e.target.value)}
-                                placeholder="Enter reference number"
+                                placeholder="Enter order number"
                                 sx={fieldStyles}
                             />
                         </div>
 
+                        {/* Repeat Every */}
                         <div>
                             <label className="block text-sm font-medium mb-2">
-                                Sales Order Date<span className="text-red-500">*</span>
+                                Repeat Every
+                            </label>
+
+                            <div className="flex gap-2">
+
+                                <TextField
+                                    type="number"
+                                    size="small"
+                                    value={repeatCount}
+                                    onChange={(e) => setRepeatCount(e.target.value)}
+                                    sx={{ width: "90px" }}
+                                />
+
+                                <FormControl fullWidth size="small">
+                                    <Select
+                                        value={repeatType}
+                                        onChange={(e) => setRepeatType(e.target.value)}
+                                        sx={fieldStyles}
+                                    >
+
+                                        <MenuItem value="day">Day</MenuItem>
+                                        <MenuItem value="week">Week</MenuItem>
+                                        <MenuItem value="month">Month</MenuItem>
+                                        <MenuItem value="year">Year</MenuItem>
+
+                                    </Select>
+                                </FormControl>
+
+                            </div>
+                        </div>
+
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">
+                                Start On<span className="text-red-500">*</span>
                             </label>
                             <TextField
                                 fullWidth
@@ -1873,73 +1946,71 @@ export const SalesOrderCreatePage: React.FC = () => {
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Expected Shipment Date<span className="text-red-500">*</span>
-                            </label>
-                            <TextField
-                                fullWidth
-                                type="date"
-                                value={expectedShipmentDate}
-                                onChange={(e) => setExpectedShipmentDate(e.target.value)}
-                                error={!!errors.expectedShipmentDate}
-                                helperText={errors.expectedShipmentDate}
-                                sx={{
-                                    ...fieldStyles,
-                                    '& .MuiInputBase-input': {
-                                        color: expectedShipmentDate ? 'transparent' : 'inherit',
-                                    }
-                                }}
-                                InputLabelProps={{ shrink: true }}
-                                inputProps={{ min: salesOrderDate }}
-                                InputProps={{
-                                    startAdornment: expectedShipmentDate ? (
-                                        <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
-                                            {format(parseISO(expectedShipmentDate), 'dd/MM/yyyy')}
-                                        </InputAdornment>
-                                    ) : null
-                                }}
-                            />
-                        </div>
 
-                        <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Payment Terms<span className="text-red-500">*</span>
-                            </label>
 
-                            <FormControl fullWidth error={!!errors.paymentTerms}>
-                                <Select
-                                    value={selectedTerm}
-                                    onChange={(e) => setSelectedTerm(e.target.value)}
-                                    renderValue={(val) => {
-                                        if (!val) {
-                                            return <span className="text-gray-400">Select payment term</span>;
+                        <div className="flex gap-4 items-end">
+
+                            {/* Ends On Date */}
+                            <div className="w-1/2">
+                                <label className="block text-sm font-medium mb-2">
+                                    Ends On<span className="text-red-500">*</span>
+                                </label>
+
+                                <TextField
+                                    fullWidth
+                                    type="date"
+                                    value={neverExpires ? "" : expectedShipmentDate}
+                                    onChange={(e) => setExpectedShipmentDate(e.target.value)}
+                                    disabled={neverExpires}
+                                    error={!neverExpires && !!errors.expectedShipmentDate}
+                                    helperText={!neverExpires ? errors.expectedShipmentDate : ""}
+                                    sx={{
+                                        ...fieldStyles,
+                                        '& .MuiInputBase-input': {
+                                            color: (!neverExpires && expectedShipmentDate) ? 'transparent' : 'inherit',
                                         }
-                                        const found = filteredTerms.find(term => term.id === val);
-                                        return found ? found.name : val;
                                     }}
-                                    displayEmpty
-                                    sx={fieldStyles}
-                                >
-                                    <MenuItem value="">
-                                        Select payment term
-                                    </MenuItem>
+                                    InputLabelProps={{ shrink: true }}
+                                    inputProps={{ min: salesOrderDate }}
+                                    InputProps={{
+                                        startAdornment: (!neverExpires && expectedShipmentDate) ? (
+                                            <InputAdornment position="start" sx={{ position: 'absolute', pointerEvents: 'none', left: '10px', backgroundColor: 'white', pr: 1, zIndex: 1 }}>
+                                                {format(parseISO(expectedShipmentDate), 'dd/MM/yyyy')}
+                                            </InputAdornment>
+                                        ) : null
+                                    }}
+                                />
+                            </div>
 
-                                    {filteredTerms.map((term) => (
-                                        <MenuItem key={term.id || term.name} value={term.id}>
-                                            {term.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                            {/* Never Expires Checkbox */}
+                            <div className="flex items-center pb-2">
+                                <FormControlLabel
+                                    control={
+                                        <Checkbox
+                                            checked={neverExpires}
+                                            onChange={(e) => {
+                                                const checked = e.target.checked;
+                                                setNeverExpires(checked);
+
+                                                if (checked) {
+                                                    setExpectedShipmentDate(""); // clear date
+                                                }
+                                            }}
+                                        />
+                                    }
+                                    label="Never Expires"
+                                />
+                            </div>
+
                         </div>
-                        {/* <div>
-                            <label className="block text-sm font-medium mb-2">
+
+                        <div>
+                            {/* <label className="block text-sm font-medium mb-2">
                                 Payment Terms<span className="text-red-500">*</span>
                             </label>
-                            <FormControl fullWidth error={!!errors.paymentTerms}>
+                            <FormControl fullWidth error={!!errors.paymentTerms}> */}
                                 {/* <InputLabel>Payment Terms</InputLabel> */}
-                        {/* <Select
+                                {/* <Select
                                     value={selectedTerm}
                                     label="Payment Terms"
                                     onChange={e => setSelectedTerm(e.target.value)}
@@ -1953,12 +2024,47 @@ export const SalesOrderCreatePage: React.FC = () => {
                                     {filteredTerms.map(term => (
                                         <MenuItem key={term.id || term.name} value={term.id}>{term.name}</MenuItem>
                                     ))}
-                                
+
                                 </Select>
                             </FormControl> */}
 
-                        {/* Configure Payment Terms Modal */}
-                        {/* {showConfig && (
+                            <label className="block text-sm font-medium mb-2">
+                                Payment Terms<span className="text-red-500">*</span>
+                            </label>
+
+                            <FormControl fullWidth error={!!errors.paymentTerms}>
+                                <Select
+                                    value={selectedTerm || ""}
+                                    onChange={(e) => setSelectedTerm(e.target.value)}
+                                    displayEmpty
+                                    renderValue={(val) => {
+                                        if (!val) {
+                                            return <span className="text-gray-400">Select payment term</span>;
+                                        }
+
+                                        const found = paymentTermsList.find(
+                                            (term) => String(term.id) === String(val)
+                                        );
+
+                                        return found ? found.name : val;
+                                    }}
+                                    sx={fieldStyles}
+                                >
+                                    <MenuItem value="">
+                                        <span className="text-gray-400">Select payment term</span>
+                                    </MenuItem>
+
+                                    {filteredTerms.map((term) => (
+                                        <MenuItem key={term.id || term.name} value={String(term.id)}>
+                                            {term.name}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
+
+                            {/* Configure Payment Terms Modal */}
+                            {showConfig && (
                                 <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
                                     <div className="bg-white rounded-lg p-6 w-[400px] shadow-lg">
                                         <h2 className="text-lg font-semibold mb-4">Configure Payment Terms</h2>
@@ -2021,7 +2127,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                                             <button
                                                 className="bg-gray-200 px-4 py-2 rounded"
                                                 onClick={() => {
-                                                    setEditTerms(paymentTerms.map(term => ({ ...term })));
+                                                    setEditTerms(paymentTermsList.map(term => ({ ...term })));
                                                     setShowConfig(false);
                                                 }}
                                             >
@@ -2031,28 +2137,27 @@ export const SalesOrderCreatePage: React.FC = () => {
                                     </div>
                                 </div>
                             )}
-                        </div> */}
+                        </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">
-                                Delivery Method
+                            <label className="block text-sm font-medium ">
+                                Subject
                             </label>
-                            <FormControl fullWidth>
-                                <Select
-                                    value={deliveryMethod}
-                                    onChange={(e) => setDeliveryMethod(e.target.value)}
-                                    displayEmpty
-                                    sx={fieldStyles}
-                                >
-                                    <MenuItem value="" disabled>Select a delivery method or type to add</MenuItem>
-                                    {/* <MenuItem value="courier">Courier</MenuItem> */}
-                                    {/* <MenuItem value="hand-delivery">Hand Delivery</MenuItem> */}
-                                    {/* <MenuItem value="pickup">Pickup</MenuItem> */}
-                                    {/* <MenuItem value="shipping">Shipping</MenuItem> */}
-                                    <MenuItem value="drive">Drive</MenuItem>
-                                </Select>
-                            </FormControl>
+                            <textarea
+                                className="w-full border border-gray-300 rounded-md p-3 mt-1 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+                                rows={4}
+                                value={subject}
+                                onChange={(e) => {
+                                    if (e.target.value.length <= 500) setSubject(e.target.value);
+                                }}
+                                placeholder="Enter subject (max 500 characters)"
+                                maxLength={500}
+                            />
+                            <div className="text-xs text-gray-400 text-right mt-1">
+                                {(subject?.length || 0)}/500
+                            </div>
                         </div>
+
 
                         <div>
                             <label className="block text-sm font-medium mb-2">
@@ -2072,6 +2177,8 @@ export const SalesOrderCreatePage: React.FC = () => {
                                 </Select>
                             </FormControl>
                         </div>
+
+
                     </div>
                 </Section>
 
@@ -2107,14 +2214,14 @@ export const SalesOrderCreatePage: React.FC = () => {
                                                         onSelect={(selected) => {
                                                             const isSameState = orgState && placeOfSupply.trim().toLowerCase() === orgState.trim().toLowerCase();
                                                             let taxFields: Partial<Item> = {};
-                                                            if (selected.tax_preference === "non_taxable") {
-                                                                taxFields = { item_tax_type: "non_taxable", tax_exemption_id: selected.tax_exemption_id };
-                                                            } else if (selected.tax_preference === "taxable") {
-                                                                taxFields = { item_tax_type: isSameState ? "tax_group" : "tax_rate", tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id };
-                                                            } else if (selected.tax_preference === "out_of_scope") {
-                                                                taxFields = { item_tax_type: "out_of_scope" };
-                                                            } else if (selected.tax_preference === "non_gst_supply") {
-                                                                taxFields = { item_tax_type: "non_gst_supply" };
+                                                            if (selected.tax_preference === 'non_taxable') {
+                                                                taxFields = { item_tax_type: 'non_taxable', tax_exemption_id: selected.tax_exemption_id };
+                                                            } else if (selected.tax_preference === 'taxable') {
+                                                                taxFields = { item_tax_type: isSameState ? 'tax_group' : 'tax_rate', tax_group_id: isSameState ? selected.tax_group_id : selected.inter_state_tax_rate_id };
+                                                            } else if (selected.tax_preference === 'out_of_scope') {
+                                                                taxFields = { item_tax_type: 'out_of_scope' };
+                                                            } else if (selected.tax_preference === 'non_gst_supply') {
+                                                                taxFields = { item_tax_type: 'non_gst_supply' };
                                                             }
                                                             updateItemFields(index, { item_id: String(selected.id), name: selected.name, rate: selected.rate || 0, description: selected.description || '', ...taxFields });
                                                         }}
@@ -2187,11 +2294,10 @@ export const SalesOrderCreatePage: React.FC = () => {
                                                     </FormControl>
                                                 </div> */}
                                             {/* </td> */}
-
                                             <td className="px-4 py-3">
                                                 <FormControl size="small" sx={{ width: 200 }}>
                                                     <Select
-                                                        value={["tax_group", "tax_rate"].includes(item.item_tax_type) ? item.tax_group_id : item.item_tax_type || ""}
+                                                        value={["tax_group", "tax_rate"].includes(item.item_tax_type || '') ? item.tax_group_id : item.item_tax_type || ""}
                                                         displayEmpty
                                                         onChange={(e) => {
                                                             const value = String(e.target.value);
@@ -2251,8 +2357,8 @@ export const SalesOrderCreatePage: React.FC = () => {
                                                 <IconButton
                                                     size="small"
                                                     onClick={() => {
-                                                        setDeleteTargetType('item');
                                                         setDeleteTargetIndex(index);
+                                                        setDeleteTargetType('item');
                                                         setDeleteConfirmOpen(true);
                                                     }}
                                                     disabled={items.length === 1}
@@ -2339,8 +2445,6 @@ export const SalesOrderCreatePage: React.FC = () => {
                                     </span>
                                 </div>
                             ))}
-
-
                             <Divider />
 
                             <div className="flex flex-wrap items-center gap-3 py-2">
@@ -2454,7 +2558,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                 </Section>
 
                 {/* Attachments */}
-                <Section title="Attach Files to Sales Order" icon={<AttachFile className="w-5 h-5" />}>
+                {/* <Section title="Attach Files to Sales Order" icon={<AttachFile className="w-5 h-5" />}>
                     <div className="space-y-4">
                         <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                             <input
@@ -2488,8 +2592,8 @@ export const SalesOrderCreatePage: React.FC = () => {
                                             </span>
                                         </div>
                                         <IconButton size="small" onClick={() => {
-                                            setDeleteTargetType('attachment');
                                             setDeleteTargetIndex(index);
+                                            setDeleteTargetType('attachment');
                                             setDeleteConfirmOpen(true);
                                         }}>
                                             <Close fontSize="small" />
@@ -2509,10 +2613,10 @@ export const SalesOrderCreatePage: React.FC = () => {
                             label="Display attachments in customer portal and emails"
                         />
                     </div>
-                </Section>
+                </Section> */}
 
                 {/* Email Communications */}
-                <Section title="Email Communications" icon={<FileText className="w-5 h-5" />}>
+                {/* <Section title="Email Communications" icon={<FileText className="w-5 h-5" />}>
                     <div className="space-y-4">
                         <FormControlLabel
                             control={
@@ -2525,7 +2629,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                         />
 
                         {/* Contact Persons Section */}
-                        {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
+                {/* {selectedCustomer && selectedCustomer.contact_persons && selectedCustomer.contact_persons.length > 0 && (
                             <div>
                                 <Typography variant="body2" className="font-semibold mb-2">
                                     Select contact persons to email
@@ -2552,15 +2656,15 @@ export const SalesOrderCreatePage: React.FC = () => {
                                     ))}
                                 </div>
                             </div>
-                        )}
+                        )} */}
 
-                        {/* External Users Section */}
-                        <div>
+                {/* External Users Section */}
+                {/* <div>
                             <div className="flex items-center justify-between mb-2">
                                 <Typography variant="body2" className="font-semibold">
                                     Add external users (email users other than the selected customer above)
-                                </Typography>
-                                {/* <Button
+                                </Typography> */}
+                {/* <Button
                                                     startIcon={<PersonAdd />}
                                                     onClick={() => setAddUserDialogOpen(true)}
                                                     size="small"
@@ -2569,7 +2673,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                                                 >
                                                     Add More
                                                 </Button> */}
-                            </div>
+                {/* </div>
 
                             {externalUsers.length > 0 && (
                                 <div className="flex flex-wrap gap-2">
@@ -2585,19 +2689,19 @@ export const SalesOrderCreatePage: React.FC = () => {
                             )}
                         </div>
                     </div>
-                </Section>
+                </Section> */}
 
                 {/* Additional Fields */}
-                <Section title="Additional Custom Fields" icon={<FileText className="w-5 h-5" />}>
+                {/* <Section title="Additional Custom Fields" icon={<FileText className="w-5 h-5" />}>
                     <Typography variant="body2" className="text-gray-600">
                         Add custom fields to your sales orders by going to Settings → Sales → Sales Orders → Field Customization
                     </Typography>
-                </Section>
+                </Section> */}
             </div>
 
             <div className="flex items-center gap-3 justify-center pt-2">
                 <Button
-                    className="fm-button-fix fm-button-brand px-4 py-2P"
+                    variant="text"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
                     sx={{
@@ -2615,7 +2719,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                     Save as Draft
                 </Button>
                 <Button
-                    className="fm-button-fix fm-button-brand px-4 py-2P"
+                    variant="text"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
                     sx={{
@@ -2630,11 +2734,11 @@ export const SalesOrderCreatePage: React.FC = () => {
                         textTransform: 'none'
                     }}
                 >
-                    {isSubmitting ? 'Submitting...' : 'Save and Send'}
+                    {isSubmitting ? 'Submitting...' : 'Submit'}
                 </Button>
                 <Button
                     variant="outlined"
-                    onClick={() => navigate('/accounting/sales-order')}
+                    onClick={() => navigate('/accounting/recurring-invoices')}
                     disabled={isSubmitting}
                     sx={{
                         textTransform: 'none',
@@ -2653,46 +2757,142 @@ export const SalesOrderCreatePage: React.FC = () => {
                 </Button>
             </div>
 
-
-            {/* Delete Confirmation Dialog */}
-            <Dialog
-                open={deleteConfirmOpen}
-                onClose={() => setDeleteConfirmOpen(false)}
-                maxWidth="xs"
-                fullWidth
+            {/* Customer Details Drawer */}
+            <Drawer
+                anchor="right"
+                open={customerDrawerOpen}
+                onClose={() => setCustomerDrawerOpen(false)}
+                PaperProps={{ sx: { width: { xs: '100%', sm: 500 } } }}
             >
-                <DialogTitle sx={{ fontWeight: 600 }}>Confirm Delete</DialogTitle>
-                <DialogContent>
-                    <Typography variant="body1">
-                        Are you sure about deleting this item?
-                    </Typography>
-                </DialogContent>
-                <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-                    <Button
-                        onClick={() => setDeleteConfirmOpen(false)}
-                        variant="outlined"
-                        sx={{
-                            textTransform: 'none',
-                            borderColor: '#C72030',
-                            color: '#C72030',
-                            '&:hover': { borderColor: '#A01020', bgcolor: '#f8f1f1' }
-                        }}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        onClick={handleDeleteConfirm}
-                        variant="contained"
-                        sx={{
-                            textTransform: 'none',
-                            bgcolor: '#C72030',
-                            '&:hover': { bgcolor: '#A01020' }
-                        }}
-                    >
-                        Delete
-                    </Button>
-                </DialogActions>
-            </Dialog>
+                {selectedCustomer && (
+                    <div className="p-6 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <span className="text-xl font-bold text-blue-600">
+                                        {selectedCustomer.name.charAt(0)}
+                                    </span>
+                                </div>
+                                <div>
+                                    <Typography variant="h6" className="font-bold">
+                                        {selectedCustomer.name}
+                                    </Typography>
+                                    <Typography variant="body2" className="text-gray-600">
+                                        {selectedCustomer.email}
+                                    </Typography>
+                                </div>
+                            </div>
+                            <IconButton onClick={() => setCustomerDrawerOpen(false)}>
+                                <Close />
+                            </IconButton>
+                        </div>
+
+                        <Divider />
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-orange-50 rounded-lg p-4 text-center">
+                                <Typography variant="h6" className="font-bold">
+                                    {/* ₹{typeof selectedCustomer.outstandingReceivables === 'number' ? selectedCustomer.outstandingReceivables.toLocaleString() : '0'} */}
+                                </Typography>
+                                <Typography variant="body2" className="text-gray-600">
+                                    Outstanding Receivables
+                                </Typography>
+                            </div>
+                            <div className="bg-green-50 rounded-lg p-4 text-center">
+                                <Typography variant="h6" className="font-bold">
+                                    {/* ₹{selectedCustomer.unusedCredits.toLocaleString()} */}
+                                </Typography>
+                                <Typography variant="body2" className="text-gray-600">
+                                    Unused Credits
+                                </Typography>
+                            </div>
+                        </div>
+
+                        <div>
+                            <Typography variant="subtitle1" className="font-semibold mb-3">
+                                Contact Details
+                            </Typography>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Customer Type</span>
+                                    <span className="font-semibold">{selectedCustomer.customerType}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Currency</span>
+                                    <span className="font-semibold">{selectedCustomer.currency}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Payment Terms</span>
+                                    <span className="font-semibold">{selectedCustomer.paymentTerms}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Portal Status</span>
+                                    <span className="font-semibold">{selectedCustomer.portalStatus}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Customer Language</span>
+                                    <span className="font-semibold">{selectedCustomer.language}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <Divider />
+
+                        <div>
+                            <div className="flex items-center justify-between mb-3">
+                                <Typography variant="subtitle1" className="font-semibold">
+                                    Contact Persons
+                                </Typography>
+                                <Button
+                                    size="small"
+                                    startIcon={<Add />}
+                                    onClick={() => setContactPersonDialogOpen(true)}
+                                    variant="outlined"
+                                    sx={{ textTransform: 'none' }}
+                                >
+                                    Add
+                                </Button>
+                            </div>
+
+                            {/* {selectedCustomer.contactPersons.length === 0 ? (
+                                <Typography variant="body2" className="text-gray-500">
+                                    No contact persons added
+                                </Typography>
+                            ) : (
+                                <div className="space-y-3">
+                                    {selectedCustomer.contactPersons.map(person => (
+                                        <div key={person.id} className="bg-gray-50 rounded-lg p-4">
+                                            <Typography variant="body1" className="font-semibold">
+                                                {person.salutation} {person.firstName} {person.lastName}
+                                            </Typography>
+                                            <Typography variant="body2" className="text-gray-600">
+                                                {person.email}
+                                            </Typography>
+                                            {person.designation && (
+                                                <Typography variant="body2" className="text-gray-600">
+                                                    {person.designation} {person.department && `- ${person.department}`}
+                                                </Typography>
+                                            )}
+                                            <div className="flex gap-3 mt-2">
+                                                {person.workPhone && (
+                                                    <Typography variant="body2" className="text-gray-600">
+                                                        Work: {person.workPhone}
+                                                    </Typography>
+                                                )}
+                                                {person.mobile && (
+                                                    <Typography variant="body2" className="text-gray-600">
+                                                        Mobile: {person.mobile}
+                                                    </Typography>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )} */}
+                        </div>
+                    </div>
+                )}
+            </Drawer>
 
             {/* Add External User Dialog */}
             <Dialog open={addUserDialogOpen} onClose={() => setAddUserDialogOpen(false)} maxWidth="sm" fullWidth>
@@ -2729,10 +2929,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                         {getAddressBookByType(activeAddressType).map((addr) => (
                             <div
                                 key={addr.id}
-                                className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id)
-                                    ? 'border-[#C72030] bg-red-50'
-                                    : 'border-gray-200 hover:border-gray-300'
-                                    }`}
+                                className={`border rounded-md p-3 text-sm cursor-pointer transition-colors ${String(activeAddressType === 'billing' ? selectedBillingAddressId : selectedShippingAddressId) === String(addr.id) ? 'border-[#C72030] bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}
                                 onClick={() => {
                                     if (activeAddressType === 'billing') setSelectedBillingAddressId(addr.id);
                                     else setSelectedShippingAddressId(addr.id);
@@ -2746,17 +2943,9 @@ export const SalesOrderCreatePage: React.FC = () => {
                                         {addr.address_line_two && <div>{addr.address_line_two}</div>}
                                         <div>{[addr.city, addr.state].filter(Boolean).join(', ')}{addr.pin_code ? ` ${addr.pin_code}` : ''}</div>
                                         {addr.country && <div>{addr.country}</div>}
-                                        {(addr.telephone_number || addr.fax_number) && (
-                                            <div>{addr.telephone_number}{addr.fax_number ? ` Fax Number : ${addr.fax_number}` : ''}</div>
-                                        )}
+                                        {(addr.telephone_number || addr.fax_number) && (<div>{addr.telephone_number}{addr.fax_number ? ` Fax Number : ${addr.fax_number}` : ''}</div>)}
                                     </div>
-                                    <IconButton
-                                        size="small"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            openAddressFormModal('edit', activeAddressType, addr);
-                                        }}
-                                    >
+                                    <IconButton size="small" onClick={(e) => { e.stopPropagation(); openAddressFormModal('edit', activeAddressType, addr); }}>
                                         <EditOutlined fontSize="small" className="text-blue-500" />
                                     </IconButton>
                                 </div>
@@ -2765,11 +2954,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                     </div>
                 </DialogContent>
                 <DialogActions className="!justify-between !px-4">
-                    <button
-                        type="button"
-                        className="text-[#1d4ed8] text-sm font-medium"
-                        onClick={() => openAddressFormModal('new', activeAddressType)}
-                    >
+                    <button type="button" className="text-[#1d4ed8] text-sm font-medium" onClick={() => openAddressFormModal('new', activeAddressType)}>
                         + New address
                     </button>
                     <Button onClick={() => setAddressListModalOpen(false)} variant="outlined" size="small" sx={modalSecondaryButtonSx}>Close</Button>
@@ -2782,15 +2967,11 @@ export const SalesOrderCreatePage: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
                         <TextField label="Attention" fullWidth value={addressForm.attention} onChange={(e) => setAddressForm(prev => ({ ...prev, attention: e.target.value }))} className="md:col-span-2" />
                         <TextField label="Country/Region" select fullWidth value={addressForm.country} onChange={(e) => setAddressForm(prev => ({ ...prev, country: e.target.value }))} className="md:col-span-2">
-                            {addressCountryOptions.map((opt) => (
-                                <MenuItem key={opt.code} value={opt.name}>{opt.name}</MenuItem>
-                            ))}
+                            {addressCountryOptions.map((opt) => (<MenuItem key={opt.code} value={opt.name}>{opt.name}</MenuItem>))}
                         </TextField>
                         <TextField label="Tax Information" select fullWidth value={selectedAddressTaxInfoId} onChange={(e) => setSelectedAddressTaxInfoId(String(e.target.value))} className="md:col-span-2">
                             <MenuItem value="">Select</MenuItem>
-                            {gstDetails.map((gst) => (
-                                <MenuItem key={gst.id} value={String(gst.id)}>{gst.gstin} - {gst.place_of_supply}</MenuItem>
-                            ))}
+                            {gstDetails.map((gst) => (<MenuItem key={gst.id} value={String(gst.id)}>{gst.gstin} - {gst.place_of_supply}</MenuItem>))}
                         </TextField>
                         <TextField label="Address" placeholder="Street 1" fullWidth value={addressForm.address} onChange={(e) => setAddressForm(prev => ({ ...prev, address: e.target.value }))} className="md:col-span-2" />
                         <TextField placeholder="Street 2" fullWidth value={addressForm.address_line_two} onChange={(e) => setAddressForm(prev => ({ ...prev, address_line_two: e.target.value }))} className="md:col-span-2" />
@@ -2839,11 +3020,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                                         value={newGstForm.gstin}
                                         onChange={(e) => setNewGstForm(prev => ({ ...prev, gstin: e.target.value.toUpperCase() }))}
                                         error={!!newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)}
-                                        helperText={
-                                            newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin)
-                                                ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5'
-                                                : ''
-                                        }
+                                        helperText={newGstForm.gstin && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(newGstForm.gstin) ? 'Invalid GSTIN format. e.g. 27AAAAA1234A1Z5' : ''}
                                         inputProps={{ maxLength: 15 }}
                                         size="small"
                                     />
@@ -3050,263 +3227,50 @@ export const SalesOrderCreatePage: React.FC = () => {
                 </DialogActions>
 
             </Dialog>
-            {/* Customer Details Drawer */}
-            {customerDrawerOpen && (
-                <div className="fixed inset-0 z-[9999] flex justify-end">
-                    <div
-                        className="absolute inset-0 bg-black/30 backdrop-blur-[1px] transition-opacity"
-                        onClick={() => setCustomerDrawerOpen(false)}
-                    />
-                    <div className="relative w-full max-w-[450px] bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-                        {/* Header */}
-                        <div className="px-5 py-4 flex items-center justify-between border-b border-gray-100 bg-white sticky top-0 z-10">
-                            <span className="font-semibold text-gray-800 text-lg">Customer details</span>
-                            <button
-                                onClick={() => setCustomerDrawerOpen(false)}
-                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
-                            >
-                                ✕
-                            </button>
-                        </div>
+            <Dialog
+                open={deleteConfirmOpen}
+                onClose={() => setDeleteConfirmOpen(false)}
+                maxWidth="xs"
+                fullWidth
+            >
+                <DialogTitle>Confirm Delete</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Are you sure about deleting this {deleteTargetType}?
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        onClick={() => setDeleteConfirmOpen(false)}
+                        variant="outlined"
+                        sx={{
+                            color: '#C72030',
+                            borderColor: '#C72030',
+                            '&:hover': {
+                                borderColor: '#C72030',
+                                backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                            }
+                        }}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        onClick={handleDeleteConfirm}
+                        variant="contained"
+                        sx={{
+                            backgroundColor: '#C72030',
+                            '&:hover': {
+                                backgroundColor: '#A01926'
+                            }
+                        }}
+                    >
+                        Delete
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
-                        {customerDetailLoading ? (
-                            <div className="flex-1 flex items-center justify-center">
-                                <CircularProgress size={36} />
-                            </div>
-                        ) : customerDetail ? (
-                            <div className="flex-1 overflow-y-auto">
-                                {/* Customer Name + Avatar */}
-                                <div className="px-5 py-4 flex items-center gap-3 border-b border-gray-100">
-                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold text-lg">
-                                        {(customerDetail.company_name || customerDetail.first_name || "?")[0].toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <div className="font-semibold text-gray-800 text-base flex items-center gap-1">
-                                            {customerDetail.company_name ||
-                                                [customerDetail.salutation, customerDetail.first_name, customerDetail.last_name]
-                                                    .filter(Boolean)
-                                                    .join(" ")}
-                                            <span className="text-blue-500 cursor-pointer text-sm">↗</span>
-                                        </div>
-                                        {customerDetail.company_name && (
-                                            <div className="text-sm text-gray-500">{customerDetail.company_name}</div>
-                                        )}
-                                        {customerDetail.email && (
-                                            <div className="text-xs text-blue-500">{customerDetail.email}</div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Tabs */}
-                                <div className="flex border-b border-gray-200 px-4">
-                                    {["Details", "Activity Log"].map((t, i) => (
-                                        <button
-                                            key={t}
-                                            onClick={() => setDrawerActiveTab(i)}
-                                            className={`py-2 px-3 text-sm font-medium border-b-2 transition-colors ${drawerActiveTab === i
-                                                ? "border-[#C72030] text-[#C72030]"
-                                                : "border-transparent text-gray-500 hover:text-gray-700"
-                                                }`}
-                                        >
-                                            {t}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {drawerActiveTab === 0 && (
-                                    <div className="p-4 space-y-4">
-                                        {/* Outstanding & Credits */}
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="border border-gray-200 rounded-lg p-3 text-center">
-                                                <div className="text-orange-400 text-xl mb-1">⚠</div>
-                                                <div className="text-xs text-gray-500">Outstanding Receivables</div>
-                                                <div className="font-semibold text-gray-800 text-sm mt-1">
-                                                    ₹{(customerDetail.outstanding_receivable_amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                                                </div>
-                                            </div>
-                                            <div className="border border-gray-200 rounded-lg p-3 text-center">
-                                                <div className="text-green-500 text-xl mb-1">●</div>
-                                                <div className="text-xs text-gray-500">Unused Credits</div>
-                                                <div className="font-semibold text-gray-800 text-sm mt-1">
-                                                    ₹{(customerDetail.unused_credits_receivable_amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Contact Details */}
-                                        <div className="border border-gray-200 rounded-lg p-4">
-                                            <div className="font-semibold text-gray-700 mb-3 text-sm">Contact Details</div>
-                                            {[
-                                                ["Customer Type", customerDetail.customer_type || "—"],
-                                                ["Currency", customerDetail.currency || "INR"],
-                                                ["Payment Terms", customerDetail.payment_terms || "—"],
-                                                ["Portal Status", customerDetail.portal_status || "—"],
-                                                ["Customer Language", customerDetail.customer_language || "English"],
-                                                ["GST Treatment", customerDetail.gst_treatment || "—"],
-                                                ["GSTIN", customerDetail.gstin || "—"],
-                                                ["PAN", customerDetail.pan || "—"],
-                                                ["Place of Supply", customerDetail.place_of_supply || "Yet to be updated"],
-                                                ["Tax Preference", customerDetail.tax_preference || "—"],
-                                            ].map(([label, value]) => (
-                                                <div key={label} className="flex justify-between items-start py-1.5 border-b border-gray-100 last:border-0">
-                                                    <span className="text-xs text-[#C72030] w-36 shrink-0">{label}</span>
-                                                    <span className="text-xs text-gray-700 text-right">{value}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Contact Persons */}
-                                        {customerDetail.contact_persons && customerDetail.contact_persons.length > 0 && (
-                                            <div className="border border-gray-200 rounded-lg">
-                                                <div
-                                                    className="flex items-center justify-between px-4 py-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
-                                                    onClick={() => setContactPersonsExpanded(!contactPersonsExpanded)}
-                                                >
-                                                    <span className="font-semibold text-gray-700 text-sm">
-                                                        Contact Persons
-                                                        <span className="ml-2 bg-gray-200 text-gray-600 text-xs rounded-full px-1.5 py-0.5">
-                                                            {customerDetail.contact_persons.length}
-                                                        </span>
-                                                    </span>
-                                                    {contactPersonsExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                                                </div>
-                                                {contactPersonsExpanded && (
-                                                    <div className="divide-y divide-gray-100">
-                                                        {customerDetail.contact_persons.map((cp: any, idx: number) => (
-                                                            <div key={cp.id || idx} className="px-4 py-4 flex items-start gap-3">
-                                                                <div className="relative mt-1">
-                                                                    <div className="w-8 h-8 rounded-full bg-[#EAEEF6] flex items-center justify-center text-[#7C8DAC] font-semibold text-sm shrink-0">
-                                                                        {(cp.first_name || "?")[0].toUpperCase()}
-                                                                    </div>
-                                                                    {idx === 0 && (
-                                                                        <div className="absolute -bottom-1 -right-1 w-[14px] h-[14px] bg-[#42C867] rounded-full border-[1.5px] border-white flex justify-center items-center">
-                                                                            <Star className="w-[8px] h-[8px] text-white fill-current" />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-
-                                                                <div className="flex-1">
-                                                                    <div className="text-sm font-medium text-gray-900 mb-1">
-                                                                        {[cp.salutation, cp.first_name, cp.last_name].filter(Boolean).join(" ")}
-                                                                    </div>
-                                                                    <div className="space-y-1">
-                                                                        {cp.email && (
-                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
-                                                                                <Mail className="w-3.5 h-3.5 text-gray-400" /> {cp.email}
-                                                                            </div>
-                                                                        )}
-                                                                        {cp.work_phone && (
-                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
-                                                                                <Phone className="w-3.5 h-3.5 text-gray-400" /> {cp.work_phone}
-                                                                            </div>
-                                                                        )}
-                                                                        {!cp.work_phone && cp.phone && (
-                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
-                                                                                <Phone className="w-3.5 h-3.5 text-gray-400" /> {cp.phone}
-                                                                            </div>
-                                                                        )}
-                                                                        {cp.mobile && (
-                                                                            <div className="text-[13px] text-gray-500 flex items-center gap-2">
-                                                                                <Smartphone className="w-3.5 h-3.5 text-gray-400" /> {cp.mobile}
-                                                                            </div>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Address Section */}
-                                        <div className="border border-gray-200 rounded-lg">
-                                            <div
-                                                className="px-4 py-3 border-b border-gray-100 flex items-center justify-between cursor-pointer hover:bg-gray-50 transition-colors"
-                                                onClick={() => setAddressExpanded(!addressExpanded)}
-                                            >
-                                                <span className="font-semibold text-gray-700 text-sm">Address</span>
-                                                {addressExpanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
-                                            </div>
-                                            {addressExpanded && (
-                                                <div className="p-4 space-y-3">
-                                                    <div>
-                                                        <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
-                                                            <span>📋</span> Billing Address
-                                                        </div>
-                                                        {customerDetail.billing_address?.address ? (
-                                                            <div className="text-xs text-gray-700 leading-relaxed">
-                                                                <div>{customerDetail.billing_address.address}</div>
-                                                                {customerDetail.billing_address.address_line_two && (
-                                                                    <div>{customerDetail.billing_address.address_line_two}</div>
-                                                                )}
-                                                                <div>
-                                                                    {[customerDetail.billing_address.city, customerDetail.billing_address.state]
-                                                                        .filter(Boolean)
-                                                                        .join(", ")}
-                                                                    {customerDetail.billing_address.pin_code
-                                                                        ? " " + customerDetail.billing_address.pin_code
-                                                                        : ""}
-                                                                </div>
-                                                                {customerDetail.billing_address.country && (
-                                                                    <div>{customerDetail.billing_address.country}</div>
-                                                                )}
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-xs text-gray-400 italic">No billing address provided</div>
-                                                        )}
-                                                    </div>
-
-                                                    <div>
-                                                        <div className="text-xs font-semibold text-gray-500 mb-1 flex items-center gap-1">
-                                                            <span>🚚</span> Shipping Address
-                                                        </div>
-                                                        {customerDetail.shipping_address?.address ? (
-                                                            <div className="text-xs text-gray-700 leading-relaxed">
-                                                                <div>{customerDetail.shipping_address.address}</div>
-                                                                {customerDetail.shipping_address.address_line_two && (
-                                                                    <div>{customerDetail.shipping_address.address_line_two}</div>
-                                                                )}
-                                                                <div>
-                                                                    {[customerDetail.shipping_address.city, customerDetail.shipping_address.state]
-                                                                        .filter(Boolean)
-                                                                        .join(", ")}
-                                                                    {customerDetail.shipping_address.pin_code
-                                                                        ? " " + customerDetail.shipping_address.pin_code
-                                                                        : ""}
-                                                                </div>
-                                                                {customerDetail.shipping_address.country && (
-                                                                    <div>{customerDetail.shipping_address.country}</div>
-                                                                )}
-                                                            </div>
-                                                        ) : (
-                                                            <div className="text-xs text-[#C72030] font-medium py-1 px-2 bg-red-50 rounded border border-red-100 inline-block">
-                                                                New Address
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-                                {drawerActiveTab === 1 && (
-                                    <div className="p-10 text-center">
-                                        <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <FileText className="w-8 h-8 text-gray-300" />
-                                        </div>
-                                        <div className="text-gray-500 text-sm">No activity logs found</div>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="flex-1 flex items-center justify-center text-gray-400">
-                                No customer details available
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
+
+export default EditRecurringInvoicePage;

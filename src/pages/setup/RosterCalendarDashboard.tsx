@@ -186,13 +186,6 @@ export const RosterCalendarDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Footer */}
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500">
-            Powered by <span className="font-semibold">Phygitalwork</span>
-          </p>
-        </div>
-
         <RosterCalendarFilterDialog
           open={isFilterOpen}
           onOpenChange={setIsFilterOpen}

@@ -245,6 +245,13 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         setAttachmentPreviews([]);
     };
 
+    const formatIndian = (val: string | number): string => {
+        if (val === "" || val === null || val === undefined) return "";
+        const n = parseFloat(String(val));
+        if (isNaN(n)) return "";
+        return n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    };
+
     const handleSaveInvoice = async () => {
         try {
             const payload = {
@@ -618,7 +625,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                         <StyledTextField
                                             fullWidth
                                             label="Rate"
-                                            value={boq.rate}
+                                            value={formatIndian(boq.rate)}
                                             onChange={(e) => updateBOQDetail(boq.id, 'rate', e.target.value)}
                                             variant="outlined"
                                         />
@@ -631,7 +638,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                         <StyledTextField
                                             fullWidth
                                             label="Taxable Amount"
-                                            value={boq.taxableAmount}
+                                            value={formatIndian(boq.taxableAmount)}
                                             onChange={(e) => updateBOQDetail(boq.id, 'taxableAmount', e.target.value)}
                                             variant="outlined"
                                         />
@@ -641,7 +648,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                         <StyledTextField
                                             fullWidth
                                             label="Invoice Amount"
-                                            value={boq.invoiceAmount}
+                                            value={formatIndian(boq.invoiceAmount)}
                                             InputProps={{ readOnly: true }}
                                             variant="outlined"
                                         />
@@ -654,7 +661,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                         <StyledTextField
                                             fullWidth
                                             label="Total Invoice Amount"
-                                            value={boq.totalInvoiceAmount}
+                                            value={formatIndian(boq.totalInvoiceAmount)}
                                             InputProps={{ readOnly: true }}
                                             variant="outlined"
                                         />

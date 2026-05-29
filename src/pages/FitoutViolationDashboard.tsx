@@ -21,7 +21,7 @@ export const FitoutViolationDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex gap-4 mb-6">
-        <Button className="bg-red-600 hover:bg-red-700 text-white">
+        <Button className="fm-button-fix fm-button-brand px-4 py-2">
           <Plus className="w-4 h-4 mr-2" />
           Report Violation
         </Button>
