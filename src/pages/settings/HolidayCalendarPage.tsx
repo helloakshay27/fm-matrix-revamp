@@ -805,7 +805,7 @@ export const HolidayCalendarPage = () => {
             setIsAddDialogOpen(open);
           }}>
             <DialogTrigger asChild>
-              <Button className='bg-primary text-primary-foreground hover:bg-primary/90'>
+              <Button className='fm-button-fix fm-button-brand !rounded-md !px-4 !py-2 !text-sm !font-semibold'>
                 <Plus className="w-4 h-4 mr-2" /> Add Holiday
               </Button>
             </DialogTrigger>
