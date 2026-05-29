@@ -170,26 +170,24 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         message: "Please enter your email or mobile number.",
       };
 
-    const looksLikeEmail = trimmed.includes("@");
-    if (looksLikeEmail) {
+    if (trimmed.includes("@")) {
       const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed);
       return valid
         ? { isValid: true, message: "" }
         : {
             isValid: false,
-            message:
-              "Please enter a valid email address (e.g. name@example.com).",
+            message: "Please enter a valid email address (e.g. name@example.com).",
           };
     }
 
-    // Treat as mobile: strip spaces/dashes, allow optional leading +
-    const digits = trimmed.replace(/[\s\-().]/g, "");
-    const valid = /^\+?[0-9]{7,15}$/.test(digits);
+    // Indian mobile: strip optional +91 / 91 prefix, then 10 digits starting 6–9
+    const normalized = trimmed.replace(/^(\+91|91)/, "").replace(/[\s\-().]/g, "");
+    const valid = /^[6-9]\d{9}$/.test(normalized);
     return valid
       ? { isValid: true, message: "" }
       : {
           isValid: false,
-          message: "Please enter a valid mobile number (7–15 digits).",
+          message: "Please enter a valid 10-digit mobile number (e.g. 9876543210).",
         };
   };
 
@@ -247,7 +245,34 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
     setIsLoading(true);
     try {
-      const orgs = await getOrganizationsByEmail(email);
+      // Execute reCAPTCHA v3 before hitting the API
+      let captchaToken: string | undefined;
+      const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+      if (siteKey) {
+        const maxWaitMs = 10000;
+        const pollMs = 500;
+        let waited = 0;
+        while (!executeRecaptchaRef.current && waited < maxWaitMs) {
+          await new Promise((r) => setTimeout(r, pollMs));
+          waited += pollMs;
+        }
+        const execFn = executeRecaptchaRef.current;
+        if (execFn) {
+          try {
+            captchaToken = await execFn("get_organizations");
+          } catch {
+            toast.error("reCAPTCHA failed. Please refresh and try again.");
+            setIsLoading(false);
+            return;
+          }
+        } else {
+          toast.error("reCAPTCHA not ready. Check your network and try again.");
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      const orgs = await getOrganizationsByEmail(email, captchaToken);
       setOrganizations(orgs);
       setCurrentStep(2);
       if (orgs.length === 0) {

@@ -93,6 +93,8 @@ export const EmployeeUnifiedCalendar: React.FC<
   >("schedule");
   const [date, setDate] = useState(new Date());
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [isNcConnectModalOpen, setIsNcConnectModalOpen] = useState(false);
+  const [ncCredentials, setNcCredentials] = useState({ username: '', app_password: '' });
   const [isYearLoading, setIsYearLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasAppliedCustomFilters, setHasAppliedCustomFilters] = useState(false);
@@ -1045,39 +1047,43 @@ export const EmployeeUnifiedCalendar: React.FC<
                 toast.error("User email not found. Please log in again.");
                 return;
               }
+              const baseUrl = getBaseUrl() || "";
+
               try {
-                toast.info("Checking Google Calendar connection...");
-                const domain = getBaseUrl()?.replace(/^https?:\/\//, "") || "";
+                toast.info("Checking calendar connection...");
                 const statusRes = await fetch(
-                  `https://${domain}/google_calander/status?email=${encodeURIComponent(email)}`
+                  `${baseUrl}/calendar/status?email=${encodeURIComponent(email)}`
                 );
-                if (!statusRes.ok) throw new Error("Failed to check status");
+                if (!statusRes.ok) throw new Error("Failed to check calendar status");
                 const statusData = await statusRes.json();
-                if (statusData.connected === true) {
-                  toast.info("Syncing Google Calendar events...");
+
+                if (statusData.connected) {
+                  toast.info("Syncing calendar...");
                   const syncRes = await fetch(
-                    `https://${domain}/google_calander/sync?email=${encodeURIComponent(email)}`
+                    `${baseUrl}/calendar/sync?email=${encodeURIComponent(email)}`
                   );
                   if (syncRes.ok) {
-                    toast.success("Google Calendar synced!");
+                    toast.success("Calendar synced successfully!");
                     fetchCalendarData();
-                  } else toast.error("Failed to sync");
-                } else {
-                  toast.info("Opening Google Calendar connection...");
-                  window.open(
-                    `https://${domain}/google_oauth/connect?email=${encodeURIComponent(email)}`,
-                    "_blank"
-                  );
+                  } else {
+                    toast.error("Failed to sync calendar");
+                  }
+                } else if (statusData.action === "redirect") {
+                  toast.info("Opening calendar connection...");
+                  window.open(statusData.connect_url, "_blank");
+                } else if (statusData.action === "show_form") {
+                  setIsNcConnectModalOpen(true);
                 }
-              } catch {
-                toast.error("Failed to process Google Calendar request");
+              } catch (error) {
+                console.error("Calendar sync error:", error);
+                toast.error("Failed to process calendar request");
               }
             }}
             variant="outline"
             className="flex items-center gap-2 px-4 py-2 h-10"
           >
             <RefreshCw className="h-4 w-4" />
-            Sync Google Calendar
+            Sync Calendar
           </Button>
           <Button
             onClick={() => setIsFilterModalOpen(true)}
@@ -2166,6 +2172,112 @@ export const EmployeeUnifiedCalendar: React.FC<
           </div>
         </div>
       )}
+
+      {/* Nextcloud Connect Modal */}
+      <Dialog open={isNcConnectModalOpen} onOpenChange={setIsNcConnectModalOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">
+              Connect Nextcloud Calendar
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <p className="text-sm text-gray-600">
+              Generate an <strong>App Password</strong> in Nextcloud:{" "}
+              <em>Settings → Security → App Passwords</em>, then enter it below.
+            </p>
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">
+                Nextcloud Username
+              </label>
+              <input
+                type="text"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                placeholder="your.username"
+                value={ncCredentials.username}
+                onChange={(e) =>
+                  setNcCredentials((prev) => ({ ...prev, username: e.target.value }))
+                }
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500 mb-1 block">
+                App Password
+              </label>
+              <input
+                type="password"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                placeholder="xxxx-xxxx-xxxx-xxxx"
+                value={ncCredentials.app_password}
+                onChange={(e) =>
+                  setNcCredentials((prev) => ({ ...prev, app_password: e.target.value }))
+                }
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-2 border-t">
+              <button
+                onClick={() => setIsNcConnectModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const user = JSON.parse(localStorage.getItem("user") || "{}");
+                  const email =
+                    user?.email ||
+                    localStorage.getItem("userEmail") ||
+                    localStorage.getItem("email");
+                  const baseUrl = getBaseUrl() || "";
+
+                  if (!ncCredentials.username || !ncCredentials.app_password) {
+                    toast.error("Please enter username and app password");
+                    return;
+                  }
+
+                  try {
+                    toast.info("Connecting to Nextcloud...");
+                    const response = await fetch(
+                      `${baseUrl}/calendar/connect`,
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          email,
+                          username: ncCredentials.username,
+                          app_password: ncCredentials.app_password,
+                        }),
+                      }
+                    );
+                    const data = await response.json();
+
+                    if (response.ok && data.connected) {
+                      toast.success("Nextcloud connected! Syncing events...");
+                      setIsNcConnectModalOpen(false);
+                      setNcCredentials({ username: "", app_password: "" });
+
+                      const syncResponse = await fetch(
+                        `${baseUrl}/calendar/sync?email=${encodeURIComponent(email!)}`
+                      );
+                      if (syncResponse.ok) {
+                        toast.success("Nextcloud Calendar synced successfully!");
+                        fetchCalendarData();
+                      }
+                    } else {
+                      toast.error(data.error || "Connection failed");
+                    }
+                  } catch (error) {
+                    toast.error("Failed to connect to Nextcloud");
+                  }
+                }}
+                className="px-4 py-2 bg-[#C72030] text-white rounded-md hover:bg-[#a01828] text-sm font-medium"
+              >
+                Connect & Sync
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Advanced Filter Modal */}
       <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
