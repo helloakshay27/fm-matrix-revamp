@@ -507,11 +507,12 @@ export const QuotesEdit: React.FC = () => {
                         }
                     }
 
-                    if (data.sale_order_items && data.sale_order_items.length > 0) {
-                        setItems(data.sale_order_items.map((item: any) => ({
+                    const lineItems = data.item_details || data.sale_order_items || [];
+                    if (lineItems.length > 0) {
+                        setItems(lineItems.map((item: any) => ({
                             id: item.id || Date.now().toString() + Math.random(),
                             line_item_id: item.id,
-                            name: item.item_name || '',
+                            name: item.item_name || item.name || '',
                             item_id: item.lock_account_item_id || null,
                             description: item.description || '',
                             quantity: item.quantity || 1,

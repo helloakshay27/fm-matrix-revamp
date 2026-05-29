@@ -304,12 +304,145 @@ export const EditRecurringInvoicePage: React.FC = () => {
     };
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     useEffect(() => {
         document.title = 'Edit Recurring Invoice';
     }, []);
+
+    // Load existing Recurring Invoice details on mount
+    useEffect(() => {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        const lock_account_id = localStorage.getItem('lock_account_id');
+
+        const fetchRecurringInvoice = async () => {
+            if (!id) return;
+            setLoading(true);
+            try {
+                const res = await axios.get(`https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=${lock_account_id}`, {
+                    headers: { Authorization: token ? `Bearer ${token}` : undefined }
+                });
+                const data = res.data?.data || res.data;
+                if (data) {
+                    setReferenceNumber(data.order_number || data.reference_number || '');
+                    setDeliveryMethod(data.delivery_method || '');
+                    setSalesperson(data.sales_person_id ? String(data.sales_person_id) : '');
+                    setSelectedTerm(data.payment_term_id ? String(data.payment_term_id) : '');
+                    setCustomerNotes(data.customer_notes || '');
+                    setTermsAndConditions(data.terms_and_conditions || '');
+                    setSubject(data.subject || '');
+                    setProfileName(data.profile_name || '');
+
+                    const recDetail = data.recurring_detail || {};
+                    setRepeatCount(recDetail.repeat_value || data.repeat_value || '');
+                    setRepeatType(recDetail.repeat_type || data.repeat_type || 'month');
+                    setNeverExpires(recDetail.never_expires === true || recDetail.never_expires === 'true' || data.never_expires === true || false);
+                    setSalesOrderDate(recDetail.start_date ? recDetail.start_date.split('T')[0] : (data.date ? data.date.split('T')[0] : ''));
+                    setExpectedShipmentDate(recDetail.end_date ? recDetail.end_date.split('T')[0] : (data.due_date ? data.due_date.split('T')[0] : ''));
+
+                    if (data.discount_per) {
+                        setDiscountTypeOnTotal('percentage');
+                        setDiscountOnTotal(Number(data.discount_per) || 0);
+                    } else if (data.discount_amount) {
+                        setDiscountTypeOnTotal('amount');
+                        setDiscountOnTotal(Number(data.discount_amount) || 0);
+                    } else {
+                        setDiscountOnTotal(0);
+                    }
+
+                    if (data.charge_amount) {
+                        setAdjustment(Number(data.charge_amount) || 0);
+                        setAdjustmentLabel(data.charge_name || 'Adjustment');
+                    }
+
+                    if (data.tax_type) {
+                        setTaxType((data.tax_type.toUpperCase() as 'TDS' | 'TCS') || 'TDS');
+                    }
+                    if (data.lock_account_tax_id) {
+                        setSelectedTax(String(data.lock_account_tax_id));
+                    }
+                    if (data.place_of_supply) {
+                        setPlaceOfSupply(data.place_of_supply);
+                    }
+
+                    // Pre-fill selected customer and detail book
+                    if (data.lock_account_customer_id) {
+                        setSelectedCustomer({
+                            id: String(data.lock_account_customer_id),
+                            name: data.customer_name || 'Customer',
+                            currency: data.currency || 'INR'
+                        } as any);
+
+                        const customerDetailResult = await fetchCustomerDetail(data.lock_account_customer_id);
+
+                        const billingId = data.address_detail?.billing_address_id || data.address_detail?.billing_address?.id || customerDetailResult?.defaultBilling?.id || null;
+                        const shippingId = data.address_detail?.shipping_address_id || data.address_detail?.shipping_address?.id || customerDetailResult?.defaultShipping?.id || null;
+
+                        setSelectedBillingAddressId(billingId);
+                        setSelectedShippingAddressId(shippingId);
+
+                        const billingAddressFromOrder = customerDetailResult?.nextBilling.find((addr: CustomerAddress) => String(addr.id) === String(billingId))
+                            || customerDetailResult?.defaultBilling
+                            || (data.address_detail?.billing_address ? mapAddress(data.address_detail.billing_address, 'billing') : null);
+                        const shippingAddressFromOrder = customerDetailResult?.nextShipping.find((addr: CustomerAddress) => String(addr.id) === String(shippingId))
+                            || customerDetailResult?.defaultShipping
+                            || (data.address_detail?.shipping_address ? mapAddress(data.address_detail.shipping_address, 'shipping') : null);
+
+                        setBillingAddress(formatAddressText(billingAddressFromOrder));
+                        setShippingAddress(formatAddressText(shippingAddressFromOrder));
+
+                        if (data.address_detail?.gst_detail_id) {
+                            setSelectedGstDetailId(data.address_detail.gst_detail_id);
+                        }
+                        if (data.address_detail?.gst_detail?.place_of_supply) {
+                            setPlaceOfSupply(data.address_detail.gst_detail.place_of_supply);
+                        }
+                    }
+
+                    // Map line items
+                    const lineItems = data.item_details || data.sale_order_items || [];
+                    if (lineItems.length > 0) {
+                        setItems(lineItems.map((item: any, idx: number) => ({
+                            id: String(idx + 1),
+                            line_item_id: item.id,
+                            name: item.item_name || item.name || '',
+                            item_id: item.lock_account_item_id ? String(item.lock_account_item_id) : null,
+                            description: item.description || '',
+                            quantity: item.quantity || '',
+                            rate: item.rate || '',
+                            discount: 0,
+                            discountType: 'percentage' as const,
+                            tax: '',
+                            taxRate: 0,
+                            amount: item.total_amount || 0,
+                            item_tax_type: item.tax_type || '',
+                            tax_group_id: item.tax_group_id || null,
+                            tax_exemption_id: item.tax_exemption_id || null
+                        })));
+                    }
+
+                    // Map existing attachments
+                    if (data.attachments && data.attachments.length > 0) {
+                        setExistingAttachments(data.attachments.map((att: any) => ({
+                            id: att.id,
+                            name: att.name || att.document_file_name || 'Attachment',
+                            url: att.url || att.document_url
+                        })));
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load recurring invoice details:', err);
+                toast.error('Failed to load recurring invoice details');
+            } finally {
+                setLoading(false);
+                setIsInitialLoad(false);
+            }
+        };
+
+        if (id && baseUrl && token) fetchRecurringInvoice();
+    }, [id]);
 
     // Customer data
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -1030,9 +1163,22 @@ export const EditRecurringInvoicePage: React.FC = () => {
 
     // Remove item
     const removeItem = (index: number) => {
+        const itemToRemove = items[index];
+        if (itemToRemove && itemToRemove.line_item_id) {
+            setDeletedItemIds(prev => [...prev, itemToRemove.line_item_id]);
+        }
         if (items.length > 1) {
             setItems(prev => prev.filter((_, i) => i !== index));
         }
+    };
+
+    // Remove existing attachment
+    const removeExistingAttachment = (index: number) => {
+        const attToRemove = existingAttachments[index];
+        if (attToRemove && attToRemove.id) {
+            setDeletedAttachmentIds(prev => [...prev, attToRemove.id]);
+        }
+        setExistingAttachments(prev => prev.filter((_, i) => i !== index));
     };
     const [taxAmount2, setTaxAmount2] = useState(0);
     const [totalAmount2, setTotalAmount2] = useState(0);
@@ -1302,6 +1448,9 @@ export const EditRecurringInvoicePage: React.FC = () => {
             );
             // Invoice items
             items.forEach((item, idx) => {
+                if (item.line_item_id) {
+                    formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][id]`, String(item.line_item_id));
+                }
                 const resolvedId = item.item_id || itemOptions.find(opt => opt.name === item.name)?.id;
                 if (resolvedId) {
                     formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][lock_account_item_id]`, String(resolvedId));
@@ -1318,6 +1467,13 @@ export const EditRecurringInvoicePage: React.FC = () => {
                 formData.append(`lock_account_invoice[sale_order_items_attributes][${idx}][tax_exemption_id]`, String(item.tax_exemption_id));
             });
 
+            // Deleted items
+            deletedItemIds.forEach((dbId, idx) => {
+                const index = items.length + idx;
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${index}][id]`, String(dbId));
+                formData.append(`lock_account_invoice[sale_order_items_attributes][${index}][_destroy]`, 'true');
+            });
+
             // Email contact persons
             selectedContactPersons.forEach((id, idx) => {
                 formData.append(`lock_account_invoice[email_contact_persons_attributes][${idx}][contact_person_id]`, String(id));
@@ -1329,8 +1485,15 @@ export const EditRecurringInvoicePage: React.FC = () => {
                 formData.append(`lock_account_invoice[attachments_attributes][${idx}][active]`, 'true');
             });
 
-            await fetch(`https://${baseUrl}/lock_account_invoices.json?lock_account_id=${lock_account_id}`, {
-                method: 'POST',
+            // Deleted attachments
+            deletedAttachmentIds.forEach((dbId, idx) => {
+                const index = attachments.length + idx;
+                formData.append(`lock_account_invoice[attachments_attributes][${index}][id]`, String(dbId));
+                formData.append(`lock_account_invoice[attachments_attributes][${index}][_destroy]`, 'true');
+            });
+
+            await fetch(`https://${baseUrl}/lock_account_invoices/${id}.json?lock_account_id=${lock_account_id}`, {
+                method: 'PUT',
                 headers: {
                     Authorization: token ? `Bearer ${token}` : undefined
                     // Do NOT set Content-Type, browser will set it for FormData
