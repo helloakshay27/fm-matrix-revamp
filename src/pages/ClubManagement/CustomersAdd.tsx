@@ -199,9 +199,9 @@ const muiTheme = createTheme({
         MuiCheckbox: {
             styleOverrides: {
                 root: {
-                    color: "#bf213e",
+                    color: "#DA7756",
                     "&.Mui-checked": {
-                        color: "#bf213e",
+                        color: "#DA7756",
                     },
                 },
             },
@@ -211,9 +211,9 @@ const muiTheme = createTheme({
         MuiRadio: {
             styleOverrides: {
                 root: {
-                    color: "#bf213e",
+                    color: "#DA7756",
                     "&.Mui-checked": {
-                        color: "#bf213e",
+                        color: "#DA7756",
                     },
                 },
             },
@@ -567,7 +567,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
 
             <TextField
                 select
-                label={<span>GST Treatment <span className="text-red-600">*</span></span>}
+                label={<span>GST Treatment <span className="text-[#DA7756]">*</span></span>}
                 name="gst_treatment"
                 value={form.gst_treatment}
                 onChange={handleChange}
@@ -845,7 +845,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                                             />
                                         </td>
                                         <td className="border p-2">
-                                            <button className="text-red-600 text-xs" onClick={async () => {
+                                            <button className="text-[#DA7756] text-xs" onClick={async () => {
                                                 if (row.id) {
                                                     await handleRemovePaymentTerm(row.id, idx);
                                                 } else {
@@ -867,7 +867,7 @@ const OtherDetailsTab = ({ selectedTerm, setSelectedTerm, paymentTerms, setPayme
                         </div>
                         <div className="flex gap-2">
                             <button
-                                className="bg-[#C72030] hover:bg-[#A01020] text-white px-4 py-2 rounded"
+                                className="bg-[#DA7756] hover:bg-[#C45F40] text-white px-4 py-2 rounded"
                                 onClick={handleSaveTerms}
                             >
                                 Save
@@ -1055,7 +1055,7 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
                     />
 
                     <div className="flex items-center gap-2">
-                        <Button onClick={addRow} className="bg-[#C72030] text-white">
+                        <Button onClick={addRow} className="bg-[#DA7756] hover:bg-[#C45F40] text-white">
                             +
                         </Button>
 
@@ -1063,7 +1063,7 @@ const OpeningBalanceTab = ({ openingBalances, setOpeningBalances }) => {
                             <Button
                                 onClick={() => removeRow(index)}
                                 variant="outline"
-                                className="border-red-500 text-red-500"
+                                className="border-[#DA7756] text-[#DA7756] hover:bg-[#DA7756]/10"
                             >
                                 -
                             </Button>
@@ -1237,7 +1237,7 @@ const ContactPersonsTab = ({ rows, setRows }) => {
                             <td className="border p-2 text-center">
                                 <button
                                     type="button"
-                                    className="text-red-500 text-lg px-2"
+                                    className="text-[#DA7756] text-lg px-2"
                                     onClick={() => handleDeleteRow(idx)}
                                     title="Delete Row"
                                     disabled={rows.length === 1}
@@ -1275,7 +1275,7 @@ const RemarksTab = ({ remarks, setRemarks }) => (
     <div className="flex flex-col">
         <label className="text-sm text-gray-600 mb-1">Remarks</label>
         <textarea
-            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-[#bf213e] focus:border-[#bf213e] resize-y"
+            className="w-full border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-1 focus:ring-[#DA7756] focus:border-[#DA7756] resize-y"
             rows={5}
             placeholder="Enter remarks (max 500 characters)"
             value={remarks}
@@ -1813,7 +1813,7 @@ const CustomersAdd = () => {
 
                 {/* DISPLAY NAME */}
                 <div className="grid md:grid-cols-[160px_1fr] items-center gap-4 mb-4">
-                    <div className="text-red-600">Display Name *</div>
+                    <div className="text-[#DA7756]">Display Name *</div>
                     <TextField
                         name="display_name"
                         placeholder="Enter display name"
@@ -1906,7 +1906,7 @@ const CustomersAdd = () => {
                                 onClick={() => setActiveTab(tab.key)}
                                 className={`flex-1 text-center px-4 py-3 text-sm font-semibold whitespace-nowrap transition-colors
     ${activeTab === tab.key
-                                        ? "text-[#C72030] border-b-2 border-[#C72030] bg-[#f9f7f2]/50"
+                                        ? "text-[#DA7756] border-b-2 border-[#DA7756] bg-[#f9f7f2]/50"
                                         : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                                     }
   `}
@@ -1990,7 +1990,7 @@ const CustomersAdd = () => {
                     <Button
                         onClick={handleSubmit}
                         disabled={loading}
-                        className="bg-[#C72030] hover:bg-[#A01020] text-white min-w-[100px]"
+                        className="fm-button-fix fm-button-brand min-w-[100px]"
                     >
                         {loading ? (
                             <>
