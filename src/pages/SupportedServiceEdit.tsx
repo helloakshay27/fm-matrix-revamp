@@ -627,7 +627,7 @@ export const SupportedServiceEdit = () => {
                 type="button"
                 onClick={() => document.getElementById("file-upload")?.click()}
                 variant="outline"
-                className="border-dashed border-2 border-gray-300 hover:border-gray-400 text-gray-600 bg-white hover:bg-gray-50"
+                className="border-dashed border border-[#DA7756] text-[#DA7756] bg-[#fdf5f2] hover:bg-[#f8e7df]"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Files
@@ -680,7 +680,7 @@ export const SupportedServiceEdit = () => {
           <Button
             type="submit"
             disabled={loading}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
+            className="fm-button-fix fm-button-brand px-8 py-2 min-w-[180px] disabled:opacity-70"
           >
             {loading ? "Updating..." : "Update Service"}
           </Button>
@@ -688,7 +688,7 @@ export const SupportedServiceEdit = () => {
             type="button"
             variant="outline"
             onClick={handleCancel}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+            className="bg-[#fdf5f2] border border-[#DA7756] text-[#DA7756] hover:bg-[#f8e7df] px-8 py-2 min-w-[130px]"
           >
             Cancel
           </Button>
