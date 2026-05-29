@@ -1618,6 +1618,7 @@ const WeeklyReports = () => {
         const labels: {
             key: string;
             short: string;
+            date: string;
             color: string;
             canAdd: boolean;
         }[] = [];
@@ -1638,6 +1639,7 @@ const WeeklyReports = () => {
             labels.push({
                 key,
                 short: format(d, "EEE d MMM"),
+                date: format(d, "yyyy-MM-dd"),
                 color: colors[i] ?? "bg-slate-50",
                 canAdd,
             });
@@ -2466,9 +2468,9 @@ const WeeklyReports = () => {
                         upcoming_week_plan: [{
                             ...Object.fromEntries(
                                 Object.entries(dayPlans).map(([dayKey, tasks]) => {
-                                    // Extract day abbreviation (Mon, Tue, etc.) and convert to lowercase
                                     const dayMatch = dayKey.match(/^(\w{3})/);
                                     const dayAbbr = dayMatch ? dayMatch[1].toLowerCase() : dayKey.slice(0, 3).toLowerCase();
+                                    const planForDate = upcomingDays.find(d => d.key === dayKey)?.date ?? null;
                                     const filteredTasks = tasks
                                         .filter(t => t.text.trim() !== '')
                                         .map(t => ({
@@ -2477,6 +2479,7 @@ const WeeklyReports = () => {
                                             starred: t.starred ?? false,
                                             source_id: t.source_id ?? null,
                                             source_type: t.source_type ?? null,
+                                            plan_for_date: planForDate,
                                         }));
                                     return [dayAbbr, filteredTasks];
                                 })
