@@ -161,7 +161,7 @@ export const CRMCampaignPage = () => {
               onClick={() => navigate('/crm/campaign/add')}
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-6"
             >
-              Add
+             + Add
             </Button>
             <Button 
               variant="outline" 

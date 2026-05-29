@@ -173,7 +173,7 @@ export const CreateRetainerInvoicePage = () => {
         <div className="grid grid-cols-12 gap-y-6 gap-x-8 mb-8">
           {/* Customer Name */}
           <div className="col-span-3">
-            <label className="text-sm font-medium text-red-700">
+            <label className="text-sm font-medium text-[#DA7756]">
               Customer Name*
             </label>
           </div>
@@ -247,9 +247,9 @@ export const CreateRetainerInvoicePage = () => {
                         <CommandGroup>
                           <CommandItem
                             onSelect={() => {}}
-                            className="flex items-center gap-2 p-3 text-red-700 cursor-pointer hover:bg-red-50 rounded-md"
+                            className="flex items-center gap-2 p-3 text-[#DA7756] cursor-pointer hover:bg-[#fdf5f2] rounded-md"
                           >
-                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-red-700 text-white">
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#DA7756] text-white">
                               <Plus className="h-3 w-3" />
                             </div>
                             <span className="font-medium">New Customer</span>
@@ -262,9 +262,9 @@ export const CreateRetainerInvoicePage = () => {
               </div>
               <Button
                 size="icon"
-                className="bg-blue-500 hover:bg-blue-600 rounded-md shrink-0 w-11 h-11"
+                className="bg-white border border-gray-300 hover:bg-[#fdf5f2] rounded-md shrink-0 w-11 h-11 text-[#DA7756] hover:text-[#C45F40]"
               >
-                <Search className="h-5 w-5 text-white" />
+                <Search className="h-5 w-5" />
               </Button>
               {customerName && (
                 <div className="flex items-center justify-center px-3 border border-gray-200 rounded-md bg-white h-11 shrink-0">
@@ -286,7 +286,7 @@ export const CreateRetainerInvoicePage = () => {
                   <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
                     Billing Address
                   </span>
-                  <button className="text-gray-400 hover:text-blue-500 transition-colors">
+                  <button className="text-gray-400 hover:text-[#DA7756] transition-colors">
                     <Pencil className="w-3 h-3" />
                   </button>
                 </div>
@@ -315,7 +315,7 @@ export const CreateRetainerInvoicePage = () => {
 
           {/* Retainer Invoice Number */}
           <div className="col-span-3">
-            <label className="text-sm font-medium text-red-700">
+            <label className="text-sm font-medium text-[#DA7756]">
               Retainer Invoice Number*
             </label>
           </div>
@@ -325,7 +325,7 @@ export const CreateRetainerInvoicePage = () => {
               onChange={(e) => setRetainerNumber(e.target.value)}
               className="w-full border-gray-300 pr-10"
             />
-            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-600">
+            <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[#DA7756] hover:text-[#C45F40]">
               <Settings className="w-4 h-4" />
             </button>
           </div>
@@ -348,7 +348,7 @@ export const CreateRetainerInvoicePage = () => {
 
           {/* Retainer Invoice Date */}
           <div className="col-span-3">
-            <label className="text-sm font-medium text-red-700">
+            <label className="text-sm font-medium text-[#DA7756]">
               Retainer Invoice Date*
             </label>
           </div>
@@ -435,7 +435,7 @@ export const CreateRetainerInvoicePage = () => {
                       </button>
                       <button
                         onClick={() => handleDeleteItem(item.id)}
-                        className="text-red-700 hover:text-red-700"
+                        className="text-[#DA7756] hover:text-[#C45F40]"
                       >
                         <X size={16} />
                       </button>
@@ -454,7 +454,7 @@ export const CreateRetainerInvoicePage = () => {
               variant="outline"
               size="sm"
               onClick={handleAddItem}
-              className="text-blue-600 border-none bg-blue-50/50 hover:bg-blue-100 hover:text-blue-700 h-8 px-3 text-xs font-medium"
+              className="text-[#DA7756] border-none bg-[#fdf5f2] hover:bg-[#f8e7df] hover:text-[#C45F40] h-8 px-3 text-xs font-medium"
             >
               <Plus className="w-3.5 h-3.5 mr-1" /> Add New Row
             </Button>
@@ -590,7 +590,7 @@ export const CreateRetainerInvoicePage = () => {
           >
             Save as Draft
           </Button>
-          <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+          <Button className="fm-button-fix fm-button-brand text-white">
             Save and Send
           </Button>
           <Button
@@ -603,7 +603,7 @@ export const CreateRetainerInvoicePage = () => {
         </div>
         <div className="text-xs text-gray-600">
           PDF Template: <span className="font-medium">'Standard Template'</span>{" "}
-          <a href="#" className="text-blue-500 hover:underline ml-1">
+          <a href="#" className="text-[#DA7756] hover:text-[#C45F40] hover:underline ml-1">
             Change
           </a>
         </div>

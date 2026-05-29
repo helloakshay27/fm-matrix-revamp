@@ -1460,8 +1460,11 @@ export const CreateContestPage: React.FC = () => {
                 <div className="py-2 px-3 rounded text-white font-semibold bg-white">
                   <div
                     className={`
-                    px-6 py-3 rounded text-white font-semibold text-xs relative z-5 transition-colors whitespace-nowrap
-                    ${step.active || step.completed || step.id < currentStep ? "bg-[#C72030]" : "bg-gray-400"}
+                    px-6 py-3 rounded border font-semibold text-xs relative z-5 transition-colors whitespace-nowrap
+                    ${step.active || step.completed || step.id < currentStep
+                        ? "bg-[#DA7756] border-[#DA7756] text-white"
+                        : "bg-[#F6EEE9] border-[#E8D5CA] text-[#8A5A45]"
+                      }
                   `}
                   >
                     {step.id}. {step.title}
@@ -1489,7 +1492,7 @@ export const CreateContestPage: React.FC = () => {
           {currentStep < 4 ? (
             <Button
               onClick={handleNext}
-              className="bg-[#C72030] text-white hover:bg-[#B71C1C]"
+              className="fm-button-fix fm-button-brand min-w-[160px] disabled:opacity-70"
               disabled={submitting}
             >
               Proceed to next
@@ -1498,7 +1501,7 @@ export const CreateContestPage: React.FC = () => {
             <Button
               onClick={handleSubmit}
               disabled={submitting}
-              className="bg-[#C72030] text-white hover:bg-[#B71C1C]"
+              className="fm-button-fix fm-button-brand min-w-[160px] disabled:opacity-70"
             >
               {submitting ? "Submitting..." : "Submit"}
             </Button>

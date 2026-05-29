@@ -90,15 +90,13 @@ const RuleAlert = ({ open, onClose, setShowNewRuleForm, handleSubmit, handleUpda
             </DialogContent>
             <DialogActions style={{ justifyContent: 'center', paddingBottom: '20px', padding: "20px 30px" }}>
                 <Button
-                    style={{ backgroundColor: '#C72030' }}
-                    className="text-white hover:bg-[#C72030]/90 flex-1"
+                    className="fm-button-fix fm-button-brand flex-1"
                     onClick={handleYesClick}
                 >
                     Yes
                 </Button>
                 <Button
-                    variant="outline"
-                    className="flex-1 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+                    className="fm-button-fix fm-button-brand flex-1"
                     onClick={onClose}
                 >
                     No
