@@ -236,17 +236,47 @@ export const ExpenseListPage: React.FC = () => {
 
                 // Filter based on search
                 let filteredData = data;
+
                 if (search.trim()) {
-                    filteredData = filteredData.filter(expense => {
-                        const accountName = getAccountName(expense.account_id);
-                        const vendorName = getVendorName(expense.vendor_id);
-                        const expenseAccountName = expense.expense_accounts?.[0]?.lock_account_name || '';
+                    const searchValue = search.toLowerCase().trim();
+
+                    filteredData = data.filter((expense) => {
+                        const accountName =
+                            getAccountName(expense.account_id || '')?.toLowerCase() || '';
+
+                        const paidThroughName =
+                            getAccountName(expense.paid_through_account_id || '')?.toLowerCase() || '';
+
+                        const vendorName =
+                            getVendorName(expense.vendor_id || '')?.toLowerCase() || '';
+
+                        const expenseAccountName =
+                            expense.expense_accounts
+                                ?.map((acc) => acc.lock_account_name || '')
+                                .join(' ')
+                                .toLowerCase() || '';
+
+                        const referenceNumber =
+                            expense.reference_number?.toLowerCase() || '';
+
+                        const voucherNumber =
+                            expense.transaction?.voucher_number?.toLowerCase() || '';
+
+                        const customerName =
+                            expense.customer_name?.toLowerCase() || '';
+
+                        const amount =
+                            expense.amount?.toString() || '';
+
                         return (
-                            accountName.toLowerCase().includes(search.toLowerCase()) ||
-                            vendorName.toLowerCase().includes(search.toLowerCase()) ||
-                            expenseAccountName.toLowerCase().includes(search.toLowerCase()) ||
-                            expense.reference_number.toLowerCase().includes(search.toLowerCase()) ||
-                            expense.transaction?.voucher_number.toLowerCase().includes(search.toLowerCase())
+                            accountName.includes(searchValue) ||
+                            paidThroughName.includes(searchValue) ||
+                            vendorName.includes(searchValue) ||
+                            expenseAccountName.includes(searchValue) ||
+                            referenceNumber.includes(searchValue) ||
+                            voucherNumber.includes(searchValue) ||
+                            customerName.includes(searchValue) ||
+                            amount.includes(searchValue)
                         );
                     });
                 }
@@ -280,8 +310,22 @@ export const ExpenseListPage: React.FC = () => {
 
     // Load data on component mount and when page/perPage/filters change
     useEffect(() => {
-        fetchExpenseData(currentPage, perPage, debouncedSearchQuery, appliedFilters);
-    }, [currentPage, perPage, debouncedSearchQuery, appliedFilters]);
+        if (accountLedgers.length > 0 || vendors.length > 0) {
+            fetchExpenseData(
+                currentPage,
+                perPage,
+                debouncedSearchQuery,
+                appliedFilters
+            );
+        }
+    }, [
+        currentPage,
+        perPage,
+        debouncedSearchQuery,
+        appliedFilters,
+        accountLedgers,
+        vendors
+    ]);
 
     // Handle search
     const handleSearch = (term: string) => {
