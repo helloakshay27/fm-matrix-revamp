@@ -1,4 +1,4 @@
-﻿import * as faceapi from "face-api.js";
+import * as faceapi from "face-api.js";
 import axios from "axios";
 import { getToken, getBaseUrl, getUser } from "../../utils/auth";
 
