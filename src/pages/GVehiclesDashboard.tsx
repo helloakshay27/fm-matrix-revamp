@@ -198,21 +198,13 @@ export const GVehiclesDashboard = () => {
       <div className="flex gap-3 mb-6">
         <Button 
           onClick={handleHistoryClick}
-          className={`px-6 py-2 rounded ${
-            activeTab === 'History' 
-              ? 'bg-primary text-primary-foreground' 
-              : 'bg-primary text-primary-foreground'
-          }`}
+          className="fm-button-fix fm-button-brand px-4 py-2"
         >
           History
         </Button>
         <Button 
           onClick={handleVehicleOutClick}
-          className={`px-6 py-2 rounded ${
-            activeTab === 'Vehicle Out' 
-              ? 'bg-primary text-primary-foreground' 
-              : 'bg-primary text-primary-foreground'
-          }`}
+          className="fm-button-fix fm-button-brand px-4 py-2"
         >
           Vehicle Out
         </Button>
@@ -236,9 +228,9 @@ export const GVehiclesDashboard = () => {
           <div className="flex gap-3">
             <Button 
               onClick={() => setIsAddModalOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2"
+              className="fm-button-fix fm-button-brand px-4 py-2"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4" />
               Add
             </Button>
           </div>
