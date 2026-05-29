@@ -413,7 +413,7 @@ export const ExpenseListPage: React.FC = () => {
                 onSearchChange={handleSearch}
                 loading={loading}
                 leftActions={(
-                    <Button onClick={() => navigate('/accounting/expense/create')} className="gap-2">
+                    <Button onClick={() => navigate('/accounting/expense/create')} className="fm-button-fix fm-button-brand gap-2 px-4 py-2">
                         <Plus className="h-4 w-4" />
                         New Expense
                     </Button>

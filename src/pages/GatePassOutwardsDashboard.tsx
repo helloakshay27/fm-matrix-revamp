@@ -287,7 +287,7 @@ export const GatePassOutwardsDashboard = () => {
     // </Button>
     <Button
       size="sm"
-      className="mr-2"
+      className="fm-button-fix fm-button-brand px-8 py-2"
       onClick={() => setShowActionPanel((prev) => !prev)}
     >
       <Plus className="w-4 h-4 mr-2" />

@@ -685,7 +685,7 @@ export const StaffsDashboard = () => {
                 <Button 
                   onClick={() => navigate('/security/staff/add')}
                   style={{ backgroundColor: '#C72030' }}
-                  className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+                  className="fm-button-fix fm-button-brand px-8 py-2"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add
@@ -694,7 +694,7 @@ export const StaffsDashboard = () => {
                   <Button 
                     onClick={handlePrintQR}
                     style={{ backgroundColor: '#C72030' }}
-                    className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+                    className="fm-button-fix fm-button-brand px-8 py-2"
                   >
                     <QrCode className="w-4 h-4 mr-2" />
                     Print QR 
@@ -731,7 +731,7 @@ export const StaffsDashboard = () => {
             <Button 
               onClick={handleSearch}
               style={{ backgroundColor: '#C72030' }}
-              className="hover:bg-[#C72030]/90 text-white px-6 py-2 h-10 rounded-lg text-sm font-medium border-0"
+              className="fm-button-fix fm-button-brand px-8 py-2"
             >
               Go!
             </Button>
