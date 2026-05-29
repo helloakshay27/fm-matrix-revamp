@@ -17,38 +17,66 @@
 /* Hide scrollbar while maintaining scroll functionality */
 .scrollbar-hide {
   -ms-overflow-style: none;
+
   /* Custom Dashboard Animations */
-@keyframes slideInRight {
-  from { transform: translateX(30px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-@keyframes slideInLeft {
-  from { transform: translateX(-30px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-@keyframes fadeInScale {
-  from { transform: scale(0.98); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
+  @keyframes slideInRight {
+    from {
+      transform: translateX(30px);
+      opacity: 0;
+    }
 
-.animate-slide-in-right {
-  animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-.animate-slide-in-left {
-  animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-.animate-fade-in-scale {
-  animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
 
-/* Glass Card Content Stacking Fix */
-.glass-content-stack {
-  display: grid;
-  grid-template-areas: "content";
-}
-.glass-content-stack > * {
-  grid-area: content;
-}
+  @keyframes slideInLeft {
+    from {
+      transform: translateX(-30px);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeInScale {
+    from {
+      transform: scale(0.98);
+      opacity: 0;
+    }
+
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  .animate-fade-in-scale {
+    animation: fadeInScale 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Glass Card Content Stacking Fix */
+  .glass-content-stack {
+    display: grid;
+    grid-template-areas: "content";
+  }
+
+  .glass-content-stack>* {
+    grid-area: content;
+  }
+
   scrollbar-width: none;
   /* Firefox */
 }
@@ -1511,4 +1539,9 @@ button.text-blue-600 {
 /* Hide Quill UI helper span */
 .quill-content .ql-ui {
   display: none;
+}
+
+/* Hide Google reCAPTCHA badge to prevent domain mismatch error popups */
+.grecaptcha-badge {
+  visibility: hidden !important;
 }
