@@ -24,12 +24,23 @@ import {
   Trash2,
   Loader2,
   Target,
+  Bot,
+  Cpu,
+  KeyRound,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format, parse, isValid } from "date-fns";
@@ -253,6 +264,33 @@ type UserKpi = {
   status?: string | null;
 };
 
+type AiProvider = {
+  display_name: string;
+  provider_id: string;
+};
+
+type AiModel = {
+  display_name: string;
+  model_name: string;
+};
+
+type UserAiConfig = {
+  code?: number;
+  user_id?: number;
+  user_name?: string;
+  configured?: boolean;
+  message?: string;
+  provider?: string | {
+    id?: string;
+    display_name?: string;
+  };
+  provider_id?: string;
+  model?: string | AiModel;
+  model_name?: string;
+  api_key?: string;
+  endpoint?: string;
+};
+
 const normalizeUserKpis = (raw: any): UserKpi[] => {
   const list = Array.isArray(raw)
     ? raw
@@ -274,6 +312,36 @@ const normalizeUserKpis = (raw: any): UserKpi[] => {
     priority: item.priority ?? "",
     status: item.status ?? item.badge ?? "Active",
   }));
+};
+
+const AI_CONFIG_BASE_URL = "https://fm-uat-api.lockated.com";
+
+const getAiConfigProviderId = (config?: UserAiConfig | null) => {
+  if (!config) return "";
+  if (typeof config.provider === "object") return config.provider?.id || "";
+  return config.provider_id || config.provider || "";
+};
+
+const getAiConfigProviderDisplayName = (config?: UserAiConfig | null) => {
+  if (!config) return "";
+  if (typeof config.provider === "object") {
+    return config.provider?.display_name || config.provider?.id || "";
+  }
+  return config.provider || config.provider_id || "";
+};
+
+const getAiConfigModelName = (config?: UserAiConfig | null) => {
+  if (!config) return "";
+  if (typeof config.model === "object") return config.model?.model_name || "";
+  return config.model_name || config.model || "";
+};
+
+const getAiConfigModelDisplayName = (config?: UserAiConfig | null) => {
+  if (!config) return "";
+  if (typeof config.model === "object") {
+    return config.model?.display_name || config.model?.model_name || "";
+  }
+  return config.model || config.model_name || "";
 };
 
 const BusinessCompassProfile = () => {
@@ -443,6 +511,18 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
   const [userKpis, setUserKpis] = useState<UserKpi[]>([]);
   const [isKpisLoading, setIsKpisLoading] = useState(false);
   const [kpisError, setKpisError] = useState<string | null>(null);
+  const [aiProviders, setAiProviders] = useState<AiProvider[]>([]);
+  const [aiModels, setAiModels] = useState<AiModel[]>([]);
+  const [selectedAiProvider, setSelectedAiProvider] = useState("");
+  const [selectedAiModel, setSelectedAiModel] = useState("");
+  const [aiApiKey, setAiApiKey] = useState("");
+  const [userAiConfig, setUserAiConfig] = useState<UserAiConfig | null>(null);
+  const [isAiProvidersLoading, setIsAiProvidersLoading] = useState(false);
+  const [isAiModelsLoading, setIsAiModelsLoading] = useState(false);
+  const [isAiConfigLoading, setIsAiConfigLoading] = useState(false);
+  const [isAiConfigSaving, setIsAiConfigSaving] = useState(false);
+  const [isAiConfigDeleting, setIsAiConfigDeleting] = useState(false);
+  const [aiConfigError, setAiConfigError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const docFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -450,6 +530,17 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
+
+  const getAuthHeaders = () => {
+    const token = getToken();
+    return {
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  };
+
+  const currentUserId =
+    localStorage.getItem("userId") || String(getUser()?.id || "");
 
   useEffect(() => {
     const fetchProfileDetails = async () => {
@@ -527,6 +618,232 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
 
     fetchUserKpis();
   }, []);
+
+  useEffect(() => {
+    const fetchAiProviders = async () => {
+      try {
+        setIsAiProvidersLoading(true);
+        setAiConfigError(null);
+        const response = await fetch(`${AI_CONFIG_BASE_URL}/user_ai_config/providers`, {
+          headers: getAuthHeaders(),
+        });
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        setAiProviders(Array.isArray(data?.providers) ? data.providers : []);
+      } catch (error: any) {
+        console.error("Failed to load AI providers", error);
+        setAiProviders([]);
+        setAiConfigError(error?.message || "Failed to load AI providers");
+      } finally {
+        setIsAiProvidersLoading(false);
+      }
+    };
+
+    const fetchUserAiConfig = async () => {
+      if (!currentUserId) return;
+
+      try {
+        setIsAiConfigLoading(true);
+        setAiConfigError(null);
+        const response = await fetch(
+          `${AI_CONFIG_BASE_URL}/user_ai_config/${encodeURIComponent(currentUserId)}`,
+          { headers: getAuthHeaders() }
+        );
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data: UserAiConfig = await response.json();
+        setUserAiConfig(data);
+
+        const provider = getAiConfigProviderId(data);
+        const model = getAiConfigModelName(data);
+        if (provider) setSelectedAiProvider(provider);
+        if (model) setSelectedAiModel(model);
+        if (data.api_key) setAiApiKey(data.api_key);
+      } catch (error: any) {
+        console.error("Failed to load user AI config", error);
+        setUserAiConfig(null);
+        setAiConfigError(error?.message || "Failed to load user AI config");
+      } finally {
+        setIsAiConfigLoading(false);
+      }
+    };
+
+    fetchAiProviders();
+    fetchUserAiConfig();
+  }, [currentUserId]);
+
+  useEffect(() => {
+    const fetchAiModels = async () => {
+      if (!selectedAiProvider) {
+        setAiModels([]);
+        setSelectedAiModel("");
+        return;
+      }
+
+      try {
+        setIsAiModelsLoading(true);
+        setAiConfigError(null);
+        const response = await fetch(
+          `${AI_CONFIG_BASE_URL}/user_ai_config/models?provider=${encodeURIComponent(selectedAiProvider)}`,
+          { headers: getAuthHeaders() }
+        );
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        const models = Array.isArray(data?.models) ? data.models : [];
+        setAiModels(models);
+        setSelectedAiModel((current) =>
+          current && models.some((model: AiModel) => model.model_name === current)
+            ? current
+            : ""
+        );
+      } catch (error: any) {
+        console.error("Failed to load AI models", error);
+        setAiModels([]);
+        setSelectedAiModel("");
+        setAiConfigError(error?.message || "Failed to load AI models");
+      } finally {
+        setIsAiModelsLoading(false);
+      }
+    };
+
+    fetchAiModels();
+  }, [selectedAiProvider]);
+
+  const handleSaveAiConfig = async () => {
+    if (!selectedAiProvider) {
+      toast.error("Please select an AI provider");
+      return;
+    }
+
+    if (!selectedAiModel) {
+      toast.error("Please select an AI model");
+      return;
+    }
+
+    if (!aiApiKey.trim()) {
+      toast.error("Please enter an API key");
+      return;
+    }
+
+    try {
+      setIsAiConfigSaving(true);
+      setAiConfigError(null);
+
+      const response = await fetch(`${AI_CONFIG_BASE_URL}/user_ai_config`, {
+        method: "POST",
+        headers: {
+          ...getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          provider: selectedAiProvider,
+          model: selectedAiModel,
+          api_key: aiApiKey.trim(),
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(
+          data?.message || data?.error || `HTTP ${response.status}`
+        );
+      }
+
+      setUserAiConfig((prev) => ({
+        ...prev,
+        ...data,
+        configured: data?.configured ?? true,
+        provider: data?.provider || {
+          id: selectedAiProvider,
+          display_name:
+            aiProviders.find((provider) => provider.provider_id === selectedAiProvider)
+              ?.display_name || selectedAiProvider,
+        },
+        provider_id: data?.provider_id || selectedAiProvider,
+        model: data?.model || {
+          model_name: selectedAiModel,
+          display_name:
+            aiModels.find((model) => model.model_name === selectedAiModel)
+              ?.display_name || selectedAiModel,
+        },
+        model_name: data?.model_name || selectedAiModel,
+        user_id: data?.user_id || prev?.user_id || Number(currentUserId) || undefined,
+        user_name: data?.user_name || prev?.user_name || formData.displayName,
+      }));
+      toast.success("AI configuration saved successfully");
+    } catch (error: any) {
+      console.error("Failed to save AI config", error);
+      const message = error?.message || "Failed to save AI configuration";
+      setAiConfigError(message);
+      toast.error(message);
+    } finally {
+      setIsAiConfigSaving(false);
+    }
+  };
+
+  const handleDeleteAiApiKey = async () => {
+    if (!selectedAiProvider) {
+      toast.error("Please select an AI provider");
+      return;
+    }
+
+    try {
+      setIsAiConfigDeleting(true);
+      setAiConfigError(null);
+
+      const response = await fetch(`${AI_CONFIG_BASE_URL}/user_ai_config/remove_key`, {
+        method: "DELETE",
+        headers: {
+          ...getAuthHeaders(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          provider: selectedAiProvider,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(
+          data?.message || data?.error || `HTTP ${response.status}`
+        );
+      }
+
+      setAiApiKey("");
+      setUserAiConfig((prev) => ({
+        ...prev,
+        ...data,
+        configured: false,
+        api_key: "",
+        message: data?.message || "API key removed",
+        provider: prev?.provider || {
+          id: selectedAiProvider,
+          display_name:
+            aiProviders.find((provider) => provider.provider_id === selectedAiProvider)
+              ?.display_name || selectedAiProvider,
+        },
+        model: prev?.model || {
+          model_name: selectedAiModel,
+          display_name:
+            aiModels.find((model) => model.model_name === selectedAiModel)
+              ?.display_name || selectedAiModel,
+        },
+      }));
+      toast.success(data?.message || "API key removed successfully");
+    } catch (error: any) {
+      console.error("Failed to delete AI API key", error);
+      const message = error?.message || "Failed to delete API key";
+      setAiConfigError(message);
+      toast.error(message);
+    } finally {
+      setIsAiConfigDeleting(false);
+    }
+  };
 
   // Sync documents to localStorage whenever they change
   useEffect(() => {
@@ -754,6 +1071,9 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase() || "")
       .join("") || "U";
+  const aiConfigProviderDisplayName = getAiConfigProviderDisplayName(userAiConfig);
+  const aiConfigModelName = getAiConfigModelName(userAiConfig);
+  const aiConfigModelDisplayName = getAiConfigModelDisplayName(userAiConfig);
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto font-poppins bg-[#F6F4EE]/30 min-h-screen">
@@ -1121,6 +1441,194 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
                 </div>
               )}
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-[16px] border border-blue-100 bg-white shadow-sm ring-1 ring-blue-50">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="flex items-center gap-2 text-lg font-bold text-blue-700">
+            <Bot size={20} className="text-blue-500" />
+            AI Configuration
+          </CardTitle>
+          <Badge
+            variant="outline"
+            className={cn(
+              "px-3 h-6 rounded-full font-bold",
+              userAiConfig?.configured
+                ? "bg-green-50 text-green-700 border-green-200"
+                : "bg-amber-50 text-amber-700 border-amber-200"
+            )}
+          >
+            {isAiConfigLoading
+              ? "Checking"
+              : userAiConfig?.configured
+                ? "Configured"
+                : "Not Configured"}
+          </Badge>
+        </CardHeader>
+        <CardContent className="py-6 space-y-5">
+          {aiConfigError && (
+            <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+              {aiConfigError}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Bot size={14} className="text-blue-500" />
+                <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                  Provider
+                </span>
+              </div>
+              <Select
+                value={selectedAiProvider}
+                onValueChange={(value) => {
+                  setSelectedAiProvider(value);
+                  setSelectedAiModel("");
+                }}
+                disabled={isAiProvidersLoading}
+              >
+                <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
+                  <SelectValue
+                    placeholder={
+                      isAiProvidersLoading ? "Loading providers..." : "Select Provider"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {aiProviders.map((provider) => (
+                    <SelectItem
+                      key={provider.provider_id}
+                      value={provider.provider_id}
+                    >
+                      {provider.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Cpu size={14} className="text-indigo-500" />
+                <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                  Models
+                </span>
+              </div>
+              <Select
+                value={selectedAiModel}
+                onValueChange={setSelectedAiModel}
+                disabled={!selectedAiProvider || isAiModelsLoading}
+              >
+                <SelectTrigger className="h-10 border-gray-300 bg-[#FAFAFA]">
+                  <SelectValue
+                    placeholder={
+                      !selectedAiProvider
+                        ? "Select provider first"
+                        : isAiModelsLoading
+                          ? "Loading models..."
+                          : "Select Model"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {aiModels.map((model) => (
+                    <SelectItem key={model.model_name} value={model.model_name}>
+                      {model.display_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-500">
+                User AI Config
+              </p>
+              <p className="mt-2 text-sm font-bold text-gray-800">
+                {userAiConfig?.user_name || formData.displayName}
+              </p>
+              {aiConfigProviderDisplayName && (
+                <p className="mt-2 text-xs font-semibold text-gray-500">
+                  Provider:{" "}
+                  <span className="text-gray-800">
+                    {aiConfigProviderDisplayName}
+                  </span>
+                </p>
+              )}
+              {(aiConfigModelDisplayName || aiConfigModelName) && (
+                <p className="mt-1 text-xs font-semibold text-gray-500">
+                  Model:{" "}
+                  <span className="text-gray-800">
+                    {aiConfigModelDisplayName || aiConfigModelName}
+                  </span>
+                </p>
+              )}
+              {!userAiConfig?.configured && userAiConfig?.message && (
+                <p className="mt-2 text-xs font-semibold text-amber-700">
+                  {userAiConfig.message}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <KeyRound size={14} className="text-slate-500" />
+              <span className="text-[#8e8e8e] text-[10px] font-bold uppercase tracking-widest leading-none">
+                API Key
+              </span>
+            </div>
+            <Textarea
+              value={aiApiKey}
+              onChange={(event) => setAiApiKey(event.target.value)}
+              placeholder="Enter API key"
+              disabled={isAiConfigSaving}
+              className="min-h-[96px] bg-[#FAFAFA] text-sm"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-end gap-3 border-t border-gray-100 pt-4">
+            <Button
+              variant="outline"
+              onClick={handleDeleteAiApiKey}
+              disabled={
+                isAiConfigDeleting ||
+                isAiConfigSaving ||
+                !selectedAiProvider ||
+                !aiApiKey.trim()
+              }
+              className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700 font-bold h-10 px-6 shadow-sm"
+            >
+              {isAiConfigDeleting ? (
+                <Loader2 size={16} className="mr-2 animate-spin" />
+              ) : (
+                <Trash2 size={16} className="mr-2" strokeWidth={2.5} />
+              )}
+              {isAiConfigDeleting ? "Deleting..." : "Delete"}
+            </Button>
+            <Button
+              onClick={handleSaveAiConfig}
+              disabled={
+                isAiConfigSaving ||
+                isAiConfigDeleting ||
+                isAiProvidersLoading ||
+                isAiModelsLoading ||
+                !selectedAiProvider ||
+                !selectedAiModel ||
+                !aiApiKey.trim()
+              }
+              className="bg-[#2563EB] hover:bg-blue-700 text-white font-bold h-10 px-6 shadow-sm"
+            >
+              {isAiConfigSaving ? (
+                <Loader2 size={16} className="mr-2 animate-spin" />
+              ) : (
+                <Save size={16} className="mr-2" strokeWidth={2.5} />
+              )}
+              {isAiConfigSaving ? "Saving..." : "Save"}
+            </Button>
           </div>
         </CardContent>
       </Card>
