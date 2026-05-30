@@ -812,7 +812,9 @@ const modulesByPackage = {
         },
         { name: "PO", href: "/finance/po", color: "text-[#1a1a1a]" },
         { name: "WO", href: "/finance/wo", color: "text-[#1a1a1a]" },
-        { name: "GRN/ SRN", href: "/finance/grn-srn", color: "text-[#1a1a1a]" },
+        { name: "GRN", href: "/finance/grn-srn", color: "text-[#1a1a1a]" },
+        { name: "Invoices/SES", href: "finance/invoices", color: "text-[#1a1a1a]" },
+
         {
           name: "Auto Saved PR",
           href: "/finance/auto-saved-pr",
@@ -862,25 +864,25 @@ const modulesByPackage = {
         },
       ],
     },
-    { name: "Invoices", icon: Receipt, href: "/finance/invoices" },
-    { name: "Bill Booking", icon: Receipt, href: "/finance/bill-booking" },
-    {
-      name: "Accounting",
-      icon: Calculator,
-      href: "/finance/accounting",
-      subItems: [
-        {
-          name: "Cost Center",
-          href: "/finance/cost-center",
-          color: "text-[#1a1a1a]",
-        },
-        {
-          name: "Budgeting",
-          href: "/finance/budgeting",
-          color: "text-[#1a1a1a]",
-        },
-      ],
-    },
+    // { name: "Invoices", icon: Receipt, href: "/finance/invoices" },
+    // { name: "Bill Booking", icon: Receipt, href: "/finance/bill-booking" },
+    // {
+    //   name: "Accounting",
+    //   icon: Calculator,
+    //   href: "/finance/accounting",
+    //   subItems: [
+    //     {
+    //       name: "Cost Center",
+    //       href: "/finance/cost-center",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //     {
+    //       name: "Budgeting",
+    //       href: "/finance/budgeting",
+    //       color: "text-[#1a1a1a]",
+    //     },
+    //   ],
+    // },
     // { name: "WBS", icon: BarChart3, href: "/finance/wbs" },
   ],
   CRM: [

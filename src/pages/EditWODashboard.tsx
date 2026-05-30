@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { cache } from "@/utils/cacheUtils";
 import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Settings, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -438,6 +439,7 @@ export const EditWODashboard: React.FC = () => {
             setSubmitting(true);
             await dispatch(editServicePR({ data: payload, baseUrl, token, id: Number(id) })).unwrap();
             toast.success("Work Order updated successfully");
+            cache.invalidatePattern("wo*");
             navigate('/finance/wo');
         } catch (error) {
             console.log(error);

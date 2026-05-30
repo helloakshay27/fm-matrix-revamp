@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { cache } from "@/utils/cacheUtils";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -352,6 +353,7 @@ export const AddPODashboard = () => {
         createPurchaseOrder({ baseUrl, token, data: payload })
       ).unwrap();
       toast.success("Purchase Order created successfully");
+      cache.invalidatePattern("po*");
       navigate("/finance/po");
     } catch (error) {
       console.log(error);
