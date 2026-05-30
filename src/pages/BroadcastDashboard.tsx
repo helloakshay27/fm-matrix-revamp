@@ -532,33 +532,32 @@ export const BroadcastDashboard = () => {
   };
 
   const renderActions = (item: any) => (
-    <div className="flex">
+    <div className="flex items-center justify-center gap-1">
       <Button
         variant="ghost"
-        size="sm"
-        className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
+        size="icon"
+        className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
         onClick={() => handleImportantClick(item)}
         disabled={updatingStatus[`important_${item.id}`]}
       >
         <Star
           className="w-4 h-4"
-          stroke={item.is_important ? "rgb(234, 179, 8)" : "#000"}
-          fill={item.is_important ? "rgb(234, 179, 8)" : "#fff"}
+          fill={item.is_important ? "#DA7756" : "none"}
         />
       </Button>
       <Button
         variant="ghost"
-        size="sm"
+        size="icon"
         onClick={() => handleView(item.id)}
-        className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
+        className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
       >
         <Eye className="w-4 h-4" />
       </Button>
       <Button
         variant="ghost"
-        size="sm"
+        size="icon"
         onClick={() => handleEdit(item.id)}
-        className="hover:bg-[#C72030]/10 hover:text-[#C72030]"
+        className="!h-7 !w-7 !min-h-7 !p-0 !bg-transparent !text-[#DA7756] hover:!bg-[#DA7756]/10 hover:!text-[#DA7756] [&_svg]:!text-[#DA7756] [&_svg]:!stroke-[#DA7756]"
       >
         <Edit className="w-4 h-4" />
       </Button>

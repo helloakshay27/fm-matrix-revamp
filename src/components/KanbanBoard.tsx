@@ -2,7 +2,7 @@ import { ArrowLeftToLine } from "lucide-react";
 import { useState } from "react";
 import { useDroppable } from "@dnd-kit/core";
 
-const KanbanBoard = ({ color, add, title, count = 0, children, className, onDrop }: { color: string, add: boolean, title: string, count?: number, children?: React.ReactNode, className?: string, onDrop?: (data: any, status: string) => void }) => {
+const KanbanBoard = ({ color, add, title, count = 0, children, className, onDrop, scrollRef }: { color: string, add: boolean, title: string, count?: number, children?: React.ReactNode, className?: string, onDrop?: (data: any, status: string) => void, scrollRef?: React.RefObject<HTMLDivElement> }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
     const columnStatus = title.toLowerCase().replace(/\s+/g, "_");
@@ -64,7 +64,7 @@ const KanbanBoard = ({ color, add, title, count = 0, children, className, onDrop
                 </div>
             </div>
 
-            <div className="h-full overflow-y-auto no-scrollbar w-full">
+            <div ref={scrollRef} className="h-full overflow-y-auto no-scrollbar w-full">
                 {!isCollapsed && children}
             </div>
         </div>

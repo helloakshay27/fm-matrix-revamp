@@ -736,13 +736,13 @@ export const CreatePaymentPage: React.FC = () => {
               <TabsList className="bg-transparent justify-start rounded-none h-auto p-0 gap-6">
                 <TabsTrigger
                   value="bill_payment"
-                  className="px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-red-700 data-[state=active]:bg-transparent data-[state=active]:text-red-700 data-[state=active]:shadow-none font-medium text-gray-600 bg-transparent transition-none mb-[-1px]"
+                  className="px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-[#DA7756] data-[state=active]:bg-transparent data-[state=active]:text-[#DA7756] data-[state=active]:shadow-none font-medium text-gray-600 bg-transparent transition-none mb-[-1px]"
                 >
                   Bill Payment
                 </TabsTrigger>
                 <TabsTrigger
                   value="vendor_advance"
-                  className="px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-red-700 data-[state=active]:bg-transparent data-[state=active]:text-red-700 data-[state=active]:shadow-none font-medium text-gray-600 bg-transparent transition-none mb-[-1px]"
+                  className="px-4 py-2 rounded-none border-b-2 border-transparent data-[state=active]:border-[#DA7756] data-[state=active]:bg-transparent data-[state=active]:text-[#DA7756] data-[state=active]:shadow-none font-medium text-gray-600 bg-transparent transition-none mb-[-1px]"
                 >
                   Vendor Advance
                 </TabsTrigger>
@@ -902,18 +902,12 @@ export const CreatePaymentPage: React.FC = () => {
 
           {/* ══ MAIN FORM SECTION (White Background) ══ */}
           <div className="px-6 py-6 bg-white">
-            <div
-              className={cn(
-                "space-y-5 transition-all duration-300",
-                !selectedVendor &&
-                  "opacity-50 blur-[2px] pointer-events-none select-none grayscale-[0.3]"
-              )}
-            >
+            <div className="space-y-5 transition-all duration-300">
               {/* ── PAYMENT DETAILS ── */}
               <div className="border border-gray-200 bg-white">
                 <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
                   <FileText
-                    className="w-[18px] h-[18px] text-[#db4a4a]"
+                    className="w-[18px] h-[18px] text-[#DA7756]"
                     strokeWidth={2}
                   />
                   <span className="text-[13px] font-bold tracking-wide text-[#333]">
@@ -941,7 +935,7 @@ export const CreatePaymentPage: React.FC = () => {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Settings
-                              className="absolute right-3 top-2.5 h-4 w-4 text-blue-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                              className="absolute right-3 top-2.5 h-4 w-4 text-[#DA7756] cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
                               onClick={() => setIsConfigModalOpen(true)}
                             />
                           </TooltipTrigger>
@@ -974,7 +968,7 @@ export const CreatePaymentPage: React.FC = () => {
                         <label className="mt-2 flex items-center gap-2 text-xs text-gray-700 cursor-pointer">
                           <input
                             type="checkbox"
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            className="w-4 h-4 rounded border-gray-300 text-[#DA7756] focus:ring-[#DA7756] cursor-pointer"
                             checked={payFullAmount}
                             disabled={!selectedVendor || billsLoading || vendorAmountDue <= 0}
                             onChange={(e) => applyFullPaymentAmount(e.target.checked)}
@@ -1006,7 +1000,7 @@ export const CreatePaymentPage: React.FC = () => {
                              <input
                                type="checkbox"
                                id="reverseCharge"
-                               className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                               className="w-4 h-4 rounded border-gray-300 text-[#DA7756] focus:ring-[#DA7756] cursor-pointer"
                                checked={isReverseCharge}
                                onChange={(e) => setIsReverseCharge(e.target.checked)}
                              />
@@ -1139,7 +1133,7 @@ export const CreatePaymentPage: React.FC = () => {
               <div className="border border-gray-200 mt-6 bg-white">
                 <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
                   <CreditCard
-                    className="w-[18px] h-[18px] text-[#db4a4a]"
+                    className="w-[18px] h-[18px] text-[#DA7756]"
                     strokeWidth={2}
                   />
                   <span className="text-[13px] font-bold tracking-wide text-[#333]">
@@ -1268,7 +1262,7 @@ export const CreatePaymentPage: React.FC = () => {
                 <div className="border border-gray-200 mt-6 bg-white">
                   <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
                     <FileText
-                      className="w-[18px] h-[18px] text-[#db4a4a]"
+                      className="w-[18px] h-[18px] text-[#DA7756]"
                       strokeWidth={2}
                     />
                     <span className="text-[13px] font-bold tracking-wide text-[#333]">
@@ -1280,7 +1274,7 @@ export const CreatePaymentPage: React.FC = () => {
                     <div className="flex justify-end mb-2">
                       <button
                         type="button"
-                        className="text-blue-500 text-xs hover:underline"
+                        className="text-[#DA7756] text-xs hover:underline"
                         onClick={() => {
                           setAppliedAmounts({});
                           setPayFullAmount(false);
@@ -1315,7 +1309,7 @@ export const CreatePaymentPage: React.FC = () => {
                         {selectedVendor && (
                           <button
                             type="button"
-                            className="mt-3 text-blue-500 text-xs hover:underline"
+                            className="mt-3 text-[#DA7756] text-xs hover:underline"
                             onClick={() => fetchBills(selectedVendor)}
                           >
                             Retry
@@ -1382,7 +1376,7 @@ export const CreatePaymentPage: React.FC = () => {
                                   [bill.id]: e.target.value,
                                 }));
                               }}
-                              className="w-24 text-right border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-blue-400 bg-white"
+                              className="w-24 text-right border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:border-[#DA7756] bg-white"
                             />
                           </div>
                         </div>
@@ -1426,7 +1420,7 @@ export const CreatePaymentPage: React.FC = () => {
                     </div>
                     <div className="flex justify-between text-sm pt-2">
                       <span className="text-gray-600 flex items-center gap-1">
-                        <AlertTriangle className="h-4 w-4 text-orange-400 fill-orange-400 text-white" />
+                        <AlertTriangle className="h-4 w-4 text-orange-400 fill-orange-400" />
                         Amount in Excess:
                       </span>
                       <span className="font-medium text-gray-800">
@@ -1441,7 +1435,7 @@ export const CreatePaymentPage: React.FC = () => {
               <div className="border border-gray-200 mt-6 bg-white">
                 <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
                   <FileText
-                    className="w-[18px] h-[18px] text-[#db4a4a]"
+                    className="w-[18px] h-[18px] text-[#DA7756]"
                     strokeWidth={2}
                   />
                   <span className="text-[13px] font-bold tracking-wide text-[#333]">
@@ -1462,7 +1456,7 @@ export const CreatePaymentPage: React.FC = () => {
               <div className="border border-gray-200 mt-6 bg-white">
                 <div className="flex items-center gap-2 px-5 py-3 border-b border-gray-200">
                   <Paperclip
-                    className="w-[18px] h-[18px] text-[#db4a4a]"
+                    className="w-[18px] h-[18px] text-[#DA7756]"
                     strokeWidth={2}
                   />
                   <span className="text-[13px] font-bold tracking-wide text-[#333]">
@@ -1558,14 +1552,14 @@ export const CreatePaymentPage: React.FC = () => {
                 <Button
                   variant="outline"
                   disabled={isSaving}
-                  className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 h-9 px-4 text-sm font-medium rounded-[4px]"
+                  className="fm-button-fix border border-[#DA7756] text-[#DA7756] hover:!bg-[#DA7756]/10 h-9 px-4 text-sm font-medium rounded-[4px]"
                   onClick={() => handleSave("DRAFT")}
                 >
                   {isSaving ? "Saving..." : "Save as Draft"}
                 </Button>
                 <Button
                   disabled={isSaving}
-                  className="bg-[#2977ff] hover:bg-blue-600 text-white h-9 px-4 text-sm font-medium rounded-[4px]"
+                  className="fm-button-fix fm-button-brand h-9 px-4 text-sm font-medium rounded-[4px]"
                   onClick={() => handleSave("PAID")}
                 >
                   {isSaving ? "Saving..." : "Save as Paid"}
@@ -1573,7 +1567,7 @@ export const CreatePaymentPage: React.FC = () => {
                 <Button
                   variant="outline"
                   disabled={isSaving}
-                  className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 h-9 px-4 text-sm font-medium rounded-[4px]"
+                  className="fm-button-fix border border-[#DA7756] text-[#DA7756] hover:!bg-[#DA7756]/10 h-9 px-4 text-sm font-medium rounded-[4px]"
                   onClick={() => navigate("/accounting/payments-made")}
                 >
                   Cancel
@@ -1604,7 +1598,7 @@ export const CreatePaymentPage: React.FC = () => {
                     <h2 className="text-lg font-semibold text-gray-900">
                       {selectedSupplier?.name ?? "-"}
                     </h2>
-                    <ExternalLink className="h-4 w-4 text-blue-500 cursor-pointer" />
+                    <ExternalLink className="h-4 w-4 text-[#DA7756] cursor-pointer" />
                   </div>
                 </div>
               </div>
@@ -1619,7 +1613,7 @@ export const CreatePaymentPage: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Mail className="h-4 w-4 text-gray-400" />
-                    <span className="text-blue-500">
+                    <span className="text-[#DA7756]">
                       {selectedSupplier?.email ?? "-"}
                     </span>
                   </div>
@@ -1872,7 +1866,7 @@ export const CreatePaymentPage: React.FC = () => {
                   {!modalAutoGenerate && (
                     <div className="grid grid-cols-2 gap-4 pl-7">
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider text-gray-400">Prefix</Label>
+                        <Label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Prefix</Label>
                         <Input
                           value={modalPrefix}
                           onChange={(e) => setModalPrefix(e.target.value)}
@@ -1881,7 +1875,7 @@ export const CreatePaymentPage: React.FC = () => {
                         />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider text-gray-400">Payment Number</Label>
+                        <Label className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Payment Number</Label>
                         <Input
                           value={modalNextNumber}
                           onChange={(e) => setModalNextNumber(e.target.value)}
@@ -1909,7 +1903,7 @@ export const CreatePaymentPage: React.FC = () => {
                     setPaymentNumber(`${modalPrefix}${modalNextNumber}`);
                   }
                 }}
-                className="bg-[#2977ff] hover:bg-blue-600 text-white h-9 px-6 text-sm font-medium rounded-[4px]"
+                className="fm-button-fix fm-button-brand h-9 px-6 text-sm font-medium rounded-[4px]"
               >
                 Save
               </Button>

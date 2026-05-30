@@ -1308,20 +1308,20 @@ export const AddEventPage = () => {
           </div>
         </div>
 
-        <div className="flex justify-center gap-4 mt-8 pb-8">
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="disabled:!bg-[#DF808B] !bg-[#C72030] hover:bg-[#d0606e] !text-white min-w-[150px] h-10"
-          >
-            {isSubmitting ? "Submitting..." : "Submit"}
-          </Button>
+        <div className="flex justify-end gap-4 mt-8 pb-8">
           <Button
             onClick={() => navigate(`/pulse/events`)}
             variant="outline"
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white min-w-[150px] h-10"
+            className="bg-[#fdf5f2] border border-[#DA7756] text-[#DA7756] hover:bg-[#f8e7df] min-w-[150px] h-10"
           >
             Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="fm-button-fix fm-button-brand min-w-[150px] h-10 disabled:opacity-70"
+          >
+            {isSubmitting ? "Submitting..." : "Submit"}
           </Button>
         </div>
       </div>

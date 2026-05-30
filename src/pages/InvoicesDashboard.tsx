@@ -47,6 +47,13 @@ const columns: ColumnConfig[] = [
     draggable: true,
   },
   {
+    key: 'external_id',
+    label: 'Reference Number',
+    sortable: true,
+    defaultVisible: true,
+    draggable: true,
+  },
+  {
     key: 'wo_amount',
     label: 'WO Amount',
     sortable: true,

@@ -1,16 +1,26 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Edit } from "lucide-react";
+import { Plus, Eye, Edit, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ServicePRFilterDialog } from "@/components/ServicePRFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import {
   getServicePr,
   updateServiceActiveStaus,
 } from "@/store/slices/servicePRSlice";
+import { cache } from "@/utils/cacheUtils";
+
+const CACHE_TTL = 5 * 60 * 1000;
+const STALE_TTL = 30 * 60 * 1000;
+const CACHE_PREFIX = "service_pr";
+
+const buildCacheKey = (siteId: string, page: number, params: Record<string, any>) => {
+  const { reference_number = "", external_id = "", supplier_name = "", approval_status = "", search = "" } = params;
+  return `${CACHE_PREFIX}_site${siteId}_p${page}_ref${reference_number}_ext${external_id}_sup${supplier_name}_st${approval_status}_q${search}`;
+};
 import {
   Pagination,
   PaginationContent,
@@ -116,7 +126,9 @@ export const ServicePRDashboard = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
-  const { loading } = useAppSelector((state) => state.getServicePr);
+  const [loading, setLoading] = useState(false);
+  const bgRefreshingRef = useRef(false);
+  const currentSiteRef = useRef(localStorage.getItem("selectedSiteId") || "");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
@@ -136,29 +148,75 @@ export const ServicePRDashboard = () => {
     [key: string]: boolean;
   }>({});
 
-  const fetchData = async (filterParams = {}) => {
+  const applyResponse = (response: any) => {
+    setServicePR(response.work_orders);
+    setPagination({
+      current_page: response.current_page,
+      total_count: response.total_count,
+      total_pages: response.total_pages,
+    });
+  };
+
+  const fetchData = async (filterParams: Record<string, any> = {}) => {
+    const page: number = filterParams.page ?? pagination.current_page;
+    const siteId = localStorage.getItem("selectedSiteId") || "";
+    const cacheKey = buildCacheKey(siteId, page, filterParams);
+
+    // Fresh cache — return instantly, no network call
+    const fresh = cache.get<any>(cacheKey, CACHE_TTL);
+    if (fresh) {
+      applyResponse(fresh);
+      return;
+    }
+
+    // Stale cache — show old data immediately, refresh silently in background
+    const stale = cache.get<any>(cacheKey, STALE_TTL);
+    if (stale) {
+      applyResponse(stale);
+      if (!bgRefreshingRef.current) {
+        bgRefreshingRef.current = true;
+        dispatch(getServicePr({ baseUrl, token, page, ...filterParams }))
+          .unwrap()
+          .then((response) => {
+            cache.set(cacheKey, response, CACHE_TTL);
+            applyResponse(response);
+          })
+          .catch(console.error)
+          .finally(() => { bgRefreshingRef.current = false; });
+      }
+      return;
+    }
+
+    // No cache — fetch with loading indicator
+    setLoading(true);
     try {
       const response = await dispatch(
-        getServicePr({
-          baseUrl,
-          token,
-          page: pagination.current_page,
-          ...filterParams,
-        })
+        getServicePr({ baseUrl, token, page, ...filterParams })
       ).unwrap();
-      setServicePR(response.work_orders);
-      setPagination({
-        current_page: response.current_page,
-        total_count: response.total_count,
-        total_pages: response.total_pages,
-      });
+      cache.set(cacheKey, response, CACHE_TTL);
+      applyResponse(response);
     } catch (error) {
       toast.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  // Invalidate cache and re-fetch when site changes while page is open
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newSiteId = localStorage.getItem("selectedSiteId") || "";
+      if (newSiteId !== currentSiteRef.current) {
+        currentSiteRef.current = newSiteId;
+        cache.invalidatePattern(`${CACHE_PREFIX}*`);
+        fetchData();
+      }
+    }, 500);
+    return () => clearInterval(interval);
   }, []);
 
   const handleApplyFilters = (newFilters: {
@@ -297,7 +355,7 @@ export const ServicePRDashboard = () => {
       >
         <Eye className="w-4 h-4" />
       </Button>
-      {item.all_level_approved === null && (
+      {item.can_edit && (
         <Button
           size="sm"
           variant="ghost"
@@ -313,8 +371,13 @@ export const ServicePRDashboard = () => {
     </div>
   );
 
+  const handleRefresh = () => {
+    cache.invalidatePattern(`${CACHE_PREFIX}*`);
+    fetchData();
+  };
+
   const leftActions = (
-    <>
+    <div className="flex items-center gap-2">
       <Button
         className="bg-[#C72030] hover:bg-[#C72030]/90 text-white h-9 px-4 text-sm font-medium"
         onClick={() => navigate("/finance/service-pr/add")}
@@ -322,7 +385,20 @@ export const ServicePRDashboard = () => {
         <Plus className="w-4 h-4 mr-2" />
         Add
       </Button>
-    </>
+    </div>
+  );
+
+  const refreshAction = (
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-9 w-9 p-0"
+      onClick={handleRefresh}
+      disabled={loading}
+      title="Refresh"
+    >
+      <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+    </Button>
   );
 
   const handlePageChange = async (page: number) => {
@@ -491,6 +567,7 @@ export const ServicePRDashboard = () => {
         enableSelection={true}
         leftActions={leftActions}
         onFilterClick={() => setIsFilterDialogOpen(true)}
+        filterAdjacentActions={refreshAction}
         loading={loading}
       />
 

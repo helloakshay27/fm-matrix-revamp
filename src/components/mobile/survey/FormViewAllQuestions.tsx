@@ -33,6 +33,27 @@ export const FormViewAllQuestions: React.FC<FormViewAllQuestionsProps> = ({
         });
     };
 
+    const handleCheckboxSelect = (questionId: number, option: SurveyOption, currentSelectedOptions: SurveyOption[] = []) => {
+        const isSelected = currentSelectedOptions.some((opt) => opt.id === option.id);
+        const newSelected = isSelected
+            ? currentSelectedOptions.filter((opt) => opt.id !== option.id)
+            : [...currentSelectedOptions, option];
+        onAnswerChange(questionId, {
+            qtype: "checkbox",
+            value: newSelected.map((opt) => opt.qname).join(", "),
+            selectedOptions: newSelected,
+            comments: "",
+        });
+    };
+
+    const handleDateChange = (questionId: number, value: string) => {
+        onAnswerChange(questionId, {
+            qtype: "date",
+            value: value,
+            comments: "",
+        });
+    };
+
     const handleRatingSelect = (questionId: number, rating: number, question: SurveyQuestion) => {
         onAnswerChange(questionId, {
             qtype: "rating",
@@ -76,10 +97,13 @@ export const FormViewAllQuestions: React.FC<FormViewAllQuestionsProps> = ({
             switch (question.qtype) {
                 case "multiple":
                     return answer.selectedOptions && answer.selectedOptions.length > 0;
+                case "checkbox":
+                    return answer.selectedOptions && answer.selectedOptions.length > 0;
                 case "input":
                 case "input_box":
                 case "text":
                 case "description":
+                case "date":
                     return answer.value && answer.value.toString().trim() !== "";
                 case "rating":
                 case "emoji":
@@ -124,6 +148,44 @@ export const FormViewAllQuestions: React.FC<FormViewAllQuestionsProps> = ({
                                 />
                             )}
 
+                            {/* Checkbox (Multi-Select) */}
+                            {question.qtype === "checkbox" && (
+                                <div className="space-y-2">
+                                    {question.snag_quest_options.map((option) => {
+                                        const isChecked = (answer?.selectedOptions || []).some(
+                                            (opt: SurveyOption) => opt.id === option.id
+                                        );
+                                        return (
+                                            <button
+                                                type="button"
+                                                key={option.id}
+                                                onClick={() => handleCheckboxSelect(question.id, option, answer?.selectedOptions || [])}
+                                                className={`w-full p-3 rounded-lg border-2 text-left transition-all flex items-center justify-between ${
+                                                    isChecked
+                                                        ? "border-blue-600 bg-blue-50"
+                                                        : "border-gray-300 bg-white hover:bg-gray-50"
+                                                }`}
+                                            >
+                                                <span className="font-medium text-sm">{option.qname}</span>
+                                                <div
+                                                    className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                                                        isChecked
+                                                            ? "bg-blue-600 border-blue-600"
+                                                            : "border-gray-300"
+                                                    }`}
+                                                >
+                                                    {isChecked && (
+                                                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                        </svg>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
                             {/* Rating */}
                             {question.qtype === "rating" && (
                                 <StarRatingQuestion
@@ -151,6 +213,16 @@ export const FormViewAllQuestions: React.FC<FormViewAllQuestionsProps> = ({
                                     value={answer?.value?.toString() || ""}
                                     onChange={(e) => handleTextChange(question.id, e.target.value, "input")}
                                     placeholder="Enter your answer..."
+                                    className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                />
+                            )}
+
+                            {/* Date */}
+                            {question.qtype === "date" && (
+                                <input
+                                    type="date"
+                                    value={answer?.value?.toString() || ""}
+                                    onChange={(e) => handleDateChange(question.id, e.target.value)}
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                                 />
                             )}

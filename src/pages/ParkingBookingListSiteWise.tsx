@@ -2504,9 +2504,8 @@ const ParkingBookingListSiteWise = () => {
 
               {/* Filter Button */}
               <Button
-                variant="outline"
                 onClick={handleToggleFilters}
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 w-10 h-10 p-0"
+                className="fm-button-fix fm-button-brand px-8 py-2"
               >
                 <Filter className="w-4 h-4" />
               </Button>
@@ -2517,12 +2516,12 @@ const ParkingBookingListSiteWise = () => {
               <ColumnVisibilityDropdown
                 columns={columns}
                 onColumnToggle={handleColumnToggle}
+                className="fm-button-fix fm-button-brand px-8 py-2"
               />
 
               <Button
-                variant="outline"
                 onClick={handleExport}
-                className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10 w-10 h-10 p-0"
+                className="fm-button-fix fm-button-brand px-8 py-2"
               >
                 <Download className="w-4 h-4" />
               </Button>

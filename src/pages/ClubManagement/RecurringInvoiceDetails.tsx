@@ -69,7 +69,7 @@ import {
 } from "@/components/ui/accordion";
 import AccountingDocumentPdf from "@/components/accounting/AccountingDocumentPdf";
 
-export const InvoiceDashboardDetailsPage = () => {
+export const RecurringInvoiceDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -290,11 +290,7 @@ export const InvoiceDashboardDetailsPage = () => {
   };
 
   const handleEdit = () => {
-    if (invoiceData?.recurring) {
-      navigate(`/accounting/recurring-invoices/edit/${id}`);
-    } else {
-      navigate(`/accounting/invoices/edit/${id}`);
-    }
+    navigate(`/accounting/recurring-invoices/edit/${id}`);
   };
 
   const handleDelete = async () => {
@@ -309,7 +305,7 @@ export const InvoiceDashboardDetailsPage = () => {
         }
       );
       sonnerToast.success("Invoice deleted successfully");
-      navigate("/accounting/invoices/list");
+      navigate("/accounting/recurring-invoices");
     } catch (error) {
       console.error("Error deleting invoice:", error);
       sonnerToast.error("Failed to delete invoice");
@@ -561,7 +557,7 @@ export const InvoiceDashboardDetailsPage = () => {
           <p className="text-lg text-muted-foreground">Invoice not found</p>
           <Button
             className="mt-4"
-            onClick={() => navigate("/accounting/invoices/list")}
+            onClick={() => navigate("/accounting/recurring-invoices")}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Invoices
@@ -608,7 +604,7 @@ export const InvoiceDashboardDetailsPage = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate("/accounting/invoices/list")}
+              onClick={() => navigate("/accounting/recurring-invoices")}
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
@@ -627,15 +623,16 @@ export const InvoiceDashboardDetailsPage = () => {
                         <Badge className={`${getStatusColor(invoiceData.status)} border`}>
                             {invoiceData.status?.replace(/_/g, " ").toUpperCase()}
                         </Badge>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={handleEdit}
-                            className="gap-2"
-                        >
-                            <Edit className="h-4 w-4" />
-                            Edit
-                        </Button>
+
+            <Button
+              size="sm"
+              variant="default"
+              onClick={handleEdit}
+              className="gap-2"
+            >
+              <Edit className="h-4 w-4" />
+              Edit
+            </Button>
 
             {invoiceData?.approval_status?.approval_levels?.length > 0 && (
               <Button
@@ -1886,4 +1883,4 @@ export const InvoiceDashboardDetailsPage = () => {
   );
 };
 
-export default InvoiceDashboardDetailsPage;
+export default RecurringInvoiceDetailsPage;

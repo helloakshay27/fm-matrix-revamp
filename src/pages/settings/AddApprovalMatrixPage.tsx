@@ -479,7 +479,7 @@ const AddApprovalMatrixPage = () => {
           <Button
             onClick={handleCreate}
             disabled={isSubmitting}
-            className="bg-[#6B2C91] hover:bg-[#5A2478] text-white px-8 disabled:opacity-50"
+            className="fm-button-fix fm-button-brand px-8 py-2"
           >
             {isSubmitting ? 'Creating...' : 'Create'}
           </Button>

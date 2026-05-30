@@ -92,15 +92,15 @@ const MarketPlaceAllPage = () => {
   }: {
     app: typeof featuredApps[0];
     isEditor?: boolean;
-  }) => <div key={`${isEditor ? 'editor-' : ''}${app.id}`} onClick={() => handleCardClick(app.route)} className={`group relative overflow-hidden rounded-lg cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl ${isEditor ? 'bg-white border border-gray-200 hover:border-[#C72030]/30' : 'bg-white hover:bg-gradient-to-br hover:from-white hover:to-red-50'}`}>
+  }) => <div key={`${isEditor ? 'editor-' : ''}${app.id}`} onClick={() => handleCardClick(app.route)} className={`group relative overflow-hidden rounded-lg cursor-pointer transition-all duration-300 ease-in-out transform hover:scale-105 hover:shadow-xl ${isEditor ? 'bg-white' : 'bg-white hover:bg-gradient-to-br hover:from-white hover:to-red-50'}`}>
       <div className="p-4 relative z-10">
         <div className="flex items-center justify-between mb-3">
-          <div className="p-2 rounded-lg bg-gray-50 group-hover:bg-[#C72030]/10 transition-colors duration-300">
-            <app.icon className="w-6 h-6 text-[#C72030] group-hover:scale-110 transition-transform duration-300" />
+          <div className="fm-button-fix fm-button-brand !h-8 !w-8 !min-h-8 !p-0 rounded-lg bg-[#da7756] text-white transition-colors duration-300">
+            <app.icon className="w-4 h-4 text-white stroke-white group-hover:scale-110 transition-transform duration-300" />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs bg-gray-100 px-2 py-1 rounded font-medium">FREE</span>
-            <Button onClick={e => handleInstall(app.id, e)} disabled={installingApps.includes(app.id)} size="sm" className={`opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 bg-[#C72030] hover:bg-[#C72030]/90 text-white px-3 py-1 text-xs ${installingApps.includes(app.id) ? 'opacity-100' : ''}`}>
+            <Button onClick={e => handleInstall(app.id, e)} disabled={installingApps.includes(app.id)} size="sm" className={`fm-button-fix fm-button-brand px-8 py-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 text-xs ${installingApps.includes(app.id) ? 'opacity-100' : ''}`}>
               {installingApps.includes(app.id) ? <>
                   <div className="w-3 h-3 border border-white border-t-transparent rounded-full animate-spin mr-1"></div>
                   Installing...
@@ -138,7 +138,7 @@ const MarketPlaceAllPage = () => {
           <div className="text-sm text-gray-500">
             {featuredApps.length} apps found
           </div>
-          <Button onClick={() => setIsFilterOpen(true)} variant="outline" className="fm-button-fix fm-button-outline px-8 py-2">
+          <Button onClick={() => setIsFilterOpen(true)} className="fm-button-fix fm-button-brand px-8 py-2">
             <Filter className="w-4 h-4 mr-2" />
             Filters
           </Button>

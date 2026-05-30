@@ -18,6 +18,8 @@ const ticketOptions = [
   { id: 'category-wise', label: 'Unit Category-wise Tickets', checked: true, chartSection: 'categoryChart' },
   { id: 'aging-matrix', label: 'Ticket ageing matrix', checked: true, chartSection: 'agingMatrix' },
   { id: 'resolutionTat', label: 'Resolution TAT', checked: true, chartSection: 'resolutionTat' },
+  { id: 'issueBreakdown', label: 'Issue Breakdown Category Wise', checked: true, chartSection: 'issueBreakdown' },
+  { id: 'siteWiseSummary', label: 'Site / Project-wise Issue Summary', checked: true, chartSection: 'siteWiseSummary' },
 ];
 
 interface SelectorOption {

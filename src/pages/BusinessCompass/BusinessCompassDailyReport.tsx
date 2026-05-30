@@ -272,7 +272,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     []
   );
   const [planningItems, setPlanningItems] = useState<
-    { id: string; text: string; starred: boolean; source_id?: number | null; source_type?: string | null }[]
+    { id: string; text: string; starred: boolean; source_id?: number | null; source_type?: string | null; fromWeeklyPlan?: boolean }[]
   >([]);
   const [uploadedFiles, setUploadedFiles] = useState<
     {
@@ -1945,12 +1945,31 @@ const BusinessCompassDailyReport: React.FC = () => {
             setCurrentReportId(null);
             setUploadedFiles([]);
             setReportAttachments([]);
-            setPlanningItems([]);
             setKpiEntries({});
             setSelectedTasksIssues({});
             setIsAbsent(false);
             setAbsenceReason("");
             setSelfRating([2]);
+
+            // Load tomorrow_plan from a not_submitted/weekly-plan-prefilled report (id: null)
+            const weeklyTomorrowPlan = getNonEmptyReportItems(
+              existingReport?.report_data?.tomorrow_plan
+            );
+            if (weeklyTomorrowPlan.length) {
+              setPlanningItems(
+                weeklyTomorrowPlan.map((p: any, idx: number) => ({
+                  id: `weekly-plan-${idx}`,
+                  text: getReportItemText(p),
+                  starred: p.is_starred ?? p.starred ?? false,
+                  fromWeeklyPlan: true,
+                  ...(p.source_id != null
+                    ? { source_id: p.source_id, source_type: p.source_type }
+                    : {}),
+                }))
+              );
+            } else {
+              setPlanningItems([]);
+            }
 
             // No report today, just apply carried items
             setAccomplishments(carriedPlanItems);
@@ -3504,45 +3523,60 @@ const BusinessCompassDailyReport: React.FC = () => {
                               key={item.id}
                               className="relative group animate-in fade-in slide-in-from-top-1 duration-200"
                             >
-                              <div className="flex items-center gap-4 bg-[#fafafa] border border-[#f3f4f6] rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] hover:border-[#DA7756]/30 transition-all">
-                                <Star
-                                  size={18}
-                                  className={cn(
-                                    "cursor-pointer transition-all shrink-0",
-                                    item.starred
-                                      ? "text-[#eab308] fill-[#eab308]"
-                                      : "text-gray-300 hover:text-gray-400"
-                                  )}
-                                  onClick={() => togglePlanningStar(item.id)}
-                                />
-                                {item.source_type && (
-                                  <span className={cn(
-                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                    item.source_type === "task"
-                                      ? "bg-[#DA7756] text-white"
-                                      : item.source_type === "issue"
-                                        ? "bg-violet-600 text-white"
-                                        : "bg-amber-500 text-white"
-                                  )}>
-                                    {item.source_type}
-                                  </span>
-                                )}
-                                <input
-                                  type="text"
-                                  value={item.text}
-                                  onChange={(e) =>
-                                    updatePlanningText(item.id, e.target.value)
-                                  }
-                                  placeholder="What's your strategic priority?"
-                                  className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
-                                />
-                                <div className="flex items-center gap-2">
-                                  <X
+                              <div className={cn(
+                                "flex flex-col bg-[#fafafa] border rounded-[10px] p-3 shadow-sm hover:bg-[#f9fafb] transition-all",
+                                item.fromWeeklyPlan
+                                  ? "border-blue-200 bg-blue-50/30 hover:border-blue-300"
+                                  : "border-[#f3f4f6] hover:border-[#DA7756]/30"
+                              )}>
+                                <div className="flex items-center gap-4">
+                                  <Star
                                     size={18}
-                                    className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
-                                    onClick={() => removePlanningItem(item.id)}
+                                    className={cn(
+                                      "cursor-pointer transition-all shrink-0",
+                                      item.starred
+                                        ? "text-[#eab308] fill-[#eab308]"
+                                        : "text-gray-300 hover:text-gray-400"
+                                    )}
+                                    onClick={() => togglePlanningStar(item.id)}
                                   />
+                                  {item.source_type && (
+                                    <span className={cn(
+                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                      item.source_type === "task"
+                                        ? "bg-[#DA7756] text-white"
+                                        : item.source_type === "issue"
+                                          ? "bg-violet-600 text-white"
+                                          : "bg-amber-500 text-white"
+                                    )}>
+                                      {item.source_type}
+                                    </span>
+                                  )}
+                                  <input
+                                    type="text"
+                                    value={item.text}
+                                    onChange={(e) =>
+                                      updatePlanningText(item.id, e.target.value)
+                                    }
+                                    placeholder="What's your strategic priority?"
+                                    className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
+                                  />
+                                  <div className="flex items-center gap-2">
+                                    <X
+                                      size={18}
+                                      className="text-red-500 cursor-pointer opacity-70 hover:opacity-100 transition-opacity"
+                                      onClick={() => removePlanningItem(item.id)}
+                                    />
+                                  </div>
                                 </div>
+                                {item.fromWeeklyPlan && (
+                                  <div className="pl-7 pt-1">
+                                    <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
+                                      <CalendarIcon size={10} />
+                                      From Weekly Report
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           ))}
