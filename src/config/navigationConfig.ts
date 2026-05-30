@@ -499,7 +499,7 @@ export const modulesByPackage = {
         },
         { name: "PO", href: "/finance/po", color: "text-[#1a1a1a]" },
         { name: "WO", href: "/finance/wo", color: "text-[#1a1a1a]" },
-        { name: "GRN/ SRN", href: "/finance/grn-srn", color: "text-[#1a1a1a]" },
+        { name: "GRN", href: "/finance/grn-srn", color: "text-[#1a1a1a]" },
         {
           name: "Auto Saved PR",
           href: "/finance/auto-saved-pr",
@@ -1274,7 +1274,7 @@ export const sidebarToApiFunctionMapping = {
   "material pr": ["po", "pms_purchase_orders"],
   "service pr": ["wo", "pms_work_orders"],
   "po/wo": ["po", "pms_purchase_orders", "wo", "pms_work_orders"],
-  "grn/ srn": ["grn", "pms_grns", "srns", "pms_srns"],
+  "grn/srn": ["grn", "pms_grns", "srns", "pms_srns"],
   srns: ["srns", "pms_srns"],
   "auto saved pr": ["po", "pms_purchase_orders"],
   invoices: ["wo invoices", "pms_work_order_invoices"],
