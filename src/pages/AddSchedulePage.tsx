@@ -2319,21 +2319,6 @@ export const AddSchedulePage = () => {
       }
     }
 
-    // Attachment validation
-    if (!attachments || attachments.length === 0) {
-      errors["attachments"] = "At least one attachment is required";
-      // toast.error("Please upload at least one attachment.");
-      //    toast.error("Please upload at least one attachment.", {
-      //   position: "top-right",
-      //   duration: 4000,
-      //   style: {
-      //     background: "#fff",
-      //     color: "black",
-      //     border: "none",
-      //   },
-      // });
-    }
-
     // Update field errors
     setFieldErrors((prev) => ({
       ...prev,
@@ -2900,44 +2885,63 @@ export const AddSchedulePage = () => {
     }, 100);
   };
 
-  const handleStepClick = (step: number) => {
-    // Validate current step before allowing navigation
-    if (step > activeStep && !validateCurrentStep()) {
+  const handleStepClick = async (step: number) => {
+    if (step === activeStep) return;
+
+    // Going backward — always allowed
+    if (step < activeStep) {
+      setCompletedSteps(completedSteps.filter(stepIndex => stepIndex < step));
+      setActiveStep(step);
+      setEditingStep(step);
+      setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
       return;
     }
 
-    if (step < activeStep) {
-      setCompletedSteps(completedSteps.filter(stepIndex => stepIndex < step));
-    } else if (step > activeStep) {
-      if (!completedSteps.includes(activeStep)) {
-        setCompletedSteps([...completedSteps, activeStep]);
-        // Show success message for the completed step
-        const stepMessages = {
-          0: "Basic Configuration completed successfully!",
-          1: "Schedule Setup completed successfully!",
-          2: "Question Setup completed successfully!",
-          3: "Time Setup completed successfully!",
-          4: "Mapping completed successfully!"
-        };
-        const currentStepMessage = stepMessages[activeStep as keyof typeof stepMessages];
-        if (currentStepMessage) {
-          toast.success(currentStepMessage, {
-            position: 'top-right',
-            duration: 4000,
-            style: {
-              background: '#fff',
-              color: 'black',
-              border: 'none',
-            },
-          });
-        }
+    // Going forward — every step before the target must be completed (or be the active step being validated)
+    const allPreviousCompleted = Array.from({ length: step }, (_, i) => i)
+      .every(i => completedSteps.includes(i) || i === activeStep);
+
+    if (!allPreviousCompleted) {
+      toast.error("Please complete the previous steps first.", {
+        position: 'top-right',
+        duration: 4000,
+        style: { background: '#fff', color: 'black', border: 'none' },
+      });
+      return;
+    }
+
+    // Validate the current step before advancing
+    if (!(await validateCurrentStep())) {
+      toast.error("Please fill all required fields before proceeding.", {
+        position: 'top-right',
+        duration: 4000,
+        style: { background: '#fff', color: 'black', border: 'none' },
+      });
+      return;
+    }
+
+    if (!completedSteps.includes(activeStep)) {
+      setCompletedSteps([...completedSteps, activeStep]);
+      const stepMessages: Record<number, string> = {
+        0: "Basic Configuration completed successfully!",
+        1: "Schedule Setup completed successfully!",
+        2: "Question Setup completed successfully!",
+        3: "Time Setup completed successfully!",
+        4: "Mapping completed successfully!",
+      };
+      const msg = stepMessages[activeStep];
+      if (msg) {
+        toast.success(msg, {
+          position: 'top-right',
+          duration: 4000,
+          style: { background: '#fff', color: 'black', border: 'none' },
+        });
       }
     }
+
     setActiveStep(step);
     setEditingStep(step);
-    setTimeout(() => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 100);
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 100);
   };
 
   // Check if a step should be red (active or completed)
@@ -3590,7 +3594,7 @@ export const AddSchedulePage = () => {
                     },
                   }}
                 >
-                  Add Attachment*
+                  Add Attachment
                 </MuiButton>
 
                 {fieldErrors.attachments && (
