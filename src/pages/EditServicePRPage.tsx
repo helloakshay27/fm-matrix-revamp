@@ -1,4 +1,5 @@
 import axios from "axios";
+import { cache } from "@/utils/cacheUtils";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Loader2, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -634,6 +635,7 @@ export const EditServicePRPage = () => {
     try {
       await dispatch(editServicePR({ data: payload, baseUrl, token, id: Number(id) })).unwrap();
       toast.success("Service PR updated successfully");
+      cache.invalidatePattern("service_pr*");
       navigate("/finance/service-pr");
     } catch (error) {
       console.log(error);

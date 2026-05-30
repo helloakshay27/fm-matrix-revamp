@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { cache } from "@/utils/cacheUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X, Info } from "lucide-react";
@@ -776,6 +777,7 @@ export const AddMaterialPRDashboard = () => {
     try {
       await dispatch(createMaterialPR({ baseUrl, token, data: payload })).unwrap();
       toast.success("Material PR created successfully");
+      cache.invalidatePattern("material_pr*");
       navigate("/finance/material-pr");
     } catch (error) {
       toast.error(error);

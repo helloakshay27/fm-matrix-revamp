@@ -22,6 +22,14 @@ const TaskCard = ({
     handleLink = () => { },
     iconColor = "#323232",
     count = 0,
+    type = "task",
+}: {
+    task: any;
+    toggleSubCard?: () => void;
+    handleLink?: () => void;
+    iconColor?: string;
+    count?: number;
+    type?: "task" | "issue";
 }) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -101,10 +109,10 @@ const TaskCard = ({
                 className="mb-2 truncate cursor-pointer text-start hover:text-blue-600 transition-colors"
                 onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/vas/tasks/${task.id}`);
+                    navigate(type === "issue" ? `/vas/issues/${task.id}` : `/vas/tasks/${task.id}`);
                 }}
             >
-                <span className="text-blue-500">T-{task.id}</span> {task.title}
+                <span className="text-blue-500">{type === "issue" ? "I" : "T"}-{task.id}</span> {task.title}
             </p>
             <div
                 {...listeners}

@@ -1579,7 +1579,7 @@ if (!profileName || profileName.trim() === "") {
                   <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                     Billing Address
                     <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                      <EditOutlined fontSize="small" className="text-blue-500" />
+                      <EditOutlined fontSize="small" className="text-[#DA7756]" />
                     </IconButton>
                   </div>
                   {selectedBillingAddress?.address ? (
@@ -1603,7 +1603,7 @@ if (!profileName || profileName.trim() === "") {
                   <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                     Shipping Address
                     <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                      <EditOutlined fontSize="small" className="text-blue-500" />
+                      <EditOutlined fontSize="small" className="text-[#DA7756]" />
                     </IconButton>
                   </div>
                   {selectedShippingAddress?.address ? (
@@ -1631,14 +1631,14 @@ if (!profileName || profileName.trim() === "") {
                   <span className="text-gray-500">GST Treatment:</span>
                   <span className="text-gray-800">{getGstTreatmentLabel(selectedCustomer.gst_preference || selectedCustomer.gst_treatment)}</span>
                   <IconButton size="small" onClick={openGstModal}>
-                    <EditOutlined fontSize="small" className="text-blue-500" />
+                    <EditOutlined fontSize="small" className="text-[#DA7756]" />
                   </IconButton>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-gray-500">GSTIN:</span>
                   <span className="text-gray-800 font-medium">{selectedCustomer.gstin || "—"}</span>
                   <IconButton size="small" onClick={openGstModal}>
-                    <EditOutlined fontSize="small" className="text-blue-500" />
+                    <EditOutlined fontSize="small" className="text-[#DA7756]" />
                   </IconButton>
                 </div>
               </div>
@@ -1666,7 +1666,7 @@ if (!profileName || profileName.trim() === "") {
                 </label>
                 {selectedCustomer && (
                   <IconButton size="small" onClick={() => openAddressListModal('billing')}>
-                    <EditOutlined fontSize="small" className="text-blue-500" />
+                    <EditOutlined fontSize="small" className="text-[#DA7756]" />
                   </IconButton>
                 )}
               </div>
@@ -1699,7 +1699,7 @@ if (!profileName || profileName.trim() === "") {
                 </label>
                 {selectedCustomer && (
                   <IconButton size="small" onClick={() => openAddressListModal('shipping')}>
-                    <EditOutlined fontSize="small" className="text-blue-500" />
+                    <EditOutlined fontSize="small" className="text-[#DA7756]" />
                   </IconButton>
                 )}
               </div>
@@ -1943,7 +1943,7 @@ if (!profileName || profileName.trim() === "") {
                               />
                             </td>
                             <td className="border p-2">
-                              <button className="text-red-600 text-xs" onClick={async () => {
+                              <button className="text-[#DA7756] text-xs" onClick={async () => {
                                 if (row.id) {
                                   await handleRemovePaymentTerm(row.id, idx);
                                 } else {
@@ -1957,7 +1957,7 @@ if (!profileName || profileName.trim() === "") {
                     </table>
                     <div className="flex gap-2 mb-2">
                       <button
-                        className="text-blue-600 text-sm"
+                        className="text-[#DA7756] text-sm"
                         onClick={handleAddNewTerm}
                       >
                         + Add New
@@ -2157,7 +2157,7 @@ if (!profileName || profileName.trim() === "") {
                 <td className="border p-2">
 
                   <button
-                    className="text-red-600 text-xs"
+                    className="text-[#DA7756] text-xs"
 
                     onClick={async () => {
 
@@ -2194,7 +2194,7 @@ if (!profileName || profileName.trim() === "") {
         <div className="flex gap-2 mb-3">
 
           <button
-            className="text-blue-600 text-sm"
+            className="text-[#DA7756] text-sm"
 
             onClick={handleAddNewTerm}
           >
@@ -2816,7 +2816,7 @@ if (!profileName || profileName.trim() === "") {
                       openAddressFormModal('edit', activeAddressType, addr);
                     }}
                   >
-                    <EditOutlined fontSize="small" className="text-blue-500" />
+                    <EditOutlined fontSize="small" className="text-[#DA7756]" />
                   </IconButton>
                 </div>
               </div>
@@ -2826,7 +2826,7 @@ if (!profileName || profileName.trim() === "") {
         <DialogActions className="!justify-between !px-4">
           <button
             type="button"
-            className="text-[#1d4ed8] text-sm font-medium"
+            className="text-[#DA7756] text-sm font-medium hover:text-[#C45F40]"
             onClick={() => openAddressFormModal('new', activeAddressType)}
           >
             + New address
@@ -2948,8 +2948,8 @@ if (!profileName || profileName.trim() === "") {
           <div className="p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                  <span className="text-xl font-bold text-blue-600">
+                <div className="w-12 h-12 rounded-full bg-[#fdf5f2] flex items-center justify-center">
+                  <span className="text-xl font-bold text-[#DA7756]">
                     {(selectedCustomer.company_name || selectedCustomer.name || 'V').charAt(0).toUpperCase()}
                   </span>
                 </div>
