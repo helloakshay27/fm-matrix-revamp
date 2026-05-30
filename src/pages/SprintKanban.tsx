@@ -1122,7 +1122,7 @@ const SprintKanban: React.FC<SprintKanbanProps> = ({ selectedProject: initialSel
                                                 target_date: item.end_date,
                                                 project_management_title: item.project_management_name,
                                                 milestone_title: item.milestone_name,
-                                                responsible_person_name: item.responsible_person?.name || item.responsible_person_name,
+                                                responsible_person: item.responsible_person?.name || item.responsible_person_name,
                                             };
                                             return (
                                                 <div key={`issue-${item.id}`} className="w-full my-2">
