@@ -111,7 +111,7 @@ export const FitoutRequestListDashboard = () => {
         <Button 
           variant="outline" 
           onClick={() => setShowFilters(true)}
-          className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          className="fm-button-fix fm-button-brand px-4 py-2"
         >
           <Filter className="w-4 h-4 mr-2" />
           Filters

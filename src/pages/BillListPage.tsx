@@ -430,10 +430,11 @@ export const BillListPage: React.FC = () => {
         loading={loading}
         leftActions={
           <Button
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
+            className="fm-button-fix fm-button-brand px-4 py-2 gap-2"
             onClick={() => navigate("/accounting/bills/create")}
           >
-            <Plus className="w-4 h-4 mr-2" /> New
+            <Plus className="w-4 h-4" />
+            New
           </Button>
         }
       />

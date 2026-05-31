@@ -290,7 +290,11 @@ export const InvoiceDashboardDetailsPage = () => {
   };
 
   const handleEdit = () => {
-    navigate(`/accounting/invoices/edit/${id}`);
+    if (invoiceData?.recurring) {
+      navigate(`/accounting/recurring-invoices/edit/${id}`);
+    } else {
+      navigate(`/accounting/invoices/edit/${id}`);
+    }
   };
 
   const handleDelete = async () => {
@@ -623,6 +627,15 @@ export const InvoiceDashboardDetailsPage = () => {
                         <Badge className={`${getStatusColor(invoiceData.status)} border`}>
                             {invoiceData.status?.replace(/_/g, " ").toUpperCase()}
                         </Badge>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleEdit}
+                            className="gap-2"
+                        >
+                            <Edit className="h-4 w-4" />
+                            Edit
+                        </Button>
 
             {invoiceData?.approval_status?.approval_levels?.length > 0 && (
               <Button

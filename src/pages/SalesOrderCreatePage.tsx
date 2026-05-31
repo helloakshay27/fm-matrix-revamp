@@ -2597,7 +2597,7 @@ export const SalesOrderCreatePage: React.FC = () => {
 
             <div className="flex items-center gap-3 justify-center pt-2">
                 <Button
-                    variant="text"
+                    className="fm-button-fix fm-button-brand px-4 py-2P"
                     onClick={() => handleSubmit(true)}
                     disabled={isSubmitting}
                     sx={{
@@ -2615,7 +2615,7 @@ export const SalesOrderCreatePage: React.FC = () => {
                     Save as Draft
                 </Button>
                 <Button
-                    variant="text"
+                    className="fm-button-fix fm-button-brand px-4 py-2P"
                     onClick={() => handleSubmit(false)}
                     disabled={isSubmitting}
                     sx={{

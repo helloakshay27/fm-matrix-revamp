@@ -261,6 +261,14 @@ const CRMWalletList = () => {
         },
     ];
 
+    const formatCardValue = (value: number | string) => {
+        const numericValue = Number(value);
+        if (!Number.isNaN(numericValue)) {
+            return numericValue.toLocaleString("en-IN");
+        }
+        return value;
+    };
+
     return (
         <div className="w-full p-6 space-y-6">
             <div className="flex justify-between items-center">
@@ -270,32 +278,37 @@ const CRMWalletList = () => {
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <StatsCard
                     title="Total Wallet Users"
-                    value={walletCardCount.total_users}
+                    value={formatCardValue(walletCardCount.total_users)}
                     icon={<Users className="w-6 h-6" />}
+                    valueClassName="text-[#DA7756] font-bold tabular-nums"
                     className="cursor-pointer"
                 />
                 <StatsCard
                     title="Total Wallet Balance"
-                    value={walletCardCount.total_amount}
+                    value={formatCardValue(walletCardCount.total_amount)}
                     icon={<Wallet className="w-6 h-6" />}
+                    valueClassName="text-[#DA7756] font-bold tabular-nums"
                     className="cursor-pointer"
                 />
                 <StatsCard
                     title="Paid Points"
-                    value={walletCardCount.paid_points}
+                    value={formatCardValue(walletCardCount.paid_points)}
                     icon={<Coins className="w-6 h-6" />}
+                    valueClassName="text-[#DA7756] font-bold tabular-nums"
                     className="cursor-pointer"
                 />
                 <StatsCard
                     title="Complimentary Points"
-                    value={walletCardCount.complimentary_points}
+                    value={formatCardValue(walletCardCount.complimentary_points)}
                     icon={<Star className="w-6 h-6" />}
+                    valueClassName="text-[#DA7756] font-bold tabular-nums"
                     className="cursor-pointer"
                 />
                 <StatsCard
                     title="Expired Points"
-                    value={walletCardCount.expiry_points}
+                    value={formatCardValue(walletCardCount.expiry_points)}
                     icon={<Users className="w-6 h-6" />}
+                    valueClassName="text-[#DA7756] font-bold tabular-nums"
                     className="cursor-pointer"
                 />
             </div>

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ClipboardList, Contact, Download, Eye, File, FileSpreadsheet, FileText, Images, Printer, Rss, ScrollText, Loader2 } from "lucide-react";
+import { ArrowLeft, ClipboardList, Contact, Download, Eye, File, FileSpreadsheet, FileText, Images, Printer, Rss, ScrollText, Loader2, Edit2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -377,6 +377,15 @@ export const InvoiceDetails = () => {
                     WORK ORDER INVOICE
                 </h1>
                 <div className="flex gap-2 flex-wrap">
+                    {/* <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-gray-300"
+                        onClick={() => navigate(`/finance/invoices/edit/${id}`)}
+                    >
+                        <Edit2 className="w-4 h-4 mr-1" />
+                        Edit
+                    </Button> */}
                     {
                         invoice.all_level_approved && localStorage.getItem("userType") === 'pms_occupant' && (
                             <Button

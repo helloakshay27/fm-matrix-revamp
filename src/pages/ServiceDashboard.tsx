@@ -896,8 +896,8 @@ export const ServiceDashboard = () => {
 
   const leftActions = useMemo(() => (
     <div className="flex flex-wrap gap-3">
-      <Button onClick={handleActionClick} className="bg-primary text-primary-foreground hover:bg-primary/90">
-        <Plus className="fm-button-fix" /> Action
+      <Button onClick={handleActionClick} className="fm-button-fix fm-button-brand !h-8 !min-h-8 !px-3 !py-1.5 text-sm">
+        <Plus className="w-4 h-4" /> Action
       </Button>
       {selectedItems.length > 0 && (
         <Button

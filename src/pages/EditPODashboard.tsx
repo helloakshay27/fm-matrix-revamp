@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { cache } from "@/utils/cacheUtils";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -383,6 +384,7 @@ export const EditPODashboard = () => {
                 updatePurchaseOrder({ baseUrl, token, data: payload, id: Number(id) })
             ).unwrap();
             toast.success("Purchase Order updated successfully");
+            cache.invalidatePattern("po*");
             navigate("/finance/po");
         } catch (error) {
             console.log(error);

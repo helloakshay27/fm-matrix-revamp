@@ -229,7 +229,7 @@ export const PaymentLinksDashboard = () => {
         leftActions={
           <div className="flex items-center gap-2">
             <Button
-              className="bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+              className="fm-button-fix fm-button-brand px-4 py-2P"
               onClick={() => setIsNewLinkOpen(true)}
             >
               <Plus className="w-4 h-4 mr-2" /> New
@@ -310,12 +310,12 @@ export const PaymentLinksDashboard = () => {
           </div>
 
           <DialogFooter className="px-6 py-4 border-t border-gray-100 bg-gray-50 sm:justify-start gap-2">
-            <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+            <Button className="fm-button-fix fm-button-brand px-4 py-2P" onClick={() => toast.success("Payment link generated successfully!")}>
               Generate Link
             </Button>
             <Button
               variant="outline"
-              className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+              className="fm-button-fix fm-button-brand px-4 py-2P"
             >
               Save and Share
             </Button>

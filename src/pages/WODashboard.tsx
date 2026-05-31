@@ -1,13 +1,23 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Edit, Eye, Plus } from "lucide-react";
+import { Edit, Eye, Plus, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { WOFilterDialog } from "@/components/WOFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import { fetchWorkOrders } from "@/store/slices/workOrderSlice";
+import { cache } from "@/utils/cacheUtils";
+
+const CACHE_TTL = 5 * 60 * 1000;
+const STALE_TTL = 30 * 60 * 1000;
+const CACHE_PREFIX = "wo";
+
+const buildCacheKey = (siteId: string, page: number, params: Record<string, any>) => {
+  const { reference_number = "", external_id = "", supplier_name = "", search = "" } = params;
+  return `${CACHE_PREFIX}_site${siteId}_p${page}_ref${reference_number}_ext${external_id}_sup${supplier_name}_q${search}`;
+};
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { updateServiceActiveStaus } from "@/store/slices/servicePRSlice";
 import { Switch } from "@/components/ui/switch";
@@ -220,7 +230,9 @@ export const WODashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const [orgId, setOrgId] = useState<number | null>(null);
 
-  const { loading } = useAppSelector(state => state.fetchWorkOrders)
+  const [loading, setLoading] = useState(false);
+  const bgRefreshingRef = useRef(false);
+  const currentSiteRef = useRef(localStorage.getItem("selectedSiteId") || "");
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
@@ -237,20 +249,55 @@ export const WODashboard = () => {
   });
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
 
-  const fetchData = async (filterData = {}) => {
+  const applyResponse = (response: any) => {
+    setWorkOrders(response.work_orders);
+    setPagination({
+      current_page: response.current_page,
+      total_count: response.total_count,
+      total_pages: response.total_pages,
+    });
+  };
+
+  const fetchData = async (filterData: Record<string, any> = {}) => {
+    const page: number = filterData.page ?? pagination.current_page;
+    const siteId = localStorage.getItem("selectedSiteId") || "";
+    const cacheKey = buildCacheKey(siteId, page, filterData);
+
+    const fresh = cache.get<any>(cacheKey, CACHE_TTL);
+    if (fresh) {
+      applyResponse(fresh);
+      return;
+    }
+
+    const stale = cache.get<any>(cacheKey, STALE_TTL);
+    if (stale) {
+      applyResponse(stale);
+      if (!bgRefreshingRef.current) {
+        bgRefreshingRef.current = true;
+        dispatch(fetchWorkOrders({ baseUrl, token, page, ...filterData }))
+          .unwrap()
+          .then((response) => {
+            cache.set(cacheKey, response, CACHE_TTL);
+            applyResponse(response);
+          })
+          .catch(console.error)
+          .finally(() => { bgRefreshingRef.current = false; });
+      }
+      return;
+    }
+
+    setLoading(true);
     try {
       const response = await dispatch(
-        fetchWorkOrders({ baseUrl, token, page: pagination.current_page, ...filterData })
+        fetchWorkOrders({ baseUrl, token, page, ...filterData })
       ).unwrap();
-      setWorkOrders(response.work_orders);
-      setPagination({
-        current_page: response.current_page,
-        total_count: response.total_count,
-        total_pages: response.total_pages
-      })
+      cache.set(cacheKey, response, CACHE_TTL);
+      applyResponse(response);
     } catch (error) {
       console.log(error);
       toast.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 useEffect(() => {
@@ -281,6 +328,18 @@ useEffect(() => {
     }, []);
   useEffect(() => {
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newSiteId = localStorage.getItem("selectedSiteId") || "";
+      if (newSiteId !== currentSiteRef.current) {
+        currentSiteRef.current = newSiteId;
+        cache.invalidatePattern(`${CACHE_PREFIX}*`);
+        fetchData();
+      }
+    }, 500);
+    return () => clearInterval(interval);
   }, []);
 
   const handleApplyFilters = (newFilters: {
@@ -429,17 +488,37 @@ useEffect(() => {
     </div>
   );
 
-  const leftActions = orgId === 63 ? null : (
-    <>
-      <Button
-        className="fm-button-fix fm-button-brand px-4 py-2"
-        variant="ghost"
-        onClick={() => navigate('/finance/wo/add')}
-      >
-        <Plus className="w-4 h-4 mr-2" />
-        Add
-      </Button>
-    </>
+  const handleRefresh = () => {
+    cache.invalidatePattern(`${CACHE_PREFIX}*`);
+    fetchData();
+  };
+
+  const leftActions = (
+    <div className="flex items-center gap-2">
+      {orgId !== 63 && (
+        <Button
+          className="fm-button-fix fm-button-brand px-4 py-2"
+          variant="ghost"
+          onClick={() => navigate('/finance/wo/add')}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add
+        </Button>
+      )}
+    </div>
+  );
+
+  const refreshAction = (
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-9 w-9 p-0"
+      onClick={handleRefresh}
+      disabled={loading}
+      title="Refresh"
+    >
+      <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+    </Button>
   );
 
   const handlePageChange = async (page: number) => {
@@ -601,6 +680,7 @@ useEffect(() => {
         loading={loading}
         enableSearch={true}
         onFilterClick={() => setIsFilterDialogOpen(true)}
+        filterAdjacentActions={refreshAction}
         leftActions={leftActions}
       />
 

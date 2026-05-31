@@ -22,6 +22,14 @@ const TaskCard = ({
     handleLink = () => { },
     iconColor = "#323232",
     count = 0,
+    type = "task",
+}: {
+    task: any;
+    toggleSubCard?: () => void;
+    handleLink?: () => void;
+    iconColor?: string;
+    count?: number;
+    type?: "task" | "issue";
 }) => {
     const baseUrl = localStorage.getItem("baseUrl");
     const token = localStorage.getItem("token");
@@ -101,10 +109,10 @@ const TaskCard = ({
                 className="mb-2 truncate cursor-pointer text-start hover:text-blue-600 transition-colors"
                 onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/vas/tasks/${task.id}`);
+                    navigate(type === "issue" ? `/vas/issues/${task.id}` : `/vas/tasks/${task.id}`);
                 }}
             >
-                <span className="text-blue-500">T-{task.id}</span> {task.title}
+                <span className="text-blue-500">{type === "issue" ? "I" : "T"}-{task.id}</span> {task.title}
             </p>
             <div
                 {...listeners}
@@ -125,7 +133,7 @@ const TaskCard = ({
                 </div>
                 <div className="flex items-start gap-1">
                     <User2 className="text-[#C72030] flex-shrink-0" size={14} />
-                    <span className="text-[10px] truncate">{task?.responsible_person_name}</span>
+                    <span className="text-[10px] truncate">{task?.responsible_person}</span>
                 </div>
                 <div className="flex items-start gap-1">
                     <Timer className="text-[#029464] flex-shrink-0" size={14} />
@@ -293,7 +301,7 @@ const TaskCard = ({
                         </span>
                     </span>
                     <span className="h-5 w-5 flex items-center justify-center bg-green-600 text-white rounded-full text-[7px] font-light">
-                        {getInitials(task?.responsible_person_name)}
+                        {getInitials(task?.responsible_person)}
                     </span>
                 </div>
             </div>

@@ -1877,6 +1877,7 @@ export const Dashboard = () => {
               closed: data.overall.total_closed || 0,
               wip: data.overall.total_wip || 0,
               info: data.overall.info,
+              detailedSummary: data.detailed_summary || null,
             };
           }
           return data;
@@ -1927,6 +1928,7 @@ export const Dashboard = () => {
               <TicketStatusOverviewCard
                 openTickets={statusData.open || 0}
                 closedTickets={statusData.closed || 0}
+                detailedSummary={statusData.detailedSummary || null}
               />
             );
           }

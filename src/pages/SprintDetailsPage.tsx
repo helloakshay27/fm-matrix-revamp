@@ -2,6 +2,7 @@ import axios from "axios";
 import { useEffect, useState, useRef, useCallback, forwardRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, ChevronDown, ChevronDownCircle, Eye, Loader2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogTitle, Slide } from "@mui/material";
@@ -320,6 +321,7 @@ export const SprintDetailsPage = () => {
   const baseUrl = localStorage.getItem("baseUrl") || "";
   const token = localStorage.getItem("token") || "";
 
+  const [loading, setLoading] = useState(true);
   const [sprintDetails, setSprintDetails] = useState<SprintDetails>({});
   const [tasks, setTasks] = useState<Task[]>([]);
   const [sprintIssues, setSprintIssues] = useState<any[]>([]);
@@ -334,6 +336,7 @@ export const SprintDetailsPage = () => {
 
   const fetchData = useCallback(async () => {
     if (!id) return;
+    setLoading(true);
     try {
       const resp = (await dispatch(fetchSprintById({ token, baseUrl, id })).unwrap()) as ApiSprint;
       setSprintDetails(mapApiToDetails(resp));
@@ -342,6 +345,8 @@ export const SprintDetailsPage = () => {
       setSprintMembers(extractMembers(resp));
     } catch (error) {
       toast.error(String(error) || "Failed to fetch sprint details");
+    } finally {
+      setLoading(false);
     }
   }, [id, dispatch, token, baseUrl]);
 
@@ -438,134 +443,185 @@ export const SprintDetailsPage = () => {
       </Button>
 
       <div className="px-4 pt-1">
-        {/* Title */}
-        <h2 className="text-[15px] p-3 px-0">
-          <span className="mr-3">S-{sprintDetails.id}</span>
-          <span>{sprintDetails.title}</span>
-        </h2>
-        <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+        {loading ? (
+          <>
+            {/* Title skeleton */}
+            <div className="flex items-center gap-3 p-3 px-0">
+              <Skeleton className="h-5 w-12" />
+              <Skeleton className="h-5 w-48" />
+            </div>
+            <div className="border-b-[3px] border-[rgba(190,190,190,1)]"></div>
 
-        {/* Header Info & Dropdown */}
-        <div className="flex items-center justify-between my-3 text-[12px]">
-          <div className="flex items-center gap-3 text-[#323232] flex-wrap">
-            <span>Created By: {sprintDetails.created_by_name}</span>
-            <span className="h-6 w-[1px] border border-gray-300"></span>
-            <span className="flex items-center gap-3">
-              Created On: {formatToDDMMYYYY_AMPM(sprintDetails.created_at)}
-            </span>
-            <span className="h-6 w-[1px] border border-gray-300"></span>
+            {/* Header info skeleton */}
+            <div className="flex items-center gap-4 my-3">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="h-7 w-24 rounded-md" />
+            </div>
+            <div className="border-b-[3px] border-grey my-3"></div>
 
-            {/* Status Dropdown */}
-            <span
-              className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] || "bg-gray-400 text-white"}`}
-            >
-              <div className="relative" ref={dropdownRef}>
-                <div
-                  className="flex items-center gap-1 cursor-pointer px-2 py-1"
-                  onClick={() => setOpenDropdown(!openDropdown)}
-                  role="button"
-                  aria-haspopup="true"
-                  aria-expanded={openDropdown}
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && setOpenDropdown(!openDropdown)}
-                >
-                  <span className="text-[13px]">{selectedOption}</span>
-                  <ChevronDown size={15} className={`${openDropdown ? "rotate-180" : ""} transition-transform`} />
-                </div>
-                <ul
-                  className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"}`}
-                  role="menu"
-                  style={{ minWidth: "150px", maxHeight: "400px", overflowY: "auto", zIndex: 1000 }}
-                >
-                  {dropdownOptions.map((option, idx) => (
-                    <li key={idx} role="menuitem">
-                      <button
-                        className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? "bg-gray-100 font-semibold" : ""}`}
-                        onClick={() => handleOptionSelect(option)}
-                      >
-                        {option}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+            {/* Details card skeleton */}
+            <div className="border rounded-[10px] shadow-md p-5 mb-4">
+              <div className="flex items-center gap-4 mb-4">
+                <Skeleton className="h-7 w-7 rounded-full" />
+                <Skeleton className="h-5 w-20" />
               </div>
-            </span>
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i}>
+                  <div className="flex items-center gap-3 ml-10">
+                    <Skeleton className="h-4 w-36" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  {i < 4 && <span className="border h-[1px] inline-block w-full my-4"></span>}
+                </div>
+              ))}
+            </div>
 
-            {/* Members */}
-            {sprintMembers.length > 0 && (
-              <>
+            {/* Tabs skeleton */}
+            <div>
+              <div className="flex items-center gap-0 border-b-[3px] border-[rgba(190,190,190,1)] pb-2">
+                <Skeleton className="h-5 w-16 mx-5" />
+                <Skeleton className="h-5 w-16 mx-5" />
+              </div>
+              <div className="mt-4 space-y-3">
+                <Skeleton className="h-10 w-full rounded" />
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Skeleton key={i} className="h-12 w-full rounded" />
+                ))}
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Title */}
+            <h2 className="text-[15px] p-3 px-0">
+              <span className="mr-3">S-{sprintDetails.id}</span>
+              <span>{sprintDetails.title}</span>
+            </h2>
+            <div className="border-b-[3px] border-[rgba(190, 190, 190, 1)]"></div>
+
+            {/* Header Info & Dropdown */}
+            <div className="flex items-center justify-between my-3 text-[12px]">
+              <div className="flex items-center gap-3 text-[#323232] flex-wrap">
+                <span>Created By: {sprintDetails.created_by_name}</span>
                 <span className="h-6 w-[1px] border border-gray-300"></span>
-                <button
-                  onClick={() => setIsMembersOpen(true)}
-                  className="flex items-center gap-2 px-2 py-1 rounded-md transition-colors"
+                <span className="flex items-center gap-3">
+                  Created On: {formatToDDMMYYYY_AMPM(sprintDetails.created_at)}
+                </span>
+                <span className="h-6 w-[1px] border border-gray-300"></span>
+
+                {/* Status Dropdown */}
+                <span
+                  className={`flex items-center gap-2 cursor-pointer px-2 py-1 rounded-md text-sm ${STATUS_COLORS[mapDisplayToApiStatus(selectedOption).toLowerCase()] || "bg-gray-400 text-white"}`}
                 >
-                  <Users size={15} /> Sprint Members
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+                  <div className="relative" ref={dropdownRef}>
+                    <div
+                      className="flex items-center gap-1 cursor-pointer px-2 py-1"
+                      onClick={() => setOpenDropdown(!openDropdown)}
+                      role="button"
+                      aria-haspopup="true"
+                      aria-expanded={openDropdown}
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === "Enter" && setOpenDropdown(!openDropdown)}
+                    >
+                      <span className="text-[13px]">{selectedOption}</span>
+                      <ChevronDown size={15} className={`${openDropdown ? "rotate-180" : ""} transition-transform`} />
+                    </div>
+                    <ul
+                      className={`dropdown-menu absolute right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-lg overflow-hidden ${openDropdown ? "block" : "hidden"}`}
+                      role="menu"
+                      style={{ minWidth: "150px", maxHeight: "400px", overflowY: "auto", zIndex: 1000 }}
+                    >
+                      {dropdownOptions.map((option, idx) => (
+                        <li key={idx} role="menuitem">
+                          <button
+                            className={`dropdown-item w-full text-left px-4 py-2 text-[13px] text-gray-700 hover:bg-gray-100 ${selectedOption === option ? "bg-gray-100 font-semibold" : ""}`}
+                            onClick={() => handleOptionSelect(option)}
+                          >
+                            {option}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </span>
 
-        <div className="border-b-[3px] border-grey my-3"></div>
-
-        {/* Details Section (matches card style) */}
-        <div className="border rounded-[10px] shadow-md p-5 mb-4">
-          <div className="font-[600] text-[16px] flex items-center gap-4">
-            <ChevronDownCircle color="#E95420" size={30} />
-            Details
-          </div>
-          <div className="mt-3">
-            {/* Rows styled like milestone */}
-            <div className="flex items-center gap-3 ml-10">
-              <span className="text-[13px] font-medium text-[#1A1A1A]">Responsible Person:</span>
-              <span className="text-[13px] text-[#1A1A1A]">{sprintDetails.responsible_person || "-"}</span>
-            </div>
-            <span className="border h-[1px] inline-block w-full my-4"></span>
-            <div className="flex items-center gap-3 ml-10">
-              <span className="text-[13px] font-medium text-[#1A1A1A]">Priority:</span>
-              <span className="text-[13px] text-[#1A1A1A]">{sprintDetails.priority || "-"}</span>
-            </div>
-            <span className="border h-[1px] inline-block w-full my-4"></span>
-            <div className="flex items-center gap-3 ml-10">
-              <span className="text-[13px] font-medium text-[#1A1A1A]">Start Date:</span>
-              <span className="text-[13px] text-[#1A1A1A]">{sprintDetails.start_date || "-"}</span>
-            </div>
-            <span className="border h-[1px] inline-block w-full my-4"></span>
-            <div className="flex items-center gap-3 ml-10">
-              <span className="text-[13px] font-medium text-[#1A1A1A]">End Date:</span>
-              <span className="text-[13px] text-[#1A1A1A]">{sprintDetails.end_date || "-"}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs Section */}
-        <div>
-          {/* Tab headers */}
-          <div className="flex items-center gap-0 border-b-[3px] border-[rgba(190,190,190,1)]">
-            {(["tasks", "issues"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`relative px-5 py-2 text-[14px] font-[500] capitalize transition-colors focus:outline-none ${
-                  activeTab === tab
-                    ? "text-[#E95420]"
-                    : "text-[#323232] hover:text-[#E95420]"
-                }`}
-              >
-                {tab === "tasks" ? "Tasks" : "Issues"}
-                {activeTab === tab && (
-                  <span className="absolute bottom-[-3px] left-0 w-full h-[3px] bg-[#E95420] rounded-t-sm" />
+                {/* Members */}
+                {sprintMembers.length > 0 && (
+                  <>
+                    <span className="h-6 w-[1px] border border-gray-300"></span>
+                    <button
+                      onClick={() => setIsMembersOpen(true)}
+                      className="flex items-center gap-2 px-2 py-1 rounded-md transition-colors"
+                    >
+                      <Users size={15} /> Sprint Members
+                    </button>
+                  </>
                 )}
-              </button>
-            ))}
-          </div>
+              </div>
+            </div>
 
-          {/* Tab content */}
-          <div className="mt-4 overflow-x-auto">
-            {activeTab === "tasks" && <SprintTasks tasks={tasks} />}
-            {activeTab === "issues" && <SprintIssues issues={sprintIssues} />}
-          </div>
-        </div>
+            <div className="border-b-[3px] border-grey my-3"></div>
+
+            {/* Details Section (matches card style) */}
+            <div className="border rounded-[10px] shadow-md p-5 mb-4">
+              <div className="font-[600] text-[16px] flex items-center gap-4">
+                <ChevronDownCircle color="#E95420" size={30} />
+                Details
+              </div>
+              <div className="mt-3">
+                <div className="flex items-center gap-3 ml-10">
+                  <span className="text-[13px] font-medium text-[#1A1A1A]">Responsible Person:</span>
+                  <span className="text-[13px] text-[#1A1A1A]">{sprintDetails.responsible_person || "-"}</span>
+                </div>
+                <span className="border h-[1px] inline-block w-full my-4"></span>
+                <div className="flex items-center gap-3 ml-10">
+                  <span className="text-[13px] font-medium text-[#1A1A1A]">Priority:</span>
+                  <span className="text-[13px] text-[#1A1A1A]">{sprintDetails.priority || "-"}</span>
+                </div>
+                <span className="border h-[1px] inline-block w-full my-4"></span>
+                <div className="flex items-center gap-3 ml-10">
+                  <span className="text-[13px] font-medium text-[#1A1A1A]">Start Date:</span>
+                  <span className="text-[13px] text-[#1A1A1A]">{sprintDetails.start_date || "-"}</span>
+                </div>
+                <span className="border h-[1px] inline-block w-full my-4"></span>
+                <div className="flex items-center gap-3 ml-10">
+                  <span className="text-[13px] font-medium text-[#1A1A1A]">End Date:</span>
+                  <span className="text-[13px] text-[#1A1A1A]">{sprintDetails.end_date || "-"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs Section */}
+            <div>
+              {/* Tab headers */}
+              <div className="flex items-center gap-0 border-b-[3px] border-[rgba(190,190,190,1)]">
+                {(["tasks", "issues"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`relative px-5 py-2 text-[14px] font-[500] capitalize transition-colors focus:outline-none ${
+                      activeTab === tab
+                        ? "text-[#E95420]"
+                        : "text-[#323232] hover:text-[#E95420]"
+                    }`}
+                  >
+                    {tab === "tasks" ? "Tasks" : "Issues"}
+                    {activeTab === tab && (
+                      <span className="absolute bottom-[-3px] left-0 w-full h-[3px] bg-[#E95420] rounded-t-sm" />
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Tab content */}
+              <div className="mt-4 overflow-x-auto">
+                {activeTab === "tasks" && <SprintTasks tasks={tasks} />}
+                {activeTab === "issues" && <SprintIssues issues={sprintIssues} />}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Members Panel */}
