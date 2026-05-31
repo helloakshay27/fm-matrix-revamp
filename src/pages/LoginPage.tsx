@@ -245,10 +245,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
     setIsLoading(true);
     try {
-      // Execute reCAPTCHA v3 before hitting the API
       let captchaToken: string | undefined;
       const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-      if (siteKey) {
+      const isLocalDev = hostname === "localhost" || hostname === "127.0.0.1";
+
+      if (siteKey && !isLocalDev) {
         const maxWaitMs = 10000;
         const pollMs = 500;
         let waited = 0;
@@ -359,12 +360,11 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       const baseUrl = `${selectedOrganization.sub_domain}.${selectedOrganization.domain}`;
       const organizationId = selectedOrganization.id;
 
-      // Execute Google reCAPTCHA v3 and obtain token for backend verification.
-      // Poll up to 10s in case the script is still loading.
       let recaptchaToken: string | undefined;
       const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+      const isLocalDev = hostname === "localhost" || hostname === "127.0.0.1";
 
-      if (siteKey) {
+      if (siteKey && !isLocalDev) {
         const maxWaitMs = 10000;
         const pollMs = 500;
         let waited = 0;
@@ -386,8 +386,6 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
           setLoginLoading(false);
           return;
         }
-      } else {
-        console.warn("reCAPTCHA site key is missing. Skipping reCAPTCHA verification.");
       }
 
       const response = await loginUser(
