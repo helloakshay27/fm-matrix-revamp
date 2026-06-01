@@ -281,7 +281,7 @@ const DetailsVendorPage = () => {
                             <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => navigate(`/maintenance/vendor/edit/${vendor?.id}`)}
+                                onClick={() => navigate(`/accounting/vendor/edit/${vendor?.id}`)}
                             >
                                 Edit Vendor
                             </Button>

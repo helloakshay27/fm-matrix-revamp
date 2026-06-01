@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { PaymentDetailView } from "./components/PaymentDetailView";
+import PaymentDetailView from "./components/PaymentDetailView";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,7 +14,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { TicketPagination } from "@/components/TicketPagination";
 import { useDebounce } from "@/hooks/useDebounce";
 import { API_CONFIG } from "@/config/apiConfig";
-
+import { Eye } from "lucide-react";
 // API shape returned by lock_payments.json
 interface LockPayment {
   id: number;
@@ -146,7 +146,7 @@ const mapLockPayment = (lp: LockPayment): Payment => {
 export const PaymentsMadePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [viewMode, setViewMode] = useState<"list" | "detail">("list");
+  // const [viewMode, setViewMode] = useState<"list" | "detail">("list");
   const [selectedPaymentId, setSelectedPaymentId] = useState<string | null>(
     null
   );
@@ -299,6 +299,13 @@ export const PaymentsMadePage: React.FC = () => {
   // Column configuration for the enhanced table
   const columns: ColumnConfig[] = [
     {
+  key: "actions",
+  label: "ACTIONS",
+  sortable: false,
+  hideable: false,
+  draggable: false,
+},
+    {
       key: "date",
       label: "DATE",
       sortable: true,
@@ -386,6 +393,18 @@ export const PaymentsMadePage: React.FC = () => {
   };
 
   const renderRow = (payment: Payment) => ({
+     actions: (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={() =>
+        navigate(`/accounting/payments-made/${payment.id}`)
+      }
+    >
+      <Eye className="h-4 w-4 text-blue-600" />
+    </Button>
+  ),
+
     date: <span className="text-sm text-gray-900">{payment.date}</span>,
     payment_number: (
       <div
@@ -444,27 +463,27 @@ export const PaymentsMadePage: React.FC = () => {
     ),
   });
 
-  if (viewMode === "detail") {
-    return (
-      <div className="bg-white min-h-screen ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-        {loading ? (
-          <div className="flex items-center justify-center h-screen">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>
-          </div>
-        ) : (
-          <PaymentDetailView
-            payments={filteredPayments}
-            selectedPaymentId={selectedPaymentId}
-            onSelectPayment={(id) => setSelectedPaymentId(id)}
-            onClose={() => {
-              setSearchParams({});
-              setViewMode("list");
-            }}
-          />
-        )}
-      </div>
-    );
-  }
+  // if (viewMode === "detail") {
+    // return (
+    //   <div className="bg-white min-h-screen ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+    //     {loading ? (
+    //       <div className="flex items-center justify-center h-screen">
+    //         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-700"></div>
+    //       </div>
+    //     ) : (
+    //       <PaymentDetailView
+    //         payments={filteredPayments}
+    //         selectedPaymentId={selectedPaymentId}
+    //         onSelectPayment={(id) => setSelectedPaymentId(id)}
+    //         onClose={() => {
+    //           setSearchParams({});
+    //           setViewMode("list");
+    //         }}
+    //       />
+    //     )}
+    //   </div>
+    // );
+  // }
 
   return (
     <div className="p-6 space-y-6 bg-white min-h-screen">
@@ -496,8 +515,9 @@ export const PaymentsMadePage: React.FC = () => {
         searchPlaceholder="Search payments..."
         loading={loading}
         onRowClick={(payment) => {
-          setSelectedPaymentId(payment.id);
-          setViewMode("detail");
+          // setSelectedPaymentId(payment.id);
+          // setViewMode("detail");
+          navigate(`/accounting/payments-made/${payment.id}`)
         }}
       />
 

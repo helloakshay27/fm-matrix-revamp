@@ -377,7 +377,7 @@ export const InvoiceDetails = () => {
                     WORK ORDER INVOICE
                 </h1>
                 <div className="flex gap-2 flex-wrap">
-                    <Button
+                    {/* <Button
                         size="sm"
                         variant="outline"
                         className="border-gray-300"
@@ -385,7 +385,7 @@ export const InvoiceDetails = () => {
                     >
                         <Edit2 className="w-4 h-4 mr-1" />
                         Edit
-                    </Button>
+                    </Button> */}
                     {
                         invoice.all_level_approved && localStorage.getItem("userType") === 'pms_occupant' && (
                             <Button

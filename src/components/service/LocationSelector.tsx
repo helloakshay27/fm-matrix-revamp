@@ -198,31 +198,30 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   };
 
   const handleBuildingChange = (buildingId: number) => {
-    dispatch(setSelectedBuilding(buildingId));
+    dispatch(setSelectedBuilding(buildingId)); // resets wing/area/floor/room in Redux
     if (buildingId) {
       dispatch(fetchWings(buildingId));
-      dispatch(fetchAreas(buildingId));
-      dispatch(fetchFloors(buildingId));
-      dispatch(fetchRooms(buildingId));
+      dispatch(fetchAreas({ buildingId })); // load areas without wing filter
+      // floors/rooms load only after area/floor is selected
     }
   };
 
   const handleWingChange = (wingId: number) => {
-    dispatch(setSelectedWing(wingId));
+    dispatch(setSelectedWing(wingId)); // resets area/floor/room in Redux
     if (selectedBuildingId) {
-      dispatch(fetchAreas(selectedBuildingId));
+      dispatch(fetchAreas({ buildingId: selectedBuildingId, wingId: wingId || undefined }));
     }
   };
 
   const handleAreaChange = (areaId: number) => {
-    dispatch(setSelectedArea(areaId));
+    dispatch(setSelectedArea(areaId)); // resets floor/room in Redux
     if (selectedBuildingId) {
       dispatch(fetchFloors(selectedBuildingId));
     }
   };
 
   const handleFloorChange = (floorId: number) => {
-    dispatch(setSelectedFloor(floorId));
+    dispatch(setSelectedFloor(floorId)); // resets room in Redux
     if (selectedBuildingId) {
       dispatch(fetchRooms(selectedBuildingId));
     }
@@ -352,7 +351,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             value={selectedFloorId || ''}
             onChange={(e) => handleFloorChange(Number(e.target.value))}
             sx={fieldStyles}
-            disabled={!selectedBuildingId || loading.floors}
+            disabled={!selectedAreaId || loading.floors}
           >
             <MenuItem value="">
               <em>Select Floor</em>
@@ -384,7 +383,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             value={selectedRoomId || ''}
             onChange={(e) => handleRoomChange(Number(e.target.value))}
             sx={fieldStyles}
-            disabled={!selectedBuildingId || loading.rooms}
+            disabled={!selectedFloorId || loading.rooms}
           >
             <MenuItem value="">
               <em>Select Room</em>

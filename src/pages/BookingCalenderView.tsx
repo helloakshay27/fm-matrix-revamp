@@ -293,7 +293,7 @@ const BookingCalenderView = () => {
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-6">
                     <Button
-                        className="bg-[#8B4B8C] hover:bg-[#7A3F7B] text-white w-[106px] h-[36px]"
+                        className="fm-button-fix fm-button-brand px-4 py-2"
                         onClick={handleAddBooking}
                     >
                         <Plus className="w-4 h-4" />

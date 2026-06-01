@@ -1746,7 +1746,7 @@ export const ProjectTaskDetails = () => {
         </Breadcrumb>
       )}
 
-      {window.location.pathname === "/vas/tasks" && (
+      {window.location.pathname.startsWith("/vas/tasks") && (
         <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back

@@ -1,16 +1,26 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye, Edit } from "lucide-react";
+import { Plus, Eye, Edit, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MaterialPRFilterDialog } from "@/components/MaterialPRFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { useAppDispatch } from "@/store/hooks";
 import { getMaterialPR, updateActiveStaus } from "@/store/slices/materialPRSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { format } from "date-fns";
 import { Switch } from "@/components/ui/switch";
+import { cache } from "@/utils/cacheUtils";
+
+const CACHE_TTL = 5 * 60 * 1000;   // 5 minutes — fresh
+const STALE_TTL = 30 * 60 * 1000;  // 30 minutes — show stale while revalidating
+const CACHE_PREFIX = "material_pr";
+
+const buildCacheKey = (siteId: string, page: number, params: Record<string, any>) => {
+  const { reference_number = "", external_id = "", supplier_name = "", approval_status = "", search = "" } = params;
+  return `${CACHE_PREFIX}_site${siteId}_p${page}_ref${reference_number}_ext${external_id}_sup${supplier_name}_st${approval_status}_q${search}`;
+};
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -106,7 +116,9 @@ export const MaterialPRDashboard = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
-  const { loading } = useAppSelector((state) => state.getMaterialPR);
+  const [loading, setLoading] = useState(false);
+  const bgRefreshingRef = useRef(false);
+  const currentSiteRef = useRef(localStorage.getItem("selectedSiteId") || "");
 
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -125,45 +137,95 @@ export const MaterialPRDashboard = () => {
   });
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
 
-  const fetchData = async (filterParams = {}) => {
+  const applyResponse = (response: any) => {
+    const formatedResponse = response.purchase_orders.map((item: any) => ({
+      id: item.id,
+      prNo: item.external_id,
+      po_number: item.po_number,
+      referenceNo: item.reference_number,
+      supplierName: item.supplier?.company_name,
+      createdBy: item.user.full_name,
+      createdOn: item.created_at,
+      lastApprovedBy: item.approved_by_user,
+      approvedStatus: item.all_level_approved
+        ? "Approved"
+        : item.all_level_approved === false
+          ? "Rejected"
+          : "Pending",
+      prAmount: item.total_amount,
+      activeInactive: item.active,
+      allLevelApproved: item.all_level_approved,
+      canEditAll: item.can_edit_all,
+    }));
+    setMaterialPR(formatedResponse);
+    setPagination({
+      current_page: response.current_page,
+      total_count: response.total_count,
+      total_pages: response.total_pages,
+    });
+  };
+
+  const fetchData = async (filterParams: Record<string, any> = {}) => {
+    const page: number = filterParams.page ?? pagination.current_page;
+    const siteId = localStorage.getItem("selectedSiteId") || "";
+    const cacheKey = buildCacheKey(siteId, page, filterParams);
+
+    // Fresh cache — return instantly, no network call
+    const fresh = cache.get<any>(cacheKey, CACHE_TTL);
+    if (fresh) {
+      applyResponse(fresh);
+      return;
+    }
+
+    // Stale cache — show old data immediately, refresh silently in background
+    const stale = cache.get<any>(cacheKey, STALE_TTL);
+    if (stale) {
+      applyResponse(stale);
+      if (!bgRefreshingRef.current) {
+        bgRefreshingRef.current = true;
+        dispatch(getMaterialPR({ baseUrl, token, page, ...filterParams }))
+          .unwrap()
+          .then((response) => {
+            cache.set(cacheKey, response, CACHE_TTL);
+            applyResponse(response);
+          })
+          .catch(console.error)
+          .finally(() => { bgRefreshingRef.current = false; });
+      }
+      return;
+    }
+
+    // No cache — fetch with loading indicator
+    setLoading(true);
     try {
       const response = await dispatch(
-        getMaterialPR({ baseUrl, token, page: pagination.current_page, ...filterParams })
+        getMaterialPR({ baseUrl, token, page, ...filterParams })
       ).unwrap();
-      const formatedResponse = response.purchase_orders.map((item: any) => ({
-        id: item.id,
-        prNo: item.external_id,
-        po_number: item.po_number,
-        referenceNo: item.reference_number,
-        supplierName: item.supplier?.company_name,
-        createdBy: item.user.full_name,
-        createdOn: item.created_at,
-        lastApprovedBy: item.approved_by_user,
-        approvedStatus: item.all_level_approved
-          ? "Approved"
-          : item.all_level_approved === false
-            ? "Rejected"
-            : "Pending",
-        prAmount: item.total_amount,
-        activeInactive: item.active,
-        allLevelApproved: item.all_level_approved,
-      }));
-      setMaterialPR(formatedResponse);
-      setPagination({
-        current_page: response.current_page,
-        total_count: response.total_count,
-        total_pages: response.total_pages,
-      });
+      cache.set(cacheKey, response, CACHE_TTL);
+      applyResponse(response);
     } catch (error) {
       console.log(error);
-      toast.error(
-        error.message || "Failed to fetch material PR data. Please try again."
-      );
+      toast.error(error.message || "Failed to fetch material PR data. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
+  }, []);
+
+  // Invalidate cache and re-fetch when site changes while page is open
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newSiteId = localStorage.getItem("selectedSiteId") || "";
+      if (newSiteId !== currentSiteRef.current) {
+        currentSiteRef.current = newSiteId;
+        cache.invalidatePattern(`${CACHE_PREFIX}*`);
+        fetchData();
+      }
+    }, 500);
+    return () => clearInterval(interval);
   }, []);
 
   const handleApplyFilters = (newFilters: {
@@ -299,7 +361,7 @@ export const MaterialPRDashboard = () => {
           <Eye className="w-4 h-4" />
         </Button>
         {
-          item.allLevelApproved === null && <Button
+          item.canEditAll && <Button
             size="sm"
             variant="ghost"
             className="p-1"
@@ -315,8 +377,13 @@ export const MaterialPRDashboard = () => {
     )
   };
 
+  const handleRefresh = () => {
+    cache.invalidatePattern(`${CACHE_PREFIX}*`);
+    fetchData();
+  };
+
   const leftActions = (
-    <>
+    <div className="flex items-center gap-2">
       <Button
         className="bg-[#C72030] hover:bg-[#A01020] text-white"
         onClick={() => navigate("/finance/material-pr/add")}
@@ -324,7 +391,20 @@ export const MaterialPRDashboard = () => {
         <Plus className="w-4 h-4 mr-2" />
         Add
       </Button>
-    </>
+    </div>
+  );
+
+  const refreshAction = (
+    <Button
+      variant="outline"
+      size="sm"
+      className="h-9 w-9 p-0"
+      onClick={handleRefresh}
+      disabled={loading}
+      title="Refresh"
+    >
+      <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+    </Button>
   );
 
   const handlePageChange = async (page: number) => {
@@ -488,6 +568,7 @@ export const MaterialPRDashboard = () => {
         enableSelection={true}
         leftActions={leftActions}
         onFilterClick={() => setFilterDialogOpen(true)}
+        filterAdjacentActions={refreshAction}
         loading={loading}
       />
 

@@ -2030,3 +2030,9 @@ a.fm-button-fix.fm-button-brand *,
 [role="button"].fm-button-fix.fm-button-brand * {
   color: #ffffff !important;
 }
+
+/* Hide Google reCAPTCHA badge to prevent domain mismatch error popups */
+.grecaptcha-badge {
+  visibility: hidden !important;
+}
+
