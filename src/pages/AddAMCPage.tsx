@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, X, Plus, FileSpreadsheet, FileText, File, Loader2 } from 'lucide-react';
@@ -16,12 +16,41 @@ import { fetchInventoryAssets } from '@/store/slices/inventoryAssetsSlice';
 import { TimeSetupStep } from '@/components/schedule/TimeSetupStep';
 import { Autocomplete } from "@mui/material";
 import Select from "react-select";
+import { SupplierSearchSelect } from '@/components/SupplierSearchSelect';
 // Removed Material-UI checkbox imports - using custom styled components
 
 interface Service {
   id: string | number;
   service_name: string;
 }
+
+const MAX_ATTACHMENT_SIZE_MB = 20;
+const MAX_ATTACHMENT_SIZE_BYTES = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024;
+
+const AMC_DROPDOWN_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+const getDropdownCache = (key: string): unknown | null => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const { data, timestamp } = JSON.parse(raw);
+    if (Date.now() - timestamp > AMC_DROPDOWN_CACHE_TTL) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+};
+
+const setDropdownCache = (key: string, data: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+  } catch {
+    // ignore quota errors silently
+  }
+};
 
 export const AddAMCPage = () => {
   const navigate = useNavigate();
@@ -44,11 +73,7 @@ export const AddAMCPage = () => {
   const [assetQuery, setAssetQuery] = useState('');
   const [assetSearchLoading, setAssetSearchLoading] = useState(false);
   const [assetMenuId] = useState(() => `asset-menu-${Math.random().toString(36).slice(2)}`);
-  // Suppliers remote search using global enhancer
-  const [supplierOptions, setSupplierOptions] = useState<any[]>([]);
-  const [supplierQuery, setSupplierQuery] = useState('');
-  const [supplierSearchLoading, setSupplierSearchLoading] = useState(false);
-  const [supplierMenuId] = useState(() => `supplier-menu-${Math.random().toString(36).slice(2)}`);
+  const [supplierDisplayLabel, setSupplierDisplayLabel] = useState('');
   // Technician state
   const [technicianOptions, setTechnicianOptions] = useState<any[]>([]);
   const [techniciansLoading, setTechniciansLoading] = useState(false);
@@ -129,11 +154,11 @@ export const AddAMCPage = () => {
   const [loading, setLoading] = useState(false);
 
   const suppliers: any[] = []; // not used now; kept for group type select reuse logic below
-  const [suppliersLoading, setSuppliersLoading] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => {
       if (field === 'details' && prev.details !== value) {
+        setSupplierDisplayLabel('');
         return {
           ...prev,
           [field]: value,
@@ -146,6 +171,7 @@ export const AddAMCPage = () => {
         };
       }
       if (field === 'type' && prev.type !== value) {
+        setSupplierDisplayLabel('');
         return {
           ...prev,
           [field]: value,
@@ -165,13 +191,28 @@ export const AddAMCPage = () => {
   };
 
   const handleFileUpload = (type: 'contracts' | 'invoices', files: FileList | null) => {
-    if (files) {
-      const fileArray = Array.from(files);
-      setAttachments(prev => ({
-        ...prev,
-        [type]: [...prev[type], ...fileArray]
-      }));
+    if (!files) return;
+
+    const fileArray = Array.from(files);
+    const validFiles = fileArray.filter(file => file.size <= MAX_ATTACHMENT_SIZE_BYTES);
+    const oversizedFiles = fileArray.filter(file => file.size > MAX_ATTACHMENT_SIZE_BYTES);
+
+    if (oversizedFiles.length > 0) {
+      const skippedNames = oversizedFiles
+        .slice(0, 3)
+        .map(file => file.name)
+        .join(', ');
+      toast.error(
+        `Each attachment must be ${MAX_ATTACHMENT_SIZE_MB} MB or less. Skipped: ${skippedNames}${oversizedFiles.length > 3 ? '...' : ''}`
+      );
     }
+
+    if (validFiles.length === 0) return;
+
+    setAttachments(prev => ({
+      ...prev,
+      [type]: [...prev[type], ...validFiles]
+    }));
   };
 
   const removeFile = (type: 'contracts' | 'invoices', index: number) => {
@@ -206,17 +247,25 @@ export const AddAMCPage = () => {
     // initialLoad();
 
     const fetchAssetGroups = async () => {
+      const CACHE_KEY = 'amc_cache_asset_groups';
+      const cached = getDropdownCache(CACHE_KEY);
+      if (cached) {
+        setAssetGroups(cached as Array<{ id: number; name: string; sub_groups: Array<{ id: number; name: string }> }>);
+        return;
+      }
       setLoading(true);
       try {
         const response = await apiClient.get('/pms/assets/get_asset_group_sub_group.json');
+        let groups: Array<{ id: number; name: string; sub_groups: Array<{ id: number; name: string }> }> = [];
         if (Array.isArray(response.data)) {
-          setAssetGroups(response.data);
+          groups = response.data;
         } else if (response.data && Array.isArray(response.data.asset_groups)) {
-          setAssetGroups(response.data.asset_groups);
+          groups = response.data.asset_groups;
         } else {
           console.warn('API response is not an array:', response.data);
-          setAssetGroups([]);
         }
+        setAssetGroups(groups);
+        setDropdownCache(CACHE_KEY, groups);
       } catch (error) {
         console.error('Error fetching asset groups:', error);
         setAssetGroups([]);
@@ -227,16 +276,24 @@ export const AddAMCPage = () => {
     };
 
     const fetchService = async () => {
+      const CACHE_KEY = 'amc_cache_services';
+      const cached = getDropdownCache(CACHE_KEY);
+      if (cached) {
+        setServices(cached as Service[]);
+        return;
+      }
       try {
         const response = await apiClient.get('/pms/services/get_services.json');
+        let svcs: Service[] = [];
         if (Array.isArray(response.data)) {
-          setServices(response.data);
+          svcs = response.data;
         } else if (response.data && Array.isArray(response.data.services)) {
-          setServices(response.data.services);
+          svcs = response.data.services;
         } else {
           console.warn('API response is not an array:', response.data);
-          setServices([]);
         }
+        setServices(svcs);
+        setDropdownCache(CACHE_KEY, svcs);
       } catch (error) {
         console.error('Error fetching services:', error);
         setServices([]);
@@ -249,6 +306,12 @@ export const AddAMCPage = () => {
 
     // Fetch technicians
     const fetchTechnicians = async () => {
+      const CACHE_KEY = 'amc_cache_technicians';
+      const cached = getDropdownCache(CACHE_KEY);
+      if (cached) {
+        setTechnicianOptions(cached as unknown[]);
+        return;
+      }
       setTechniciansLoading(true);
       try {
         const baseUrl = localStorage.getItem('baseUrl');
@@ -264,7 +327,9 @@ export const AddAMCPage = () => {
         );
         if (response.ok) {
           const data = await response.json();
-          setTechnicianOptions(data.users || []);
+          const users = data.users || [];
+          setTechnicianOptions(users);
+          setDropdownCache(CACHE_KEY, users);
         }
       } catch (error) {
         console.error('Error fetching technicians:', error);
@@ -306,20 +371,6 @@ export const AddAMCPage = () => {
     return () => document.removeEventListener('input', onInput, true);
   }, [assetMenuId]);
 
-  // Listen within the Supplier menu
-  useEffect(() => {
-    const onInput = (e: Event) => {
-      const t = e.target as HTMLElement | null;
-      if (!t || !(t instanceof HTMLInputElement)) return;
-      if (!t.classList.contains('mui-search-input')) return;
-      const paper = t.closest('.MuiMenu-paper, .MuiPaper-root') as HTMLElement | null;
-      if (!paper || paper.id !== supplierMenuId) return;
-      setSupplierQuery(t.value || '');
-    };
-    document.addEventListener('input', onInput, true);
-    return () => document.removeEventListener('input', onInput, true);
-  }, [supplierMenuId]);
-
   // Clear back to initial options when below threshold
   useEffect(() => {
     if (assetQuery.length < 3) {
@@ -356,62 +407,6 @@ export const AddAMCPage = () => {
     }, 350);
     return () => { active = false; clearTimeout(handler); };
   }, [assetQuery]);
-
-  // Reset to initial suppliers when search is cleared (re-fetch base list)
-  useEffect(() => {
-    if (supplierQuery.length === 0) {
-      (async () => {
-        try {
-          const baseUrl = localStorage.getItem('baseUrl');
-          const token = localStorage.getItem('token');
-          if (!baseUrl || !token) return;
-          setSupplierSearchLoading(true);
-          const resp = await fetch(`https://${baseUrl}/pms/suppliers/get_suppliers.json`, { headers: { Authorization: `Bearer ${token}` } });
-          if (resp.ok) {
-            const data = await resp.json();
-            const arr = Array.isArray(data) ? data : (Array.isArray(data?.pms_suppliers) ? data.pms_suppliers : (Array.isArray(data?.suppliers) ? data.suppliers : []));
-            setSupplierOptions(arr);
-          } else {
-            setSupplierOptions([]);
-          }
-        } catch (e) {
-          console.error('Suppliers reset load error', e);
-          setSupplierOptions([]);
-        } finally {
-          setSupplierSearchLoading(false);
-        }
-      })();
-    }
-  }, [supplierQuery]);
-
-  // Debounced remote search for suppliers on any input (1+ char)
-  useEffect(() => {
-    if (supplierQuery.length === 0) return;
-    let active = true;
-    const handler = setTimeout(async () => {
-      try {
-        const baseUrl = localStorage.getItem('baseUrl');
-        const token = localStorage.getItem('token');
-        if (!baseUrl || !token) return;
-        setSupplierSearchLoading(true);
-        const url = `https://${baseUrl}/pms/suppliers/get_suppliers.json?q[company_name_cont]=${encodeURIComponent(supplierQuery)}`;
-        const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        if (!active) return;
-        if (resp.ok) {
-          const data = await resp.json();
-          const arr = Array.isArray(data) ? data : (Array.isArray(data?.pms_suppliers) ? data.pms_suppliers : (Array.isArray(data?.suppliers) ? data.suppliers : []));
-          setSupplierOptions(arr);
-        } else {
-          setSupplierOptions([]);
-        }
-      } catch (err) {
-        console.error('Supplier search error', err);
-      } finally {
-        if (active) setSupplierSearchLoading(false);
-      }
-    }, 350);
-    return () => { active = false; clearTimeout(handler); };
-  }, [supplierQuery]);
 
   useEffect(() => {
     if (amcCreateSuccess) {
@@ -1113,20 +1108,56 @@ export const AddAMCPage = () => {
     },
   };
 
+  const getSupplierDisplayLabel = () =>
+    supplierDisplayLabel ||
+    (formData.supplier ? `Supplier #${formData.supplier}` : '');
+
+  const handleSupplierIdChange = useCallback((supplierId: string) => {
+    setFormData((prev) => ({ ...prev, supplier: supplierId }));
+    setErrors((prev) => ({ ...prev, supplier: '' }));
+    if (!supplierId) setSupplierDisplayLabel('');
+  }, []);
+
+  const handleSupplierOptionChange = useCallback((option: { label: string } | null) => {
+    setSupplierDisplayLabel(option?.label ?? '');
+  }, []);
+
+  const supplierField = (
+    <SupplierSearchSelect
+      value={formData.supplier}
+      onChange={handleSupplierIdChange}
+      onOptionChange={handleSupplierOptionChange}
+      disabled={loading || isSubmitting}
+      error={!!errors.supplier}
+      helperText={errors.supplier}
+      label={
+        <>
+          Supplier <span style={{ color: '#C72030' }}>*</span>
+        </>
+      }
+      required
+    />
+  );
+
   // Custom input styles for non-Material-UI elements
   const inputStyles = "w-full h-[40px] px-3 py-2 border border-[#ddd] rounded-md bg-white text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] disabled:bg-gray-50 disabled:text-gray-500";
   const labelStyles = "block text-sm font-semibold text-[#1a1a1a] mb-2";
   const errorStyles = "text-red-500 text-sm mt-1";
 
   const fetchAsset = async () => {
+    const CACHE_KEY = 'amc_cache_assets';
+    const cached = getDropdownCache(CACHE_KEY);
+    if (cached) {
+      setAssetList(cached as unknown[]);
+      return;
+    }
     const baseUrl = localStorage.getItem('baseUrl');
-    const token = localStorage.getItem("token"); // Get token from localStorage
-
+    const token = localStorage.getItem("token");
     try {
       const response = await fetch(`https://${baseUrl}/pms/assets/get_assets.json`, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Ensure token is a Bearer token if needed
+          'Authorization': `Bearer ${token}`,
         }
       });
 
@@ -1135,8 +1166,8 @@ export const AddAMCPage = () => {
       }
 
       const data = await response.json();
-      setAssetList(data)
-      console.log('SAC data:', data);
+      setAssetList(data);
+      setDropdownCache(CACHE_KEY, data);
       return data;
     } catch (error) {
       console.error('Error fetching SAC:', error);
@@ -1564,11 +1595,11 @@ export const AddAMCPage = () => {
                             disabled
                           >
                             <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                            {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
-                              <MenuItem key={supplier.id} value={supplier.id?.toString?.() || String(supplier.id)}>
-                                {supplier.company_name || supplier.name}
+                            {formData.supplier ? (
+                              <MenuItem value={formData.supplier}>
+                                {getSupplierDisplayLabel()}
                               </MenuItem>
-                            ))}
+                            ) : null}
                           </MuiSelect>
                         </FormControl>
 
@@ -1639,11 +1670,11 @@ export const AddAMCPage = () => {
                               disabled
                             >
                               <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                              {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
-                                <MenuItem key={supplier.id} value={supplier.id.toString()}>
-                                  {supplier.company_name || supplier.name}
+                              {formData.supplier ? (
+                                <MenuItem value={formData.supplier}>
+                                  {getSupplierDisplayLabel()}
                                 </MenuItem>
-                              ))}
+                              ) : null}
                             </MuiSelect>
                           </FormControl>
 
@@ -2065,11 +2096,11 @@ export const AddAMCPage = () => {
                           disabled
                         >
                           <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                          {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
-                            <MenuItem key={supplier.id} value={supplier.id?.toString?.() || String(supplier.id)}>
-                              {supplier.company_name || supplier.name}
+                          {formData.supplier ? (
+                            <MenuItem value={formData.supplier}>
+                              {getSupplierDisplayLabel()}
                             </MenuItem>
-                          ))}
+                          ) : null}
                         </MuiSelect>
                       </FormControl>
 
@@ -2139,11 +2170,11 @@ export const AddAMCPage = () => {
                             disabled
                           >
                             <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                            {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
-                              <MenuItem key={supplier.id} value={supplier.id.toString()}>
-                                {supplier.company_name || supplier.name}
+                            {formData.supplier ? (
+                              <MenuItem value={formData.supplier}>
+                                {getSupplierDisplayLabel()}
                               </MenuItem>
-                            ))}
+                            ) : null}
                           </MuiSelect>
                         </FormControl>
 
@@ -2913,102 +2944,7 @@ export const AddAMCPage = () => {
 
 
 
-<FormControl fullWidth error={!!errors.supplier}>
-  <Typography
-    sx={{
-      fontSize: "14px",
-      mb: 1,
-      fontWeight: 500,
-      color: "#444",
-    }}
-  >
-    Supplier <span style={{ color: "#C72030" }}>*</span>
-  </Typography>
-
-  <Select
-    options={(supplierOptions || []).map((item) => ({
-      value: item.id,
-      label: item.company_name || item.name,
-    }))}
-    value={
-      supplierOptions
-        ?.filter(
-          (item) =>
-            String(item.id) === String(formData.supplier)
-        )
-        ?.map((item) => ({
-          value: item.id,
-          label: item.company_name || item.name,
-        }))[0] || null
-    }
-    onChange={(selected: any) => {
-      handleInputChange(
-        "supplier",
-        selected ? String(selected.value) : ""
-      );
-
-      setErrors((prev: any) => ({
-        ...prev,
-        supplier: "",
-      }));
-    }}
-    isDisabled={
-      loading || suppliersLoading || isSubmitting
-    }
-    isClearable
-    placeholder="Search Supplier"
-    styles={{
-      control: (base, state) => ({
-        ...base,
-        minHeight: "56px",
-        borderRadius: "4px",
-        borderColor: errors.supplier
-          ? "#d32f2f"
-          : state.isFocused
-          ? "#C72030"
-          : "#c4c4c4",
-        boxShadow: "none",
-        "&:hover": {
-          borderColor: "#C72030",
-        },
-      }),
-
-      menu: (base) => ({
-        ...base,
-        zIndex: 9999,
-      }),
-
-      // option: (base, state) => ({
-      //   ...base,
-      //   backgroundColor: state.isFocused
-      //     ? "rgba(199,32,48,0.08)"
-      //     : "#fff",
-      //   color: "#000",
-      //   cursor: "pointer",
-      // }),
-
-      option: (base, state) => ({
-  ...base,
-  backgroundColor: state.isFocused
-    ? "#eff6ff" // faint blue on hover
-    : "#fff",
-  color: "#000",
-  cursor: "pointer",
-}),
-
-      placeholder: (base) => ({
-        ...base,
-        color: "#999",
-      }),
-    }}
-  />
-
-  {errors.supplier && (
-    <FormHelperText>
-      {errors.supplier}
-    </FormHelperText>
-  )}
-</FormControl>
+{supplierField}
 
 
 
@@ -3352,84 +3288,7 @@ export const AddAMCPage = () => {
       />
     </FormControl>
 
-    {/* Supplier */}
-    <FormControl fullWidth error={!!errors.supplier}>
-      <Typography
-        sx={{
-          fontSize: "14px",
-          mb: 1,
-          fontWeight: 500,
-          color: "#444",
-        }}
-      >
-        Supplier <span style={{ color: "#C72030" }}>*</span>
-      </Typography>
-
-      <Select
-        options={(supplierOptions || []).map((item) => ({
-          value: item.id,
-          label: item.company_name || item.name,
-        }))}
-        value={
-          (supplierOptions || [])
-            .filter(
-              (item) =>
-                String(item.id) === String(formData.supplier)
-            )
-            .map((item) => ({
-              value: item.id,
-              label: item.company_name || item.name,
-            }))[0] || null
-        }
-        onChange={(selected: any) => {
-          handleInputChange(
-            "supplier",
-            selected ? String(selected.value) : ""
-          );
-        }}
-        isDisabled={
-          loading || suppliersLoading || isSubmitting
-        }
-        isClearable
-        placeholder="Search Supplier"
-        styles={{
-          control: (base, state) => ({
-            ...base,
-            minHeight: "56px",
-            borderRadius: "4px",
-            borderColor: errors.supplier
-              ? "#d32f2f"
-              : state.isFocused
-              ? "#C72030"
-              : "#c4c4c4",
-            boxShadow: "none",
-            "&:hover": {
-              borderColor: "#C72030",
-            },
-          }),
-
-          option: (base, state) => ({
-            ...base,
-            backgroundColor: state.isFocused
-              ? "#eff6ff"
-              : "#fff",
-            color: "#000",
-            cursor: "pointer",
-          }),
-
-          menu: (base) => ({
-            ...base,
-            zIndex: 9999,
-          }),
-        }}
-      />
-
-      {errors.supplier && (
-        <FormHelperText>
-          {errors.supplier}
-        </FormHelperText>
-      )}
-    </FormControl>
+    {supplierField}
 
     {/* Technician */}
     <FormControl fullWidth error={!!errors.technician}>
@@ -3787,7 +3646,10 @@ export const AddAMCPage = () => {
                         multiple
                         className="hidden"
                         id="contracts-upload"
-                        onChange={e => handleFileUpload('contracts', e.target.files)}
+                        onChange={e => {
+                          handleFileUpload('contracts', e.target.files);
+                          e.currentTarget.value = '';
+                        }}
                         disabled={isSubmitting}
                       />
                       <div className="flex items-center justify-center gap-2 mb-4">
@@ -3807,6 +3669,9 @@ export const AddAMCPage = () => {
                         <Plus className="w-4 h-4 mr-1" />
                         Upload Files
                       </Button>
+                      <p className="mt-3 text-xs text-gray-500">
+                        Max file size: {MAX_ATTACHMENT_SIZE_MB} MB
+                      </p>
                     </div>
 
                     {attachments.contracts.length > 0 && (
@@ -3863,7 +3728,10 @@ export const AddAMCPage = () => {
                         multiple
                         className="hidden"
                         id="invoices-upload"
-                        onChange={e => handleFileUpload('invoices', e.target.files)}
+                        onChange={e => {
+                          handleFileUpload('invoices', e.target.files);
+                          e.currentTarget.value = '';
+                        }}
                         disabled={isSubmitting}
                       />
                       <div className="flex items-center justify-center gap-2 mb-4">
@@ -3883,6 +3751,9 @@ export const AddAMCPage = () => {
                         <Plus className="w-4 h-4 mr-1" />
                         Upload Files
                       </Button>
+                      <p className="mt-3 text-xs text-gray-500">
+                        Max file size: {MAX_ATTACHMENT_SIZE_MB} MB
+                      </p>
                     </div>
                     {attachments.invoices.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-3">

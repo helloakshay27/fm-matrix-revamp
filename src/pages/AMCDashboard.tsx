@@ -730,12 +730,14 @@ export const AMCDashboard = () => {
     setSelectedSummary(null);
   };
 
+  // Load analytics APIs only when the Analytics tab is selected
   useEffect(() => {
-    const defaultRange = getDefaultDateRange();
-    const startDate = convertDateStringToDate(defaultRange.startDate);
-    const endDate = convertDateStringToDate(defaultRange.endDate);
-    fetchAMCAnalyticsData(startDate, endDate);
-  }, []);
+    if (activeTab === 'analytics') {
+      const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+      const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+      fetchAMCAnalyticsData(startDate, endDate);
+    }
+  }, [activeTab]);
 
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
@@ -906,14 +908,21 @@ export const AMCDashboard = () => {
           return '-';
         }
       case 'associated_asset_service': {
-        // Map from associated_assets key and combine with service names from amc_services
-        const rawAssocAssets = Array.isArray(item.associated_assets) ? item.associated_assets
+        const rawAssocAssets = Array.isArray(item.associated_assets)
+          ? item.associated_assets
           : Array.isArray(item.amc_assets) ? item.amc_assets : [];
         const rawAssocServices = Array.isArray(item.amc_services) ? item.amc_services : [];
-        const assetAssocNames = rawAssocAssets.map((a: any) => a.asset_name).filter(Boolean);
-        const serviceAssocNames = rawAssocServices.map((s: any) => s.service_name).filter(Boolean);
-        const allAssocNames = [...assetAssocNames, ...serviceAssocNames];
-        return allAssocNames.length > 0 ? formatNamesWithEllipsis(allAssocNames) : '-';
+        const count = item.amc_type === 'Service'
+          ? rawAssocServices.length
+          : item.amc_type === 'Asset'
+            ? rawAssocAssets.length
+            : rawAssocAssets.length + rawAssocServices.length;
+        const label = item.amc_type === 'Service' ? 'Service' : 'Asset';
+        return count > 0 ? (
+          <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#EDEAE3] text-[#1a1a1a]">
+            {count} {label}{count !== 1 ? 's' : ''}
+          </span>
+        ) : '-';
       }
       case 'amc_type':
         return item.amc_type || '-';
@@ -1003,10 +1012,12 @@ export const AMCDashboard = () => {
                   );
                   if (response.status === 200) {
                     toast.success(`Status updated to ${value}`);
-                    const { startDate, endDate } = analyticsDateRange;
-                    const startDateObj = convertDateStringToDate(startDate);
-                    const endDateObj = convertDateStringToDate(endDate);
-                    await fetchAMCAnalyticsData(startDateObj, endDateObj);
+                    if (activeTab === 'analytics') {
+                      const { startDate, endDate } = analyticsDateRange;
+                      const startDateObj = convertDateStringToDate(startDate);
+                      const endDateObj = convertDateStringToDate(endDate);
+                      await fetchAMCAnalyticsData(startDateObj, endDateObj);
+                    }
                   } else {
                     dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
                     toast.error('Failed to update AMC status');
