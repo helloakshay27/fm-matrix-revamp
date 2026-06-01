@@ -314,7 +314,11 @@ const normalizeUserKpis = (raw: any): UserKpi[] => {
   }));
 };
 
-const AI_CONFIG_BASE_URL = "https://fm-uat-api.lockated.com";
+const getAiConfigBaseUrl = () => {
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) throw new Error("API base URL is not configured");
+  return baseUrl.replace(/\/+$/, "");
+};
 
 const getAiConfigProviderId = (config?: UserAiConfig | null) => {
   if (!config) return "";
@@ -624,7 +628,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       try {
         setIsAiProvidersLoading(true);
         setAiConfigError(null);
-        const response = await fetch(`${AI_CONFIG_BASE_URL}/user_ai_config/providers`, {
+        const response = await fetch(`${getAiConfigBaseUrl()}/user_ai_config/providers`, {
           headers: getAuthHeaders(),
         });
 
@@ -648,7 +652,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         setIsAiConfigLoading(true);
         setAiConfigError(null);
         const response = await fetch(
-          `${AI_CONFIG_BASE_URL}/user_ai_config/${encodeURIComponent(currentUserId)}`,
+          `${getAiConfigBaseUrl()}/user_ai_config/${encodeURIComponent(currentUserId)}`,
           { headers: getAuthHeaders() }
         );
 
@@ -687,7 +691,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
         setIsAiModelsLoading(true);
         setAiConfigError(null);
         const response = await fetch(
-          `${AI_CONFIG_BASE_URL}/user_ai_config/models?provider=${encodeURIComponent(selectedAiProvider)}`,
+          `${getAiConfigBaseUrl()}/user_ai_config/models?provider=${encodeURIComponent(selectedAiProvider)}`,
           { headers: getAuthHeaders() }
         );
 
@@ -734,7 +738,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       setIsAiConfigSaving(true);
       setAiConfigError(null);
 
-      const response = await fetch(`${AI_CONFIG_BASE_URL}/user_ai_config`, {
+      const response = await fetch(`${getAiConfigBaseUrl()}/user_ai_config`, {
         method: "POST",
         headers: {
           ...getAuthHeaders(),
@@ -796,7 +800,7 @@ const [documents, setDocuments] = useState<DocumentEntry[]>(() => {
       setIsAiConfigDeleting(true);
       setAiConfigError(null);
 
-      const response = await fetch(`${AI_CONFIG_BASE_URL}/user_ai_config/remove_key`, {
+      const response = await fetch(`${getAiConfigBaseUrl()}/user_ai_config/remove_key`, {
         method: "DELETE",
         headers: {
           ...getAuthHeaders(),
