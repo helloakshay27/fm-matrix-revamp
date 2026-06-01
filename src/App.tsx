@@ -3469,7 +3469,7 @@ function App() {
                               path="/accounting/recurring-invoices/edit/:id"
                               element={<EditRecurringInvoicePage />}
                             />
-                             <Route
+                            <Route
                               path="/accounting/recurring-invoices/details/:id"
                               element={<RecurringInvoiceDetailsPage />}
                             />
@@ -3520,7 +3520,7 @@ function App() {
                             />
                             <Route
                               path="/accounting/purchase-order/edit/:id"
-                              element={<PurchaseOrderCreatePage />}
+                              element={<PurchaseOrderEditPage />}
                             />
                             {/* Bills Routes */}
                             <Route
@@ -4684,19 +4684,19 @@ function App() {
                               element={<ViewPerformancePage />}
                             />
                             <Route
-                              path="/maintenance/vendor"
+                              path="/accounting/vendor"
                               element={<VendorPage />}
                             />
                             <Route
-                              path="/maintenance/vendor/add"
+                              path="/accounting/vendor/add"
                               element={<AddVendorPage />}
                             />
                             <Route
-                              path="/maintenance/vendor/view/:id"
+                              path="/accounting/vendor/view/:id"
                               element={<DetailsVendorPage />}
                             />
                             <Route
-                              path="/maintenance/vendor/edit/:id"
+                              path="/accounting/vendor/edit/:id"
                               element={<EditVendorPage />}
                             ></Route>
 
