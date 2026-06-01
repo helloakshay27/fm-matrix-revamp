@@ -730,12 +730,14 @@ export const AMCDashboard = () => {
     setSelectedSummary(null);
   };
 
+  // Load analytics APIs only when the Analytics tab is selected
   useEffect(() => {
-    const defaultRange = getDefaultDateRange();
-    const startDate = convertDateStringToDate(defaultRange.startDate);
-    const endDate = convertDateStringToDate(defaultRange.endDate);
-    fetchAMCAnalyticsData(startDate, endDate);
-  }, []);
+    if (activeTab === 'analytics') {
+      const startDate = convertDateStringToDate(analyticsDateRange.startDate);
+      const endDate = convertDateStringToDate(analyticsDateRange.endDate);
+      fetchAMCAnalyticsData(startDate, endDate);
+    }
+  }, [activeTab]);
 
   const handleAddClick = () => {
     navigate('/maintenance/amc/add');
@@ -1010,10 +1012,12 @@ export const AMCDashboard = () => {
                   );
                   if (response.status === 200) {
                     toast.success(`Status updated to ${value}`);
-                    const { startDate, endDate } = analyticsDateRange;
-                    const startDateObj = convertDateStringToDate(startDate);
-                    const endDateObj = convertDateStringToDate(endDate);
-                    await fetchAMCAnalyticsData(startDateObj, endDateObj);
+                    if (activeTab === 'analytics') {
+                      const { startDate, endDate } = analyticsDateRange;
+                      const startDateObj = convertDateStringToDate(startDate);
+                      const endDateObj = convertDateStringToDate(endDate);
+                      await fetchAMCAnalyticsData(startDateObj, endDateObj);
+                    }
                   } else {
                     dispatch(fetchAMCData.fulfilled(apiData, 'fetchAMCData', undefined));
                     toast.error('Failed to update AMC status');
