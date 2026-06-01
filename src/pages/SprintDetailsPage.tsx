@@ -11,7 +11,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
-import { fetchSprintById } from "@/store/slices/sprintSlice";
+import { fetchSprintById, updateSprintStatus } from "@/store/slices/sprintSlice";
 import SprintTasks from "@/components/SprintTasks";
 import SprintIssues from "@/components/SprintIssues";
 
@@ -164,6 +164,7 @@ interface ApiSprint {
   associated_projects_count?: number;
   sprint_task_managements?: ApiSprintTask[];
   sprint_issues?: any[];
+  created_by_name?: string; // not present in API response, will be set to "-" in mapping
 }
 
 // Normalize raw status to display value
@@ -270,7 +271,7 @@ const extractMembers = (api: ApiSprint): SprintMember[] => {
 const mapApiToDetails = (api: ApiSprint): SprintDetails => ({
   id: api.id,
   title: api.title ?? api.name,
-  created_by_name: undefined, // field not present in sprint response
+  created_by_name: api.created_by_name ?? "-", // field not present in sprint response
   created_at: api.created_at,
   status: mapStatusToDisplay(api.status),
   responsible_person: api.sprint_owner_name ?? "-",
@@ -343,6 +344,7 @@ export const SprintDetailsPage = () => {
       setTasks(mapApiTasks(resp));
       setSprintIssues(resp.sprint_issues ?? []);
       setSprintMembers(extractMembers(resp));
+      setSelectedOption(mapStatusToDisplay(resp.status));
     } catch (error) {
       toast.error(String(error) || "Failed to fetch sprint details");
     } finally {
@@ -389,16 +391,14 @@ export const SprintDetailsPage = () => {
     setSelectedOption(option);
     setOpenDropdown(false);
 
-    // await dispatch(
-    //   updateTaskStatus({
-    //     baseUrl,
-    //     token,
-    //     id: taskId,
-    //     data: {
-    //       status: mapDisplayToApiStatus(option),
-    //     },
-    //   })
-    // ).unwrap();
+    await dispatch(
+      updateSprintStatus({
+        token,
+        baseUrl,
+        id,
+        data: { status: option.toLowerCase().replace(/\s+/g, "_"), },
+      })
+    ).unwrap();
     fetchData();
     toast.dismiss();
     toast.success("Status updated successfully");
@@ -600,11 +600,10 @@ export const SprintDetailsPage = () => {
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`relative px-5 py-2 text-[14px] font-[500] capitalize transition-colors focus:outline-none ${
-                      activeTab === tab
-                        ? "text-[#E95420]"
-                        : "text-[#323232] hover:text-[#E95420]"
-                    }`}
+                    className={`relative px-5 py-2 text-[14px] font-[500] capitalize transition-colors focus:outline-none ${activeTab === tab
+                      ? "text-[#E95420]"
+                      : "text-[#323232] hover:text-[#E95420]"
+                      }`}
                   >
                     {tab === "tasks" ? "Tasks" : "Issues"}
                     {activeTab === tab && (

@@ -9,7 +9,7 @@ import { KeyProcessesSection } from "./AdminCompassComponent/KeyProcessesSection
 import SWOTAnalysis from "./AdminCompassComponent/SWOTAnalysis";
 import { GoalsView } from "./AdminCompassComponent/GoalsView";
 import { AdminViewEmulation } from "@/components/AdminViewEmulation";
-import { toast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 import GoalsPage from "./AdminCompassComponent/goalsPage";
 
 // ── Design Tokens ──
@@ -40,6 +40,49 @@ const getBaseUrl = () => {
 
 const BASE_URL = getBaseUrl();
 const AI_CRITICAL_NUMBERS_STORAGE_KEY = "business_plan_ai_critical_numbers";
+
+function getCleanAiPlanErrorMessage(message: string): string {
+  const cleanMessage = (value: string) =>
+    value
+      .trim()
+      .replace(/\s+See\s+https?:\/\/\S+\.?$/i, "")
+      .replace(/\s+You can find your API key at https?:\/\/\S+\.?$/i, "");
+
+  const trimmedMessage = cleanMessage(message);
+  const jsonStartIndex = trimmedMessage.indexOf("{");
+
+  if (jsonStartIndex === -1) {
+    return trimmedMessage;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmedMessage.slice(jsonStartIndex)) as {
+      error?: { message?: unknown };
+    };
+    const apiMessage = parsed.error?.message;
+
+    if (typeof apiMessage === "string" && apiMessage.trim()) {
+      return cleanMessage(apiMessage);
+    }
+  } catch {
+    // Keep the original message if it is not parseable JSON.
+  }
+
+  return trimmedMessage;
+}
+
+const toast = sonnerToast;
+const showToastError = sonnerToast.error.bind(
+  sonnerToast
+) as typeof sonnerToast.error;
+toast.error = ((
+  message: Parameters<typeof sonnerToast.error>[0],
+  options?: Parameters<typeof sonnerToast.error>[1]
+) =>
+  showToastError(
+    typeof message === "string" ? getCleanAiPlanErrorMessage(message) : message,
+    options
+  )) as typeof toast.error;
 
 const getAuthHeaders = (): Record<string, string> => {
   const token = localStorage.getItem("token") || "";
@@ -1982,6 +2025,32 @@ const BusinessPlanAndGoles = () => {
     ].join("\n");
   };
 
+  const getAiPlanResponseText = (response: any): string => {
+    const candidates = [
+      response?.response,
+      response?.data?.response,
+      response?.result?.response,
+      response?.output,
+      response?.data?.output,
+      response?.result?.output,
+      response?.content,
+      response?.data?.content,
+      response?.result?.content,
+      response?.text,
+      response?.data?.text,
+      response?.result?.text,
+      response?.generated_text,
+      response?.data?.generated_text,
+      response?.result?.generated_text,
+    ];
+
+    const text = candidates.find(
+      (candidate) => typeof candidate === "string" && candidate.trim()
+    );
+
+    return text ? text.trim() : "";
+  };
+
   const extractAiPlanText = (response: any): string => {
     const planObject =
       response?.plan ||
@@ -2005,6 +2074,7 @@ const BusinessPlanAndGoles = () => {
       response?.result?.ai_plan,
       response?.result?.business_plan,
       response?.result?.summary,
+      getAiPlanResponseText(response),
     ];
     const text = candidates.find(
       (candidate) => typeof candidate === "string" && candidate.trim()
@@ -2019,7 +2089,13 @@ const BusinessPlanAndGoles = () => {
     return (
       status === "completed" ||
       status === "success" ||
-      (response?.success === true && !!(response?.plan || response?.data?.plan))
+      (response?.success === true &&
+        !!(
+          response?.plan ||
+          response?.data?.plan ||
+          response?.result?.plan ||
+          getAiPlanResponseText(response)
+        ))
     );
   };
 
@@ -2249,7 +2325,7 @@ const BusinessPlanAndGoles = () => {
       const json = await res.json().catch(() => ({}));
 
       if (!res.ok || json?.success === false) {
-        throw new Error(json?.message || json?.error || "Failed to start AI plan generation.");
+        throw new Error(json?.message || json?.error || "No AI Setup Detected");
       }
 
       if (isAiPlanCompleted(json)) {
@@ -2283,6 +2359,7 @@ const BusinessPlanAndGoles = () => {
       }
 
       setAiBuilderError(err.message || "Failed to generate AI plan.");
+      toast.error(err.message || "Failed to generate AI plan.");
       setAiBuilderStage("questions");
     } finally {
       if (aiPlanAbortRef.current === controller) {
@@ -2293,7 +2370,9 @@ const BusinessPlanAndGoles = () => {
 
   const goToNextAiQuestion = () => {
     if (!aiAnswers[aiQuestionIndex]?.trim()) {
-      setAiBuilderError("Please answer this question before continuing.");
+      const message = "Please answer this question before continuing.";
+      setAiBuilderError(message);
+      toast.error(message);
       return;
     }
 
@@ -3695,10 +3774,6 @@ const BusinessPlanAndGoles = () => {
                       autoFocus
                     />
                   </div>
-
-                  {aiBuilderError && (
-                    <div className="bp-error-banner">{aiBuilderError}</div>
-                  )}
                 </div>
               )}
 
