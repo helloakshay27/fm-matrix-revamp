@@ -81,8 +81,9 @@ const fetchSuppliersPage = async (
     page: String(page),
     per_page: String(PAGE_SIZE),
   });
-  if (searchTerm?.trim()) {
-    params.set('q[company_name_cont]', searchTerm.trim());
+  const trimmedSearch = searchTerm?.trim();
+  if (trimmedSearch) {
+    params.set('q[company_name_cont]', trimmedSearch);
   }
 
   const url = `https://${auth.baseUrl}/pms/suppliers/get_suppliers.json?${params.toString()}`;
@@ -93,7 +94,12 @@ const fetchSuppliersPage = async (
   if (!resp.ok) return { options: [], hasMore: false };
 
   const data = await resp.json();
-  const options = parseSuppliersResponse(data).map(toSelectOption);
+  let options = parseSuppliersResponse(data).map(toSelectOption);
+
+  if (trimmedSearch) {
+    const q = trimmedSearch.toLowerCase();
+    options = options.filter((opt) => opt.label.toLowerCase().includes(q));
+  }
 
   let hasMore = options.length >= PAGE_SIZE;
   if (data && typeof data === 'object' && !Array.isArray(data)) {
@@ -220,10 +226,44 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
     setSelected(option);
   }, []);
 
+  const filterOptionsByTerm = (
+    items: ReactSelectOption[],
+    term: string
+  ): ReactSelectOption[] => {
+    const q = term.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((opt) => opt.label.toLowerCase().includes(q));
+  };
+
   const loadPage = useCallback(
     async (page: number, replace: boolean, searchTerm?: string) => {
-      if (loadingRef.current) return;
+      if (loadingRef.current && !replace) return;
       if (!replace && !hasMoreRef.current) return;
+
+      const trimmedSearch = searchTerm?.trim();
+
+      if (trimmedSearch && clientFullListRef.current) {
+        const filtered = filterOptionsByTerm(
+          clientFullListRef.current,
+          trimmedSearch
+        );
+        const start = (page - 1) * PAGE_SIZE;
+        const pageOptionsFinal = filtered.slice(start, start + PAGE_SIZE);
+        const hasMoreFinal = start + PAGE_SIZE < filtered.length;
+
+        setOptions((prev) => {
+          const merged = dedupeOptions(
+            replace ? pageOptionsFinal : [...prev, ...pageOptionsFinal]
+          );
+          return merged;
+        });
+        pageRef.current = page;
+        hasMoreRef.current = hasMoreFinal;
+        setMenuLoading(false);
+        setInitialLoading(false);
+        loadingRef.current = false;
+        return;
+      }
 
       loadAbortRef.current?.abort();
       const controller = new AbortController();
@@ -310,9 +350,8 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
 
   const runSearch = useCallback(
     (term: string) => {
-      searchAbortRef.current?.abort();
-      const controller = new AbortController();
-      searchAbortRef.current = controller;
+      loadAbortRef.current?.abort();
+      loadingRef.current = false;
       isSearchModeRef.current = true;
       searchTermRef.current = term;
       hasMoreRef.current = true;
@@ -389,7 +428,9 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
 
   const handleInputChange = useCallback(
     (inputValue: string, meta: { action: string }) => {
-      if (meta.action !== 'input') return;
+      const isTyping =
+        meta.action === 'input-change' || meta.action === 'input';
+      if (!isTyping) return;
 
       if (searchDebounceRef.current) {
         clearTimeout(searchDebounceRef.current);
@@ -398,17 +439,32 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
       const trimmed = inputValue.trim();
 
       if (!trimmed) {
-        searchAbortRef.current?.abort();
+        loadAbortRef.current?.abort();
+        loadingRef.current = false;
         isSearchModeRef.current = false;
         searchTermRef.current = '';
         hasMoreRef.current = true;
+        setMenuLoading(false);
         if (browseBufferRef.current.length > 0) {
           setOptions(browseBufferRef.current);
           pageRef.current = Math.max(
             1,
             Math.ceil(browseBufferRef.current.length / PAGE_SIZE)
           );
+        } else {
+          void loadPage(1, true);
         }
+        return;
+      }
+
+      if (clientFullListRef.current) {
+        isSearchModeRef.current = true;
+        searchTermRef.current = trimmed;
+        hasMoreRef.current = true;
+        pageRef.current = 1;
+        const filtered = filterOptionsByTerm(clientFullListRef.current, trimmed);
+        setOptions(filtered.slice(0, PAGE_SIZE));
+        hasMoreRef.current = filtered.length > PAGE_SIZE;
         return;
       }
 
@@ -416,7 +472,7 @@ export const SupplierSearchSelect: React.FC<SupplierSearchSelectProps> = ({
         runSearch(trimmed);
       }, SEARCH_DEBOUNCE_MS);
     },
-    [runSearch]
+    [loadPage, runSearch]
   );
 
   const VirtualizedMenuList = useMemo(() => {
