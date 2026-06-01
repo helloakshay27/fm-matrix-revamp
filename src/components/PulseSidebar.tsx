@@ -273,6 +273,11 @@ const modulesByPackage = {
       ],
     },
 
+    {
+      name: "Ride Settings",
+      icon: Settings,
+      href: "/pulse/ride_settings",
+    },
     // {
     //   name: 'Inventory Sub Type',
     //   icon: PackagePlus,
@@ -431,6 +436,8 @@ export const PulseSidebar = () => {
       setCurrentSection("Master");
     } else if (path.startsWith("/settings")) {
       setCurrentSection("Settings");
+    } else if (path === "/pulse/ride_settings" || path.startsWith("/pulse/ride_settings/")) {
+      setCurrentSection("Master");
     } else if (path.startsWith("/pulse") || !currentSection) {
       setCurrentSection("Pulse Privilege");
     }
