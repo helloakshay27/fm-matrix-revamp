@@ -272,7 +272,7 @@ const BusinessCompassDailyReport: React.FC = () => {
     []
   );
   const [planningItems, setPlanningItems] = useState<
-    { id: string; text: string; starred: boolean; source_id?: number | null; source_type?: string | null; fromWeeklyPlan?: boolean }[]
+    { id: string; text: string; starred: boolean; source_id?: number | null; source_type?: string | null; fromWeeklyPlan?: boolean; originalData?: any }[]
   >([]);
   const [uploadedFiles, setUploadedFiles] = useState<
     {
@@ -473,6 +473,8 @@ const BusinessCompassDailyReport: React.FC = () => {
             id: `task-${t.id}`,
             title: t.title || t.name || "",
             type: "task" as const,
+            priority: t.priority || null,
+            originalData: t,
           })),
         ...issues
           .filter((i: any) => !isCompleted(i.status))
@@ -480,6 +482,8 @@ const BusinessCompassDailyReport: React.FC = () => {
             id: `issue-${i.id}`,
             title: i.title || "",
             type: "issue" as const,
+            priority: i.priority || null,
+            originalData: i,
           })),
         ...todos
           .filter((t: any) => !isCompleted(t.status))
@@ -487,6 +491,8 @@ const BusinessCompassDailyReport: React.FC = () => {
             id: `todo-${t.id}`,
             title: t.title || "",
             type: "todo" as const,
+            priority: t.priority || null,
+            originalData: t,
           })),
       ].filter((item) => item.title.trim() !== "");
 
@@ -1055,7 +1061,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       const sourceType = item.type ?? null;
       setPlanningItems((prev) => [
         ...prev,
-        { id: `tomorrow-${item.id}-${Date.now()}`, text, starred: false, source_id: sourceId, source_type: sourceType },
+        { id: `tomorrow-${item.id}-${Date.now()}`, text, starred: false, source_id: sourceId, source_type: sourceType, originalData: item.originalData ?? null },
       ]);
       markDraftDirty();
     }
@@ -2707,6 +2713,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                               <span className="flex-1 text-sm font-medium text-gray-400 line-through truncate select-none">
                                 {item.title}
                               </span>
+                              {item.priority && (
+                                <span
+                                  className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                  style={{
+                                    backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                    color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                  }}
+                                >
+                                  {item.priority}
+                                </span>
+                              )}
                               <button
                                 onClick={() => {
                                   if (item.type === "todo") {
@@ -2745,6 +2762,46 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 <Pencil size={13} />
                               </button>
                             </div>
+                            {(() => {
+                              const d = item.originalData;
+                              const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                              const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                              let issueEffort: string | null = null;
+                              if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                const totalMin = d.issue_allocation_times.reduce(
+                                  (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                );
+                                if (totalMin > 0) {
+                                  const h = Math.floor(totalMin / 60);
+                                  const m = totalMin % 60;
+                                  issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                }
+                              }
+                              const hasInfo = endDate || effortEst || issueEffort;
+                              if (!hasInfo) return null;
+                              return (
+                                <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                  {endDate && (
+                                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                      <CalendarIcon size={9} className="shrink-0" />
+                                      {endDate}
+                                    </span>
+                                  )}
+                                  {effortEst && (
+                                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                      <Clock size={9} className="shrink-0" />
+                                      Est: {effortEst}
+                                    </span>
+                                  )}
+                                  {issueEffort && (
+                                    <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                      <Zap size={9} className="shrink-0" />
+                                      Effort: {issueEffort}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </div>
                         </div>
                       ))}
@@ -3561,6 +3618,17 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     placeholder="What's your strategic priority?"
                                     className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-gray-700 placeholder:text-gray-400"
                                   />
+                                  {item.originalData?.priority && (
+                                    <span
+                                      className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                      style={{
+                                        backgroundColor: item.originalData.priority === "High" ? "#fee2e2" : item.originalData.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                        color: item.originalData.priority === "High" ? "#991b1b" : item.originalData.priority === "Medium" ? "#92400e" : "#166534",
+                                      }}
+                                    >
+                                      {item.originalData.priority}
+                                    </span>
+                                  )}
                                   <div className="flex items-center gap-2">
                                     <X
                                       size={18}
@@ -3569,6 +3637,57 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     />
                                   </div>
                                 </div>
+                                {item.originalData && (() => {
+                                  const d = item.originalData;
+                                  const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                  const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                  const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                  let timeLeftLabel: string | null = null;
+                                  if (item.source_type === "issue" && d?.end_date && !overdueLabel) {
+                                    const now = new Date();
+                                    const end = new Date(d.end_date);
+                                    end.setHours(23, 59, 59, 999);
+                                    const diff = end.getTime() - now.getTime();
+                                    if (diff > 0) {
+                                      const days = Math.floor(diff / 86400000);
+                                      const hrs = Math.floor((diff % 86400000) / 3600000);
+                                      const mins = Math.floor((diff % 3600000) / 60000);
+                                      if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                      else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                      else timeLeftLabel = `${mins}m left`;
+                                    }
+                                  }
+                                  const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                  if (!hasInfo) return null;
+                                  return (
+                                    <div className="flex items-center gap-3 pl-7 pt-1 flex-wrap">
+                                      {endDate && (
+                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                          <CalendarIcon size={9} className="shrink-0" />
+                                          {endDate}
+                                        </span>
+                                      )}
+                                      {overdueLabel && (
+                                        <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                          <AlertCircle size={9} className="shrink-0" />
+                                          {overdueLabel}
+                                        </span>
+                                      )}
+                                      {timeLeftLabel && (
+                                        <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                          <Clock size={9} className="shrink-0" />
+                                          {timeLeftLabel}
+                                        </span>
+                                      )}
+                                      {effortEst && (
+                                        <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                          <Clock size={9} className="shrink-0" />
+                                          Est: {effortEst}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                                 {item.fromWeeklyPlan && (
                                   <div className="pl-7 pt-1">
                                     <span className="inline-flex items-center gap-1 bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold px-2 py-0.5 rounded-[5px]">
@@ -3606,21 +3725,85 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 key={item.id}
                                 className="relative animate-in fade-in slide-in-from-top-1 duration-200"
                               >
-                                <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-[10px] p-3 cursor-not-allowed select-none">
-                                  <Star size={18} className="text-gray-300 shrink-0" />
-                                  <span className={cn(
-                                    "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                    item.type === "task"
-                                      ? "bg-[#DA7756]/10 text-[#9e4f36]"
-                                      : item.type === "issue"
-                                        ? "bg-violet-100 text-violet-700"
-                                        : "bg-yellow-100 text-yellow-700"
-                                  )}>
-                                    {item.type}
-                                  </span>
-                                  <span className="flex-1 text-sm font-medium text-gray-500 truncate">
-                                    {item.title}
-                                  </span>
+                                <div className="flex flex-col bg-gray-50 border border-gray-200 rounded-[10px] p-3 cursor-not-allowed select-none">
+                                  <div className="flex items-center gap-3">
+                                    <Star size={18} className="text-gray-300 shrink-0" />
+                                    <span className={cn(
+                                      "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                      item.type === "task"
+                                        ? "bg-[#DA7756]/10 text-[#9e4f36]"
+                                        : item.type === "issue"
+                                          ? "bg-violet-100 text-violet-700"
+                                          : "bg-yellow-100 text-yellow-700"
+                                    )}>
+                                      {item.type}
+                                    </span>
+                                    <span className="flex-1 text-sm font-medium text-gray-500 truncate">
+                                      {item.title}
+                                    </span>
+                                    {item.priority && (
+                                      <span
+                                        className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                        style={{
+                                          backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                          color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                        }}
+                                      >
+                                        {item.priority}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {(() => {
+                                    const d = item.originalData;
+                                    const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
+                                    const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                    const overdueLabel = getOverdueLabel(d?.target_date || d?.due_date || d?.end_date);
+                                    let timeLeftLabel: string | null = null;
+                                    if (item.type === "issue" && d?.end_date && !overdueLabel) {
+                                      const now = new Date();
+                                      const end = new Date(d.end_date);
+                                      end.setHours(23, 59, 59, 999);
+                                      const diff = end.getTime() - now.getTime();
+                                      if (diff > 0) {
+                                        const days = Math.floor(diff / 86400000);
+                                        const hrs = Math.floor((diff % 86400000) / 3600000);
+                                        const mins = Math.floor((diff % 3600000) / 60000);
+                                        if (days > 0) timeLeftLabel = `${days}d ${hrs}h left`;
+                                        else if (hrs > 0) timeLeftLabel = `${hrs}h ${mins}m left`;
+                                        else timeLeftLabel = `${mins}m left`;
+                                      }
+                                    }
+                                    const hasInfo = endDate || effortEst || overdueLabel || timeLeftLabel;
+                                    if (!hasInfo) return null;
+                                    return (
+                                      <div className="flex items-center gap-3 pl-7 pt-1.5 flex-wrap">
+                                        {endDate && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                            <CalendarIcon size={9} className="shrink-0" />
+                                            {endDate}
+                                          </span>
+                                        )}
+                                        {overdueLabel && (
+                                          <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600">
+                                            <AlertCircle size={9} className="shrink-0" />
+                                            {overdueLabel}
+                                          </span>
+                                        )}
+                                        {timeLeftLabel && (
+                                          <span className="flex items-center gap-1 text-[10px] text-blue-600">
+                                            <Clock size={9} className="shrink-0" />
+                                            {timeLeftLabel}
+                                          </span>
+                                        )}
+                                        {effortEst && (
+                                          <span className="flex items-center gap-1 text-[10px] text-gray-500">
+                                            <Clock size={9} className="shrink-0" />
+                                            Est: {effortEst}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             ))}
