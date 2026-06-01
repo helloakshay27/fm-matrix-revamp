@@ -115,6 +115,7 @@ interface TaskManagement {
 
 interface ApiSprintTask {
   id: number;
+  is_started?: boolean;
   sprint_id?: number;
   task_id?: number;
   created_at?: string;
@@ -286,7 +287,8 @@ const mapApiTasks = (api: ApiSprint): Task[] => {
   return list.map((t) => {
     const taskMgmt = t;
     return {
-      id: t.id,
+      id: taskMgmt.id,
+      is_started: taskMgmt.is_started,
       task_code: taskMgmt?.task_code ?? "-",
       title: taskMgmt?.title ?? `Task #${t.task_id ?? t.id}`,
       project_management_title: taskMgmt?.project_management_title ?? "-",
