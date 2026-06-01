@@ -93,8 +93,8 @@ export const VendorPage = () => {
     }
   };
 
-  const handleAddVendor = () => navigate('/maintenance/vendor/add');
-  const handleViewVendor = (id: number) => navigate(`/maintenance/vendor/view/${id}`);
+  const handleAddVendor = () => navigate('/accounting/vendor/add');
+  const handleViewVendor = (id: number) => navigate(`/accounting/vendor/view/${id}`);
 
   const handleImport = () => {
     setShowImportModal(true);
