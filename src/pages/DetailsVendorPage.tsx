@@ -5,15 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TextField, Grid } from '@mui/material';
-import { Building, FileText, Landmark, ShieldCheck, User, ArrowLeft, Loader2, Eye, Download, FileSpreadsheet, File } from 'lucide-react';
+import { TextField } from '@mui/material';
+import { Building, FileText, Landmark, ShieldCheck, User, ArrowLeft, Loader2, Eye, Download, FileSpreadsheet, File, Printer } from 'lucide-react';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import VendorStatementPdf from './VendorStatementTemplate';
 
 // Define the types for the vendor data based on the provided JSON
 interface Contact {
-    name: string;
-    email: string;
-    phone: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    email1?: string;
+    email2?: string;
+    mobile1?: string;
+    mobile2?: string;
+    name?: string;
+    phone?: string;
 }
 
 interface BankInformation {
@@ -168,6 +177,8 @@ const DetailsVendorPage = () => {
     const [activeTab, setActiveTab] = useState("basic");
     const [selectedDoc, setSelectedDoc] = useState<any>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [statementDownloading, setStatementDownloading] = useState(false);
+    const statementPdfRef = React.useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         const fetchVendorDetails = async () => {
@@ -212,19 +223,103 @@ const DetailsVendorPage = () => {
 
     console.log("vendor:-", vendor);
 
+    const formatDate = (value: string) => {
+        if (!value) return '-';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return value;
+        return date.toLocaleDateString('en-GB');
+    };
 
-    const renderDetailField = (label: string, value: any) => (
-        <Grid item xs={12} sm={6} md={4}>
-            <TextField
-                label={label}
-                value={value || '-'}
-                InputProps={{ readOnly: true, disableUnderline: true }}
-                variant="standard"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-            />
-        </Grid>
-    );
+    const formatCurrency = (value: number | string | undefined | null) => {
+        const amount = Number(value || 0);
+        return amount.toLocaleString('en-IN', {
+            style: 'currency',
+            currency: 'INR',
+            maximumFractionDigits: 2,
+        });
+    };
+
+    const handleDownloadStatement = async () => {
+        if (!statementPdfRef.current) {
+            return;
+        }
+
+        try {
+            setStatementDownloading(true);
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+
+            const canvas = await html2canvas(statementPdfRef.current, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false,
+            });
+
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+            let heightLeft = imgHeight;
+            let position = 0;
+
+            pdf.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+            heightLeft -= pageHeight;
+
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', 0, position, pageWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            const fileName = `VendorStatement-${vendor?.company_name?.replace(/\s+/g, '-') || vendor?.id || 'statement'}.pdf`;
+            pdf.save(fileName);
+        } catch (error) {
+            console.error('Error generating vendor statement PDF:', error);
+            setError('Failed to download vendor statement.');
+        } finally {
+            setStatementDownloading(false);
+        }
+    };
+
+    const handlePrintStatement = () => {
+        setActiveTab('statement');
+        setTimeout(() => window.print(), 0);
+    };
+
+    const statementFrom = vendor?.created_at || new Date().toISOString();
+    const statementTo = vendor?.updated_at || new Date().toISOString();
+    const statementVendorName = vendor?.company_name || `${vendor?.first_name || ''} ${vendor?.last_name || ''}`.trim() || 'Vendor';
+    const statementVendorGstin = vendor?.primary_gst_detail?.gstin || vendor?.gstin_number || '';
+    const statementAmountPaid = Number(vendor?.financial_summary?.total_paid_amount_all || 0);
+    const statementBalanceDue = Number(vendor?.financial_summary?.total_outstanding_amount_all || 0);
+    const statementBilledAmount =
+        Number(vendor?.financial_summary?.po_total_amount || 0) +
+        Number(vendor?.financial_summary?.wo_total_amount || 0);
+    const statementTransactions =
+        vendor?.opening_balances && vendor.opening_balances.length > 0
+            ? vendor.opening_balances.map((item) => ({
+                date: item.date,
+                transaction: item.bill_no || 'Opening Balance',
+                details: item.due_date ? `Due ${formatDate(item.due_date)}` : '-',
+                amount: item.amount || 0,
+                payment: 0,
+                balance: item.amount || 0,
+            }))
+            : [
+                {
+                    date: formatDate(statementFrom),
+                    transaction: 'Statement summary',
+                    details: 'Generated from vendor financial summary',
+                    amount: statementBilledAmount,
+                    payment: statementAmountPaid,
+                    balance: statementBalanceDue,
+                },
+            ];
+
+    const statementStatus = statementBalanceDue > 0 ? 'unpaid' : 'paid';
 
     const getStatusBadgeStyles = (status: string) => {
         const normalizedStatus = status.toLowerCase();
@@ -344,6 +439,13 @@ const DetailsVendorPage = () => {
                             className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
                         >
                             Attachments
+                        </TabsTrigger>
+
+                        <TabsTrigger
+                            value="statement"
+                            className="flex-1 min-w-0 bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] border-r border-gray-200 last:border-r-0"
+                        >
+                            Statement
                         </TabsTrigger>
 
                         <TabsTrigger
@@ -781,6 +883,61 @@ const DetailsVendorPage = () => {
                                                 )}
                                             </TableBody>
                                         </Table>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="statement" className="p-4 sm:p-6">
+                        {/* Vendor Statement */}
+                        <Card className="w-full">
+                            <CardHeader className="pb-4 lg:pb-6">
+                                <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-lg font-semibold text-[#1A1A1A]">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                                            <FileText className="w-6 h-6" style={{ color: '#C72030' }} />
+                                        </div>
+                                        <span className="uppercase tracking-wide">Vendor Statement</span>
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={handlePrintStatement}
+                                        >
+                                            <Printer className="h-4 w-4 mr-2" />
+                                            Print Statement
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={handleDownloadStatement}
+                                            disabled={statementDownloading}
+                                        >
+                                            <Download className="h-4 w-4 mr-2" />
+                                            {statementDownloading ? 'Downloading...' : 'Download Statement'}
+                                        </Button>
+                                    </div>
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                                <div className="overflow-x-auto">
+                                    <div ref={statementPdfRef} className="inline-block min-w-full">
+                                        <VendorStatementPdf
+                                            vendorName={statementVendorName}
+                                            vendorGstin={statementVendorGstin}
+                                            statementFrom={statementFrom}
+                                            statementTo={statementTo}
+                                            openingBalance={Number(vendor?.financial_summary?.total_amount_all || 0)}
+                                            billedAmount={statementBilledAmount}
+                                            amountPaid={statementAmountPaid}
+                                            balanceDue={statementBalanceDue}
+                                            transactions={statementTransactions}
+                                            status={statementStatus}
+                                            formatDate={formatDate}
+                                            formatCurrency={formatCurrency}
+                                        />
                                     </div>
                                 </div>
                             </CardContent>
