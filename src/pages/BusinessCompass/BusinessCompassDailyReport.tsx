@@ -875,12 +875,18 @@ const BusinessCompassDailyReport: React.FC = () => {
     }));
     const nonEmptyAccomplishments = [
       ...visibleAccomplishments.filter((a) => cleanReportText(a.text) !== ""),
-      ...autoAddedAccomplishments.map((item) => ({
-        id: `auto-${item.id}`,
-        text: item.title || "",
-        completed: true,
-        starred: false,
-      })),
+      ...autoAddedAccomplishments.map((item) => {
+        const autoStarKey = String(item.id);
+        const isStarred = autoStarredIds.has(autoStarKey);
+        return {
+          id: `auto-${autoStarKey}`,
+          text: item.title || "",
+          completed: true,
+          starred: isStarred,
+          star: isStarred,
+          is_starred: isStarred,
+        };
+      }),
     ];
     const nonEmptyPlanningItems = planningItems.filter(
       (p) => cleanReportText(p.text) !== ""
@@ -891,7 +897,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       mergedTasksIssues,
       nonEmptyPlanningItems
     );
-  }, [kpis, kpiEntries, visibleAccomplishments, autoAddedAccomplishments, mergedTasksIssues, planningItems]);
+  }, [kpis, kpiEntries, visibleAccomplishments, autoAddedAccomplishments, autoStarredIds, mergedTasksIssues, planningItems]);
 
   useEffect(() => {
     const fetchKpis = async () => {
@@ -2013,7 +2019,7 @@ const BusinessCompassDailyReport: React.FC = () => {
       const startDate = `${selectedYear}-${monthIndex.toString().padStart(2, "0")}-01`;
       const lastDay = new Date(parseInt(selectedYear), monthIndex, 0).getDate();
       const endDate = `${selectedYear}-${monthIndex.toString().padStart(2, "0")}-${lastDay.toString().padStart(2, "0")}`;
-      queryParams.append("q[start_date_gteq]", startDate);
+      // queryParams.append("q[start_date_gteq]", startDate);
       queryParams.append("q[start_date_lteq]", endDate);
 
       const url = `${baseUrl.replace(/\/+$/, "")}/user_journals.json?${queryParams.toString()}`;
@@ -2055,7 +2061,7 @@ const BusinessCompassDailyReport: React.FC = () => {
         })),
       ...autoAddedAccomplishments.map((item) => ({
         title: cleanReportText(item.title || ""),
-        star: autoStarredIds.has(item.id),
+        star: autoStarredIds.has(String(item.id)),
       })),
     ].filter((a) => a.title !== "");
     const manualTomorrowPlan = planningItems
@@ -2583,9 +2589,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                         Today's Accomplishments
                       </h3>
                     </div>
-                    <Badge className={badgePoints}>
-                      {dailyScore.accomplishmentsScore}/20 PTS
-                    </Badge>
+                    <div className="flex items-center gap-4">
+                      <Badge className={badgePoints}>
+                        {dailyScore.accomplishmentsScore}/20 PTS
+                      </Badge>
+                      <Button
+                        className="rounded-[8px] shadow-lg font-semibold text-sm"
+                        onClick={addAccomplishment}
+                      >
+                        <Plus size={14} />
+                        Add Item
+                      </Button>
+                    </div>
                   </div>
 
                   <CardContent className="p-6 space-y-6">
@@ -2634,6 +2649,10 @@ const BusinessCompassDailyReport: React.FC = () => {
                                 onClick={() => toggleStar(item.id)}
                               />
 
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0 bg-gray-500 text-white">
+                                Note
+                              </span>
+
                               <input
                                 type="text"
                                 value={item.text}
@@ -2672,139 +2691,145 @@ const BusinessCompassDailyReport: React.FC = () => {
                       ))}
 
                       {/* ── Auto-added (checkbox + star editable, title non-editable) ── */}
-                      {autoAddedAccomplishments.map((item) => (
-                        <div key={item.id} className="relative animate-in fade-in duration-300">
-                          <div className="flex flex-col gap-1 bg-[#DA7756]/10 border border-[#DA7756]/10 rounded-[10px] p-3">
-                            <div className="flex items-center gap-4">
-                              <div
-                                className="h-6 w-6 rounded-[6px] flex items-center justify-center border-2 shrink-0 bg-[#DA7756] border-[#DA7756] cursor-pointer hover:opacity-70 transition-opacity"
-                                onClick={() => { setPendingReopenItem(item); setReopenReason(""); }}
-                                title="Mark as open"
-                              >
-                                <Check size={14} className="text-white" />
-                              </div>
-                              <Star
-                                size={18}
-                                className={cn(
-                                  "cursor-pointer transition-all shrink-0",
-                                  autoStarredIds.has(item.id)
-                                    ? "text-[#eab308] fill-[#eab308]"
-                                    : "text-[#DA7756]/70 hover:text-[#DA7756]"
-                                )}
-                                onClick={() => {
-                                  setAutoStarredIds((prev) => {
-                                    const next = new Set(prev);
-                                    if (next.has(item.id)) next.delete(item.id);
-                                    else next.add(item.id);
-                                    return next;
-                                  });
-                                }}
-                              />
-                              <span className={cn(
-                                "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                item.type === "task"
-                                  ? "bg-[#DA7756] text-white"
-                                  : item.type === "issue"
-                                    ? "bg-violet-600 text-white"
-                                    : "bg-amber-500 text-white"
-                              )}>
-                                {item.type}
-                              </span>
-                              <span className="flex-1 text-sm font-medium text-gray-400 line-through truncate select-none">
-                                {item.title}
-                              </span>
-                              {item.priority && (
-                                <span
-                                  className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
-                                  style={{
-                                    backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
-                                    color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
-                                  }}
+                      {autoAddedAccomplishments.map((item) => {
+                        const autoStarKey = String(item.id);
+                        const isAutoStarred = autoStarredIds.has(autoStarKey);
+
+                        return (
+                          <div key={item.id} className="relative animate-in fade-in duration-300">
+                            <div className="flex flex-col gap-1 bg-[#DA7756]/10 border border-[#DA7756]/10 rounded-[10px] p-3">
+                              <div className="flex items-center gap-4">
+                                <div
+                                  className="h-6 w-6 rounded-[6px] flex items-center justify-center border-2 shrink-0 bg-[#DA7756] border-[#DA7756] cursor-pointer hover:opacity-70 transition-opacity"
+                                  onClick={() => { setPendingReopenItem(item); setReopenReason(""); }}
+                                  title="Mark as open"
                                 >
-                                  {item.priority}
-                                </span>
-                              )}
-                              <button
-                                onClick={() => {
-                                  if (item.type === "todo") {
-                                    setSelectedTodo(item.originalData);
-                                    setIsDetailsModalOpen(true);
-                                  } else {
-                                    navigate(
-                                      item.type === "task"
-                                        ? `/vas/tasks/${item.originalData?.id}`
-                                        : `/vas/issues/${item.originalData?.id}`
-                                    );
-                                  }
-                                }}
-                                className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
-                                title={`View ${item.type} details`}
-                              >
-                                <Eye size={14} className="text-[#DA7756]" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (item.type === "task") {
-                                    setEditTaskData(item.originalData);
-                                    setIsEditTaskModalOpen(true);
-                                  } else if (item.type === "issue") {
-                                    setEditIssueData(item.originalData);
-                                    setIsEditIssueModalOpen(true);
-                                  } else if (item.type === "todo") {
-                                    setEditTodoData(item.originalData);
-                                    setIsEditTodoModalOpen(true);
-                                  }
-                                }}
-                                className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
-                                title={`Edit ${item.type}`}
-                              >
-                                <Pencil size={13} />
-                              </button>
-                            </div>
-                            {(() => {
-                              const d = item.originalData;
-                              const endDate = fmtDate(d?.target_date || d?.due_date || d?.end_date);
-                              const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
-                              let issueEffort: string | null = null;
-                              if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
-                                const totalMin = d.issue_allocation_times.reduce(
-                                  (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
-                                );
-                                if (totalMin > 0) {
-                                  const h = Math.floor(totalMin / 60);
-                                  const m = totalMin % 60;
-                                  issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
-                                }
-                              }
-                              const hasInfo = endDate || effortEst || issueEffort;
-                              if (!hasInfo) return null;
-                              return (
-                                <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
-                                  {endDate && (
-                                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                      <CalendarIcon size={9} className="shrink-0" />
-                                      {endDate}
-                                    </span>
-                                  )}
-                                  {effortEst && (
-                                    <span className="flex items-center gap-1 text-[10px] text-gray-400">
-                                      <Clock size={9} className="shrink-0" />
-                                      Est: {effortEst}
-                                    </span>
-                                  )}
-                                  {issueEffort && (
-                                    <span className="flex items-center gap-1 text-[10px] text-purple-500">
-                                      <Zap size={9} className="shrink-0" />
-                                      Effort: {issueEffort}
-                                    </span>
-                                  )}
+                                  <Check size={14} className="text-white" />
                                 </div>
-                              );
-                            })()}
+                                <Star
+                                  size={18}
+                                  className={cn(
+                                    "cursor-pointer transition-all shrink-0",
+                                    isAutoStarred
+                                      ? "text-[#eab308] fill-[#eab308]"
+                                      : "text-[#DA7756]/70 hover:text-[#DA7756]"
+                                  )}
+                                  onClick={() => {
+                                    markDraftDirty();
+                                    setAutoStarredIds((prev) => {
+                                      const next = new Set(prev);
+                                      if (next.has(autoStarKey)) next.delete(autoStarKey);
+                                      else next.add(autoStarKey);
+                                      return next;
+                                    });
+                                  }}
+                                />
+                                <span className={cn(
+                                  "text-[10px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                  item.type === "task"
+                                    ? "bg-[#DA7756] text-white"
+                                    : item.type === "issue"
+                                      ? "bg-violet-600 text-white"
+                                      : "bg-amber-500 text-white"
+                                )}>
+                                  {item.type}
+                                </span>
+                                <span className="flex-1 text-sm font-medium text-gray-400 line-through truncate select-none">
+                                  {item.title}
+                                </span>
+                                {item.priority && (
+                                  <span
+                                    className="text-[9px] px-1.5 py-0.5 rounded-full font-bold shrink-0"
+                                    style={{
+                                      backgroundColor: item.priority === "High" ? "#fee2e2" : item.priority === "Medium" ? "#fef3c7" : "#dcfce7",
+                                      color: item.priority === "High" ? "#991b1b" : item.priority === "Medium" ? "#92400e" : "#166534",
+                                    }}
+                                  >
+                                    {item.priority}
+                                  </span>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    if (item.type === "todo") {
+                                      setSelectedTodo(item.originalData);
+                                      setIsDetailsModalOpen(true);
+                                    } else {
+                                      navigate(
+                                        item.type === "task"
+                                          ? `/vas/tasks/${item.originalData?.id}`
+                                          : `/vas/issues/${item.originalData?.id}`
+                                      );
+                                    }
+                                  }}
+                                  className="p-1 hover:bg-white/60 rounded-[6px] transition-colors shrink-0"
+                                  title={`View ${item.type} details`}
+                                >
+                                  <Eye size={14} className="text-[#DA7756]" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (item.type === "task") {
+                                      setEditTaskData(item.originalData);
+                                      setIsEditTaskModalOpen(true);
+                                    } else if (item.type === "issue") {
+                                      setEditIssueData(item.originalData);
+                                      setIsEditIssueModalOpen(true);
+                                    } else if (item.type === "todo") {
+                                      setEditTodoData(item.originalData);
+                                      setIsEditTodoModalOpen(true);
+                                    }
+                                  }}
+                                  className="p-1 text-gray-500 hover:text-[#DA7756] transition-colors shrink-0"
+                                  title={`Edit ${item.type}`}
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                              </div>
+                              {(() => {
+                                const d = item.originalData;
+                                const endDate = fmtDate(startDate);
+                                const effortEst = fmtHours(d?.total_allocated_hours || d?.estimated_hour);
+                                let issueEffort: string | null = null;
+                                if (item.type === "issue" && Array.isArray(d?.issue_allocation_times) && d.issue_allocation_times.length > 0) {
+                                  const totalMin = d.issue_allocation_times.reduce(
+                                    (sum: number, t: any) => sum + (t.hours * 60) + t.minutes, 0
+                                  );
+                                  if (totalMin > 0) {
+                                    const h = Math.floor(totalMin / 60);
+                                    const m = totalMin % 60;
+                                    issueEffort = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+                                  }
+                                }
+                                const hasInfo = endDate || effortEst || issueEffort;
+                                if (!hasInfo) return null;
+                                return (
+                                  <div className="flex items-center gap-3 px-1 pt-1 flex-wrap">
+                                    {endDate && (
+                                      <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                        <CalendarIcon size={9} className="shrink-0" />
+                                        {endDate}
+                                      </span>
+                                    )}
+                                    {effortEst && (
+                                      <span className="flex items-center gap-1 text-[10px] text-gray-400">
+                                        <Clock size={9} className="shrink-0" />
+                                        Est: {effortEst}
+                                      </span>
+                                    )}
+                                    {issueEffort && (
+                                      <span className="flex items-center gap-1 text-[10px] text-purple-500">
+                                        <Zap size={9} className="shrink-0" />
+                                        Effort: {issueEffort}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })()}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
 
                       {visibleAccomplishments.length === 0 && autoAddedAccomplishments.length === 0 && (
                         <div className="flex flex-col items-center gap-4 text-center py-10 bg-gray-50/50 rounded-[14px] border-2 border-dashed border-gray-100">
@@ -2822,32 +2847,6 @@ const BusinessCompassDailyReport: React.FC = () => {
                         </div>
                       )}
 
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          className="flex-1 h-11 border-[#10b981]/30 text-[#10b981] font-bold text-sm bg-white hover:bg-[#ecfdf5] rounded-[8px] flex items-center justify-center gap-2"
-                          onClick={addAccomplishment}
-                        >
-                          <Plus size={18} />
-                          Add Item
-                        </Button>
-                        {/* {visibleAccomplishments.some((a) => !a.completed) && (
-                          <button
-                            type="button"
-                            style={{
-                              backgroundColor: "#DA7756",
-                              color: "#ffffff",
-                              cursor: "pointer",
-                              opacity: 1,
-                            }}
-                            className="flex h-10 items-center gap-2 rounded-[8px] border-none px-6 text-xs font-black shadow-md transition-all"
-                            onClick={transferUncheckedToTomorrow}
-                          >
-                            <CalendarCheck size={16} />
-                            Transfer unchecked to tomorrow
-                          </button>
-                        )} */}
-                      </div>
                     </div>
 
                     <div className="pt-6 border-t border-gray-50 flex items-center justify-between">
@@ -3597,18 +3596,18 @@ const BusinessCompassDailyReport: React.FC = () => {
                                     )}
                                     onClick={() => togglePlanningStar(item.id)}
                                   />
-                                  {item.source_type && (
-                                    <span className={cn(
-                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
-                                      item.source_type === "task"
-                                        ? "bg-[#DA7756] text-white"
-                                        : item.source_type === "issue"
-                                          ? "bg-violet-600 text-white"
-                                          : "bg-amber-500 text-white"
-                                    )}>
-                                      {item.source_type}
-                                    </span>
-                                  )}
+                                  <span className={cn(
+                                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase shrink-0",
+                                    item.source_type === "task"
+                                      ? "bg-[#DA7756] text-white"
+                                      : item.source_type === "issue"
+                                        ? "bg-violet-600 text-white"
+                                        : item.source_type === "todo"
+                                          ? "bg-amber-500 text-white"
+                                          : "bg-gray-500 text-white"
+                                  )}>
+                                    {item.source_type || "Note"}
+                                  </span>
                                   <input
                                     type="text"
                                     value={item.text}
@@ -3830,7 +3829,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="mt-4">
+                    {/* <div className="mt-4">
                       <Button
                         variant="outline"
                         className="w-full h-11 border-[#DA7756]/30 text-[#DA7756] font-bold text-sm bg-white hover:bg-[#DA7756]/5 rounded-[8px] flex items-center justify-center gap-2"
@@ -3839,7 +3838,7 @@ const BusinessCompassDailyReport: React.FC = () => {
                         <Plus size={18} />
                         Add Item
                       </Button>
-                    </div>
+                    </div> */}
                   </CardContent>
                 </Card>
               </div>
@@ -5597,6 +5596,34 @@ const BusinessCompassDailyReport: React.FC = () => {
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
+        <MenuItem
+          onClick={() => {
+            addPlanningItem()
+            setPlanningMenuAnchor(null);
+          }}
+          sx={{
+            py: 1.5,
+            px: 2,
+            margin: "8px 8px 4px 8px",
+            borderRadius: "10px",
+            "&:hover": {
+              backgroundColor: "#f0f4ff",
+              transform: "translateX(4px)",
+            },
+          }}
+        >
+          <div className="flex items-center gap-3 w-full">
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Plus size={18} className="text-blue-600" />
+            </div>
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-gray-900 text-sm">Add Note</span>
+              <span className="text-xs text-gray-500 font-medium">
+                For {nextDayLabel || "tomorrow"}
+              </span>
+            </div>
+          </div>
+        </MenuItem>
         <MenuItem
           onClick={() => {
             setPreFillDate(getNextDayDate());
